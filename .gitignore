@@ -1,0 +1,7 @@
+FEM.pyc
+GUI.pyc
+param_BCs.py
+ParameterFiles/
+__pycache__/
+.nfs*
+.idea/
