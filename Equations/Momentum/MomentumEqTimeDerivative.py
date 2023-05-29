@@ -4,4 +4,4 @@ from ufl import (
 				dx,
 				)
 def MomentumEqTimeDerivative(self,fluc,X,mean):
-	self.B_real_vf.add(mean.rho*self.R*fluc.u[i]*X[i] *dx)
+	self.B_vf.add(mean.rho*self.R*fluc.u[i]*X[i] *dx)

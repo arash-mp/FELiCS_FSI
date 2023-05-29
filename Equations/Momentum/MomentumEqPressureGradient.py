@@ -9,6 +9,7 @@ from ufl import (
 				grad,
 				Dx,
 				Identity,
+				conj,
 				)
 
 def MomentumEqPressureGradient(self,fluc,X,mean,param):
@@ -19,15 +20,15 @@ def MomentumEqPressureGradient(self,fluc,X,mean,param):
 	print(X)
 	I=Identity( fluc.u.geometric_dimension() )
 	if IntegrationByParts:
-		#self.A_imag_vf.add(inner(div(X*self.R),fluc.p)*dx)
-		self.A_imag_vf.add(Dx(X[i]*self.R,j)*fluc.p * I[i,j] * dx)
+		#self.A_vf.add(1j * inner(div(X*self.R),fluc.p)*dx)
+		self.A_vf.add(1j * Dx(conj(X[i])*self.R,j)*fluc.p * I[i,j] * dx)
 		# Integrate pressure gradient boundary terms (resulting from integration by parts)
-		self.A_imag_vf.add(-self.R*fluc.p*self.n_BC[j]*X[i]* I[i,j] * self.all_ds)
+		self.A_vf.add(1j * -self.R*fluc.p*self.n_BC[j]*conj(X[i])* I[i,j] * self.all_ds)
 	else:
-		self.A_imag_vf.add(-self.R*inner(X,grad(fluc.p))*dx)
+		self.A_vf.add(1j * -self.R*inner(X,grad(fluc.p))*dx)
 
 	if not param.Case.m == 0:
-		self.A_real_vf.add(+X[2]*self.m*fluc.p*dx)
+		self.A_vf.add(+conj(X[2])*self.m*fluc.p*dx)
 
 
 	if param.NumericalScheme in ['Discontinuous Galerkin']:
@@ -41,4 +42,4 @@ def MomentumEqPressureGradient(self,fluc,X,mean,param):
 		F_p_ij = Iden[i,j] * fluc.p
 		F_p = as_tensor(F_p_ij, (i, j))
 		F_p_LFF = dot(avg(F_p), self.n_BC('+'))+ avg(C_LFF) * jump(fluc.u) / 2.0
-		self.A_imag_vf.add(-aot(jump(X), F_p_LFF) * dS)
+		self.A_vf.add(1j * -aot(jump(X), F_p_LFF) * dS)
