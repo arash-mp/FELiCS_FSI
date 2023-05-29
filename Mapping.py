@@ -2,6 +2,9 @@
 import numpy as np
 import pdb
 
+import time
+import sys
+
 class Mapping:
     """
     This class contains mappings
@@ -31,12 +34,35 @@ class Mapping:
 
 
     def _mappingFunc(self, exportMeshDOFCoordinates, calcMeshDOFCoordinates):
-    	# mapping from CalcMesh to exportMesh needs to be done:
-    	mapping = np.zeros(exportMeshDOFCoordinates.shape[0], dtype=int)
-    	for index, coordinate in enumerate(calcMeshDOFCoordinates):
-    		mapping[index] = np.where(np.isclose(coordinate, exportMeshDOFCoordinates).all(axis=1) == True)[0]
+        s_t = time.time()
+        # mapping from CalcMesh to exportMesh needs to be done:
+        exportMesh = np.copy(exportMeshDOFCoordinates)
+        exportMeshNorm = np.linalg.norm(exportMesh,axis=1)
+        calcMesh = np.copy(calcMeshDOFCoordinates)
+        calcMeshNorm = np.linalg.norm(calcMesh,axis=1)
+        exportMesh = np.append(exportMesh,np.arange(len(exportMesh)).reshape(len(exportMesh),1),axis=1)
+        calcMesh = np.append(calcMesh,np.arange(len(calcMesh)).reshape(len(calcMesh),1),axis=1)
+        #exportMesh = exportMesh[np.lexsort((exportMesh[:,2],exportMesh[:,1],exportMesh[:,0]))].astype(np.int)
+        calcMesh = calcMesh[np.lexsort((calcMesh[:, 2], calcMesh[:, 1], calcMesh[:, 0]))].astype(np.int)
+        mappingtest = exportMesh[:,-1][calcMesh[:,-1]]
 
-    	return mapping
+        #print(time.time() - s_t, file=sys.stderr)
+
+        mapping = np.zeros(exportMesh.shape[0], dtype=int)
+        del_indices = []
+        for index, coordinate in enumerate(calcMeshDOFCoordinates):
+            ind= np.isclose(coordinate, exportMesh[:,:-1])
+            cur_index = np.where(ind.all(axis=1))[0]
+            mapping[index] = exportMesh[cur_index,-1]
+            del_indices.append(cur_index)
+            if len(del_indices) > 100:
+                exportMesh = np.delete(exportMesh, del_indices,axis=0)
+                del_indices = []
+        #print(mapping, file=sys.stderr)
+        #print(mappingtest, file=sys.stderr)
+        #print(time.time() - s_t, file=sys.stderr)
+
+        return mapping
 
     # @property
     # def MappingVector(self):
