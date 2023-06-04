@@ -34,36 +34,25 @@ class Mapping:
 
 
     def _mappingFunc(self, exportMeshDOFCoordinates, calcMeshDOFCoordinates):
-        s_t = time.time()
-        # mapping from CalcMesh to exportMesh needs to be done:
+
+        # copy coordinates to avoid changing the original arrays
         exportMesh = np.copy(exportMeshDOFCoordinates)
-        exportMeshNorm = np.linalg.norm(exportMesh,axis=1)
         calcMesh = np.copy(calcMeshDOFCoordinates)
-        calcMeshNorm = np.linalg.norm(calcMesh,axis=1)
-        exportMesh = np.append(exportMesh,np.arange(len(exportMesh)).reshape(len(exportMesh),1),axis=1)
-        calcMesh = np.append(calcMesh,np.arange(len(calcMesh)).reshape(len(calcMesh),1),axis=1)
-        #exportMesh = exportMesh[np.lexsort((exportMesh[:,2],exportMesh[:,1],exportMesh[:,0]))].astype(np.int)
-        calcMesh = calcMesh[np.lexsort((calcMesh[:, 2], calcMesh[:, 1], calcMesh[:, 0]))].astype(np.int)
-        mappingtest = exportMesh[:,-1][calcMesh[:,-1]]
 
-        #print(time.time() - s_t, file=sys.stderr)
+        # append indices as last column
+        exportMesh = np.append(exportMesh,np.arange(len(exportMesh)).reshape(len(exportMesh),1),axis=1).round(11)
+        calcMesh = np.append(calcMesh,np.arange(len(calcMesh)).reshape(len(calcMesh),1),axis=1).round(11)
 
-        mapping = np.zeros(exportMesh.shape[0], dtype=int)
-        del_indices = []
-        for index, coordinate in enumerate(calcMeshDOFCoordinates):
-            ind= np.isclose(coordinate, exportMesh[:,:-1])
-            cur_index = np.where(ind.all(axis=1))[0]
-            mapping[index] = exportMesh[cur_index,-1]
-            del_indices.append(cur_index)
-            if len(del_indices) > 100:
-                exportMesh = np.delete(exportMesh, del_indices,axis=0)
-                del_indices = []
-        #print(mapping, file=sys.stderr)
-        #print(mappingtest, file=sys.stderr)
-        #print(time.time() - s_t, file=sys.stderr)
+        # sort by x,y,z
+        exportMeshSorted = exportMesh[np.lexsort((exportMesh[:,2],exportMesh[:,1],exportMesh[:,0]))].astype(np.int)
+        calcMeshSorted = calcMesh[np.lexsort((calcMesh[:, 2], calcMesh[:, 1], calcMesh[:, 0]))].astype(np.int)
+
+        # find indices of sorted exportMesh in calcMesh
+        index_array = np.vstack((calcMeshSorted[:, -1], exportMeshSorted[:, -1])).T
+        mapping = index_array[index_array[:, 0].argsort()][:, 1]
 
         return mapping
 
-    # @property
+    # @propertyq
     # def MappingVector(self):
     #     return self._indexVector

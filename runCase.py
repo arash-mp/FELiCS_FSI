@@ -22,13 +22,10 @@ def runCase(param, useGUI):
 
 	mesh=param.BCs.getMesh()
 	print('Defining FEMSpaces...')
-	starttime = time.time()
 	FEMSpaces         =DefineFEMSpaces.FEMSpacesClass(
 														param,
 														mesh,
 														)
-	print('time for Defining FEMSpaces: ',time.time()-starttime,file=sys.stderr)
-
 	print('Reading InputFlow...')
 	MeanFlow = meanFlowClass(param, FEMSpaces)
 
