@@ -1,9 +1,6 @@
-
 import numpy as np
 import pdb
 
-import time
-import sys
 
 class Mapping:
     """
@@ -34,6 +31,17 @@ class Mapping:
 
 
     def _mappingFunc(self, exportMeshDOFCoordinates, calcMeshDOFCoordinates):
+        """
+        This function provides a mapping from the calculation mesh to the export
+        mesh. It adds a column with indices to both coordinate matrices each,
+        sorts the matrices by x, y and z coordinate and then takes the last
+        column of indices to build a new matrix. Sorting this new matrix by the
+        column with indices of the calculation mesh will reveal the wanted
+        mapping to the export mesh in the other column.
+        Note that the coordinates are rounded to 11 decimals for the sorting
+        process. This does not affect the actual coordinates and is only
+        relevant within this function.
+        """
 
         # copy coordinates to avoid changing the original arrays
         exportMesh = np.copy(exportMeshDOFCoordinates)

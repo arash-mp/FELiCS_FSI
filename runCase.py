@@ -17,8 +17,7 @@ def runCase(param, useGUI):
 	import numpy as np
 	from fluctuationClass import fluctuationSolutions
 	import copy
-	import sys
-	import time
+
 
 	mesh=param.BCs.getMesh()
 	print('Defining FEMSpaces...')
