@@ -59,7 +59,7 @@ class Mapping:
         index_array = np.vstack((calcMeshSorted[:, -1], exportMeshSorted[:, -1])).T
         mapping = index_array[index_array[:, 0].argsort()][:, 1]
 
-    	return mapping
+        return mapping
 
     # @property
     # def MappingVector(self):
