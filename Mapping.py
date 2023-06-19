@@ -1,6 +1,6 @@
+
 import numpy as np
 import pdb
-
 
 class Mapping:
     """
@@ -59,8 +59,8 @@ class Mapping:
         index_array = np.vstack((calcMeshSorted[:, -1], exportMeshSorted[:, -1])).T
         mapping = index_array[index_array[:, 0].argsort()][:, 1]
 
-        return mapping
+    	return mapping
 
-    # @propertyq
+    # @property
     # def MappingVector(self):
     #     return self._indexVector

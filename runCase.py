@@ -18,13 +18,14 @@ def runCase(param, useGUI):
 	from fluctuationClass import fluctuationSolutions
 	import copy
 
-
 	mesh=param.BCs.getMesh()
 	print('Defining FEMSpaces...')
 	FEMSpaces         =DefineFEMSpaces.FEMSpacesClass(
 														param,
 														mesh,
 														)
+
+
 	print('Reading InputFlow...')
 	MeanFlow = meanFlowClass(param, FEMSpaces)
 
