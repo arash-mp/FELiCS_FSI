@@ -1,3 +1,6 @@
-from ufl import dx
+from ufl import (
+				dx,
+				conj,
+				)
 def addSpeciesEqTimeDerivative(self,fluc,X,mean,species):
-	self.B_real_vf.add( self.R*fluc.Y(species)*X*mean.rho*dx ) # Why is here no term fluc.rho * mean.Y
+	self.B_vf.add( self.R*fluc.Y(species)*conj(X)*mean.rho*dx ) # Why is here no term fluc.rho * mean.Y

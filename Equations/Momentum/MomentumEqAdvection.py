@@ -43,17 +43,17 @@ def MomentumEqAdvection(
 			    - self.R * conj(X[i]) * fluc.rho * mean.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
 
 	if param.Case.CoordinateSystem in ['Cylindrical']:
-		self.A_vf.add(1j * - conj(X[2]) * mean.rho *mean.u[1] * fluc.u[2] * dx)
-		self.A_vf.add(1j * - conj(X[2]) * mean.rho *fluc.u[1] * mean.u[2] * dx)
-		self.A_vf.add(1j * - conj(X[2]) * fluc.rho *mean.u[1] * mean.u[2] * dx)
+		self.A_vf.add(1j * - X[2] * mean.rho *mean.u[1] * fluc.u[2] * dx)
+		self.A_vf.add(1j * - X[2] * mean.rho *fluc.u[1] * mean.u[2] * dx)
+		self.A_vf.add(1j * - X[2] * fluc.rho *mean.u[1] * mean.u[2] * dx)
 
 
-		self.A_vf.add(1j * conj(X[1]) * mean.u[2] * fluc.u[2] * mean.rho * dx\
-					  + conj(X[1]) * fluc.u[2] * mean.u[2] * mean.rho * dx\
-					  + conj(X[1]) * mean.u[2] * mean.u[2] * fluc.rho * dx)
+		self.A_vf.add(1j * X[1] * mean.u[2] * fluc.u[2] * mean.rho * dx\
+					  + X[1] * fluc.u[2] * mean.u[2] * mean.rho * dx\
+					  + X[1] * mean.u[2] * mean.u[2] * fluc.rho * dx)
 
 		if not param.Case.m == 0:
-			self.A_vf.add(mean.rho * conj(X[i]) * param.Case.m * mean.u[2] * fluc.u[i] * dx)
+			self.A_vf.add(mean.rho * X[i] * param.Case.m * mean.u[2] * fluc.u[i] * dx)
 
 	if param.NumericalScheme in ['Discontinuous Galerkin']:
 		#Lax-Friedrich-Flux coeffficient chosen as one
