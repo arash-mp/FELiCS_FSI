@@ -28,7 +28,7 @@ def MomentumEqPressureGradient(self,fluc,X,mean,param):
 		self.A_vf.add(1j * -self.R*inner(conj(X),conj(grad(fluc.p)))*dx)
 
 	if not param.Case.m == 0:
-		self.A_vf.add(+X[2]*self.m*fluc.p*dx)
+		self.A_vf.add(+conj(X)[2]*self.m*fluc.p*dx)
 
 
 	if param.NumericalScheme in ['Discontinuous Galerkin']:

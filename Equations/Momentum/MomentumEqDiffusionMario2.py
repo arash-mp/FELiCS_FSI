@@ -52,7 +52,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 		self.A_vf.add(-X[2]*mean.nuTot.dx(0)*self.m*fluc.u[0]*dx)
 		#self.A_vf.add(1j * -X*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)							#III  -> A_real ??? (CA)
 		self.A_vf.add(-X[2]*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)
-		self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*inner( X,fluc.u )*dx)#
+		self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*inner( X,conj(fluc.u) )*dx)#
 
 		self.A_vf.add(2*mean.nuTot*self.m/self.R*X[1]*fluc.u[2]*dx)#
 
@@ -65,8 +65,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 		if param.Case.HeatTransfer or param.Case.Compressible:
 			
 			self.A_vf.add(1j * -mean.nuTot/self.R*fluc.u[1]*X[1]*dx)									#II(1)
-			
-			
+
 			self.A_vf.add(1j * -2.0/3.0*fluc.u[1]*Dx(mean.nuTot,i)*X[i]*dx)							#IV(1)
 			self.A_vf.add(1j * -2.0/3.0*mean.nuTot*Dx(fluc.u[1],i)*X[i]*dx)							#IV(2)
 			self.A_vf.add(1j * 2.0/3.0*mean.nuTot/self.R*fluc.u[1]*X[1]*dx)							#IV(3)

@@ -26,18 +26,18 @@ def MassEqAdvection(self,fluc,X,mean,param):
 
 	if param.Case.CoordinateSystem in ['Cylindrical']:
 		if not param.Case.m == 0:
-			self.A_vf.add(X*mean.rho*self.m*fluc.u[2]*dx) #possibly conj(X) instead of X
-			self.A_vf.add(X*fluc.rho*self.m*mean.u[2]*dx)
+			self.A_vf.add(conj(X)*mean.rho*self.m*fluc.u[2]*dx)
+			self.A_vf.add(conj(X)*fluc.rho*self.m*mean.u[2]*dx)
 
 	# In case of Input-Output analysis, we must adapt the boundary terms...
 	if param.Case.AnalysisMode in ['Input-Output']:
 		# Iterate through all boundaries, at which forcing is applied
 		for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
 			# First subtract the part added in a few lines above...
-			self.A_vf.add(1j * self.R*inner(fluc.u,self.n_BC)*X*self.ds(boundary_index)) #possibly conj(X) instead of X
+			self.A_vf.add(1j * self.R*inner(fluc.u,self.n_BC)*conj(X)*self.ds(boundary_index))
 			# Then add the forcing at the inlet...
-			self.A_vf.add(-self.R*inner(mean.u_forcing_r,self.n_BC)*X*self.ds(boundary_index))
-			self.A_vf.add(1j * -self.R*inner(mean.u_forcing_i,self.n_BC)*X*self.ds(boundary_index))
+			self.A_vf.add(-self.R*inner(mean.u_forcing_r,self.n_BC)*conj(X)*self.ds(boundary_index))
+			self.A_vf.add(1j * -self.R*inner(mean.u_forcing_i,self.n_BC)*conj(X)*self.ds(boundary_index))
 
 	if param.NumericalScheme in ['Discontinuous Galerkin']:
 		F_rho_LFF = dot(avg(fluc.u),self.n_BC('+'))

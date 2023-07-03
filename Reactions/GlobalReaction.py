@@ -14,6 +14,7 @@ from dolfinx.fem import (
 from ufl import (
 	dx,
 	exp,
+	conj,
 )
 
 class GlobalReaction():
@@ -79,7 +80,7 @@ class GlobalReaction():
 		self.i_rho=solutionList.index('rho')
 		self.i_C=solutionList.index('CH4')
 		dQ=self.dQ_(mean, fluc)
-		return -testf[self.i_rho]*(dQ*self.Q)*self.h0*dx-testf[self.i_C]*(dQ*self.Q)*self.st_C*self.WC*dx
+		return -conj(testf[self.i_rho])*(dQ*self.Q)*self.h0*dx-conj(testf[self.i_C])*(dQ*self.Q)*self.st_C*self.WC*dx
 
 	def dQ_(self, mean, fluc):
 		dO2_= fluc.Y('CH4')/(self.st_C*self.WC)*self.st_O*self.WO

@@ -169,7 +169,6 @@ class WeakFormulationCollectionClass():
         self.B_vf = WeakForm()
         if 'u' in self.__param.SolutionList:
             from Equations.Momentum.addMomentumEq import addMomentumEq
-            print("adding momentum equation",file=sys.stderr)
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
 
         #If needed, add third momentum equation
@@ -180,12 +179,10 @@ class WeakFormulationCollectionClass():
         # Add continuity equation
         if 'p' in self.__param.SolutionList:
             from Equations.Mass.addMassEq import addMassEq
-            print("adding mass equation", file=sys.stderr)
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
         if (self.__param.Case.Reaction or self.__param.Case.Compressible or self.__param.Case.HeatTransfer) and not self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
             from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
-            print("adding enthalpy equation",file=sys.stderr)
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
@@ -197,13 +194,11 @@ class WeakFormulationCollectionClass():
             i_eqn=self.__param.SolutionList.index(specie)
             from Equations.Species.addSpeciesEq import addSpeciesEq
             print('Adding Equation for species '+specie)
-            print("adding species equation", file=sys.stderr)
             addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
 
         # Add reactions
 
         if self.__param.Case.Reaction:
-            print("there is also some reaction",file=sys.stderr)
             if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
                 from Reactions.GlobalReaction import GlobalReaction
                 ReactionModelName="WestbrookDryer_Max" #to be put in param
