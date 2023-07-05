@@ -17,21 +17,21 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 # VISCOUS TERMS FOR INCOMPRESSIBLE FLOW:
 #------------------------------------------------------------------------------
 	# I,III: div(mean.mu*grad(fluc.u)) in 2D after Ibp (boundary integral neglected): 
-	self.A_vf.add(1j * -self.R*mean.nuTot*Dx(fluc.u[i],j)*Dx(X[i],j)*dx )
-	
+	self.A_vf.add(1j * -self.R*mean.nuTot*Dx(fluc.u[i],j)*Dx(conj(X)[i],j)*dx )
+
 	#div(fluc.mu*grad(mean.u)) in 2D after Ibp (integral of boundary terms neglected):
 	#CAUTION: NOT IMPLEMENTED IN CYLINDRICAL COORDINATES!
 	self.A_vf.add(1j * -fluc.nulam*mean.u[i].dx(j)*X[i].dx(j)*dx )
-	
+
 #------------------------------------------------------------------------------
 # ADDITIONAL TERMS FOR COMPRESSIBLE FLOW:
 #------------------------------------------------------------------------------
-	if param.Case.HeatTransfer or param.Case.Compressible:
+	if param.Case.HeatTransfer or param.Case.Compressible: ########## check here whether to use conj or not
 		Iden=Identity( fluc.rho.geometric_dimension() )
-		
+
 		# II, III: div(mu*grad^T(fluc.u)) in 2D after Ibp (boundary integral neglected):
 		self.A_vf.add(1j * -self.R*mean.nuTot*Dx(fluc.u[j],i)*Dx(X[i],j)*dx )
-		
+
 		# IV: div(mean.mu*(div(u)*I)
 		self.A_vf.add(1j * mean.nuTot*2.0/3.0*Dx(fluc.u[k],k)*Dx(self.R*X[i],j)*Iden[i,j]*dx ) # Change CA:
 		#div(fluc.mu*grad^T(mean.u)) in 2D after Ibp (integral of boundary terms neglected):
@@ -44,17 +44,18 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 # ADDITIONAL TERMS FOR CYLINDRICAL COORDINATES, INCOMPRESSIBLE FLOW: 
 #------------------------------------------------------------------------------
 	if param.Case.CoordinateSystem =='Cylindrical':									#is this necessary? (CA)
-		self.A_vf.add(1j * -mean.nuTot/self.R*X[2]*fluc.u[2]*dx)#
-		self.A_vf.add(1j * -mean.nuTot.dx(1)*X[2]*fluc.u[2]*dx)
-		self.A_vf.add(1j * -mean.nuTot*X[1]/self.R*fluc.u[1]*dx)#
+		self.A_vf.add(1j * -mean.nuTot/self.R*conj(X)[2]*fluc.u[2]*dx)#
+		self.A_vf.add(1j * -mean.nuTot.dx(1)*conj(X)[2]*fluc.u[2]*dx)
+		self.A_vf.add(1j * -mean.nuTot*conj(X)[1]/self.R*fluc.u[1]*dx)#
 	if not param.Case.m == 0:
-		self.A_vf.add(-2*mean.nuTot/self.R*self.m*X[2]*fluc.u[1]*dx)#
-		self.A_vf.add(-X[2]*mean.nuTot.dx(0)*self.m*fluc.u[0]*dx)
+		self.A_vf.add(-2*mean.nuTot/self.R*self.m*conj(X)[2]*fluc.u[1]*dx)#
+		self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(0)*self.m*fluc.u[0]*dx)
 		#self.A_vf.add(1j * -X*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)							#III  -> A_real ??? (CA)
-		self.A_vf.add(-X[2]*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)
-		self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*inner( X,conj(fluc.u) )*dx)#
+		self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)
+		#self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*inner(conj(X), conj(fluc.u))*dx)#
+		self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*conj(X)[i]*fluc.u[i]*dx)# this line replaces the above which uses inner
 
-		self.A_vf.add(2*mean.nuTot*self.m/self.R*X[1]*fluc.u[2]*dx)#
+		self.A_vf.add(2*mean.nuTot*self.m/self.R*conj(X)[1]*fluc.u[2]*dx)#
 
 
 			
@@ -62,10 +63,8 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 # ADDITIONAL TERMS FOR CYLINDRICAL COORDINATES, COMPRESSIBLE FLOW (CA): 
 #------------------------------------------------------------------------------
 		#if True:
-		if param.Case.HeatTransfer or param.Case.Compressible:
-			
+		if param.Case.HeatTransfer or param.Case.Compressible: 	########## check here whether to use conj or not
 			self.A_vf.add(1j * -mean.nuTot/self.R*fluc.u[1]*X[1]*dx)									#II(1)
-
 			self.A_vf.add(1j * -2.0/3.0*fluc.u[1]*Dx(mean.nuTot,i)*X[i]*dx)							#IV(1)
 			self.A_vf.add(1j * -2.0/3.0*mean.nuTot*Dx(fluc.u[1],i)*X[i]*dx)							#IV(2)
 			self.A_vf.add(1j * 2.0/3.0*mean.nuTot/self.R*fluc.u[1]*X[1]*dx)							#IV(3)
@@ -91,7 +90,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 
 
 
-	if param.Case.AnalysisMode in ['Input-Output']:
+	if param.Case.AnalysisMode in ['Input-Output']:		########## check here whether to use conj or not
 		for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
 
 			# Add physical boundary terms in imaginary part, where the forcing is applied...
@@ -112,8 +111,8 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 	                   				self.n_BC[1] * (X[1].dx(1))) * (-mean.u_forcing_r[1])) *self.ds(boundary_index))
 
 
-	if param.NumericalScheme in ['Discontinuous Galerkin']:
-		                #F_vis_Int = ((self.n_BC[0]('+') * avg(4 / 3 * X[0].dx(0) - 2 / 3 * X[1].dx(1)) +
+	if param.NumericalScheme in ['Discontinuous Galerkin']:	########## check here whether to use conj or not
+				#F_vis_Int = ((self.n_BC[0]('+') * avg(4 / 3 * X[0].dx(0) - 2 / 3 * X[1].dx(1)) +
 				#	self.n_BC[1]('+') * avg(X[0].dx(1) + X[1].dx(0))) * jump(fluc['u'][0]) +
 				#	(self.n_BC[0]('+') * avg(X[0].dx(1) + X[1].dx(0)) +
 				#	 self.n_BC[1]('+') * avg(4 / 3 * X[1].dx(1) - 2 / 3 * X[0].dx(0))) * jump(fluc['u'][1]) -
@@ -144,7 +143,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 
 
 #####Other stuff
-	if  param.Case.TransVelFluc:
+	if  param.Case.TransVelFluc:	########## check here whether to use conj or not
 		if param.Case.HeatTransfer or param.Case.Compressible:
 			self.A_vf.add(1j * self.R*Dx(mean.nuTot,i)*Dx(fluc.u[2],i)*X[2]*dx)						#III(1) (not 100% sure why only in case of dilatation -> needs checking)
 
@@ -160,7 +159,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 
 
 
-		if param.Case.AnalysisMode in ['Input-Output']:
+		if param.Case.AnalysisMode in ['Input-Output']:	########## check here whether to use conj or not
 			for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
 
 				# Add physical boundary terms in imaginary part, where the forcing is applied...

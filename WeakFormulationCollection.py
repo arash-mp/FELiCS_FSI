@@ -73,7 +73,6 @@ from functions import *
 #from fenics import FunctionAssigner,Constant
 import pdb
 import LinearSystem
-import sys
 
 class WeakFormulationCollectionClass():
     '''This class build the variational formulations for all relevant matrices
@@ -169,6 +168,7 @@ class WeakFormulationCollectionClass():
         self.B_vf = WeakForm()
         if 'u' in self.__param.SolutionList:
             from Equations.Momentum.addMomentumEq import addMomentumEq
+
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
 
         #If needed, add third momentum equation
