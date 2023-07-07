@@ -592,7 +592,8 @@ class WeakFormulationCollectionClass():
             # Only goes through the index loop if spatial limiter given
             if flagdom:
                 for index_local in dofsIterator:
-                    if round(forcingDomainVMixed.vector()[index_local]) == 1:
+                    #if round(forcingDomainVMixed.vector()[index_local]) == 1:
+                    if forcingDomainVMixed.x.array[index_local] == 1:
                         index = np.append(index, index_local)
                         # Rounding added there since mesh interpolation can result
                         # in non-integrer values of the limiter domain flag
@@ -629,7 +630,7 @@ class WeakFormulationCollectionClass():
             flagdom = False
             print('-- No spatial restriction of response.')
         else:
-            responseDom.x.array[:] = np.rint(responseDom.vector()[:])
+            responseDom.x.array[:] = np.rint(responseDom.x.array[:])
             flagdom = True
             print('-- Applying spatial restriction of response from MeanFlow file.')
 
@@ -645,7 +646,7 @@ class WeakFormulationCollectionClass():
             # Only goes through the index loop if spatial limiter given
             if flagdom:
                 for index_local in dofsIterator:
-                    if round(responseDomainVMixed.vector()[index_local]) == 1:
+                    if round(responseDomainVMixed.x.array[index_local]) == 1:
                         index = np.append(index, index_local)
             else:
                 index = np.append(index, dofsIterator)
