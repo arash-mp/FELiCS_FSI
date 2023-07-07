@@ -34,7 +34,7 @@ from dolfinx.fem import (
 from functions import *
 import numpy as np
 #import pyvtk
-import matplotlib.tri as tri
+#import matplotlib.tri as tri
 from colorama import Fore, Style
 import scipy.io as sio
 
