@@ -194,23 +194,22 @@ class FEMSpacesClass():
 		for i in range(nDim):
 			spacevel.append(self.P2) # Here we assume P2 by default!
 			fieldvel.append(field)
+			fieldvelocity.sub(i).collapse().x.array[:] = field.x.array
 		'''assigner = FunctionAssigner(self.FunctionSpaceVectorVelocity, spacevel)
 		assigner.assign(fieldvelocity, fieldvel)'''
-		fieldvelocity.x.array[:] = fieldvel
-		exit()
 
 		# Then we project to the whole mixed space, including remaining scalar fields
 		nscalar = nfluctvar - nDim
+		fieldVMixed = Function(self.VMixed)
 		spacemixed = [self.FunctionSpaceVectorVelocity]
 		fieldmixed = [fieldvelocity]
 		for i in range(nscalar):
 			spacemixed.append(self.P2) # Here we assume P2 by default!
 			fieldmixed.append(field)
-		fieldVMixed = Function(self.VMixed)
+			fieldVMixed.sub(i).collapse().x.array[:] = field.x.array
 		'''assigner2 = FunctionAssigner(self.VMixed, spacemixed)
 		assigner2.assign(fieldVMixed, fieldmixed)'''
-
-		fieldVMixed.x.array[:] = fieldmixed.x.array
+		exit()
 
 		return fieldVMixed
 
