@@ -183,8 +183,9 @@ class FEMSpacesClass():
 			nDim: number of spatial dimension = number of velocity components
 		"""
 
-		from functions import Function
-		from fenics import FunctionAssigner, Constant
+		from dolfinx.fem import Function
+		import sys
+		import numpy as np
 
 		# First we project to all velocity components
 		fieldvelocity = Function(self.FunctionSpaceVectorVelocity)
@@ -193,8 +194,10 @@ class FEMSpacesClass():
 		for i in range(nDim):
 			spacevel.append(self.P2) # Here we assume P2 by default!
 			fieldvel.append(field)
-		assigner = FunctionAssigner(self.FunctionSpaceVectorVelocity, spacevel)
-		assigner.assign(fieldvelocity, fieldvel)
+		'''assigner = FunctionAssigner(self.FunctionSpaceVectorVelocity, spacevel)
+		assigner.assign(fieldvelocity, fieldvel)'''
+		fieldvelocity.x.array[:] = fieldvel
+		exit()
 
 		# Then we project to the whole mixed space, including remaining scalar fields
 		nscalar = nfluctvar - nDim
@@ -204,7 +207,10 @@ class FEMSpacesClass():
 			spacemixed.append(self.P2) # Here we assume P2 by default!
 			fieldmixed.append(field)
 		fieldVMixed = Function(self.VMixed)
-		assigner2 = FunctionAssigner(self.VMixed, spacemixed)
-		assigner2.assign(fieldVMixed, fieldmixed)
+		'''assigner2 = FunctionAssigner(self.VMixed, spacemixed)
+		assigner2.assign(fieldVMixed, fieldmixed)'''
+
+		fieldVMixed.x.array[:] = fieldmixed.x.array
 
 		return fieldVMixed
+

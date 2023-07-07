@@ -573,7 +573,7 @@ class WeakFormulationCollectionClass():
             flagdom = False
             print('-- No spatial restriction of forcing.')
         else:
-            forcingDom.x.array[:] = np.rint(forcingDom.vector()[:])
+            forcingDom.x.array[:] = np.rint(forcingDom.x.array[:])
             flagdom = True
             print('-- Applying spatial restriction of forcing from MeanFlow file.')
 
@@ -636,7 +636,6 @@ class WeakFormulationCollectionClass():
             responseDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(responseDom, nfluctvar, nDim)
 
         index = np.empty(shape=(0,0))
-
         for i in range(nfluctvar): # HARDCODED FOR U, V, P: incompressible 2D
             if i < self.__nVelocityComponents:
                 dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]
