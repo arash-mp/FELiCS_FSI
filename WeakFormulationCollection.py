@@ -74,6 +74,8 @@ from functions import *
 import pdb
 import LinearSystem
 
+import sys
+
 class WeakFormulationCollectionClass():
     '''This class build the variational formulations for all relevant matrices
     Currently these are:
@@ -168,7 +170,7 @@ class WeakFormulationCollectionClass():
         self.B_vf = WeakForm()
         if 'u' in self.__param.SolutionList:
             from Equations.Momentum.addMomentumEq import addMomentumEq
-
+            print("adding momentum",file=sys.stderr)
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
 
         #If needed, add third momentum equation
@@ -179,10 +181,12 @@ class WeakFormulationCollectionClass():
         # Add continuity equation
         if 'p' in self.__param.SolutionList:
             from Equations.Mass.addMassEq import addMassEq
+            print("adding mass", file=sys.stderr)
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
         if (self.__param.Case.Reaction or self.__param.Case.Compressible or self.__param.Case.HeatTransfer) and not self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
             from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
+            print("adding enthalpy",file=sys.stderr)
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
@@ -193,6 +197,7 @@ class WeakFormulationCollectionClass():
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             from Equations.Species.addSpeciesEq import addSpeciesEq
+            print("adding species",file=sys.stderr)
             print('Adding Equation for species '+specie)
             addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
 
@@ -206,6 +211,7 @@ class WeakFormulationCollectionClass():
                 reactionRateMean=Reaction.computeMeanField(self.__MeanFlow,self.__FEMSpaces.P2)
                 reactionForm=Reaction.addReaction(self.__MeanFlow, X, fluctuationC, self.__param.SolutionList)
                 self.A_vf.add(1j * reactionForm)
+                print("adding reaction 1", file=sys.stderr)
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
                 from Reactions.TwoStepReaction import TwoStepReaction
                 ReactionModelName="BFER" #to be put in param
@@ -214,6 +220,7 @@ class WeakFormulationCollectionClass():
                 Reaction.testM()
                 reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
                 self.A_vf.add(1j * reactionForm)
+                print("adding reaction 2", file=sys.stderr)
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='2S-SM2':
                 from Reactions.c2sm2 import C2SM2
                 ReactionModelName="2S-SM2" #to be put in param
@@ -243,6 +250,7 @@ class WeakFormulationCollectionClass():
                 #                        MeanFlow.Y('O2'),
                 #                        MeanFlow.Y('CO2'))
 
+                print("adding reaction 3", file=sys.stderr)
                 self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
                 reaction=self.__MeanFlow.reaction
@@ -250,6 +258,7 @@ class WeakFormulationCollectionClass():
                 self.v_NO2 = X[self.__param.Case.getTransportedQuantityList().index('NO2')]
                 self.T = self.__MeanFlow.T
                 self.phi = self.__MeanFlow.phi
+                print("adding reaction 4", file=sys.stderr)
                 self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
 
 ########################### Resolvent Norm  ############################
