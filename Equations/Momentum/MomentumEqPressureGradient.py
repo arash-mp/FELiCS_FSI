@@ -25,7 +25,7 @@ def MomentumEqPressureGradient(self,fluc,X,mean,param):
 		# Integrate pressure gradient boundary terms (resulting from integration by parts)
 		self.A_vf.add(1j * -self.R*fluc.p*self.n_BC[j]*conj(X[i])* I[i,j] * self.all_ds)
 	else:
-		self.A_vf.add(1j * -self.R*inner(conj(X),conj(grad(fluc.p)))*dx)
+		self.A_vf.add(1j * -self.R*inner(grad(fluc.p), X)*dx)
 
 	if not param.Case.m == 0:
 		self.A_vf.add(+conj(X)[2]*self.m*fluc.p*dx)
