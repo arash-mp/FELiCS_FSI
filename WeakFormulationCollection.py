@@ -170,6 +170,7 @@ class WeakFormulationCollectionClass():
         self.B_vf = WeakForm()
         if 'u' in self.__param.SolutionList:
             from Equations.Momentum.addMomentumEq import addMomentumEq
+            print("adding momentum", file=sys.stderr)
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
 
         #If needed, add third momentum equation
@@ -180,10 +181,12 @@ class WeakFormulationCollectionClass():
         # Add continuity equation
         if 'p' in self.__param.SolutionList:
             from Equations.Mass.addMassEq import addMassEq
+            print("adding mass", file=sys.stderr)
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
         if (self.__param.Case.Reaction or self.__param.Case.Compressible or self.__param.Case.HeatTransfer) and not self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
             from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
+            print("adding enthalpy", file=sys.stderr)
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
@@ -194,12 +197,14 @@ class WeakFormulationCollectionClass():
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             from Equations.Species.addSpeciesEq import addSpeciesEq
+            print("adding species", file=sys.stderr)
             print('Adding Equation for species '+specie)
             addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
 
         # Add reactions
 
         if self.__param.Case.Reaction:
+            print("adding reaction", file=sys.stderr)
             if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
                 from Reactions.GlobalReaction import GlobalReaction
                 ReactionModelName="WestbrookDryer_Max" #to be put in param
@@ -408,6 +413,8 @@ class WeakFormulationCollectionClass():
             #BC_Diriclet_mat = as_backend_type(BC_Diriclet).mat()
             self.__matrix_dict['A'] = self.__matrix_dict['A'] + 10**30*(1+1j) * csr_matrix(BC_Diriclet.getValuesCSR()[::-1], shape = BC_Diriclet.size,dtype=complex)
             del BC_Diriclet
+        import sys
+        #print(self.__matrix_dict['A'], file=sys.stderr)
         self.__matrix_dict['B'] = csr_matrix(B.getValuesCSR()[::-1], shape = B.size,dtype=complex)
         del B
         #tempMat=1*matrix_dict['B'].transpose()
