@@ -132,26 +132,89 @@ class CaseSettingsGUI():
 		#	self.flowModeStr.set(AllSettings['FlowMode']['default'])
 
 		# velocity fluctuations check box
-		velFlucColumn=1
-		velFlucRow=4
-		self.velFlucL     = tk.Label(self.window, text='Vel. Fluc.', font=labelFont)
-		self.velFlucL.grid         (row = velFlucRow , column = velFlucColumn, rowspan = 1, columnspan = 1)
-		self.velFlucBool = tk.BooleanVar()
-		self.velFlucCB = tk.Checkbutton(self.window, text='', variable = self.velFlucBool,\
-				command=self.doNothing)
-		self.velFlucCB.grid         (row =velFlucRow+1 , column = velFlucColumn, rowspan = 1, columnspan = 1)
-		if hasattr(self.Case,'VelFluc'):
-			self.velFlucBool.set(self.Case.VelFluc)
+		# set of equations Frame
+		setOfEquationsColumn=1
+		setOfEquationsRow=3
+		self.window.setOfEquationFrame = tk.LabelFrame(self.window, text="Set of equations",font=labelFont())
+		self.window.setOfEquationFrame.grid        (row = setOfEquationsRow, column = setOfEquationsColumn, rowspan = 1, columnspan = 5, sticky="")
+
+		# Navier Stokes  equations (momentum + continuity)
+		NavierStokesEquationsColumn = 1
+		NavierStokesEquationsRow = 1
+		self.window.NavierStokesEquationsL  = tk.Label(self.window.setOfEquationFrame, text='Navier-StokesEquations', font=labelFont())
+		self.window.NavierStokesEquationsL.grid         (row = NavierStokesEquationsRow, column = NavierStokesEquationsColumn, rowspan = 1, columnspan = 1)
+		self.NavierStokesEquationsStr    = tk.StringVar()
+		NavierStokesEquationsCH = {'None', 'PrimitiveVariables'}
+		self.window.NavierStokesEquationsM  = tk.OptionMenu(self.window.setOfEquationFrame, self.NavierStokesEquationsStr, *NavierStokesEquationsCH,command=self.doNothing)
+		self.window.NavierStokesEquationsM.grid         (row = NavierStokesEquationsRow+1 , column = NavierStokesEquationsColumn, rowspan = 1, columnspan = 1)
+		if hasattr(self.Case,'SetOfEquations'):
+			self.NavierStokesEquationsStr.set(self.Case.SetOfEquations['Navier-Stokes'])
 		else:
-			self.velFlucBool.set(AllSettings['VelFluc']['default'])
+			self.NavierStokesEquationsStr.set(AllSettings['SetOfEquations']['default']['Navier-Stokes'])
+
+		# Energy equations
+		energyEquationColumn = 2
+		energyEquationRow = 1
+		self.window.energyEquationL  = tk.Label(self.window.setOfEquationFrame, text='Energy', font=labelFont())
+		self.window.energyEquationL.grid         (row = energyEquationRow, column = energyEquationColumn, rowspan = 1, columnspan = 1)
+		self.energyEquationStr    = tk.StringVar()
+		energyEquationCH = {'None', 'Enthalpy'}
+		self.window.energyEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.energyEquationStr, *energyEquationCH,command=self.doNothing)
+		self.window.energyEquationM.grid         (row = energyEquationRow+1 , column = energyEquationColumn, rowspan = 1, columnspan = 1)
+		if hasattr(self.Case,'SetOfEquations'):
+			self.energyEquationStr.set(self.Case.SetOfEquations['Energy'])
+		else:
+			self.energyEquationStr.set(AllSettings['SetOfEquations']['default']['Energy'])
+
+		# Species equations
+		speciesEquationColumn = 3
+		speciesEquationRow = 1
+		self.window.speciesEquationL  = tk.Label(self.window.setOfEquationFrame, text='Species', font=labelFont())
+		self.window.speciesEquationL.grid         (row = speciesEquationRow, column = speciesEquationColumn, rowspan = 1, columnspan = 1)
+		self.speciesEquationStr    = tk.StringVar()
+		speciesEquationCH = {'None', 'PrimitiveVariables'}
+		self.window.speciesEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.speciesEquationStr, *speciesEquationCH,command=self.doNothing)
+		self.window.speciesEquationM.grid         (row = speciesEquationRow+1 , column = speciesEquationColumn, rowspan = 1, columnspan = 1)
+		if hasattr(self.Case,'SetOfEquations'):
+			self.speciesEquationStr.set(self.Case.SetOfEquations['Species'])
+		else:
+			self.speciesEquationStr.set(AllSettings['SetOfEquations']['default']['Species'])
+
+		# equationOfState
+		equationOfStateColumn = 4
+		equationOfStateRow = 1
+		self.window.equationOfStateL  = tk.Label(self.window.setOfEquationFrame, text='Species', font=labelFont())
+		self.window.equationOfStateL.grid         (row = equationOfStateRow, column = equationOfStateColumn, rowspan = 1, columnspan = 1)
+		self.equationOfStateStr    = tk.StringVar()
+		equationOfStateCH = {'None', 'Low-Mach', 'KaiserCnF2023'}
+		self.window.equationOfStateM  = tk.OptionMenu(self.window.setOfEquationFrame, self.equationOfStateStr, *equationOfStateCH,command=self.doNothing)
+		self.window.equationOfStateM.grid         (row = equationOfStateRow+1 , column = equationOfStateColumn, rowspan = 1, columnspan = 1)
+		if hasattr(self.Case,'SetOfEquations'):
+			self.equationOfStateStr.set(self.Case.SetOfEquations['EquationOfState'])
+		else:
+			self.equationOfStateStr.set(AllSettings['SetOfEquations']['default']['EquationOfState'])
+
+
+		#velFlucColumn=1
+		#velFlucRow=4
+		#self.velFlucL     = tk.Label(self.window, text='Vel. Fluc.', font=labelFont)
+		#self.velFlucL.grid         (row = velFlucRow , column = velFlucColumn, rowspan = 1, columnspan = 1)
+		#self.velFlucBool = tk.BooleanVar()
+		#self.velFlucCB = tk.Checkbutton(self.window, text='', variable = self.velFlucBool,\
+		#		command=self.doNothing)
+		#self.velFlucCB.grid         (row =velFlucRow+1 , column = velFlucColumn, rowspan = 1, columnspan = 1)
+		#if hasattr(self.Case,'VelFluc'):
+		#	self.velFlucBool.set(self.Case.VelFluc)
+		#else:
+		#	self.velFlucBool.set(AllSettings['VelFluc']['default'])
 
 		# transverse velocity fluctuations check box
-		TransVelFlucColumn=2
-		TransVelFlucRow=4
-		self.TransVelFlucL     = tk.Label(self.window, text='Trans. Vel. Fluc.', font=labelFont)
+		TransVelFlucColumn=6
+		TransVelFlucRow=1
+		self.TransVelFlucL     = tk.Label(self.window.setOfEquationFrame, text='Trans. Vel. Fluc.', font=labelFont)
 		self.TransVelFlucL.grid         (row = TransVelFlucRow , column = TransVelFlucColumn, rowspan = 1, columnspan = 1)
 		self.TransVelFlucBool = tk.BooleanVar()
-		self.TransVelFlucCB = tk.Checkbutton(self.window, text='', variable = self.TransVelFlucBool,\
+		self.TransVelFlucCB = tk.Checkbutton(self.window.setOfEquationFrame, text='', variable = self.TransVelFlucBool,\
 				command=self.doNothing)
 		self.TransVelFlucCB.grid         (row =TransVelFlucRow+1 , column = TransVelFlucColumn, rowspan = 1, columnspan = 1)
 		#if hasattr(self.Case,'TransVelFluc'):
@@ -163,41 +226,41 @@ class CaseSettingsGUI():
 			self.TransVelFlucBool.set(True)
 		else:
 			self.TransVelFlucBool.set(False)
-		# heat transfer check box
-		heatTransferColumn=3
-		heatTransferRow=4
-		self.heatTransferL     = tk.Label(self.window, text='Heat Transfer', font=labelFont)
-		self.heatTransferL.grid         (row = heatTransferRow , column = heatTransferColumn, rowspan = 1, columnspan = 1)
-		self.heatTransferBool = tk.BooleanVar()
-		self.heatTransferCB = tk.Checkbutton(self.window, text='', variable = self.heatTransferBool,\
-				command=self.doNothing)
-		self.heatTransferCB.grid         (row =heatTransferRow+1 , column = heatTransferColumn, rowspan = 1, columnspan = 1)
-		if hasattr(self.Case,'HeatTransfer'):
-			self.heatTransferBool.set(self.Case.HeatTransfer)
-		else:
-			self.heatTransferBool.set(AllSettings['HeatTransfer']['default'])
+		## heat transfer check box
+		#heatTransferColumn=3
+		#heatTransferRow=4
+		#self.heatTransferL     = tk.Label(self.window, text='Heat Transfer', font=labelFont)
+		#self.heatTransferL.grid         (row = heatTransferRow , column = heatTransferColumn, rowspan = 1, columnspan = 1)
+		#self.heatTransferBool = tk.BooleanVar()
+		#self.heatTransferCB = tk.Checkbutton(self.window, text='', variable = self.heatTransferBool,\
+		#		command=self.doNothing)
+		#self.heatTransferCB.grid         (row =heatTransferRow+1 , column = heatTransferColumn, rowspan = 1, columnspan = 1)
+		#if hasattr(self.Case,'HeatTransfer'):
+		#	self.heatTransferBool.set(self.Case.HeatTransfer)
+		#else:
+		#	self.heatTransferBool.set(AllSettings['HeatTransfer']['default'])
 
-		# compressible check box
-		compressibleColumn=4
-		compressibleRow=4
-		self.compressibleL     = tk.Label(self.window, text='Compressible', font=labelFont)
-		self.compressibleL.grid         (row = compressibleRow , column = compressibleColumn, rowspan = 1, columnspan = 1)
-		self.compressibleBool = tk.BooleanVar()
-		self.compressibleCB = tk.Checkbutton(self.window, text='', variable = self.compressibleBool,\
-				command=self.doNothing)
-		self.compressibleCB.grid         (row =compressibleRow+1 , column = compressibleColumn, rowspan = 1, columnspan = 1)
-		if hasattr(self.Case,'Compressible'):
-			self.compressibleBool.set(self.Case.Compressible)
-		else:
-			self.compressibleBool.set(AllSettings['Compressible']['default'])
+		## compressible check box
+		#compressibleColumn=4
+		#compressibleRow=4
+		#self.compressibleL     = tk.Label(self.window, text='Compressible', font=labelFont)
+		#self.compressibleL.grid         (row = compressibleRow , column = compressibleColumn, rowspan = 1, columnspan = 1)
+		#self.compressibleBool = tk.BooleanVar()
+		#self.compressibleCB = tk.Checkbutton(self.window, text='', variable = self.compressibleBool,\
+		#		command=self.doNothing)
+		#self.compressibleCB.grid         (row =compressibleRow+1 , column = compressibleColumn, rowspan = 1, columnspan = 1)
+		#if hasattr(self.Case,'Compressible'):
+		#	self.compressibleBool.set(self.Case.Compressible)
+		#else:
+		#	self.compressibleBool.set(AllSettings['Compressible']['default'])
 
 		# Reaction
 		ReactionColumn=5
-		ReactionRow=4
-		self.ReactionL     = tk.Label(self.window, text='Reaction', font=labelFont)
+		ReactionRow=1
+		self.ReactionL     = tk.Label(self.window.setOfEquationFrame, text='Reaction', font=labelFont)
 		self.ReactionL.grid         (row = ReactionRow , column = ReactionColumn, rowspan = 1, columnspan = 1)
 		self.ReactionBool = tk.BooleanVar()
-		self.ReactionCB = tk.Checkbutton(self.window, text='', variable = self.ReactionBool,\
+		self.ReactionCB = tk.Checkbutton(self.window.setOfEquationFrame, text='', variable = self.ReactionBool,\
 				command=self.doNothing)
 		self.ReactionCB.grid         (row =ReactionRow+1 , column = ReactionColumn, rowspan = 1, columnspan = 1)
 		if hasattr(self.Case,'Reaction'):

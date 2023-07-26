@@ -19,26 +19,30 @@ class CaseSettingsClass(Settings):
 	def getAllSettingsDict(self):
 		'''Function returning all CaseSettings with default values'''
 		CaseSettingsDict={\
-			'nDim':{'datatype':int,'default':2},\
-			'CoordinateSystem':{'datatype':str,'default':'Cartesian'},\
-			#'FlowMode':{'datatype':str,'default':'ColdFlow'},\
-			'TurbulenceModel':{'datatype':str,'default':'None'},\
-			'm':{'datatype':int,'default':0},\
-			'MolViscModel':{'datatype':str,'default':'Constant'},\
-			'MolViscPerturbModel':{'datatype':str,'default':'None'},\
-			'MolVisc':{'datatype':int,'default':0.0},\
-			'AnalysisMode':{'datatype':str,'default':'Modal'},\
-			'VelFluc':{'datatype':bool,'default':True},\
-			'TransVelFluc':{'datatype':bool,'default':False},\
-			'HeatTransfer':{'datatype':bool,'default':False},\
-			'Compressible':{'datatype':bool,'default':False},\
-			'Reaction':{'datatype':bool,'default':False},\
-			'MixtureFilePath':{'datatype':str,'default':''},\
-			'SpeciesFilePath':{'datatype':str,'default':''},\
-			'MeshFilePath':{'datatype':str,'default':''}\
+			'nDim':{'datatype':int,'default':2},
+			'CoordinateSystem':{'datatype':str,'default':'Cartesian'},
+			'TurbulenceModel':{'datatype':str,'default':'None'},
+			'm':{'datatype':int,'default':0},
+			'MolViscModel':{'datatype':str,'default':'Constant'},
+			'MolViscPerturbModel':{'datatype':str,'default':'None'},
+			'MolVisc':{'datatype':int,'default':0.0},
+			'AnalysisMode':{'datatype':str,'default':'Modal'},
+			'TransVelFluc':{'datatype':bool,'default':False},
+			'SetOfEquations':{'datatype':dict,'default':{
+				'Navier-Stokes':'PrimitiveVariables',
+				'Energy':'None',
+				'Species': 'None',
+				'EquationOfState': 'None',
+				}
+			},
+			'Reaction':{'datatype':bool,'default':False},
+			'MixtureFilePath':{'datatype':str,'default':''},
+			'SpeciesFilePath':{'datatype':str,'default':''},
+			'MeshFilePath':{'datatype':str,'default':''}
 		}
 		return CaseSettingsDict
 
+			#'SetOfEquations':{'datatype':dict,'default':{'Navier-Stokes':'Primitive Variables','Energy':'None','Species': 'None', 'equationOfState': 'None'}}
 	def importSettings(self,settingFilePath):
 		''' Loading Case parameters from file '''
 		CaseSettingsDict=self.getAllSettingsDict()
@@ -83,23 +87,21 @@ class CaseSettingsClass(Settings):
 	def getTransportedQuantityList(self):
 		''' Provides a list of all transported quantities for the given case settings '''
 		SolutionList = []
-		if self.VelFluc:
+		if self.SetOfEquations['Navier-Stokes'] in ['PrimitiveVariables']:
 			SolutionList.append('u')
-		#if self.TransVelFluc:
-		#	SolutionList.append('ut')
-		if self.VelFluc:
 			SolutionList.append('p')
-		if (self.HeatTransfer or self.Compressible or self.Reaction) and not self.Mixture.ReactionMechanism['type']=='NOx':
+		if self.SetOfEquations['Energy'] in ['Enthalpy']:
 			SolutionList.append('rho')
-		for species in list(self.Mixture.getSpeciesList('transported')):
-			SolutionList.append(species)
+		if self.SetOfEquations['Species'] in ['PrimitiveVariables']:
+			for species in list(self.Mixture.getSpeciesList('transported')):
+				SolutionList.append(species)
 		return SolutionList
 
 	def getExtendedTransportedQuantityList(self):
 		''' Like getTransportedQuantitiyList but with all velocity components '''
 		SolutionList = []
 		# First add all velocity components
-		if self.VelFluc:
+		if self.SetOfEquations['Navier-Stokes'] in ['PrimitiveVariables']:
 			for component in self.getVelocityComponents():
 				SolutionList.append('u'+component)
 		#Then extend the list by the transported quantity list
@@ -159,7 +161,7 @@ class CaseSettingsClass(Settings):
 			MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
 		elif self.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.CoordinateSystem == 'Cartesian':
 			MeanList.extend(['rstxx', 'rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
-		if self.HeatTransfer:
+		if self.SetOfEquations['Energy'] == 'Enthalpy':
 			MeanList.append('cp')
 			MeanList.append('alpha')
 			MeanList.append('he')
@@ -167,9 +169,9 @@ class CaseSettingsClass(Settings):
 			MeanList.append('molarMass')
 		if self.Reaction:
 			MeanList.append('dQ')
-		if self.Compressible:
-			MeanList.append('p')
-			MeanList.append('gamma')
+		#if self.Compressible:
+		#	MeanList.append('p')
+		#	MeanList.append('gamma')
 		printDebug(True,"Mean flow fields to be read are " +str(MeanList))
 		return MeanList
 
