@@ -25,7 +25,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 #------------------------------------------------------------------------------
 # ADDITIONAL TERMS FOR COMPRESSIBLE FLOW:
 #------------------------------------------------------------------------------
-	if param.Case.HeatTransfer or param.Case.Compressible:
+	if not param.Case.SetOfEquations['Energy'] in 'None':
 		Iden=Identity( fluc.rho.geometric_dimension() )
 		
 		# II, III: div(mu*grad^T(fluc.u)) in 2D after Ibp (boundary integral neglected):
@@ -61,7 +61,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 # ADDITIONAL TERMS FOR CYLINDRICAL COORDINATES, COMPRESSIBLE FLOW (CA): 
 #------------------------------------------------------------------------------
 		#if True:
-		if param.Case.HeatTransfer or param.Case.Compressible:
+		if not param.Case.SetOfEquations['Energy'] == 'None':
 			
 			self.A_imag_vf.add(-mean.nuTot/self.R*fluc.u[1]*X[1]*dx)									#II(1)
 			
@@ -145,7 +145,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 
 #####Other stuff
 	if  param.Case.TransVelFluc:
-		if param.Case.HeatTransfer or param.Case.Compressible:
+		if not param.Case.SetOfEquations['Energy'] == 'None':
 			self.A_imag_vf.add(self.R*Dx(mean.nuTot,i)*Dx(fluc.u[2],i)*X[2]*dx)						#III(1) (not 100% sure why only in case of dilatation -> needs checking)
 
 			if not param.Case.m == 0:

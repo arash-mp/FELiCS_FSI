@@ -135,11 +135,7 @@ class fluctuationClass(
         )
         self._meanfieldDict = None
 
-        if param.Case.HeatTransfer \
-                or param.Case.Compressible \
-                or param.Case.Reaction \
-                and not param.Case.Mixture.getReactionMechanism()['type'] \
-                        in ['NOx']:
+        if param.Case.SetOfEquations['Energy'] in ['Enthalpy']:
             temperatureHandler.__init__(
                 self,
                 param,
@@ -297,11 +293,7 @@ class fluctuationSolutions(
         viscosityHandler.__init__(self)
         self._meanfieldDict = None
 
-        if self._param.Case.HeatTransfer \
-                or self._param.Case.Compressible \
-                or self._param.Case.Reaction \
-                and not self._param.Case.Mixture.getReactionMechanism()['type'] \
-                        in ['NOx']:
+        if self._param.Case.SetOfEquations['Energy'] == 'Enthalpy':
             temperatureHandler.__init__(
                 self,
                 self._param,

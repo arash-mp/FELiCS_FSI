@@ -98,9 +98,9 @@ class meanFlowClass(
             self._fieldDict['nulam'], \
             self._fieldDict['nulam'].x.array[:] = self.getConstVisc()
         self.__FieldsNames = list(self._fieldDict.keys())
-        if self._param.Case.Compressible:
-            self._fieldDict['c'].interpolate(sqrt(self.gamma * self.p / self.rho))
-
+        #if self._param.Case.Compressible:
+        #    self._fieldDict['c'].interpolate(sqrt(self.gamma * self.p / self.rho))
+#
     def initLamDiff(self):
         from dolfinx.fem import Function
         from dependentVariables.getAlpha import getAlpha

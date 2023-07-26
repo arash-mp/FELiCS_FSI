@@ -168,22 +168,13 @@ class WeakFormulationCollectionClass():
         self.B_real_vf=WeakForm()
         self.A_imag_vf=WeakForm()
         self.B_imag_vf=WeakForm()
-        if 'u' in self.__param.SolutionList:
+        if self.__param.Case.SetOfEquations['Navier-Stokes'] == 'PrimitiveVariables':
             from Equations.Momentum.addMomentumEq import addMomentumEq
-
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
-
-        #If needed, add third momentum equation
-        #if 'ut' in self.__param.SolutionList:
-        #    from Equations.Momentum.addThirdMomentumEq import addThirdMomentumEq
-        #    #addThirdMomentumEq(self,fluctuationC,X[0][2],MeanFlow,self.__param)
-
-        # Add continuity equation
-        if 'p' in self.__param.SolutionList:
             from Equations.Mass.addMassEq import addMassEq
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
-        if (self.__param.Case.Reaction or self.__param.Case.Compressible or self.__param.Case.HeatTransfer) and not self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
+        if self.__param.Case.SetOfEquations['Energy'] == 'Enthalpy':
             from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 
