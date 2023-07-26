@@ -183,28 +183,45 @@ class FEMSpacesClass():
 			nDim: number of spatial dimension = number of velocity components
 		"""
 
-		from functions import Function
-		from fenics import FunctionAssigner, Constant
+		from dolfinx.fem import Function
+		import sys
+		import numpy as np
+
+		fieldVMixed = Function(self.VMixed)
+		for i in range(self.VMixed.num_sub_spaces):
+			
+			if self.VMixed.sub(i).num_sub_spaces > 0:
+
+				for j in range(self.VMixed.sub(i).num_sub_spaces):
+					space_ii, map_ii = self.VMixed.sub(i).sub(j).collapse()
+					fieldVMixed.x.array[map_ii] = field.x.array
+					
+			else:
+				space_i, map_i = self.VMixed.sub(i).collapse()
+				fieldVMixed.x.array[map_i] = field.x.array
+
+
 
 		# First we project to all velocity components
-		fieldvelocity = Function(self.FunctionSpaceVectorVelocity)
-		spacevel = []
-		fieldvel = []
-		for i in range(nDim):
-			spacevel.append(self.P2) # Here we assume P2 by default!
-			fieldvel.append(field)
-		assigner = FunctionAssigner(self.FunctionSpaceVectorVelocity, spacevel)
-		assigner.assign(fieldvelocity, fieldvel)
+		#fieldvelocity = Function(self.FunctionSpaceVectorVelocity)
+		#spacevel = []
+		#fieldvel = []
+		#for i in range(nDim):
+		#	spacevel.append(self.P2) # Here we assume P2 by default!
+	#		fieldvel.append(field)
+			# fieldvelocity.sub(i).collapse().x.array[:] = field.x.array[:]
+		#	fieldvelocity.sub(i).x.array[:] = field.x.array[:]
 
 		# Then we project to the whole mixed space, including remaining scalar fields
-		nscalar = nfluctvar - nDim
-		spacemixed = [self.FunctionSpaceVectorVelocity]
-		fieldmixed = [fieldvelocity]
-		for i in range(nscalar):
-			spacemixed.append(self.P2) # Here we assume P2 by default!
-			fieldmixed.append(field)
-		fieldVMixed = Function(self.VMixed)
-		assigner2 = FunctionAssigner(self.VMixed, spacemixed)
-		assigner2.assign(fieldVMixed, fieldmixed)
+		#nscalar = nfluctvar - nDim
+		#fieldVMixed = Function(self.VMixed)
+		#spacemixed = [self.FunctionSpaceVectorVelocity]
+		#fieldmixed = [fieldvelocity]
+		#for i in range(nscalar):
+		#	spacemixed.append(self.P2) # Here we assume P2 by default!
+	#		fieldmixed.append(field)
+			# fieldVMixed.sub(i+1).collapse().x.array[:] = field.x.array[:]
+	#		fieldVMixed.sub(i+1).x.array[:] = field.x.array[:]
 
 		return fieldVMixed
+
