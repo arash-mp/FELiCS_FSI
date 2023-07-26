@@ -18,23 +18,21 @@
 # ********************
 '''
 from sys import exit
-# import tkinter as tk
+import tkinter as tk
 # from tkinter import filedialog
 #
-# import matplotlib
-# matplotlib.use("Agg")
-# from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-# import matplotlib.pyplot as plt
-
+#import matplotlib
+#matplotlib.use("Agg")
+#from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+#import matplotlib.pyplot as plt
+#import pyvista
 from dolfinx.fem import (
 						Function,
 )
 
-#from fenics import Function,File,plot,cpp
 from functions import *
 import numpy as np
-#import pyvtk
-#import matplotlib.tri as tri
+import matplotlib.tri as tri
 from colorama import Fore, Style
 import scipy.io as sio
 
@@ -114,7 +112,8 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulation):
 			response_real.vector[:]=np.real(responses[:,nSolutForPlot,omega_index]).astype(float)
 			if param.Case.AnalysisMode in ['Resolvent']:
 				forcing_real.vector[:]=np.real(forcings[:,nSolutForPlot,omega_index]).astype(float)
-			if param.Case.nDim==2:
+			#if param.Case.nDim==2:
+			if False:
 				## Plot the corresponding pair of response and forcing...
 				fig2 = plt.figure()
 				plt.set_cmap('coolwarm')
