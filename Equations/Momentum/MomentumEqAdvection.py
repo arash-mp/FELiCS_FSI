@@ -14,7 +14,6 @@ from ufl import (
 				Identity,
 				)
 
-import numpy as np
 
 def MomentumEqAdvection(
 	self,
@@ -43,8 +42,6 @@ def MomentumEqAdvection(
 			    - self.R * conj(X[i]) * fluc.rho * mean.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
 
 	if param.Case.CoordinateSystem in ['Cylindrical']:
-		import sys
-		print("momentum advection cylindrical", file=sys.stderr)
 		self.A_vf.add(1j * - conj(X)[2] * mean.rho *mean.u[1] * fluc.u[2] * dx)
 		self.A_vf.add(1j * - conj(X)[2] * mean.rho *fluc.u[1] * mean.u[2] * dx)
 		self.A_vf.add(1j * - conj(X)[2] * fluc.rho *mean.u[1] * mean.u[2] * dx)
@@ -54,12 +51,9 @@ def MomentumEqAdvection(
 					  + 1j * conj(X)[1] * mean.u[2] * mean.u[2] * fluc.rho * dx)
 
 		if not param.Case.m == 0:
-			print("momentum advection not case 0", file=sys.stderr)
 			self.A_vf.add(mean.rho * conj(X)[i] * param.Case.m * mean.u[2] * fluc.u[i] * dx)
 
 	if param.NumericalScheme in ['Discontinuous Galerkin']:
-		import sys
-		print("momentum advection discont galerkin", file=sys.stderr)
 		#Lax-Friedrich-Flux coeffficient chosen as one
 		LFFPrefactor=1
 		# Calculate Lax-Friedrich fluxes

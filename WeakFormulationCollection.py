@@ -74,7 +74,6 @@ from functions import *
 import pdb
 import LinearSystem
 
-import sys
 
 class WeakFormulationCollectionClass():
     '''This class build the variational formulations for all relevant matrices
@@ -170,7 +169,7 @@ class WeakFormulationCollectionClass():
         self.B_vf = WeakForm()
         if 'u' in self.__param.SolutionList:
             from Equations.Momentum.addMomentumEq import addMomentumEq
-            print("adding momentum", file=sys.stderr)
+
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
 
         #If needed, add third momentum equation
@@ -181,12 +180,10 @@ class WeakFormulationCollectionClass():
         # Add continuity equation
         if 'p' in self.__param.SolutionList:
             from Equations.Mass.addMassEq import addMassEq
-            print("adding mass", file=sys.stderr)
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
         if (self.__param.Case.Reaction or self.__param.Case.Compressible or self.__param.Case.HeatTransfer) and not self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
             from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
-            print("adding enthalpy", file=sys.stderr)
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
@@ -197,14 +194,12 @@ class WeakFormulationCollectionClass():
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             from Equations.Species.addSpeciesEq import addSpeciesEq
-            print("adding species", file=sys.stderr)
             print('Adding Equation for species '+specie)
             addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
 
         # Add reactions
 
         if self.__param.Case.Reaction:
-            print("adding reaction", file=sys.stderr)
             if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
                 from Reactions.GlobalReaction import GlobalReaction
                 ReactionModelName="WestbrookDryer_Max" #to be put in param
@@ -358,7 +353,6 @@ class WeakFormulationCollectionClass():
 
         bcs= self.__getListOfDirichletBCs()
         n_dof=BC_Diriclet.size[0]
-
         if not self.A_vf.lhsIsZero():
             if AnalysisMode in ['Input-Output']:
                 A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
@@ -390,7 +384,7 @@ class WeakFormulationCollectionClass():
             set_bc(forcing_vec_petsc, bcs)
 
             b_forcing = 1j * forcing_vec_petsc.array
-            self.__matrix_dict['b_forcing'] =  b_forcing
+            self.__matrix_dict['b_forcing'] = b_forcing
             del b_forcing, forcing_vec_petsc
 
         # Get the BCs provided by the user
@@ -413,8 +407,6 @@ class WeakFormulationCollectionClass():
             #BC_Diriclet_mat = as_backend_type(BC_Diriclet).mat()
             self.__matrix_dict['A'] = self.__matrix_dict['A'] + 10**30*(1+1j) * csr_matrix(BC_Diriclet.getValuesCSR()[::-1], shape = BC_Diriclet.size,dtype=complex)
             del BC_Diriclet
-        import sys
-        #print(self.__matrix_dict['A'], file=sys.stderr)
         self.__matrix_dict['B'] = csr_matrix(B.getValuesCSR()[::-1], shape = B.size,dtype=complex)
         del B
         #tempMat=1*matrix_dict['B'].transpose()
@@ -531,7 +523,7 @@ class WeakFormulationCollectionClass():
                     if forcingDomainVMixed.x.array[index_local] == 1:
                         index = np.append(index, index_local)
                         # Rounding added there since mesh interpolation can result
-                        # in non-integrer values of the limiter domain flag
+                        # in non-integer values of the limiter domain flag
             else:
                 index = np.append(index, dofsIterator)
 
@@ -572,6 +564,7 @@ class WeakFormulationCollectionClass():
             responseDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(responseDom, nfluctvar, nDim)
 
         index = np.empty(shape=(0,0))
+
         for i in range(nfluctvar): # HARDCODED FOR U, V, P: incompressible 2D
             if i < self.__nVelocityComponents:
                 dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]

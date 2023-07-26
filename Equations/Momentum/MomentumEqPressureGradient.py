@@ -34,8 +34,6 @@ def MomentumEqPressureGradient(self,fluc,X,mean,param):
 	if param.NumericalScheme in ['Discontinuous Galerkin']:
 		if param.Case.CoordinateSystem in ['Cylindrical']:
 			printError("Discontinuous Elements not implemented for cylindrical coordinates")
-		import sys
-		print("momentum pressure grad discont galerkin", file=sys.stderr)
 		#Lax-Friedrich-Flux coeffficient chosen as one
 		LFFPrefactor=1
 		# Calculate Lax-Friedrich fluxes
