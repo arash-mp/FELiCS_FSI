@@ -21,10 +21,10 @@ from sys import exit
 import tkinter as tk
 # from tkinter import filedialog
 #
-#import matplotlib
-#matplotlib.use("Agg")
-#from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-#import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+import matplotlib.pyplot as plt
 #import pyvista
 from dolfinx.fem import (
 						Function,
@@ -224,48 +224,48 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulation):
 			ModeDirect.vector[:]=np.real(eVecDirect[:,EValDirIndex].flatten()).astype(float)
 			ModeAdjoint.vector[:]=np.real(eVecAdjoint[:,EValAdjIndex].flatten()).astype(float)
     		#Plot the modes chosen by the user...
-			fig2 = plt.figure()
-			plt.set_cmap('coolwarm')
-			plot_index=0
-			for name in param.SolutionList:
-				if name =='u':
-					for component in param.VelocityComponents:
-						ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+1)
-						cs=plot(ModeDirect.split()[0].split()[plot_index])
-						cbar = fig2.colorbar(cs)
-						plt.title('Direct Mode in '+ name+component)
-						ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+2)
-						cs=plot(ModeAdjoint.split()[0].split()[plot_index])
-						cbar = fig2.colorbar(cs)
-						plt.title('Adjoint Mode in '+ name+component)
-						plot_index += 1
-				else:
-					ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+1)
+			#fig2 = plt.figure()
+			#plt.set_cmap('coolwarm')
+			#plot_index=0
+			#for name in param.SolutionList:
+			#	if name =='u':
+			#		for component in param.VelocityComponents:
+			#			ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+1)
+			#			cs=plot(ModeDirect.split()[0].split()[plot_index])
+			#			cbar = fig2.colorbar(cs)
+			#			plt.title('Direct Mode in '+ name+component)
+			#			ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+2)
+			#			cs=plot(ModeAdjoint.split()[0].split()[plot_index])
+			#			cbar = fig2.colorbar(cs)
+			#			plt.title('Adjoint Mode in '+ name+component)
+			#			plot_index += 1
+			#	else:
+			#		ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+1)
 
-					cs=plot(ModeDirect.split()[plot_index-param.nVelocityComponents+1])
-					cbar = fig2.colorbar(cs)
-					plt.title('Direct Mode in '+ name+component)
-					ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+2)
-					cs=plot(ModeAdjoint.split()[plot_index-param.nVelocityComponents+1])
-					cbar = fig2.colorbar(cs)
-					plt.title('Adjoint Mode in '+ name+component)
-					plot_index += 1
+			#		cs=plot(ModeDirect.split()[plot_index-param.nVelocityComponents+1])
+			#		cbar = fig2.colorbar(cs)
+			#		plt.title('Direct Mode in '+ name+component)
+			#		ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+2)
+			#		cs=plot(ModeAdjoint.split()[plot_index-param.nVelocityComponents+1])
+			#		cbar = fig2.colorbar(cs)
+			#		plt.title('Adjoint Mode in '+ name+component)
+			#		plot_index += 1
 
-			if len(resultWin.children)<2:
-				canvas2 = FigureCanvasTkAgg(fig2, master = resultWin)
-				canvas2.draw()
-				tBar = NavigationToolbar2Tk( canvas2, resultWin )
-				tBar.update()
-				canvas2._tkcanvas.pack(side=tk.RIGHT)
-			else:
-				resultWin.winfo_children()[2].destroy()
-				resultWin.winfo_children()[1].destroy()
-				canvas2 = FigureCanvasTkAgg(fig2, master = resultWin)
-				canvas2.draw()
-				tBar = NavigationToolbar2Tk( canvas2, resultWin )
-				tBar.update()
-				canvas2._tkcanvas.pack(side=tk.RIGHT)
-				canvas2.toolbar.update()
+			#if len(resultWin.children)<2:
+			#	canvas2 = FigureCanvasTkAgg(fig2, master = resultWin)
+			#	canvas2.draw()
+			#	tBar = NavigationToolbar2Tk( canvas2, resultWin )
+			#	tBar.update()
+			#	canvas2._tkcanvas.pack(side=tk.RIGHT)
+			#else:
+			#	resultWin.winfo_children()[2].destroy()
+			#	resultWin.winfo_children()[1].destroy()
+			#	canvas2 = FigureCanvasTkAgg(fig2, master = resultWin)
+			#	canvas2.draw()
+			#	tBar = NavigationToolbar2Tk( canvas2, resultWin )
+			#	tBar.update()
+			#	canvas2._tkcanvas.pack(side=tk.RIGHT)
+			#	canvas2.toolbar.update()
 
 			for fluctSolut in fluctSolutList:
 

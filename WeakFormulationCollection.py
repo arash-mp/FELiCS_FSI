@@ -167,13 +167,14 @@ class WeakFormulationCollectionClass():
         ## Initialize variatial formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
-        if self.__param.Case.SetOfEquations['Navier-Stokes'] == 'PrimitiveVariables':
+        if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
             from Equations.Momentum.addMomentumEq import addMomentumEq
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
+        if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from Equations.Mass.addMassEq import addMassEq
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
-        if self.__param.Case.SetOfEquations['Energy'] == 'Enthalpy':
+        if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 

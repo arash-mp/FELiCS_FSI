@@ -26,7 +26,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 #------------------------------------------------------------------------------
 # ADDITIONAL TERMS FOR COMPRESSIBLE FLOW:
 #------------------------------------------------------------------------------
-	if not param.Case.SetOfEquations['Energy'] in 'None':
+	if not param.Case.SetOfEquations['Energy']['Equation'] in 'None':
 		Iden=Identity( fluc.rho.geometric_dimension() )
 
 		# II, III: div(mu*grad^T(fluc.u)) in 2D after Ibp (boundary integral neglected):

@@ -29,12 +29,13 @@ class CaseSettingsClass(Settings):
 			'AnalysisMode':{'datatype':str,'default':'Modal'},
 			'TransVelFluc':{'datatype':bool,'default':False},
 			'SetOfEquations':{'datatype':dict,'default':{
-				'Navier-Stokes':'PrimitiveVariables',
-				'Energy':'None',
-				'Species': 'None',
-				'EquationOfState': 'None',
+				'Momentum':{'Equation':'NSPrimitive','Variable':'u'},
+				'Mass': {'Equation':'Continuity','Variable':'p'},
+				'Energy'    : {'Equation':'None','Variable':'None'},
+				'Species': {'Equation':'None','Variable':'None'},
+				'EquationOfState': {'Equation':'None'    ,'Variable':'None'}
 				}
-			},
+				},
 			'Reaction':{'datatype':bool,'default':False},
 			'MixtureFilePath':{'datatype':str,'default':''},
 			'SpeciesFilePath':{'datatype':str,'default':''},
@@ -87,21 +88,24 @@ class CaseSettingsClass(Settings):
 	def getTransportedQuantityList(self):
 		''' Provides a list of all transported quantities for the given case settings '''
 		SolutionList = []
-		if self.SetOfEquations['Navier-Stokes'] in ['PrimitiveVariables']:
-			SolutionList.append('u')
-			SolutionList.append('p')
-		if self.SetOfEquations['Energy'] in ['Enthalpy']:
-			SolutionList.append('rho')
-		if self.SetOfEquations['Species'] in ['PrimitiveVariables']:
-			for species in list(self.Mixture.getSpeciesList('transported')):
-				SolutionList.append(species)
+		if not self.SetOfEquations['Momentum']['Variable'] == 'None':
+			SolutionList.append(self.SetOfEquations['Momentum']['Variable'])
+		if not self.SetOfEquations['Mass']['Variable'] == 'None':
+			SolutionList.append(self.SetOfEquations['Mass']['Variable'])
+		if not self.SetOfEquations['Energy']['Variable'] == 'None':
+			SolutionList.append(self.SetOfEquations['Energy']['Variable'])
+		if 'Species' in list(self.SetOfEquations.keys()):
+			if self.SetOfEquations['Species']['Variable'] == 'Y':
+				for species in list(self.Mixture.getSpeciesList('transported')):
+					SolutionList.append(species)
 		return SolutionList
 
 	def getExtendedTransportedQuantityList(self):
 		''' Like getTransportedQuantitiyList but with all velocity components '''
 		SolutionList = []
 		# First add all velocity components
-		if self.SetOfEquations['Navier-Stokes'] in ['PrimitiveVariables']:
+		transportedQuantities = self.getTransportedQuantityList()
+		if 'u' in transportedQuantities:
 			for component in self.getVelocityComponents():
 				SolutionList.append('u'+component)
 		#Then extend the list by the transported quantity list
@@ -161,7 +165,7 @@ class CaseSettingsClass(Settings):
 			MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
 		elif self.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.CoordinateSystem == 'Cartesian':
 			MeanList.extend(['rstxx', 'rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
-		if self.SetOfEquations['Energy'] == 'Enthalpy':
+		if self.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
 			MeanList.append('cp')
 			MeanList.append('alpha')
 			MeanList.append('he')
