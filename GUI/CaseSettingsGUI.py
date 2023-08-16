@@ -267,7 +267,7 @@ class CaseSettingsGUI():
 		self.window.speciesTransportEquationL  = tk.Label(self.window.setOfEquationFrame, text='Species', font=labelFont())
 		self.window.speciesTransportEquationL.grid         (row = speciesTransportEquationRow, column = speciesTransportEquationColumn, rowspan = 1, columnspan = 1)
 		self.speciesTransportEquationStr    = tk.StringVar()
-		speciesTransportEquationCH = {'None', 'PrimitiveVariables'}
+		speciesTransportEquationCH = {'None', 'Non-conservative', 'Conservative'}
 		self.window.speciesTransportEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.speciesTransportEquationStr, *speciesTransportEquationCH,command=self.doNothing)
 		self.window.speciesTransportEquationM.grid         (row = speciesTransportEquationRow+1 , column = speciesTransportEquationColumn, rowspan = 1, columnspan = 1)
 		self.speciesVariableStr    = tk.StringVar()
