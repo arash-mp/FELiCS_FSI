@@ -185,9 +185,14 @@ class WeakFormulationCollectionClass():
         transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
-            from Equations.Species.addSpeciesEq import addSpeciesEq
-            print('Adding Equation for species '+specie)
-            addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
+            if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
+            	from Equations.Species.addSpeciesEq import addSpeciesEq
+            	print('Adding Equation for species '+specie + ' in non-conservative form')
+            	addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
+            elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
+            	from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+            	print('Adding Equation for species '+specie +' in conservative form')
+            	addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
 
         # Add reactions
 

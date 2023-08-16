@@ -203,6 +203,9 @@ class fieldProperties:
 	def rhou(self):
 		return self._mean.rho * self.u + self.rho * self._mean.u
 
+	def rhoY(self,species):
+		return self._mean.rho * self.Y(species) + self.rho * self._mean.Y(species)
+
 	@property
 	def T(self):
 		if self.isMeanFlowClass():
