@@ -39,7 +39,6 @@ class NumericsSettingsClass(Settings):
 			# Add every line of the file as an attribute to the object
 			
 			for line in lines:
-				print(line)
 				beforeEqualSign = line.split('=')[0].strip()
 				afterEqualSign = line.split('=')[1].strip()
 				if beforeEqualSign in list(SettingsDict.keys()):

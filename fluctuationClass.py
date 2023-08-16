@@ -135,7 +135,7 @@ class fluctuationClass(
         )
         self._meanfieldDict = None
 
-        if param.Case.SetOfEquations['Energy'] in ['Enthalpy']:
+        if param.Case.SetOfEquations['Energy']['Equation'] in ['Enthalpy']:
             temperatureHandler.__init__(
                 self,
                 param,
@@ -293,7 +293,7 @@ class fluctuationSolutions(
         viscosityHandler.__init__(self)
         self._meanfieldDict = None
 
-        if self._param.Case.SetOfEquations['Energy'] == 'Enthalpy':
+        if self._param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             temperatureHandler.__init__(
                 self,
                 self._param,

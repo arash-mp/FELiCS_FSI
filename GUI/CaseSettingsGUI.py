@@ -138,61 +138,173 @@ class CaseSettingsGUI():
 		self.window.setOfEquationFrame = tk.LabelFrame(self.window, text="Set of equations",font=labelFont())
 		self.window.setOfEquationFrame.grid        (row = setOfEquationsRow, column = setOfEquationsColumn, rowspan = 1, columnspan = 5, sticky="")
 
-		# Navier Stokes  equations (momentum + continuity)
-		NavierStokesEquationsColumn = 1
-		NavierStokesEquationsRow = 1
-		self.window.NavierStokesEquationsL  = tk.Label(self.window.setOfEquationFrame, text='Navier-StokesEquations', font=labelFont())
-		self.window.NavierStokesEquationsL.grid         (row = NavierStokesEquationsRow, column = NavierStokesEquationsColumn, rowspan = 1, columnspan = 1)
-		self.NavierStokesEquationsStr    = tk.StringVar()
-		NavierStokesEquationsCH = {'None', 'PrimitiveVariables'}
-		self.window.NavierStokesEquationsM  = tk.OptionMenu(self.window.setOfEquationFrame, self.NavierStokesEquationsStr, *NavierStokesEquationsCH,command=self.doNothing)
-		self.window.NavierStokesEquationsM.grid         (row = NavierStokesEquationsRow+1 , column = NavierStokesEquationsColumn, rowspan = 1, columnspan = 1)
+		# Momentum transport equations
+		MomentumTransportEquationsColumn = 1
+		MomentumTransportEquationsRow = 1
+		self.window.MomentumTransportEquationsL  = tk.Label(
+			self.window.setOfEquationFrame,
+			text='Momentum Transport',
+			font=labelFont(),
+			)
+		self.window.MomentumTransportEquationsL.grid(
+			row = MomentumTransportEquationsRow, 
+			column = MomentumTransportEquationsColumn, 
+			rowspan = 1, 
+			columnspan = 1
+			)
+		self.MomentumTransportEquationsStr    = tk.StringVar()
+		MomentumTransportEquationsCH = {'None', 'NSPrimitive'}
+		self.window.MomentumTransportEquationsM  = tk.OptionMenu(
+			self.window.setOfEquationFrame,
+			self.MomentumTransportEquationsStr, 
+			*MomentumTransportEquationsCH,
+			command=self.doNothing,
+			)
+		self.window.MomentumTransportEquationsM.grid(
+			row = MomentumTransportEquationsRow+1,
+			column = MomentumTransportEquationsColumn,
+			rowspan = 1,
+			columnspan = 1,
+			)
+		self.MomentumVariableStr    = tk.StringVar()
+		MomentumVariableCH = {'None', 'u'}
+		self.window.MomentumVariableM  = tk.OptionMenu(
+			self.window.setOfEquationFrame,
+			self.MomentumVariableStr, 
+			*MomentumVariableCH,
+			command=self.doNothing,
+			)
+		self.window.MomentumVariableM.grid(
+			row = MomentumTransportEquationsRow+2,
+			column = MomentumTransportEquationsColumn,
+			rowspan = 1,
+			columnspan = 1,
+			)
 		if hasattr(self.Case,'SetOfEquations'):
-			self.NavierStokesEquationsStr.set(self.Case.SetOfEquations['Navier-Stokes'])
-		else:
-			self.NavierStokesEquationsStr.set(AllSettings['SetOfEquations']['default']['Navier-Stokes'])
+			if 'Momentum' in list(self.Case.SetOfEquations.keys()):
+				self.MomentumTransportEquationsStr.set(self.Case.SetOfEquations['Momentum']['Equation'])
+				self.MomentumVariableStr.set(self.Case.SetOfEquations['Momentum']['Variable'])
+			else:
+				self.MomentumTransportEquationsStr.set('')
+
+		# Mass transport equation 
+		MassTransportEquationsColumn = 2
+		MassTransportEquationsRow = 1
+		self.window.MassTransportEquationsL  = tk.Label(
+			self.window.setOfEquationFrame,
+			text='Mass Transport',
+			font=labelFont(),
+			)
+		self.window.MassTransportEquationsL.grid(
+			row = MassTransportEquationsRow, 
+			column = MassTransportEquationsColumn, 
+			rowspan = 1, 
+			columnspan = 1
+			)
+		self.MassTransportEquationsStr    = tk.StringVar()
+		MassTransportEquationsCH = {'None','Continuity'}
+		self.window.MassTransportEquationsM  = tk.OptionMenu(
+			self.window.setOfEquationFrame,
+			self.MassTransportEquationsStr, 
+			*MassTransportEquationsCH,
+			command=self.doNothing,
+			)
+		self.window.MassTransportEquationsM.grid         (row = MassTransportEquationsRow+1 , column = MassTransportEquationsColumn, rowspan = 1, columnspan = 1)
+		self.MassVariableStr    = tk.StringVar()
+		MassVariableCH = {'None', 'u'}
+		self.window.MassVariableM  = tk.OptionMenu(
+			self.window.setOfEquationFrame,
+			self.MassVariableStr, 
+			*MassVariableCH,
+			command=self.doNothing,
+			)
+		self.window.MassVariableM.grid(
+			row = MassTransportEquationsRow+2,
+			column = MassTransportEquationsColumn,
+			rowspan = 1,
+			columnspan = 1,
+			)
+		if hasattr(self.Case,'SetOfEquations'):
+			if 'Mass' in list(self.Case.SetOfEquations.keys()):
+				self.MassTransportEquationsStr.set(self.Case.SetOfEquations['Mass']['Equation'])
+				self.MassVariableStr.set(self.Case.SetOfEquations['Mass']['Variable'])
+			else:
+				self.MassTransportEquationsStr.set('')
 
 		# Energy equations
-		energyEquationColumn = 2
-		energyEquationRow = 1
-		self.window.energyEquationL  = tk.Label(self.window.setOfEquationFrame, text='Energy', font=labelFont())
-		self.window.energyEquationL.grid         (row = energyEquationRow, column = energyEquationColumn, rowspan = 1, columnspan = 1)
-		self.energyEquationStr    = tk.StringVar()
-		energyEquationCH = {'None', 'Enthalpy'}
-		self.window.energyEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.energyEquationStr, *energyEquationCH,command=self.doNothing)
-		self.window.energyEquationM.grid         (row = energyEquationRow+1 , column = energyEquationColumn, rowspan = 1, columnspan = 1)
+		energyTransportEquationColumn = 3
+		energyTransportEquationRow = 1
+		self.window.energyTransportEquationL  = tk.Label(self.window.setOfEquationFrame, text='Energy', font=labelFont())
+		self.window.energyTransportEquationL.grid         (row = energyTransportEquationRow, column = energyTransportEquationColumn, rowspan = 1, columnspan = 1)
+		self.energyTransportEquationStr    = tk.StringVar()
+		energyTransportEquationCH = {'None', 'Enthalpy'}
+		self.window.energyTransportEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.energyTransportEquationStr, *energyTransportEquationCH,command=self.doNothing)
+		self.window.energyTransportEquationM.grid         (row = energyTransportEquationRow+1 , column = energyTransportEquationColumn, rowspan = 1, columnspan = 1)
+		self.energyVariableStr    = tk.StringVar()
+		energyVariableCH = {'None', 'rho'}
+		self.window.energyVariableM  = tk.OptionMenu(
+			self.window.setOfEquationFrame,
+			self.energyVariableStr, 
+			*energyVariableCH,
+			command=self.doNothing,
+			)
+		self.window.energyVariableM.grid(
+			row = energyTransportEquationRow+2,
+			column = energyTransportEquationColumn,
+			rowspan = 1,
+			columnspan = 1,
+			)
 		if hasattr(self.Case,'SetOfEquations'):
-			self.energyEquationStr.set(self.Case.SetOfEquations['Energy'])
-		else:
-			self.energyEquationStr.set(AllSettings['SetOfEquations']['default']['Energy'])
+			if 'Energy' in list(self.Case.SetOfEquations.keys()):
+				self.energyTransportEquationStr.set(self.Case.SetOfEquations['Energy']['Equation'])
+				self.energyVariableStr.set(self.Case.SetOfEquations['Energy']['Equation'])
+			else:
+				self.energyTransportEquationStr.set('None')
 
 		# Species equations
-		speciesEquationColumn = 3
-		speciesEquationRow = 1
-		self.window.speciesEquationL  = tk.Label(self.window.setOfEquationFrame, text='Species', font=labelFont())
-		self.window.speciesEquationL.grid         (row = speciesEquationRow, column = speciesEquationColumn, rowspan = 1, columnspan = 1)
-		self.speciesEquationStr    = tk.StringVar()
-		speciesEquationCH = {'None', 'PrimitiveVariables'}
-		self.window.speciesEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.speciesEquationStr, *speciesEquationCH,command=self.doNothing)
-		self.window.speciesEquationM.grid         (row = speciesEquationRow+1 , column = speciesEquationColumn, rowspan = 1, columnspan = 1)
+		speciesTransportEquationColumn = 4
+		speciesTransportEquationRow = 1
+		self.window.speciesTransportEquationL  = tk.Label(self.window.setOfEquationFrame, text='Species', font=labelFont())
+		self.window.speciesTransportEquationL.grid         (row = speciesTransportEquationRow, column = speciesTransportEquationColumn, rowspan = 1, columnspan = 1)
+		self.speciesTransportEquationStr    = tk.StringVar()
+		speciesTransportEquationCH = {'None', 'PrimitiveVariables'}
+		self.window.speciesTransportEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.speciesTransportEquationStr, *speciesTransportEquationCH,command=self.doNothing)
+		self.window.speciesTransportEquationM.grid         (row = speciesTransportEquationRow+1 , column = speciesTransportEquationColumn, rowspan = 1, columnspan = 1)
+		self.speciesVariableStr    = tk.StringVar()
+		speciesVariableCH = {'None', 'Y'}
+		self.window.speciesVariableM  = tk.OptionMenu(
+			self.window.setOfEquationFrame,
+			self.speciesVariableStr, 
+			*speciesVariableCH,
+			command=self.doNothing,
+			)
+		self.window.speciesVariableM.grid(
+			row = speciesTransportEquationRow+2,
+			column = speciesTransportEquationColumn,
+			rowspan = 1,
+			columnspan = 1,
+			)
 		if hasattr(self.Case,'SetOfEquations'):
-			self.speciesEquationStr.set(self.Case.SetOfEquations['Species'])
-		else:
-			self.speciesEquationStr.set(AllSettings['SetOfEquations']['default']['Species'])
+			if 'Species' in list(self.Case.SetOfEquations.keys()):
+				self.speciesTransportEquationStr.set(self.Case.SetOfEquations['Species']['Equation'])
+				self.speciesVariableStr.set(self.Case.SetOfEquations['Species']['Variable'])
+			else:
+				self.speciesTransportEquationStr.set('None')
 
 		# equationOfState
-		equationOfStateColumn = 4
+		equationOfStateColumn = 5
 		equationOfStateRow = 1
-		self.window.equationOfStateL  = tk.Label(self.window.setOfEquationFrame, text='Species', font=labelFont())
+		self.window.equationOfStateL  = tk.Label(self.window.setOfEquationFrame, text='Equation of state', font=labelFont())
 		self.window.equationOfStateL.grid         (row = equationOfStateRow, column = equationOfStateColumn, rowspan = 1, columnspan = 1)
 		self.equationOfStateStr    = tk.StringVar()
 		equationOfStateCH = {'None', 'Low-Mach', 'KaiserCnF2023'}
 		self.window.equationOfStateM  = tk.OptionMenu(self.window.setOfEquationFrame, self.equationOfStateStr, *equationOfStateCH,command=self.doNothing)
 		self.window.equationOfStateM.grid         (row = equationOfStateRow+1 , column = equationOfStateColumn, rowspan = 1, columnspan = 1)
 		if hasattr(self.Case,'SetOfEquations'):
-			self.equationOfStateStr.set(self.Case.SetOfEquations['EquationOfState'])
-		else:
-			self.equationOfStateStr.set(AllSettings['SetOfEquations']['default']['EquationOfState'])
+			if 'EquationOfState' in list(self.Case.SetOfEquations.keys()):
+				self.speciesTransportEquationStr.set(self.Case.SetOfEquations['EquationOfState']['Equation'])
+			else:
+				self.speciesTransportEquationStr.set('None')
 
 
 		#velFlucColumn=1
@@ -255,7 +367,7 @@ class CaseSettingsGUI():
 		#	self.compressibleBool.set(AllSettings['Compressible']['default'])
 
 		# Reaction
-		ReactionColumn=5
+		ReactionColumn=7
 		ReactionRow=1
 		self.ReactionL     = tk.Label(self.window.setOfEquationFrame, text='Reaction', font=labelFont)
 		self.ReactionL.grid         (row = ReactionRow , column = ReactionColumn, rowspan = 1, columnspan = 1)
@@ -330,16 +442,34 @@ class CaseSettingsGUI():
 		mainGUI.param.Case.MolViscModel=self.molViscModelStr.get()
 		mainGUI.param.Case.MolViscPerturbModel=self.molViscPerturbModelStr.get()
 		mainGUI.param.Case.MolVisc=float(self.molViscStr.get())
-		mainGUI.param.Case.VelFluc=self.velFlucBool.get()
 		mainGUI.param.Case.TransVelFluc=self.TransVelFlucBool.get()
-		mainGUI.param.Case.HeatTransfer=self.heatTransferBool.get()
-		mainGUI.param.Case.Compressible=self.compressibleBool.get()
 		mainGUI.param.Case.Reaction=self.ReactionBool.get()
 		mainGUI.param.Case.MeshFilePath=self.MeshFilePathStr.get()
 		mainGUI.param.Case.MixtureFilePath=self.MixtureFilePathStr.get()
 		mainGUI.param.Case.Mixture=MixtureClass(self.MixtureFilePathStr.get(),self.SpeciesFilePathStr.get())
 		mainGUI.param.Case.SpeciesFilePath=self.SpeciesFilePathStr.get()
-
+		setOfEquations = {}
+		setOfEquations['Momentum'] = {
+			'Equation': self.MomentumTransportEquationsStr.get(),
+			'Variable': self.MomentumVariableStr.get(),
+			}
+		setOfEquations['Mass'] = {
+			'Equation': self.MassTransportEquationsStr.get(),
+			'Variable': self.MassVariableStr.get(),
+			}
+		setOfEquations['Energy'] = {
+			'Equation': self.energyTransportEquationStr.get(),
+			'Variable': self.energyVariableStr.get(),
+			}
+		setOfEquations['Species'] = {
+			'Equation': self.speciesTransportEquationStr.get(),
+			'Variable': self.speciesVariableStr.get(),
+			}
+		setOfEquations['EquationOfState'] = {
+			'Equation': self.equationOfStateStr.get(),
+			'Variable': 'None',
+			}
+		mainGUI.param.Case.SetOfEquations = setOfEquations
 		if self.__NewMeshFileBool__:
 			mainGUI.param.BCs.readDomainData(mainGUI.param.Case.MeshFilePath,
 				mainGUI.param.Case.getExtendedTransportedQuantityList())

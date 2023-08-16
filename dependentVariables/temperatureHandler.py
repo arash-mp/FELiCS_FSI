@@ -68,12 +68,12 @@ class temperatureHandler:
                     rho.shape[0]:
                	flucT = -rho / ClassDict['rho'].compute_vertex_values() * \
                         ClassDict['T'].compute_vertex_values()
-                if param.Case.setOfEquations['EquationOfState'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
+                if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
                     flucT += p / ClassDict['p'].compute_vertex_values() * \
                              ClassDict['T'].compute_vertex_values()
             else:
                 flucT = -rho / mean.rho * mean.T
-                if param.Case.SetOfEquations['EquationOfState'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
+                if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
                     flucT += p / mean.p * mean.T
 
         return flucT
