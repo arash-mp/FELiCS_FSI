@@ -302,9 +302,9 @@ class CaseSettingsGUI():
 		self.window.equationOfStateM.grid         (row = equationOfStateRow+1 , column = equationOfStateColumn, rowspan = 1, columnspan = 1)
 		if hasattr(self.Case,'SetOfEquations'):
 			if 'EquationOfState' in list(self.Case.SetOfEquations.keys()):
-				self.speciesTransportEquationStr.set(self.Case.SetOfEquations['EquationOfState']['Equation'])
+				self.equationOfStateStr.set(self.Case.SetOfEquations['EquationOfState']['Equation'])
 			else:
-				self.speciesTransportEquationStr.set('None')
+				self.equationOfStateStr.set('None')
 
 
 		#velFlucColumn=1
