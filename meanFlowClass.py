@@ -413,7 +413,7 @@ class meanFlowClass(
         # Perform interpolation nearest (more precise)
         try:
             temp_vecP2 = interpolate.griddata(points, valsP2,
-                                              dof_InterpolationFELiCSMeshP2,
+                                              dof_InterpolationFELiCSMeshP2[:, 0:self._param.Case.nDim],
                                               method='linear')
             temp_vecP2[np.isnan(temp_vecP2)] \
                 = temp_vecP2nearest[np.isnan(temp_vecP2)]

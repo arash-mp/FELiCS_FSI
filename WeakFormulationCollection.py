@@ -570,7 +570,7 @@ class WeakFormulationCollectionClass():
             flagdom = False
             print('-- No spatial restriction of forcing.')
         else:
-            forcingDom.x.array[:] = np.rint(forcingDom.vector()[:])
+            forcingDom.x.array[:] = np.rint(forcingDom.x.array[:])
             flagdom = True
             print('-- Applying spatial restriction of forcing from MeanFlow file.')
 
@@ -589,7 +589,8 @@ class WeakFormulationCollectionClass():
             # Only goes through the index loop if spatial limiter given
             if flagdom:
                 for index_local in dofsIterator:
-                    if round(forcingDomainVMixed.vector()[index_local]) == 1:
+                    #if round(forcingDomainVMixed.vector()[index_local]) == 1:
+                    if forcingDomainVMixed.x.array[index_local] == 1:
                         index = np.append(index, index_local)
                         # Rounding added there since mesh interpolation can result
                         # in non-integrer values of the limiter domain flag
@@ -626,14 +627,13 @@ class WeakFormulationCollectionClass():
             flagdom = False
             print('-- No spatial restriction of response.')
         else:
-            responseDom.x.array[:] = np.rint(responseDom.vector()[:])
+            responseDom.x.array[:] = np.rint(responseDom.x.array[:])
             flagdom = True
             print('-- Applying spatial restriction of response from MeanFlow file.')
 
             responseDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(responseDom, nfluctvar, nDim)
 
         index = np.empty(shape=(0,0))
-
         for i in range(nfluctvar): # HARDCODED FOR U, V, P: incompressible 2D
             if i < self.__nVelocityComponents:
                 dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]
@@ -643,7 +643,7 @@ class WeakFormulationCollectionClass():
             # Only goes through the index loop if spatial limiter given
             if flagdom:
                 for index_local in dofsIterator:
-                    if round(responseDomainVMixed.vector()[index_local]) == 1:
+                    if round(responseDomainVMixed.x.array[index_local]) == 1:
                         index = np.append(index, index_local)
             else:
                 index = np.append(index, dofsIterator)
