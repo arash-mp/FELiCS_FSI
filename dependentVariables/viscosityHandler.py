@@ -64,28 +64,21 @@ class viscosityHandler:
                                           rho):
         from dolfinx.fem import Function, Constant
         if isinstance(mean.T, np.ndarray) and mean.T.shape[0] != rho.shape[0]:
-            nulam = self.As * fieldDict['T'] \
-                    * (0.5
-                       * meanfieldDict['T'].compute_vertex_values() ** (3 / 2)
-                       + 1.5 * self.Ts
-                       * meanfieldDict['T'].compute_vertex_values() ** 0.5) \
-                    / ((meanfieldDict['T'].compute_vertex_values()
-                        + self.Ts) ** 2)
+            local_T = meanfieldDict['T'].compute_vertex_values()
         else:
-            nulam = (self.As * fieldDict['T']
-                     * (0.5 * mean.T ** (3 / 2) + 1.5 * self.Ts * mean.T ** 0.5)
-                     / ((mean.T + self.Ts) ** 2))
+            local_T = mean.T
+        nulam = self.As * fieldDict['T'] * (0.5 * local_T ** (3/2) + 1.5 * self.Ts * local_T ** 0.5) / ((local_T + self.Ts) ** 2)
         return nulam
 
     def getSutherlandMeanVisc(self, mean, meanfieldDict, rho):
         if isinstance(mean.T, np.ndarray) and mean.T.shape[0] != rho.shape[0]:
-            fluct = (meanfieldDict['T'].compute_vertex_values() + 3 * self.Ts) \
-                    / (2 * (meanfieldDict['T'].compute_vertex_values()
-                            + self.Ts)) \
-                    * (-rho / meanfieldDict['rho'].compute_vertex_values())
-            nulam = meanfieldDict['nulam'].compute_vertex_values() * fluct
+            local_T = meanfieldDict['T'].compute_vertex_values()
+            local_rho = meanfieldDict['rho'].compute_vertex_values()
+            local_nulam = meanfieldDict['nulam'].compute_vertex_values()
         else:
-            fluct = (mean.T + 3 * self.Ts) / (2 * (mean.T + self.Ts)) \
-                    * (-rho / mean.rho)
-            nulam = mean.nulam * fluct
+            local_T = mean.T
+            local_rho = mean.rho
+            local_nulam = mean.nulam
+        fluct = (local_T + 3 * self.Ts) / (2 * (local_T + self.Ts)) * (-rho / local_rho)
+        nulam = local_nulam * fluct
         return nulam, fluct
