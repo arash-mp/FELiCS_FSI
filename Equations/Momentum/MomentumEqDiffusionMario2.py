@@ -65,12 +65,12 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 		#if True:
 		if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
 			
-			self.A_imag_vf.add(-mean.nuTot/self.R*fluc.u[1]*X[1]*dx)									#II(1)
+			self.A_vf.add(1j * -mean.nuTot/self.R*fluc.u[1]*conj(X)[1]*dx)									#II(1)
 			
 			
-			self.A_imag_vf.add(-2.0/3.0*fluc.u[1]*Dx(mean.nuTot,i)*X[i]*dx)							#IV(1)
-			self.A_imag_vf.add(-2.0/3.0*mean.nuTot*Dx(fluc.u[1],i)*X[i]*dx)							#IV(2)
-			self.A_imag_vf.add(2.0/3.0*mean.nuTot/self.R*fluc.u[1]*X[1]*dx)							#IV(3)
+			self.A_vf.add(1j * -2.0/3.0*fluc.u[1]*Dx(mean.nuTot,i)*conj(X)[i]*dx)							#IV(1)
+			self.A_vf.add(1j * -2.0/3.0*mean.nuTot*Dx(fluc.u[1],i)*conj(X)[i]*dx)							#IV(2)
+			self.A_vf.add(1j * 2.0/3.0*mean.nuTot/self.R*fluc.u[1]*conj(X)[1]*dx)							#IV(3)
 			
 			if not param.Case.m == 0:
 				self.A_vf.add(-self.m*mean.nuTot*Dx(fluc.u[2],i)*conj(X)[i]*dx)							#II(2)
@@ -147,7 +147,7 @@ def MomentumEqDiffusion(self,fluc,X,mean,param):
 #####Other stuff
 	if  param.Case.TransVelFluc:
 		if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-			self.A_imag_vf.add(self.R*Dx(mean.nuTot,i)*Dx(fluc.u[2],i)*X[2]*dx)						#III(1) (not 100% sure why only in case of dilatation -> needs checking)
+			self.A_vf.add(1j * self.R*Dx(mean.nuTot,i)*Dx(fluc.u[2],i)*conj(X)[2]*dx)						#III(1) (not 100% sure why only in case of dilatation -> needs checking)
 
 			if not param.Case.m == 0:
 				self.A_vf.add(1j * -self.m**2/self.R*mean.nuTot*fluc.u[2]*conj(X)[2]*dx)					#II(4)
