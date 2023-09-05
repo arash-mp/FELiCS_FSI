@@ -276,9 +276,9 @@ class WeakFormulationCollectionClass():
                 # velocity component. If not, it is applied directly to the first level subspace,
                 # and the index is corrected by param.nVelocityComponents+1
                 if i<param.Case.getNVelocityComponents():
-                    self.forcing_vf += X[0][i]*barrho*self.hat[0][i]*self.R*dx
+                    self.forcing_vf += conj(X[0][i])*barrho*self.hat[0][i]*self.R*dx
                 else:
-                    self.forcing_vf += X[i-param.nVelocityComponents+1]*\
+                    self.forcing_vf += conj(X[i-param.nVelocityComponents+1])*\
                         barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
 
         # In boundary forcing, forcing is allowed only on the specific boundaries
@@ -314,9 +314,9 @@ class WeakFormulationCollectionClass():
             # velocity component. If not, it is applied directly to the first level subspace,
             # and the index is corrected by param.nVelocityComponents+1
             if i<param.Case.getNVelocityComponents():
-                self.response_vf += X[0][i]*barrho*self.hat[0][i]*self.R*dx
+                self.response_vf += conj(X[0][i])*barrho*self.hat[0][i]*self.R*dx
             else:
-                self.response_vf += X[i-param.nVelocityComponents+1]*barrho*\
+                self.response_vf += conj(X[i-param.nVelocityComponents+1])*barrho*\
                     self.hat[i-param.nVelocityComponents+1]*self.R*dx
 
         # Prompt variational formulations in debug mode
