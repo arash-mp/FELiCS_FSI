@@ -471,8 +471,12 @@ class CaseSettingsGUI():
 			}
 		mainGUI.param.Case.SetOfEquations = setOfEquations
 		if self.__NewMeshFileBool__:
-			mainGUI.param.BCs.readDomainData(mainGUI.param.Case.MeshFilePath,
-				mainGUI.param.Case.getExtendedTransportedQuantityList())
+			print(mainGUI.param.Case.getExtendedTransportedQuantityList())
+			mainGUI.param.BCs.readDomainData(
+				mainGUI.param.Case.MeshFilePath,
+				mainGUI.param.Case.nDim,
+				mainGUI.param.Case.getExtendedTransportedQuantityList(),
+				)
 
 	def Cancel(self):
 		'''Function closing the current window'''
