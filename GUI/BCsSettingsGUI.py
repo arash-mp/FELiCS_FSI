@@ -6,8 +6,10 @@ class BCsSettingsGUI():
 		\t Input: 
 		\t -mainGUI: The FELiCS main GUI object
 		'''
-		from fenics import plot
-		import meshio
+		from dolfinx import (plot,
+			#MeshTags,
+			)
+		#import meshio
 		import matplotlib.pyplot as plt
 		from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 		import numpy as np
@@ -30,8 +32,7 @@ class BCsSettingsGUI():
 		
 		#mesh=Mesh.ReadMesh(mainGUI.param.Case.MeshFilePath)
 		mesh=self.BCs.getMesh()
-		gmsh=meshio.read(mainGUI.param.Case.MeshFilePath)
-
+		#gmsh=meshio.read(mainGUI.param.Case.MeshFilePath)
 		#Load BC file
 		BCsFilePathColumn=1
 		BCsFilePathRow=1
@@ -55,8 +56,8 @@ class BCsSettingsGUI():
 		else:
 			boundarykey='line'
 		# Plot the boundaries
-		borderIDX = gmsh.cells[boundarykey]
-		Lines = gmsh.cell_data[boundarykey]['gmsh:physical']
+####		borderIDX = gmsh.cells[boundarykey]
+####		Lines = gmsh.cell_data[boundarykey]['gmsh:physical']
 		# get a list of all kinds of BC indices
 		self.BCIDs=self.BCs.getBCIDs()
 			
@@ -68,8 +69,8 @@ class BCsSettingsGUI():
 
 		meshPlot=plt.figure()
 		# Plot the mesh
-		if not self.BCs.dim==3:
-			plot(mesh, linewidth=0.1)
+####		if not self.BCs.dim==3:
+####			plot(mesh, linewidth=0.1)
 		canvas = FigureCanvasTkAgg(meshPlot, master = self.window)
 		canvas.draw()
 		if self.BCs.dim==3:
@@ -80,56 +81,65 @@ class BCsSettingsGUI():
 		tBar.update()
 		canvas.get_tk_widget().grid             (row = 3, column = 1, rowspan = 1, columnspan = 10, pady=(20,20), sticky=     "N")
 		for i in self.BCIDs:
-			# Get the lines of the loops boundary
-			LinesLocal=list(borderIDX[Lines==i])
-			# Get their coordinates and plot the lines
-			verts=[]
-			
-			# Append next color element to list (required for re-accessing identical BoundaryLabel colors further below)
+####			# Get the lines of the loops boundary
+####			LinesLocal=list(borderIDX[Lines==i])
+####			# Get their coordinates and plot the lines
+####			verts=[]
+####			
+####			# Append next color element to list (required for re-accessing identical BoundaryLabel colors further below)
 			plotColorsCycleElement.append(next(plotColorsCycle))
-			
-			for line in LinesLocal:
-				CoordX=[]
-				CoordY=[]
-				CoordZ=[]
-				for point in line:
-					CoordX.append(mesh.coordinates()[point][0])
-					CoordY.append(mesh.coordinates()[point][1])
-					if self.BCs.dim>2:
-						CoordZ.append(mesh.coordinates()[point][2])
-					
-				if self.BCs.dim==2:
-					plt.plot(CoordX,CoordY,color=plotColorsCycleElement[count])
-				elif self.BCs.dim==3:
-					verts.append(list(zip(CoordX, CoordY, CoordZ)))
-			if self.BCs.dim==3:
-				ax.set_xlabel('x')
-				ax.set_ylabel('y')
-				ax.set_zlabel('z')
-				
-				srf = Poly3DCollection(verts, facecolor=plotColorsCycleElement[count])
-				plt.gca().add_collection3d(srf)
-			count += 1
+####			
+####			for line in LinesLocal:
+####				CoordX=[]
+####				CoordY=[]
+####				CoordZ=[]
+####				for point in line:
+####					CoordX.append(mesh.coordinates()[point][0])
+####					CoordY.append(mesh.coordinates()[point][1])
+####					if self.BCs.dim>2:
+####						CoordZ.append(mesh.coordinates()[point][2])
+####					
+####				if self.BCs.dim==2:
+####					plt.plot(CoordX,CoordY,color=plotColorsCycleElement[count])
+####				elif self.BCs.dim==3:
+####					verts.append(list(zip(CoordX, CoordY, CoordZ)))
+####			if self.BCs.dim==3:
+####				ax.set_xlabel('x')
+####				ax.set_ylabel('y')
+####				ax.set_zlabel('z')
+####				
+####				srf = Poly3DCollection(verts, facecolor=plotColorsCycleElement[count])
+####				plt.gca().add_collection3d(srf)
+####			count += 1
 					
 		ExtendedSolutionList=mainGUI.param.Case.getExtendedTransportedQuantityList()
-		# Construct a dictionary of Objects
+####		# Construct a dictionary of Objects
 		MatrixRow=5
-		BoundaryLabels={}
-		#Iterate over all boundaries
-		gmshBCDict=gmsh.field_data
-		# Delete all internal regions in mesh (which are not boundaries)
-		for key in list(gmshBCDict.keys()):
-			if gmshBCDict[key][1]>self.BCs.dim-1:
-				del gmshBCDict[key]
-		BCNames=list(gmshBCDict.keys())
-		# The dictionaries NameToID and IDToName allow to reference quickly between the name of a Boundary and its ID, and back...
+####		BoundaryLabels={}
+####		#Iterate over all boundaries
+####		gmshBCDict=gmsh.field_data
+####		# Delete all internal regions in mesh (which are not boundaries)
+####		for key in list(gmshBCDict.keys()):
+####			if gmshBCDict[key][1]>self.BCs.dim-1:
+####				del gmshBCDict[key]
+####		BCNames=list(gmshBCDict.keys())
+####		# The dictionaries NameToID and IDToName allow to reference quickly between the name of a Boundary and its ID, and back...
+####		self.BCNameToID={}
+####		self.BCIDToName={}
+####		for i,BCName in enumerate(BCNames):
+####			BoundaryLabels[BCName]=tk.Label(self.window, text='B'+str(gmshBCDict[BCName][0])+': '+BCName, font=labelFont(), highlightthickness=4,  highlightbackground=plotColorsCycleElement[i])
+####			BoundaryLabels[BCName].grid(row =MatrixRow , column = (1+BCNames.index(BCName))*2, rowspan = 1, columnspan = 2)
+####			self.BCNameToID[BCName]=gmshBCDict[BCName][0]
+####			self.BCIDToName[gmshBCDict[BCName][0]]=BCName 
+		BCNames =[str(entry) for entry in list(self.BCs.getBCIDs()) ]
 		self.BCNameToID={}
 		self.BCIDToName={}
+		BoundaryLabels={}
 		for i,BCName in enumerate(BCNames):
-			BoundaryLabels[BCName]=tk.Label(self.window, text='B'+str(gmshBCDict[BCName][0])+': '+BCName, font=labelFont(), highlightthickness=4,  highlightbackground=plotColorsCycleElement[i])
+			BoundaryLabels[BCName] = tk.Label(self.window, text='B: '+BCName, font=labelFont(), highlightthickness=4,  highlightbackground=plotColorsCycleElement[i])
 			BoundaryLabels[BCName].grid(row =MatrixRow , column = (1+BCNames.index(BCName))*2, rowspan = 1, columnspan = 2)
-			self.BCNameToID[BCName]=gmshBCDict[BCName][0]
-			self.BCIDToName[gmshBCDict[BCName][0]]=BCName 
+			self.BCNameToID[BCName]=self.BCs.getBCIDs()[i]
+			self.BCIDToName[BCName]=BCName
 		# Make a dictionary for the labels of transported quantities
 		UnknownLabels={}
 		# Write the labels of transportet quantities to the GUI

@@ -134,7 +134,7 @@ class CaseSettingsGUI():
 		# velocity fluctuations check box
 		# set of equations Frame
 		setOfEquationsColumn=1
-		setOfEquationsRow=3
+		setOfEquationsRow=4
 		self.window.setOfEquationFrame = tk.LabelFrame(self.window, text="Set of equations",font=labelFont())
 		self.window.setOfEquationFrame.grid        (row = setOfEquationsRow, column = setOfEquationsColumn, rowspan = 1, columnspan = 5, sticky="")
 
