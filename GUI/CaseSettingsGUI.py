@@ -134,7 +134,7 @@ class CaseSettingsGUI():
 		# velocity fluctuations check box
 		# set of equations Frame
 		setOfEquationsColumn=1
-		setOfEquationsRow=3
+		setOfEquationsRow=4
 		self.window.setOfEquationFrame = tk.LabelFrame(self.window, text="Set of equations",font=labelFont())
 		self.window.setOfEquationFrame.grid        (row = setOfEquationsRow, column = setOfEquationsColumn, rowspan = 1, columnspan = 5, sticky="")
 
@@ -471,8 +471,12 @@ class CaseSettingsGUI():
 			}
 		mainGUI.param.Case.SetOfEquations = setOfEquations
 		if self.__NewMeshFileBool__:
-			mainGUI.param.BCs.readDomainData(mainGUI.param.Case.MeshFilePath,
-				mainGUI.param.Case.getExtendedTransportedQuantityList())
+			print(mainGUI.param.Case.getExtendedTransportedQuantityList())
+			mainGUI.param.BCs.readDomainData(
+				mainGUI.param.Case.MeshFilePath,
+				mainGUI.param.Case.nDim,
+				mainGUI.param.Case.getExtendedTransportedQuantityList(),
+				)
 
 	def Cancel(self):
 		'''Function closing the current window'''

@@ -2,7 +2,13 @@ from os.path import isfile
 from os import system, path
 
 from dolfinx import __version__
-from dolfinx.mesh import Mesh
+from dolfinx.mesh import (
+	locate_entities,
+	locate_entities_boundary,
+	meshtags,
+	meshtags_from_entities,
+	Mesh,
+	)
 from dolfinx.io import gmshio
 from mpi4py import MPI
 
@@ -39,6 +45,7 @@ class FELiCSMesh(Mesh):
 			Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
 
 			#Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
+
 			self.mesh = mesh
 			self.facet_tags = facet_tags
 			self.gdim = gdim
