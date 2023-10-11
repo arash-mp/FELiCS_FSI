@@ -186,12 +186,13 @@ class fieldProperties:
 	@property
 	def rho(self):
 		if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
-			from dolfinx.fem import Constant
 			if 'rho' in list(self._fieldDict.keys()):
 				return self._fieldDict['rho']
 			else:
+				from dolfinx.fem import Constant
+				from petsc4py import PETSc
 				mesh = self._fieldDict[list(self._fieldDict.keys())[0]].function_space.mesh
-				return Constant(mesh, 1.0)
+				return Constant(mesh, PETSc.ScalarType(1.0 + 0j))
 		else:
 			if 'rho' in self._transportedQuantities:
 				return self._fieldDict['rho']

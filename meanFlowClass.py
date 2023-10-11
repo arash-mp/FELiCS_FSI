@@ -861,7 +861,8 @@ class meanFlowVertexValues(fieldProperties):
             # The vector components (velocity u) need to be reshaped
             if fieldDict[key].function_space.num_sub_spaces > 1:
                 tempSolutionArray = np.zeros((fieldDict[key].function_space.num_sub_spaces,
-                                              fieldDict[key].function_space.mesh.coordinates().shape[0]))
+                                              fieldDict[key].function_space.mesh.coordinates().shape[0]),
+                                             dtype=np.complex128)
                 for subSpace in range(fieldDict[key].function_space.num_sub_spaces):
                     indicesOfSubSpace = fieldDict[key].function_space.sub(subSpace).collapse()[1]
                     tempSolutionArray[subSpace, :] = fieldDict[key].x.array[indicesOfSubSpace]

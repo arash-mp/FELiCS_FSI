@@ -39,7 +39,7 @@ from ufl import (
                 Measure,
                 rhs,
                 lhs,
-
+                conj,
                 )
 
 from dolfinx.fem import (
@@ -73,6 +73,7 @@ from functions import *
 #from fenics import FunctionAssigner,Constant
 import pdb
 import LinearSystem
+
 
 class WeakFormulationCollectionClass():
     '''This class build the variational formulations for all relevant matrices
@@ -164,10 +165,8 @@ class WeakFormulationCollectionClass():
         self.n_BC=FacetNormal(self.__FEMSpaces.P2.mesh)
 
         ## Initialize variatial formulations
-        self.A_real_vf=WeakForm()
-        self.B_real_vf=WeakForm()
-        self.A_imag_vf=WeakForm()
-        self.B_imag_vf=WeakForm()
+        self.A_vf = WeakForm()
+        self.B_vf = WeakForm()
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
             from Equations.Momentum.addMomentumEq import addMomentumEq
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
@@ -204,7 +203,7 @@ class WeakFormulationCollectionClass():
                 Reaction=GlobalReaction(self.__param.Case.Mixture.ReactionMechanism)
                 reactionRateMean=Reaction.computeMeanField(self.__MeanFlow,self.__FEMSpaces.P2)
                 reactionForm=Reaction.addReaction(self.__MeanFlow, X, fluctuationC, self.__param.SolutionList)
-                self.A_imag_vf.add(reactionForm)
+                self.A_vf.add(1j * reactionForm)
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
                 from Reactions.TwoStepReaction import TwoStepReaction
                 ReactionModelName="BFER" #to be put in param
@@ -212,7 +211,7 @@ class WeakFormulationCollectionClass():
                 Reaction.computeMeanField(MF,self.__FEMSpaces.P2)
                 Reaction.testM()
                 reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
-                self.A_imag_vf.add(reactionForm)
+                self.A_vf.add(1j * reactionForm)
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='2S-SM2':
                 from Reactions.c2sm2 import C2SM2
                 ReactionModelName="2S-SM2" #to be put in param
@@ -242,18 +241,14 @@ class WeakFormulationCollectionClass():
                 #                        MeanFlow.Y('O2'),
                 #                        MeanFlow.Y('CO2'))
 
-                self.A_imag_vf.add(-c2.add_source_to_weak_form(self))
+                self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
                 reaction=self.__MeanFlow.reaction
                 self.v_NO  = X[self.__param.Case.getTransportedQuantityList().index('NO')]
                 self.v_NO2 = X[self.__param.Case.getTransportedQuantityList().index('NO2')]
                 self.T = self.__MeanFlow.T
                 self.phi = self.__MeanFlow.phi
-                self.A_imag_vf.add(-reaction.add_source_to_weak_form(self))
-        #print('A_imag')
-        #print(self.A_imag_vf.weakForm)
-        #print('A_real')
-        #print(self.A_real_vf.weakForm)
+                self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
 
 ########################### Resolvent Norm  ############################
     def getResolventNorms(self,X,param,MF):
@@ -281,9 +276,9 @@ class WeakFormulationCollectionClass():
                 # velocity component. If not, it is applied directly to the first level subspace,
                 # and the index is corrected by param.nVelocityComponents+1
                 if i<param.Case.getNVelocityComponents():
-                    self.forcing_vf += X[0][i]*barrho*self.hat[0][i]*self.R*dx
+                    self.forcing_vf += conj(X[0][i])*barrho*self.hat[0][i]*self.R*dx
                 else:
-                    self.forcing_vf += X[i-param.nVelocityComponents+1]*\
+                    self.forcing_vf += conj(X[i-param.nVelocityComponents+1])*\
                         barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
 
         # In boundary forcing, forcing is allowed only on the specific boundaries
@@ -319,9 +314,9 @@ class WeakFormulationCollectionClass():
             # velocity component. If not, it is applied directly to the first level subspace,
             # and the index is corrected by param.nVelocityComponents+1
             if i<param.Case.getNVelocityComponents():
-                self.response_vf += X[0][i]*barrho*self.hat[0][i]*self.R*dx
+                self.response_vf += conj(X[0][i])*barrho*self.hat[0][i]*self.R*dx
             else:
-                self.response_vf += X[i-param.nVelocityComponents+1]*barrho*\
+                self.response_vf += conj(X[i-param.nVelocityComponents+1])*barrho*\
                     self.hat[i-param.nVelocityComponents+1]*self.R*dx
 
         # Prompt variational formulations in debug mode
@@ -353,86 +348,41 @@ class WeakFormulationCollectionClass():
         BC_Diriclet.setDiagonal(bcFunction.vector)
         BC_Diriclet.assemble()
 
-        # Definie matrices
-        # A_real = PETScMatrix()
-        # A_imag = PETScMatrix()
-        # B_real = PETScMatrix()
-        # B_imag = PETScMatrix()
-        # BC_Diriclet = PETScMatrix()
-        # Assamble the weak formulation to the matrices
-        #assemble(self.B_real_vf.lhs,tensor=BC_Diriclet)
-        #BC_Diriclet.zero()
         bcs= self.__getListOfDirichletBCs()
         n_dof=BC_Diriclet.size[0]
-        if not self.A_imag_vf.lhsIsZero():
+        if not self.A_vf.lhsIsZero():
             if AnalysisMode in ['Input-Output']:
-                A_imag = assemble_matrix(form(self.A_imag_vf.lhs), bcs=bcs)
-                A_imag.assemble()
+                A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
+                A.assemble()
             else:
-                A_imag = assemble_matrix(form(self.A_imag_vf.lhs))
-                A_imag.assemble()
+                A = assemble_matrix(form(self.A_vf.lhs))
+                A.assemble()
         else:
-            A_imag=0*BC_Diriclet
-        if not self.A_real_vf.lhsIsZero():
-            if AnalysisMode in ['Input-Output']:
-                A_real = assemble_matrix(form(self.A_real_vf.lhs), bcs=bcs)
-                A_real.assemble()
-            else:
-                A_real = assemble_matrix(form(self.A_real_vf.lhs))
-                A_real.assemble()
+            A = 0*BC_Diriclet
+
+        if not self.B_vf.lhsIsZero():
+            B = assemble_matrix(form(self.B_vf.lhs))
+            B.assemble()
         else:
-            A_real=0*BC_Diriclet
-        if not self.B_real_vf.lhsIsZero():
-            B_real = assemble_matrix(form(self.B_real_vf.lhs))
-            B_real.assemble()
-        else:
-            B_real=0*BC_Diriclet
-        if not self.B_imag_vf.lhsIsZero():
-            B_imag = assemble_matrix(form(self.B_imag_vf.lhs))
-            B_imag.assemble()
-        else:
-            B_imag=0*BC_Diriclet
+            B = 0*BC_Diriclet
+
         self.__matrix_dict={}
 
 
         if AnalysisMode in ['Input-Output']:
-            if not self.A_imag_vf.rhsIsZero():
-                forcing_vec_i_petsc=assemble_vector(form(self.A_imag_vf.rhs))
-                forcing_vec_i_petsc.assemble()
+            if not self.A_vf.rhsIsZero():
+                forcing_vec_petsc = assemble_vector(form(self.A_vf.rhs))
+                forcing_vec_petsc.assemble()
             else:
-                forcing_vec_i_petsc=PETScVector()
-                forcing_vec_i_petsc.init(n_dof)
-            if not self.A_real_vf.rhsIsZero():
-                forcing_vec_r_petsc=assemble_vector(form(self.A_real_vf.rhs))
-                forcing_vec_r_petsc.assemble()
-            else:
-                forcing_vec_r_petsc=PETScVector()
-                forcing_vec_r_petsc.init(n_dof)
+                forcing_vec_petsc = PETScVector()
+                forcing_vec_petsc.init(n_dof)
 
             from dolfinx.fem.petsc import set_bc
-            #BClist= self.__getListOfDirichletBCs()
-            # bcFunction.x.array[:] = 0.0
-            # for bc in bcs:
-            # 	dofs = bc.dof_indices()[0]
-            # 	bc_vals = 1.0
-            # 	bcFunction.x.array[dofs] = bc_vals
-            # A_imag.setDiagonal(bcFunction.vector)
-            # A_real.setDiagonal(bcFunction.vector)
-            set_bc(forcing_vec_i_petsc, bcs)
-            set_bc(forcing_vec_r_petsc, bcs)
-            # A_imag = assemble_matrix(form(self.A_imag_vf.lhs), bcs=BClist)
-            # A_imag.assemble()
+            set_bc(forcing_vec_petsc, bcs)
 
-            # for bc in bcs:
-            #     bc.apply(A_imag,forcing_vec_i_petsc)
-            #     bc.apply(A_real,forcing_vec_r_petsc)
-
-
-            # forcing_vec_i=as_backend_type(forcing_vec_i_petsc).vec().array
-            # forcing_vec_r=as_backend_type(forcing_vec_r_petsc).vec().array
-            b_forcing =  1j*forcing_vec_r_petsc.array  - forcing_vec_i_petsc.array
-            self.__matrix_dict['b_forcing'] =  b_forcing
-            del b_forcing, forcing_vec_r_petsc, forcing_vec_i_petsc
+            b_forcing = 1j * forcing_vec_petsc.array
+            self.__matrix_dict['b_forcing'] = b_forcing
+            del b_forcing, forcing_vec_petsc
 
         # Get the BCs provided by the user
         # Aplly the BCs
@@ -448,22 +398,14 @@ class WeakFormulationCollectionClass():
             BC_Diriclet.assemble()
         # In the next 12 lines the Imaginary and real parts of both the lhs and rhs matrix are combined to the
         # sparse matrix A and B, respectively. Not needed matrices are deleted
-        #A_real_mat = as_backend_type(A_real).mat()
-        self.__matrix_dict['A'] = csr_matrix(A_real.getValuesCSR()[::-1], shape = A_real.size,dtype=complex)
-        del A_real
-        #A_imag_mat = as_backend_type(A_imag).mat()
-        self.__matrix_dict['A'] = self.__matrix_dict['A'] + 1j * csr_matrix(A_imag.getValuesCSR()[::-1], shape = A_imag.size,dtype=complex)
-        del A_imag
+        self.__matrix_dict['A'] = csr_matrix(A.getValuesCSR()[::-1], shape = A.size,dtype=complex)
+        del A
         if not AnalysisMode in ['Input-Output']:
             #BC_Diriclet_mat = as_backend_type(BC_Diriclet).mat()
             self.__matrix_dict['A'] = self.__matrix_dict['A'] + 10**30*(1+1j) * csr_matrix(BC_Diriclet.getValuesCSR()[::-1], shape = BC_Diriclet.size,dtype=complex)
             del BC_Diriclet
-        #B_real_mat = as_backend_type(B_real).mat()
-        self.__matrix_dict['B'] = csr_matrix(B_real.getValuesCSR()[::-1], shape = B_real.size,dtype=complex)
-        del B_real
-        #B_imag_mat = as_backend_type(B_imag).mat()
-        self.__matrix_dict['B'] = self.__matrix_dict['B'] + 1j * csr_matrix(B_imag.getValuesCSR()[::-1], shape = B_imag.size,dtype=complex)
-        del B_imag
+        self.__matrix_dict['B'] = csr_matrix(B.getValuesCSR()[::-1], shape = B.size,dtype=complex)
+        del B
         #tempMat=1*matrix_dict['B'].transpose()
         #tempMat[1,1]=100
         #input((matrix_dict['B'] != tempMat).nnz==0)
@@ -471,29 +413,14 @@ class WeakFormulationCollectionClass():
         # must be constructed. So far only the L2 norm is implemented (To be extended!)
         if AnalysisMode in ['Resolvent']:
             #forcing_norm,response_norm=getResolventNorms(param,MF,FEMSpaces)
-            #B_forcing_real = PETScMatrix()
-            B_forcing_real = assemble_matrix(form(self.forcing_vf))
-            B_forcing_real.assemble()
-            #assemble(self.forcing_vf,tensor=B_forcing_real)
-            #for bc in bcs:
-            #    bc.zero(B_forcing_real)
-            #B_forcing_real_mat = as_backend_type(B_forcing_real).mat()
-            self.__matrix_dict['B_forcing'] = csr_matrix(B_forcing_real.getValuesCSR()[::-1], shape = B_forcing_real.size,dtype=complex)
-            del B_forcing_real
-            #B_forcing_imag = PETScMatrix()
-            #assemble(rhs_imag,tensor=B_forcing_imag)
-            ##for bc in bcs:
-            ##    bc.zero(B_forcing_imag)
-            #B_forcing_imag_mat = as_backend_type(B_forcing_imag).mat()
-            #matrix_dict['B_forcing'] = matrix_dict['B_forcing']+ 1j * csr_matrix(B_forcing_imag_mat.getValuesCSR()[::-1], shape = B_forcing_imag_mat.size)
-            #del B_forcing_imag, B_forcing_imag_mat
-            B_response_real = assemble_matrix(form(self.response_vf))
-            B_response_real.assemble()
-            #for bc in bcs:
-            #    bc.zero(B_response_real)
-            #B_response_real_mat = as_backend_type(B_response_real).mat()
-            self.__matrix_dict['B_response'] = csr_matrix(B_response_real.getValuesCSR()[::-1], shape = B_response_real.size,dtype=complex)
-            del B_response_real
+            B_forcing = assemble_matrix(form(self.forcing_vf))
+            B_forcing.assemble()
+            self.__matrix_dict['B_forcing'] = csr_matrix(B_forcing.getValuesCSR()[::-1], shape = B_forcing.size,dtype=complex)
+            del B_forcing
+            B_response = assemble_matrix(form(self.response_vf))
+            B_response.assemble()
+            self.__matrix_dict['B_response'] = csr_matrix(B_response.getValuesCSR()[::-1], shape = B_response.size,dtype=complex)
+            del B_response
 
         return self.__buildSolutionObj()
 
@@ -593,7 +520,7 @@ class WeakFormulationCollectionClass():
                     if forcingDomainVMixed.x.array[index_local] == 1:
                         index = np.append(index, index_local)
                         # Rounding added there since mesh interpolation can result
-                        # in non-integrer values of the limiter domain flag
+                        # in non-integer values of the limiter domain flag
             else:
                 index = np.append(index, dofsIterator)
 
@@ -634,6 +561,7 @@ class WeakFormulationCollectionClass():
             responseDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(responseDom, nfluctvar, nDim)
 
         index = np.empty(shape=(0,0))
+
         for i in range(nfluctvar): # HARDCODED FOR U, V, P: incompressible 2D
             if i < self.__nVelocityComponents:
                 dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]

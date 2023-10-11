@@ -60,24 +60,23 @@ class laminarDiffusionHandler:
         elif param.Case.MolViscPerturbModel == 'Sutherland mean':
             self._fieldDict['nulam'], fluct = self.getSutherlandMeanVisc(
                 mean,
-                self._meanfieldDict if hasattr(self, "_meanfieldDict")
-                                    else None,
+                self._meanfieldDict if hasattr(self, "_meanfieldDict") else None,
                 self.rho
             )
             self._fieldDict['alpha'] = getAlpha(
                 param,
                 mean,
                 self._fieldDict,
-                self._meanfieldDict if hasattr(self, "_meanfieldDict")
-                                    else None, self.rho,
-                isMeanFlowClass=False)
+                self._meanfieldDict if hasattr(self, "_meanfieldDict") else None,
+                self.rho,
+                isMeanFlowClass=False
+            )
             for specie in param.Case.Mixture.getSpeciesList('transported'):
                 if isinstance(mean.T, np.ndarray):
                     if mean.T.shape[0] != self.rho.shape[0]:
-                        self._fieldDict['D_' + specie] \
-                            = self._meanfieldDict[f'D_{specie}']. \
-                                  compute_vertex_values() * fluct
+                        local_mean_D = self._meanfieldDict[f'D_{specie}'].compute_vertex_values()
                     else:
-                        self._fieldDict['D_' + specie] = mean.D(specie) * fluct
+                        local_mean_D = mean.D(specie)
                 else:
-                    self._fieldDict['D_' + specie] = mean.D(specie) * fluct
+                    local_mean_D = mean.D(specie)
+                self._fieldDict['D_' + specie] = local_mean_D * fluct

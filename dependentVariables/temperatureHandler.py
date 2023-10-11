@@ -57,23 +57,26 @@ class temperatureHandler:
 
             if isinstance(mean.rho, np.ndarray) and mean.rho.shape[0] != \
                     rho.shape[0]:
-                Tm = pRef / R / ClassDict['rho'].compute_vertex_values()
-                flucT = -rho / ClassDict['rho'].compute_vertex_values() * Tm
+                local_rho = ClassDict['rho'].compute_vertex_values()
             else:
-                Tm = pRef / R / mean.rho
-                flucT = -rho / mean.rho * Tm
+                local_rho = mean.rho
+            Tm = pRef / R / local_rho
+            flucT = -rho / local_rho * Tm
 
         else:
             if isinstance(mean.rho, np.ndarray) and mean.rho.shape[0] != \
                     rho.shape[0]:
-               	flucT = -rho / ClassDict['rho'].compute_vertex_values() * \
-                        ClassDict['T'].compute_vertex_values()
+                local_rho = ClassDict['rho'].compute_vertex_values()
+                local_T = ClassDict['T'].compute_vertex_values()
                 if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
-                    flucT += p / ClassDict['p'].compute_vertex_values() * \
-                             ClassDict['T'].compute_vertex_values()
+                    local_p = ClassDict['p'].compute_vertex_values()
             else:
-                flucT = -rho / mean.rho * mean.T
+                local_rho = mean.rho
+                local_T = mean.T
                 if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
-                    flucT += p / mean.p * mean.T
+                    local_p = mean.p
+            flucT = -rho / local_rho * local_T
+            if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
+                flucT += p / local_p * local_T
 
         return flucT

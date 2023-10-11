@@ -3,6 +3,7 @@ from ufl import (
 				dx,
 				grad,
 				div,
+				conj,
 				)
 def EnthalpyEqTimeDerivative(self,fluc,X,mean):
-	self.B_real_vf.add( mean.rho*fluc.h*X*self.R*dx-fluc.p*X*self.R*dx)
+	self.B_vf.add( mean.rho*fluc.h*conj(X)*self.R*dx-fluc.p*conj(X)*self.R*dx)

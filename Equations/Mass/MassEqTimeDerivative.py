@@ -1,3 +1,6 @@
-from ufl import dx
+from ufl import (
+				dx,
+				conj,
+				)
 def MassEqTimeDerivative(self,fluc,X,mean,param):
-	self.B_real_vf.add( fluc.rho*self.R*X*dx)
+	self.B_vf.add( fluc.rho*self.R*conj(X)*dx)
