@@ -7,6 +7,17 @@ Created on Tue Sep 15 12:15:31 2020
 """
 
 def TransferFunctionPoint(param,FEMSpace,mean,index1,index2, response_abs, response_arg):
+	"""google type docstring
+
+	Args:
+		param (_type_): _description_
+		FEMSpace (_type_): _description_
+		mean (_type_): _description_
+		index1 (_type_): _description_
+		index2 (_type_): _description_
+		response_abs (_type_): _description_
+		response_arg (_type_): _description_
+	"""
 	# param.FlowMode in ['LowMachEnthalpy']
 	#input: response_abs, response_arg, MeanFlow(for normalization),
 	#       probe_names: variable names, probe_points: probe positions
@@ -57,6 +68,17 @@ def TransferFunctionPoint(param,FEMSpace,mean,index1,index2, response_abs, respo
 		writeTF2CSV(p_name,abs_li,arg_li,index2)
 
 def FTF(param,mean,fluc_real,fluc_imag):
+	"""sphinx type docstring
+
+	:param param: _description_
+	:type param: _type_
+	:param mean: _description_
+	:type mean: _type_
+	:param fluc_real: _description_
+	:type fluc_real: _type_
+	:param fluc_imag: _description_
+	:type fluc_imag: _type_
+	"""
 	from fenics import Measure,inner,FacetNormal,dx,assemble,Constant
 	import numpy as np
 	MeanFlowDict=mean.MeanFlowDict
@@ -98,6 +120,20 @@ def FTF(param,mean,fluc_real,fluc_imag):
 	print('FTF gain: '+str(FTF_gain)+', FTF phase: '+str(FTF_phase))
 
 def FTFAndHeatRelease(param,FEMSpace,MeanFlow,index1,index2,response_real, response_imag):
+	"""_summary_
+
+	Args:
+		param (_type_): _description_
+		FEMSpace (_type_): _description_
+		MeanFlow (_type_): _description_
+		index1 (_type_): _description_
+		index2 (_type_): _description_
+		response_real (_type_): _description_
+		response_imag (_type_): _description_
+
+	Returns:
+		_type_: _description_
+	"""
 	#input: response_real, response_imag, MeanFlow(for normalization),
 	#       probe_names: variable names
 	#Currently implemented for Global

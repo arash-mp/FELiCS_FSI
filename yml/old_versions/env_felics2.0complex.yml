@@ -1,0 +1,29 @@
+name: felics2.0complex
+# comment: this version worked for ubuntu WSL and c14 CentOS system but not for Mac M2
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9.13
+  - numpy=1.23.3
+  - matplotlib==3.3.2=0
+  - colorama=0.4.5
+  - h5py=3.7.0
+  - fenics-ffcx==0.5.0
+  - fenics-basix=0.5.0
+  - fenics-dijitso=2019.1.0
+  - fenics-dolfinx=0.5.1
+  - fenics-libdolfinx==0.5.1
+  - fenics-libbasix==0.5.0
+  - fenics-ufcx==0.5.0
+  - fenics-ufl==2022.2.0
+  - fenics-fiat=2019.1.0
+  - petsc==3.17.3=complex_*
+  - slepc==3.17.1=complex_*
+  - petsc4py==3.17.1=complex_*
+  - slepc4py==3.17.1=complex_*
+  - pyvista=0.36.1
+  - ipykernel
+  - pip:
+    - scipy==1.9.1
+    - gmsh==4.10.5
