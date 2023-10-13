@@ -99,11 +99,8 @@ class parameters():
 		\t Input:
 		\t -filestring: path of parameter file
 		'''
-		from MixtureClass import MixtureClass
 		if '.h5' in filestring:
 			self.Case.importFromH5File(filestring)
-			#The Mixture is not loaded but constructed from the inputs
-			self.Case.Mixture=MixtureClass(self.Case.MixtureFilePath,self.Case.SpeciesFilePath)
 			self.FlowInput.importFromH5File(filestring)
 			self.BCs.importFromH5File(filestring)
 			self.BCs.readDomainData(self.Case.MeshFilePath,
@@ -114,8 +111,6 @@ class parameters():
 		else:
 
 			self.Case.importSettings(filestring)
-			#The Mixture is not loaded but constructed from the inputs
-			self.Case.Mixture=MixtureClass(self.Case.MixtureFilePath,self.Case.SpeciesFilePath)
 			self.FlowInput.importSettings(filestring)
 			self.BCs.importSettings(filestring)
 			self.BCs.readDomainData(self.Case.MeshFilePath,

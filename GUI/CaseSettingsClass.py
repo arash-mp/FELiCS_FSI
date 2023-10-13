@@ -1,5 +1,6 @@
 from .SettingsClass import Settings
-
+from MixtureClass import MixtureClass
+from reactionMechanism import reactionMechanismClass
 class CaseSettingsClass(Settings):
 	def __init__(self):
 		'''Initializing the Case settings '''
@@ -14,6 +15,7 @@ class CaseSettingsClass(Settings):
 			else:
 				tempStr='self.'+key+'='+str(CaseSettingsDict[key]['default'])
 			exec(tempStr)
+		self.reactionMechanism = reactionMechanismClass('None') 
 
 
 	def getAllSettingsDict(self):
@@ -46,17 +48,36 @@ class CaseSettingsClass(Settings):
 			#'SetOfEquations':{'datatype':dict,'default':{'Navier-Stokes':'Primitive Variables','Energy':'None','Species': 'None', 'equationOfState': 'None'}}
 	def importSettings(self,settingFilePath):
 		''' Loading Case parameters from file '''
+		from reactionMechanism import reactionMechanismClass
 		CaseSettingsDict=self.getAllSettingsDict()
 		if not settingFilePath =='':
 			file = open(settingFilePath)
 
 			#Read whole file
 			lines = file.readlines()
-			# Add every line of the file as an attribute to the object
+			#Add every line of the file as an attribute to the object
 			for line in lines:
 				if line.split('=')[0].strip() in list(CaseSettingsDict.keys()):
 					exec('self.'+line)
 			file.close()
+			#The Mixture and reaction are not loaded but constructed from the inputs
+			self.Mixture = MixtureClass(
+				self.MixtureFilePath,
+				self.SpeciesFilePath,
+				)
+			self.reactionMechanism = reactionMechanismClass(self.Mixture.getReactionMechanism()['type']) 
+	def importFromH5File(self, h5FileName):
+		"""
+		This function adapts the inherited function of same name from the SettingsClass
+		"""
+		from reactionMechanism import reactionMechanismClass
+		super().importFromH5File(h5FileName);
+		#The Mixture is not loaded but constructed from the inputs
+		self.Mixture = MixtureClass(
+			self.MixtureFilePath,
+			self.SpeciesFilePath,
+			)
+		self.reactionMechanism = reactionMechanismClass(self.Mixture.getReactionMechanism()['type']) 
 
 	def getInternalVelocityComponents(self):
 		''' Provides a list of velocity components, which are directed within the dimensions of the mesh '''
@@ -173,9 +194,6 @@ class CaseSettingsClass(Settings):
 			MeanList.append('molarMass')
 		if self.Reaction:
 			MeanList.append('dQ')
-		#if self.Compressible:
-		#	MeanList.append('p')
-		#	MeanList.append('gamma')
 		printDebug(True,"Mean flow fields to be read are " +str(MeanList))
 		return MeanList
 

@@ -432,6 +432,7 @@ class CaseSettingsGUI():
 		\t Input:
 		\t -mainGUI: Needed to pass the changes in the parameter file'''
 		from MixtureClass import MixtureClass
+		from reactionMechanism import reactionMechanismClass
 		#from loadSpecies import loadSpecies
 		mainGUI.param.Case.nDim=int(self.nDimStr.get())
 		mainGUI.param.Case.CoordinateSystem=self.coordSysStr.get()
@@ -447,6 +448,8 @@ class CaseSettingsGUI():
 		mainGUI.param.Case.MeshFilePath=self.MeshFilePathStr.get()
 		mainGUI.param.Case.MixtureFilePath=self.MixtureFilePathStr.get()
 		mainGUI.param.Case.Mixture=MixtureClass(self.MixtureFilePathStr.get(),self.SpeciesFilePathStr.get())
+		mainGUI.param.Case.reactionMechanism = reactionMechanismClass(
+			main.param.Case.Mixture.getReactionMechanism()['type']) 
 		mainGUI.param.Case.SpeciesFilePath=self.SpeciesFilePathStr.get()
 		setOfEquations = {}
 		setOfEquations['Momentum'] = {
