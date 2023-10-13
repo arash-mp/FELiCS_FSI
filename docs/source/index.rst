@@ -1,0 +1,62 @@
+.. FELiCS2.0 documentation master file, created by
+   sphinx-quickstart on Wed Jun 21 16:35:23 2023.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+   
+.. .. automodule:: Equations.Momentum.addMomentumEq
+..     :members:
+=====================================
+FELiCS2.0
+=====================================
+
+The goal of the FELiCS project is to (further) develop a code (FELiCS) that applies linear analysis to multi-physics flow problems.
+The software should provide a simple access to the related methods (Stability analysis, Resolvent analysis, Input-Output analysis) and allow a user to apply the code without significant knowledge about its details and implementation to flows in complex geometries.
+
+---------------
+Contents
+---------------
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   installation_guide
+   tutorial_1
+   api/modules
+
+
+
+Validation Cases
+-------------
+
+The validation cases can be downloaded `here <https://tubcloud.tu-berlin.de/s/3MQCKgK7JKGSDdx>`_
+
+
+External Guides
+-------------
+
+- `A nice guide to Solving PDEs in Python <https://fenicsproject.org/pub/tutorial/pdf/fenics-tutorial-vol1.pdf>`_
+- `Best Practice Guidelines for Coding <https://www.overleaf.com/project/61dd7ece45e8fc038220b1b0>`_
+
+
+How to write a guide or documentation file
+-------------
+
+- All guides and documentation files should be written in markdown or rst file format. 
+- The template is in docs/source/markdown_template.md
+- To add a file to the documentation, put the markdown or rst file in the docs/source folder
+- Then, add the filename to the index file: docs/source/index.rst
+
+How to write docstrings
+-------------
+
+- see PostProcessing.py for example
+- https://numpydoc.readthedocs.io/en/latest/format.html
+- https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
+- VSCode extension: autoDocstring - Python Docstring Generator is helpful!
+
+Indices and tables
+-------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

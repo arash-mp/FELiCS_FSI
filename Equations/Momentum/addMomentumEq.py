@@ -1,4 +1,16 @@
 def addMomentumEq(self,fluc,X,mean,param):
+	"""
+	This functions adds the momentum equation. This is test docstring written by Lukas.
+
+	input:
+	
+		fluc : fluc
+		X : ...
+		mean : ...
+		param : ...
+
+
+	"""
 	from Equations.Momentum.MomentumEqTimeDerivative import MomentumEqTimeDerivative
 	from Equations.Momentum.MomentumEqAdvection import MomentumEqAdvection
 	from Equations.Momentum.MomentumEqPressureGradient import MomentumEqPressureGradient

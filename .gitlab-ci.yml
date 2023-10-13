@@ -1,0 +1,32 @@
+# The Docker image that will be used to build your app
+image: python:3.10-slim-bullseye
+variables:
+  GIT_STRATEGY: clone  
+# Functions that should be executed before the build script is run
+before_script:
+  - git --version
+  - python3 -m venv local-runner-env
+  - source local-runner-env/bin/activate
+  - pip3 install -U sphinx
+  - pip3 install -U myst-parser
+  - pip3 install -U sphinx-book-theme
+
+pages:
+  script:
+  - cd docs
+  - mkdir ../public
+  - python3 --version
+  - pip list
+  - make html
+  - ls
+  - cp -r build/html/ ../public/.
+  - cd ..
+  - cp -r public/html/* public/
+  - rm -r public/html/
+
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+    - documentation
