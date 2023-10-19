@@ -27,6 +27,7 @@ class CaseSettingsClass(Settings):
 			'MolViscPerturbModel':{'datatype':str,'default':'None'},
 			'MolVisc':{'datatype':int,'default':0.0},
 			'AnalysisMode':{'datatype':str,'default':'Modal'},
+			'AdjointFlag':{'datatype':bool,'default':True},
 			'TransVelFluc':{'datatype':bool,'default':False},
 			'SetOfEquations':{'datatype':dict,'default':{
 				'Momentum':{'Equation':'NSPrimitive','Variable':'u'},
