@@ -66,9 +66,9 @@ from petsc4py.PETSc import ScalarType
 
 #from fenics import  PETScMatrix, PETScVector,DirichletBC, as_backend_type
 from scipy.sparse import (
-	csr_matrix,
-	csc_matrix
-	)
+    csr_matrix,
+    csc_matrix
+    )
 from functions import *
 #from fenics import FunctionAssigner,Constant
 import pdb
@@ -168,10 +168,16 @@ class WeakFormulationCollectionClass():
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
-            from Equations.Momentum.addMomentumEq import addMomentumEq
+            # -- > Previous implementation
+            #from Equations.Momentum.addMomentumEq import addMomentumEq
+            # -- > Tensor implementation (not working for cyl coord)
+            from Equations.Momentum.addMomentumEq_incomp_tensorial import addMomentumEq
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
-            from Equations.Mass.addMassEq import addMassEq
+            # -- > Previous implementation
+            #from Equations.Mass.addMassEq import addMassEq
+            # -- > Tensor implementation (not working for cyl coord)
+            from Equations.Mass.addMassEq_tensorial import addMassEq
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
@@ -186,13 +192,16 @@ class WeakFormulationCollectionClass():
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
-            	from Equations.Species.addSpeciesEq import addSpeciesEq
-            	print('Adding Equation for species '+specie + ' in non-conservative form')
-            	addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
+                # -- > Previous implementation
+                #from Equations.Species.addSpeciesEq import addSpeciesEq
+                # -- > Tensor implementation (not working for cyl coord)
+                from Equations.Species.addSpeciesEq_tensorial import addSpeciesEq
+                print('Adding Equation for species '+specie + ' in non-conservative form')
+                addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
             elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
-            	from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
-            	print('Adding Equation for species '+specie +' in conservative form')
-            	addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
+                from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+                print('Adding Equation for species '+specie +' in conservative form')
+                addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
 
         # Add reactions
 
@@ -391,9 +400,9 @@ class WeakFormulationCollectionClass():
 
             bcFunction.x.array[:] = 0.0
             for bc in bcs:
-            	dofs = bc.dof_indices()[0]
-            	bc_vals = 1.0
-            	bcFunction.x.array[dofs] = bc_vals
+                dofs = bc.dof_indices()[0]
+                bc_vals = 1.0
+                bcFunction.x.array[dofs] = bc_vals
             BC_Diriclet.setDiagonal(bcFunction.vector)
             BC_Diriclet.assemble()
         # In the next 12 lines the Imaginary and real parts of both the lhs and rhs matrix are combined to the
@@ -481,7 +490,7 @@ class WeakFormulationCollectionClass():
         '''
         This function provides the P matrix, which restricts the forcing
         '''
-	
+    
         self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
         #self.__nVelocityComponents = self.__param.nVelocityComponents
         self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
