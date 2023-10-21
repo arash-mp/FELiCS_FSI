@@ -1,5 +1,6 @@
 class reactionClass():
     def __init__(
+            self,
             educts, 
             products,
             reactionMechanism, 
@@ -83,7 +84,7 @@ class reactionMechanismClass():
         if self.__reactionMechanism in ['EBU_CnF_Kaiser2023']:            
             self.__numberOfSpecies = 1
             self.__numberOfReactions = 1
-            self.__reactionList.append(reaction('','progress'),reactionMechanism, fluc, mean)
+            self.__reactionList.append(reactionClass('','progress',reactionMechanism, fluc, mean))
             self.__additionalMeanFieldQuantities.append('rr_prefactor')
 
 

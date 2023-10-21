@@ -196,6 +196,8 @@ class fieldProperties:
 		else:
 			if 'rho' in self._transportedQuantities:
 				return self._fieldDict['rho']
+		#	elif self._param.Case.SetOfEquations['EquationOfState']['Equation'] == 'LowMach':
+		#		return -self._mean['rho']/self._mean['T']*self.T
 			else:
 				return self._zeroField
 

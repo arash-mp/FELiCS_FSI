@@ -28,8 +28,10 @@ from dependentVariables.enthalpyHandler import enthalpyHandler
 from dependentVariables.heatReleaseHandler import heatReleaseHandler
 from dependentVariables.laminarDiffusionHandler import laminarDiffusionHandler
 from dependentVariables.temperatureHandler import temperatureHandler
+from dependentVariables.equationOfStateHandler import equationOfStateHandler
 from functions import (
-    printWarning
+    printError,
+    printWarning,
 )
 from export import export
 
@@ -40,7 +42,8 @@ class fluctuationClass(
     enthalpyHandler,
     heatReleaseHandler,
     laminarDiffusionHandler,
-    temperatureHandler
+    temperatureHandler,
+    equationOfStateHandler
     ):
     """
     This class fulfills two purposes. First, it is a wrapper for the test
@@ -130,17 +133,25 @@ class fluctuationClass(
                     tempField = self._fluc
                 self._fieldDict[field] = tempField
 
+        # Check if two out of p, rho and T are in the fieldDict
+        if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
+            equationOfStateHandler.__init__(
+                self,
+                param,
+                mean,
+                )
+
         viscosityHandler.__init__(
             self
         )
         self._meanfieldDict = None
 
         if param.Case.SetOfEquations['Energy']['Equation'] in ['Enthalpy']:
-            temperatureHandler.__init__(
-                self,
-                param,
-                mean
-            )
+            #temperatureHandler.__init__(
+            #    self,
+            #    param,
+            #    mean
+            #)
             enthalpyHandler.__init__(
                 self,
                 param,
@@ -152,7 +163,12 @@ class fluctuationClass(
             param,
             mean
         )
-
+        if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
+            equationOfStateHandler.__init__(
+                self,
+                param,
+                mean,
+                )
         if param.Case.Reaction \
                 and param.Case.Mixture.getReactionMechanism()['type'] \
                 == '2S-SM2':
@@ -169,7 +185,8 @@ class fluctuationSolutions(
     heatReleaseHandler,
     laminarDiffusionHandler,
     temperatureHandler,
-    export
+    equationOfStateHandler,
+    export,
 ):
     """
     This class contains the solutions to the linearized equations in form of the
@@ -288,17 +305,24 @@ class fluctuationSolutions(
         """
 
         self._fieldDict = self._mapCalcToExport(self._vmixedVector)
+        # Check if two out of p, rho and T are in the fieldDict
+        if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
+            equationOfStateHandler.__init__(
+                self,
+                self._param,
+                self._mean.getVertexValues(),
+                )
 
         fieldProperties.__init__(self)
         viscosityHandler.__init__(self)
         self._meanfieldDict = None
 
         if self._param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            temperatureHandler.__init__(
-                self,
-                self._param,
-                self._mean.getVertexValues()
-            )
+            #temperatureHandler.__init__(
+            #    self,
+            #    self._param,
+            #    self._mean.getVertexValues()
+            #)
             enthalpyHandler.__init__(
                 self,
                 self._param,
@@ -310,6 +334,14 @@ class fluctuationSolutions(
             self._param,
             self._mean.getVertexValues()
         )
+
+        # Check if two out of p, rho and T are in the fieldDict
+        if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
+            equationOfStateHandler.__init__(
+                self,
+                self._param,
+                self._mean.getVertexValues(),
+                )
 
         if self._param.Case.Reaction \
                 and self._param.Case.Mixture.getReactionMechanism()['type'] \
