@@ -92,10 +92,12 @@ class CoordinateSystem():
             self.ch = as_tensor([ch1, ch2, ch3])
             self.cov_metric = as_matrix([[1, 0, 0], \
                                          [0, x[0]*x[0], 0], \
-                                         [0, 0, 1]])
+                                         [0, 0, 1]]
+                                        )
             self.con_metric = as_matrix([[1, 0, 0], \
                                          [0, 1/(x[0]*x[0]), 0], \
-                                         [0, 0, 1]])
+                                         [0, 0, 1]]
+                                        )
             
         elif name == "cylindricalfelics":
             self.dim = 3
@@ -120,10 +122,12 @@ class CoordinateSystem():
             self.ch = as_tensor([ch1, ch2, ch3])
             self.cov_metric = as_matrix([[1, 0, 0], \
                                          [0, 1, 0], \
-                                         [0, 0, x[1]*x[1]]])
+                                         [0, 0, x[1]*x[1]]]
+                                        )
             self.con_metric = as_matrix([[1, 0, 0], \
                                          [0, 1, 0], \
-                                         [0, 0, 1/(x[1]*x[1])]])
+                                         [0, 0, 1/(x[1]*x[1])]]
+                                        )
 
         elif name == "spherical":
             """
