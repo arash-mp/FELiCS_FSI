@@ -19,7 +19,8 @@ from tensor_utils import (
     iDiv,
     iGrad,
     iConj,
-    iOuter
+    iOuter,
+    iT
 )
 from functions import printWarning
 
@@ -43,20 +44,34 @@ def addMomentumEq(self,fluc,X,mean,param):
     '''
 
     # ------------------------ Define the tensorial operators
-    # HARDCODED "mesh_dims" and "as_vector(x1, x2, 0.0)" to cartesian coords!
-    coord_sys = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
-    # HARDCODED FOR CYL COORD IN FELiCS, DEFINED AS (Z, R, PHI)!
-    #coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
-
-    x_tens = Tensor(as_vector((X[0], X[1], 0.0)), coord_sys)
-    rho_mean_tens = Tensor(mean.rho, coord_sys)
-    nutot_mean_tens = Tensor(mean.nuTot, coord_sys)
-    nulam_fluc_tens = Tensor(fluc.nulam, coord_sys)
-    rho_fluc_tens = Tensor(fluc.rho, coord_sys)
-    p_fluc_tens = Tensor(fluc.p, coord_sys)
-    u_fluc_tens = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord_sys)
-    u_mean_tens = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord_sys)
-    nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord_sys)
+    if param.Case.CoordinateSystem =='Cartesian':
+        # HARDCODED "mesh_dims" and "as_vector(x1, x2, 0.0)" to cartesian coords
+        coord_sys = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
+        x_tens = Tensor(as_vector((X[0], X[1], 0.0)), coord_sys)
+        rho_mean_tens = Tensor(mean.rho, coord_sys)
+        nutot_mean_tens = Tensor(mean.nuTot, coord_sys)
+        nulam_fluc_tens = Tensor(fluc.nulam, coord_sys)
+        rho_fluc_tens = Tensor(fluc.rho, coord_sys)
+        p_fluc_tens = Tensor(fluc.p, coord_sys)
+        u_fluc_tens = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord_sys)
+        u_mean_tens = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord_sys)
+        nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord_sys)
+    
+    elif param.Case.CoordinateSystem =='Cylindrical':
+        # HARDCODED FOR CYL COORD IN FELiCS, DEFINED AS (Z, R, PHI)!
+        coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
+        x_tens = Tensor(as_vector((X[0], X[1], X[2])), coord_sys)
+        rho_mean_tens = Tensor(mean.rho, coord_sys)
+        nutot_mean_tens = Tensor(mean.nuTot, coord_sys)
+        nulam_fluc_tens = Tensor(fluc.nulam, coord_sys)
+        rho_fluc_tens = Tensor(fluc.rho, coord_sys)
+        p_fluc_tens = Tensor(fluc.p, coord_sys)
+        u_fluc_tens = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord_sys)
+        u_mean_tens = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord_sys)
+        nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord_sys)
+        
+    else:
+        printWarning('Coord. syst not yet implemented in tensor framework.')
 
     # Disclaimers
     if param.NumericalScheme in ['Discontinuous Galerkin']:
@@ -84,50 +99,58 @@ def addMomentumEq(self,fluc,X,mean,param):
 
     # ------------------------ Convective terms
 
-    # Integrate convective terms in domain (integration by parts is applied)
+    ## Integrate convective terms in domain (integration by parts is applied)
     # -- > Previous implementation
     I=Identity( fluc.u.geometric_dimension() )
     #self.A_vf.add(1j * Dx(self.R * conj(X[i]) * mean.rho * mean.u[j] ,k) * fluc.u[i] * I[k,j] * dx)
-    #self.A_vf.add(1j * Dx(self.R * conj(X[i]) * mean.rho * fluc.u[j] ,k) * mean.u[i] * I[k,j] * dx)
-    #self.A_vf.add(1j * Dx(self.R * conj(X[i]) * fluc.rho * mean.u[j] ,k) * mean.u[i] * I[k,j] * dx)
-    # -- > Tensor implementation (not working for cyl coord)
-    self.A_vf.add( (1j * iDot(iDiv(iOuter(iConj(x_tens), rho_mean_tens*u_mean_tens)), u_fluc_tens)\
-                        ).ufl_tens * coord_sys.J_hat * dx)
-    self.A_vf.add( (1j * iDot(iDiv(iOuter(iConj(x_tens), rho_mean_tens*u_fluc_tens)), u_mean_tens)\
-                        ).ufl_tens * coord_sys.J_hat * dx)
-    self.A_vf.add( (1j * iDot(iDiv(iOuter(iConj(x_tens), rho_fluc_tens*u_mean_tens)), u_mean_tens)\
-                        ).ufl_tens * coord_sys.J_hat * dx)
+    self.A_vf.add(1j * Dx(self.R * conj(X[i]) * mean.rho * fluc.u[j] ,k) * mean.u[i] * I[k,j] * dx)
+    self.A_vf.add(1j * Dx(self.R * conj(X[i]) * fluc.rho * mean.u[j] ,k) * mean.u[i] * I[k,j] * dx)
+    
+    # -- > Tensor implementation which mimicks the previous implementation in FELiCS
+    #self.A_vf.add( (1j * iDot(iDiv( iOuter(iConj(x_tens), rho_mean_tens*u_mean_tens) ), u_fluc_tens)).ufl_tens * coord_sys.J_hat * dx)
+    #self.A_vf.add( (1j * iDot(iDiv( iOuter(iConj(x_tens), rho_mean_tens*u_fluc_tens) ), u_mean_tens)).ufl_tens * coord_sys.J_hat * dx)
+    #self.A_vf.add( (1j * iDot(iDiv( iOuter(iConj(x_tens), rho_fluc_tens*u_mean_tens) ), u_mean_tens)).ufl_tens * coord_sys.J_hat * dx)
+    
+    # -- > Tensor implementation derived by hand (deosn't seem to work)
+    self.A_vf.add( (1j * iInner(iGrad( iConj(x_tens) ), rho_mean_tens*iOuter( u_fluc_tens, u_mean_tens )) ).ufl_tens * coord_sys.J_hat * dx)
+    #self.A_vf.add( (1j * iInner(iGrad( iConj(x_tens) ), rho_mean_tens*iOuter( u_mean_tens, u_fluc_tens )) ).ufl_tens * coord_sys.J_hat * dx)
+    #self.A_vf.add( (1j * iInner(iGrad( iConj(x_tens) ), rho_fluc_tens*iOuter( u_mean_tens, u_mean_tens )) ).ufl_tens * coord_sys.J_hat * dx)
+    
     # NOTE: The last term above has not been validated yet.
-
-    ## Project flux normal to boundary (scalar product with n_BC)
-    # and add it to the momentum equation
-    # -- > Previous implementation
-    #self.A_vf.add(1j * (- self.R * conj(X[i]) * mean.rho * mean.u[j] * fluc.u[i] * self.n_BC[k] * I[k,j]\
-    #            - self.R * conj(X[i]) * mean.rho * fluc.u[j] * mean.u[i] * self.n_BC[k] * I[k,j]\
-    #            - self.R * conj(X[i]) * fluc.rho * mean.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
-    # -- > Tensor implementation (not working for cyl coord)
-    self.A_vf.add( (-1j * rho_mean_tens*iDot(u_mean_tens, nbc_tens) \
-                    * iDot(u_fluc_tens, iConj(x_tens)) ).ufl_tens \
-                        * coord_sys.J_hat * self.all_ds)
-    self.A_vf.add( (-1j * rho_mean_tens*iDot(u_fluc_tens, nbc_tens) \
-                    * iDot(u_mean_tens, iConj(x_tens)) ).ufl_tens \
-                        * coord_sys.J_hat * self.all_ds)
-    self.A_vf.add( (-1j * rho_fluc_tens*iDot(u_mean_tens, nbc_tens) \
-                    * iDot(u_mean_tens, iConj(x_tens)) ).ufl_tens \
-                        * coord_sys.J_hat * self.all_ds)
-
+    
     if param.Case.CoordinateSystem in ['Cylindrical']:
         # The terms below should no longer be necessary in tensor framework
         #self.A_vf.add(1j * - conj(X)[2] * mean.rho *mean.u[1] * fluc.u[2] * dx)
         #self.A_vf.add(1j * - conj(X)[2] * mean.rho *fluc.u[1] * mean.u[2] * dx)
         #self.A_vf.add(1j * - conj(X)[2] * fluc.rho *mean.u[1] * mean.u[2] * dx)
 
-        #self.A_vf.add(1j * conj(X)[1] * mean.u[2] * fluc.u[2] * mean.rho * dx\
-        #              + 1j * conj(X)[1] * fluc.u[2] * mean.u[2] * mean.rho * dx\
-        #              + 1j * conj(X)[1] * mean.u[2] * mean.u[2] * fluc.rho * dx)
+        #self.A_vf.add(1j * conj(X)[1] * mean.u[2] * fluc.u[2] * mean.rho * dx)
+        #self.A_vf.add(1j * conj(X)[1] * fluc.u[2] * mean.u[2] * mean.rho * dx)
+        #self.A_vf.add(1j * conj(X)[1] * mean.u[2] * mean.u[2] * fluc.rho * dx)
 
         if not param.Case.m == 0:
             self.A_vf.add(mean.rho * conj(X)[i] * param.Case.m * mean.u[2] * fluc.u[i] * dx)
+
+    ## Project flux normal to boundary (scalar product with n_BC)
+    # and add it to the momentum equation
+    # -- > Previous implementation
+    self.A_vf.add(1j * (- self.R * conj(X[i]) * mean.rho * mean.u[j] * fluc.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
+    self.A_vf.add(1j * (- self.R * conj(X[i]) * mean.rho * fluc.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
+    self.A_vf.add(1j * (- self.R * conj(X[i]) * fluc.rho * mean.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
+    
+    # -- > Tensor implementation which mimicks the previous implementation in FELiCS
+    #self.A_vf.add( (-1j * rho_mean_tens * iDot(u_mean_tens, nbc_tens) * iDot(u_fluc_tens, iConj(x_tens)) ).ufl_tens*coord_sys.J_hat*self.all_ds)
+    #self.A_vf.add( (-1j * rho_mean_tens*iDot(u_fluc_tens, nbc_tens) * iDot(u_mean_tens, iConj(x_tens)) ).ufl_tens*coord_sys.J_hat*self.all_ds)
+    #self.A_vf.add( (-1j * rho_fluc_tens*iDot(u_mean_tens, nbc_tens) * iDot(u_mean_tens, iConj(x_tens)) ).ufl_tens*coord_sys.J_hat*self.all_ds)
+    
+    # -- > Tensor implementation derived by hand
+    #self.A_vf.add( (-1j * iDot( iDot( (rho_mean_tens*iOuter(u_fluc_tens, u_mean_tens)), iConj(x_tens) ), nbc_tens) ).ufl_tens*coord_sys.J_hat*self.all_ds)
+    #self.A_vf.add( (-1j * iDot( iDot( (rho_mean_tens*iOuter(u_mean_tens, u_fluc_tens)), iConj(x_tens) ), nbc_tens) ).ufl_tens*coord_sys.J_hat*self.all_ds)
+    #self.A_vf.add( (-1j * iDot( iDot(rho_fluc_tens * iOuter(u_mean_tens, u_mean_tens), iConj(x_tens)), nbc_tens) ).ufl_tens*coord_sys.J_hat*self.all_ds)
+    
+    #self.A_vf.add( (-1j * iDot(iDot(iConj(x_tens), rho_mean_tens * iOuter(u_fluc_tens, u_mean_tens)), nbc_tens)).ufl_tens*coord_sys.J_hat*self.all_ds)
+    #self.A_vf.add( (-1j * iDot(iDot(iConj(x_tens), rho_mean_tens * iOuter(u_mean_tens, u_fluc_tens)), nbc_tens)).ufl_tens*coord_sys.J_hat*self.all_ds)
+    #self.A_vf.add( (-1j * iDot(iDot(iConj(x_tens), rho_fluc_tens * iOuter(u_mean_tens, u_mean_tens)), nbc_tens) ).ufl_tens*coord_sys.J_hat*self.all_ds)
 
 
     # ------------------------ Pressure gradient terms
@@ -177,10 +200,10 @@ def addMomentumEq(self,fluc,X,mean,param):
     # NOTE: The term with nulam_fluc has not been validated yet
 
     # ---- Visc. 3: additional viscous terms for incompressible flow in cyl. coord
-    if param.Case.CoordinateSystem =='Cylindrical':									#is this necessary? (CA)
-        self.A_vf.add(1j * -mean.nuTot/self.R*conj(X)[2]*fluc.u[2]*dx)#
-        self.A_vf.add(1j * -mean.nuTot.dx(1)*conj(X)[2]*fluc.u[2]*dx)
-        self.A_vf.add(1j * -mean.nuTot*conj(X)[1]/self.R*fluc.u[1]*dx)#
+    #if param.Case.CoordinateSystem =='Cylindrical':									#is this necessary? (CA)
+        #self.A_vf.add(1j * -mean.nuTot/self.R*conj(X)[2]*fluc.u[2]*dx)#
+        #self.A_vf.add(1j * -mean.nuTot.dx(1)*conj(X)[2]*fluc.u[2]*dx)
+        #self.A_vf.add(1j * -mean.nuTot*conj(X)[1]/self.R*fluc.u[1]*dx)#
     if not param.Case.m == 0:
         self.A_vf.add(-2*mean.nuTot/self.R*self.m*conj(X)[2]*fluc.u[1]*dx)#
         self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(0)*self.m*fluc.u[0]*dx)
