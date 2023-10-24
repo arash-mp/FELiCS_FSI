@@ -7,12 +7,13 @@ from functions import printWarning
 from export import export
 from dependentVariables.viscosityHandler import viscosityHandler
 from fieldProperties import fieldProperties
-
+from dependentVariables.energyHandler import energyHandler
 
 class meanFlowClass(
     fieldProperties,
+    energyHandler,
     viscosityHandler,
-    export
+    export,
 ):
     """
     Parent classes:
@@ -28,6 +29,8 @@ class meanFlowClass(
             param,
             FEMSpaces
     ):
+        self._isMean = True
+        self._isFluctuation = False
         self._param = param
         self._FEMSpaces = FEMSpaces
         fieldProperties.__init__(self)
@@ -37,7 +40,7 @@ class meanFlowClass(
         self.__ZeroField = Function(self._FEMSpaces.P2)
         self.__OneField = Function(self._FEMSpaces.P2)
         self.__OneField.x.array[:] = 1.0
-
+        
         #self.addDerivativeFieldsToMean()
         #self.initLamDiff()
         #if param.Case.Reaction:
@@ -209,7 +212,7 @@ class meanFlowClass(
         indexMappingArray = mappingFunc(coordArray, coordinatesOfP2Mesh)
 
         fieldDict = {}
-        for name in self._param.Case.getMeanFlowFieldNames():
+        for name in self._getMeanFieldsToBeRead():
             if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
                 fieldDict[name] = Function(
                     self._FEMSpaces.FunctionSpaceVectorVelocity)
@@ -245,7 +248,7 @@ class meanFlowClass(
         # List of fields, which are not in the import file
         self.__notInFileList = []
         ## Get Mean flow names
-        nameListMean = Case.getMeanFlowFieldNames()
+        nameListMean = self._getMeanFieldsToBeRead()
         ## Get AVBP mesh file path
         filePath = self._param.FlowInput.MeanFlowFilePath
         # Open hdf5 file
@@ -314,7 +317,7 @@ class meanFlowClass(
         from dolfinx.fem import Function
         from scipy import interpolate
         from Import import ExpandForAverage, ContractAfterAverage
-        nameListMean = self._param.Case.getMeanFlowFieldNames()
+        nameListMean = self._getMeanFieldsToBeRead()
         # Get mesh data
         mesh = self._ScalarFunctionSpace.mesh
         # For three-dimensional databases restrict domain to reduce the number
@@ -838,6 +841,11 @@ class meanFlowClass(
         instance of the class meanFlowVertexValues
         """
         return meanFlowVertexValues(self._meanfieldDict, self._FEMSpaces)
+
+    def _getMeanFieldsToBeRead(self):
+        listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
+        listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
+        return listOfFieldsToBeRead
 
 class meanFlowVertexValues(fieldProperties):
     """

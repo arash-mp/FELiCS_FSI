@@ -186,12 +186,12 @@ class CaseSettingsClass(Settings):
 			MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
 		elif self.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.CoordinateSystem == 'Cartesian':
 			MeanList.extend(['rstxx', 'rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
-		if self.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-			MeanList.append('cp')
-			MeanList.append('alpha')
-			MeanList.append('he')
-			MeanList.append('T')
-			MeanList.append('molarMass')
+	#	if self.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
+	#		MeanList.append('cp')
+	#		MeanList.append('alpha')
+	#		MeanList.append('he')
+	#		MeanList.append('T')
+	#		MeanList.append('molarMass')
 		if self.Reaction:
 			MeanList.append('dQ')
 		printDebug(True,"Mean flow fields to be read are " +str(MeanList))

@@ -24,10 +24,9 @@ from ufl import (
 # Local libraries and methods
 from fieldProperties import fieldProperties
 from dependentVariables.viscosityHandler import viscosityHandler
-from dependentVariables.enthalpyHandler import enthalpyHandler
 from dependentVariables.heatReleaseHandler import heatReleaseHandler
 from dependentVariables.laminarDiffusionHandler import laminarDiffusionHandler
-from dependentVariables.temperatureHandler import temperatureHandler
+from dependentVariables.energyHandler import energyHandler
 from dependentVariables.equationOfStateHandler import equationOfStateHandler
 from functions import (
     printError,
@@ -39,11 +38,10 @@ from export import export
 class fluctuationClass(
     fieldProperties,
     viscosityHandler,
-    enthalpyHandler,
     heatReleaseHandler,
     laminarDiffusionHandler,
-    temperatureHandler,
-    equationOfStateHandler
+    equationOfStateHandler,
+    energyHandler,
     ):
     """
     This class fulfills two purposes. First, it is a wrapper for the test
@@ -106,6 +104,9 @@ class fluctuationClass(
         fieldProperties.__init__(
             self
         )
+        self._isFluctuation = True
+        self._isMean = False
+        self._isSolution = False
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroVelocityField \
             = Function(FEMSpaces.FunctionSpaceVectorVelocity)
@@ -141,34 +142,30 @@ class fluctuationClass(
                 mean,
                 )
 
+        self._meanfieldDict = None
+
+        if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+            energyHandler.__init__(
+                self,
+                )
+            self._initializeEnergyFluctuations()
+
         viscosityHandler.__init__(
             self
         )
-        self._meanfieldDict = None
-
-        if param.Case.SetOfEquations['Energy']['Equation'] in ['Enthalpy']:
-            #temperatureHandler.__init__(
-            #    self,
-            #    param,
-            #    mean
-            #)
-            enthalpyHandler.__init__(
-                self,
-                param,
-                mean
-            )
-
         laminarDiffusionHandler.__init__(
             self,
             param,
             mean
         )
+
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
             equationOfStateHandler.__init__(
                 self,
                 param,
                 mean,
                 )
+
         if param.Case.Reaction \
                 and param.Case.Mixture.getReactionMechanism()['type'] \
                 == '2S-SM2':
@@ -181,11 +178,10 @@ class fluctuationClass(
 class fluctuationSolutions(
     fieldProperties,
     viscosityHandler,
-    enthalpyHandler,
     heatReleaseHandler,
     laminarDiffusionHandler,
-    temperatureHandler,
     equationOfStateHandler,
+    energyHandler,
     export,
 ):
     """
@@ -266,6 +262,7 @@ class fluctuationSolutions(
         """
 
         # dolfinx specific: There is no compute_vertex_values anymore.
+        self._isSolution = True
         self._zeroField = Function(FEMSpaces.P1)
         self._zeroField.x.array[:] = 0.0
         self._zeroVelocityField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
@@ -314,21 +311,17 @@ class fluctuationSolutions(
                 )
 
         fieldProperties.__init__(self)
-        viscosityHandler.__init__(self)
         self._meanfieldDict = None
 
-        if self._param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            #temperatureHandler.__init__(
-            #    self,
-            #    self._param,
-            #    self._mean.getVertexValues()
-            #)
-            enthalpyHandler.__init__(
+        if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+            energyHandler.__init__(
                 self,
-                self._param,
-                self._mean.getVertexValues()
-            )
+                #self._param,
+                #self._mean.getVertexValues(),
+                )
+            self._initializeEnergyFluctuations()
 
+        viscosityHandler.__init__(self)
         laminarDiffusionHandler.__init__(
             self,
             self._param,

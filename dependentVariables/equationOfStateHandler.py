@@ -41,13 +41,13 @@ class equationOfStateHandler:
         if all(item in alreadyDefinedQuantities for item in ['p','T']):
         # Calculate density from pressure and temperature
             if isinstance(mean.T, np.ndarray) and mean.T.shape[0] != self.rho.shape[0]:
-                local_mean_T = mean.T.compute_vertex_values()
-                local_mean_rho = mean.rho.compute_vertex_values()
+                mean_T = mean.T.compute_vertex_values()
+                mean_rho = mean.rho.compute_vertex_values()
             else:
-                local_mean_T = mean.T
-                local_mean_rho = mean.rho
+                mean_T = mean.T
+                mean_rho = mean.rho
             if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'Low-Mach':
-                self._fieldDict['rho'] = -mean['rho']/mean['T']*self.T
+                self._fieldDict['rho'] = -mean_rho / mean_T * self.T
             else:
                 printError('Equation of State ' + param.Case.SetOfEquations['EquationOfState']['Equation'] + ' not defined.')
 
@@ -56,15 +56,15 @@ class equationOfStateHandler:
             printError('Equation of state not defined to yield pressure fluctuation.')
             
         elif all(item in alreadyDefinedQuantities for item in ['rho','p']):
-        # Calculate temperature from density and pressurea
+        # Calculate temperature from density and pressure
             if isinstance(mean.T, np.ndarray) and mean.T.shape[0] != self.rho.shape[0]:
-                local_mean_T = mean.T.compute_vertex_values()
-                local_mean_rho = mean.rho.compute_vertex_values()
+                mean_T = mean.T.compute_vertex_values()
+                mean_rho = mean.rho.compute_vertex_values()
             else:
-                local_mean_T = mean.T
-                local_mean_rho = mean.rho
+                mean_T = mean.T
+                mean_rho = mean.rho
             if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'Low-Mach':
-                self._fieldDict['T'] = -self.rho / local_mean_rho * local_mean_T
+                self._fieldDict['T'] = -self.rho / mean_rho * mean_T
             else:
                 printError('Equation of State ' + param.Case.SetOfEquations['EquationOfState']['Equation'] + ' not defined.')
 

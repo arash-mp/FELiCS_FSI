@@ -1,4 +1,4 @@
-class reactionClass():
+class reactionClass:
     def __init__(
             self,
             educts, 
@@ -38,8 +38,8 @@ class reactionClass():
             ):
         self.__isDisretized == True
         if reactionMechanism in ['EBU_CnF_Kaiser2023']:
-            self.__rr = mean.rr_prefactor * mean.rho * (fluc.Y('c') - 2 * fluc.Y('c') * mean.Y('c'))\
-                      + mean.rr_prefactor * fluc.rho * (mean.Y('c') -     mean.Y('c') * mean.Y('c'))
+            self.__rr = mean.rr_prefactor * mean.rho * (fluc.Y('progress') - 2 * fluc.Y('progress') * mean.Y('progress'))\
+                      + mean.rr_prefactor * fluc.rho * (mean.Y('progress') -     mean.Y('progress') * mean.Y('progress'))
         else:
             printWarning('Reaction ' + self.__name + ' could not be discretized.') 
             self.__isDisretized == False
@@ -70,7 +70,7 @@ class reactionClass():
         return self.__rr
 
 
-class reactionMechanismClass():
+class reactionMechanismClass:
     def __init__(
             self,reactionMechanism, 
             fluc = None, 
@@ -86,6 +86,8 @@ class reactionMechanismClass():
             self.__numberOfReactions = 1
             self.__reactionList.append(reactionClass('','progress',reactionMechanism, fluc, mean))
             self.__additionalMeanFieldQuantities.append('rr_prefactor')
+            self.__additionalMeanFieldQuantities.append('T_u') # unburnt temperature
+            self.__additionalMeanFieldQuantities.append('T_b') # burnt temperature
 
 
     @property
