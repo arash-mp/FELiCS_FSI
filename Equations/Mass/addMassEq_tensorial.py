@@ -14,19 +14,24 @@ from tensor_utils import (
     iDot,
     iConj
 )
-from functions import printWarning
+from functions import printWarning, printError
 
 def addMassEq(self,fluc,X,mean,param):
     '''
     This function builds the weak form of the linearized
     mass conservation equation, in tensorial framework.
+    
+    NOTE:   The "FLAG_TENS" is used to activate the tensor
+            framework in specific terms of the eq. It is possible
+            to combine tensorial terms with index-notation ones
     '''
 
+    # Disclaimers
     if param.NumericalScheme in ['Discontinuous Galerkin']:
         printWarning('Discontinuous Galerkin not implemented in tensorial framework.')
 
     if param.Case.CoordinateSystem =='Cylindrical':
-        printWarning('Cyl. coord. not yet tested in tensor framework.')
+        printWarning('Cyl. coord. still in debugging for tensor framework.')
 
     if not param.Case.m == 0:
         printWarning('m > 0 not yet implemented in tensor framework. \
@@ -38,6 +43,7 @@ def addMassEq(self,fluc,X,mean,param):
 
     if 'rho' in param.Case.getTransportedQuantityList():
         printWarning('Density fluctuations not yet tested in tensor framework.')
+        
 
     # ------------------------ Define the tensorial operators
     if param.Case.CoordinateSystem =='Cartesian':
@@ -61,42 +67,68 @@ def addMassEq(self,fluc,X,mean,param):
 
 
     # ------------------------ Time derivative term used
-    # (if density fluctuations are considered)
-    # THIS TERM WAS NOT TESTED YET!
+    # Only if density fluctuations are considered
+    FLAG_TENS = True
+    
     if 'rho' in param.Case.getTransportedQuantityList():
-        # -- > Previous implementation
-        #self.B_vf.add( fluc.rho*self.R*conj(X)*dx)
-        # -- > Tensor implementation (not working for cyl coord)
-        self.B_vf.add( (rho_fluc_tens*iConj(x_tens)).ufl_tens*coord_sys.J_hat*dx)
+        if FLAG_TENS:
+            printWarning('Density fluctuation term not validated in \
+                tensor framework.')
+            self.B_vf.add( (rho_fluc_tens*iConj(x_tens)).ufl_tens*coord_sys.J_hat*dx)
+            
+        else:
+            # -- > Previous implementation
+            self.B_vf.add( fluc.rho*self.R*conj(X)*dx)        
 
 
     # ------------------------ Advection terms
-    # -- > Previous implementation
-    I = Identity( fluc.u.geometric_dimension() )
-    #self.A_vf.add(1j * conj(X).dx(i)*coord_sys.J_hat*fluc.rhou[j]*I[i,j]*dx)
-    # -- > Tensor implementation (not working for cyl coord)
-    self.A_vf.add( (1j*iDot(iGrad(iConj(x_tens)), rhou_fluc_tens)).ufl_tens*coord_sys.J_hat*dx)
+    # The advection term is integrated by parts
+    FLAG_TENS = True
+    
+    if FLAG_TENS:
+        # -- > Tensor implementation
+        # Volume term from IbP
+        self.A_vf.add( (1j*iDot(iGrad(iConj(x_tens)), rhou_fluc_tens)).ufl_tens*coord_sys.J_hat*dx)
+        
+        # Boundary term from IbP
+        self.A_vf.add( (-1j*iDot(nbc_tens, rhou_fluc_tens*iConj(x_tens)) ).ufl_tens*coord_sys.J_hat*self.all_ds)
+        
+        # Extra term for m > 0 
+        if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
+            printError('m > 0 term not implemented in \
+                tensor framework.')
+        
+    else:
+        # -- > Previous implementation
+        I = Identity(fluc.u.geometric_dimension())
+        
+        # Volume term from IbP
+        self.A_vf.add(1j * conj(X).dx(i)*self.R*fluc.rhou[j]*I[i,j]*dx)
+        
+        # Boundary term from IbP
+        self.A_vf.add(1j * -self.R*fluc.rhou[j]*self.n_BC[i]*conj(X)*I[i,j]*self.all_ds)
+        
+        # Extra term for m > 0 
+        if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
+            self.A_vf.add(conj(X)*mean.rho*self.m*fluc.u[2]*dx)
+            self.A_vf.add(conj(X)*fluc.rho*self.m*mean.u[2]*dx)
 
-    # An integration by part is used to make BC term appear?
-    # -- > Previous implementation
-    #self.A_vf.add(1j * -self.R*fluc.rhou[j]*self.n_BC[i]*conj(X)*I[i,j]*self.all_ds)
-    # -- > Tensor implementation (not working for cyl coord)
-    self.A_vf.add( (-1j*iDot(nbc_tens, rhou_fluc_tens*iConj(x_tens)) ).ufl_tens*coord_sys.J_hat*self.all_ds)
-
-    # m > 0 NOT IMPLEMENTED IN TENSOR FRAMEWORK YET
-    if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-        self.A_vf.add(conj(X)*mean.rho*self.m*fluc.u[2]*dx)
-        self.A_vf.add(conj(X)*fluc.rho*self.m*mean.u[2]*dx)
-
-    # In case of Input-Output analysis, we must adapt the boundary terms...
-    # NOT YET TESTED FOR TENSOR FRAMEWORK
+    # ------------------------ BC term for Input/Output analysis
+    FLAG_TENS = True
+    
     if param.Case.AnalysisMode in ['Input-Output']:
-        # Iterate through all boundaries, at which forcing is applied
-        for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
-            # First subtract the part added in a few lines above...
-            self.A_vf.add(1j * self.R*inner(fluc.u,self.n_BC)*conj(X)*self.ds(boundary_index))
-            # Then add the forcing at the inlet...
-            self.A_vf.add(-self.R*inner(mean.u_forcing_r,self.n_BC)\
-                          *conj(X)*self.ds(boundary_index))
-            self.A_vf.add(1j * -self.R*inner(mean.u_forcing_i,self.n_BC)\
-                          *conj(X)*self.ds(boundary_index))
+        if FLAG_TENS:
+            printError('Input-output analysis not implemented in \
+                tensor framework.')
+            
+        else:
+            # -- > Previous implementation
+            # Iterate through all boundaries, at which forcing is applied
+            for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
+                # First subtract the part added in a few lines above...
+                self.A_vf.add(1j * self.R*inner(fluc.u,self.n_BC)*conj(X)*self.ds(boundary_index))
+                # Then add the forcing at the inlet...
+                self.A_vf.add(-self.R*inner(mean.u_forcing_r,self.n_BC)\
+                            *conj(X)*self.ds(boundary_index))
+                self.A_vf.add(1j * -self.R*inner(mean.u_forcing_i,self.n_BC)\
+                            *conj(X)*self.ds(boundary_index))
