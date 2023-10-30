@@ -445,7 +445,7 @@ def iGrad(T: Tensor):
             diffs.append(row)
             
         gradient = as_matrix(diffs)
-        return Tensor(gradient, T.CoordSys, basis = T.basis + [True])
+        #return Tensor(gradient, T.CoordSys, basis = T.basis + [True])
         i, j, k, l = indices(4)
         gradient += \
             as_tensor(T.ufl_tens[l,j] * T.CoordSys.ch[i,l,k], (i,j,k)) + \
