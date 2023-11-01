@@ -387,7 +387,7 @@ def getMetric(basisA: Union[list, bool, int], basisB: Union[list, bool, int], \
     return metric
 
 
-def iGrad(T: Tensor):
+def iGrad(T: Tensor, m=0):
     # implementing all kind of derivatives is tideous. --> convert every tensor
     # to tangent basis and only implement grads in tangent basis.
     if sum(T.basis) != 0:
@@ -401,7 +401,10 @@ def iGrad(T: Tensor):
             if T.sym[i] == 1:
                 diffs.append(T.ufl_tens.dx(mesh_iter))
             else:
-                diffs.append(0.0)
+                if m==0:
+                    diffs.append(0.0)
+                else:
+                    diffs.append(1j*m*T.ufl_tens) # Added wavenumber on homogeneous direction
             if T.CoordSys.mesh_dims[i] == 1:
                 mesh_iter += 1
         gradient = as_vector(diffs)
@@ -416,7 +419,10 @@ def iGrad(T: Tensor):
                 if T.sym[i][j] == 1:
                     row.append(T.ufl_tens[i].dx(mesh_iter))
                 else:
-                    row.append(0.0)
+                    if m==0:
+                        row.append(0.0)
+                    else:
+                        row.append(1j*m*T.ufl_tens[i]) # Added wavenumber on homogeneous direction
                 if T.CoordSys.mesh_dims[j]:
                     mesh_iter += 1
             diffs.append(row)
@@ -438,7 +444,10 @@ def iGrad(T: Tensor):
                     if T.sym[i][j][k] == 1:
                         column.append(T.ufl_tens[i,j].dx(mesh_iter))
                     else:
-                        column.append(0.0)
+                        if m==0:
+                            column.append(0.0)
+                        else:
+                            column.append(1j*m*T.ufl_tens[i,j]) # Added wavenumber on homogeneous direction
                     if T.CoordSys.mesh_dims[k] == 1:
                         mesh_iter += 1
                 row.append(column)
@@ -458,18 +467,18 @@ def iGrad(T: Tensor):
     return Tensor(gradient, T.CoordSys, basis = T.basis + [True])
     
 
-def iDiv(tensor: Tensor):
+def iDiv(tensor: Tensor, m=0):
     if tensor.order == 0:
         raise ValueError("Divergence of scalars not defined.")
         tensor = convertBasis(tensor, tensor.order*[False])
         
     elif tensor.order == 1:
-        gradient = iGrad(tensor)
+        gradient = iGrad(tensor, m) # Added wavenumber on homogeneous direction
         i = indices(1)
         Div = tr(gradient.ufl_tens)
     
     elif tensor.order == 2:
-        gradient = iGrad(tensor)
+        gradient = iGrad(tensor, m) # Added wavenumber on homogeneous direction
         i,j = indices(2)
         Div = as_tensor(gradient.ufl_tens[i,j,j], (i))
         
