@@ -69,17 +69,17 @@ def addMassEq(self,fluc,X,mean,param):
     if FLAG_TENS:
         # -- > Tensor implementation
         # Volume term from IbP
-        self.A_vf.add( (1j*iDot(iGrad(iConj(x_tens)), rhou_fluc_tens)).ufl_tens*coord_sys.J_hat*dx)
+        self.A_vf.add( (1j*iDot(iGrad(iConj(x_tens), -self.m), rhou_fluc_tens)).ufl_tens*coord_sys.J_hat*dx)
         
         # Boundary term from IbP
         self.A_vf.add( (-1j*iDot(nbc_tens, rhou_fluc_tens*iConj(x_tens)) ).ufl_tens*coord_sys.J_hat*self.all_ds)
         
         # Extra term for m > 0
-        if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-            printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
+        #if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
+        #    printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
             # We can't just add the terms for m > 1 in the tensor framework 
-            self.A_vf.add(conj(X)*mean.rho*self.m*fluc.u[2]*dx)
-            self.A_vf.add(conj(X)*fluc.rho*self.m*mean.u[2]*dx)
+            #self.A_vf.add(conj(X)*mean.rho*self.m*fluc.u[2]*dx)
+            #self.A_vf.add(conj(X)*fluc.rho*self.m*mean.u[2]*dx)
         
     else:
         # -- > Previous implementation

@@ -61,7 +61,7 @@ def addMomentumEq(self,fluc,X,mean,param):
         # HARDCODED FOR CYL COORD IN FELiCS, DEFINED AS (Z, R, PHI)!
         coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
         x_tens = Tensor(as_vector((X[0], X[1], X[2])), coord_sys)
-        u_fluc_tens = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord_sys)
+        u_fluc_tens = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord_sys)
         u_mean_tens = Tensor(as_vector((mean.u[0], mean.u[1], mean.u[2])), coord_sys)
         
     else:
@@ -93,14 +93,15 @@ def addMomentumEq(self,fluc,X,mean,param):
     # ------------------------ Convective terms
     FLAG_TENS = True
     int_by_parts = True
+    
     if int_by_parts:
+        
         if FLAG_TENS:
-            
             # OPT1. -- > Tensor implementation (derived by hand by Jens)
             # -- Volume term from integration by parts
-            self.A_vf.add( (1j * iDot(iDiv( iOuter(iConj(x_tens), rho_mean_tens*u_mean_tens) ), u_fluc_tens)).ufl_tens*coord_sys.J_hat*dx)
-            self.A_vf.add( (1j * iDot(iDiv( iOuter(iConj(x_tens), rho_mean_tens*u_fluc_tens) ), u_mean_tens)).ufl_tens*coord_sys.J_hat*dx)
-            self.A_vf.add( (1j * iDot(iDiv( iOuter(iConj(x_tens), rho_fluc_tens*u_mean_tens) ), u_mean_tens)).ufl_tens*coord_sys.J_hat*dx)
+            self.A_vf.add((1j*iDot(iDiv(iOuter(iConj(x_tens),rho_mean_tens*u_mean_tens), -self.m),u_fluc_tens)).ufl_tens*coord_sys.J_hat*dx)
+            self.A_vf.add((1j*iDot(iDiv(iOuter(iConj(x_tens),rho_mean_tens*u_fluc_tens), 0),u_mean_tens)).ufl_tens*coord_sys.J_hat*dx)
+            self.A_vf.add((1j*iDot(iDiv(iOuter(iConj(x_tens),rho_fluc_tens*u_mean_tens), 0),u_mean_tens)).ufl_tens*coord_sys.J_hat*dx)
             
             # -- Boundary term from integration by parts
             if param.Case.CoordinateSystem =='Cartesian':
@@ -119,9 +120,9 @@ def addMomentumEq(self,fluc,X,mean,param):
                 printError('Coord. syst not yet implemented in tensor framework.')
                 
             # -- Additionnal terms for cyl. coord and m > 0
-            if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-                printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
-                self.A_vf.add(mean.rho * conj(X)[i] * param.Case.m * mean.u[2] * fluc.u[i] * dx)
+            #if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
+            #    printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
+                #self.A_vf.add(mean.rho * conj(X)[i] * param.Case.m * mean.u[2] * fluc.u[i] * dx)
         
         else:
             # -- > Previous implementation
@@ -132,19 +133,19 @@ def addMomentumEq(self,fluc,X,mean,param):
             self.A_vf.add(1j * Dx(self.R * conj(X[i]) * fluc.rho * mean.u[j] ,k) * mean.u[i] * I[k,j] * dx)
             
             # -- Boundary term from integration by parts
-            self.A_vf.add(1j * (- self.R * conj(X[i]) * mean.rho * mean.u[j] * fluc.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
-            self.A_vf.add(1j * (- self.R * conj(X[i]) * mean.rho * fluc.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
-            self.A_vf.add(1j * (- self.R * conj(X[i]) * fluc.rho * mean.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
+            self.A_vf.add(1j * (- self.R * conj(X[i]) * mean.rho * mean.u[j] * fluc.u[i] * self.n_BC[k] * I[k,j]\
+			    - self.R * conj(X[i]) * mean.rho * fluc.u[j] * mean.u[i] * self.n_BC[k] * I[k,j]\
+			    - self.R * conj(X[i]) * fluc.rho * mean.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
             
             # -- Additionnal terms for cyl. coord
             if param.Case.CoordinateSystem in ['Cylindrical']:
-                self.A_vf.add(1j * -conj(X)[2] * mean.rho *mean.u[1] * fluc.u[2] * dx)
-                self.A_vf.add(1j * -conj(X)[2] * mean.rho *fluc.u[1] * mean.u[2] * dx)
-                self.A_vf.add(1j * -conj(X)[2] * fluc.rho *mean.u[1] * mean.u[2] * dx)
+                self.A_vf.add(1j * - conj(X)[2] * mean.rho *mean.u[1] * fluc.u[2] * dx)
+                self.A_vf.add(1j * - conj(X)[2] * mean.rho *fluc.u[1] * mean.u[2] * dx)
+                self.A_vf.add(1j * - conj(X)[2] * fluc.rho *mean.u[1] * mean.u[2] * dx)
 
-                self.A_vf.add(1j * conj(X)[1] * mean.u[2] * fluc.u[2] * mean.rho * dx)
-                self.A_vf.add(1j * conj(X)[1] * fluc.u[2] * mean.u[2] * mean.rho * dx)
-                self.A_vf.add(1j * conj(X)[1] * mean.u[2] * mean.u[2] * fluc.rho * dx)
+                self.A_vf.add(1j * conj(X)[1] * mean.u[2] * fluc.u[2] * mean.rho * dx\
+					  + 1j * conj(X)[1] * fluc.u[2] * mean.u[2] * mean.rho * dx\
+					  + 1j * conj(X)[1] * mean.u[2] * mean.u[2] * fluc.rho * dx)
 
                 # -- Additionnal terms for cyl. coord and m > 0
                 if not param.Case.m == 0:
@@ -157,12 +158,12 @@ def addMomentumEq(self,fluc,X,mean,param):
              
         if FLAG_TENS:
             # -- > Tensor implementation derived by hand
-            self.A_vf.add( (-1j*iDot( iDot(iGrad(u_fluc_tens), rho_mean_tens*u_mean_tens), iConj(x_tens)) ).ufl_tens*coord_sys.J_hat* dx)
+            self.A_vf.add( (-1j*iDot( iDot(iGrad(u_fluc_tens, self.m), rho_mean_tens*u_mean_tens), iConj(x_tens)) ).ufl_tens*coord_sys.J_hat* dx)
             self.A_vf.add( (-1j*iDot( iDot(iGrad(u_mean_tens), rho_mean_tens*u_fluc_tens), iConj(x_tens)) ).ufl_tens*coord_sys.J_hat* dx)
             self.A_vf.add( (-1j*iDot( iDot(iGrad(u_mean_tens), rho_fluc_tens*u_mean_tens), iConj(x_tens)) ).ufl_tens*coord_sys.J_hat* dx)
             
         else:
-            # Index notation implementation
+            # Index notation implementation (m > 0 terms missing!)
             I = Identity( fluc.u.geometric_dimension() )
             self.A_vf.add(-1j * self.R*conj(X[i])*mean.rho*mean.u[j]*Dx(fluc.u[i], k)*I[k,j] * dx)
             self.A_vf.add(-1j * self.R*conj(X[i])*mean.rho*fluc.u[j]*Dx(mean.u[i], k)*I[k,j] * dx)
@@ -186,14 +187,18 @@ def addMomentumEq(self,fluc,X,mean,param):
         # Integrate pressure gradient boundary terms (resulting from integration by parts)
         if FLAG_TENS:
             # -- > Tensor implementation
-            self.A_vf.add( (1j * p_fluc_tens*iDiv(iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * dx)
-            self.A_vf.add( (-1j * iDot(p_fluc_tens*iConj(x_tens), nbc_tens))\
-                    .ufl_tens * coord_sys.J_hat * self.all_ds)
+            self.A_vf.add( (1j*p_fluc_tens*iDiv(iConj(x_tens), -self.m)).ufl_tens*coord_sys.J_hat*dx)
+            self.A_vf.add( (-1j*iDot(p_fluc_tens*iConj(x_tens), nbc_tens)).ufl_tens*coord_sys.J_hat*self.all_ds)
             
         else:
             # -- > Previous implementation
+            I = Identity( fluc.u.geometric_dimension() )
             self.A_vf.add(1j * Dx(conj(X[i])*self.R,j)*fluc.p * I[i,j] * dx)
             self.A_vf.add(1j * -self.R*fluc.p*self.n_BC[j]*conj(X[i])* I[i,j] * self.all_ds)
+            
+            # -- Additionnal terms for m > 0
+            if not param.Case.m == 0: # Should this not be ony for cyl. coords.??
+                self.A_vf.add(+conj(X)[2]*self.m*fluc.p*dx)
 
     else:
         # No integration by parts of the pressure term
@@ -203,8 +208,11 @@ def addMomentumEq(self,fluc,X,mean,param):
         else:
             # -- > Previous implementation
             self.A_vf.add(1j * -self.R*inner(grad(fluc.p), X)*dx)
+            
+            # -- Additionnal terms for m > 0
             if not param.Case.m == 0: # Should this not be ony for cyl. coords.??
                 self.A_vf.add(+conj(X)[2]*self.m*fluc.p*dx)
+
 
 
     # ------------------------ Diffusion terms
@@ -219,24 +227,23 @@ def addMomentumEq(self,fluc,X,mean,param):
     
     ## ---- Visc. 1: viscous terms for incompressible flow
     FLAG_TENS = True
+    
     if FLAG_TENS:
         # -- > Tensor implementation
-        self.A_vf.add( (-1j * nutot_mean_tens * iInner(iGrad(u_fluc_tens), iGrad(iConj(x_tens))) )\
-                .ufl_tens * coord_sys.J_hat * dx)
-        self.A_vf.add( (-1j * nulam_fluc_tens * iInner(iGrad(u_mean_tens), iGrad(iConj(x_tens))) )\
-                .ufl_tens * coord_sys.J_hat * dx)
+        self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
         # NOTE: The term with nulam_fluc has not been validated yet
         
         # -- Additionnal terms for cyl. coord and m > 0
-        if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-            printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
-            self.A_vf.add(-2*mean.nuTot/self.R*self.m*conj(X)[2]*fluc.u[1]*dx)#
-            self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(0)*self.m*fluc.u[0]*dx)
-            #self.A_vf.add(1j * -X*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)							#III  -> A_real ??? (CA)
-            self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)
-            self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*inner(fluc.u, X)*dx)#
-            #self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*conj(X)[i]*fluc.u[i]*dx)# this line replaces the above which uses inner
-            self.A_vf.add(2*mean.nuTot*self.m/self.R*conj(X)[1]*fluc.u[2]*dx)#
+        #if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
+        #    printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
+            #self.A_vf.add(-2*mean.nuTot/self.R*self.m*conj(X)[2]*fluc.u[1]*dx)#
+            #self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(0)*self.m*fluc.u[0]*dx)
+            ##self.A_vf.add(1j * -X*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)							#III  -> A_real ??? (CA)
+            #self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)
+            #self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*inner(fluc.u, X)*dx)#
+            ##self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*conj(X)[i]*fluc.u[i]*dx)# this line replaces the above which uses inner
+            #self.A_vf.add(2*mean.nuTot*self.m/self.R*conj(X)[1]*fluc.u[2]*dx)#
         
     else:
         # -- > Previous implementation
@@ -265,7 +272,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     ## ---- Visc. 2: viscous terms for compressible flow
     if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
         if FLAG_TENS:
-            printWarning('Compressible mom. eq. not implemented in tensor framework. Currently relies on index notation.')
+            printError('Compressible mom. eq. not implemented in tensor framework. Currently relies on index notation.')
 
         # -- > Previous implementation
         I = Identity( fluc.u.geometric_dimension() )
@@ -299,7 +306,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     ## ---- Visc. 3: viscous BC terms for input-output analysis
     if param.Case.AnalysisMode in ['Input-Output']:
         if FLAG_TENS:
-            printWarning('Input-Output analysis not implemented in tensor framework. Currently relies on index notation.')
+            printError('Input-Output analysis not implemented in tensor framework. Currently relies on index notation.')
             
         # -- > Previous implementation
         for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
@@ -331,7 +338,7 @@ def addMomentumEq(self,fluc,X,mean,param):
         # -- > Previous implementation
         if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
             if FLAG_TENS:
-                printWarning('Compressible mom. not implemented in tensor framework. Currently relies on index notation.')
+                printError('Compressible mom. not implemented in tensor framework. Currently relies on index notation.')
             
             # -- > Previous implementation
             self.A_vf.add(1j * self.R*Dx(mean.nuTot,i)*Dx(fluc.u[2],i)*conj(X)[2]*dx)       #III(1) (not 100% sure why only in case of dilatation -> needs checking)
@@ -347,7 +354,7 @@ def addMomentumEq(self,fluc,X,mean,param):
 
         if param.Case.AnalysisMode in ['Input-Output']:
             if FLAG_TENS:
-                printWarning('Input-Output analysis not implemented in tensor framework. Currently relies on index notation.')
+                printError('Input-Output analysis not implemented in tensor framework. Currently relies on index notation.')
                 
             # -- > Previous implementation
             for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
