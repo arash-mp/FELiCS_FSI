@@ -22,13 +22,17 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
         u_mean_tens = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord_sys)
     
     elif param.Case.CoordinateSystem =='Cylindrical':
-        # HARDCODED FOR CYL COORD IN FELiCS, DEFINED AS (Z, R, PHI)!
+        # CYL COORD IN FELiCS DEFINED AS (Z, R, PHI)!
+        printWarning("Cylindrical coordinates for tensor species-cons not validated yet. Treat results with care.")
         coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
         u_fluc_tens = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord_sys)
         u_mean_tens = Tensor(as_vector((mean.u[0], mean.u[1], mean.u[2])), coord_sys)
         
     else:
         printError('Coord. syst not yet implemented in tensor framework.')
+        
+    if not param.Case.m == 0:
+            printWarning('m > 0 for tensor species-cons not validated yet. Treat results with care.')
         
     Y_mean_tens = Tensor(mean.Y(species), coord_sys)
     forcing_tens = Tensor(mean.forcing_r(species)+1j*mean.forcing_i(species), coord_sys)
@@ -46,20 +50,14 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     if FLAG_TENS:
         # -- > Tensor implementation (NOT TESTED FOR CYL. COORDS!)
         # Volume term from IbP
-        self.A_vf.add( ( 1j * Y_fluc_tens * iDiv(rho_mean_tens*u_mean_tens*iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * dx)
-        self.A_vf.add( ( 1j * Y_mean_tens * iDiv(rho_mean_tens*u_fluc_tens*iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * dx)
-        self.A_vf.add( ( 1j * Y_mean_tens * iDiv(rho_fluc_tens*u_mean_tens*iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * dx)
+        self.A_vf.add( ( 1j * Y_fluc_tens * iDiv(rho_mean_tens*u_mean_tens*iConj(x_tens), -self.m)).ufl_tens*coord_sys.J_hat*dx)
+        self.A_vf.add( ( 1j * Y_mean_tens * iDiv(rho_mean_tens*u_fluc_tens*iConj(x_tens), 0)).ufl_tens*coord_sys.J_hat*dx)
+        self.A_vf.add( ( 1j * Y_mean_tens * iDiv(rho_fluc_tens*u_mean_tens*iConj(x_tens), 0)).ufl_tens*coord_sys.J_hat*dx)
         
         # Boundary term from IbP
-        self.A_vf.add( (-1j * iDot(nbc_tens, Y_fluc_tens*rho_mean_tens*u_mean_tens*iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * self.all_ds)
-        self.A_vf.add( (-1j * iDot(nbc_tens, Y_mean_tens*rho_mean_tens*u_fluc_tens*iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * self.all_ds)
-        self.A_vf.add( (-1j * iDot(nbc_tens, Y_mean_tens*rho_fluc_tens*u_mean_tens*iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * self.all_ds)
-        
-        # Extra term for m > 0 
-        if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-            printWarning('m > 0 term not yet implemented in tensor framework. Currently relies on index notation.')
-            printWarning("Cylindrical coordinates for m <> 0 are not validated. Treat results with care")
-            self.A_vf += X*param.Case.m*fluc.Y(i_eqn)*mean.ut*dx #possibly conj(X) instead of X
+        self.A_vf.add( (-1j * iDot(nbc_tens, Y_fluc_tens*rho_mean_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.all_ds)
+        self.A_vf.add( (-1j * iDot(nbc_tens, Y_mean_tens*rho_mean_tens*u_fluc_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.all_ds)
+        self.A_vf.add( (-1j * iDot(nbc_tens, Y_mean_tens*rho_fluc_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.all_ds)
         
     else:
         # -- > Previous implementation
@@ -96,14 +94,8 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     if FLAG_TENS:
         # -- > Tensor implementation (NOT TESTED FOR CYL. COORDS!)
         # NOTE: Not sure what the term before the weak form is supposed to be
-        self.A_vf.add( ( -1j* D_mean_tens * (iDot(iGrad(Y_fluc_tens), iGrad(iConj(x_tens))))).ufl_tens * coord_sys.J_hat * dx)
-        self.A_vf.add( ( -1j* D_fluc_tens * (iDot(iGrad(Y_mean_tens), iGrad(iConj(x_tens))))).ufl_tens * coord_sys.J_hat * dx)
-        
-        # Extra term for m > 0 
-        if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-            printWarning('m > 0 term not yet implemented in tensor framework. Currently relies on index notation.')
-            printWarning("Cylindrical coordinates for m <> 0 are not validated. Treat results with care")
-            self.A_vf.add(1j * mean.D*X*param.Case.m**2/self.R*fluc.Y(species)*dx)
+        self.A_vf.add( ( -1j* D_mean_tens * (iDot(iGrad(Y_fluc_tens, self.m), iGrad(iConj(x_tens), -self.m)))).ufl_tens * coord_sys.J_hat * dx)
+        self.A_vf.add( ( -1j* D_fluc_tens * (iDot(iGrad(Y_mean_tens), iGrad(iConj(x_tens), -self.m)))).ufl_tens * coord_sys.J_hat * dx)
         
     else:
         # -- > Previous implementation
@@ -159,15 +151,23 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
             # If it is Dirichlet, the BC is applied in the weak formulation
             if Boundary['type'] in ['Dirichlet']:
                 if FLAG_TENS:
-                    printWarning('Dirichlet BC implementation in species conservation eq. not implemeted in tensor framework. Using index notation')
-
-                # First subtract the part added in a few lines above...
-                self.A_vf.add(1j * +inner(self.n_BC,mean.u)*self.R*fluc.Y(species)*conj(X)*self.ds(Boundary['ID']))
-                # Then add the respective Boundary condition
-                # If BC value is 0, then the weak formulation throws an error, therefore check if it is zero...
-                # ... if the value is zero, a treatment is not necessary anyway
-                if not Boundary['value'] in [0.0]:
-                    self.A_vf.add(-inner(self.n_BC,mean.u)*self.R*Boundary['value']*conj(X)*self.ds(Boundary['ID']))
+                    printWarning('Dirichlet BC implementation in species conservation eq. not validated in tensor framework. Treat results with care.')
+                    
+                    # First subtract the part added in a few lines above...
+                    self.A_vf.add((1j * iDot(nbc_tens, Y_fluc_tens*rho_mean_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
+                    # If BC value is 0, then the weak formulation throws an error, therefore check if it is zero...
+                    # ... if the value is zero, a treatment is not necessary anyway
+                    if not Boundary['value'] in [0.0]:
+                        self.A_vf.add((1j * iDot(nbc_tens, Boundary['value']*rho_mean_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
+                    
+                else:
+                    # First subtract the part added in a few lines above...
+                    self.A_vf.add(1j * +inner(self.n_BC,mean.u)*self.R*fluc.Y(species)*conj(X)*self.ds(Boundary['ID']))
+                    # Then add the respective Boundary condition
+                    # If BC value is 0, then the weak formulation throws an error, therefore check if it is zero...
+                    # ... if the value is zero, a treatment is not necessary anyway
+                    if not Boundary['value'] in [0.0]:
+                        self.A_vf.add(-inner(self.n_BC,mean.u)*self.R*Boundary['value']*conj(X)*self.ds(Boundary['ID']))
                     
             if Boundary['type'] in ['Neumann']:
                 if not Boundary['value'] in [0.0]:

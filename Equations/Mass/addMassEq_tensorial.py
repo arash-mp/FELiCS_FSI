@@ -35,15 +35,19 @@ def addMassEq(self,fluc,X,mean,param):
         # HARDCODED FOR CARTESIAN COORDINATES, should be moved to param
         coord_sys = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
         rhou_fluc_tens = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord_sys)
+        forcing_comp = mean.u_forcing_r+1j*mean.u_forcing_i
+        forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], 0.0)), coord_sys)
     
     elif param.Case.CoordinateSystem =='Cylindrical':
         # HARDCODED FOR CYL COORD IN FELiCS, DEFINED AS (Z, R, PHI)!
         coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
         rhou_fluc_tens = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], fluc.rhou[2])), coord_sys)
+        forcing_comp = mean.u_forcing_r+1j*mean.u_forcing_i
+        forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], forcing_comp[2])), coord_sys)
         
     else:
         printWarning('Coord. syst not yet implemented in tensor framework.')
-
+        
     rho_fluc_tens = Tensor(fluc.rho, coord_sys)
     x_tens = Tensor(X, coord_sys)
     nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord_sys)
@@ -74,13 +78,6 @@ def addMassEq(self,fluc,X,mean,param):
         # Boundary term from IbP
         self.A_vf.add( (-1j*iDot(nbc_tens, rhou_fluc_tens*iConj(x_tens)) ).ufl_tens*coord_sys.J_hat*self.all_ds)
         
-        # Extra term for m > 0
-        #if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-        #    printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
-            # We can't just add the terms for m > 1 in the tensor framework 
-            #self.A_vf.add(conj(X)*mean.rho*self.m*fluc.u[2]*dx)
-            #self.A_vf.add(conj(X)*fluc.rho*self.m*mean.u[2]*dx)
-        
     else:
         # -- > Previous implementation
         I = Identity(fluc.u.geometric_dimension())
@@ -101,15 +98,22 @@ def addMassEq(self,fluc,X,mean,param):
     
     if param.Case.AnalysisMode in ['Input-Output']:
         if FLAG_TENS:
-            printWarning('Input-Output analysis not implemented in tensor framework. Currently relies on index notation.')
-
-        # -- > Previous implementation
-        # Iterate through all boundaries, at which forcing is applied
-        for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
-            # First subtract the part added in a few lines above...
-            self.A_vf.add(1j * self.R*inner(fluc.u,self.n_BC)*conj(X)*self.ds(boundary_index))
-            # Then add the forcing at the inlet...
-            self.A_vf.add(-self.R*inner(mean.u_forcing_r,self.n_BC)\
-                        *conj(X)*self.ds(boundary_index))
-            self.A_vf.add(1j * -self.R*inner(mean.u_forcing_i,self.n_BC)\
-                        *conj(X)*self.ds(boundary_index))
+            printWarning('Input-Output analysis not validated in tensor framework. Treat results with care.')
+            # Iterate through all boundaries, at which forcing is applied
+            for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
+                # First subtract the part added in a few lines above...
+                self.A_vf.add( (1j*iDot(nbc_tens, rhou_fluc_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
+                # Then add the forcing at the inlet...
+                self.A_vf.add( (1j*iDot(nbc_tens, forcing_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
+            
+        else:
+            # -- > Previous implementation
+            # Iterate through all boundaries, at which forcing is applied
+            for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
+                # First subtract the part added in a few lines above...
+                self.A_vf.add(1j * self.R*inner(fluc.u,self.n_BC)*conj(X)*self.ds(boundary_index))
+                # Then add the forcing at the inlet...
+                self.A_vf.add(-self.R*inner(mean.u_forcing_r,self.n_BC)\
+                            *conj(X)*self.ds(boundary_index))
+                self.A_vf.add(1j * -self.R*inner(mean.u_forcing_i,self.n_BC)\
+                            *conj(X)*self.ds(boundary_index))
