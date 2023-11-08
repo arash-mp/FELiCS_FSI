@@ -173,7 +173,7 @@ class WeakFormulationCollectionClass():
             
             FLAG_TENS = False
             if FLAG_TENS:
-                from Equations.Momentum.addMomentumEq_incomp_tensorial import addMomentumEq
+                from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
             else:
                 from Equations.Momentum.addMomentumEq import addMomentumEq
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
