@@ -94,6 +94,7 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     if FLAG_TENS:
         # -- > Tensor implementation (NOT TESTED FOR CYL. COORDS!)
         # NOTE: Not sure what the term before the weak form is supposed to be
+        # Shouldn't there be a rho_mean here? Or is it absorbed into the D?
         self.A_vf.add( ( -1j* D_mean_tens * (iDot(iGrad(Y_fluc_tens, self.m), iGrad(iConj(x_tens), -self.m)))).ufl_tens * coord_sys.J_hat * dx)
         self.A_vf.add( ( -1j* D_fluc_tens * (iDot(iGrad(Y_mean_tens), iGrad(iConj(x_tens), -self.m)))).ufl_tens * coord_sys.J_hat * dx)
         
