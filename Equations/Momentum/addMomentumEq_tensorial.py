@@ -225,9 +225,12 @@ def addMomentumEq(self,fluc,X,mean,param):
     
     if FLAG_TENS:
         # -- > Tensor implementation
-        self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
-        self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        # self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        # self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
         # NOTE: The term with nulam_fluc has not been validated yet
+        # Version with full viscous tensor (not assuming constant viscosity)
+        self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m)+iT(iGrad(u_fluc_tens,self.m)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens)+iT(iGrad(u_mean_tens)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
         
     else:
         # -- > Previous implementation
@@ -292,7 +295,9 @@ def addMomentumEq(self,fluc,X,mean,param):
     if param.Case.AnalysisMode in ['Input-Output']:
         if FLAG_TENS:
             for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
-                self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iGrad(u_fluc_tens, self.m),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
+                # self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iGrad(u_fluc_tens, self.m),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
+                # Version with full viscous tensor (not assuming constant viscosity)
+                self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iGrad(u_fluc_tens, self.m)+iT(iGrad(u_fluc_tens, self.m)),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
             
         else:
             # -- > Previous implementation
