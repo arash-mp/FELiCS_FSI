@@ -171,7 +171,7 @@ class WeakFormulationCollectionClass():
         self.B_vf = WeakForm()
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
             
-            FLAG_TENS = False
+            FLAG_TENS = True
             if FLAG_TENS:
                 from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
             else:
