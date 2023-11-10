@@ -32,10 +32,9 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
         printError('Coord. syst not yet implemented in tensor framework.')
         
     if not param.Case.m == 0:
-            printWarning('m > 0 for tensor species-cons not validated yet. Treat results with care.')
+            printWarning('--> Species eq: m > 0 for tensor not validated yet. Treat results with care.')
         
     Y_mean_tens = Tensor(mean.Y(species), coord_sys)
-    forcing_tens = Tensor(mean.forcing_r(species)+1j*mean.forcing_i(species), coord_sys)
     D_mean_tens = Tensor(mean.D(species), coord_sys)
     Y_fluc_tens = Tensor(fluc.Y(species), coord_sys)
     D_fluc_tens = Tensor(fluc.D(species), coord_sys)
@@ -43,6 +42,9 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     rho_mean_tens = Tensor(mean.rho, coord_sys)
     rho_fluc_tens = Tensor(fluc.rho, coord_sys)
     x_tens = Tensor(X, coord_sys)
+    
+    if param.Case.AnalysisMode in ['Input-Output']:
+        forcing_tens = Tensor(mean.forcing_r(species)+1j*mean.forcing_i(species), coord_sys)
 
     # ----------------------------------------- Advection term
     # This term is integrated by parts
@@ -50,6 +52,7 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     if FLAG_TENS:
         # -- > Tensor implementation (NOT TESTED FOR CYL. COORDS!)
         # Volume term from IbP
+        # The volume term seems to introduce a small error (~1e-12) in cartesian coordinates wrt. previous implementation
         self.A_vf.add( ( 1j * Y_fluc_tens * iDiv(rho_mean_tens*u_mean_tens*iConj(x_tens), -self.m)).ufl_tens*coord_sys.J_hat*dx)
         self.A_vf.add( ( 1j * Y_mean_tens * iDiv(rho_mean_tens*u_fluc_tens*iConj(x_tens), 0)).ufl_tens*coord_sys.J_hat*dx)
         self.A_vf.add( ( 1j * Y_mean_tens * iDiv(rho_fluc_tens*u_mean_tens*iConj(x_tens), 0)).ufl_tens*coord_sys.J_hat*dx)
@@ -114,7 +117,6 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     if param.Case.AnalysisMode == 'Input-Output' and param.IOResolvent.ForcingMode == 'Body':
         if FLAG_TENS:
             # -- > Tensor implementation (NOT TESTED FOR CYL. COORDS!)
-            printWarning("Input-Output analysis with Body forcing not validated yet in tensor framework. Treat results with care")
             self.A_vf.add( (forcing_tens*iConj(x_tens)).ufl_tens * coord_sys.J_hat *dx)
             
         else:
@@ -132,11 +134,11 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
             
             if FLAG_TENS:
                 # -- > Tensor implementation (NOT TESTED FOR CYL. COORDS!)
-                printWarning("Input-Output analysis with boundary forcing not validated yet in tensor framework. Treat results with care")
-                # First subtract the part added in a few lines above...
-                self.A_vf.add( (1j * iDot(nbc_tens, Y_fluc_tens*rho_mean_tens*u_mean_tens*iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * self.ds(Boundary['ID']))
-                # Then add the forcing of the respective species given in the mean flow dict at the respective bounary
-                self.A_vf.add( (-1 * iDot(nbc_tens, u_mean_tens*forcing_tens*iConj(x_tens)) ).ufl_tens * coord_sys.J_hat * self.ds(Boundary['ID']))
+                printWarning("--> Species eq: Input-Output analysis with boundary forcing not validated yet in tensor framework. Treat results with care")
+                # # First subtract the part added in a few lines above...
+                self.A_vf.add((1j*iDot(nbc_tens, Y_fluc_tens*rho_mean_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
+                # # Then add the forcing of the respective species given in the mean flow dict at the respective bounary
+                self.A_vf.add((-1j*iDot(nbc_tens, u_mean_tens*forcing_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
                 
             else:
                 # -- > Previous implementation
@@ -152,14 +154,15 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
             # If it is Dirichlet, the BC is applied in the weak formulation
             if Boundary['type'] in ['Dirichlet']:
                 if FLAG_TENS:
-                    printWarning('Dirichlet BC implementation in species conservation eq. not validated in tensor framework. Treat results with care.')
+                    printWarning('--> Species eq: Dirichlet BC implementation in species conservation eq. not validated in tensor framework. Treat results with care.')
                     
                     # First subtract the part added in a few lines above...
                     self.A_vf.add((1j * iDot(nbc_tens, Y_fluc_tens*rho_mean_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
                     # If BC value is 0, then the weak formulation throws an error, therefore check if it is zero...
                     # ... if the value is zero, a treatment is not necessary anyway
                     if not Boundary['value'] in [0.0]:
-                        self.A_vf.add((1j * iDot(nbc_tens, Boundary['value']*rho_mean_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
+                        printWarning('--> Species eq: Dirichlet BC with non-zero value not validated in tensor framework! Treat results with care.')
+                        self.A_vf.add((-1*iDot(nbc_tens, Boundary['value']*rho_mean_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
                     
                 else:
                     # First subtract the part added in a few lines above...
