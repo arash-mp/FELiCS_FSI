@@ -111,18 +111,14 @@ def addMomentumEq(self,fluc,X,mean,param):
                 self.A_vf.add( (-1j * rho_fluc_tens*iDot(iDot( iOuter(u_mean_tens, iConj(x_tens)), u_mean_tens), nbc_tens)).ufl_tens*coord_sys.J_hat*self.all_ds)
                 
             elif param.Case.CoordinateSystem =='Cylindrical':
-                # Because there is no Nabla in this term we can use the ufl operators, which seem to avoid singular term error
+                # In cyl coords, a singular term error arise for the above term in the tensor framework
+                # Because there is no Nabla in this term we can use the ufl operators, which seems this error
                 self.A_vf.add( (-1j * mean.rho*dot(dot( outer(conj(fluc.u), conj(X)), mean.u), as_vector((self.n_BC[0], self.n_BC[1], 0.0)) )) *self.x[1]*self.all_ds)
                 self.A_vf.add( (-1j * mean.rho*dot(dot( outer(conj(mean.u), conj(X)), fluc.u), as_vector((self.n_BC[0], self.n_BC[1], 0.0)) )) *self.x[1]*self.all_ds)
                 self.A_vf.add( (-1j * fluc.rho*dot(dot( outer(conj(mean.u), conj(X)), fluc.u), as_vector((self.n_BC[0], self.n_BC[1], 0.0)) )) *self.x[1]*self.all_ds)
                 
             else:
                 printError('Coord. syst not yet implemented in tensor framework.')
-                
-            # -- Additionnal terms for cyl. coord and m > 0
-            #if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-            #    printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
-                #self.A_vf.add(mean.rho * conj(X)[i] * param.Case.m * mean.u[2] * fluc.u[i] * dx)
         
         else:
             # -- > Previous implementation
@@ -154,7 +150,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     else:
          ## ---- ALTERNATIVE: No integration by part, just one volume term
         if not param.Case.m == 0:
-            printError('Convection term without IbP not implemented for m > 0.')     
+            printError('--> Mom eq: Convection term without IbP not implemented for m > 0.')     
              
         if FLAG_TENS:
             # -- > Tensor implementation derived by hand
@@ -203,7 +199,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     else:
         # No integration by parts of the pressure term
         if FLAG_TENS:
-            printError('Pressure term without IbP not implemented in tensor framework.')
+            printError('--> Mom eq: Pressure term without IbP not implemented in tensor framework.')
             
         else:
             # -- > Previous implementation
@@ -224,7 +220,6 @@ def addMomentumEq(self,fluc,X,mean,param):
     # NOTE: The boundary term from the integration by part is ignored. This should impose a 
     # BC equivalent to stress-free BC
     
-    
     ## ---- Visc. 1: viscous terms for incompressible flow
     FLAG_TENS = True
     
@@ -233,17 +228,6 @@ def addMomentumEq(self,fluc,X,mean,param):
         self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
         self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
         # NOTE: The term with nulam_fluc has not been validated yet
-        
-        # -- Additionnal terms for cyl. coord and m > 0
-        #if (param.Case.CoordinateSystem in ['Cylindrical']) and (not param.Case.m == 0):
-        #    printWarning('m > 0 term not yet implemented in tensor framework. Results are wrong!')
-            #self.A_vf.add(-2*mean.nuTot/self.R*self.m*conj(X)[2]*fluc.u[1]*dx)#
-            #self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(0)*self.m*fluc.u[0]*dx)
-            ##self.A_vf.add(1j * -X*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)							#III  -> A_real ??? (CA)
-            #self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)
-            #self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*inner(fluc.u, X)*dx)#
-            ##self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*conj(X)[i]*fluc.u[i]*dx)# this line replaces the above which uses inner
-            #self.A_vf.add(2*mean.nuTot*self.m/self.R*conj(X)[1]*fluc.u[2]*dx)#
         
     else:
         # -- > Previous implementation
@@ -272,7 +256,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     ## ---- Visc. 2: viscous terms for compressible flow
     if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
         if FLAG_TENS:
-            printError('Compressible mom. eq. not implemented in tensor framework. Currently relies on index notation.')
+            printWarning('--> Mom eq: Compressible mom. eq. not implemented in tensor framework. Currently relies on index notation.')
 
         # -- > Previous implementation
         I = Identity( fluc.u.geometric_dimension() )
@@ -304,41 +288,46 @@ def addMomentumEq(self,fluc,X,mean,param):
     
 
     ## ---- Visc. 3: viscous BC terms for input-output analysis
+    FLAG_TENS = True
     if param.Case.AnalysisMode in ['Input-Output']:
         if FLAG_TENS:
-            printError('Input-Output analysis not implemented in tensor framework. Currently relies on index notation.')
+            for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
+                self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iGrad(u_fluc_tens, self.m),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
             
-        # -- > Previous implementation
-        for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
+        else:
+            # -- > Previous implementation
+            for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
 
-            # Add physical boundary terms in imaginary part, where the forcing is applied...
-            self.A_vf.add(1j * -self.R*mean.nuTot*
-                        (-conj(X)[0] * (self.n_BC[0] * (fluc.u[0].dx(0)) +
-                                        self.n_BC[1] * (fluc.u[0].dx(1))) -
-                            conj(X)[1] *
-                                        (self.n_BC[0] * (fluc.u[1].dx(0)) +
-                                        self.n_BC[1] * (fluc.u[1].dx(1))) )
-                            * self.ds(boundary_index))
+                # Add physical boundary terms in imaginary part, where the forcing is applied...
+                self.A_vf.add(1j * -self.R*mean.nuTot*
+                            (-conj(X)[0] * (self.n_BC[0] * (fluc.u[0].dx(0)) +
+                                            self.n_BC[1] * (fluc.u[0].dx(1))) -
+                                conj(X)[1] *
+                                            (self.n_BC[0] * (fluc.u[1].dx(0)) +
+                                            self.n_BC[1] * (fluc.u[1].dx(1))) )
+                                * self.ds(boundary_index))
 
-            # Add stabilization terms on imaginary part according
-            # to Baumann and Oden JFM 2016 vol 798
-            self.A_vf.add(1j * -self.R*mean.nuTot*((self.n_BC[0] * (conj(X)[0].dx(0)) +
-                                    self.n_BC[1] *   (conj(X)[0].dx(1))) * (fluc.u[0]-mean.u_forcing_i[0]) +#jvs
-                                        (self.n_BC[0] *  (conj(X)[1].dx(0)) +
-                                    self.n_BC[1] *   (conj(X)[1].dx(1))) * (fluc.u[1]-mean.u_forcing_i[1])) *self.ds(boundary_index)) #jvs
+                # Add stabilization terms on imaginary part according
+                # to Baumann and Oden JFM 2016 vol 798
+                # self.A_vf.add(1j * -self.R*mean.nuTot*((self.n_BC[0] * (conj(X)[0].dx(0)) +
+                #                         self.n_BC[1] *   (conj(X)[0].dx(1))) * (fluc.u[0]-mean.u_forcing_i[0]) +#jvs
+                #                             (self.n_BC[0] *  (conj(X)[1].dx(0)) +
+                #                         self.n_BC[1] *   (conj(X)[1].dx(1))) * (fluc.u[1]-mean.u_forcing_i[1])) *self.ds(boundary_index)) #jvs
 
-            # Add stabilization terms on imaginary part according to Baumann and Oden JFM 2016 vol 798
-            self.A_vf.add(-self.R*mean.nuTot*((self.n_BC[0] * (conj(X)[0].dx(0)) +
-                                    self.n_BC[1] * (conj(X)[0].dx(1) )) * (-mean.u_forcing_r[0]) +
-                                        (self.n_BC[0] * (conj(X)[1].dx(0) ) +
-                                    self.n_BC[1] * (conj(X)[1].dx(1))) * (-mean.u_forcing_r[1])) *self.ds(boundary_index))
+                # # Add stabilization terms on imaginary part according to Baumann and Oden JFM 2016 vol 798
+                # self.A_vf.add(-self.R*mean.nuTot*((self.n_BC[0] * (conj(X)[0].dx(0)) +
+                #                         self.n_BC[1] * (conj(X)[0].dx(1) )) * (-mean.u_forcing_r[0]) +
+                #                             (self.n_BC[0] * (conj(X)[1].dx(0) ) +
+                #                         self.n_BC[1] * (conj(X)[1].dx(1))) * (-mean.u_forcing_r[1])) *self.ds(boundary_index))
     
-    ## ---- Visc. 4: other stuff
+    ## ---- Visc. 4: terms needed if we have three components to the mean velocity vector
+    # These should be included in previous terms in tensor framework
+    FLAG_TENS = True
     if param.Case.TransVelFluc:
         # -- > Previous implementation
         if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
             if FLAG_TENS:
-                printError('Compressible mom. not implemented in tensor framework. Currently relies on index notation.')
+                printWarning('--> Mom eq: Compressible + trans. vel not implemented in tensor framework. Currently relies on index notation.')
             
             # -- > Previous implementation
             self.A_vf.add(1j * self.R*Dx(mean.nuTot,i)*Dx(fluc.u[2],i)*conj(X)[2]*dx)       #III(1) (not 100% sure why only in case of dilatation -> needs checking)
@@ -354,7 +343,7 @@ def addMomentumEq(self,fluc,X,mean,param):
 
         if param.Case.AnalysisMode in ['Input-Output']:
             if FLAG_TENS:
-                printError('Input-Output analysis not implemented in tensor framework. Currently relies on index notation.')
+                printWarning('--> Mom eq: Input-Output + trans. vel not implemented in tensor framework. Currently relies on index notation.')
                 
             # -- > Previous implementation
             for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
