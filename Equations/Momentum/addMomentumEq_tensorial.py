@@ -300,9 +300,9 @@ def addMomentumEq(self,fluc,X,mean,param):
     if param.Case.AnalysisMode in ['Input-Output']:
         if FLAG_TENS:
             for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
-                # self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iGrad(u_fluc_tens, self.m),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
-                # Version with full viscous tensor (not assuming constant viscosity)
-                self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iGrad(u_fluc_tens, self.m)+iT(iGrad(u_fluc_tens, self.m)),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
+                self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iGrad(u_fluc_tens, self.m),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
+                # Version with full viscous tensor (not assuming constant viscosity) --> Not working as expected for now
+                #self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iGrad(u_fluc_tens, self.m)+iT(iGrad(u_fluc_tens, self.m)),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(boundary_index))
             
         else:
             # -- > Previous implementation
@@ -365,6 +365,6 @@ def addMomentumEq(self,fluc,X,mean,param):
                 self.A_vf.add(1j * -self.R * mean.nuTot * ((	self.n_BC[0] * (conj(X).dx(0)) +
                                                 self.n_BC[self.ThirdVelCompIndex] * (conj(X).dx(1))) * (fluc.u[2] - mean.ut_forcing_i)) * self.ds(boundary_index))
 
-            # Add stabilization terms on real part according to Baumann and Oden JFM 2016 vol 798
+                # Add stabilization terms on real part according to Baumann and Oden JFM 2016 vol 798
                 self.A_vf.add(-self.R * mean.nuTot * ((	self.n_BC[0] * (conj(X).dx(0)) +
                                                 self.n_BC[self.ThirdVelCompIndex] * (conj(X).dx(1))) * (-mean.ut_forcing_r)) * self.ds(boundary_index))
