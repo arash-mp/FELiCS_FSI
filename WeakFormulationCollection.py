@@ -188,7 +188,12 @@ class WeakFormulationCollectionClass():
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
+            
+            FLAG_TENS = False
+            if FLAG_TENS:
+                from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
+            else:
+                from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
