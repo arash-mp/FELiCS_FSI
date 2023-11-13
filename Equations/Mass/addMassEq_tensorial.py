@@ -34,10 +34,10 @@ def addMassEq(self,fluc,X,mean,param):
     if param.Case.CoordinateSystem =='Cartesian':
         # HARDCODED FOR CARTESIAN COORDINATES, should be moved to param
         coord_sys = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
-        rhou_fluc_tens = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord_sys)
+        rhou_fluc_tens = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord_sys)  # HARDCODED FOR 2D perturbations so far
         if param.Case.AnalysisMode in ['Input-Output']:
             forcing_comp = mean.u_forcing_r + 1j*mean.u_forcing_i
-            forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], 0.0)), coord_sys)
+            forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], 0.0)), coord_sys)  # HARDCODED FOR 2D perturbations so far
     
     elif param.Case.CoordinateSystem =='Cylindrical':
         # HARDCODED FOR CYL COORD IN FELiCS, DEFINED AS (Z, R, PHI)!
@@ -61,7 +61,6 @@ def addMassEq(self,fluc,X,mean,param):
     
     if 'rho' in param.Case.getTransportedQuantityList():
         if FLAG_TENS:
-            printWarning('--> Mass eq: Density fluctuation term not yet validated in tensor framework.')
             self.B_vf.add( (rho_fluc_tens*iConj(x_tens)).ufl_tens*coord_sys.J_hat*dx)
             
         else:
@@ -101,7 +100,6 @@ def addMassEq(self,fluc,X,mean,param):
     
     if param.Case.AnalysisMode in ['Input-Output']:
         if FLAG_TENS:
-            printWarning('--> Mass eq: Input-Output analysis not validated in tensor framework. Treat results with care.')
             # Iterate through all boundaries, at which forcing is applied
             for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
                 # First subtract the boundary term from advection
