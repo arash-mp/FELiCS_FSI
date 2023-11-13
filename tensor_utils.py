@@ -543,7 +543,6 @@ def iConj(tensor: Tensor):
 
 
 def iOuter(tensorA: Tensor, tensorB: Tensor):
-    print('iOuter() is not validated yet.')
     if tensorA.order == 1 and tensorB.order == 1:
         i,j = indices(2)
         outered = as_tensor(tensorA.ufl_tens[i]*tensorB.ufl_tens[j], (i,j))
