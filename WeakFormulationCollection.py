@@ -189,7 +189,7 @@ class WeakFormulationCollectionClass():
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             
-            FLAG_TENS = False
+            FLAG_TENS = True
             if FLAG_TENS:
                 from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
             else:
