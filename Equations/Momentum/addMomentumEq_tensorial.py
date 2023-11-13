@@ -10,7 +10,8 @@ from ufl import (
     inner,
     grad,
     dot,
-    outer
+    outer,
+    transpose
 )
 from tensor_utils import (
     Tensor,
@@ -225,12 +226,16 @@ def addMomentumEq(self,fluc,X,mean,param):
     
     if FLAG_TENS:
         # -- > Tensor implementation
-        # self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
-        # self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
         # NOTE: The term with nulam_fluc has not been validated yet
-        # Version with full viscous tensor (not assuming constant viscosity)
-        self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m)+iT(iGrad(u_fluc_tens,self.m)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
-        self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens)+iT(iGrad(u_mean_tens)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        
+        # Version with full viscous tensor (not assuming constant viscosity) --> Currently not working!
+        #self.A_vf.add((-1j*nutot_mean_tens*iInner(iGrad(u_fluc_tens,self.m)+iT(iGrad(u_fluc_tens,self.m)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        #self.A_vf.add((-1j*nulam_fluc_tens*iInner(iGrad(u_mean_tens)+iT(iGrad(u_mean_tens)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        # In this case we need a boundary term
+        # self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iT(iGrad(u_fluc_tens, self.m)),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.all_ds)
+        # self.A_vf.add((1j*nulam_fluc_tens*iDot(iDot(iT(iGrad(u_mean_tens)),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.all_ds)
         
     else:
         # -- > Previous implementation
