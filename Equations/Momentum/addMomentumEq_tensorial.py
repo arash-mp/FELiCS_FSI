@@ -232,8 +232,8 @@ def addMomentumEq(self,fluc,X,mean,param):
         
         # In case we decide not to neglect the gradient of nutot:
         # Term corresponding to:    div(mu*grad^T(u)) = div(mu_mean*grad^T(u_fluc)) + div(mu_fluc*grad^T(u_mean))
-        self.A_vf.add((-1j*nutot_mean_tens*iInner(iT(iGrad(u_fluc_tens,self.m)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
-        self.A_vf.add((-1j*nulam_fluc_tens*iInner(iT(iGrad(u_mean_tens)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        # self.A_vf.add((-1j*nutot_mean_tens*iInner(iT(iGrad(u_fluc_tens,self.m)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
+        # self.A_vf.add((-1j*nulam_fluc_tens*iInner(iT(iGrad(u_mean_tens)), iGrad(iConj(x_tens),-self.m))).ufl_tens*coord_sys.J_hat*dx)
         # Do we need to add the following boundary term then?
         # self.A_vf.add((1j*nutot_mean_tens*iDot(iDot(iT(iGrad(u_fluc_tens, self.m)),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.all_ds)
         # self.A_vf.add((1j*nulam_fluc_tens*iDot(iDot(iT(iGrad(u_mean_tens)),nbc_tens),iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.all_ds)
