@@ -265,8 +265,6 @@ def addMomentumEq(self,fluc,X,mean,param):
     ## ---- Visc. 2: viscous terms for compressible flow
     if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
         if FLAG_TENS:
-            printWarning('--> Mom eq: Compressible mom. eq. not validated in tensor framework. Treat results with care.')
-            
             # The viscous diffusion is still integrated by parts and the resulting boundary 
             # terms are neglected to impose a Neumann BC
             
@@ -367,7 +365,7 @@ def addMomentumEq(self,fluc,X,mean,param):
         if param.Case.AnalysisMode in ['Input-Output']:
             if not FLAG_TENS:
                 # -- > Previous implementation
-                # These terms are already added above in the tensorial framework
+                # These terms are already added above in the tensor framework
                 for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
 
                     # Add physical boundary terms in imaginary part, where the forcing is applied...
