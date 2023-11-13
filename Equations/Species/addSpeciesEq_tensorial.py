@@ -18,8 +18,8 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     if param.Case.CoordinateSystem =='Cartesian':
         # HARDCODED "mesh_dims" and "as_vector(x1, x2, 0.0)" to cartesian coords
         coord_sys = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
-        u_fluc_tens = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord_sys)
-        u_mean_tens = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord_sys)
+        u_fluc_tens = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord_sys)  # HARDCODED FOR 2D perturbations so far
+        u_mean_tens = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord_sys)  # HARDCODED FOR 2D perturbations so far
     
     elif param.Case.CoordinateSystem =='Cylindrical':
         # CYL COORD IN FELiCS DEFINED AS (Z, R, PHI)!
@@ -38,7 +38,7 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     D_mean_tens = Tensor(mean.D(species), coord_sys)
     Y_fluc_tens = Tensor(fluc.Y(species), coord_sys)
     D_fluc_tens = Tensor(fluc.D(species), coord_sys)
-    nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord_sys)
+    nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord_sys) 
     rho_mean_tens = Tensor(mean.rho, coord_sys)
     rho_fluc_tens = Tensor(fluc.rho, coord_sys)
     x_tens = Tensor(X, coord_sys)
@@ -96,8 +96,8 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     FLAG_TENS = True
     if FLAG_TENS:
         # -- > Tensor implementation (NOT TESTED FOR CYL. COORDS!)
-        # NOTE: Not sure what the term before the weak form is supposed to be
-        # Shouldn't there be a rho_mean here? Or is it absorbed into the D?
+        # NOTE: similarly to what is done in the mom. eq., the diffusion term is integrated by parts but only the 
+        # volume part is added to the eqs. --> neglecting the boundary part allows to set a Neumann condition  
         self.A_vf.add( ( -1j* D_mean_tens * (iDot(iGrad(Y_fluc_tens, self.m), iGrad(iConj(x_tens), -self.m)))).ufl_tens * coord_sys.J_hat * dx)
         self.A_vf.add( ( -1j* D_fluc_tens * (iDot(iGrad(Y_mean_tens), iGrad(iConj(x_tens), -self.m)))).ufl_tens * coord_sys.J_hat * dx)
         
@@ -135,9 +135,9 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
             if FLAG_TENS:
                 # -- > Tensor implementation (NOT TESTED FOR CYL. COORDS!)
                 printWarning("--> Species eq: Input-Output analysis with boundary forcing not validated yet in tensor framework. Treat results with care")
-                # # First subtract the part added in a few lines above...
+                # First subtract the part added in a few lines above...
                 self.A_vf.add((1j*iDot(nbc_tens, Y_fluc_tens*rho_mean_tens*u_mean_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
-                # # Then add the forcing of the respective species given in the mean flow dict at the respective bounary
+                # Then add the forcing of the respective species given in the mean flow dict at the respective bounary
                 self.A_vf.add((-1j*iDot(nbc_tens, u_mean_tens*forcing_tens*iConj(x_tens))).ufl_tens*coord_sys.J_hat*self.ds(Boundary['ID']))
                 
             else:
