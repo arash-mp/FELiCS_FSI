@@ -61,7 +61,7 @@ def writeCSVSpectrum(param,spectrumDirect,spectrumAdjoint=0):
 	''' This file writes the gains to a CSV file in the solution directory provided by the user'''
 	import csv
 	print (param.Export.ExportFolder+'/spectrum.csv')
-	if param.Case.AdjointFlag is True:
+	if param.Case.CalculateAdjoint:
 
 		with open(param.Export.ExportFolder+'/spectrum.csv', mode='w') as writer_file:
 			writer = csv.writer(writer_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -467,7 +467,7 @@ def ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow):
 		eValDirect = np.array(eValDirect)
 		idxDirect  = np.argmax(np.imag(eValDirect))
 
-		if param.Case.AdjointFlag is True:
+		if param.Case.CalculateAdjoint:
 			eValAdjoint = np.array(eValAdjoint)
 			idxAdjoint = np.argmax(np.imag(eValAdjoint))
 			writeCSVSpectrum(param,eValDirect,eValAdjoint)
