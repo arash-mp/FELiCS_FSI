@@ -214,7 +214,12 @@ class WeakFormulationCollectionClass():
                 addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
                 
             elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
-                from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+                
+                FLAG_TENS = True
+                if FLAG_TENS:
+                    from Equations.speciesConservative.addSpeciesConservativeEq_tensorial import addSpeciesConservativeEq
+                else:
+                    from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
                 print('-- Adding Equation for species '+specie +' in conservative form')
                 addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
 
