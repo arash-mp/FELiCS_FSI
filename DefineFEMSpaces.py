@@ -66,7 +66,8 @@ class FEMSpacesClass():
 		elif param.BCs.dim==3:
 			element_shape = tetrahedron
 		elementTypeStr='CG'
-		self._degree = 2
+		self._degree = param.Numerics.PolynomialOrder['u']
+		self._degree_p = param.Numerics.PolynomialOrder['p']
 		self._nVelocityComponents = len(param.Case.getVelocityComponents())
 		# Create a finite element for a scalar
 		FE_scalar=FiniteElement(
@@ -77,7 +78,7 @@ class FEMSpacesClass():
 		FE_scalar_p=FiniteElement(
 			elementTypeStr,
 			element_shape,
-			self._degree,
+			self._degree_p, # This is HARDCODED FOR NOW!!
 			)
 		# Create a finite element for a vector (velocity in x-y-plane)
 		FE_vector=VectorElement(
@@ -122,6 +123,9 @@ class FEMSpacesClass():
 				#In order to stabilize the equations, the shape functions for pressure must be of one order lower than those of the velocity
 				MixedList.append(FE_vector)
 				self.FunctionSpaceList.append(FunctionSpace(mesh,FE_vector))
+			elif name=='p':
+				MixedList.append(FE_scalar_p)
+				self.FunctionSpaceList.append(FunctionSpace(mesh,FE_scalar_p))
 			else:
 				MixedList.append(FE_scalar)
 				self.FunctionSpaceList.append(FunctionSpace(mesh,FE_scalar))
@@ -152,6 +156,9 @@ class FEMSpacesClass():
 				#In order to stabilize the equations, the shape functions for pressure must be of one order lower than those of the velocity
 				MixedList.append(FE_vector)
 				self.FunctionSpaceListExport.append(FunctionSpace(exportMesh,FE_vector))
+			elif name=='p':
+				MixedList.append(FE_scalar_p)
+				self.FunctionSpaceListExport.append(FunctionSpace(exportMesh,FE_scalar_p))
 			else:
 				MixedList.append(FE_scalar)
 				self.FunctionSpaceListExport.append(FunctionSpace(exportMesh,FE_scalar))
