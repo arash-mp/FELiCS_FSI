@@ -91,6 +91,7 @@ class WeakFormulationCollectionClass():
         from itertools import compress
         from fluctuationClass import fluctuationClass
         from WeakForm import WeakForm
+        from tensor_utils import CoordinateSystem
 
         # add the parameters of the constructor as attributs of the class to use them in DiscretizeFlow-method:
         self.__param = param
@@ -152,8 +153,18 @@ class WeakFormulationCollectionClass():
                 first_BC_flag=False
             else:
                 self.all_ds+=self.ds(Boundary['ID'])
+                
         # Get spatial coordinates
         self.x = SpatialCoordinate(self.__FEMSpaces.P2.mesh)
+        
+        # Define tensor coordinate system, we always assume the third dimension to be homogenous
+        if param.Case.CoordinateSystem =='Cartesian':
+            self.coord_sys = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
+        elif param.Case.CoordinateSystem =='Cylindrical':
+            self.coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
+        else:
+            printError('Coord. syst not yet implemented in tensor framework.')
+            
 
         # Get radial coordinate
         if self.__param.Case.CoordinateSystem in ['Cylindrical']:
