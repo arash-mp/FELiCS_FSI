@@ -21,7 +21,7 @@ def addEnthalpyEq(self,fluc,X,mean,param):
             should be the sum of the m for each term in the argument,
             by convention:
                 .m = 0 for mean flow quantities
-                .m = -m for conj(x)
+                .m = -m for conj(X)
     '''
 
     from functions import printDebug, printError, printWarning
