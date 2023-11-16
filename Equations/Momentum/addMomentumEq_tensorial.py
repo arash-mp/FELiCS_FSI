@@ -25,7 +25,7 @@ from tensor_utils import (
     iT,
     iIdentity
 )
-from functions import printWarning, printError
+from functions import printWarning, printError, printDebug
 
 def addMomentumEq(self,fluc,X,mean,param):
     '''
@@ -66,11 +66,13 @@ def addMomentumEq(self,fluc,X,mean,param):
     
     # Vector quantities
     if fluc.u.ufl_shape[0] == 2:
+        printDebug(param.debug, '--> Mom eq: fluctuations and mean flow 2D')
         x_tens = Tensor(as_vector((X[0], X[1], 0.0)), coord)
         u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord)
         u_m = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord)
     
     elif fluc.u.ufl_shape[0] == 3:
+        printDebug(param.debug, '--> Mom eq: fluctuations and mean flow 3D')
         x_tens = Tensor(as_vector((X[0], X[1], X[2])), coord)
         u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord)
         u_m = Tensor(as_vector((mean.u[0], mean.u[1], mean.u[2])), coord)
@@ -102,7 +104,7 @@ def addMomentumEq(self,fluc,X,mean,param):
 
     # ------------------------ Convective terms
     FLAG_TENS = True
-    int_by_parts = True
+    int_by_parts = False
     if int_by_parts:
         if FLAG_TENS:
             # Volume term from integration by parts
@@ -148,7 +150,8 @@ def addMomentumEq(self,fluc,X,mean,param):
                     self.A_vf.add(mean.rho * conj(X)[i] * param.Case.m * mean.u[2] * fluc.u[i] * dx)
                     
     else:
-         ## ---- ALTERNATIVE: No integration by part, just one volume term  
+        ## ---- ALTERNATIVE: No integration by part, just one volume term
+        printDebug(param.debug, '--> Mom eq: convection term NOT integrated by part')
         if FLAG_TENS:
             # -- > Tensor implementation derived by hand
             self.A_vf.add(( -1j*iDot(iDot(iGrad(u_f,self.m),rho_m*u_m),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)

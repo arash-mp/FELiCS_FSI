@@ -13,7 +13,7 @@ from tensor_utils import (
     iDot,
     iConj
 )
-from functions import printWarning, printError
+from functions import printDebug, printError
 
 def addMassEq(self,fluc,X,mean,param):
     '''
@@ -42,12 +42,14 @@ def addMassEq(self,fluc,X,mean,param):
     
     # Vector quantities
     if fluc.rhou.ufl_shape[0] == 2:
+        printDebug(param.debug,'--> Mass eq: fluctuations and mean flow 2D')
         rhou_f = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord)
         if param.Case.AnalysisMode in ['Input-Output']:
             forcing_comp = mean.u_forcing_r + 1j*mean.u_forcing_i
             forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], 0.0)), coord)
             
     elif fluc.rhou.ufl_shape[0] == 3:
+        printDebug(param.debug,'--> Mass eq: fluctuations and mean flow 3D')
         rhou_f = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], fluc.rhou[2])), coord)
         if param.Case.AnalysisMode in ['Input-Output']:
             forcing_comp = mean.u_forcing_r - 1j*mean.u_forcing_i
