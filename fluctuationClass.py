@@ -254,9 +254,9 @@ class fluctuationSolutions(
         self._zeroVelocityField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
         self._zeroVelocityField.x.array[:] = 0.0
 
-        if np.imag(gainValue) > 1e-10 * np.real(gainValue):
-            printWarning('The gain is a complex number, while it should be \
-            real. I will ignore this and take the real part!')
+        # if np.imag(gainValue) > 1e-10 * np.real(gainValue):
+        #     printWarning('The gain is a complex number, while it should be \
+        #     real. I will ignore this and take the real part!')
         self._gainValue = np.real(gainValue)
         self._omega = omega
         self._isResponseOrDirect = isResponseOrDirect
