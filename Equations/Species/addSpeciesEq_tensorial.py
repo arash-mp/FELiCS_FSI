@@ -43,18 +43,16 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     coord = self.coord_sys
     
     # Vector quantities
-    if fluc.u.ufl_shape == 2:
-        x_tens = Tensor(as_vector((X[0], X[1], 0.0)), coord)
+    if fluc.u.ufl_shape[0] == 2:
         u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord)
         u_m = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord)
     
-    elif fluc.u.ufl_shape == 3:
-        x_tens = Tensor(as_vector((X[0], X[1], X[2])), coord)
+    elif fluc.u.ufl_shape[0] == 3:
         u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord)
         u_m = Tensor(as_vector((mean.u[0], mean.u[1], mean.u[2])), coord)
         
     else:
-        printError('u has neither 2 or 3 dimensions: not implemented.') 
+        printError('--> Species-nc eq: u has neither 2 or 3 dimensions: not implemented.') 
         
     # Scalar quantities
     Y_m = Tensor(mean.Y(species), coord)  

@@ -41,20 +41,20 @@ def addMassEq(self,fluc,X,mean,param):
     coord = self.coord_sys
     
     # Vector quantities
-    if fluc.rhou.ufl_shape == 2:
-        rhou_f = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], fluc.rhou[2])), coord)
-        if param.Case.AnalysisMode in ['Input-Output']:
-            forcing_comp = mean.u_forcing_r - 1j*mean.u_forcing_i
-            forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], forcing_comp[2])), coord)
-            
-    elif fluc.rhou.ufl_shape == 3:
+    if fluc.rhou.ufl_shape[0] == 2:
         rhou_f = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord)
         if param.Case.AnalysisMode in ['Input-Output']:
             forcing_comp = mean.u_forcing_r + 1j*mean.u_forcing_i
             forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], 0.0)), coord)
             
+    elif fluc.rhou.ufl_shape[0] == 3:
+        rhou_f = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], fluc.rhou[2])), coord)
+        if param.Case.AnalysisMode in ['Input-Output']:
+            forcing_comp = mean.u_forcing_r - 1j*mean.u_forcing_i
+            forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], forcing_comp[2])), coord)
+            
     else:
-        printError('rhou has neither 2 or 3 dimensions: not implemented.')
+        printError('--> Mass eq: rhou has neither 2 or 3 dimensions: not implemented.')
     
     # Scalar quantities    
     rho_f = Tensor(fluc.rho, coord)
