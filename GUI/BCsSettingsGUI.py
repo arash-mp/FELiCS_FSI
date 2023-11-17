@@ -6,6 +6,7 @@ class BCsSettingsGUI():
 		\t Input: 
 		\t -mainGUI: The FELiCS main GUI object
 		'''
+		from dolfinx.mesh import compute_incident_entities
 		from dolfinx import (plot,
 			#MeshTags,
 			)
@@ -56,10 +57,46 @@ class BCsSettingsGUI():
 		else:
 			boundarykey='line'
 		# Plot the boundaries
-####		borderIDX = gmsh.cells[boundarykey]
-####		Lines = gmsh.cell_data[boundarykey]['gmsh:physical']
+		borderIDX = mesh.facet_tags.indices
+		Lines = mesh.facet_tags.values
 		# get a list of all kinds of BC indices
 		self.BCIDs=self.BCs.getBCIDs()
+		'''
+  		New codes to get boundary names
+    	'''
+		BC_Path = self.Case.MeshFilePath
+		start_marker = "$PhysicalNames"
+		end_marker = "$EndPhysicalNames"
+		with open(BC_Path,'r') as file:
+			inside_markers = False
+			current_data = []
+			for line in file:
+				line = line.strip()
+    
+				if line == start_marker:
+					inside_markers = True
+					current_data = []
+				elif line == end_marker:
+					inside_markers = False
+				elif inside_markers:
+					current_data.append(line)
+
+		dim = []
+		index = []
+		name = []
+		for data_line in current_data:
+			data_list = data_line.split()
+			if len(data_list) >= 3:
+				dim.append(data_list[0])
+				index.append(data_list[1])
+				name.append(data_list[2][1:-1])
+		'''
+  		End of the new code, we can write it in function format later.    
+    	'''
+		
+		self.BCList = []
+		for i in self.BCIDs:
+			self.BCList.append(name[index.index(str(i))])
 			
 		# Create cycled list of colors
 		count = 0
@@ -81,36 +118,38 @@ class BCsSettingsGUI():
 		tBar.update()
 		canvas.get_tk_widget().grid             (row = 3, column = 1, rowspan = 1, columnspan = 10, pady=(20,20), sticky=     "N")
 		for i in self.BCIDs:
-####			# Get the lines of the loops boundary
-####			LinesLocal=list(borderIDX[Lines==i])
+			# Get the lines of the loops boundary
+			
+			LinesLocal=compute_incident_entities( mesh.mesh , list(borderIDX[Lines==i]), 1, 0)
 ####			# Get their coordinates and plot the lines
-####			verts=[]
+			verts=[]
 ####			
 ####			# Append next color element to list (required for re-accessing identical BoundaryLabel colors further below)
 			plotColorsCycleElement.append(next(plotColorsCycle))
 ####			
-####			for line in LinesLocal:
-####				CoordX=[]
-####				CoordY=[]
-####				CoordZ=[]
-####				for point in line:
-####					CoordX.append(mesh.coordinates()[point][0])
-####					CoordY.append(mesh.coordinates()[point][1])
-####					if self.BCs.dim>2:
-####						CoordZ.append(mesh.coordinates()[point][2])
-####					
-####				if self.BCs.dim==2:
-####					plt.plot(CoordX,CoordY,color=plotColorsCycleElement[count])
-####				elif self.BCs.dim==3:
-####					verts.append(list(zip(CoordX, CoordY, CoordZ)))
-####			if self.BCs.dim==3:
-####				ax.set_xlabel('x')
-####				ax.set_ylabel('y')
-####				ax.set_zlabel('z')
-####				
-####				srf = Poly3DCollection(verts, facecolor=plotColorsCycleElement[count])
-####				plt.gca().add_collection3d(srf)
-####			count += 1
+
+			CoordX=[]
+			CoordY=[]
+			CoordZ=[]
+			for point in LinesLocal:
+				CoordX.append(mesh.coordinates()[point][0])
+				CoordY.append(mesh.coordinates()[point][1])
+				if self.BCs.dim>2:
+					CoordZ.append(mesh.coordinates()[point][2])
+				
+			if self.BCs.dim==2:
+				plt.plot(CoordX,CoordY,color=plotColorsCycleElement[count])
+			elif self.BCs.dim==3:
+				verts.append(list(zip(CoordX, CoordY, CoordZ)))
+			if self.BCs.dim==3:
+				ax.set_xlabel('x')
+				ax.set_ylabel('y')
+				ax.set_zlabel('z')
+				
+				srf = Poly3DCollection(verts, facecolor=plotColorsCycleElement[count])
+				plt.gca().add_collection3d(srf)
+   
+			count += 1
 					
 		ExtendedSolutionList=mainGUI.param.Case.getExtendedTransportedQuantityList()
 ####		# Construct a dictionary of Objects
@@ -131,7 +170,7 @@ class BCsSettingsGUI():
 ####			BoundaryLabels[BCName].grid(row =MatrixRow , column = (1+BCNames.index(BCName))*2, rowspan = 1, columnspan = 2)
 ####			self.BCNameToID[BCName]=gmshBCDict[BCName][0]
 ####			self.BCIDToName[gmshBCDict[BCName][0]]=BCName 
-		BCNames =[str(entry) for entry in list(self.BCs.getBCIDs()) ]
+		BCNames = self.BCList
 		self.BCNameToID={}
 		self.BCIDToName={}
 		BoundaryLabels={}
