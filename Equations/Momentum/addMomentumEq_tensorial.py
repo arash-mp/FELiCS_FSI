@@ -104,7 +104,7 @@ def addMomentumEq(self,fluc,X,mean,param):
 
     # ------------------------ Convective terms
     FLAG_TENS = True
-    int_by_parts = False
+    int_by_parts = True
     if int_by_parts:
         if FLAG_TENS:
             # Volume term from integration by parts
