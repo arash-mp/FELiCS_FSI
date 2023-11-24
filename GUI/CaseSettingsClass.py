@@ -73,7 +73,10 @@ class CaseSettingsClass(Settings):
 	def getExternalVelocityComponents(self):
 		''' Provides a list of velocity components, which are directed outside the dimensions of the mesh '''
 		if self.CoordinateSystem=='Cartesian':
-			VelCompList = []
+			if self.m!=0 and self.nDim==2:
+				VelCompList = ['z']
+			else:
+				VelCompList = []
 		elif self.CoordinateSystem=='Cylindrical':
 			VelCompList = ['t']
 
