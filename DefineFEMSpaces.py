@@ -204,7 +204,8 @@ class FEMSpacesClass():
 					fieldVMixed.x.array[map_ii] = field.x.array
 					
 			else:
-				space_i, map_i = self.VMixed.sub(i).collapse()
+				# space_i, map_i = self.VMixed.sub(i).collapse()
+				space_i, map_i = self.VMixed.sub(0).sub(i).collapse() # Not sure why but this works also with P1 spaces
 				fieldVMixed.x.array[map_i] = field.x.array
 
 
