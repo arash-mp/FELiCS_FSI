@@ -35,12 +35,11 @@ class enthalpyHandler:
         Function returns:
         """
 
-        if not param.Case.Mixture.ReactionMechanism['type'] == 'NOx':
-            if isinstance(mean.cp, np.ndarray):
-                if mean.cp.shape[0] != self._fieldDict['T'].shape[0]:
-                    local_cp = self._meanfieldDict['cp'].compute_vertex_values()
-                else:
-                    local_cp = mean.cp
+        if isinstance(mean.cp, np.ndarray):
+            if mean.cp.shape[0] != self._fieldDict['T'].shape[0]:
+                local_cp = self._meanfieldDict['cp'].compute_vertex_values()
             else:
                 local_cp = mean.cp
-            self._fieldDict['h'] = local_cp * self._fieldDict['T']
+        else:
+            local_cp = mean.cp
+        self._fieldDict['h'] = local_cp * self._fieldDict['T']

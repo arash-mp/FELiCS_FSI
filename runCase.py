@@ -28,6 +28,13 @@ def runCase(param, useGUI):
 
 	print('Reading InputFlow...')
 	MeanFlow = meanFlowClass(param, FEMSpaces)
+	MeanFlow.importDataFromFile()
+	if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
+		MeanFlow.exportBaseFlowAsHDF5()
+
+	# export the mapped Meanflow:
+	meanflowFilename = 'meanflow.h5'
+	MeanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
 	print('Discretizing the Equations...')
 	WeakFormulation = WeakFormulationCollection.WeakFormulationCollectionClass(
@@ -38,9 +45,6 @@ def runCase(param, useGUI):
 	LinearAlgebraObj = WeakFormulation.DiscretizeFlow()
 
 
-	# export the mapped Meanflow:
-	meanflowFilename = 'meanflow.h5'
-	MeanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
 	if param.Case.AnalysisMode=='Modal':
 		fluctSolutList = LinearAlgebraObj.\

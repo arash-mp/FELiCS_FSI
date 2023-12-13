@@ -7,12 +7,13 @@ from functions import printWarning
 from export import export
 from dependentVariables.viscosityHandler import viscosityHandler
 from fieldProperties import fieldProperties
-
+from dependentVariables.energyHandler import energyHandler
 
 class meanFlowClass(
     fieldProperties,
+    energyHandler,
     viscosityHandler,
-    export
+    export,
 ):
     """
     Parent classes:
@@ -28,44 +29,48 @@ class meanFlowClass(
             param,
             FEMSpaces
     ):
+        self._isMean = True
+        self._isFluctuation = False
         self._param = param
         self._FEMSpaces = FEMSpaces
         fieldProperties.__init__(self)
         viscosityHandler.__init__(self)
         self._meanflowFilename = None
         self.__Mixture = param.Case.Mixture
-
-        self.ImportDataFromFile()
-        if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-            self.exportBaseFlowAsHDF5(FEMSpaces)
-        self.addDerivativeFieldsToMean()
         self.__ZeroField = Function(self._FEMSpaces.P2)
         self.__OneField = Function(self._FEMSpaces.P2)
         self.__OneField.x.array[:] = 1.0
-        self.initLamDiff()
-        if param.Case.Reaction:
-            if param.Case.Mixture.getReactionMechanism()['type'] == '2S-SM2':
-                self.calculateSpeciesEnthalpy()
-                from Reactions.c2sm2 import C2SM2
-                YCH4_lim = 0.043 * 1e-4
-                self.__reaction = C2SM2(YCH4_lim, 2)
-                self.__reaction.computeSensitivities(self.T,
-                                                     self.rho,
-                                                     self.Y('CH4'),
-                                                     self.Y('CO'),
-                                                     self.Y('O2'),
-                                                     self.Y('CO2'))
-                self._fieldDict['Q'] = self.__reaction.Q(self.T,
-                                                            self.rho,
-                                                            self.Y('CH4'),
-                                                            self.Y('CO'),
-                                                            self.Y('O2'),
-                                                            self.Y('CO2'))
-            if param.Case.Mixture.ReactionMechanism['type'] == 'NOx':
-                from Reactions.NOx import NOx
-                self.__reaction = NOx(2)
+        
+        #self.addDerivativeFieldsToMean()
+        #self.initLamDiff()
+        #if param.Case.Reaction:
+        #    print('1')
+            #print(param.Case.Mixture.getReactionMechanism()['type'])
+            #if param.Case.Mixture.getReactionMechanism()['type'] == '2S-SM2':
+            #    print('2')
+            #    param.Case.Mixture.getReactionMechanism()['type']
+            #    self.calculateSpeciesEnthalpy()
+            #    from Reactions.c2sm2 import C2SM2
+            #    YCH4_lim = 0.043 * 1e-4
+            #    self.__reaction = C2SM2(YCH4_lim, 2)
+            #    self.__reaction.computeSensitivities(self.T,
+            #                                         self.rho,
+            #                                         self.Y('CH4'),
+            #                                         self.Y('CO'),
+            #                                         self.Y('O2'),
+            #                                         self.Y('CO2'))
+            #    self._fieldDict['Q'] = self.__reaction.Q(self.T,
+            #                                                self.rho,
+            #                                                self.Y('CH4'),
+            #                                                self.Y('CO'),
+            #                                                self.Y('O2'),
+            #                                                self.Y('CO2'))
+            #if param.Case.Mixture.ReactionMechanism['type'] == 'NOx':
+            #    print('3')
+            #    from Reactions.NOx import NOx
+            #    self.__reaction = NOx(2)
 
-    def ImportDataFromFile(self):
+    def importDataFromFile(self):
         self._fieldDict = {}
         self.__notInFileList = []
         self.__RawFlowDict = {}
@@ -89,17 +94,17 @@ class meanFlowClass(
             self.InterpolateOnFELiCSMesh()
             del self.__RawFlowDict
             self.raiseNotInFileListWarning()
+        self.initLamDiff()
 
-    def addDerivativeFieldsToMean(self):
-        from ufl import sqrt
-        from dolfinx.fem import Function
-
-        if self._param.Case.MolViscModel == 'Constant':
-            self._fieldDict['nulam'], \
-            self._fieldDict['nulam'].x.array[:] = self.getConstVisc()
-        self.__FieldsNames = list(self._fieldDict.keys())
-        #if self._param.Case.Compressible:
-        #    self._fieldDict['c'].interpolate(sqrt(self.gamma * self.p / self.rho))
+#    def addDerivativeFieldsToMean(self):
+#        from ufl import sqrt
+#        from dolfinx.fem import Function
+#
+#        if self._param.Case.MolViscModel == 'Constant':
+#            self._fieldDict['nulam'], \
+#            self._fieldDict['nulam'].x.array[:] = self.getConstVisc()
+#        #if self._param.Case.Compressible:
+#        #    self._fieldDict['c'].interpolate(sqrt(self.gamma * self.p / self.rho))
 #
     def initLamDiff(self):
         from dolfinx.fem import Function
@@ -117,6 +122,10 @@ class meanFlowClass(
                     = getAlpha(self._param,
                                self._fieldDict,
                                isMeanFlowClass=True)
+        else: 
+            if self._param.Case.MolViscModel == 'Constant':
+                self._fieldDict['nulam'], \
+                self._fieldDict['nulam'].x.array[:] = self.getConstVisc()
 
         for specie in self._param.Case.Mixture.getSpeciesList('transported'):
             Sc = self._param.Case.Mixture.species[specie]['Sc']
@@ -151,7 +160,7 @@ class meanFlowClass(
             group,
         )
 
-    def exportBaseFlowAsHDF5(self, FEMSpaces):
+    def exportBaseFlowAsHDF5(self, meanflowFilename = 'meanflow.h5'):
 
         #from fenics import HDF5File
         #mesh = self.fieldDict[list(self.fieldDict.keys())[0]].\
@@ -159,10 +168,9 @@ class meanFlowClass(
         #exportFilePath = self._param.FlowInput.MeanFlowFilePath[0:-4] + "_" \
         #                 + self._param.Case.MeshFilePath[0:-3].split('/')[-1] \
         #                 + "hdf5"
-
         # export the mapped Meanflow:
-        meanflowFilename = 'meanflow.h5'
-        self.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+        #meanflowFilename = 'meanflow.h5'
+        self.mapToExportMeshAndExport(self._FEMSpaces, meanflowFilename)
         #hdf5file = HDF5File(mesh.mpi_comm(), exportFilePath, 'w')
         #for name in self.fieldDict.keys():
         #    hdf5file.write(self.fieldDict[name], name)
@@ -204,7 +212,7 @@ class meanFlowClass(
         indexMappingArray = mappingFunc(coordArray, coordinatesOfP2Mesh)
 
         fieldDict = {}
-        for name in self._param.Case.getMeanFlowFieldNames():
+        for name in self._getMeanFieldsToBeRead():
             if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
                 fieldDict[name] = Function(
                     self._FEMSpaces.FunctionSpaceVectorVelocity)
@@ -240,7 +248,7 @@ class meanFlowClass(
         # List of fields, which are not in the import file
         self.__notInFileList = []
         ## Get Mean flow names
-        nameListMean = Case.getMeanFlowFieldNames()
+        nameListMean = self._getMeanFieldsToBeRead()
         ## Get AVBP mesh file path
         filePath = self._param.FlowInput.MeanFlowFilePath
         # Open hdf5 file
@@ -309,7 +317,7 @@ class meanFlowClass(
         from dolfinx.fem import Function
         from scipy import interpolate
         from Import import ExpandForAverage, ContractAfterAverage
-        nameListMean = self._param.Case.getMeanFlowFieldNames()
+        nameListMean = self._getMeanFieldsToBeRead()
         # Get mesh data
         mesh = self._ScalarFunctionSpace.mesh
         # For three-dimensional databases restrict domain to reduce the number
@@ -833,6 +841,11 @@ class meanFlowClass(
         instance of the class meanFlowVertexValues
         """
         return meanFlowVertexValues(self._meanfieldDict, self._FEMSpaces)
+
+    def _getMeanFieldsToBeRead(self):
+        listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
+        listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
+        return listOfFieldsToBeRead
 
 class meanFlowVertexValues(fieldProperties):
     """
