@@ -66,34 +66,7 @@ class FEMSpacesClass():
 		elif param.BCs.dim==3:
 			element_shape = tetrahedron
 		elementTypeStr='CG'
-		self._degree = param.Numerics.PolynomialOrder['u']
-		self._degree_p = param.Numerics.PolynomialOrder['p']
 		self._nVelocityComponents = len(param.Case.getVelocityComponents())
-		# Create a finite element for a scalar
-		FE_scalar=FiniteElement(
-			elementTypeStr,
-			element_shape,
-			self._degree,
-			)
-		FE_scalar_p=FiniteElement(
-			elementTypeStr,
-			element_shape,
-			self._degree_p, # This is HARDCODED FOR NOW!!
-			)
-		# Create a finite element for a vector (velocity in x-y-plane)
-		FE_vector=VectorElement(
-			elementTypeStr,
-			element_shape,
-			self._degree,
-			dim = self._nVelocityComponents,
-			)
-
-		self.FunctionSpaceVectorVelocity = VectorFunctionSpace(
-			mesh,
-			(elementTypeStr,
-			 self._degree),
-			dim = self._nVelocityComponents,
-			)
 
 		# refine the mesh to get the exportMesh:
 		exportMesh = refine(mesh)
@@ -103,6 +76,16 @@ class FEMSpacesClass():
 
 		exportMesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/{meshfileName}')
 
+		if 'u' in param.Case.getTransportedQuantityList():
+			velocityOrder = param.Numerics.PolynomialOrder['u']
+		else:
+			velocityOrder = 2
+		self.FunctionSpaceVectorVelocity = VectorFunctionSpace(
+			mesh,
+			(elementTypeStr,
+			 velocityOrder),
+			dim = self._nVelocityComponents,
+			)
 		self.FunctionSpaceVectorVelocityExport = VectorFunctionSpace(
 			exportMesh,
 			(elementTypeStr,
@@ -110,30 +93,38 @@ class FEMSpacesClass():
 			dim = self._nVelocityComponents
 			)
 
-
-
 		# Collect all of them in a list
 		MixedList=[]
+
 		# Then a scalar for all the remaining quantities
 		self.FunctionSpaceList=[]
-		print(FE_vector)
+		self.FunctionSpaceListExport=[]
 		for name in param.SolutionList:
 			printDebug(param.debug,'Adding finite element space for '+name+'...')
 			if name=='u':
-				#In order to stabilize the equations, the shape functions for pressure must be of one order lower than those of the velocity
-				MixedList.append(FE_vector)
-				self.FunctionSpaceList.append(FunctionSpace(mesh,FE_vector))
-			elif name=='p':
-				MixedList.append(FE_scalar_p)
-				self.FunctionSpaceList.append(FunctionSpace(mesh,FE_scalar_p))
+				FE = VectorElement(
+                       			elementTypeStr,
+                        		element_shape,
+                       			param.Numerics.PolynomialOrder['u'],
+				    	dim = self._nVelocityComponents,
+                       			)	
+					
 			else:
-				MixedList.append(FE_scalar)
-				self.FunctionSpaceList.append(FunctionSpace(mesh,FE_scalar))
+				FE=FiniteElement(
+                       			 elementTypeStr,
+                       			 element_shape,
+                       			 param.Numerics.PolynomialOrder[name],
+                    			 )
+					
+			MixedList.append(FE)		
+
 		printDebug(param.debug,'The mixed finite element list is: ' + str(MixedList))
+
 		# Create a element of the mixed function space
-		element=MixedElement(MixedList)
+		MixedFE=MixedElement(MixedList)
+
 		# Create a function space containing of mixed elements on the given mesh
-		self.VMixed = FunctionSpace(mesh,element)
+		self.VMixed = FunctionSpace(mesh,MixedFE)
 
 		self.FunctionSpaceVectorVelocityP1 = VectorFunctionSpace(
 			mesh,
@@ -141,32 +132,14 @@ class FEMSpacesClass():
 			 1),
 			dim=self._nVelocityComponents,
 		)
-		# Get a function space for the velocity components
-		# Get function spaces for first order and second order elements...
+		self.FunctionSpaceListExport=[]
+
+#		# Get function spaces for first order and second order elements...
 		self.P1=FunctionSpace(mesh,FiniteElement(elementTypeStr, element_shape, 1))
 		self.P2=FunctionSpace(mesh,FiniteElement(elementTypeStr, element_shape, 2))
 
-		# Collect all of them in a list
-		MixedList=[]
-		# Then a scalar for all the remaining quantities
-		self.FunctionSpaceListExport=[]
-		for name in param.SolutionList:
-			printDebug(param.debug,'Adding finite element space for '+name+'...')
-			if name=='u':
-				#In order to stabilize the equations, the shape functions for pressure must be of one order lower than those of the velocity
-				MixedList.append(FE_vector)
-				self.FunctionSpaceListExport.append(FunctionSpace(exportMesh,FE_vector))
-			elif name=='p':
-				MixedList.append(FE_scalar_p)
-				self.FunctionSpaceListExport.append(FunctionSpace(exportMesh,FE_scalar_p))
-			else:
-				MixedList.append(FE_scalar)
-				self.FunctionSpaceListExport.append(FunctionSpace(exportMesh,FE_scalar))
-		printDebug(param.debug,'The mixed finite element list is: ' + str(MixedList))
-		# Create a element of the mixed function space
-		element=MixedElement(MixedList)
-		# Create a function space containing of mixed elements on the given mesh
-		self.VMixedExport = FunctionSpace(exportMesh,element)
+#		# Create a function space containing of mixed elements on the given mesh
+		self.VMixedExport = FunctionSpace(exportMesh,MixedFE)
 
 		# Get a function space for the velocity components
 		# Get function spaces for first order and second order elements...
