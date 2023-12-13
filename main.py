@@ -10,17 +10,16 @@
 # */
 
 
-'''
-# **********************************************************************
-# * This file is called to start the program
-# * 
-# * This file was created by Thomas L. Kaiser. Significant contributions 
-# *
-# *
-# *   
-# *   
-# ********************
-'''
+"""
+This file is called to start the program
+
+This file was created by Thomas L. Kaiser. Significant contributions 
+
+Parameters
+----------
+
+
+"""
 import sys
 from GUI.GUI import FELiCS_GUI
 from runCase import runCase
