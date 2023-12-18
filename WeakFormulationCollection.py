@@ -63,14 +63,13 @@ from dolfinx.cpp.la.petsc import (
 )
 
 # SLEPc modification
-from petsc4py import PETSc
 from petsc4py.PETSc import ScalarType
 
 #from fenics import  PETScMatrix, PETScVector,DirichletBC, as_backend_type
 from scipy.sparse import (
-    csr_matrix,
-    csc_matrix
-    )
+	csr_matrix,
+	csc_matrix
+	)
 from functions import *
 #from fenics import FunctionAssigner,Constant
 import pdb

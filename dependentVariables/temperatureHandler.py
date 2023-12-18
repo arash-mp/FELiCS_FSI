@@ -28,17 +28,17 @@ class temperatureHandler:
         Function returns:
         """
 
-        self._fieldDict['T'] = self.getTemp(
-            param,
-            mean,
-            self._meanfieldDict if hasattr(self, "_meanfieldDict") else None,
-            self.rho,
-            self.p
-        )
+        if not param.Case.SetOfEquations['Energy']['Variable'] == 'T':
+            self._fieldDict['T'] = self.getTemp(
+                param,
+                mean,
+                self._meanfieldDict if hasattr(self, "_meanfieldDict") else None,
+            )
 
-    def getTemp(self, param, mean, ClassDict, rho, p):
+    def getTemp(self, param, mean, ClassDict):
         import numpy as np
-
+        rho = self.rho
+        p = self.p
         if param.Case.Reaction and not \
         param.Case.Mixture.getReactionMechanism()['type'] in ['2S-SM2']:
             # These hardcoded values are only temporary/unfinished
@@ -64,19 +64,27 @@ class temperatureHandler:
             flucT = -rho / local_rho * Tm
 
         else:
-            if isinstance(mean.rho, np.ndarray) and mean.rho.shape[0] != \
-                    rho.shape[0]:
-                local_rho = ClassDict['rho'].compute_vertex_values()
-                local_T = ClassDict['T'].compute_vertex_values()
+            if param.Case.SetOfEquations['Energy']['Equation'] == 'ProgressVariableLinear':
+                #if isinstance(mean.Y('progress'), np.ndarray) and mean.Y('progress').shape[0] != \
+                #        self.Y('progress').shape[0]:
+                #    localProgress=self.Y('progress').compute_vertex_values()
+                Tu=300
+                Tb=2138
+                flucT= self.Y('progress') * (Tb-Tu)
+            else:    
+                if isinstance(mean.rho, np.ndarray) and mean.rho.shape[0] != \
+                        rho.shape[0]:
+                    local_rho = ClassDict['rho'].compute_vertex_values()
+                    local_T = ClassDict['T'].compute_vertex_values()
+                    if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
+                        local_p = ClassDict['p'].compute_vertex_values()
+                else:
+                    local_rho = mean.rho
+                    local_T = mean.T
+                    if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
+                        local_p = mean.p
+                flucT = -rho / local_rho * local_T
                 if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
-                    local_p = ClassDict['p'].compute_vertex_values()
-            else:
-                local_rho = mean.rho
-                local_T = mean.T
-                if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
-                    local_p = mean.p
-            flucT = -rho / local_rho * local_T
-            if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'PerfectGas':# Add term for pressure fluctuation (compressible flows)
-                flucT += p / local_p * local_T
+                    flucT += p / local_p * local_T
 
         return flucT

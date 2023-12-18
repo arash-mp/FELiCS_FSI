@@ -108,6 +108,9 @@ class export:
 		# exportDictImag = {}
 		from dolfinx import plot
 		import pyvista
+		from functions import printWarning
+		from scipy import interpolate
+  
 		valueDict = {}
 		dofsExport = self._FEMSpaces.P1Export.mesh.coordinates()
 		# get the index-vector for the mapping from P2 to P1-Export Space:
@@ -195,9 +198,18 @@ class export:
 
 					else:
 						ValueArray = ( flucRealCalc.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.sub(indexOfFieldInList).collapse().x.array )
-						subSpaceDofCoordinates = flucRealCalc.sub(indexOfFieldInList).collapse().function_space.tabulate_dof_coordinates()
-						#indexVector = self.mappingFunc(subSpaceDofCoordinates[:, 0:2], dofsExport[:, 0:2])
-						tempSolutionArray = ValueArray[P2CalcToP1ExportIndecies]
+      
+						# Check if the transported quantity was obtained on P2 elts, otherwise we need to 
+						# interpolate from P1 to P2 meshes
+						if len(ValueArray) < len(dofsExport):
+							dofsSolP1 = self._FEMSpaces.P1.mesh.coordinates()
+							printWarning(f'{field}-fluctuations obtained on P1-elts needs to be interpolated onto P2-elts mesh!')
+							tempSolutionArray = interpolate.griddata(dofsSolP1,ValueArray,dofsExport,method='linear')
+       
+						else:
+							subSpaceDofCoordinates = flucRealCalc.sub(indexOfFieldInList).collapse().function_space.tabulate_dof_coordinates()
+							#indexVector = self.mappingFunc(subSpaceDofCoordinates[:, 0:2], dofsExport[:, 0:2])
+							tempSolutionArray = ValueArray[P2CalcToP1ExportIndecies]
 					valueDict[field] = tempSolutionArray
 				else:
 					# muss noch angepasst werden!
