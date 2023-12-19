@@ -113,13 +113,13 @@ def addMomentumEq(self,fluc,X,mean,param):
             self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_f*u_m),0),u_m) ).ufl_tens*coord.J_hat*dx)
             # Boundary term from integration by parts
             if param.Case.CoordinateSystem =='Cartesian':
-                # We might need to use the ufl form in cartesian coord with m > 0 (not tested yet)
                 self.A_vf.add(( -1j*rho_m*iDot(iDot(iOuter(u_f,iConj(x_tens)),u_m),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
                 self.A_vf.add(( -1j*rho_m*iDot(iDot(iOuter(u_m,iConj(x_tens)),u_f),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
                 self.A_vf.add(( -1j*rho_f*iDot(iDot(iOuter(u_m,iConj(x_tens)),u_m),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
             elif param.Case.CoordinateSystem =='Cylindrical':
-                # In cyl coords, a singular term error arise for the above term in the tensor framework
-                # Because there is no Nabla in this term we can use the ufl operators, which seems this error
+                # In cyl coords, a singular term error arise for the boundary term in the tensor framework
+                # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
+                # This should be fixed later on
                 self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(X)),mean.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
                 self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(X)),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
                 self.A_vf.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(X)),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
@@ -231,7 +231,7 @@ def addMomentumEq(self,fluc,X,mean,param):
         # Term corresponding to:    div(mu*grad^T(u)) = div(mu_mean*grad^T(u_fluc)) + div(mu_fluc*grad^T(u_mean))
         # self.A_vf.add(( -1j*nutot_m*iInner(iT(iGrad(u_f,self.m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
         # self.A_vf.add(( -1j*nulam_f*iInner(iT(iGrad(u_m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-        # Do we need to add the following boundary term then? --> Singular vbalue error!
+        # Do we need to add the following boundary term then? --> Singular value error!
         # self.A_vf.add(( 1j*nutot_m*iDot(iDot(iT(iGrad(u_f,self.m)),nbc_tens),iConj(x_tens)) ).ufl_tens*coord.J_hat*self.all_ds)
         # self.A_vf.add(( 1j*nulam_f*iDot(iDot(iT(iGrad(u_m)),nbc_tens),iConj(x_tens)) ).ufl_tens*coord.J_hat*self.all_ds)
         

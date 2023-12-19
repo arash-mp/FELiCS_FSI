@@ -32,10 +32,12 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     
     # Vector quantities
     if fluc.rhou.ufl_shape[0] == 2:
+        printDebug(param.debug, '--> Enthalpy cons. eq: fluctuations and mean flow 2D')
         u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord)
         u_m = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord)
         
     elif fluc.rhou.ufl_shape[0] == 3:
+        printDebug(param.debug, '--> Enthalpy cons. eq: fluctuations and mean flow 3D')
         u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord)
         u_m = Tensor(as_vector((mean.u[0], mean.u[1], mean.u[2])), coord)
     
