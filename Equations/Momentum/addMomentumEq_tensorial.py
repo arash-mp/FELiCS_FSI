@@ -36,17 +36,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     For now all terms from the momentum equation have been grouped 
     into a single file instead of being in serparate files.
 
-    NOTE:
-        (i)     This version doesn't work in cylindrical coordinates
-        (ii)    It is an early attempt at integrating the tensor
-                framework in FELiCS, so bugs/errors are expected.
-        (iii)   Support for discontinuous Galerkin has been dropped.
-        (iv)    Viscosity fluctuations are currently neglected.
-        (v)     This version is only for an INCOMPRESSIBLE flow, 
-                and does not include density fluctuations.
-        (vi)    The "FLAG_TENS" is used to activate the tensor
-                framework in specific terms of the eq. It is possible
-                to combine tensorial terms with index-notation ones
+    NOTE:   Support for discontinuous Galerkin has been dropped
                 
     NOTE:   How to set "m" in the tensor iGrad and iDiv: the value
             should be the sum of the m for each term in the argument,
@@ -92,121 +82,55 @@ def addMomentumEq(self,fluc,X,mean,param):
         
 
     # ------------------------ Time derivative term
-    FLAG_TENS = True
-    if FLAG_TENS:
-        # -- > Tensor implementation (not working for cyl coord)
-        self.B_vf.add(( iDot(rho_m*u_f,iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
-        
-    else:
-        # -- > Previous implementation
-        self.B_vf.add(mean.rho*self.R*fluc.u[i]*conj(X)[i] *dx)
+    self.B_vf.add(( iDot(rho_m*u_f,iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
 
 
     # ------------------------ Convective terms
-    FLAG_TENS = True
     int_by_parts = True
     if int_by_parts:
-        if FLAG_TENS:
-            # Volume term from integration by parts
-            self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_m*u_m),-self.m),u_f) ).ufl_tens*coord.J_hat*dx)
-            self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_m*u_f),0),u_m) ).ufl_tens*coord.J_hat*dx)
-            self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_f*u_m),0),u_m) ).ufl_tens*coord.J_hat*dx)
-            # Boundary term from integration by parts
-            if param.Case.CoordinateSystem =='Cartesian':
-                self.A_vf.add(( -1j*rho_m*iDot(iDot(iOuter(u_f,iConj(x_tens)),u_m),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
-                self.A_vf.add(( -1j*rho_m*iDot(iDot(iOuter(u_m,iConj(x_tens)),u_f),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
-                self.A_vf.add(( -1j*rho_f*iDot(iDot(iOuter(u_m,iConj(x_tens)),u_m),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
-            elif param.Case.CoordinateSystem =='Cylindrical':
-                # In cyl coords, a singular term error arise for the boundary term in the tensor framework
-                # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
-                # This should be fixed later on
-                self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(X)),mean.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
-                self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(X)),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
-                self.A_vf.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(X)),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
-            else:
-                printError('Coord. syst not yet implemented in tensor framework.')
-        
+        # Volume term from integration by parts
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_m*u_m),-self.m),u_f) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_m*u_f),0),u_m) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_f*u_m),0),u_m) ).ufl_tens*coord.J_hat*dx)
+        # Boundary term from integration by parts
+        if param.Case.CoordinateSystem =='Cartesian':
+            self.A_vf.add(( -1j*rho_m*iDot(iDot(iOuter(u_f,iConj(x_tens)),u_m),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
+            self.A_vf.add(( -1j*rho_m*iDot(iDot(iOuter(u_m,iConj(x_tens)),u_f),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
+            self.A_vf.add(( -1j*rho_f*iDot(iDot(iOuter(u_m,iConj(x_tens)),u_m),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
+        elif param.Case.CoordinateSystem =='Cylindrical':
+            # In cyl coords, a singular term error arise for the boundary term in the tensor framework
+            # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
+            # This should be fixed later on
+            self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(X)),mean.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
+            self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(X)),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
+            self.A_vf.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(X)),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
         else:
-            # -- > Previous implementation
-            # Volume term from integration by parts
-            I = Identity(fluc.u.geometric_dimension())
-            self.A_vf.add(1j * Dx(self.R * conj(X[i]) * mean.rho * mean.u[j] ,k) * fluc.u[i] * I[k,j] * dx)
-            self.A_vf.add(1j * Dx(self.R * conj(X[i]) * mean.rho * fluc.u[j] ,k) * mean.u[i] * I[k,j] * dx)
-            self.A_vf.add(1j * Dx(self.R * conj(X[i]) * fluc.rho * mean.u[j] ,k) * mean.u[i] * I[k,j] * dx)
-            # Boundary term from integration by parts
-            self.A_vf.add(1j * (- self.R * conj(X[i]) * mean.rho * mean.u[j] * fluc.u[i] * self.n_BC[k] * I[k,j]\
-			    - self.R * conj(X[i]) * mean.rho * fluc.u[j] * mean.u[i] * self.n_BC[k] * I[k,j]\
-			    - self.R * conj(X[i]) * fluc.rho * mean.u[j] * mean.u[i] * self.n_BC[k] * I[k,j])*self.all_ds)
-            # Additionnal terms for cyl. coord
-            if param.Case.CoordinateSystem in ['Cylindrical']:
-                self.A_vf.add(1j * - conj(X)[2] * mean.rho *mean.u[1] * fluc.u[2] * dx)
-                self.A_vf.add(1j * - conj(X)[2] * mean.rho *fluc.u[1] * mean.u[2] * dx)
-                self.A_vf.add(1j * - conj(X)[2] * fluc.rho *mean.u[1] * mean.u[2] * dx)
-                self.A_vf.add(1j * conj(X)[1] * mean.u[2] * fluc.u[2] * mean.rho * dx\
-					  + 1j * conj(X)[1] * fluc.u[2] * mean.u[2] * mean.rho * dx\
-					  + 1j * conj(X)[1] * mean.u[2] * mean.u[2] * fluc.rho * dx)
-                # -- Additionnal terms for cyl. coord and m > 0
-                if not param.Case.m == 0:
-                    self.A_vf.add(mean.rho * conj(X)[i] * param.Case.m * mean.u[2] * fluc.u[i] * dx)
+            printError('Coord. syst not yet implemented in tensor framework.')
                     
     else:
         ## ---- ALTERNATIVE: No integration by part, just one volume term
         printDebug(param.debug, '--> Mom eq: convection term NOT integrated by part')
-        if FLAG_TENS:
-            # -- > Tensor implementation derived by hand
-            self.A_vf.add(( -1j*iDot(iDot(iGrad(u_f,self.m),rho_m*u_m),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
-            self.A_vf.add(( -1j*iDot(iDot(iGrad(u_m),rho_m*u_f),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
-            self.A_vf.add(( -1j*iDot(iDot(iGrad(u_m),rho_f*u_m),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
-            
-        else:
-            if not param.Case.m == 0:
-                printError('--> Mom eq: Convection term without IbP not implemented for m > 0.')
-            # Index notation implementation (m > 0 terms missing!)
-            I = Identity( fluc.u.geometric_dimension() )
-            self.A_vf.add(-1j * self.R*conj(X[i])*mean.rho*mean.u[j]*Dx(fluc.u[i], k)*I[k,j] * dx)
-            self.A_vf.add(-1j * self.R*conj(X[i])*mean.rho*fluc.u[j]*Dx(mean.u[i], k)*I[k,j] * dx)
-            self.A_vf.add(-1j * self.R*conj(X[i])*fluc.rho*mean.u[j]*Dx(mean.u[i], k)*I[k,j] * dx)
-            if param.Case.CoordinateSystem in ['Cylindrical']:
-                self.A_vf.add(1j * conj(X)[1]*mean.rho*mean.u[2]*fluc.u[2] * dx)
-                self.A_vf.add(1j * -conj(X)[2]*mean.rho*mean.u[1]*fluc.u[2] * dx)
-                
-                self.A_vf.add(1j * conj(X)[1]*mean.rho*fluc.u[2]*mean.u[2] * dx)
-                self.A_vf.add(1j * -conj(X)[2]*mean.rho*fluc.u[1]*mean.u[2] * dx)
-                
-                self.A_vf.add(1j * conj(X)[1]*fluc.rho*mean.u[2]*mean.u[2] * dx)
-                self.A_vf.add(1j * -conj(X)[2]*fluc.rho*mean.u[1]*mean.u[2] * dx)
+        # -- > Tensor implementation derived by hand
+        self.A_vf.add(( -1j*iDot(iDot(iGrad(u_f,self.m),rho_m*u_m),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( -1j*iDot(iDot(iGrad(u_m),rho_m*u_f),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( -1j*iDot(iDot(iGrad(u_m),rho_f*u_m),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
 
 
     # ------------------------ Pressure gradient terms
-    FLAG_TENS = True
     int_by_parts = True  
     if int_by_parts:
         # Integrate pressure gradient boundary terms (resulting from integration by parts)
-        if FLAG_TENS:
-            # -- > Tensor implementation
-            self.A_vf.add( (1j*p_f*iDiv(iConj(x_tens),-self.m) ).ufl_tens*coord.J_hat*dx)
-            self.A_vf.add( (-1j*iDot(p_f*iConj(x_tens),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
-            
-        else:
-            # -- > Previous implementation
-            I = Identity( fluc.u.geometric_dimension() )
-            self.A_vf.add(1j * Dx(conj(X[i])*self.R,j)*fluc.p * I[i,j] * dx)
-            self.A_vf.add(1j * -self.R*fluc.p*self.n_BC[j]*conj(X[i])* I[i,j] * self.all_ds)
-            # Additionnal terms for m > 0
-            if not param.Case.m == 0: # Should this not be ony for cyl. coords.??
-                self.A_vf.add(+conj(X)[2]*self.m*fluc.p*dx)
+        self.A_vf.add( (1j*p_f*iDiv(iConj(x_tens),-self.m) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add( (-1j*iDot(p_f*iConj(x_tens),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
 
     else:
         # No integration by parts of the pressure term
-        if FLAG_TENS:
-            printError('--> Mom eq: Pressure term without IbP not implemented in tensor framework.')
-            
-        else:
-            # -- > Previous implementation
-            self.A_vf.add(1j * -self.R*inner(grad(fluc.p), X)*dx)
-            # Additionnal terms for m > 0
-            if not param.Case.m == 0: # Should this not be ony for cyl. coords.??
-                self.A_vf.add(+conj(X)[2]*self.m*fluc.p*dx)
+        printError('--> Mom eq: Pressure term without IbP not implemented in tensor framework.')
+        # -- > Previous implementation
+        #self.A_vf.add(1j * -self.R*inner(grad(fluc.p), X)*dx)
+        # Additionnal terms for m > 0
+        #if not param.Case.m == 0: # Should this not be ony for cyl. coords.??
+        #    self.A_vf.add(+conj(X)[2]*self.m*fluc.p*dx)
 
 
 
@@ -221,142 +145,35 @@ def addMomentumEq(self,fluc,X,mean,param):
     
     
     ## ---- Visc. 1: viscous terms for incompressible flow
-    FLAG_TENS = True
-    if FLAG_TENS:
-        # -- > Tensor implementation
-        # Term corresponding to:     div(mu*gradT(u)) = div(mu_mean*grad(u_fluc)) + div(mu_fluc*grad(u_mean))
-        self.A_vf.add(( -1j*nutot_m*iInner(iGrad(u_f,self.m),iGrad(iConj(x_tens),-self.m) )).ufl_tens*coord.J_hat*dx)
-        self.A_vf.add(( -1j*nulam_f*iInner(iGrad(u_m),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-        # In case we decide not to neglect the gradient of nutot:
-        # Term corresponding to:    div(mu*grad^T(u)) = div(mu_mean*grad^T(u_fluc)) + div(mu_fluc*grad^T(u_mean))
-        # self.A_vf.add(( -1j*nutot_m*iInner(iT(iGrad(u_f,self.m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-        # self.A_vf.add(( -1j*nulam_f*iInner(iT(iGrad(u_m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-        # Do we need to add the following boundary term then? --> Singular value error!
-        # self.A_vf.add(( 1j*nutot_m*iDot(iDot(iT(iGrad(u_f,self.m)),nbc_tens),iConj(x_tens)) ).ufl_tens*coord.J_hat*self.all_ds)
-        # self.A_vf.add(( 1j*nulam_f*iDot(iDot(iT(iGrad(u_m)),nbc_tens),iConj(x_tens)) ).ufl_tens*coord.J_hat*self.all_ds)
-        
-    else:
-        # -- > Previous implementation
-        # I,III: div(mean.mu*grad(fluc.u)) in 2D after Ibp (boundary integral neglected): 
-        self.A_vf.add(1j * -self.R*mean.nuTot*Dx(fluc.u[i],j)*Dx(conj(X)[i],j)*dx )
-        # div(fluc.mu*grad(mean.u)) in 2D after Ibp (integral of boundary terms neglected):
-        self.A_vf.add(1j * -fluc.nulam*mean.u[i].dx(j)*conj(X)[i].dx(j)*dx )
-        # Additional terms for flow in cyl. coord
-        if param.Case.CoordinateSystem =='Cylindrical':
-            self.A_vf.add(1j * -mean.nuTot/self.R*conj(X)[2]*fluc.u[2]*dx)
-            self.A_vf.add(1j * -mean.nuTot.dx(1)*conj(X)[2]*fluc.u[2]*dx)
-            self.A_vf.add(1j * -mean.nuTot*conj(X)[1]/self.R*fluc.u[1]*dx)
-            # Additional terms for m > 0
-            if not param.Case.m == 0:
-                self.A_vf.add(-2*mean.nuTot/self.R*self.m*conj(X)[2]*fluc.u[1]*dx)#
-                self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(0)*self.m*fluc.u[0]*dx)
-                #self.A_vf.add(1j * -X*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)            #III  -> A_real ??? (CA)
-                self.A_vf.add(-conj(X)[2]*mean.nuTot.dx(1)*self.m*fluc.u[1]*dx)
-                self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*inner(fluc.u, X)*dx)#
-                #self.A_vf.add(1j * -mean.nuTot*self.m**2/self.R*conj(X)[i]*fluc.u[i]*dx)# this line replaces the above which uses inner
-                self.A_vf.add(2*mean.nuTot*self.m/self.R*conj(X)[1]*fluc.u[2]*dx)#
-
+    # Term corresponding to:     div(mu*gradT(u)) = div(mu_mean*grad(u_fluc)) + div(mu_fluc*grad(u_mean))
+    self.A_vf.add(( -1j*nutot_m*iInner(iGrad(u_f,self.m),iGrad(iConj(x_tens),-self.m) )).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( -1j*nulam_f*iInner(iGrad(u_m),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
     
+    # In case we decide not to neglect the gradient of nutot (still need debugging):
+    # Term corresponding to:    div(mu*grad^T(u)) = div(mu_mean*grad^T(u_fluc)) + div(mu_fluc*grad^T(u_mean))
+    # self.A_vf.add(( -1j*nutot_m*iInner(iT(iGrad(u_f,self.m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+    # self.A_vf.add(( -1j*nulam_f*iInner(iT(iGrad(u_m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+    # Do we need to add the following boundary term then? --> Singular value error!
+    # self.A_vf.add(( 1j*nutot_m*iDot(iDot(iT(iGrad(u_f,self.m)),nbc_tens),iConj(x_tens)) ).ufl_tens*coord.J_hat*self.all_ds)
+    # self.A_vf.add(( 1j*nulam_f*iDot(iDot(iT(iGrad(u_m)),nbc_tens),iConj(x_tens)) ).ufl_tens*coord.J_hat*self.all_ds)
+
+
     ## ---- Visc. 2: viscous terms for compressible flow
     if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-        if FLAG_TENS:
-            # The viscous diffusion is still integrated by parts and the resulting boundary 
-            # terms are neglected to impose a Neumann BC
-            # Adding term corresponding to: div(mu*grad^T(u)) = div(mu_mean*grad^T(u_fluc)) + div(mu_fluc*grad^T(u_mean))
-            self.A_vf.add(( -1j*nutot_m*iInner(iT(iGrad(u_f,self.m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-            self.A_vf.add(( -1j*nulam_f*iInner(iT(iGrad(u_m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-            # Adding terms corresponding to: -2/3*div(mu*(div(u)*I) = -2/3*div(mu_mean*(div(u_fluc)*I) -2/3*div(mu_fluc*(div(u_mean)*I)
-            self.A_vf.add(( 1j*2.0/3.0*nutot_m*iInner(iDiv(u_f,self.m)*iIdentity(iGrad(u_f)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-            self.A_vf.add(( 1j*2.0/3.0*nulam_f*iInner(iDiv(u_m)*iIdentity(iGrad(u_f)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-            
-        else:
-            # -- > Previous implementation
-            I = Identity( fluc.u.geometric_dimension() )
-            # II, III: div(mu*grad^T(fluc.u)) in 2D after Ibp (boundary integral neglected):
-            self.A_vf.add(1j * -self.R*mean.nuTot*Dx(fluc.u[j],i)*Dx(conj(X)[i],j)*dx )
-            # IV: div(mean.mu*(div(u)*I)
-            self.A_vf.add(1j * mean.nuTot*2.0/3.0*Dx(fluc.u[k],k)*Dx(self.R*conj(X)[i],j)*I[i,j]*dx ) # Change CA:
-            #div(fluc.mu*grad^T(mean.u)) in 2D after Ibp (integral of boundary terms neglected):#
-            #CAUTION: NOT IMPLEMENTED IN CYLINDRICAL COORDINATES!
-            self.A_vf.add(1j * -fluc.nulam*mean.u[j].dx(i)*conj(X)[i].dx(j)*dx )
-            self.A_vf.add(1j * 2.0/3.0 * fluc.nulam*mean.u[k].dx(k)*I[i,j]*conj(X)[i].dx(j)*dx )
-            # Additional terms in cylindrical coordinates
-            if param.Case.CoordinateSystem =='Cylindrical':
-                self.A_vf.add(1j * -mean.nuTot/self.R*fluc.u[1]*conj(X)[1]*dx)              #II(1)
-                self.A_vf.add(1j * -2.0/3.0*fluc.u[1]*Dx(mean.nuTot,i)*conj(X)[i]*dx)       #IV(1)
-                self.A_vf.add(1j * -2.0/3.0*mean.nuTot*Dx(fluc.u[1],i)*conj(X)[i]*dx)       #IV(2)
-                self.A_vf.add(1j * 2.0/3.0*mean.nuTot/self.R*fluc.u[1]*conj(X)[1]*dx)
-                # Extra terms for m > 0
-                if not param.Case.m == 0:
-                    self.A_vf.add(-self.m*mean.nuTot*Dx(fluc.u[2],i)*conj(X)[i]*dx)		    #II(2)
-                    self.A_vf.add(self.m/self.R*mean.nuTot*fluc.u[2]*conj(X)[1]*dx)		    #II(3)
-                    self.A_vf.add(2.0/3.0*self.m*fluc.u[2]*Dx(mean.nuTot,i)*conj(X)[i]*dx)  #IV(4)
-                    self.A_vf.add(2.0/3.0*self.m*mean.nuTot*Dx(fluc.u[2],i)*conj(X)[i]*dx)  #IV(5)
-                    self.A_vf.add(-2.0/3.0*self.m/self.R*mean.nuTot*fluc.u[2]*conj(X)[1]*dx)	
+        # The viscous diffusion is still integrated by parts and the resulting boundary 
+        # terms are neglected to impose a Neumann BC
+        # Adding term corresponding to: div(mu*grad^T(u)) = div(mu_mean*grad^T(u_fluc)) + div(mu_fluc*grad^T(u_mean))
+        self.A_vf.add(( -1j*nutot_m*iInner(iT(iGrad(u_f,self.m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( -1j*nulam_f*iInner(iT(iGrad(u_m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+        # Adding terms corresponding to: -2/3*div(mu*(div(u)*I) = -2/3*div(mu_mean*(div(u_fluc)*I) -2/3*div(mu_fluc*(div(u_mean)*I)
+        self.A_vf.add(( 1j*2.0/3.0*nutot_m*iInner(iDiv(u_f,self.m)*iIdentity(iGrad(u_f)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( 1j*2.0/3.0*nulam_f*iInner(iDiv(u_m)*iIdentity(iGrad(u_f)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
     
 
     ## ---- Visc. 3: viscous BC terms for input-output analysis
-    FLAG_TENS = True
     if param.Case.AnalysisMode in ['Input-Output']:
-        if FLAG_TENS:
-            for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
-                self.A_vf.add(( 1j*nutot_m*iDot(iDot(iGrad(u_f,self.m),nbc_tens),iConj(x_tens)) ).ufl_tens*coord.J_hat*self.ds(boundary_index))
-                # Version with full viscous tensor (not assuming constant viscosity) --> Not working as expected for now
-                #self.A_vf.add((1j*nutot_m*iDot(iDot(iGrad(u_f, self.m)+iT(iGrad(u_f, self.m)),nbc_tens),iConj(x_tens))).ufl_tens*coord.J_hat*self.ds(boundary_index))
+        for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
+            self.A_vf.add(( 1j*nutot_m*iDot(iDot(iGrad(u_f,self.m),nbc_tens),iConj(x_tens)) ).ufl_tens*coord.J_hat*self.ds(boundary_index))
+            # Version with full viscous tensor (not assuming constant viscosity) --> Not working as expected for now
+            #self.A_vf.add((1j*nutot_m*iDot(iDot(iGrad(u_f, self.m)+iT(iGrad(u_f, self.m)),nbc_tens),iConj(x_tens))).ufl_tens*coord.J_hat*self.ds(boundary_index))
             
-        else:
-            # -- > Previous implementation
-            for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
-                # Add physical boundary terms in imaginary part, where the forcing is applied...
-                self.A_vf.add(1j * -self.R*mean.nuTot*
-                            (-conj(X)[0] * (self.n_BC[0] * (fluc.u[0].dx(0)) +
-                                            self.n_BC[1] * (fluc.u[0].dx(1))) -
-                                conj(X)[1] *
-                                            (self.n_BC[0] * (fluc.u[1].dx(0)) +
-                                            self.n_BC[1] * (fluc.u[1].dx(1))) )
-                                * self.ds(boundary_index))
-                # Add stabilization terms on imaginary part according
-                # to Baumann and Oden JFM 2016 vol 798
-                # self.A_vf.add(1j * -self.R*mean.nuTot*((self.n_BC[0] * (conj(X)[0].dx(0)) +
-                #                         self.n_BC[1] *   (conj(X)[0].dx(1))) * (fluc.u[0]-mean.u_forcing_i[0]) +#jvs
-                #                             (self.n_BC[0] *  (conj(X)[1].dx(0)) +
-                #                         self.n_BC[1] *   (conj(X)[1].dx(1))) * (fluc.u[1]-mean.u_forcing_i[1])) *self.ds(boundary_index)) #jvs
-
-                # # Add stabilization terms on imaginary part according to Baumann and Oden JFM 2016 vol 798
-                # self.A_vf.add(-self.R*mean.nuTot*((self.n_BC[0] * (conj(X)[0].dx(0)) +
-                #                         self.n_BC[1] * (conj(X)[0].dx(1) )) * (-mean.u_forcing_r[0]) +
-                #                             (self.n_BC[0] * (conj(X)[1].dx(0) ) +
-                #                         self.n_BC[1] * (conj(X)[1].dx(1))) * (-mean.u_forcing_r[1])) *self.ds(boundary_index))
-    
-    
-    ## ---- Visc. 4: terms needed if we have three components to the mean velocity vector
-    # These should be included in previous terms in tensor framework
-    FLAG_TENS = True
-    if param.Case.TransVelFluc:
-        # -- > Previous implementation
-        if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-            if not FLAG_TENS:
-                # -- > Previous implementation
-                # These terms are already added above in the tensorial framework
-                self.A_vf.add(1j * self.R*Dx(mean.nuTot,i)*Dx(fluc.u[2],i)*conj(X)[2]*dx)       #III(1) (not 100% sure why only in case of dilatation -> needs checking)
-                if not param.Case.m == 0:
-                    self.A_vf.add(1j * -self.m**2/self.R*mean.nuTot*fluc.u[2]*conj(X)[2]*dx)    #II(4)
-                    self.A_vf.add(1j * 2/3*self.m**2/self.R*mean.nuTot*fluc.u[2]*conj(X)[2]*dx) #IV(9)
-                    self.A_vf.add(-self.m*mean.nuTot*Dx(fluc.u[i],i)*conj(X)[2]*dx)			    #II(5)
-                    self.A_vf.add(-self.m/self.R*mean.nuTot*fluc.u[1]*conj(X)[2]*dx)			#II(6)
-                    self.A_vf.add(2.0/3.0*self.m*mean.nuTot*Dx(fluc.u[i],i)*conj(X)[2]*dx)		#IV(7)
-                    self.A_vf.add(2.0/3.0*self.m/self.R*mean.nuTot*fluc.u[1]*conj(X)[2]*dx)		#IV(8)
-
-        if param.Case.AnalysisMode in ['Input-Output']:
-            if not FLAG_TENS:
-                # -- > Previous implementation
-                # These terms are already added above in the tensor framework
-                for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
-                    # Add physical boundary terms in imaginary part, where the forcing is applied...
-                    self.A_vf.add(1j * -self.R*mean.nuTot*(-conj(X) * (self.n_BC[0] *   (fluc.u[2].dx(0)) + self.n_BC[self.ThirdVelCompIndex] *   (fluc.u[2].dx(1)))) *self.ds(boundary_index))
-                    # Add stabilization terms on imaginary part according to Baumann and Oden JFM 2016 vol 798
-                    self.A_vf.add(1j * -self.R * mean.nuTot * ((	self.n_BC[0] * (conj(X).dx(0)) +
-                                                    self.n_BC[self.ThirdVelCompIndex] * (conj(X).dx(1))) * (fluc.u[2] - mean.ut_forcing_i)) * self.ds(boundary_index))
-                    # Add stabilization terms on real part according to Baumann and Oden JFM 2016 vol 798
-                    self.A_vf.add(-self.R * mean.nuTot * ((	self.n_BC[0] * (conj(X).dx(0)) +
-                                                    self.n_BC[self.ThirdVelCompIndex] * (conj(X).dx(1))) * (-mean.ut_forcing_r)) * self.ds(boundary_index))
