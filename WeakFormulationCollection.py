@@ -180,30 +180,15 @@ class WeakFormulationCollectionClass():
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
-            
-            FLAG_TENS = True
-            if FLAG_TENS:
-                from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
-            else:
-                from Equations.Momentum.addMomentumEq import addMomentumEq
+            from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
             addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
-            
-            FLAG_TENS = True
-            if FLAG_TENS:
-                from Equations.Mass.addMassEq_tensorial import addMassEq
-            else:
-                from Equations.Mass.addMassEq import addMassEq
+            from Equations.Mass.addMassEq_tensorial import addMassEq
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            
-            FLAG_TENS = True
-            if FLAG_TENS:
-                from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
-            else:
-                from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
+            from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
@@ -214,27 +199,18 @@ class WeakFormulationCollectionClass():
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
-                
-                FLAG_TENS = True
-                if FLAG_TENS:
-                    from Equations.Species.addSpeciesEq_tensorial import addSpeciesEq
-                else:
-                    from Equations.Species.addSpeciesEq import addSpeciesEq
+                from Equations.Species.addSpeciesEq_tensorial import addSpeciesEq
                 print('-- Adding Equation for species '+specie + ' in non-conservative form')
                 addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
                 
             elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
-                
-                FLAG_TENS = True
-                if FLAG_TENS:
-                    from Equations.speciesConservative.addSpeciesConservativeEq_tensorial import addSpeciesConservativeEq
-                else:
-                    from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+                # This eq has not been derived in tensor framework yet.
+                from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
                 print('-- Adding Equation for species '+specie +' in conservative form')
                 addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
 
         # Add reactions
-
+        # Reaction eqs not derived in tensor framework yet
         if self.__param.Case.Reaction:
             if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
                 from Reactions.GlobalReaction import GlobalReaction
