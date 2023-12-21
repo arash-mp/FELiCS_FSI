@@ -1,5 +1,5 @@
 from ufl import dx
-from tensor_utils import *
+from tensorUtils import *
 
 def addEnthalpyEq(self,fluc,X,mean,param):
     '''
@@ -41,7 +41,11 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     alpha_m = Tensor(mean.alpha, coord)
     alpha_f = Tensor(fluc.alpha, coord)
     p_f = Tensor(fluc.p, coord)
-    x_tens = Tensor(X, coord)
+    x_tens = Tensor(
+                    X,
+                    coord,
+                    containsTestFunction = True,
+                    )
     
     # Boundary normal vector (always 2D)
     nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord)
@@ -54,7 +58,7 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     
     # ------------------------  Advection terms
     # Add volume integral of advection terms that remain after partial integration:
-    self.A_vf.add(( 1j*iDiv(iConj(x_tens)*rho_m*u_m,-self.m)*h_f ).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( 1j*iDiv(iConj(x_tens)*rho_m*u_m,self.m)*h_f ).ufl_tens*coord.J_hat*dx)
     self.A_vf.add(( 1j*iDiv(iConj(x_tens)*rho_f*u_m)*he_m ).ufl_tens*coord.J_hat*dx)
     self.A_vf.add(( 1j*iDiv(iConj(x_tens)*rho_m*u_f)*he_m ).ufl_tens*coord.J_hat*dx)
     # Add boundary integrals resulting from said partial integration:
@@ -64,8 +68,8 @@ def addEnthalpyEq(self,fluc,X,mean,param):
         
         
     # ------------------------  Diffusion terms
-    self.A_vf.add(( -1j*iDot(alpha_m*iGrad(h_f,self.m),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-    self.A_vf.add(( -1j*iDot(alpha_f*iGrad(he_m),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( -1j*iDot(alpha_m*iGrad(h_f,self.m),iGrad(iConj(x_tens),self.m)) ).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( -1j*iDot(alpha_f*iGrad(he_m),iGrad(iConj(x_tens),self.m)) ).ufl_tens*coord.J_hat*dx)
 
         
     

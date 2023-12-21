@@ -13,7 +13,7 @@ from ufl import (
     outer,
     transpose
 )
-from tensor_utils import (
+from tensorUtils import (
     Tensor,
     as_vector,
     iInner,
@@ -25,6 +25,8 @@ from tensor_utils import (
     iT,
     iIdentity
 )
+
+
 from functions import printWarning, printError, printDebug
 
 def addMomentumEq(self,fluc,X,mean,param):
@@ -57,13 +59,13 @@ def addMomentumEq(self,fluc,X,mean,param):
     # Vector quantities
     if fluc.u.ufl_shape[0] == 2:
         printDebug(param.debug, '--> Mom eq: fluctuations and mean flow 2D')
-        x_tens = Tensor(as_vector((X[0], X[1], 0.0)), coord)
+        x_tens = Tensor(as_vector((X[0], X[1], 0.0)), coord,containsTestFunction=True)
         u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord)
         u_m = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord)
     
     elif fluc.u.ufl_shape[0] == 3:
         printDebug(param.debug, '--> Mom eq: fluctuations and mean flow 3D')
-        x_tens = Tensor(as_vector((X[0], X[1], X[2])), coord)
+        x_tens = Tensor(as_vector((X[0], X[1], X[2])), coord,containsTestFunction=True)
         u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord)
         u_m = Tensor(as_vector((mean.u[0], mean.u[1], mean.u[2])), coord)
         
@@ -89,11 +91,12 @@ def addMomentumEq(self,fluc,X,mean,param):
     int_by_parts = True
     if int_by_parts:
         # Volume term from integration by parts
-        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_m*u_m),-self.m),u_f) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_m*u_m),self.m),u_f) ).ufl_tens*coord.J_hat*dx)
         self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_m*u_f),0),u_m) ).ufl_tens*coord.J_hat*dx)
         self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_f*u_m),0),u_m) ).ufl_tens*coord.J_hat*dx)
         # Boundary term from integration by parts
         if param.Case.CoordinateSystem =='Cartesian':
+            print( rho_m*iDot(iDot(iOuter(u_f,iConj(x_tens)),u_m),nbc_tens) )
             self.A_vf.add(( -1j*rho_m*iDot(iDot(iOuter(u_f,iConj(x_tens)),u_m),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
             self.A_vf.add(( -1j*rho_m*iDot(iDot(iOuter(u_m,iConj(x_tens)),u_f),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
             self.A_vf.add(( -1j*rho_f*iDot(iDot(iOuter(u_m,iConj(x_tens)),u_m),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
@@ -120,7 +123,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     int_by_parts = True  
     if int_by_parts:
         # Integrate pressure gradient boundary terms (resulting from integration by parts)
-        self.A_vf.add( (1j*p_f*iDiv(iConj(x_tens),-self.m) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add( (1j*p_f*iDiv(iConj(x_tens),self.m) ).ufl_tens*coord.J_hat*dx)
         self.A_vf.add( (-1j*iDot(p_f*iConj(x_tens),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
 
     else:
@@ -146,8 +149,8 @@ def addMomentumEq(self,fluc,X,mean,param):
     
     ## ---- Visc. 1: viscous terms for incompressible flow
     # Term corresponding to:     div(mu*gradT(u)) = div(mu_mean*grad(u_fluc)) + div(mu_fluc*grad(u_mean))
-    self.A_vf.add(( -1j*nutot_m*iInner(iGrad(u_f,self.m),iGrad(iConj(x_tens),-self.m) )).ufl_tens*coord.J_hat*dx)
-    self.A_vf.add(( -1j*nulam_f*iInner(iGrad(u_m),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( -1j*nutot_m*iInner(iGrad(u_f,self.m),iGrad(iConj(x_tens),self.m) )).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( -1j*nulam_f*iInner(iGrad(u_m),iGrad(iConj(x_tens),self.m)) ).ufl_tens*coord.J_hat*dx)
     
     # In case we decide not to neglect the gradient of nutot (still need debugging):
     # Term corresponding to:    div(mu*grad^T(u)) = div(mu_mean*grad^T(u_fluc)) + div(mu_fluc*grad^T(u_mean))
@@ -163,11 +166,11 @@ def addMomentumEq(self,fluc,X,mean,param):
         # The viscous diffusion is still integrated by parts and the resulting boundary 
         # terms are neglected to impose a Neumann BC
         # Adding term corresponding to: div(mu*grad^T(u)) = div(mu_mean*grad^T(u_fluc)) + div(mu_fluc*grad^T(u_mean))
-        self.A_vf.add(( -1j*nutot_m*iInner(iT(iGrad(u_f,self.m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-        self.A_vf.add(( -1j*nulam_f*iInner(iT(iGrad(u_m)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( -1j*nutot_m*iInner(iT(iGrad(u_f,self.m)),iGrad(iConj(x_tens),self.m)) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( -1j*nulam_f*iInner(iT(iGrad(u_m)),iGrad(iConj(x_tens),self.m)) ).ufl_tens*coord.J_hat*dx)
         # Adding terms corresponding to: -2/3*div(mu*(div(u)*I) = -2/3*div(mu_mean*(div(u_fluc)*I) -2/3*div(mu_fluc*(div(u_mean)*I)
-        self.A_vf.add(( 1j*2.0/3.0*nutot_m*iInner(iDiv(u_f,self.m)*iIdentity(iGrad(u_f)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
-        self.A_vf.add(( 1j*2.0/3.0*nulam_f*iInner(iDiv(u_m)*iIdentity(iGrad(u_f)),iGrad(iConj(x_tens),-self.m)) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( 1j*2.0/3.0*nutot_m*iInner(iDiv(u_f,self.m)*iIdentity(iGrad(u_f)),iGrad(iConj(x_tens),self.m)) ).ufl_tens*coord.J_hat*dx)
+        self.A_vf.add(( 1j*2.0/3.0*nulam_f*iInner(iDiv(u_m)*iIdentity(iGrad(u_f)),iGrad(iConj(x_tens),self.m)) ).ufl_tens*coord.J_hat*dx)
     
 
     ## ---- Visc. 3: viscous BC terms for input-output analysis

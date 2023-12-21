@@ -1,4 +1,4 @@
-from tensor_utils import *
+from tensorUtils import *
 from ufl import dx
 from functions import printWarning, printError, printDebug
 
@@ -48,7 +48,7 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     D_f = Tensor(fluc.D(species), coord)
     rho_m = Tensor(mean.rho, coord)
     rho_f = Tensor(fluc.rho, coord)
-    x_tens = Tensor(X, coord)
+    x_tens = Tensor(X, coord, containsTestFunction = True)
     if param.Case.AnalysisMode in ['Input-Output']:
         forcing_tens = Tensor(mean.forcing_r(species)+1j*mean.forcing_i(species), coord)
     
@@ -60,7 +60,7 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     # This term is integrated by parts
     # Volume term from IbP
     # The volume term seems to introduce a small error (~1e-12) in cartesian coordinates wrt. previous implementation
-    self.A_vf.add(( 1j*Y_f*iDiv(rho_m*u_m*iConj(x_tens),-self.m) ).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( 1j*Y_f*iDiv(rho_m*u_m*iConj(x_tens),self.m) ).ufl_tens*coord.J_hat*dx)
     self.A_vf.add(( 1j*Y_m*iDiv(rho_m*u_f*iConj(x_tens),0) ).ufl_tens*coord.J_hat*dx)
     self.A_vf.add(( 1j*Y_m*iDiv(rho_f*u_m*iConj(x_tens),0) ).ufl_tens*coord.J_hat*dx)
     # Boundary term from IbP
@@ -76,8 +76,8 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     # ----------------------------------------- Diffusion term
     # NOTE: similarly to what is done in the mom. eq., the diffusion term is integrated by parts but only the 
     # volume part is added to the eqs. --> neglecting the boundary part allows to set a Neumann condition  
-    self.A_vf.add(( -1j*D_m*(iDot(iGrad(Y_f,self.m),iGrad(iConj(x_tens),-self.m))) ).ufl_tens*coord.J_hat*dx)
-    self.A_vf.add(( -1j*D_f*(iDot(iGrad(Y_m),iGrad(iConj(x_tens),-self.m))) ).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( -1j*D_m*(iDot(iGrad(Y_f,self.m),iGrad(iConj(x_tens),self.m))) ).ufl_tens*coord.J_hat*dx)
+    self.A_vf.add(( -1j*D_f*(iDot(iGrad(Y_m),iGrad(iConj(x_tens),self.m))) ).ufl_tens*coord.J_hat*dx)
 
 
     # ----------------------------------------- Source terms
