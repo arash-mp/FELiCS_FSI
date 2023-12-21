@@ -50,7 +50,8 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     D_f = Tensor(fluc.D(species), coord)
     rho_m = Tensor(mean.rho, coord)
     rho_f = Tensor(fluc.rho, coord)
-    x_tens = Tensor(X, coord, containsTestFunction = True)
+    #x_tens = Tensor(X, coord, containsTestFunction = True)
+    x_tens = X
     if param.Case.AnalysisMode in ['Input-Output']:
         forcing_tens = Tensor(mean.forcing_r(species)+1j*mean.forcing_i(species), coord)
     

@@ -72,7 +72,8 @@ def addMomentumEq(self,fluc,X,mean,param):
     #else:
     #    printError('--> Mom eq: u has neither 2 or 3 dimensions: not implemented.') 
         
-    x_tens = Tensor(X, coord,containsTestFunction=True)
+    #x_tens = Tensor(X, coord,containsTestFunction=True)
+    x_tens = X
     u_f = Tensor(fluc.u , coord)
     u_m = Tensor(mean.u, coord)
     # Scalar quantities
@@ -107,9 +108,9 @@ def addMomentumEq(self,fluc,X,mean,param):
             # In cyl coords, a singular term error arise for the boundary term in the tensor framework
             # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
             # This should be fixed later on
-            self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(X)),mean.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
-            self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(X)),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
-            self.A_vf.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(X)),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
+            self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(self.X[0])),mean.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
+            self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
+            self.A_vf.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
         else:
             printError('Coord. syst not yet implemented in tensor framework.')
                     

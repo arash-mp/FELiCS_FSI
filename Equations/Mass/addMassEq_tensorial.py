@@ -52,7 +52,8 @@ def addMassEq(self,fluc,X_in,mean,param):
     
     # Scalar quantities    
     fluc_rho = Tensor(fluc.rho, coord)
-    X = Tensor(X_in, coord,containsTestFunction = True)
+    #X = Tensor(X_in, coord,containsTestFunction = True)
+    X = X_in
     
     # Boundary normal vector (always 2D)
     nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord)

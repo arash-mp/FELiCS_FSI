@@ -75,6 +75,9 @@ from functions import *
 import pdb
 import LinearSystem
 
+from tensorUtils import (
+    Tensor,
+)
 
 class WeakFormulationCollectionClass():
     '''This class build the variational formulations for all relevant matrices
@@ -90,7 +93,10 @@ class WeakFormulationCollectionClass():
         from itertools import compress
         from fluctuationClass import fluctuationClass
         from WeakForm import WeakForm
-        from tensor_utils import CoordinateSystem
+        from tensorUtils import (
+            CoordinateSystem,
+            Tensor,
+            )
 
         # add the parameters of the constructor as attributs of the class to use them in DiscretizeFlow-method:
         self.__param = param
@@ -117,11 +123,9 @@ class WeakFormulationCollectionClass():
 
         # Define test and trial functions
         #if len(param.Case.getTransportedQuantityList())>1:
-        X=TestFunctions(self.__FEMSpaces.VMixed)
         #else:
         #    X=[]
         #    X.append(TestFunction(FEMSpaces.P2))
-
         fluctuationC=fluctuationClass(param,MeanFlow,FEMSpaces)
         #self.hat=TrialFunctions(FEMSpaces.VMixed)
         self.hat=fluctuationC.fluc
@@ -163,6 +167,15 @@ class WeakFormulationCollectionClass():
             self.coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
         else:
             printError('Coord. syst not yet implemented in tensor framework.')
+
+        self.X = TestFunctions(self.__FEMSpaces.VMixed)
+        X=[]
+        for i in list(self.X):
+            X.append(Tensor(
+                i,
+                self.coord_sys,
+                containsTestFunction=True,
+                ))
             
 
         # Get radial coordinate
@@ -291,9 +304,9 @@ class WeakFormulationCollectionClass():
                 # velocity component. If not, it is applied directly to the first level subspace,
                 # and the index is corrected by param.nVelocityComponents+1
                 if i<param.Case.getNVelocityComponents():
-                    self.forcing_vf += conj(X[0][i])*barrho*self.hat[0][i]*self.R*dx
+                    self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
                 else:
-                    self.forcing_vf += conj(X[i-param.nVelocityComponents+1])*\
+                    self.forcing_vf += conj(self.X[i-param.nVelocityComponents+1])*\
                         barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
 
         # In boundary forcing, forcing is allowed only on the specific boundaries
@@ -313,10 +326,10 @@ class WeakFormulationCollectionClass():
                     # velocity component. If not, it is applied directly to the first level subspace,
                     # and the index is corrected by param.nVelocityComponents+1
                     if i<param.Case.getNVelocityComponents():
-                        self.forcing_vf += X[0][i]*barrho*\
+                        self.forcing_vf += self.X[0][i]*barrho*\
                             self.hat[0][i]*self.R*Ds(int(k))
                     else:
-                        self.forcing_vf += X[i-param.nVelocityComponents+1]*\
+                        self.forcing_vf += self.X[i-param.nVelocityComponents+1]*\
                             barrho*self.hat[i-param.nVelocityComponents+1]\
                             *self.R*Ds(int(k))
 
@@ -329,9 +342,9 @@ class WeakFormulationCollectionClass():
             # velocity component. If not, it is applied directly to the first level subspace,
             # and the index is corrected by param.nVelocityComponents+1
             if i<param.Case.getNVelocityComponents():
-                self.response_vf += conj(X[0][i])*barrho*self.hat[0][i]*self.R*dx
+                self.response_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
             else:
-                self.response_vf += conj(X[i-param.nVelocityComponents+1])*barrho*\
+                self.response_vf += conj(self.X[i-param.nVelocityComponents+1])*barrho*\
                     self.hat[i-param.nVelocityComponents+1]*self.R*dx
 
         # Prompt variational formulations in debug mode

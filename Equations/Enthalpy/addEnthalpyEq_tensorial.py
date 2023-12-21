@@ -43,11 +43,12 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     alpha_m = Tensor(mean.alpha, coord)
     alpha_f = Tensor(fluc.alpha, coord)
     p_f = Tensor(fluc.p, coord)
-    x_tens = Tensor(
-                    X,
-                    coord,
-                    containsTestFunction = True,
-                    )
+    x_tens = X
+    #x_tens = Tensor(
+    #                X,
+    #                coord,
+    #                containsTestFunction = True,
+    #                )
     
     # Boundary normal vector (always 2D)
     nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord)
