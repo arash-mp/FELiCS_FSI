@@ -56,22 +56,25 @@ def addMomentumEq(self,fluc,X,mean,param):
     # Coordinate system
     coord = self.coord_sys
     
-    # Vector quantities
-    if fluc.u.ufl_shape[0] == 2:
-        printDebug(param.debug, '--> Mom eq: fluctuations and mean flow 2D')
-        x_tens = Tensor(as_vector((X[0], X[1], 0.0)), coord,containsTestFunction=True)
-        u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord)
-        u_m = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord)
-    
-    elif fluc.u.ufl_shape[0] == 3:
-        printDebug(param.debug, '--> Mom eq: fluctuations and mean flow 3D')
-        x_tens = Tensor(as_vector((X[0], X[1], X[2])), coord,containsTestFunction=True)
-        u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord)
-        u_m = Tensor(as_vector((mean.u[0], mean.u[1], mean.u[2])), coord)
+    ## Vector quantities
+    #if fluc.u.ufl_shape[0] == 2:
+    #    printDebug(param.debug, '--> Mom eq: fluctuations and mean flow 2D')
+    #    x_tens = Tensor(as_vector((X[0], X[1], 0.0)), coord,containsTestFunction=True)
+    #    u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], 0.0)), coord)
+    #    u_m = Tensor(as_vector((mean.u[0], mean.u[1], 0.0)), coord)
+    #
+    #elif fluc.u.ufl_shape[0] == 3:
+    #    printDebug(param.debug, '--> Mom eq: fluctuations and mean flow 3D')
+    #    x_tens = Tensor(as_vector((X[0], X[1], X[2])), coord,containsTestFunction=True)
+    #    u_f = Tensor(as_vector((fluc.u[0], fluc.u[1], fluc.u[2])), coord)
+    #    u_m = Tensor(as_vector((mean.u[0], mean.u[1], mean.u[2])), coord)
+    #    
+    #else:
+    #    printError('--> Mom eq: u has neither 2 or 3 dimensions: not implemented.') 
         
-    else:
-        printError('--> Mom eq: u has neither 2 or 3 dimensions: not implemented.') 
-        
+    x_tens = Tensor(X, coord,containsTestFunction=True)
+    u_f = Tensor(fluc.u , coord)
+    u_m = Tensor(mean.u, coord)
     # Scalar quantities
     rho_m = Tensor(mean.rho, coord)
     rho_f = Tensor(fluc.rho, coord)

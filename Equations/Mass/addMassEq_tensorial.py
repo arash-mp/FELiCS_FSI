@@ -32,7 +32,8 @@ def addMassEq(self,fluc,X_in,mean,param):
     # Vector quantities
     if fluc.rhou.ufl_shape[0] == 2:
         printDebug(param.debug,'--> Mass eq: fluctuations and mean flow 2D')
-        fluc_rhou = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord)
+        #fluc_rhou = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord)
+        fluc_rhou = Tensor(fluc.rhou, coord)
         #input(len(fluc.p.ufl_shape))
         #input(len(fluc.rhou.ufl_shape))
         if param.Case.AnalysisMode in ['Input-Output']:

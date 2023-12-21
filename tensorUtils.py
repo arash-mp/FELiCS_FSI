@@ -185,6 +185,9 @@ class Tensor():#TestFunction):
         # basis, namely the tangent basis. This is done because tensor-
         # analytical operators, as they are defined in tensor_utils, require
         # it.
+        print(self.dim) 
+        print(self.order )
+        print(ufl_tens.ufl_shape)
         if 'basis' in kwargs:
             self.ufl_tens = ufl_tens
             self.basis = kwargs['basis']
@@ -193,15 +196,31 @@ class Tensor():#TestFunction):
                 self.ufl_tens = ufl_tens
                 self.basis = []
             elif self.order == 1:
-                if self.dim == 2:
+                length = ufl_tens.ufl_shape[0]
+                ##if self.dim == 2:
+                if length == 2:
                     self.ufl_tens = \
                         as_vector((ufl_tens[0]/sqrt(self.CoordSys.cov_metric[0,0]), \
-                                   ufl_tens[1]/sqrt(self.CoordSys.cov_metric[1,1])))
-                elif self.dim == 3:
+                                   ufl_tens[1]/sqrt(self.CoordSys.cov_metric[1,1]),
+                                    0.0))
+                elif length == 3:
                     self.ufl_tens = \
                         as_vector((ufl_tens[0]/sqrt(self.CoordSys.cov_metric[0,0]), \
                                    ufl_tens[1]/sqrt(self.CoordSys.cov_metric[1,1]), \
                                    ufl_tens[2]/sqrt(self.CoordSys.cov_metric[2,2])))
+                #entryTuple = []
+                #print (length)
+                #input (self.dim)
+                #if length > self.dim:
+                #    for i in range(self.dim):
+                #        if CoordSys.mesh_dims[i] == 1:
+                #            entryTuple.append(ufl_tens[i] / sqrt(self.CoordSys.cov_metric[i,i]))
+                #        else:
+                #            entryTuple.append( 0.0 )
+                #else: 
+                #    for i in range(self.dim):
+                #        entryTuple.append(ufl_tens[i] / sqrt(self.CoordSys.cov_metric[i,i]))
+                #self.ufl_tens = as_vector(tuple(entryTuple))
                 self.basis = [False]
             else:
                 raise ValueError("Basis transformation from physical to " \
