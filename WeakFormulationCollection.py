@@ -77,6 +77,10 @@ import LinearSystem
 
 from tensorUtils import (
     Tensor,
+    as_vector,
+    iInner,
+    iDot,
+    iConj,
 )
 
 class WeakFormulationCollectionClass():
@@ -167,10 +171,11 @@ class WeakFormulationCollectionClass():
             self.coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
         else:
             printError('Coord. syst not yet implemented in tensor framework.')
-
-        self.X = TestFunctions(self.__FEMSpaces.VMixed)
+        
+        XTemp = TestFunctions(self.__FEMSpaces.VMixed)
+        
         X=[]
-        for i in list(self.X):
+        for i in list(XTemp):
             X.append(Tensor(
                 i,
                 self.coord_sys,
@@ -205,7 +210,7 @@ class WeakFormulationCollectionClass():
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
-            self.getResolventNorms(X,self.__param,MF)
+            self.getResolventNorms(X,self.__param,MF,fluctuationC)
 
         # Add species transport equation for all transported species
         transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
@@ -279,7 +284,7 @@ class WeakFormulationCollectionClass():
                 self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
 
 ########################### Resolvent Norm  ############################
-    def getResolventNorms(self,X,param,MF):
+    def getResolventNorms(self,X,param,MF,fluc):
         ''' This function yields the norms for the resolvent analysis.
         Note that both the forcing and response norm must be real!'''
         #Initialize forcing and response
@@ -297,55 +302,76 @@ class WeakFormulationCollectionClass():
         if param.IOResolvent.ForcingMode=='Body':
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
-            for i in param.IOResolvent.ForcingCoeff:
-                # In case the coefficient correspionds to a velocity, i.e. i is smaller
-                # than the number of velocity components, the coefficient must be applied
-                # to the corresponding (second level) subspace of u, which correspionds to the right
-                # velocity component. If not, it is applied directly to the first level subspace,
-                # and the index is corrected by param.nVelocityComponents+1
-                if i<param.Case.getNVelocityComponents():
-                    self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
-                else:
-                    self.forcing_vf += conj(self.X[i-param.nVelocityComponents+1])*\
-                        barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
-
+            printWarning("Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
+            u_f = Tensor(fluc.u, self.coord_sys)
+            self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
+            #velocityForcingList = [0,0,0]
+            #for i in param.IOResolvent.ForcingCoeff:
+            #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
+            #    # than the number of velocity components, the coefficient must be applied
+            #    # to the corresponding (second level) subspace of u, which correspionds to the right
+            #    # velocity component. If not, it is applied directly to the first level subspace,
+            #    # and the index is corrected by param.nVelocityComponents+1
+            #    
+            #    if i<param.Case.getNVelocityComponents():
+            #        velocityForcingList[i] = self.hat[0][i]
+            #        #input(velocityForcingList)
+            #        #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
+            #        #self.forcing_vf += conj(self.X[0][i])*self.hat[0][i]*self.R*dx
+            #        
+            #    else:
+            #        self.forcing_vf += conj(self.X[i-param.nVelocityComponents+1])*\
+            #            barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
+            #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
+            #u_f = Tensor(self.hat[0], self.coord_sys)
+            #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
+            ##self.A_vf.add(( 1j*iDot(iGrad(iConj(X), self.m),fluc_rhou) ).ufl_tens*coord.J_hat*dx)
+            #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
+            #self.forcing_vf += barrho *iDot iConj(X)*self.hat[0][i]*self.R*dx
+            #self.forcing_vf += temporalVF
         # In boundary forcing, forcing is allowed only on the specific boundaries
         elif param.IOResolvent.ForcingMode=='Boundary':
-
+            raise Exception("Boundary forcing not implemented for Resolvent analysis in Tensor notation")
             # Create integrator for the respective boundaries
-            Ds = ds(subdomain_data=self.boundaries)
-
-            # Loop through forcing coefficients (The coefficients that are chosen by the user,
-            # corresponding to the respective equations)
-            for i in param.IOResolvent.ForcingCoeff:
-                # Loop through the forcing boundaries specified by the user
-                for k in param.IOResolvent.ForcingBoundaryIndices:
-                    # In case the coefficient correspionds to a velocity, i.e. i is smaller
-                    # than the number of velocity components, the coefficient must be applied
-                    # to the corresponding (second level) subspace of u, which correspionds to the right
-                    # velocity component. If not, it is applied directly to the first level subspace,
-                    # and the index is corrected by param.nVelocityComponents+1
-                    if i<param.Case.getNVelocityComponents():
-                        self.forcing_vf += self.X[0][i]*barrho*\
-                            self.hat[0][i]*self.R*Ds(int(k))
-                    else:
-                        self.forcing_vf += self.X[i-param.nVelocityComponents+1]*\
-                            barrho*self.hat[i-param.nVelocityComponents+1]\
-                            *self.R*Ds(int(k))
+#            Ds = ds(subdomain_data=self.boundaries)
+#
+#            # Loop through forcing coefficients (The coefficients that are chosen by the user,
+#            # corresponding to the respective equations)
+#            for i in param.IOResolvent.ForcingCoeff:
+#                # Loop through the forcing boundaries specified by the user
+#                for k in param.IOResolvent.ForcingBoundaryIndices:
+#                    # In case the coefficient correspionds to a velocity, i.e. i is smaller
+#                    # than the number of velocity components, the coefficient must be applied
+#                    # to the corresponding (second level) subspace of u, which correspionds to the right
+#                    # velocity component. If not, it is applied directly to the first level subspace,
+#                    # and the index is corrected by param.nVelocityComponents+1
+#                    if i<param.Case.getNVelocityComponents():
+#                        self.forcing_vf += self.X[0][i]*barrho*\
+#                            self.hat[0][i]*self.R*Ds(int(k))
+#                    else:
+#                        self.forcing_vf += self.X[i-param.nVelocityComponents+1]*\
+#                            barrho*self.hat[i-param.nVelocityComponents+1]\
+#                            *self.R*Ds(int(k))
 
         # Loop through response coefficients (The coefficients that are chosen by the user,
         # corresponding to the respective solutions to be maximized)
-        for i in param.IOResolvent.ResponseCoeff:
-            # In case the coefficient correspionds to a velocity, i.e. i is smaller
-            # than the number of velocity components, the coefficient must be applied
-            # to the corresponding (second level) subspace of u, which correspionds to the right
-            # velocity component. If not, it is applied directly to the first level subspace,
-            # and the index is corrected by param.nVelocityComponents+1
-            if i<param.Case.getNVelocityComponents():
-                self.response_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
-            else:
-                self.response_vf += conj(self.X[i-param.nVelocityComponents+1])*barrho*\
-                    self.hat[i-param.nVelocityComponents+1]*self.R*dx
+        #velocityResponseList = [0,0,0]
+        #for i in param.IOResolvent.ResponseCoeff:
+        #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
+        #    # than the number of velocity components, the coefficient must be applied
+        #    # to the corresponding (second level) subspace of u, which correspionds to the right
+        #    # velocity component. If not, it is applied directly to the first level subspace,
+        #    # and the index is corrected by param.nVelocityComponents+1
+        #    if i<param.Case.getNVelocityComponents():
+        #        velocityResponseList[i] = self.hat[0][i]
+        #   #     self.response_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
+        #    else:
+        #        self.response_vf += conj(self.X[i-param.nVelocityComponents+1])*barrho*\
+        #            self.hat[i-param.nVelocityComponents+1]*self.R*dx
+        #velocityComponents = Tensor(as_vector(velocityResponseList),self.coord_sys)
+        #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
+        #self.response_vf += temporalVF
+        self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
 
         # Prompt variational formulations in debug mode
         printDebug(param.debug,'Resolvent forcing norm is '+ str(self.forcing_vf))

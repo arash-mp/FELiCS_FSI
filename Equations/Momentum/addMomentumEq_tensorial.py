@@ -92,7 +92,7 @@ def addMomentumEq(self,fluc,X,mean,param):
 
 
     # ------------------------ Convective terms
-    int_by_parts = True
+    int_by_parts = False
     if int_by_parts:
         # Volume term from integration by parts
         self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(x_tens),rho_m*u_m),self.m),u_f) ).ufl_tens*coord.J_hat*dx)
@@ -108,6 +108,7 @@ def addMomentumEq(self,fluc,X,mean,param):
             # In cyl coords, a singular term error arise for the boundary term in the tensor framework
             # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
             # This should be fixed later on
+            # Thomas: The solution is not to not integrate aloing the axis. Anyway there will not be any fluxes on the axis.
             self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(self.X[0])),mean.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
             self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)
             self.A_vf.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),as_vector((self.n_BC[0],self.n_BC[1],0.0))) )*self.x[1]*self.all_ds)

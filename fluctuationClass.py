@@ -84,8 +84,6 @@ class fluctuationClass(
             param,
             mean,
             FEMSpaces,
-            postProcessing=False,
-            solution=None,
     ):
         """
         Constructor of the fluctuationClass. This function initializes the
@@ -114,25 +112,11 @@ class fluctuationClass(
         self._mean = mean
         self._transportedQuantities = param.Case.getTransportedQuantityList()
 
-        # _fluc is constructed. If postProcessing == False it is a trial
-        # function, if True it is a Function
-        if not postProcessing:
-            self._fluc = TrialFunctions(FEMSpaces.VMixed)
-            for field in self._transportedQuantities:
-                indexOfFieldInList = self._transportedQuantities.index(field)
-                self._fieldDict[field] = self._fluc[indexOfFieldInList]
-        else:
-            self._fluc = Function(FEMSpaces.VMixed)
-            self._fluc.vector[:] = solution.astype(float)
-
-            for field in self._transportedQuantities:
-                if len(self._transportedQuantities)>1:
-                    indexOfFieldInList = self._transportedQuantities.\
-                    index(field)
-                    tempField = self._fluc.split()[indexOfFieldInList]
-                else:
-                    tempField = self._fluc
-                self._fieldDict[field] = tempField
+        # _fluc is constructed. 
+        self._fluc = TrialFunctions(FEMSpaces.VMixed)
+        for field in self._transportedQuantities:
+            indexOfFieldInList = self._transportedQuantities.index(field)
+            self._fieldDict[field] = self._fluc[indexOfFieldInList]
 
         # Check if two out of p, rho and T are in the fieldDict
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:

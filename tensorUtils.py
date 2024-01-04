@@ -4,6 +4,9 @@
 Created on Wed Dec 14 17:59:50 2022
 
 @author: kai hildebrandt
+Modifications: 
+- Thomas L. Kaiser
+- Simon Demange
 """
 
 from typing import Union
@@ -282,7 +285,7 @@ class Tensor():#TestFunction):
     
     # subtraction: A - B is the same as A.__sub__(B)
     def __sub__(self, other):
-        if not (self.containsTestFunction == otherContainsTestFunction):
+        if not (self.containsTestFunction == other.containsTestFunction):
             ValueError("In a tensor difference, both tensors must be of same order in test functions.")
         if type(other) == Tensor:
             if self.basis == other.basis:
