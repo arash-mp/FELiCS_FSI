@@ -29,29 +29,29 @@ def addMassEq(self,fluc,X_in,mean,param):
     # Coordinate system
     coord = self.coord_sys
     
-    # Vector quantities
-    if fluc.rhou.ufl_shape[0] == 2:
-        printDebug(param.debug,'--> Mass eq: fluctuations and mean flow 2D')
-        #fluc_rhou = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord)
-        fluc_rhou = Tensor(fluc.rhou, coord)
-        #input(len(fluc.p.ufl_shape))
-        #input(len(fluc.rhou.ufl_shape))
-        if param.Case.AnalysisMode in ['Input-Output']:
-            forcing_comp = mean.u_forcing_r + 1j*mean.u_forcing_i
-            forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], 0.0)), coord)
-            
-    elif fluc.rhou.ufl_shape[0] == 3:
-        printDebug(param.debug,'--> Mass eq: fluctuations and mean flow 3D')
-        fluc_rhou = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], fluc.rhou[2])), coord)
-        if param.Case.AnalysisMode in ['Input-Output']:
-            forcing_comp = mean.u_forcing_r + 1j*mean.u_forcing_i
-            forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], forcing_comp[2])), coord)
-            
-    else:
-        printError('--> Mass eq: rhou has neither 2 or 3 dimensions: not implemented.')
-    
+    ## Vector quantities
+    #if fluc.rhou.ufl_shape[0] == 2:
+    #    printDebug(param.debug,'--> Mass eq: fluctuations and mean flow 2D')
+    #    #fluc_rhou = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], 0.0)), coord)
+    #    fluc_rhou = Tensor(fluc.rhou, coord)
+    #    #input(len(fluc.p.ufl_shape))
+    #    #input(len(fluc.rhou.ufl_shape))
+    #    if param.Case.AnalysisMode in ['Input-Output']:
+    #        forcing_comp = mean.u_forcing_r + 1j*mean.u_forcing_i
+    #        forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], 0.0)), coord)
+    #        
+    #elif fluc.rhou.ufl_shape[0] == 3:
+    #    printDebug(param.debug,'--> Mass eq: fluctuations and mean flow 3D')
+    #    fluc_rhou = Tensor(as_vector((fluc.rhou[0], fluc.rhou[1], fluc.rhou[2])), coord)
+    #    if param.Case.AnalysisMode in ['Input-Output']:
+    #        forcing_comp = mean.u_forcing_r + 1j*mean.u_forcing_i
+    #        forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], forcing_comp[2])), coord)
+    #        
+    #else:
+    #    printError('--> Mass eq: rhou has neither 2 or 3 dimensions: not implemented.')
+    fluc_rhou = fluc.rhou 
     # Scalar quantities    
-    fluc_rho = Tensor(fluc.rho, coord)
+    fluc_rho = fluc.rho
     #X = Tensor(X_in, coord,containsTestFunction = True)
     X = X_in
     

@@ -8,6 +8,7 @@ from export import export
 from dependentVariables.viscosityHandler import viscosityHandler
 from fieldProperties import fieldProperties
 from dependentVariables.energyHandler import energyHandler
+from tensorUtils import Tensor
 
 class meanFlowClass(
     fieldProperties,
@@ -27,7 +28,7 @@ class meanFlowClass(
     def __init__(
             self,
             param,
-            FEMSpaces
+            FEMSpaces,
     ):
         self._isMean = True
         self._isFluctuation = False
@@ -40,6 +41,7 @@ class meanFlowClass(
         self.__ZeroField = Function(self._FEMSpaces.P2)
         self.__OneField = Function(self._FEMSpaces.P2)
         self.__OneField.x.array[:] = 1.0
+        self._coordinateSystem = self._FEMSpaces.P2.mesh.coordSys
         
         #self.addDerivativeFieldsToMean()
         #self.initLamDiff()
@@ -237,6 +239,11 @@ class meanFlowClass(
         if 'ut' in list(fieldDict.keys()):
             fieldDict['ut'].x.array[:] = 0.0
         self._fieldDict = fieldDict
+        #for key in list(fieldDict.keys()):
+        #    self._fieldDict[key] = Tensor(
+        #                            fieldDict[key],
+        #                            self.__coordSys,
+        #                            )
 
     def importFelicsFile(self):
         import h5py

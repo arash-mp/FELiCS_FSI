@@ -99,13 +99,13 @@ class WeakFormulationCollectionClass():
         from WeakForm import WeakForm
         from tensorUtils import (
             CoordinateSystem,
-            Tensor,
             )
 
         # add the parameters of the constructor as attributs of the class to use them in DiscretizeFlow-method:
         self.__param = param
         self.__FEMSpaces = FEMSpaces
         self.__MeanFlow = MeanFlow
+
 
         ## changelog:
         # changed param, MeanFlow, FEMSpaces to private Attributes with the __
@@ -125,18 +125,6 @@ class WeakFormulationCollectionClass():
             MF['MuTot'].vector[:] = MF['MuTot'].vector[:]+MF['nulam'].vector[:]
         self.__param.IntegrationByParts=True
 
-        # Define test and trial functions
-        #if len(param.Case.getTransportedQuantityList())>1:
-        #else:
-        #    X=[]
-        #    X.append(TestFunction(FEMSpaces.P2))
-        fluctuationC=fluctuationClass(param,MeanFlow,FEMSpaces)
-        #self.hat=TrialFunctions(FEMSpaces.VMixed)
-        self.hat=fluctuationC.fluc
-
-        fluc={}
-        for sol in self.__param.SolutionList:
-            fluc[sol]=self.hat[self.__param.SolutionList.index(sol)]
 
         # # gGet boundaries from file
         # self.boundaries =
@@ -163,7 +151,7 @@ class WeakFormulationCollectionClass():
                 
         # Get spatial coordinates
         self.x = SpatialCoordinate(self.__FEMSpaces.P2.mesh)
-        
+
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
         if param.Case.CoordinateSystem =='Cartesian':
             self.coord_sys = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
@@ -171,6 +159,20 @@ class WeakFormulationCollectionClass():
             self.coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
         else:
             printError('Coord. syst not yet implemented in tensor framework.')
+        
+        # Define test and trial functions
+        fluctuationC = fluctuationClass(
+                                   param,
+                                   MeanFlow,
+                                   FEMSpaces,
+                                   self.coord_sys,
+                                   )
+        #self.hat=TrialFunctions(FEMSpaces.VMixed)
+        self.hat=fluctuationC.fluc
+
+        fluc={}
+        for sol in self.__param.SolutionList:
+            fluc[sol]=self.hat[self.__param.SolutionList.index(sol)]
         
         XTemp = TestFunctions(self.__FEMSpaces.VMixed)
         
@@ -303,7 +305,7 @@ class WeakFormulationCollectionClass():
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
             printWarning("Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
-            u_f = Tensor(fluc.u, self.coord_sys)
+            u_f = fluc.u
             self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
             #velocityForcingList = [0,0,0]
             #for i in param.IOResolvent.ForcingCoeff:

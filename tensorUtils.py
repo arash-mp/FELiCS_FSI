@@ -270,7 +270,7 @@ class Tensor():#TestFunction):
             
     # addition
     def __add__(self, other):
-        if not (self.containsTestFunction == otherContainsTestFunction):
+        if not (self.containsTestFunction == other.containsTestFunction):
             ValueError("In a tensor sum, both tensors must be of same order in test functions.")
             
         if type(other) == Tensor:

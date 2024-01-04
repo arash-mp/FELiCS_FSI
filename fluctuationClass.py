@@ -34,6 +34,9 @@ from functions import (
 )
 from export import export
 
+from tensorUtils import (
+    Tensor,
+)
 
 class fluctuationClass(
     fieldProperties,
@@ -84,6 +87,7 @@ class fluctuationClass(
             param,
             mean,
             FEMSpaces,
+            coordinateSystem,
     ):
         """
         Constructor of the fluctuationClass. This function initializes the
@@ -111,6 +115,7 @@ class fluctuationClass(
         self._fieldDict = {}
         self._mean = mean
         self._transportedQuantities = param.Case.getTransportedQuantityList()
+        self._coordinateSystem = coordinateSystem
 
         # _fluc is constructed. 
         self._fluc = TrialFunctions(FEMSpaces.VMixed)

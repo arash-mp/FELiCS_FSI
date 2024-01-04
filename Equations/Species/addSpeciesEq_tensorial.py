@@ -40,12 +40,12 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     #    
     #else:
     #    printError('--> Species-nc eq: u has neither 2 or 3 dimensions: not implemented.') 
-    u_f = Tensor(fluc.u, coord)
-    u_m = Tensor(mean.u, coord)
+    u_f = fluc.u
+    u_m = mean.u
         
     # Scalar quantities
-    Y_m = Tensor(mean.Y(species), coord)  
-    Y_f = Tensor(fluc.Y(species), coord)
+    Y_m = mean.Y(species)
+    Y_f = fluc.Y(species)
     D_m = Tensor(mean.D(species), coord)
     D_f = Tensor(fluc.D(species), coord)
     rho_m = Tensor(mean.rho, coord)

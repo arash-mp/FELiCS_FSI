@@ -14,17 +14,21 @@ from mpi4py import MPI
 
 from ufl import triangle
 
+import gmsh
 from GUI.SettingsClass import Settings
 import h5py
 import numpy as np
 import pdb
-import gmsh
+from tensorUtils import CoordinateSystem
+from ufl import SpatialCoordinate
+
 class FELiCSMesh(Mesh):
 	'''
 	This class is an extension to the fenics mesh class
 	'''
 	def __init__(
 			self,
+			coordinateSystem,
 			filename=None,
 			gdim=0,
 			inputMesh=None,
@@ -59,6 +63,23 @@ class FELiCSMesh(Mesh):
 		else:
 			Mesh.__init__(self, MPI.COMM_WORLD, inputMesh.topology, inputMesh.geometry, inputMesh.ufl_domain())
 			self.gdim = inputMesh.topology.dim
+        
+		x = SpatialCoordinate(self)
+		# Define tensor coordinate system, we always assume the third dimension to be homogenous
+		if coordinateSystem =='Cartesian':
+		    self.__coordSys = CoordinateSystem(
+                                    x, 
+                                    coordinateSystem.lower(), 
+                                    mesh_dims = (1, 1, 0),
+                                    )
+		elif coordinateSystem =='Cylindrical':
+		    self.__coordSys = CoordinateSystem(
+                                    x,
+                                    "cylindricalfelics", 
+                                    mesh_dims = (1, 1, 0),
+                                    )
+		else:
+		    printError('Coord. syst not yet implemented in tensor framework.')
 
 	def saveInFELiCSFormat(self, filename):
 		'''
@@ -109,6 +130,9 @@ class FELiCSMesh(Mesh):
 		"""
 		return self.geometry.x[:, 0:self.gdim]
 
+	@property
+	def coordSys(self):
+		return self.__coordSys
 
 class BCsSettingsClass(Settings):
 	def __init__(self,MeshFilePath):
@@ -255,15 +279,20 @@ class BCsSettingsClass(Settings):
 			EverythingPresent=False
 		return EverythingPresent
 
-	def readDomainData(self,Meshfile, gDim, ExtendedTransportedQuantityList):
+	def readDomainData(self,Meshfile, gDim, ExtendedTransportedQuantityList,coordinateSystem):
 		''' Input: Mesfile
 		Read all the domain data from the meshfile '''
-		self.readMesh(Meshfile, gDim)
+		self.readMesh(Meshfile, gDim,coordinateSystem)
 		self.readBCInfo(Meshfile, self.getMesh())
 		self.initBCsDict(ExtendedTransportedQuantityList)
 		self.importBCsDict(ExtendedTransportedQuantityList)
 
-	def readMesh(self,MeshFile, gdim):
+	def readMesh(
+                    self,
+                    MeshFile, 
+                    dim, 
+                    coordinateSystem,
+                    ):
 		'''
 			Reading Meshfile and saving it as private object
 
@@ -276,9 +305,14 @@ class BCsSettingsClass(Settings):
 
 		'''
 		if not MeshFile == '' and path.isfile(MeshFile):
-			self.__mesh__ = FELiCSMesh(MeshFile, gdim)
+			self.__mesh__ = FELiCSMesh(
+                                                coordinateSystem,
+                                                MeshFile,
+                                                dim,
+                                                )
 			self.dim = self.__mesh__.gdim
 
 	def getMesh(self):
 		''' Function is returning the mesh '''
 		return self.__mesh__
+        

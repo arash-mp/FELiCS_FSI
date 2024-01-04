@@ -70,7 +70,7 @@ class FEMSpacesClass():
 
 		# refine the mesh to get the exportMesh:
 		exportMesh = refine(mesh)
-		exportMesh = FELiCSMesh(inputMesh=exportMesh)
+		exportMesh = FELiCSMesh(param.Case.CoordinateSystem,inputMesh=exportMesh)
 		exportMesh.gdim = param.Case.nDim
 		meshfileName = f'{param.Case.AnalysisMode}_mesh.h5'
 

@@ -3,6 +3,7 @@ from dolfinx.fem import (
     Constant,
     Function,
 )
+from tensorUtils import Tensor
 
 
 class fieldProperties:
@@ -156,15 +157,24 @@ class fieldProperties:
             nuTot.vector[:] += self._fieldDict['nuturb'].vector[:]
         if 'nuSGS' in list(self._fieldDict.keys()):
             nuTot.vector[:] += self._fieldDict['nuSGS'].vector[:]
-        return nuTot
+        return Tensor(
+                    nuTot,
+                    self._coordinateSystem,
+                    )
 
     @property
     def p(self):
         if self.isMeanFlowClass:
-            return self._fieldDict['p']
+            return Tensor(
+                        self._fieldDict['p'],
+                        self._coordinateSystem,
+                        )
         else:
             if 'p' in self._transportedQuantities:
-                return self._fieldDict['p']
+                return Tensor(
+                             self._fieldDict['p'],
+                             self._coordinateSystem,
+                             )
             else:
                 return Constant(0)
 
@@ -196,10 +206,11 @@ class fieldProperties:
         else:
             if 'rho' in self._transportedQuantities:
                 return self._fieldDict['rho']
-        #    elif self._param.Case.SetOfEquations['EquationOfState']['Equation'] == 'LowMach':
-        #        return -self._mean['rho']/self._mean['T']*self.T
             else:
-                return self._zeroField
+                return Tensor(
+                            self._zeroField,
+                            self._coordinateSystem,
+                            )
 
     @property
     def rhou(self):
@@ -249,14 +260,26 @@ class fieldProperties:
     def u(self):
         if self.isMeanFlowClass():
             if 'u' in list(self._fieldDict.keys()):
-                return self._fieldDict['u']
+                return Tensor(
+                            self._fieldDict['u'],
+                            self._coordinateSystem,
+                            )
             else:
-                return self._zeroVelocityField
+                return Tensor(
+                            self._zeroVelocityField,
+                            self._coordinateSystem,
+                            )
         else:
             if 'u' in self._transportedQuantities:
-                return self._fieldDict['u']
+                return Tensor(
+                            self._fieldDict['u'],
+                            self._coordinateSystem,
+                            )
             else:
-                return self._zeroVelocityField
+                return Tensor(
+                            self._zeroVelocityField,
+                            self._coordinateSystem,
+                            )
 
     @property
     def u_forcing_i(self):
@@ -286,6 +309,12 @@ class fieldProperties:
 
     def Y(self, specie):
         if self.isMeanFlowClass():
-            return self._fieldDict[specie]
+            return Tensor(
+                self._fieldDict[specie],
+                self._coordinateSystem,
+                )
         else:
-            return self._fluc[self._transportedQuantities.index(specie)]
+            return Tensor(
+                        self._fluc[self._transportedQuantities.index(specie)],
+                        self._coordinateSystem
+                        )

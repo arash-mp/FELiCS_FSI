@@ -74,14 +74,14 @@ def addMomentumEq(self,fluc,X,mean,param):
         
     #x_tens = Tensor(X, coord,containsTestFunction=True)
     x_tens = X
-    u_f = Tensor(fluc.u , coord)
-    u_m = Tensor(mean.u, coord)
+    u_f = fluc.u
+    u_m = mean.u
     # Scalar quantities
-    rho_m = Tensor(mean.rho, coord)
-    rho_f = Tensor(fluc.rho, coord)
-    nutot_m = Tensor(mean.nuTot, coord)
-    nulam_f = Tensor(fluc.nulam, coord)
-    p_f = Tensor(fluc.p, coord)
+    rho_m = mean.rho
+    rho_f = fluc.rho
+    nutot_m = mean.nuTot
+    nulam_f = fluc.nulam
+    p_f = fluc.p
     
     # Boundary normal vector (always 2D)
     nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord)
@@ -121,6 +121,9 @@ def addMomentumEq(self,fluc,X,mean,param):
         # -- > Tensor implementation derived by hand
         self.A_vf.add(( -1j*iDot(iDot(iGrad(u_f,self.m),rho_m*u_m),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(u_m),rho_m*u_f),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
+        print(type(u_m))
+        print(type(rho_f))
+        print(rho_f*u_m)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(u_m),rho_f*u_m),iConj(x_tens)) ).ufl_tens*coord.J_hat*dx)
 
 

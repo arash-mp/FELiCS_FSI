@@ -47,7 +47,7 @@ class equationOfStateHandler:
                 mean_T = mean.T
                 mean_rho = mean.rho
             if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'Low-Mach':
-                self._fieldDict['rho'] = -mean_rho / mean_T * self.T
+                self._fieldDict['rho'] = -1 * mean_rho / mean_T * self.T
             else:
                 printError('Equation of State ' + param.Case.SetOfEquations['EquationOfState']['Equation'] + ' not defined.')
 
@@ -64,7 +64,7 @@ class equationOfStateHandler:
                 mean_T = mean.T
                 mean_rho = mean.rho
             if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'Low-Mach':
-                self._fieldDict['T'] = -self.rho / mean_rho * mean_T
+                self._fieldDict['T'] = -1 * self.rho / mean_rho * mean_T
             else:
                 printError('Equation of State ' + param.Case.SetOfEquations['EquationOfState']['Equation'] + ' not defined.')
 
