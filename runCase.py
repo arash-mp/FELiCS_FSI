@@ -20,7 +20,7 @@ def runCase(param, useGUI):
 
 	mesh=param.BCs.getMesh()
 	print('Defining FEMSpaces...')
-	FEMSpaces         =DefineFEMSpaces.FEMSpacesClass(
+	FEMSpaces         = DefineFEMSpaces.FEMSpacesClass(
 														param,
 														mesh,
 														)
