@@ -3,7 +3,10 @@ from dolfinx.fem import (
     Constant,
     Function,
 )
-from tensorUtils import Tensor
+from tensorUtils import (
+                    iDot,
+                    Tensor,
+                    )
 
 
 class fieldProperties:
@@ -43,11 +46,15 @@ class fieldProperties:
     def alpha(self):
         if self.isMeanFlowClass:
             if 'alpha' in list(self._fieldDict.keys()):
-                return self._fieldDict['alpha']
+                return  self._fieldDict['alpha']
+                            
             else:
                 return self._zeroField
         else:
-            return self._fieldDict['alpha']
+            return Tensor(
+                        self._fieldDict['alpha'],
+                        self._coordinateSystem,
+                        )
 
     @property
     def c(self):
@@ -59,10 +66,15 @@ class fieldProperties:
 
     def D(self, specie):
         if 'D_' + specie in list(self._fieldDict.keys()):
-            return self._fieldDict['D_' + specie]
+            return Tensor(
+                        self._fieldDict['D_' + specie],
+                        self._coordinateSystem,
+                        )
         else:
-            return self._zeroField
-
+            return Tensor(
+                        self._zeroField,
+                        self._coordinateSystem,
+                        )
     @property
     def dQ(self):  # heat release
         return self._fieldDict['dQ']
@@ -119,13 +131,19 @@ class fieldProperties:
 
     @property
     def h(self):
-        return self._fieldDict['h']
+        return Tensor(
+                    self._fieldDict['h'],
+                    self._coordinateSystem,
+                    )
 
     @property
     def he(self):
         # To be generalized for all dimensions
-        return self._fieldDict['he'] \
-               + 0.5 * (self.u[0] * self.u[0] + self.u[1] * self.u[1])
+        return Tensor(
+                    self._fieldDict['he'],
+                    self._coordinateSystem,
+                    ) \
+               + 0.5 * iDot(self.u, self.u)
 
     @property
     def hSpec(self):

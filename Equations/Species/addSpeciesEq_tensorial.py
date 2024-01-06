@@ -46,17 +46,17 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     # Scalar quantities
     Y_m = mean.Y(species)
     Y_f = fluc.Y(species)
-    D_m = Tensor(mean.D(species), coord)
-    D_f = Tensor(fluc.D(species), coord)
-    rho_m = Tensor(mean.rho, coord)
-    rho_f = Tensor(fluc.rho, coord)
+    D_m = mean.D(species)
+    D_f = fluc.D(species)
+    rho_m = mean.rho
+    rho_f = fluc.rho
     #x_tens = Tensor(X, coord, containsTestFunction = True)
     x_tens = X
     if param.Case.AnalysisMode in ['Input-Output']:
         forcing_tens = Tensor(mean.forcing_r(species)+1j*mean.forcing_i(species), coord)
     
     # Boundary normal vector (always 2D)
-    nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), coord) 
+    nbc_tens = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)),coord)
     
     
     # ----------------------------------------- Advection term

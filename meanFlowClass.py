@@ -131,10 +131,18 @@ class meanFlowClass(
 
         for specie in self._param.Case.Mixture.getSpeciesList('transported'):
             Sc = self._param.Case.Mixture.species[specie]['Sc']
+            nuTot = Function(self._ScalarFunctionSpace)
+
+            if 'nulam' in list(self._fieldDict.keys()):
+                nuTot.vector[:] += self._fieldDict['nulam'].vector[:]
+            if 'nuturb' in list(self._fieldDict.keys()):
+                nuTot.vector[:] += self._fieldDict['nuturb'].vector[:]
+            if 'nuSGS' in list(self._fieldDict.keys()):
+                nuTot.vector[:] += self._fieldDict['nuSGS'].vector[:]
             self._fieldDict['D_' + specie] \
-                = Function(self.nuTot.function_space)
+                = Function(self._FEMSpaces.P2)
             self._fieldDict['D_' + specie].vector[:] \
-                = self.nuTot.vector[:] / Sc
+                = nuTot.vector[:] / Sc
 
     def importMatFile(self):
         import scipy.io as spio

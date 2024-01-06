@@ -32,17 +32,17 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     #
     #else:
     #    printError('--> NRJ-h eq: u has neither 2 or 3 dimensions: not implemented.') 
-    u_f = Tensor(fluc.u, coord)
-    u_m = Tensor(mean.u, coord)
+    u_f = fluc.u
+    u_m = mean.u
         
     # Scalar quantities
-    rho_m = Tensor(mean.rho, coord)
-    rho_f = Tensor(fluc.rho, coord)
-    h_f = Tensor(fluc.h, coord)
-    he_m = Tensor(mean.he, coord)
-    alpha_m = Tensor(mean.alpha, coord)
-    alpha_f = Tensor(fluc.alpha, coord)
-    p_f = Tensor(fluc.p, coord)
+    rho_m = mean.rho
+    rho_f = fluc.rho
+    h_f = fluc.h
+    he_m = mean.he
+    alpha_m = mean.alpha
+    alpha_f = fluc.alpha
+    p_f = fluc.p
     x_tens = X
     #x_tens = Tensor(
     #                X,

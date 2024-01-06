@@ -47,6 +47,8 @@ def addMassEq(self,fluc,X_in,mean,param):
     #        forcing_comp = mean.u_forcing_r + 1j*mean.u_forcing_i
     #        forcing_tens = Tensor(as_vector((forcing_comp[0], forcing_comp[1], forcing_comp[2])), coord)
     #        
+    if param.Case.AnalysisMode in ['Input-Output']:
+        forcing_tens = Tensor(mean.u_forcing_r + 1j*mean.u_forcing_i,coord)
     #else:
     #    printError('--> Mass eq: rhou has neither 2 or 3 dimensions: not implemented.')
     fluc_rhou = fluc.rhou 
