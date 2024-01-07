@@ -121,7 +121,10 @@ class fluctuationClass(
         self._fluc = TrialFunctions(FEMSpaces.VMixed)
         for field in self._transportedQuantities:
             indexOfFieldInList = self._transportedQuantities.index(field)
-            self._fieldDict[field] = self._fluc[indexOfFieldInList]
+            self._fieldDict[field] = Tensor(
+                                            self._fluc[indexOfFieldInList],
+                                            self._coordinateSystem,
+                                            )
 
         # Check if two out of p, rho and T are in the fieldDict
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:

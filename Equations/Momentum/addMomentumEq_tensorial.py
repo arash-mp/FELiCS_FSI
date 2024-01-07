@@ -131,6 +131,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     int_by_parts = True  
     if int_by_parts:
         # Integrate pressure gradient boundary terms (resulting from integration by parts)
+        print(type(p_f))
         self.A_vf.add( (1j*p_f*iDiv(iConj(x_tens),self.m) ).ufl_tens*coord.J_hat*dx)
         self.A_vf.add( (-1j*iDot(p_f*iConj(x_tens),nbc_tens) ).ufl_tens*coord.J_hat*self.all_ds)
 

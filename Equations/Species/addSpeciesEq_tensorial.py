@@ -79,6 +79,7 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     # ----------------------------------------- Diffusion term
     # NOTE: similarly to what is done in the mom. eq., the diffusion term is integrated by parts but only the 
     # volume part is added to the eqs. --> neglecting the boundary part allows to set a Neumann condition  
+    print(Y_f)
     self.A_vf.add(( -1j*D_m*(iDot(iGrad(Y_f,self.m),iGrad(iConj(x_tens),self.m))) ).ufl_tens*coord.J_hat*dx)
     self.A_vf.add(( -1j*D_f*(iDot(iGrad(Y_m),iGrad(iConj(x_tens),self.m))) ).ufl_tens*coord.J_hat*dx)
 

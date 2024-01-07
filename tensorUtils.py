@@ -270,10 +270,10 @@ class Tensor():#TestFunction):
             
     # addition
     def __add__(self, other):
-        if not (self.containsTestFunction == other.containsTestFunction):
-            ValueError("In a tensor sum, both tensors must be of same order in test functions.")
             
         if type(other) == Tensor:
+            if not (self.containsTestFunction == other.containsTestFunction):
+                ValueError("In a tensor sum, both tensors must be of same order in test functions.")
             if self.basis == other.basis:
                 added = self.ufl_tens + other.ufl_tens
             else:
@@ -282,6 +282,36 @@ class Tensor():#TestFunction):
         else:
             added = self.ufl_tens + other
         return Tensor(added, self.CoordSys, basis = self.basis, containsTestFunction = self.containsTestFunction)
+
+    # division, 
+    def __truediv__(self, other): # Tensor object to the left
+        if type(other) == Tensor:
+            if other.containsTestFunction:
+                ValueError("Division by test function not possible.")
+            if other.order == 0:
+                return Tensor(
+                            self.ufl_tens / other.ufl_tens,
+                            self.CoordSys, 
+                            basis = self.basis, 
+                            containsTestFunction = self.containsTestFunction,
+                            )
+            elif self.order == 0:
+                return Tensor(
+                            self.ufl_tens / other.ufl_tens,
+                            self.CoordSys,
+                            basis = other.basis,
+                            containsTestFunction = self.containsTestFunction,
+                            )
+            else:
+                raise ValueError("Division operation between Tensors only " \
+                                 "defined, if one is a scalar.")
+        elif type(other) != Tensor:
+            return Tensor(
+                        self.ufl_tens * other,
+                        self.CoordSys,
+                        basis = self.basis,
+                        containsTestFunction = self.containsTestFunction,
+                        )
     
     # subtraction: A - B is the same as A.__sub__(B)
     def __sub__(self, other):

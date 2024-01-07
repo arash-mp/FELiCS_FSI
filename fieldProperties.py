@@ -131,10 +131,7 @@ class fieldProperties:
 
     @property
     def h(self):
-        return Tensor(
-                    self._fieldDict['h'],
-                    self._coordinateSystem,
-                    )
+        return self._fieldDict['h']
 
     @property
     def he(self):
@@ -182,17 +179,14 @@ class fieldProperties:
 
     @property
     def p(self):
-        if self.isMeanFlowClass:
+        if self.isMeanFlowClass():
             return Tensor(
                         self._fieldDict['p'],
                         self._coordinateSystem,
                         )
         else:
             if 'p' in self._transportedQuantities:
-                return Tensor(
-                             self._fieldDict['p'],
-                             self._coordinateSystem,
-                             )
+                return self._fieldDict['p']
             else:
                 return Constant(0)
 
@@ -213,16 +207,21 @@ class fieldProperties:
 
     @property
     def rho(self):
-        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
+        #if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
+        if self.isMeanFlowClass():
             if 'rho' in list(self._fieldDict.keys()):
-                return self._fieldDict['rho']
+                return Tensor(
+                            self._fieldDict['rho'],
+                            self._coordinateSystem,
+                            )
             else:
                 from dolfinx.fem import Constant
                 from petsc4py import PETSc
                 mesh = self._fieldDict[list(self._fieldDict.keys())[0]].function_space.mesh
                 return Constant(mesh, PETSc.ScalarType(1.0 + 0j))
         else:
-            if 'rho' in self._transportedQuantities:
+            #if 'rho' in self._transportedQuantities:
+            if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
                 return Tensor(
@@ -242,7 +241,10 @@ class fieldProperties:
         if self.isMeanFlowClass():
             from dolfinx.fem import Constant
             if 'T' in list(self._fieldDict.keys()):
-                return self._fieldDict['T']
+                return Tensor(
+                            self._fieldDict['T'],
+                            self._coordinateSystem,
+                            )
             else:
                 return Constant(1) * self.__OneField
         else:
@@ -288,11 +290,9 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
         else:
+            print(self._transportedQuantities)
             if 'u' in self._transportedQuantities:
-                return Tensor(
-                            self._fieldDict['u'],
-                            self._coordinateSystem,
-                            )
+                return  self._fieldDict['u']
             else:
                 return Tensor(
                             self._zeroVelocityField,
@@ -332,7 +332,5 @@ class fieldProperties:
                 self._coordinateSystem,
                 )
         else:
-            return Tensor(
-                        self._fluc[self._transportedQuantities.index(specie)],
-                        self._coordinateSystem
-                        )
+            return self._fieldDict[specie]
+                        

@@ -33,9 +33,7 @@ def getAlpha(param, mean, ClassDict, meanfieldDict, rho, isMeanFlowClass=True):
 			local_T = mean.T
 			local_rho = mean.rho
 			local_alpha = mean.alpha
-		fluct = (local_T + 3*Ts) / (2 * (local_T + Ts)) * (-rho / local_rho)
-		print(local_alpha)
-		print(fluct)
+		fluct = (local_T + 3*Ts) / (2 * (local_T + Ts)) * (-1 * rho / local_rho)
                 
 		alpha = local_alpha * fluct
 		return alpha
