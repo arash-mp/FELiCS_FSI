@@ -308,6 +308,13 @@ class fieldProperties:
         return self._fieldDict['u_forcing_r']
 
     @property
+    def u_forcing(self):
+        return Tensor(
+                    self.u_forcing_r + 1j*self.u_forcing_i,
+                    self._coordinateSystem,
+                    )
+
+    @property
     def ut(self):
         if self.isMeanFlowClass():
             if 'ut' in list(self._fieldDict.keys()):

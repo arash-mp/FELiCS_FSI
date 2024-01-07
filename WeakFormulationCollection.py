@@ -159,6 +159,7 @@ class WeakFormulationCollectionClass():
             self.coord_sys = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
         else:
             printError('Coord. syst not yet implemented in tensor framework.')
+        self.coordinateSystem = self.coord_sys
         
         # Define test and trial functions
         fluctuationC = fluctuationClass(
@@ -195,7 +196,7 @@ class WeakFormulationCollectionClass():
 
         # Get boundary normals
         self.n_BC=FacetNormal(self.__FEMSpaces.P2.mesh)
-
+        self.n = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), self.coord_sys)
         ## Initialize variatial formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()

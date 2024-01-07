@@ -188,9 +188,6 @@ class Tensor():#TestFunction):
         # basis, namely the tangent basis. This is done because tensor-
         # analytical operators, as they are defined in tensor_utils, require
         # it.
-        print(self.dim) 
-        print(self.order )
-        print(ufl_tens.ufl_shape)
         if 'basis' in kwargs:
             self.ufl_tens = ufl_tens
             self.basis = kwargs['basis']
