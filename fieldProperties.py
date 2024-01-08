@@ -130,6 +130,13 @@ class fieldProperties:
     def forcing_r(self, solution):
         return self._fieldDict[solution + '_forcing_r']
 
+    def forcing(self,solution):
+        return Tensor(self.forcing_r(solution)+1j*self.forcing_i(solution), self._coordinateSystem)
+
+    @property
+    def forcingDomain(self):
+        return self._fieldDict['forcingDomain']
+
     @property
     def gamma(self):
         return self._fieldDict['gamma']
@@ -290,10 +297,6 @@ class fieldProperties:
     @property
     def responseDomain(self):
         return self._fieldDict['responseDomain']
-
-    @property
-    def forcingDomain(self):
-        return self._fieldDict['forcingDomain']
 
     @property
     def u(self):
