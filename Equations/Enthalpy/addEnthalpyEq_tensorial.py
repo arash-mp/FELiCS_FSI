@@ -11,7 +11,7 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     printDebug(param.debug,"Adding transport equation for enthalpy in all mesh internal directions")
     
     # Coordinate system
-    J_hat = self.coord_sys.J_hat
+    J_hat = self._coordinateSystem.J_hat
     
     # ------------------------  Time derivative terms
     self.B_vf.add(( mean.rho*fluc.h*iConj(X) ).ufl_tens*J_hat*dx)

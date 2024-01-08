@@ -18,7 +18,7 @@ def addMassEq(self,fluc,X,mean,param):
     if param.NumericalScheme in ['Discontinuous Galerkin']:
         printError('Discontinuous Galerkin not implemented in tensorial framework.')        
 
-    J_hat = self.coordinateSystem.J_hat
+    J_hat = self._coordinateSystem.J_hat
 
     # ------------------------ Time derivative term used
     # Only if density fluctuations are considered

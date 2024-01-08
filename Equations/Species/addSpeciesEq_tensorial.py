@@ -17,7 +17,7 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
             printWarning('--> Species eq: m > 0 for tensor not validated yet. Treat results with care.')
 
     # ------------------------ Define the tensorial operators
-    J_hat = self.coord_sys.J_hat
+    J_hat = self._coordinateSystem.J_hat
     
     # ----------------------------------------- Time derivative term
     self.B_vf.add(( fluc.Y(species)*iConj(X)*mean.rho ).ufl_tens*J_hat*dx)

@@ -45,7 +45,7 @@ def addMomentumEq(self,fluc,X,mean,param):
 
 
     # ------------------------ Define the tensorial operators
-    J_hat = self.coord_sys.J_hat
+    J_hat = self._coordinateSystem.J_hat
 
     # ------------------------ Time derivative term
     self.B_vf.add(( iDot(mean.rho*fluc.u,iConj(X)) ).ufl_tens*J_hat*dx)
