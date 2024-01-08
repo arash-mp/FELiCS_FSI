@@ -3,8 +3,13 @@ from dolfinx.fem import (
     Constant,
     Function,
 )
+# Local Libraries and methods
 from tensorUtils import (
+                    iGrad,
+                    iDiv,
                     iDot,
+                    iIdentity,
+                    iT,
                     Tensor,
                     )
 
@@ -249,6 +254,20 @@ class fieldProperties:
                 return Constant(1) * self.__OneField
         else:
             return self._fieldDict['T']
+
+    @property
+    def tau(self):
+        mean_nu = self._mean.nuTot
+        mean_u = self._mean.u
+        fluc_nu = self.nulam
+        m = self._param.Case.m
+        tau_out = mean_nu * iGrad(self.u,m) + \
+                  fluc_nu * iGrad(mean_u)
+        if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
+            tau_out += iT(tau_out)
+            tau_out += -2.0/3.0 * mean_nu * iDiv(self.u,m) * iIdentity(iGrad(self.u))
+            tau_out += -2.0/3.0 * fluc_nu * iDiv(mean_u) * iIdentity(iGrad(self.u))
+        return tau_out
 
     @property
     def Tb(self):
