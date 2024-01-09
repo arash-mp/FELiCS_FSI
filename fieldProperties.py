@@ -144,6 +144,10 @@ class fieldProperties:
     @property
     def gamma(self):
         return self._fieldDict['gamma']
+    
+    @property
+    def Pr(self):
+        return self._fieldDict['Pr']
 
     @property
     def h(self):
@@ -184,6 +188,14 @@ class fieldProperties:
                 return self._fieldDict['nulam']
             else:
                 return self._zeroFieldTensor
+        
+    @property
+    # Thermal conductivity
+    def kappa(self):
+        if 'kappa' in list(self._fieldDict.keys()):
+            return self._fieldDict['kappa']
+        else:
+            return self._zeroField
 
     @property
     def nuTot(self):

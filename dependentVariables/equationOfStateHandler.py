@@ -1,6 +1,6 @@
 # Third party libraries
 import numpy as np
-from functions import printError
+from functions import printError, printDebug
 
 class equationOfStateHandler:
     """
@@ -37,7 +37,8 @@ class equationOfStateHandler:
         
         alreadyDefinedQuantities = list(self._fieldDict.keys())
 
-        print(alreadyDefinedQuantities)
+        #print(alreadyDefinedQuantities)
+        printDebug(True, f'-- EoS with input variables: {alreadyDefinedQuantities}')
         if all(item in alreadyDefinedQuantities for item in ['p','T']):
         # Calculate density from pressure and temperature
             if isinstance(mean.T, np.ndarray) and mean.T.shape[0] != self.rho.shape[0]:
@@ -65,6 +66,9 @@ class equationOfStateHandler:
                 mean_rho = mean.rho
             if param.Case.SetOfEquations['EquationOfState']['Equation'] == 'Low-Mach':
                 self._fieldDict['T'] = -1 * self.rho / mean_rho * mean_T
+            elif param.Case.SetOfEquations['EquationOfState']['Equation'] == 'Compressible':
+                print('-- EoS for compressible flow still needs to be implemented')
+                # Here we need to complete, possibility to calculate both T_mean and T_fluc!
             else:
                 printError('Equation of State ' + param.Case.SetOfEquations['EquationOfState']['Equation'] + ' not defined.')
 
