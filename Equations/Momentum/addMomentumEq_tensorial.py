@@ -11,7 +11,8 @@ from ufl import (
     grad,
     dot,
     outer,
-    transpose
+    transpose,
+    Constant,
 )
 from tensorUtils import (
     Tensor,
@@ -49,20 +50,18 @@ def addMomentumEq(self,fluc,X,mean,param):
 
     # ------------------------ Time derivative term
     self.B_vf.add(( iDot(mean.rho*fluc.u,iConj(X)) ).ufl_tens*J_hat*dx)
-
     # ------------------------ Convective terms
     int_by_parts = False
     if int_by_parts:
         # Volume term from integration by parts
-        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u),self.m),fluc.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u),0),mean.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u),0),mean.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
         # Boundary term from integration by parts
         if param.Case.CoordinateSystem =='Cartesian':
-            print( mean.rho*iDot(iDot(iOuter(fluc.u,iConj(X)),mean.u),) )
-            self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(fluc.u,iConj(X)),mean.u),) ).ufl_tens*J_hat*self.all_ds)
-            self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(mean.u,iConj(X)),fluc.u),) ).ufl_tens*J_hat*self.all_ds)
-            self.A_vf.add(( -1j*fluc.rho*iDot(iDot(iOuter(mean.u,iConj(X)),mean.u),) ).ufl_tens*J_hat*self.all_ds)
+            self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(fluc.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
+            self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(mean.u,iConj(X)),fluc.u),self.n) ).ufl_tens*J_hat*self.all_ds)
+            self.A_vf.add(( -1j*fluc.rho*iDot(iDot(iOuter(mean.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
         elif param.Case.CoordinateSystem =='Cylindrical':
             # In cyl , a singular term error arise for the boundary term in the tensor framework
             # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
@@ -78,7 +77,7 @@ def addMomentumEq(self,fluc,X,mean,param):
         ## ---- ALTERNATIVE: No integration by part, just one volume term
         printDebug(param.debug, '--> Mom eq: convection term NOT integrated by part')
         # -- > Tensor implementation derived by hand
-        self.A_vf.add(( -1j*iDot(iDot(iGrad(fluc.u,self.m),mean.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( -1j*iDot(iDot(iGrad(fluc.u),mean.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(mean.u),mean.rho*fluc.u),iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(mean.u),fluc.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
 
@@ -87,7 +86,7 @@ def addMomentumEq(self,fluc,X,mean,param):
     int_by_parts = True  
     if int_by_parts:
         # Integrate pressure gradient boundary terms (resulting from integration by parts)
-        self.A_vf.add( (1j*fluc.p*iDiv(iConj(X),self.m) ).ufl_tens*J_hat*dx)
+        self.A_vf.add( (1j*fluc.p*iDiv(iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add( (-1j*iDot(fluc.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
 
     else:
@@ -105,12 +104,12 @@ def addMomentumEq(self,fluc,X,mean,param):
     # NOTE: The boundary term from the integration by part is ignored. This should impose a 
     # BC equivalent to stress-free BC
     
-    self.A_vf.add(( -1j*iInner(fluc.tau,iGrad(iConj(X),self.m) )).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*iInner(fluc.tau,iGrad(iConj(X)) )).ufl_tens*J_hat*dx)
 
     ## ---- Visc. 3: viscous BC terms for input-output analysis
     if param.Case.AnalysisMode in ['Input-Output']:
         for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
-            self.A_vf.add(( 1j*mean.nuTot*iDot(iDot(iGrad(fluc.u,self.m),self.n),iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index))
+            self.A_vf.add(( 1j*mean.nuTot*iDot(iDot(iGrad(fluc.u),self.n),iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index))
             # Version with full viscous tensor (not assuming constant viscosity) --> Not working as expected for now
             #self.A_vf.add((1j*mean.nuTot*iDot(iDot(iGrad(fluc.u, self.m)+iT(iGrad(fluc.u, self.m)),),iConj(X))).ufl_tens*J_hat*self.ds(boundary_index))
             

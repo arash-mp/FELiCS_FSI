@@ -34,14 +34,18 @@ class meanFlowClass(
         self._isFluctuation = False
         self._param = param
         self._FEMSpaces = FEMSpaces
+        self._coordinateSystem = self._FEMSpaces.P2.mesh.coordinateSystem
         fieldProperties.__init__(self)
         viscosityHandler.__init__(self)
         self._meanflowFilename = None
         self.__Mixture = param.Case.Mixture
         self.__ZeroField = Function(self._FEMSpaces.P2)
+        self.__zeroFieldTensor = Tensor(
+                                       Function(self._FEMSpaces.P2),
+                                       self._coordinateSystem,
+                                       )
         self.__OneField = Function(self._FEMSpaces.P2)
         self.__OneField.x.array[:] = 1.0
-        self._coordinateSystem = self._FEMSpaces.P2.mesh.coordSys
         
         #self.addDerivativeFieldsToMean()
         #self.initLamDiff()
@@ -405,7 +409,6 @@ class meanFlowClass(
         m = 0
 
         # Fill valsP2 with raw data
-        print(nameListMean)
         for name in nameListMean:
             if name[0] == 'u' and name not in ['ut_forcing_r',
                                                'ut_forcing_i']:
@@ -415,7 +418,6 @@ class meanFlowClass(
                 for component in self._param.Case.getVelocityComponents():
                     # Get the name in plus component
                     nameComponent = name[:1] + component + name[1:]
-                    print(nameComponent)
                     if nameComponent in list(self.__RawFlowDict.keys()):
                         valsP2[:, m] \
                             = np.array(self.__RawFlowDict[nameComponent])
@@ -493,7 +495,6 @@ class meanFlowClass(
                                                        self._param,
                                                        temp_vecP2[:, m])
                         else:
-                            print(name)
                             self._fieldDict[name].vector[:] \
                                 = np.array(temp_vecP2[:, m])
                         m += 1

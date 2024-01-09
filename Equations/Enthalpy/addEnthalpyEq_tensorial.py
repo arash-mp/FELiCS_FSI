@@ -20,7 +20,7 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     
     # ------------------------  Advection terms
     # Add volume integral of advection terms that remain after partial integration:
-    self.A_vf.add(( 1j*iDiv(iConj(X)*mean.rho*mean.u,self.m)*fluc.h ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( 1j*iDiv(iConj(X)*mean.rho*mean.u)*fluc.h ).ufl_tens*J_hat*dx)
     self.A_vf.add(( 1j*iDiv(iConj(X)*fluc.rho*mean.u)*mean.he ).ufl_tens*J_hat*dx)
     self.A_vf.add(( 1j*iDiv(iConj(X)*mean.rho*fluc.u)*mean.he ).ufl_tens*J_hat*dx)
     # Add boundary integrals resulting from said partial integration:
@@ -28,10 +28,9 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     self.A_vf.add(( -1j*iDot(fluc.rho*mean.u*mean.he*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
     self.A_vf.add(( -1j*iDot(mean.rho*fluc.u*mean.he*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
         
-        
     # ------------------------  Diffusion terms
-    self.A_vf.add(( -1j*iDot(mean.alpha*iGrad(fluc.h,self.m),iGrad(iConj(X),self.m)) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( -1j*iDot(fluc.alpha*iGrad(mean.he),iGrad(iConj(X),self.m)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*iDot(mean.alpha*iGrad(fluc.h),iGrad(iConj(X))) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*iDot(fluc.alpha*iGrad(mean.he),iGrad(iConj(X))) ).ufl_tens*J_hat*dx)
 
         
     

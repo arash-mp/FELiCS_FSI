@@ -123,7 +123,6 @@ class export:
 													list(exportObject.keys())
 														):
 
-				print(fieldNameFieldToExport)
 				ValueArray = exportObject[fieldNameFieldToExport].x.array
 
 				numSubSpaces = exportObject[fieldNameFieldToExport].function_space.num_sub_spaces

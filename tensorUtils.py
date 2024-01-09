@@ -15,16 +15,25 @@ from ufl import Identity, as_vector, as_matrix, as_tensor
 from ufl import sin, cos, tan, sqrt
 from ufl import det, tr
 from ufl import conj
-
+from dolfinx.fem import (
+    Constant,
+)
 
 ### CLASSES
 class CoordinateSystem():
-    def __init__(self, SpatialCoordinateObj, name: str, **kwargs):
+    def __init__(
+                self, 
+                SpatialCoordinateObj, 
+                name: str,
+                m = 0, 
+                **kwargs,
+                ):
         x = SpatialCoordinateObj
         
         # mesh_dims is a variable to handle that the ufl vector x[i] might re-
         # present for example (r,z) in cylindrical coordinates but
         # tensor_utils can only operate with (r, theta, z).
+        self._m = m
         if 'mesh_dims' in kwargs:
             self.mesh_dims = kwargs['mesh_dims']
             self.dim = len(self.mesh_dims)
@@ -165,6 +174,9 @@ class CoordinateSystem():
         print(ch[2,:,0]) # first column of the last christoffel symbol
         """
 
+    @property
+    def m(self):
+        return self._m
 
 class Tensor():#TestFunction):    
     def __init__(
@@ -269,6 +281,8 @@ class Tensor():#TestFunction):
     def __add__(self, other):
             
         if type(other) == Tensor:
+            if not (self.containsFluctuation == other.containsFluctuation):
+                ValueError("In a tensor sum, both tensors must be of same order in linear fluctuations.")
             if not (self.containsTestFunction == other.containsTestFunction):
                 ValueError("In a tensor sum, both tensors must be of same order in test functions.")
             if self.basis == other.basis:
@@ -276,21 +290,32 @@ class Tensor():#TestFunction):
             else:
                 new_self = convertBasis(self, other.basis)
                 added = new_self.ufl_tens + other.ufl_tens
-        else:
+        if type(other) in [float,complex,int,Constant]:
             added = self.ufl_tens + other
-        return Tensor(added, self.CoordSys, basis = self.basis, containsTestFunction = self.containsTestFunction)
+        else:
+            ValueError("Tensor addition only defined for Tensors,Constant, float, complex and integers")
+        return Tensor(
+                    added, 
+                    self.CoordSys, 
+                    basis = self.basis, 
+                    containsTestFunction = self.containsTestFunction,
+                    containsFluctuation = self.containsFluctuation,
+                    )
 
     # division, 
     def __truediv__(self, other): # Tensor object to the left
         if type(other) == Tensor:
             if other.containsTestFunction:
                 ValueError("Division by test function not possible.")
+            if other.containsFluctuation:
+                ValueError("Division by linear fluctuations not possible.")
             if other.order == 0:
                 return Tensor(
                             self.ufl_tens / other.ufl_tens,
                             self.CoordSys, 
                             basis = self.basis, 
                             containsTestFunction = self.containsTestFunction,
+                            containsFluctuation = self.containsFluctuation,
                             )
             elif self.order == 0:
                 return Tensor(
@@ -298,44 +323,60 @@ class Tensor():#TestFunction):
                             self.CoordSys,
                             basis = other.basis,
                             containsTestFunction = self.containsTestFunction,
+                            containsFluctuation = self.containsFluctuation,
                             )
             else:
                 raise ValueError("Division operation between Tensors only " \
                                  "defined, if one is a scalar.")
-        elif type(other) != Tensor:
+        if type(other) in [float,complex,int,Constant]:
             return Tensor(
-                        self.ufl_tens * other,
+                        self.ufl_tens / other,
                         self.CoordSys,
                         basis = self.basis,
                         containsTestFunction = self.containsTestFunction,
+                        containsFluctuation = self.containsFluctuation,
                         )
+        else:
+            ValueError("Tensor division only defined for divisors of type Tensor, Constant, float, complex and integer")
     
     # subtraction: A - B is the same as A.__sub__(B)
     def __sub__(self, other):
         if not (self.containsTestFunction == other.containsTestFunction):
             ValueError("In a tensor difference, both tensors must be of same order in test functions.")
+            if not (self.containsFluctuation == other.containsFluctuation):
+                ValueError("In a tensor sum, both tensors must be of same order in test functions.")
         if type(other) == Tensor:
             if self.basis == other.basis:
                 subtracted = self.ufl_tens - other.ufl_tens
             else:
                 new_self = convertBasis(self, other.basis)
                 subtracted = new_self.ufl_tens - other.ufl_tens
-        else:
+        if type(other) in [float,complex,int,Constant]:
             subtracted = self.ufl_tens - other
+        else:
+            ValueError("Tensor subtraction only defined for Tensors, float, complex and integer")
         
-        return Tensor(subtracted, self.CoordSys, basis = self.basis, containsTestFunction = self.containsTestFunction)
-
+        return Tensor(
+                    subtracted, 
+                    self.CoordSys, 
+                    basis = self.basis, 
+                    containsTestFunction = self.containsTestFunction,
+                    containsFluctuation = self.containsFluctuation,
+                    )
     # muliplication, both ways, because matrix mul not commutative
     def __mul__(self, other): # Tensor object to the left
         if type(other) == Tensor:
             if self.containsTestFunction and other.containsTestFunction:
                 ValueError("Tensor product at least second order in test functions.")
+            if self.containsTestFunction and other.containsTestFunction:
+                ValueError("Tensor product at least second order in fluctuation.")
             if other.order == 0:
                 return Tensor(
                             self.ufl_tens * other.ufl_tens,
                             self.CoordSys, 
                             basis = self.basis, 
                             containsTestFunction = self.containsTestFunction or self.containsTestFunction,
+                            containsFluctuation = self.containsFluctuation or self.containsFluctuation,
                             )
             elif self.order == 0:
                 return Tensor(
@@ -343,28 +384,35 @@ class Tensor():#TestFunction):
                             self.CoordSys,
                             basis = other.basis,
                             containsTestFunction = self.containsTestFunction or self.containsTestFunction,
+                            containsFluctuation = self.containsFluctuation or self.containsFluctuation,
                             )
             else:
                 raise ValueError("Multiplication between Tensors only " \
                                  "defined, if one is a scalar.")
-        elif type(other) != Tensor:
+        elif type(other) in [float,complex,int,Constant]:
             return Tensor(
                         self.ufl_tens * other,
                         self.CoordSys,
                         basis = self.basis,
                         containsTestFunction = self.containsTestFunction,
+                        containsFluctuation = self.containsFluctuation,
                         )
+        else:
+            ValueError("Tensor multiplication only defined for Tensors, Constant, float, complex, and integer")
     
     def __rmul__(self, other): # Tensor object to the right
         if type(other) == Tensor:
             if self.containsTestFunction and other.containsTestFunction:
                 ValueError("Tensor product at least second order in test functions.")
+            if self.containsFluctuation and other.containsFluctuation:
+                ValueError("Tensor product at least second order in fluctuations.")
             if other.order == 0:
                 return Tensor(
                             other.ufl_tens * self.ufl_tens, 
                             self.CoordSys,
                             basis = self.basis,
                             containsTestFunction = self.containsTestFunction or self.containsTestFunction,
+                            containsFluctuation = self.containsFluctuation or self.containsFluctuation,
                             )
             elif self.order == 0:
                 return Tensor(
@@ -372,17 +420,20 @@ class Tensor():#TestFunction):
                             self.CoordSys,
                             basis = other.basis,
                             containsTestFunction = self.containsTestFunction or self.containsTestFunction,
+                            containsFluctuation = self.containsFluctuation or self.containsFluctuation,
                             )
             else:
                 raise ValueError("Multiplication between Tensors only " \
                                  "defined, if one is a scalar.")
-        else:
+        elif type(other) in [float,complex,int,Constant]:
             return Tensor(
                         other * self.ufl_tens,
                         self.CoordSys,
                         basis = self.basis,
                         containsTestFunction = self.containsTestFunction,
+                        containsFluctuation = self.containsFluctuation,
                         )
+            ValueError("Tensor multiplication only defined for Tensors, Constant, float, complex and integerr")
     
     """
     TODO: dont know if and how division is implemented in ufl
@@ -398,6 +449,8 @@ def iDot(
          ):
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         ValueError("iDot product at least second order in test functions.")
+    if tensorA.containsFluctuation and tensorB.containsFluctuation:
+        ValueError("iDot product at least second order in fluctuations.")
     # Metric depends on base vectors which are being contracted
     metric = getMetric(tensorA.basis[-1], tensorB.basis[0], tensorA.CoordSys)
     A = tensorA.ufl_tens
@@ -422,6 +475,7 @@ def iDot(
             tensorA.CoordSys, 
             basis = tensorA.basis[:-1] + tensorB.basis[1:],
             containsTestFunction = tensorA.containsTestFunction or tensorB.containsTestFunction, 
+            containsFluctuation = tensorA.containsFluctuation or tensorB.containsFluctuation, 
             )
 
 def iDotT(tensorA: Tensor, tensorB: Tensor):
@@ -436,6 +490,8 @@ def iDotT(tensorA: Tensor, tensorB: Tensor):
     """
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         ValueError("iDotT product at least second order in test functions.")
+    if tensorA.containsFluctuation and tensorB.containsFluctuation:
+        ValueError("iDotT product at least second order in fluctuations.")
     # Metric depends on base vectors which are being contracted
     metric = getMetric(tensorA.basis[-2], tensorB.basis[0], tensorA.CoordSys)
     A = tensorA.ufl_tens
@@ -459,12 +515,15 @@ def iDotT(tensorA: Tensor, tensorB: Tensor):
             tensorA.CoordSys,
             basis = [tensorA.basis[-1]],
             containsTestFunction = tensorA.containsTestFunction or tensorB.containsTestFunction,
+            containsFluctuation = tensorA.containsFluctuation or tensorB.containsFluctuation,
             )
 
 
 def iInner(tensorA: Tensor, tensorB: Tensor):
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         raise ValueError("iInner product at least second order in test functions.")
+    if tensorA.containsFluctuation and tensorB.containsFluctuation:
+        raise ValueError("iInner product at least second order in fluctuations.")
     if tensorA.order != tensorB.order or tensorA.order != 2:
         raise ValueError("The order of both tensors must be two.")
     
@@ -481,6 +540,7 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
             tensorA.CoordSys, 
             basis = tensorA.basis[:-2] + tensorB.basis[2:],
             containsTestFunction = tensorA.containsTestFunction or tensorB.containsTestFunction,
+            containsFluctuation = tensorA.containsFluctuation or tensorB.containsFluctuation,
             )
 
 
@@ -502,7 +562,6 @@ def getMetric(basisA: Union[list, bool, int], basisB: Union[list, bool, int], \
 
 def iGrad(
     T: Tensor, 
-    m=0,
     ):
     # implementing all kind of derivatives is tideous. --> convert every tensor
     # to tangent basis and only implement grads in tangent basis.
@@ -511,10 +570,11 @@ def iGrad(
 
     # If the expression contains a test function, the wave numbers in mean flow homogeneous directions must be multiplied by minus one for the following reason: if a gradient operator contains a test function, integration by parts has been applied. With the wave numbers, however an analytical expression for the gradient is found instead of a numerical one. The easily readable application of the tensorial framework, however will apply integration by parts 'falsely' also to the terms where derivations in mean flow homogeneous directions are applied analytically. The inversion of the sign in front of the wave number cancels this effect.
 
+    mLocal = 0
     if T.containsTestFunction:
-        mLocal = -m
-    else:
-        mLocal = m 
+        mLocal -= T.CoordSys.m
+    if T.containsFluctuation:
+        mLocal += T.CoordSys.m
     # compute gradient: first check symmetry, then add christoffel parts
     if T.order == 0:
         diffs =  []
@@ -591,12 +651,12 @@ def iGrad(
                   T.CoordSys, 
                   basis = T.basis + [True],
                   containsTestFunction = T.containsTestFunction,  
+                  containsFluctuation = T.containsFluctuation,  
                   )
     
 
 def iDiv(
          tensor: Tensor,
-         m=0,
          ):
     # If the expression contains a test function, the wave numbers in mean flow homogeneous directions must be multiplied by minus one for the following reason: if a gradient operator contains a test function, integration by parts has been applied. With the wave numbers, however an analytical expression for the gradient is found instead of a numerical one. The easily readable application of the tensorial framework, however will apply integration by parts 'falsely' also to the terms where derivations in mean flow homogeneous directions are applied analytically. The inversion of the sign in front of the wave number cancels this effect.
 
@@ -605,12 +665,12 @@ def iDiv(
         tensor = convertBasis(tensor, tensor.order*[False])
         
     elif tensor.order == 1:
-        gradient = iGrad(tensor, m) # Added wavenumber on homogeneous direction
+        gradient = iGrad(tensor) # Added wavenumber on homogeneous direction
         i = indices(1)
         Div = tr(gradient.ufl_tens)
     
     elif tensor.order == 2:
-        gradient = iGrad(tensor, m) # Added wavenumber on homogeneous direction
+        gradient = iGrad(tensor) # Added wavenumber on homogeneous direction
         i,j = indices(2)
         Div = as_tensor(gradient.ufl_tens[i,j,j], (i))
         
@@ -618,7 +678,8 @@ def iDiv(
                   Div, 
                   tensor.CoordSys, 
                   basis = tensor.basis[:-1],
-                  containsTestFunction = tensor.containsTestFunction
+                  containsTestFunction = tensor.containsTestFunction,
+                  containsFluctuation = tensor.containsFluctuation,
                   )
 
 
@@ -637,13 +698,14 @@ def iT(tensor: Tensor):
                       tensor.CoordSys, 
                       basis =[tensor.basis[1], tensor.basis[0]],
                       containsTestFunction = tensor.containsTestFunction,
+                      containsFluctuation = tensor.containsFluctuation,
                       )
 
 
 def iTr(tensor: Tensor):
     ''' Function returning trace '''
     # tr(tensor.ufl_tens) is invariant. This function is only for when you
-    # need a Tensor object returned
+    # need a Tensor object urned
     if tensor.order != 2:
         raise ValueError("Trace only working for tensors of order 2.")
     else:
@@ -652,6 +714,7 @@ def iTr(tensor: Tensor):
                       tensor.CoordSys, 
                       basis = [],
                       containsTestFunction = tensor.containsTestFunction,
+                      containsFluctuation = tensor.containsFluctuation,
                       )
     
     
@@ -695,6 +758,7 @@ def iIdentity(tensor: Tensor):
                   tensor.CoordSys,
                   basis = tensor.basis,
                   containsTestFunction = False,
+                  containsFluctuation = False,
                   )
 
 def iConj(tensor: Tensor):
@@ -703,12 +767,15 @@ def iConj(tensor: Tensor):
             tensor.CoordSys,
             basis = tensor.basis,
             containsTestFunction = tensor.containsTestFunction,
+            containsFluctuation = tensor.containsFluctuation,
             )
 
 
 def iOuter(tensorA: Tensor, tensorB: Tensor):
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         raise ValueError("iOuter product at least second order in test functions.")
+    if tensorA.containsFluctuation and tensorB.containsFluctuation:
+        raise ValueError("iOuter product at least second order in fluctuations.")
     if tensorA.order == 1 and tensorB.order == 1:
         i,j = indices(2)
         outered = as_tensor(tensorA.ufl_tens[i]*tensorB.ufl_tens[j], (i,j))
@@ -732,4 +799,5 @@ def iOuter(tensorA: Tensor, tensorB: Tensor):
                   tensorA.CoordSys, 
                   basis = tensorA.basis + tensorB.basis,
                   containsTestFunction = tensorA.containsTestFunction or tensorB.containsTestFunction,
+                  containsFluctuation = tensorA.containsFluctuation or tensorB.containsFluctuation,
                   )

@@ -99,10 +99,10 @@ class WeakFormulationCollectionClass():
         self.__param = param
         self.__FEMSpaces = FEMSpaces
         self.__mean = mean
-
+        mesh = self.__FEMSpaces.P2.mesh
 
         # Get class for integrating along boundaries
-        self.boundaries = self.__FEMSpaces.P2.mesh.facet_tags
+        self.boundaries = mesh.facet_tags
         self.ds = Measure("ds", subdomain_data=self.boundaries)
 
         # Get crossstreamwise wave number
@@ -118,15 +118,15 @@ class WeakFormulationCollectionClass():
                 self.all_ds += self.ds(Boundary['ID'])
                 
         # Get spatial coordinates
-        self.x = SpatialCoordinate(self.__FEMSpaces.P2.mesh)
-
-        # Define tensor coordinate system, we always assume the third dimension to be homogenous
-        if param.Case.CoordinateSystem =='Cartesian':
-            self._coordinateSystem = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
-        elif param.Case.CoordinateSystem =='Cylindrical':
-            self._coordinateSystem = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
-        else:
-            printError('Coord. syst not yet implemented in tensor framework.')
+        self.x = SpatialCoordinate(mesh)
+        self._coordinateSystem = mesh.coordinateSystem
+        ## Define tensor coordinate system, we always assume the third dimension to be homogenous
+        #if param.Case.CoordinateSystem =='Cartesian':
+        #    self._coordinateSystem = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
+        #elif param.Case.CoordinateSystem =='Cylindrical':
+        #    self._coordinateSystem = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
+        #else:
+        #    printError('Coord. syst not yet implemented in tensor framework.')
        # self.coordinateSystem = self.coord_sys
         
         # Define test and trial functions

@@ -29,7 +29,7 @@ def addMassEq(self,fluc,X,mean,param):
     # ------------------------ Advection terms
     # The advection term is integrated by parts
     # Volume term from IbP
-    self.A_vf.add(( 1j * iDot(iGrad(iConj(X), self.m),fluc.rhou)).ufl_tens * J_hat * dx)
+    self.A_vf.add(( 1j * iDot(iGrad(iConj(X)),fluc.rhou)).ufl_tens * J_hat * dx)
     # Boundary term from IbP
     self.A_vf.add(( -1j*iDot(self.n,fluc.rhou * iConj(X)) ).ufl_tens * J_hat * self.all_ds)
 

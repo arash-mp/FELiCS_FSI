@@ -103,9 +103,12 @@ class parameters():
 			self.Case.importFromH5File(filestring)
 			self.FlowInput.importFromH5File(filestring)
 			self.BCs.importFromH5File(filestring)
-			self.BCs.readDomainData(self.Case.MeshFilePath,
+			self.BCs.readDomainData(
+                                self.Case.MeshFilePath,
 				self.Case.getExtendedTransportedQuantityList(),
-				self.Case.CoordinateSystem,)
+				self.Case.CoordinateSystem,
+                                self.Case.m,
+                                )
 			self.IOResolvent.importFromH5File(filestring)
 			self.Numerics.importFromH5File(filestring)
 			self.Export.importFromH5File(filestring)
@@ -114,10 +117,13 @@ class parameters():
 			self.Case.importSettings(filestring)
 			self.FlowInput.importSettings(filestring)
 			self.BCs.importSettings(filestring)
-			self.BCs.readDomainData(self.Case.MeshFilePath,
+			self.BCs.readDomainData(
+                                self.Case.MeshFilePath,
 				self.Case.nDim,
 				self.Case.getExtendedTransportedQuantityList(),
-				self.Case.CoordinateSystem)
+				self.Case.CoordinateSystem,
+                                self.Case.m,
+                                )
 			self.IOResolvent.importSettings(filestring)
 			self.Numerics.importSettings(filestring)
 			self.Export.importSettings(filestring)

@@ -46,7 +46,6 @@ def readFELiCSResults(MeshFile, MeanFlowFile, SolutionFile):
 			fluctuationDict[element] = data
 		results['fluctuation'] = fluctuationDict
 		
-#	print(results)
 	
 	plotData = 1
 	

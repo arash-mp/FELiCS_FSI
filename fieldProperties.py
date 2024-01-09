@@ -49,17 +49,17 @@ class fieldProperties:
 
     @property
     def alpha(self):
-        if self.isMeanFlowClass:
+        if self.isMeanFlowClass():
             if 'alpha' in list(self._fieldDict.keys()):
-                return  self._fieldDict['alpha']
+                return  Tensor(
+                            self._fieldDict['alpha'],
+                            self._coordinateSystem,
+                            )
                             
             else:
-                return self._zeroField
+                return self._zeroFieldTensor
         else:
-            return Tensor(
-                        self._fieldDict['alpha'],
-                        self._coordinateSystem,
-                        )
+            return self._fieldDict['alpha']
 
     @property
     def c(self):
@@ -67,7 +67,13 @@ class fieldProperties:
 
     @property
     def cp(self):
-        return self._fieldDict['cp']
+        if self.isMeanFlowClass:
+            return Tensor(
+                        self._fieldDict['cp'],
+                        self._coordinateSystem,
+                        )
+        else:       
+            return self._fieldDict['cp']
 
     def D(self, specie):
         if 'D_' + specie in list(self._fieldDict.keys()):
@@ -76,10 +82,8 @@ class fieldProperties:
                         self._coordinateSystem,
                         )
         else:
-            return Tensor(
-                        self._zeroField,
-                        self._coordinateSystem,
-                        )
+            return self._zeroFieldTensor
+
     @property
     def dQ(self):  # heat release
         return self._fieldDict['dQ']
@@ -147,7 +151,6 @@ class fieldProperties:
 
     @property
     def he(self):
-        # To be generalized for all dimensions
         return Tensor(
                     self._fieldDict['he'],
                     self._coordinateSystem,
@@ -168,10 +171,19 @@ class fieldProperties:
 
     @property
     def nulam(self):
-        if 'nulam' in list(self._fieldDict.keys()):
-            return self._fieldDict['nulam']
+        if self.isMeanFlowClass():
+            if 'nulam' in list(self._fieldDict.keys()):
+                return Tensor(
+                            self._fieldDict['nulam'],
+                            self._coordinateSystem,
+                            )
+            else:
+                return self._zeroFieldTensor
         else:
-            return self._zeroField
+            if 'nulam' in list(self._fieldDict.keys()):
+                return self._fieldDict['nulam']
+            else:
+                return self._zeroFieldTensor
 
     @property
     def nuTot(self):
@@ -207,7 +219,7 @@ class fieldProperties:
         if 'phi' in list(self._fieldDict.keys()):
             return self._fieldDict['phi']
         else:
-            return self.__ZeroField
+            return self.__zeroFieldTensor
 
     @property
     def Q(self):  # heat release
@@ -236,10 +248,7 @@ class fieldProperties:
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
-                return Tensor(
-                            self._zeroField,
-                            self._coordinateSystem,
-                            )
+                return self._zeroFieldTensor
 
     @property
     def rhou(self):
@@ -258,7 +267,10 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                return Constant(1) * self.__OneField
+                return Tensor(
+                            self._OneField,
+                            self._coordinateSystem,
+                            )
         else:
             return self._fieldDict['T']
 
@@ -267,12 +279,11 @@ class fieldProperties:
         mean_nu = self._mean.nuTot
         mean_u = self._mean.u
         fluc_nu = self.nulam
-        m = self._param.Case.m
-        tau_out = mean_nu * iGrad(self.u,m) + \
+        tau_out = mean_nu * iGrad(self.u) + \
                   fluc_nu * iGrad(mean_u)
         if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
             tau_out += iT(tau_out)
-            tau_out += -2.0/3.0 * mean_nu * iDiv(self.u,m) * iIdentity(iGrad(self.u))
+            tau_out += -2.0/3.0 * mean_nu * iDiv(self.u) * iIdentity(iGrad(self.u))
             tau_out += -2.0/3.0 * fluc_nu * iDiv(mean_u) * iIdentity(iGrad(self.u))
         return tau_out
 
@@ -312,13 +323,13 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
         else:
-            print(self._transportedQuantities)
             if 'u' in self._transportedQuantities:
                 return  self._fieldDict['u']
             else:
                 return Tensor(
                             self._zeroVelocityField,
                             self._coordinateSystem,
+                            containsFluctuation = True,
                             )
 
     @property
@@ -347,11 +358,8 @@ class fieldProperties:
                 return Constant(mesh, 0.0)
         else:
             if  self._param.Case.TransVelFluc:
-                input('True')
-                #return self._fieldDict['ut']
                 return self._fieldDict['u'][2]
             else:
-                input('False')
                 return Constant(0)
 
     def Y(self, specie):

@@ -103,6 +103,7 @@ class fluctuationClass(
         """
         self._param = param
         self._FEMSpaces = FEMSpaces
+        self._coordinateSystem = coordinateSystem
         fieldProperties.__init__(
             self
         )
@@ -112,10 +113,14 @@ class fluctuationClass(
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroVelocityField \
             = Function(FEMSpaces.FunctionSpaceVectorVelocity)
+        self._zeroFieldTensor = Tensor(
+                                       Function(self._FEMSpaces.P2),
+                                       self._coordinateSystem,
+                                       containsFluctuation = True,
+                                       )
         self._fieldDict = {}
         self._mean = mean
         self._transportedQuantities = param.Case.getTransportedQuantityList()
-        self._coordinateSystem = coordinateSystem
 
         # _fluc is constructed. 
         self._fluc = TrialFunctions(FEMSpaces.VMixed)
@@ -124,6 +129,7 @@ class fluctuationClass(
             self._fieldDict[field] = Tensor(
                                             self._fluc[indexOfFieldInList],
                                             self._coordinateSystem,
+                                            containsFluctuation = True,
                                             )
 
         # Check if two out of p, rho and T are in the fieldDict

@@ -31,6 +31,7 @@ class FELiCSMesh(Mesh):
 			coordinateSystem,
 			filename=None,
 			gdim=0,
+                        m=0,
 			inputMesh=None,
 			):
 
@@ -67,15 +68,17 @@ class FELiCSMesh(Mesh):
 		x = SpatialCoordinate(self)
 		# Define tensor coordinate system, we always assume the third dimension to be homogenous
 		if coordinateSystem =='Cartesian':
-		    self.__coordSys = CoordinateSystem(
+		    self.__coordinateSystem = CoordinateSystem(
                                     x, 
                                     coordinateSystem.lower(), 
+                                    m = m,
                                     mesh_dims = (1, 1, 0),
                                     )
 		elif coordinateSystem =='Cylindrical':
-		    self.__coordSys = CoordinateSystem(
+		    self.__coordinateSystem = CoordinateSystem(
                                     x,
                                     "cylindricalfelics", 
+                                    m = m,
                                     mesh_dims = (1, 1, 0),
                                     )
 		else:
@@ -131,8 +134,8 @@ class FELiCSMesh(Mesh):
 		return self.geometry.x[:, 0:self.gdim]
 
 	@property
-	def coordSys(self):
-		return self.__coordSys
+	def coordinateSystem(self):
+		return self.__coordinateSystem
 
 class BCsSettingsClass(Settings):
 	def __init__(self,MeshFilePath):
@@ -279,10 +282,22 @@ class BCsSettingsClass(Settings):
 			EverythingPresent=False
 		return EverythingPresent
 
-	def readDomainData(self,Meshfile, gDim, ExtendedTransportedQuantityList,coordinateSystem):
+	def readDomainData(
+                        self,
+                        Meshfile, 
+                        gDim, 
+                        ExtendedTransportedQuantityList,
+                        coordinateSystem,
+                        m,
+                        ):
 		''' Input: Mesfile
 		Read all the domain data from the meshfile '''
-		self.readMesh(Meshfile, gDim,coordinateSystem)
+		self.readMesh(
+                            Meshfile, 
+                            gDim,
+                            coordinateSystem,
+                            m
+                            )
 		self.readBCInfo(Meshfile, self.getMesh())
 		self.initBCsDict(ExtendedTransportedQuantityList)
 		self.importBCsDict(ExtendedTransportedQuantityList)
@@ -292,6 +307,7 @@ class BCsSettingsClass(Settings):
                     MeshFile, 
                     dim, 
                     coordinateSystem,
+                    m,
                     ):
 		'''
 			Reading Meshfile and saving it as private object
@@ -309,6 +325,7 @@ class BCsSettingsClass(Settings):
                                                 coordinateSystem,
                                                 MeshFile,
                                                 dim,
+                                                m,
                                                 )
 			self.dim = self.__mesh__.gdim
 

@@ -26,9 +26,9 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     # This term is integrated by parts
     # Volume term from IbP
     # The volume term seems to introduce a small error (~1e-12) in cartesian nates wrt. previous implementation
-    self.A_vf.add(( 1j*fluc.Y(species)*iDiv(mean.rho*mean.u*iConj(X),self.m) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( 1j*mean.Y(species)*iDiv(mean.rho*fluc.u*iConj(X),0) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( 1j*mean.Y(species)*iDiv(fluc.rho*mean.u*iConj(X),0) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( 1j*fluc.Y(species)*iDiv(mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( 1j*mean.Y(species)*iDiv(mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( 1j*mean.Y(species)*iDiv(fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
     # Boundary term from IbP
     self.A_vf.add(( -1j*iDot(self.n,fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
     self.A_vf.add(( -1j*iDot(self.n,mean.Y(species)*mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
@@ -39,8 +39,8 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     # ----------------------------------------- Diffusion term
     # NOTE: similarly to what is done in the mom. eq., the diffusion term is integrated by parts but only the 
     # volume part is added to the eqs. --> neglecting the boundary part allows to set a Neumann condition  
-    self.A_vf.add(( -1j*mean.D(species)*(iDot(iGrad(fluc.Y(species),self.m),iGrad(iConj(X),self.m))) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( -1j*fluc.D(species)*(iDot(iGrad(mean.Y(species)),iGrad(iConj(X),self.m))) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*mean.D(species)*(iDot(iGrad(fluc.Y(species)),iGrad(iConj(X)))) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*fluc.D(species)*(iDot(iGrad(mean.Y(species)),iGrad(iConj(X)))) ).ufl_tens*J_hat*dx)
 
 
     # ----------------------------------------- Source terms
