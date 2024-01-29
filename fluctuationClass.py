@@ -136,9 +136,10 @@ class fluctuationClass(
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
             equationOfStateHandler.__init__(
                 self,
-                param,
-                mean,
+                # param,
+                # mean,
                 )
+            self._initializeEoSFluctuations()
 
         self._meanfieldDict = None
 
@@ -158,11 +159,12 @@ class fluctuationClass(
         )
 
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
-            equationOfStateHandler.__init__(
-                self,
-                param,
-                mean,
-                )
+            # equationOfStateHandler.__init__(
+            #     self,
+            #     param,
+            #     mean,
+            #     )
+            self._initializeEoSFluctuations()
 
         if param.Case.Reaction \
                 and param.Case.Mixture.getReactionMechanism()['type'] \
@@ -304,9 +306,10 @@ class fluctuationSolutions(
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
             equationOfStateHandler.__init__(
                 self,
-                self._param,
-                self._mean.getVertexValues(),
+                # self._param,
+                # self._mean.getVertexValues(),
                 )
+            self._initializeEoSFluctuations()
 
         fieldProperties.__init__(self)
         self._meanfieldDict = None
@@ -328,11 +331,12 @@ class fluctuationSolutions(
 
         # Check if two out of p, rho and T are in the fieldDict
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
-            equationOfStateHandler.__init__(
-                self,
-                self._param,
-                self._mean.getVertexValues(),
-                )
+            # equationOfStateHandler.__init__(
+            #     self,
+            #     self._param,
+            #     self._mean.getVertexValues(),
+            #     )
+            self._initializeEoSFluctuations()
 
         if self._param.Case.Reaction \
                 and self._param.Case.Mixture.getReactionMechanism()['type'] \
