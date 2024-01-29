@@ -52,14 +52,17 @@ def addEnergyPEq(self,fluc,X,mean,param):
     # NOTE: kappa is the thermal conductivity
     # The term is: -j*(gamma-1)*div(kappa_m*grad(T_f) + kappa_f*grad(T_m))
     # which is integrated by parts,
+    # TEMPORARY: use constant Pr definition (This should move to fieldProperty or a handler)
+    kappa_m = mean.mu*mean.cp/mean.Pr
+    kappa_f = fluc.mu*mean.cp/mean.Pr
     # Volume term:  
     #   j*(gamma-1)[(grad(conj(X)).(kappa_m*grad(T_f)) + (grad(conj(X)).(kappa_f*grad(T_m))]*dx
-    self.A_vf.add(( 1j*(mean.gamma-1)*iDot(iGrad(iConj(X)),mean.kappa*iGrad(fluc.T)) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( 1j*(mean.gamma-1)*iDot(iGrad(iConj(X)),fluc.kappa*iGrad(mean.T)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( 1j*(mean.gamma-1)*iDot(iGrad(iConj(X)),kappa_m*iGrad(fluc.T)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( 1j*(mean.gamma-1)*iDot(iGrad(iConj(X)),kappa_f*iGrad(mean.T)) ).ufl_tens*J_hat*dx)
     # Boundary term:
     #   -j*(gamma-1)[(conj(X)*kappa_m*grad(T_f)).n_bc + (conj(X)*kappa_f*grad(T_m)).n_bc]*ds
-    self.A_vf.add(( -1j*(mean.gamma-1)*iDot(iConj(X)*mean.kappa*iGrad(fluc.T),self.n) ).ufl_tens*J_hat*self.all_ds)
-    self.A_vf.add(( -1j*(mean.gamma-1)*iDot(iConj(X)*fluc.kappa*iGrad(mean.T),self.n) ).ufl_tens*J_hat*self.all_ds)
+    self.A_vf.add(( -1j*(mean.gamma-1)*iDot(iConj(X)*kappa_m*iGrad(fluc.T),self.n) ).ufl_tens*J_hat*self.all_ds)
+    self.A_vf.add(( -1j*(mean.gamma-1)*iDot(iConj(X)*kappa_f*iGrad(mean.T),self.n) ).ufl_tens*J_hat*self.all_ds)
     
     
     # ------------------------  Viscous diffusion term
