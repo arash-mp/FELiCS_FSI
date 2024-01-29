@@ -66,8 +66,7 @@ class CaseSettingsClass(Settings):
 				self.MixtureFilePath,
 				self.SpeciesFilePath,
 				)
-			self.reactionMechanism = reactionMechanismClass(self.Mixture.getReactionMechanism()['type'])
-   
+			self.reactionMechanism = reactionMechanismClass(self.Mixture.getReactionMechanism()['type']) 
 	def importFromH5File(self, h5FileName):
 		"""
 		This function adapts the inherited function of same name from the SettingsClass
@@ -152,17 +151,13 @@ class CaseSettingsClass(Settings):
 		# If necessary, add density and enthalpy diffusion
 		if 'rho' in self.getTransportedQuantityList():
 			MeanList.append('rho')
-			
+			if self.MolViscModel == 'File' or self.MolViscPerturbModel == 'Sutherland mean':
+				MeanList.append('alpha')
 		# Add species which are transported
 		for specie in self.Mixture.getSpeciesList('transported'):
 			MeanList.append(specie)
 			if self.MolViscModel == 'File' or self.MolViscPerturbModel == 'Sutherland mean':
 				MeanList.append('D_'+specie)
-    
-		# Apparently we need alpha for Sutherland with rho fluctuations
-		# NEEDS TO BE CONFIRMED!
-		if 'rho' in self.getTransportedQuantityList() and self.MolViscPerturbModel == 'Sutherland mean':
-			MeanList.append('alpha')
 
 		# If Input-Output analysis is used, the forcing must be read in (at least curently) for
 		# every conservative variable ()...
@@ -195,16 +190,12 @@ class CaseSettingsClass(Settings):
 			MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
 		elif self.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.CoordinateSystem == 'Cartesian':
 			MeanList.extend(['rstxx', 'rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
-		if self.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-			MeanList.append('alpha')
+	#	if self.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
+	#		MeanList.append('cp')
+	#		MeanList.append('alpha')
 	#		MeanList.append('he')
 	#		MeanList.append('T')
 	#		MeanList.append('molarMass')
-		if self.SetOfEquations['Energy']['Equation'] == 'EnergyP':
-			MeanList.append('p')
-			MeanList.append('Pr')
-			MeanList.append('gamma')
-			MeanList.append('R')
 		if self.Reaction:
 			MeanList.append('dQ')
 		printDebug(True,"Mean flow fields to be read are " +str(MeanList))
