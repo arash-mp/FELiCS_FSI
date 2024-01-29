@@ -180,7 +180,10 @@ class fieldProperties:
             else:
                 return self._zeroFieldTensor
         else:
-            return self._zeroField
+            if 'nulam' in list(self._fieldDict.keys()):
+                return self._fieldDict['nulam']
+            else:
+                return self._zeroFieldTensor
 
     @property
     def nuTot(self):
