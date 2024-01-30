@@ -3,17 +3,19 @@ from h5py import File
 from dolfinx.fem import Function
 
 # Local libraries and methods
-from functions import printWarning
+from functions import printWarning, printDebug
 from export import export
 from dependentVariables.viscosityHandler import viscosityHandler
 from fieldProperties import fieldProperties
 from dependentVariables.energyHandler import energyHandler
+from dependentVariables.equationOfStateHandler import equationOfStateHandler
 from tensorUtils import Tensor
 
 class meanFlowClass(
     fieldProperties,
     energyHandler,
     viscosityHandler,
+    equationOfStateHandler,
     export,
 ):
     """
@@ -226,7 +228,8 @@ class meanFlowClass(
         indexMappingArray = mappingFunc(coordArray, coordinatesOfP2Mesh)
 
         fieldDict = {}
-        for name in self._getMeanFieldsToBeRead():
+        nameListMean = self._getMeanFieldsToBeRead()        
+        for name in nameListMean:
             if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
                 fieldDict[name] = Function(
                     self._FEMSpaces.FunctionSpaceVectorVelocity)
@@ -861,6 +864,8 @@ class meanFlowClass(
     def _getMeanFieldsToBeRead(self):
         listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
+        listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
+        printDebug(True,"Mean flow fields to be read are "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
 
 class meanFlowVertexValues(fieldProperties):
