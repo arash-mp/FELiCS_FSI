@@ -72,6 +72,6 @@ class energyHandler:
         if energyEquationType == 'ProgressVariableLinear': 
             return ['T', 'Tu', 'Tb'] 
         if energyEquationType == 'primitive-p': 
-            return ['cp', 'mu', 'T', 'p', 'gamma', 'Pr'] 
+            return ['cp', 'T', 'p', 'gamma', 'Pr'] 
         else:
             return []
