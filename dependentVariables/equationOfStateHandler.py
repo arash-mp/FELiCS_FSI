@@ -79,11 +79,11 @@ class equationOfStateHandler:
 
         # OPT.1 -- Calculate density from pressure and temperature
         if all(item in alreadyDefinedQuantities for item in ['p','T']):
-            if isinstance(mean.T, np.ndarray) and mean.T.shape[0] != self.rho.shape[0]:
-                mean_T = mean.T.compute_vertex_values()
-                mean_rho = mean.rho.compute_vertex_values()
+            if self._isSolution:
+                mean_T  = mean.T.x.array[:]
+                mean_rho = mean.rho.x.array[:]
                 if EoSType == 'IdealGas':
-                    mean_Rspe = mean.R_spe.compute_vertex_values()
+                    mean_Rspe = mean.R_spe.x.array[:]
             else:
                 mean_T = mean.T
                 mean_rho = mean.rho
@@ -102,10 +102,10 @@ class equationOfStateHandler:
                 printError('Equation of State '+self._EoSModel()+\
                     ' not defined to obtain p-fluctuations.')
             elif EoSType == 'IdealGas':
-                if isinstance(mean.T, np.ndarray) and mean.T.shape[0] != self.rho.shape[0]:
-                    mean_T = mean.T.compute_vertex_values()
-                    mean_p = mean.p.compute_vertex_values()
-                    mean_Rspe = mean.R_spe.compute_vertex_values()
+                if self._isSolution:
+                    mean_T = mean.T.x.array[:]
+                    mean_p = mean.p.x.array[:]
+                    mean_Rspe = mean.R_spe.x.array[:]
                 else:
                     mean_T = mean.T
                     mean_p = mean.p
@@ -116,11 +116,14 @@ class equationOfStateHandler:
         
         # OPT.3 -- Calculate temperature from density and pressure
         elif all(item in alreadyDefinedQuantities for item in ['rho','p']):
-            if isinstance(mean.T, np.ndarray) and mean.T.shape[0] != self.rho.shape[0]:
-                mean_T = mean.T.compute_vertex_values()
-                mean_rho = mean.rho.compute_vertex_values()
+            if self._isSolution:
+                mean_T = mean.fieldDict['T'].x.array[:]
+                mean_rho = mean.fieldDict['rho'].x.array[:]
+                # mean_T = mean.T.x.array[:]
+                # mean_rho = mean.rho.x.array[:]
                 if EoSType == 'IdealGas':
-                    mean_Rspe = mean.R_spe.compute_vertex_values()
+                    mean_Rspe = mean.fieldDict['R_spe'].x.array[:]
+                    # mean_Rspe = mean.R_spe.x.array[:]
             else:
                 mean_T = mean.T
                 mean_rho = mean.rho
