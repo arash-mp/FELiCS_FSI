@@ -178,10 +178,12 @@ class WeakFormulationCollectionClass():
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
+            print('-- Adding energy equation in enthalpy form.')
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
             from Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
+            print('-- Adding energy equation in primitive-p form.')
             addEnergyPEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
