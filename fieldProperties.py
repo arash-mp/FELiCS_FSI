@@ -142,8 +142,28 @@ class fieldProperties:
         return self._fieldDict['forcingDomain']
 
     @property
-    def gamma(self):
-        return self._fieldDict['gamma']
+    def gamma(self):    # Heat capacity ratio
+        return Tensor(
+            self._fieldDict['gamma'],
+            self._coordinateSystem,
+            )
+        
+    @property
+    def Pr(self):    # Prandtl number 
+        return Tensor(
+            self._fieldDict['Pr'],
+            self._coordinateSystem,
+            )
+    
+    @property
+    def UnitT(self):    # Real unit number in tensor form
+        from dolfinx.fem import Constant
+        from petsc4py import PETSc
+        mesh = self._fieldDict[list(self._fieldDict.keys())[0]].function_space.mesh
+        return Tensor(
+            Constant(mesh, PETSc.ScalarType(1.0 + 0j)),
+            self._coordinateSystem,
+            )
 
     @property
     def h(self):
@@ -224,6 +244,13 @@ class fieldProperties:
     @property
     def Q(self):  # heat release
         return self._fieldDict['Q']
+    
+    @property
+    def R_spe(self):  # Specific gas constant
+        return Tensor(
+            self._fieldDict['R_spe'],
+            self._coordinateSystem,
+            )
 
     @property
     def reaction(self):
