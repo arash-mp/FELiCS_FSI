@@ -198,7 +198,6 @@ class CaseSettingsClass(Settings):
 	#		MeanList.append('molarMass')
 		if self.Reaction:
 			MeanList.append('dQ')
-		printDebug(True,"Mean flow fields to be read are " +str(MeanList))
 		return MeanList
 
 	def getNVelocityComponents(self):
