@@ -303,15 +303,25 @@ class fieldProperties:
 
     @property
     def tau(self):
-        mean_nu = self._mean.nuTot
-        mean_u = self._mean.u
-        fluc_nu = self.nulam
-        tau_out = mean_nu * iGrad(self.u) + \
-                  fluc_nu * iGrad(mean_u)
-        if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-            tau_out += iT(tau_out)
-            tau_out += -2.0/3.0 * mean_nu * iDiv(self.u) * iIdentity(iGrad(self.u))
-            tau_out += -2.0/3.0 * fluc_nu * iDiv(mean_u) * iIdentity(iGrad(self.u))
+        if self.isMeanFlowClass():
+            mean_nu = self.nuTot
+            mean_u = self.u
+            tau_out = mean_nu * iGrad(mean_u)
+            if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
+                tau_out += iT(tau_out)
+                tau_out += -2.0/3.0 * mean_nu * \
+                            iDiv(mean_u) * iIdentity(iGrad(mean_u))
+                
+        else:
+            mean_nu = self._mean.nuTot
+            mean_u = self._mean.u
+            fluc_nu = self.nulam
+            tau_out = mean_nu * iGrad(self.u) + \
+                        fluc_nu * iGrad(mean_u)
+            if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
+                tau_out += iT(tau_out)
+                tau_out += -2.0/3.0 * mean_nu * iDiv(self.u) * iIdentity(iGrad(self.u))
+                tau_out += -2.0/3.0 * fluc_nu * iDiv(mean_u) * iIdentity(iGrad(self.u))
         return tau_out
 
     @property
