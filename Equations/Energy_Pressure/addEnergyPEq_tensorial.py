@@ -57,12 +57,12 @@ def addEnergyPEq(self,fluc,X,mean,param):
     kappa_f = fluc.nulam*mean.cp/mean.Pr
     # Volume term:  
     #   j*(gamma-1)[(grad(conj(X)).(kappa_m*grad(T_f)) + (grad(conj(X)).(kappa_f*grad(T_m))]*dx
-    self.A_vf.add(( 1j*(mean.gamma-OneT)*iDot(iGrad(iConj(X)),kappa_m*iGrad(fluc.T)) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( 1j*(mean.gamma-OneT)*iDot(iGrad(iConj(X)),kappa_f*iGrad(mean.T)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iGrad(iConj(X)),kappa_m*iGrad(fluc.T)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iGrad(iConj(X)),kappa_f*iGrad(mean.T)) ).ufl_tens*J_hat*dx)
     # Boundary term:
     #   -j*(gamma-1)[(conj(X)*kappa_m*grad(T_f)).n_bc + (conj(X)*kappa_f*grad(T_m)).n_bc]*ds
-    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iConj(X)*kappa_m*iGrad(fluc.T),self.n) ).ufl_tens*J_hat*self.all_ds)
-    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iConj(X)*kappa_f*iGrad(mean.T),self.n) ).ufl_tens*J_hat*self.all_ds)
+    self.A_vf.add(( 1j*(mean.gamma-OneT)*iDot(iConj(X)*kappa_m*iGrad(fluc.T),self.n) ).ufl_tens*J_hat*self.all_ds)
+    self.A_vf.add(( 1j*(mean.gamma-OneT)*iDot(iConj(X)*kappa_f*iGrad(mean.T),self.n) ).ufl_tens*J_hat*self.all_ds)
     
     
     # ------------------------  Viscous diffusion term
@@ -70,12 +70,12 @@ def addEnergyPEq(self,fluc,X,mean,param):
     # The term is: -j*(gamma-1)*(Tau_m*grad(u_f) + Tau_f*grad(u_m))
     # which is integrated by parts,
     # Volume term:
-    #   j*(mean.gamma-1)*[div(Tau) . u*conj(X)]*dx
-    self.A_vf.add(( 1j*(mean.gamma-OneT)*iDot(iDiv(mean.tau),fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( 1j*(mean.gamma-OneT)*iDot(iDiv(fluc.tau),mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+    #   -j*(gamma-1)*[div(Tau) . u*conj(X)]*dx IS it really a minus in front?!?!?!
+    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iDiv(mean.tau),fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iDiv(fluc.tau),mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
     
     # Boundary term:
-    #   -j*(mean.gamma-1)*[u . T*conj(X)]*ds 
+    #   +j*(gamma-1)*[u . T*conj(X)]*ds 
     #   --> Neglected to impose the proper BC
         
     
