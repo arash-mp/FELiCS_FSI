@@ -328,11 +328,12 @@ class Tensor():#TestFunction):
     
     # subtraction: A - B is the same as A.__sub__(B)
     def __sub__(self, other):
-        if not (self.containsTestFunction == other.containsTestFunction):
-            ValueError("In a tensor difference, both tensors must be of same order in test functions.")
-            if not (self.containsFluctuation == other.containsFluctuation):
-                ValueError("In a tensor sum, both tensors must be of same order in test functions.")
         if type(other) == Tensor:
+            if not (self.containsTestFunction == other.containsTestFunction):
+                ValueError("In a tensor difference, both tensors must be of same order in test functions.")
+                if not (self.containsFluctuation == other.containsFluctuation):
+                    ValueError("In a tensor sum, both tensors must be of same order in test functions.")
+
             if self.basis == other.basis:
                 subtracted = self.ufl_tens - other.ufl_tens
             else:
