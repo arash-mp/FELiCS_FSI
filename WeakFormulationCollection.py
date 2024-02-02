@@ -182,6 +182,7 @@ class WeakFormulationCollectionClass():
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
+            printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
             from Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
             print('-- Adding energy equation in primitive-p form.')
             addEnergyPEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
