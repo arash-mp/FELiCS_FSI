@@ -44,8 +44,8 @@ def addEnergyPEq(self,fluc,X,mean,param):
     self.A_vf.add(( 1j*mean.gamma*iDot(iGrad(iConj(X)*mean.p),fluc.u) ).ufl_tens*J_hat*dx)
     self.A_vf.add(( 1j*mean.gamma*iDot(iGrad(iConj(X)*fluc.p),mean.u) ).ufl_tens*J_hat*dx)
     # Add boundary integral of (1) and (2)
-    self.A_vf.add(( -1j*(1+mean.gamma)*iDot(mean.u*fluc.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
-    self.A_vf.add(( -1j*(1+mean.gamma)*iDot(fluc.u*mean.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
+    self.A_vf.add(( -1j*(mean.gamma+1)*iDot(mean.u*fluc.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
+    self.A_vf.add(( -1j*(mean.gamma+1)*iDot(fluc.u*mean.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
 
 
     # ------------------------  Thermal diffusion term (Fourier law)
