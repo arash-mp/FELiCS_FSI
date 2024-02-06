@@ -277,6 +277,13 @@ class fieldProperties:
     @property
     def reaction(self):
         return self.__reaction
+    
+    @property
+    def spg(self):  # Sponge region term
+        return Tensor(
+            self._fieldDict['spg'],
+            self._coordinateSystem,
+            )
 
     @property
     def rho(self):

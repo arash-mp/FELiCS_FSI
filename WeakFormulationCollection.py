@@ -188,6 +188,11 @@ class WeakFormulationCollectionClass():
             from Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
             print('-- Adding energy equation in primitive-p form.')
             addEnergyPEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
+            
+        # Add sponge region
+        from Equations.addSpongeEq_tensorial import addSpongeEq
+        print('-- Adding sponge damping.')
+        addSpongeEq(self,fluctuationC,X,mean,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
             self.getResolventNorms(X,self.__param,mean,fluctuationC)
