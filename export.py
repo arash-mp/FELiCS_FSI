@@ -336,14 +336,15 @@ class export:
 		"""
 		for i, groupName in enumerate(list(exportDict.keys())):
 			#if exportDict[groupName].shape[0] == self._param.Case.nDim:
-			if groupName[0] == 'u':
+			if groupName in ['u', 'rhou', 'u_forcing_r', 'u_forcing_i']:
 				for i, component in enumerate(self._param.Case.getVelocityComponents()):
-					uComponent = 'u' + component
 					if 'u_' in groupName:
-						newGroupName = groupName.replace('u_', f'{uComponent}_')
-						currFlowVarGroup = hf.create_group(newGroupName)
+					    uComponent = 'u' + component
+					    newGroupName = groupName.replace('u_', f'{uComponent}_')
+					    currFlowVarGroup = hf.create_group(newGroupName)
 					else:
-						currFlowVarGroup = hf.create_group(uComponent)
+					    uComponent = groupName + component
+					    currFlowVarGroup = hf.create_group(uComponent)
 
 					# if the boolean exportAngle is True, values of typ flucs are
 					# written to h5. Else the meanflow is written. In case of export

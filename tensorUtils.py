@@ -290,6 +290,7 @@ class Tensor():#TestFunction):
             else:
                 new_self = convertBasis(self, other.basis)
                 added = new_self.ufl_tens + other.ufl_tens
+        print( type(other))
         if type(other) in [float,complex,int,Constant]:
             added = self.ufl_tens + other
         else:
@@ -801,3 +802,4 @@ def iOuter(tensorA: Tensor, tensorB: Tensor):
                   containsTestFunction = tensorA.containsTestFunction or tensorB.containsTestFunction,
                   containsFluctuation = tensorA.containsFluctuation or tensorB.containsFluctuation,
                   )
+    

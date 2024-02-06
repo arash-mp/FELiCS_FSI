@@ -41,13 +41,17 @@ class meanFlowClass(
         viscosityHandler.__init__(self)
         self._meanflowFilename = None
         self.__Mixture = param.Case.Mixture
-        self.__ZeroField = Function(self._FEMSpaces.P2)
+        self.__zeroField = Function(self._FEMSpaces.P2)
         self.__zeroFieldTensor = Tensor(
                                        Function(self._FEMSpaces.P2),
                                        self._coordinateSystem,
                                        )
-        self.__OneField = Function(self._FEMSpaces.P2)
-        self.__OneField.x.array[:] = 1.0
+        self._oneFieldArray = Function(self._FEMSpaces.P2)
+        self._oneFieldArray.x.array[:] = 1.0
+        self._oneField = Tensor(
+            self._oneFieldArray,
+            self._coordinateSystem, 
+            )
         
         #self.addDerivativeFieldsToMean()
         #self.initLamDiff()
@@ -859,7 +863,7 @@ class meanFlowClass(
         Function returns:
         instance of the class meanFlowVertexValues
         """
-        return meanFlowVertexValues(self._meanfieldDict, self._FEMSpaces)
+        return meanFlowVertexValues(self._meanfieldDict, self._oneFieldArray)
 
     def _getMeanFieldsToBeRead(self):
         listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
@@ -867,6 +871,7 @@ class meanFlowClass(
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
         printDebug(True,"Mean flow fields to be read are "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
+    
 
 class meanFlowVertexValues(fieldProperties):
     """
@@ -887,9 +892,15 @@ class meanFlowVertexValues(fieldProperties):
     Public attributes
     """
 
-    def __init__(self, fieldDict, FEMSpaces):
+    def __init__(
+            self, 
+            fieldDict, 
+            oneField,
+            ):
         self._fieldDict = {}
         import numpy as np
+        self._oneField = oneField.x.array[:]
+        self._isMean = True
         for key in list(fieldDict.keys()):
             #tempMeanArray = fieldDict[key].compute_vertex_values()
             # The vector components (velocity u) need to be reshaped

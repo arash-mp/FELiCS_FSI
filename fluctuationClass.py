@@ -23,11 +23,12 @@ from ufl import (
 
 # Local libraries and methods
 from fieldProperties import fieldProperties
-from dependentVariables.viscosityHandler import viscosityHandler
-from dependentVariables.heatReleaseHandler import heatReleaseHandler
-from dependentVariables.laminarDiffusionHandler import laminarDiffusionHandler
 from dependentVariables.energyHandler import energyHandler
 from dependentVariables.equationOfStateHandler import equationOfStateHandler
+from dependentVariables.heatReleaseHandler import heatReleaseHandler
+from dependentVariables.laminarDiffusionHandler import laminarDiffusionHandler
+from dependentVariables.momentumHandler import momentumHandler
+from dependentVariables.viscosityHandler import viscosityHandler
 from functions import (
     printError,
     printWarning,
@@ -45,6 +46,7 @@ class fluctuationClass(
     laminarDiffusionHandler,
     equationOfStateHandler,
     energyHandler,
+    momentumHandler,
     ):
     """
     This class fulfills two purposes. First, it is a wrapper for the test
@@ -113,7 +115,7 @@ class fluctuationClass(
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroVelocityField \
             = Function(FEMSpaces.FunctionSpaceVectorVelocity)
-        self._zeroFieldTensor = Tensor(
+        self._zeroField = Tensor(
                                        Function(self._FEMSpaces.P2),
                                        self._coordinateSystem,
                                        containsFluctuation = True,
@@ -131,6 +133,19 @@ class fluctuationClass(
                                             self._coordinateSystem,
                                             containsFluctuation = True,
                                             )
+
+        # Get all the variables, which need to be present
+        neededVariables = []
+        if not param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
+            momentumHandler.__init__(
+                self,
+                )
+            neededVariables += self._getNeededFieldsLinear()
+
+        # While not all needed fluctuations are calculated, try calculating them
+        while not set(neededVariables).issubset((self._fieldDict.keys())):
+            if not param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
+                self._relateConservativeToPrimitiveVariables()
 
         # Check if two out of p, rho and T are in the fieldDict
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
@@ -181,6 +196,7 @@ class fluctuationSolutions(
     heatReleaseHandler,
     laminarDiffusionHandler,
     equationOfStateHandler,
+    momentumHandler,
     energyHandler,
     export,
 ):
@@ -263,10 +279,11 @@ class fluctuationSolutions(
 
         # dolfinx specific: There is no compute_vertex_values anymore.
         self._isSolution = True
-        self._zeroField = Function(FEMSpaces.P1)
+        self._zeroField = Function(FEMSpaces.P2)
         self._zeroField.x.array[:] = 0.0
-        self._zeroVelocityField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
-        self._zeroVelocityField.x.array[:] = 0.0
+        self._zeroField = self._zeroField.x.array[:]
+        #self._zeroVelocityField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
+        #self._zeroVelocityField.x.array[:] = 0.0
 
         # if np.imag(gainValue) > 1e-10 * np.real(gainValue):
         #     printWarning('The gain is a complex number, while it should be \
@@ -302,6 +319,24 @@ class fluctuationSolutions(
         """
 
         self._fieldDict = self._mapCalcToExport(self._vmixedVector)
+
+        # Get all the variables, which need to be present
+        neededVariables = []
+        if not self._param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
+            momentumHandler.__init__(
+                self,
+                )
+            neededVariables += self._getNeededFieldsLinear()
+
+        # While not all needed fluctuations are calculated, try calculating them
+        while not set(neededVariables).issubset((self._fieldDict.keys())):
+            if not self._param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
+                self._relateConservativeToPrimitiveVariables(
+                                                    self._mean.getVertexValues(),
+                                                    )
+                #self._relateConservativeToPrimitiveVariables(
+                #                                    )
+
         # Check if two out of p, rho and T are in the fieldDict
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
             equationOfStateHandler.__init__(
@@ -343,7 +378,6 @@ class fluctuationSolutions(
                 == '2S-SM2':
             heatReleaseHandler.__init__(self,
                                         self._mean.getVertexValues().reaction)
-
         self._writeDictToH5(
             self._fieldDict,
             group,

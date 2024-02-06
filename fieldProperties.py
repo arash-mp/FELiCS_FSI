@@ -57,7 +57,12 @@ class fieldProperties:
                             )
                             
             else:
-                return self._zeroFieldTensor
+                return self._zeroField
+        if self.isMeanFlowVertexValuesClass():
+            if 'alpha' in list(self._fieldDict.keys()):
+                return self._fieldDict['alpha']
+            else:
+                return self._zeroField
         else:
             return self._fieldDict['alpha']
 
@@ -67,7 +72,7 @@ class fieldProperties:
 
     @property
     def cp(self):
-        if self.isMeanFlowClass:
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             return Tensor(
                         self._fieldDict['cp'],
                         self._coordinateSystem,
@@ -82,7 +87,7 @@ class fieldProperties:
                         self._coordinateSystem,
                         )
         else:
-            return self._zeroFieldTensor
+            return self._zeroField
 
     @property
     def dQ(self):  # heat release
@@ -90,7 +95,7 @@ class fieldProperties:
 
     @property
     def fieldDict(self):
-        if self.isMeanFlowClass:
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             import copy
             Output = copy.copy(self._fieldDict)
             if '__hSpec' in dir(self):
@@ -198,12 +203,18 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                return self._zeroFieldTensor
+                return self._zeroField
+        elif self.isMeanFlowVertexValuesClass():
+            if 'nulam' in list(self._fieldDict.keys()):
+                return self._fieldDict['nulam']
+            else:
+                return self._zeroField
+        
         else:
             if 'nulam' in list(self._fieldDict.keys()):
                 return self._fieldDict['nulam']
             else:
-                return self._zeroFieldTensor
+                return self._zeroField
 
     @property
     def nuTot(self):
@@ -223,7 +234,7 @@ class fieldProperties:
 
     @property
     def p(self):
-        if self.isMeanFlowClass():
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             return Tensor(
                         self._fieldDict['p'],
                         self._coordinateSystem,
@@ -239,7 +250,7 @@ class fieldProperties:
         if 'phi' in list(self._fieldDict.keys()):
             return self._fieldDict['phi']
         else:
-            return self.__zeroFieldTensor
+            return self.__zeroField
 
     @property
     def Q(self):  # heat release
@@ -258,7 +269,6 @@ class fieldProperties:
 
     @property
     def rho(self):
-        #if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
         if self.isMeanFlowClass():
             if 'rho' in list(self._fieldDict.keys()):
                 return Tensor(
@@ -266,20 +276,25 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                from dolfinx.fem import Constant
-                from petsc4py import PETSc
-                mesh = self._fieldDict[list(self._fieldDict.keys())[0]].function_space.mesh
-                return Constant(mesh, PETSc.ScalarType(1.0 + 0j))
+                return self._oneField
+        elif self.isMeanFlowVertexValuesClass():
+            if 'rho' in list(self._fieldDict.keys()):
+                return self._fieldDict['rho']
+            else:
+                return self._oneField
         else:
             #if 'rho' in self._transportedQuantities:
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
-                return self._zeroFieldTensor
+                return self._zeroField
 
     @property
     def rhou(self):
-        return self._mean.rho * self.u + self.rho * self._mean.u
+        if 'rhou' in list(self._fieldDict.keys()):
+            return self._fieldDict['rhou']
+        else:
+            return self._mean.rho * self.u + self.rho * self._mean.u
 
     def rhoY(self,species):
         return self._mean.rho * self.Y(species) + self.rho * self._mean.Y(species)
@@ -287,7 +302,6 @@ class fieldProperties:
     @property
     def T(self):
         if self.isMeanFlowClass():
-            from dolfinx.fem import Constant
             if 'T' in list(self._fieldDict.keys()):
                 return Tensor(
                             self._fieldDict['T'],
@@ -298,12 +312,18 @@ class fieldProperties:
                             self._OneField,
                             self._coordinateSystem,
                             )
+        elif self.isMeanFlowVertexValuesClass():
+            if 'T' in list(self._fieldDict.keys()):
+                return self._fieldDict['T']
+            else:
+                self._oneField
+                
         else:
             return self._fieldDict['T']
 
     @property
     def tau(self):
-        if self.isMeanFlowClass():
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             mean_nu = self.nuTot
             mean_u = self.u
             tau_out = mean_nu * iGrad(mean_u)
@@ -348,7 +368,7 @@ class fieldProperties:
 
     @property
     def u(self):
-        if self.isMeanFlowClass():
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             if 'u' in list(self._fieldDict.keys()):
                 return Tensor(
                             self._fieldDict['u'],
@@ -386,7 +406,7 @@ class fieldProperties:
 
     @property
     def ut(self):
-        if self.isMeanFlowClass():
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             if 'ut' in list(self._fieldDict.keys()):
                 return self._fieldDict['u'][2]
             else:
@@ -400,7 +420,7 @@ class fieldProperties:
                 return Constant(0)
 
     def Y(self, specie):
-        if self.isMeanFlowClass():
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             return Tensor(
                 self._fieldDict[specie],
                 self._coordinateSystem,
