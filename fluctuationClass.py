@@ -140,23 +140,22 @@ class fluctuationClass(
             momentumHandler.__init__(
                 self,
                 )
-            neededVariables += self._getNeededFieldsLinear()
+            neededVariables += self._getNeededFieldsForLinearMomentum()
+        if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
+            equationOfStateHandler.__init__(
+                self,
+                )
+            neededVariables += self._getNeededFieldsForLinearEoS()
+            
+
 
         # While not all needed fluctuations are calculated, try calculating them
         while not set(neededVariables).issubset((self._fieldDict.keys())):
             if not param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
-                self._relateConservativeToPrimitiveVariables()
+                self._relateConservativeToPrimitiveVariablesMomentum()
+            if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
+                self._initializeEoSFluctuations()
 
-        # Check if two out of p, rho and T are in the fieldDict
-        if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
-            equationOfStateHandler.__init__(
-                self,
-                # param,
-                # mean,
-                )
-            self._initializeEoSFluctuations()
-
-        self._meanfieldDict = None
 
         if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
             energyHandler.__init__(
@@ -326,25 +325,23 @@ class fluctuationSolutions(
             momentumHandler.__init__(
                 self,
                 )
-            neededVariables += self._getNeededFieldsLinear()
+            neededVariables += self._getNeededFieldsForLinearMomentum()
+        if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
+            equationOfStateHandler.__init__(
+                self,
+                )
+            neededVariables += self._getNeededFieldsForLinearEoS()
 
         # While not all needed fluctuations are calculated, try calculating them
         while not set(neededVariables).issubset((self._fieldDict.keys())):
             if not self._param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
-                self._relateConservativeToPrimitiveVariables(
+                self._relateConservativeToPrimitiveVariablesMomentum(
                                                     self._mean.getVertexValues(),
                                                     )
-                #self._relateConservativeToPrimitiveVariables(
-                #                                    )
-
-        # Check if two out of p, rho and T are in the fieldDict
-        if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
-            equationOfStateHandler.__init__(
-                self,
-                # self._param,
-                # self._mean.getVertexValues(),
-                )
-            self._initializeEoSFluctuations()
+            if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
+                self._initializeEoSFluctuations(
+                                            self._mean.getVertexValues(),
+                                                )
 
         fieldProperties.__init__(self)
         self._meanfieldDict = None

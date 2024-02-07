@@ -35,10 +35,10 @@ class momentumHandler:
         """
         pass
 
-    def _getNeededFieldsLinear(self):
+    def _getNeededFieldsForLinearMomentum(self):
         return ['u', 'rhou','p']
 
-    def _relateConservativeToPrimitiveVariables(self, mean = 'None'):
+    def _relateConservativeToPrimitiveVariablesMomentum(self, mean = 'None'):
         '''
         This function checks if conservative and/or primitive variable is already defined. 
         If only one of them is, it relates the one to the respective other.
