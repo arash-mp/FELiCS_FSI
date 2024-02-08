@@ -168,6 +168,7 @@ class WeakFormulationCollectionClass():
         ## Initialize variatial formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
+        printDebug(True, '-- Primary fluctuations: %s.' % param.SolutionList)
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
             from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
             printDebug(True, '-- Adding momentum equation for u-fluc -> X[0].')     # Hardcoded u' for mom eq.
@@ -196,10 +197,11 @@ class WeakFormulationCollectionClass():
             printDebug(True, '-- Adding pressure-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
             addEnergyPEq(self,fluctuationC,X[idVar],mean,self.__param)
             
-        # Add sponge region
-        from Equations.addSpongeEq_tensorial import addSpongeEq
-        printDebug(True, '-- Adding sponge damping.')
-        addSpongeEq(self,fluctuationC,X,mean,self.__param)
+        # Add sponge region only if the field was gieven in the mean flow file
+        if not('spg' in mean._meanFlowClass__notInFileList):
+            from Equations.addSpongeEq_tensorial import addSpongeEq
+            printDebug(True, '-- Adding sponge damping.')
+            addSpongeEq(self,fluctuationC,X,mean,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
             self.getResolventNorms(X,self.__param,mean,fluctuationC)
