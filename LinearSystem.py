@@ -276,11 +276,14 @@ class linearSystem:
 			# 	tol=self.__tol,
 			# 	return_eigenvectors=True,
 			# 	)
-			EigValTemp, EigVecTemp = self.__solveGeneralEigenproblem(
-                                                            A, B, eigenValueGuess, 
-                                                            self.__param.Numerics.nSolut,
-                                                            toleig=self.__tol,
-                                                            adjoint=False)
+			EigValTemp, EigVecTemp = self.__solveGeneralEigenproblemSLEPc(
+                                    	A, 
+                                     	B, 
+                                      	eigenValueGuess, 
+                                        self.__param.Numerics.nSolut,
+                                        toleig=self.__tol,
+                                        adjoint=False
+                                        )
 			index = list(range(i*nSol,(i+1)*nSol))
 			EigValTot[index] = EigValTemp
 			EigVecTot[:,index] = EigVecTemp
@@ -883,7 +886,32 @@ class linearSystem:
 		return fluctSolutObjList
 
 
-	def __solveGeneralEigenproblem(self, A, B, sigma, nev, toleig=1.e-16, adjoint=False):
+	def __solveGeneralEigenproblemSLEPc(
+     		self, 
+       		A, 
+         	B, 
+          	sigma, 
+           	nev, 
+            toleig=1.e-16, 
+            adjoint=False,
+            ):
+		"""
+		Solves the generalized eigenvalue problem (GEVP) 
+  		using the SLEPc and PETSc libraries.
+
+		Function arguments:
+		- A, B		Matrices defining the GEVP (A-wB)q = 0
+		- sigma 	Eigenvalue guesses
+		- nev 		Number of eigenvalues to converge
+		- toleig	(optional) precision of GEVP
+		- adjoint	(bool, optional) more optimal way to 
+					compute the adjoint GEVP
+
+		Function returns:
+		- eigVals, eigVecs
+
+		"""
+  
 		from slepc4py import SLEPc
 		from petsc4py import PETSc
 		Print = PETSc.Sys.Print
@@ -968,7 +996,7 @@ class linearSystem:
 		eps.getST().destroy()
 		eps.destroy()
 		if adjoint:
-				return eigVals, eigVecs, eigVecs_adjoint
+				return eigVals, eigVecs.T, eigVecs_adjoint.T
 		else:
 				return eigVals, eigVecs.T
 
