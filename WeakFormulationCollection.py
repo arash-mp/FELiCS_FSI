@@ -170,28 +170,36 @@ class WeakFormulationCollectionClass():
         self.B_vf = WeakForm()
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
             from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
+            printDebug(True, '-- Adding momentum equation for u-fluc -> X[0].')     # Hardcoded
             addMomentumEq(self,fluctuationC,X[0],mean,param)
             print('-- Adding momentum equation.')
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from Equations.Mass.addMassEq_tensorial import addMassEq
-            addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],mean,self.__param)
-            print('-- Adding continuity equation.')
+            varEq = self.__param.Case.SetOfEquations['Mass']['Variable']
+            idVar = param.SolutionList.index(varEq)
+            printDebug(True, '-- Adding mass-balance equation for %s-fluc -> X[%d].' % (varEq,idVar))
+            # addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],mean,self.__param)
+            addMassEq(self,fluctuationC,X[idVar],mean,self.__param)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
-            print('-- Adding energy equation in enthalpy form.')
-            addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
+            varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
+            idVar = param.SolutionList.index(varEq)
+            printDebug(True, '-- Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
+            addEnthalpyEq(self,fluctuationC,X[idVar],mean,self.__param)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
             printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
             from Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
-            print('-- Adding energy equation in primitive-p form.')
-            addEnergyPEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
+            varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
+            idVar = param.SolutionList.index(varEq)
+            printDebug(True, '-- Adding pressure-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
+            addEnergyPEq(self,fluctuationC,X[idVar],mean,self.__param)
             
         # Add sponge region
         from Equations.addSpongeEq_tensorial import addSpongeEq
-        print('-- Adding sponge damping.')
+        printDebug(True, '-- Adding sponge damping.')
         addSpongeEq(self,fluctuationC,X,mean,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
@@ -484,7 +492,7 @@ class WeakFormulationCollectionClass():
                 if self.__bcDict[k][mm]['type']=='Dirichlet':
 
 
-                    printDebug(self.__param.debug,"Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
+                    printDebug(self.__param.debug,"-- Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
                     if k in ['u'+ component for component in VelocityComponents]:
 
                         #if __version__.find('0.4.1') >= 0:
