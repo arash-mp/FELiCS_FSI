@@ -240,15 +240,16 @@ class linearSystem:
 		# EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut), 'complex')
 
 		if adjointFlag:
-
-			printDebug(True, "-- Solving adjoint GEVP")
+			printDebug(True, "-- ")
+			printDebug(True, "-- ---- Solving adjoint GEVP ----")
 			A, B, f = self.__preconditionMatrices(
 										self.__matrix_dict['A'].getH(),
 										self.__matrix_dict['B'],
 										self.__param.Numerics.Preconditioner,
 												)
 		else:
-			printDebug(True, "-- Solving direct GEVP")
+			printDebug(True, "-- ")
+			printDebug(True, "-- ---- Solving direct GEVP ----")
 			A, B, f = self.__preconditionMatrices(
 						self.__matrix_dict['A'],
 						self.__matrix_dict['B'],
@@ -264,7 +265,7 @@ class linearSystem:
 		# solve GEVP using eigs for each guess
 		for i in range(nGuesses):
 			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
-			printDebug(True, "-- Solving for guess: ", str(eigenValueGuess))
+			printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
 			# EigValTemp, EigVecTemp = splin.eigs(
 			# 	A,
 			# 	k=self.__param.Numerics.nSolut,
