@@ -940,8 +940,8 @@ class linearSystem:
 		printDebug(True, "-- Stopping condition: tol = %.4g, max_iter = %d" % (infoTol,infoMaxit))
 		printDebug(True, "-- Number of converged eigenpairs: %d" % infoNconv)
 		printDebug(True, "-- ")
-		printDebug(True, "--         k          ||Ax-kx||/||kx|| ")
-		printDebug(True, "-- ----------------- ------------------")
+		printDebug(True, "--         k             ||Ax-kx||/||kx|| ")
+		printDebug(True, "-- -------------------- ------------------")
   
 		for i in range(nev):
 				try:
