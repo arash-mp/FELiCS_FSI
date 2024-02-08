@@ -241,14 +241,14 @@ class linearSystem:
 
 		if adjointFlag:
 
-			print("-- Solving adjoint GEVP")
+			printDebug(True, "-- Solving adjoint GEVP")
 			A, B, f = self.__preconditionMatrices(
 										self.__matrix_dict['A'].getH(),
 										self.__matrix_dict['B'],
 										self.__param.Numerics.Preconditioner,
 												)
 		else:
-			print("-- Solving direct GEVP")
+			printDebug(True, "-- Solving direct GEVP")
 			A, B, f = self.__preconditionMatrices(
 						self.__matrix_dict['A'],
 						self.__matrix_dict['B'],
@@ -264,7 +264,7 @@ class linearSystem:
 		# solve GEVP using eigs for each guess
 		for i in range(nGuesses):
 			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
-			print("-- Solving for guess: ", str(eigenValueGuess))
+			printDebug(True, "-- Solving for guess: ", str(eigenValueGuess))
 			# EigValTemp, EigVecTemp = splin.eigs(
 			# 	A,
 			# 	k=self.__param.Numerics.nSolut,
@@ -805,7 +805,7 @@ class linearSystem:
 		if self.__param.Numerics.LinearAlgebraSolver=='python':
 			# Added possibility to run GEVP of different guesses in parallel
 			if self.__param.Numerics.nCPU > 1:
-				print("Entering parallel loop for GEVP")
+				print("-- Entering parallel loop for GEVP")
 				pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
 				args_map = [(linearSystem, 'GEVP', self.__matrix_dict, \
 					self.__param.Numerics.nSolut, arg, adjointFlag, self.__param.Numerics) for arg in \
