@@ -240,16 +240,16 @@ class linearSystem:
 		# EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut), 'complex')
 
 		if adjointFlag:
-			printDebug(True, "-- ")
-			printDebug(True, "-- ---- Solving adjoint GEVP ----")
+			printDebug(True,'--------------------------------')
+			printDebug(True, "-- Solving adjoint GEVP")
 			A, B, f = self.__preconditionMatrices(
 										self.__matrix_dict['A'].getH(),
 										self.__matrix_dict['B'],
 										self.__param.Numerics.Preconditioner,
 												)
 		else:
-			printDebug(True, "-- ")
-			printDebug(True, "-- ---- Solving direct GEVP ----")
+			printDebug(True,'--------------------------------')
+			printDebug(True, "-- Solving direct GEVP")
 			A, B, f = self.__preconditionMatrices(
 						self.__matrix_dict['A'],
 						self.__matrix_dict['B'],
@@ -279,6 +279,7 @@ class linearSystem:
 			EigValTemp, EigVecTemp = self.__solveGeneralEigenproblem(
                                                             A, B, eigenValueGuess, 
                                                             self.__param.Numerics.nSolut,
+                                                            toleig=self.__tol,
                                                             adjoint=False)
 			index = list(range(i*nSol,(i+1)*nSol))
 			EigValTot[index] = EigValTemp
@@ -877,13 +878,12 @@ class linearSystem:
 		end = time.time() - start
 
 		printDebug(True, '-- Solving the GEVP took %4g s' % end)
-		printDebug(True, '-- The eigensolvers tolerance is set to '+str(self.__tol)+'...')
 		printDebug(True, '-- Max residuum of %s solutions (EUCLIDIAN norm): %12g' % (method,maxRes))
 
 		return fluctSolutObjList
 
 
-	def __solveGeneralEigenproblem(self, A, B, sigma, nev, adjoint=False):
+	def __solveGeneralEigenproblem(self, A, B, sigma, nev, toleig=1.e-16, adjoint=False):
 		from slepc4py import SLEPc
 		from petsc4py import PETSc
 		Print = PETSc.Sys.Print
@@ -904,18 +904,18 @@ class linearSystem:
 		if adjoint:
 				#calculate adjoint vectors
 				eps.setTwoSided(True)
-		eps.setTolerances(tol=1.e-16,max_it=200)
+		eps.setTolerances(tol=toleig,max_it=200)
 		eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) # is standard, does not need to be set
 		#eps.setType(SLEPc.EPS.Type.ARNOLDI)
-		eps.getST().setType(SLEPc.ST.Type.SINVERT)
+		eps.getST().setType(SLEPc.ST.Type.SINVERT) 		# Not for resolvent
 		#eps.getST().setType(SLEPc.ST.Type.SHIFT)
 		#eps.getST().setShift(1000000)
 		eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
 		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_REAL)
 		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_IMAGINARY)
 		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_REAL)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE)
-		eps.setTarget(sigma)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE) # For resolvent
+		eps.setTarget(sigma) # sigma is NaN for resolvent
 		eps.setDimensions(nev=nev)
 		eps.getST().getKSP().getPC().setType('lu')
 		eps.getST().getKSP().getPC().setFactorSolverType('mumps')
