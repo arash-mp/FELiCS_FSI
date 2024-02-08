@@ -854,8 +854,7 @@ class meanFlowClass(
         listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
-        listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadReaction())
-        printDebug(True,"Mean flow fields to be read are "+str(listOfFieldsToBeRead))
+        printDebug(True,"-- Mean flow fields to be read are: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
     
 
