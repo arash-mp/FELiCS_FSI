@@ -12,7 +12,6 @@ def addEnergyPEq(self,fluc,X,mean,param):
     '''
 
     from functions import printDebug, printError, printWarning
-    printDebug(param.debug,"Adding energy-p equation in all mesh internal directions")
     
     # ------------------------ Define the tensorial operators
     J_hat = self._coordinateSystem.J_hat
@@ -20,7 +19,6 @@ def addEnergyPEq(self,fluc,X,mean,param):
     # ------------------------  Time derivative terms
     # Volume term: -omega*p_f*conj(X)
     self.B_vf.add(( fluc.p*iConj(X) ).ufl_tens*J_hat*dx)
-    OneT = mean.UnitT
     
     # ------------------------  Advection terms
     # NOTE: "." denotes the dot product bellow
