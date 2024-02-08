@@ -24,6 +24,6 @@ def addSpongeEq(self,fluc,X,mean,param):
     # ------------------------ Compressible
     # --> Assuming rho is the extra state variable!
     if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-        printDebug(True, '-- Adding sponge damping for density fluctuations.')
+        printDebug(True, '-- -> Adding sponge damping for density fluctuations.')
         id_rho = param.SolutionList.index('rho')
         self.A_vf.add(( -1j*mean.spg*fluc.rho*iConj(X[id_rho]) ).ufl_tens*J_hat*dx)
