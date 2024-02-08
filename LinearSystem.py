@@ -36,6 +36,7 @@ from functools import partial
 from functions import (
 	printError,
 	printWarning,
+	printDebug,
 	)
 from fluctuationClass import fluctuationSolutions
 
@@ -240,14 +241,14 @@ class linearSystem:
 
 		if adjointFlag:
 
-			print("Solving adjoint GEVP")
+			print("-- Solving adjoint GEVP")
 			A, B, f = self.__preconditionMatrices(
 										self.__matrix_dict['A'].getH(),
 										self.__matrix_dict['B'],
 										self.__param.Numerics.Preconditioner,
 												)
 		else:
-			print("Solving direct GEVP")
+			print("-- Solving direct GEVP")
 			A, B, f = self.__preconditionMatrices(
 						self.__matrix_dict['A'],
 						self.__matrix_dict['B'],
@@ -264,20 +265,23 @@ class linearSystem:
 		for i in range(nGuesses):
 			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
 			print("-- Solving for guess: ", str(eigenValueGuess))
-			EigValTemp, EigVecTemp = splin.eigs(
-				A,
-				k=self.__param.Numerics.nSolut,
-				M=B,
-				sigma=eigenValueGuess,
-				ncv=200,
-				maxiter=100,
-				tol=self.__tol,
-				return_eigenvectors=True,
-				)
+			# EigValTemp, EigVecTemp = splin.eigs(
+			# 	A,
+			# 	k=self.__param.Numerics.nSolut,
+			# 	M=B,
+			# 	sigma=eigenValueGuess,
+			# 	ncv=200,
+			# 	maxiter=100,
+			# 	tol=self.__tol,
+			# 	return_eigenvectors=True,
+			# 	)
+			EigValTemp, EigVecTemp = self.__solveGeneralEigenproblem(
+                                                            A, B, eigenValueGuess, 
+                                                            self.__param.Numerics.nSolut,
+                                                            adjoint=False)
 			index = list(range(i*nSol,(i+1)*nSol))
 			EigValTot[index] = EigValTemp
 			EigVecTot[:,index] = EigVecTemp
-			print("-- Done.")
 
 		return EigValTot, EigVecTot
 
@@ -301,7 +305,7 @@ class linearSystem:
 		eng.addpath (__file__.rsplit('/',1)[0]+'/Matlab', nargout= 0 )
 
 		if adjointFlag:
-			print("Solving adjoint GEVP")
+			print("-- Solving adjoint GEVP")
 			# precondition matrices
 			A, B, f = self.__preconditionMatrices(
 								self.__matrix_dict['A'].getH(),
@@ -313,7 +317,7 @@ class linearSystem:
 
 
 		else:
-			print("Solving direct GEVP")
+			print("-- Solving direct GEVP")
 			A, B, f = self.__preconditionMatrices(
 								self.__matrix_dict['A'],
 								self.__matrix_dict['B'],
@@ -869,16 +873,103 @@ class linearSystem:
 			if resTemp > maxRes:
 				maxRes = resTemp
 
-		end = time.time()
+		end = time.time() - start
 
-
-
-		print('Solving the GEVP took '+str(end)+'s')
-		print('The eigensolvers tolerance is set to '+str(self.__tol)+'...')
-		print(f'Maximum residuum of {method} solutions measured in \
-		EUCLIDIAN norm: ' +str(maxRes))
+		printDebug(True, '-- Solving the GEVP took %4g s' % end)
+		printDebug(True, '-- The eigensolvers tolerance is set to '+str(self.__tol)+'...')
+		printDebug(True, '-- Max residuum of %s solutions (EUCLIDIAN norm): %12g' % (method,maxRes))
 
 		return fluctSolutObjList
+
+
+	def __solveGeneralEigenproblem(self, A, B, sigma, nev, adjoint=False):
+		from slepc4py import SLEPc
+		from petsc4py import PETSc
+		Print = PETSc.Sys.Print
+		# finish assembling matrices
+		# A.assemble()
+		# B.assemble()
+		Ap = PETSc.Mat().createAIJ(size=A.shape,
+                                   csr=(A.indptr, A.indices,
+                                        A.data))
+		Bp = PETSc.Mat().createAIJ(size=B.shape,
+                                   csr=(B.indptr, B.indices,
+                                        B.data))
+		# create eigenproblem solver
+		eps = SLEPc.EPS().create()
+		eps.setOperators(Ap,Bp)
+		eps.setProblemType(SLEPc.EPS.ProblemType.PGNHEP) 	# general non-Hermitian eigenproblem with positive semi-definite B
+		# eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP) 	# general non-Hermitian eigenproblem with semi-definite B
+		if adjoint:
+				#calculate adjoint vectors
+				eps.setTwoSided(True)
+		eps.setTolerances(tol=1.e-16,max_it=200)
+		eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) # is standard, does not need to be set
+		#eps.setType(SLEPc.EPS.Type.ARNOLDI)
+		eps.getST().setType(SLEPc.ST.Type.SINVERT)
+		#eps.getST().setType(SLEPc.ST.Type.SHIFT)
+		#eps.getST().setShift(1000000)
+		eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_REAL)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_IMAGINARY)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_REAL)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE)
+		eps.setTarget(sigma)
+		eps.setDimensions(nev=nev)
+		eps.getST().getKSP().getPC().setType('lu')
+		eps.getST().getKSP().getPC().setFactorSolverType('mumps')
+		eps.setFromOptions()
+		eps.setUp()
+		eps.solve()
+		dim = Ap.getSize()[0]
+		eigVals,  eigVecs  = np.empty(nev,complex), np.empty([nev,dim],complex)
+		if adjoint:
+				eigVecs_adjoint  =  np.empty([nev,dim],complex)
+		vec_real, vec_imag = Ap.getVecs()
+  
+		# Printing info about the run
+		infoIts = eps.getIterationNumber()
+		infoType = eps.getType()
+		infoNev, ncv, mpd = eps.getDimensions()
+		infoTol, infoMaxit = eps.getTolerances()
+		infoNconv = eps.getConverged()
+		printDebug(True, "-- *** SLEPc INFO ***")
+		printDebug(True, "-- Number of iterations of the method: %d" % infoIts)
+		printDebug(True, "-- Solution method: %s" % infoType)
+		printDebug(True, "-- Number of requested eigenvalues: %d" % infoNev)
+		printDebug(True, "-- Stopping condition: tol = %.4g, max_iter = %d" % (infoTol,infoMaxit))
+		printDebug(True, "-- Number of converged eigenpairs: %d" % infoNconv)
+		printDebug(True, "-- ")
+		printDebug(True, "--         k          ||Ax-kx||/||kx|| ")
+		printDebug(True, "-- ----------------- ------------------")
+  
+		for i in range(nev):
+				try:
+						eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
+						eigVecs[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
+      
+						# More info
+						infoErr = eps.computeError(i)
+						if eigVals[i].imag != 0.0:
+							printDebug(True, "-- %9f%+9f j %12g" % (eigVals[i].real, eigVals[i].imag, infoErr))
+						else:
+							printDebug(True, "-- %12f      %12g" % (eigVals[i].real, infoErr))
+
+						if adjoint:
+								# get adjoint solution
+								eps.getLeftEigenvector(i,vec_real,vec_imag)
+								eigVecs_adjoint[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
+						#print(eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+				except:
+						print("Could not access eigenpair nb ", nev+1, "!")
+		eps.getST().getKSP().getPC().destroy()
+		eps.getST().getKSP().destroy()
+		eps.getST().destroy()
+		eps.destroy()
+		if adjoint:
+				return eigVals, eigVecs, eigVecs_adjoint
+		else:
+				return eigVals, eigVecs.T
 
 
 	def checkMatrix(self, eq='ux', searchPoint=[1, 2]):
