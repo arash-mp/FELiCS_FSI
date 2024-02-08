@@ -1,5 +1,6 @@
 # Third party libraries
 import numpy as np
+from dependentVariables.viscosityModels import *
 
 class energyHandler:
     """
@@ -84,9 +85,30 @@ class energyHandler:
     def _getNeededFieldsForLinearEnergy(self):
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
         if energyEquationType == 'Enthalpy':
-            return ['T', 'h']
+            return ['T', 'h', 'alpha']
         elif energyEquationType == 'ProgressVariableLinear':
             return ['T', 'progress']
+
+    def _initializeMolecularHeatDiffusionFluctuation(
+                                    self,
+                                    mean = 'None'
+                                    ):
+        alreadyDeterminedFields = list(self._fieldDict.keys())
+        viscosityModel = self._param.Case.Mixture.Viscosity
+        if viscosityModel == 'const':
+            pass
+        elif viscosityModel['type'] == 'Sutherland mean':
+            if 'rho' in alreadyDeterminedFields and not 'alpha' in alreadyDeterminedFields:
+                if mean == 'None':
+                    mean = self._mean
+                if self._isSolution:
+                    mean_alpha = mean.fieldDict['alpha']
+                else:
+                    mean_alpha = mean.alpha
+                Mixture = self._param.Case.Mixture
+                Ts = Mixture.Viscosity['Constants']['Ts']
+                foobar,fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
+                self._fieldDict['alpha'] = mean_alpha * fluc
 
     def _additionalFieldsToBeReadEnergy(self):
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']

@@ -153,19 +153,27 @@ class fluctuationClass(
             energyHandler.__init__(
                                   self,
                                   )
-            neededVariables += self._getNeededFieldsForLinearEoS()
+            neededVariables += self._getNeededFieldsForLinearEnergy()
             
         #Delete duplicates
         neededVariables = list(dict.fromkeys(neededVariables))
 
         # While not all needed fluctuations are calculated, try calculating them
+        n_try = 1
         while not set(neededVariables).issubset((self._fieldDict.keys())):
             if not param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
                 self._relateConservativeToPrimitiveVariablesMomentum()
+                self._initializeMolecularMomentumDiffusionFluctuation()
             if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
                 self._initializeEoSFluctuations()
             if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
                 self._relateConservativeToPrimitiveVariablesEnergy()
+                self._initializeMolecularHeatDiffusionFluctuation()
+            n_try += 1
+            if n_try > 100:
+                notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
+                raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: '\
+                     + str(notInitializedFields))
 
 
         viscosityHandler.__init__(
@@ -338,12 +346,14 @@ class fluctuationSolutions(
             neededVariables += self._getNeededFieldsForLinearEnergy()
 
         # While not all needed fluctuations are calculated, try calculating them
+        n_try = 0
         while not set(neededVariables).issubset((self._fieldDict.keys())):
             meanVertexValues = self._mean.getVertexValues()
             if not self._param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
                 self._relateConservativeToPrimitiveVariablesMomentum(
                                                     meanVertexValues,
                                                     )
+                self._initializeMolecularMomentumDiffusionFluctuation(meanVertexValues)
 
             if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
                 self._initializeEoSFluctuations(
@@ -354,6 +364,13 @@ class fluctuationSolutions(
                 self._relateConservativeToPrimitiveVariablesEnergy(
                                             meanVertexValues,
                                                 )
+                self._initializeMolecularHeatDiffusionFluctuation(
+                                            meanVertexValues,
+                                            )
+            n_try += 1
+            if n_try > 100:
+                notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
+                raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields)
 
         fieldProperties.__init__(self)
         self._meanfieldDict = None

@@ -58,19 +58,20 @@ class laminarDiffusionHandler:
                 self._fieldDict['D_' + specie] = self._fieldDict['nulam'] / Sc
 
         elif param.Case.MolViscPerturbModel == 'Sutherland mean':
-            self._fieldDict['nulam'], fluct = self.getSutherlandMeanVisc(
+            #self._fieldDict['nulam'], fluct = self.getSutherlandMeanVisc(
+            foobar, fluct = self.getSutherlandMeanVisc(
                 mean,
                 self._meanfieldDict if hasattr(self, "_meanfieldDict") else None,
                 self.rho
             )
-            self._fieldDict['alpha'] = getAlpha(
-                param,
-                mean,
-                self._fieldDict,
-                self._meanfieldDict if hasattr(self, "_meanfieldDict") else None,
-                self.rho,
-                isMeanFlowClass=False
-            )
+            #self._fieldDict['alpha'] = getAlpha(
+            #    param,
+            #    mean,
+            #    self._fieldDict,
+            #    self._meanfieldDict if hasattr(self, "_meanfieldDict") else None,
+            #    self.rho,
+            #    isMeanFlowClass=False
+            #)
             for specie in param.Case.Mixture.getSpeciesList('transported'):
                 if isinstance(mean.T, np.ndarray):
                     if mean.T.shape[0] != self.rho.shape[0]:

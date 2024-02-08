@@ -1,5 +1,6 @@
 # Third party libraries
 import numpy as np
+from dependentVariables.viscosityModels import *
 
 class momentumHandler:
     """
@@ -36,7 +37,10 @@ class momentumHandler:
         pass
 
     def _getNeededFieldsForLinearMomentum(self):
-        return ['u', 'rhou','p']
+        outList = ['u', 'rhou','p']
+        if not self._param.Case.Mixture.Viscosity['type'] == 'Constant': 
+            outList.append('nulam')
+        return outList
 
     def _relateConservativeToPrimitiveVariablesMomentum(self, mean = 'None'):
         '''
@@ -66,6 +70,23 @@ class momentumHandler:
                 self._fieldDict['u'] = (self.rhou - mean_u * self.rho) /  mean_rho
             elif 'u' in alreadyDeterminedFields:
                 self._fieldDict['rhou'] = self.u * mean_rho + mean_u * self.rho
+
+    def _initializeMolecularMomentumDiffusionFluctuation(
+                                    self,
+                                    mean = 'None'
+                                    ):
+        alreadyDeterminedFields = list(self._fieldDict.keys())
+        viscosityModel = self._param.Case.Mixture.Viscosity
+        if viscosityModel == 'const':
+            pass
+        elif viscosityModel['type'] == 'Sutherland mean':
+            if 'rho' in alreadyDeterminedFields and not 'nulam' in alreadyDeterminedFields:
+                if mean == 'None':
+                    mean = self._mean
+                Mixture = self._param.Case.Mixture
+                Ts = Mixture.Viscosity['Constants']['Ts']
+                nulam,fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
+                self._fieldDict['nulam'] = nulam 
 
     def _additionalFieldsToBeReadEnergy(self):
         pass
