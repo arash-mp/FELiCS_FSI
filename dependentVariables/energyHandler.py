@@ -36,34 +36,57 @@ class energyHandler:
         """
         pass
 
-    def _initializeEnergyFluctuations(self):
+    def _relateConservativeToPrimitiveVariablesEnergy(
+                                            self,
+                                            mean = 'None',
+                                            ):
         alreadyInitializedFields = list(self._fieldDict.keys())
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
-        mean = self._mean
-        if energyEquationType == 'Enthalpy':
-            if 'T' in alreadyInitializedFields:
-                if self._isSolution:
-                    mean_cp = mean.fieldDict['cp'].x.array[:]
-                    #mean_cp = mean.cp.x.array[:]
-                else:
-                    mean_cp = mean.cp
-                self._fieldDict['h'] = mean_cp * self._fieldDict['T']
-            elif 'h' in alreadyInitializedFields:
-                raise Exception('Calculation of enthalpy, h, from temperature, T, not yet implemented. Check energyHandler.')
-            else:
-                raise Exception('Enthalpy equation is chosen, however neither temperature, T, nor enthalpy, h, are available to calculate the respective other')
 
-        if energyEquationType == 'ProgressVariableLinear':
-            if 'progress' in alreadyInitializedFields:
-                if self._isSolution:
-                    mean_Tu  = mean.Tu.x.array[:]
-                    mean_Tb  = mean.Tb.x.array[:]
+        if mean == 'None':
+            mean = self._mean
+
+        ############################################### 
+        ################### Enthalpy ##################
+        ############################################### 
+        if energyEquationType == 'Enthalpy':
+            if sum(el in ['h','T'] for el in list(alreadyInitializedFields)) == 1:            
+                # so far cp is constant, which in reacting flows might be a strong assumption.
+                if 'T' in alreadyInitializedFields:
+                    if self._isSolution:
+                        mean_cp = mean.fieldDict['cp']
+                    else:
+                        mean_cp = mean.cp
+                    self._fieldDict['h'] = mean_cp * self._fieldDict['T']
+                elif 'h' in alreadyInitializedFields:
+                    raise Exception('Calculation of enthalpy, h, from temperature, T, not yet implemented. Check energyHandler.')
                 else:
-                    mean_Tu  = mean.Tu
-                    mean_Tb  = mean.Tb
-                self._fieldDict['T'] = self.Y('progress') * (mean_Tb - mean_Tu)
-            else:
-                 raise Exception('ProgressVariableLinear is chosen, however, the progress variable is not available to calculate the temperature.')
+                    raise Exception('Enthalpy equation is chosen, however neither temperature, T, nor enthalpy, h, are available to calculate the respective other')
+
+        ############################################### 
+        ########### Progress Variable linear ##########
+        ############################################### 
+        elif energyEquationType == 'ProgressVariableLinear':
+            if sum(el in ['progress','T'] for el in list(alreadyInitializedFields)) == 1:            
+                    if 'progress' in alreadyInitializedFields:
+                        if self._isSolution:
+                            mean_Tu  = mean.Tu
+                            mean_Tb  = mean.Tb
+                        else:
+                            mean_Tu  = mean.Tu
+                            mean_Tb  = mean.Tb
+                        self._fieldDict['T'] = self.Y('progress') * (mean_Tb - mean_Tu)
+                    else:
+                         raise Exception('ProgressVariableLinear is chosen, however, the progress variable is not available to calculate the temperature.')
+        else: 
+            raise Exception("Energy equation type " + energyEquationType + " not known.")
+
+    def _getNeededFieldsForLinearEnergy(self):
+        energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
+        if energyEquationType == 'Enthalpy':
+            return ['T', 'h']
+        elif energyEquationType == 'ProgressVariableLinear':
+            return ['T', 'progress']
 
     def _additionalFieldsToBeReadEnergy(self):
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']

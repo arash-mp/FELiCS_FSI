@@ -220,19 +220,6 @@ class Tensor():#TestFunction):
                         as_vector((ufl_tens[0]/sqrt(self.CoordSys.cov_metric[0,0]), \
                                    ufl_tens[1]/sqrt(self.CoordSys.cov_metric[1,1]), \
                                    ufl_tens[2]/sqrt(self.CoordSys.cov_metric[2,2])))
-                #entryTuple = []
-                #print (length)
-                #input (self.dim)
-                #if length > self.dim:
-                #    for i in range(self.dim):
-                #        if CoordSys.mesh_dims[i] == 1:
-                #            entryTuple.append(ufl_tens[i] / sqrt(self.CoordSys.cov_metric[i,i]))
-                #        else:
-                #            entryTuple.append( 0.0 )
-                #else: 
-                #    for i in range(self.dim):
-                #        entryTuple.append(ufl_tens[i] / sqrt(self.CoordSys.cov_metric[i,i]))
-                #self.ufl_tens = as_vector(tuple(entryTuple))
                 self.basis = [False]
             else:
                 raise ValueError("Basis transformation from physical to " \
@@ -290,7 +277,6 @@ class Tensor():#TestFunction):
             else:
                 new_self = convertBasis(self, other.basis)
                 added = new_self.ufl_tens + other.ufl_tens
-        print( type(other))
         if type(other) in [float,complex,int,Constant]:
             added = self.ufl_tens + other
         else:

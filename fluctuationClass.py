@@ -136,18 +136,27 @@ class fluctuationClass(
 
         # Get all the variables, which need to be present
         neededVariables = []
+
         if not param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
             momentumHandler.__init__(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearMomentum()
+
         if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
             equationOfStateHandler.__init__(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearEoS()
-            
 
+        if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+            energyHandler.__init__(
+                                  self,
+                                  )
+            neededVariables += self._getNeededFieldsForLinearEoS()
+            
+        #Delete duplicates
+        neededVariables = list(dict.fromkeys(neededVariables))
 
         # While not all needed fluctuations are calculated, try calculating them
         while not set(neededVariables).issubset((self._fieldDict.keys())):
@@ -155,30 +164,19 @@ class fluctuationClass(
                 self._relateConservativeToPrimitiveVariablesMomentum()
             if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
                 self._initializeEoSFluctuations()
+            if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+                self._relateConservativeToPrimitiveVariablesEnergy()
 
-
-        if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
-            energyHandler.__init__(
-                self,
-                )
-            self._initializeEnergyFluctuations()
 
         viscosityHandler.__init__(
             self
         )
+
         laminarDiffusionHandler.__init__(
             self,
             param,
             mean
         )
-
-        if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
-            # equationOfStateHandler.__init__(
-            #     self,
-            #     param,
-            #     mean,
-            #     )
-            self._initializeEoSFluctuations()
 
         if param.Case.Reaction \
                 and param.Case.Mixture.getReactionMechanism()['type'] \
@@ -326,33 +324,39 @@ class fluctuationSolutions(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearMomentum()
+
         if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
             equationOfStateHandler.__init__(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearEoS()
 
+        if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+            energyHandler.__init__(
+                self,
+                )
+            neededVariables += self._getNeededFieldsForLinearEnergy()
+
         # While not all needed fluctuations are calculated, try calculating them
         while not set(neededVariables).issubset((self._fieldDict.keys())):
+            meanVertexValues = self._mean.getVertexValues()
             if not self._param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
                 self._relateConservativeToPrimitiveVariablesMomentum(
-                                                    self._mean.getVertexValues(),
+                                                    meanVertexValues,
                                                     )
+
             if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
                 self._initializeEoSFluctuations(
-                                            self._mean.getVertexValues(),
+                                            meanVertexValues,
+                                                )
+
+            if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+                self._relateConservativeToPrimitiveVariablesEnergy(
+                                            meanVertexValues,
                                                 )
 
         fieldProperties.__init__(self)
         self._meanfieldDict = None
-
-        if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
-            energyHandler.__init__(
-                self,
-                #self._param,
-                #self._mean.getVertexValues(),
-                )
-            self._initializeEnergyFluctuations()
 
         viscosityHandler.__init__(self)
         laminarDiffusionHandler.__init__(
@@ -360,15 +364,6 @@ class fluctuationSolutions(
             self._param,
             self._mean.getVertexValues()
         )
-
-        # Check if two out of p, rho and T are in the fieldDict
-        if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
-            # equationOfStateHandler.__init__(
-            #     self,
-            #     self._param,
-            #     self._mean.getVertexValues(),
-            #     )
-            self._initializeEoSFluctuations()
 
         if self._param.Case.Reaction \
                 and self._param.Case.Mixture.getReactionMechanism()['type'] \
