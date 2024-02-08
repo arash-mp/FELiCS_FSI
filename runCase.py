@@ -17,16 +17,22 @@ def runCase(param, useGUI):
 	import numpy as np
 	from fluctuationClass import fluctuationSolutions
 	import copy
+	from functions import (
+		printError,
+		printWarning,
+		printDebug,
+		)
 
 	mesh=param.BCs.getMesh()
-	print('Defining FEMSpaces...')
-	FEMSpaces         =DefineFEMSpaces.FEMSpacesClass(
-														param,
-														mesh,
-														)
+	printDebug(True,'--------------------------------')
+	printDebug(True,'-- Defining FEMSpaces...')
+	FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
+				param,
+				mesh,
+				)
 
-
-	print('Reading InputFlow...')
+	printDebug(True,'--------------------------------')
+	printDebug(True,'-- Reading InputFlow...')
 	MeanFlow = meanFlowClass(param, FEMSpaces)
 	MeanFlow.importDataFromFile()
 	if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
@@ -36,7 +42,8 @@ def runCase(param, useGUI):
 	meanflowFilename = 'meanflow.h5'
 	MeanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
-	print('Discretizing the Equations...')
+	printDebug(True,'--------------------------------')
+	printDebug(True,'-- Discretizing the Equations...')
 	WeakFormulation = WeakFormulationCollection.WeakFormulationCollectionClass(
 					param,
 					FEMSpaces,
