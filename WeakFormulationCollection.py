@@ -170,7 +170,7 @@ class WeakFormulationCollectionClass():
         self.B_vf = WeakForm()
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
             from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
-            printDebug(True, '-- Adding momentum equation for u-fluc -> X[0].')     # Hardcoded
+            printDebug(True, '-- Adding momentum equation for u-fluc -> X[0].')     # Hardcoded u' for mom eq.
             addMomentumEq(self,fluctuationC,X[0],mean,param)
             print('-- Adding momentum equation.')
             
@@ -179,7 +179,6 @@ class WeakFormulationCollectionClass():
             varEq = self.__param.Case.SetOfEquations['Mass']['Variable']
             idVar = param.SolutionList.index(varEq)
             printDebug(True, '-- Adding mass-balance equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            # addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],mean,self.__param)
             addMassEq(self,fluctuationC,X[idVar],mean,self.__param)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
