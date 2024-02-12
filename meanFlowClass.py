@@ -494,7 +494,7 @@ class meanFlowClass(
     def raiseNotInFileListWarning(self):
         from functions import printWarning
         for name in self.__notInFileList:
-            printWarning("WARNING: Field " + name
+            printWarning("  -- Field " + name
                          + " not found in the import file! Assuming Field is \
                            zero...")
 
