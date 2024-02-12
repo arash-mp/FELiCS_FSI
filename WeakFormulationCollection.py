@@ -295,9 +295,13 @@ class WeakFormulationCollectionClass():
         if param.IOResolvent.ForcingMode=='Body':
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
-            printWarning("Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
+            printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
             u_f = fluc.u
             self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+            # idrhoF = param.SolutionList.index('rho')
+            # self.forcing_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
+            # idpF = param.SolutionList.index('p')
+            # self.forcing_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
             #velocityForcingList = [0,0,0]
             #for i in param.IOResolvent.ForcingCoeff:
             #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
@@ -365,10 +369,14 @@ class WeakFormulationCollectionClass():
         #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
         #self.response_vf += temporalVF
         self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+        # idrhoF = param.SolutionList.index('rho')
+        # self.response_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
+        # idpF = param.SolutionList.index('p')
+        # self.response_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
 
         # Prompt variational formulations in debug mode
-        printDebug(param.debug,'Resolvent forcing norm is '+ str(self.forcing_vf))
-        printDebug(param.debug,'Resolvent response norm is '+ str(self.response_vf))
+        printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
+        printDebug(param.debug,'-- Resolvent response norm is '+ str(self.response_vf))
 
     def DiscretizeFlow(self):
         #self.__DiscretizeAndSolve = DiscretizeAndSolve
@@ -524,9 +532,36 @@ class WeakFormulationCollectionClass():
                                         self.__mean,
                                         )
 
+    # def __plot_coo_matrix(self,m_in):
+    #     import matplotlib.pyplot as plt
+    #     from scipy.sparse import coo_matrix
+        
+    #     # Prepare the coo matrix for plot
+    #     m = coo_matrix(m_in)
+            
+    #     fig = plt.figure()
+    #     ax = plt.gca()
+    #     # ax = fig.add_subplot(111, facecolor='black')
+    #     ax.plot(m.col, m.row, 's', color='white', ms=1)
+    #     ax.set_xlim(0, m.shape[1])
+    #     ax.set_ylim(0, m.shape[0])
+    #     ax.set_aspect('equal')
+    #     for spine in ax.spines.values():
+    #         spine.set_visible(False)
+    #     ax.invert_yaxis()
+    #     ax.set_aspect('equal')
+    #     ax.set_xticks([])
+    #     ax.set_yticks([])
+    #     plt.show()
+        
+
     def getPMat(self):
         '''
         This function provides the P matrix, which restricts the forcing
+        in terms of variables and spatial region
+        
+        TODO This does not work properly if a P1-fluctuations is part
+        of the forcing/response norm! Indices of the DOFs will be wrong.
         '''
     
         self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
@@ -548,9 +583,9 @@ class WeakFormulationCollectionClass():
             flagdom = True
             print('-- Applying spatial restriction of forcing from MeanFlow file.')
 
-            nfluctvar = len(self.__bcDict)
+            nfluctvar = len(self.__bcDict)      # counting velocity components as 
             nDim = self.__param.Case.nDim
-            forcingDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(forcingDom, nfluctvar, nDim)
+            forcingDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(forcingDom, nfluctvar, nDim) # the last two inputs don't matter
 
         index = np.empty(shape=(0, 0))
 
@@ -579,7 +614,15 @@ class WeakFormulationCollectionClass():
         row_ind = index
         col_ind = np.arange(n)
         P = csr_matrix((np.ones(n), (row_ind,col_ind)), (m, n))
+        
+        # Used for debugging
+        # from matspy import spy
+        # import matplotlib
+        # matplotlib.use('TkAGG')
+        # spy(P,buckets=4000)
+        
         print('-- Done.')
+        
         return P
 
     def getCrMat(self):
@@ -630,4 +673,13 @@ class WeakFormulationCollectionClass():
         row_ind = index
         Cr = csr_matrix((np.ones(n),(row_ind,row_ind)),(m,m))
         print('-- Done.')
+        
+        # Used for debugging
+        # from matspy import spy
+        # import matplotlib
+        # matplotlib.use('TkAGG')
+        # spy(Cr,buckets=4000)
+        # import sys
+        # sys.exit()
+        
         return Cr
