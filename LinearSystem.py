@@ -933,17 +933,17 @@ class linearSystem:
 				#calculate adjoint vectors
 				eps.setTwoSided(True)
 		eps.setTolerances(tol=toleig,max_it=200)
-		eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) # is standard, does not need to be set
+		eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) 					# is standard, does not need to be set
 		#eps.setType(SLEPc.EPS.Type.ARNOLDI)
-		eps.getST().setType(SLEPc.ST.Type.SINVERT) 		# Not for resolvent
+		eps.getST().setType(SLEPc.ST.Type.SINVERT) 					# For stability analysis only
 		#eps.getST().setType(SLEPc.ST.Type.SHIFT)
 		#eps.getST().setShift(1000000)
-		eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
+		eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE) 	# For stability
 		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_REAL)
 		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_IMAGINARY)
 		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_REAL)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE) # For resolvent
-		eps.setTarget(sigma) # sigma is NaN for resolvent
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE) 	# For resolvent
+		eps.setTarget(sigma) 										# sigma is None for resolvent
 		eps.setDimensions(nev=nev)
 		eps.getST().getKSP().getPC().setType('lu')
 		eps.getST().getKSP().getPC().setFactorSolverType('mumps')
