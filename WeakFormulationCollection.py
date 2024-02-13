@@ -205,6 +205,7 @@ class WeakFormulationCollectionClass():
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
             self.getResolventNorms(X,self.__param,mean,fluctuationC)
+            self.getResolventFEMWeights(X,self.__param,mean,fluctuationC)
 
         # Add species transport equation for all transported species
         transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
@@ -298,10 +299,14 @@ class WeakFormulationCollectionClass():
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
             u_f = fluc.u
             self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
-            idrhoF = param.SolutionList.index('rho')
+            
+            # Below are arbitrary weights used for debugging resolvent considering other norms
+            # than the TKE one:
+            # idrhoF = param.SolutionList.index('rho')
             # self.forcing_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
             # idpF = param.SolutionList.index('p')
             # self.forcing_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
+            
             #velocityForcingList = [0,0,0]
             #for i in param.IOResolvent.ForcingCoeff:
             #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
@@ -369,7 +374,10 @@ class WeakFormulationCollectionClass():
         #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
         #self.response_vf += temporalVF
         self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
-        idrhoF = param.SolutionList.index('rho')
+        
+        # Below are arbitrary weights used for debugging resolvent considering other norms
+        # than the TKE one:
+        # idrhoF = param.SolutionList.index('rho')
         # self.response_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
         # idpF = param.SolutionList.index('p')
         # self.response_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
@@ -377,7 +385,38 @@ class WeakFormulationCollectionClass():
         # Prompt variational formulations in debug mode
         printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
         printDebug(param.debug,'-- Resolvent response norm is '+ str(self.response_vf))
+        
+    def getResolventFEMWeights(self,X,param,mean,fluc):
+        ''' 
+        This function yields a matrix containing the FEM weights
+        corresponding to a diagonal unit matrix.
+        (Need to chat with Sophie to better define this)
+        '''
+        
+        # Initialize the matrix
+        self.fem_weighting = 0
+        J_hat = self._coordinateSystem.J_hat
+        
+        # Loop over all eqs, and multiply fluctuation
+        # with corresponding test function
+        for eqID in param.Case.SetOfEquations :
+            if not (param.Case.SetOfEquations[eqID]['Equation'] == 'None' or \
+                param.Case.SetOfEquations[eqID]['Variable'] == 'None'):
+                
+                #  Get the corresponding variable and its index in X
+                varName = param.Case.SetOfEquations[eqID]['Variable']
+                varIndex = param.SolutionList.index(varName)
+                
+                # Dynamically get the corresponding fluctuation field
+                fluc_var = getattr(fluc, '%s' % varName)
+                
+                # Multiply by corresponding X*
+                if varName == 'u': # For u we need the dot product with X
+                    self.fem_weighting += ( iDot(fluc_var, iConj(X[varIndex])) ).ufl_tens*J_hat*dx
+                else:
+                    self.fem_weighting += ( fluc_var*iConj(X[varIndex]) ).ufl_tens*J_hat*dx
 
+        
     def DiscretizeFlow(self):
         #self.__DiscretizeAndSolve = DiscretizeAndSolve
         #self.__WeakForm = WeakForm
@@ -468,6 +507,7 @@ class WeakFormulationCollectionClass():
         # must be constructed. So far only the L2 norm is implemented (To be extended!)
         if AnalysisMode in ['Resolvent']:
             #forcing_norm,response_norm=getResolventNorms(param,MF,FEMSpaces)
+            
             B_forcing = assemble_matrix(form(self.forcing_vf))
             B_forcing.assemble()
             self.__matrix_dict['B_forcing'] = csr_matrix(B_forcing.getValuesCSR()[::-1], shape = B_forcing.size,dtype=complex)
@@ -476,6 +516,12 @@ class WeakFormulationCollectionClass():
             B_response.assemble()
             self.__matrix_dict['B_response'] = csr_matrix(B_response.getValuesCSR()[::-1], shape = B_response.size,dtype=complex)
             del B_response
+            
+            # FEM weighting matrix
+            B_femWeight = assemble_matrix(form(self.fem_weighting))
+            B_femWeight.assemble()
+            self.__matrix_dict['B_femWeight'] = csr_matrix(B_femWeight.getValuesCSR()[::-1], shape = B_femWeight.size,dtype=complex)
+            del B_femWeight
 
         return self.__buildSolutionObj()
 
@@ -654,7 +700,7 @@ class WeakFormulationCollectionClass():
 
         index = np.empty(shape=(0,0))
 
-        for i in range(nfluctvar): # HARDCODED FOR U, V, P: incompressible 2D
+        for i in range(nfluctvar): # Always considers all fluctuations in the response for now
             if i < self.__nVelocityComponents:
                 dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]
             else:
@@ -673,7 +719,7 @@ class WeakFormulationCollectionClass():
         m = len(np.arange(*local_range))
         n = len(index)
         row_ind = index
-        Cr = csr_matrix((np.ones(n),(row_ind,row_ind)),(m,m))
+        Cr = csr_matrix((np.ones(n),(row_ind,row_ind)),(m,m))   # should we also add dtype=complex here?
         printDebug(True, '-- Done.')
         
         # Used for debugging

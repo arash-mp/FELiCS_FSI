@@ -588,15 +588,19 @@ class linearSystem:
 		self.__matrix_dict['B_response'] = \
 			self.__matrix_dict['B_response'].tocsc()
 
-		self.__matrix_dict['B'] = self.__matrix_dict['B'].tocsc()
+		# The B matrix was used to impose FEM weights to matrices
+		self.__matrix_dict['B_femWeight'] = self.__matrix_dict['B_femWeight'].tocsc()
+  
+		printDebug(True, '--------------------------------')
 		printDebug(True, '-- Getting matrices limiting response/forcing...')
 		self.__matrix_dict['Pu'] = WeakFormulationClass.getPMat()
 		self.__matrix_dict['Cr'] = WeakFormulationClass.getCrMat()
+  		# SD: it would make more sense to move this to WeakFormulationCollection!
+		# similarly to what we do with forcing_vf 
 
 		printDebug(True, '-- Getting weighting matrix for forcing...')
-		self.__matrix_dict['Q'] = \
-		self.__matrix_dict['Pu'].transpose()*self.__matrix_dict['B']*\
-			self.__matrix_dict['Pu']
+		self.__matrix_dict['Q'] =  self.__matrix_dict['Pu'].transpose()*self.__matrix_dict['B_femWeight']*self.__matrix_dict['Pu']
+		# self.__matrix_dict['Q'] =  self.__matrix_dict['Pu'].transpose()*self.__matrix_dict['Pu']
 		self.__matrix_dict['Q'] = self.__matrix_dict['Q'].tocsc()
 		nu = min(np.shape(self.__matrix_dict['Pu']))
 		printDebug(True, '-- Done.')
@@ -622,6 +626,7 @@ class linearSystem:
 
 		else:
 			# Serial computation of the resolvent --------------------------------
+			printDebug(True, '--------------------------------')
 			printDebug(True, '-- Serial computation of forcing, gains, and responses...')
 			# LUQ is obtained here as it cannot be pickled
 			self.__matrix_dict['LUQ'] = \
@@ -672,7 +677,8 @@ class linearSystem:
 				for k in range(self.__param.Numerics.nSolut):
 					# Write the respective forcing to results dictionary
 					forcings[:, k, i] = self.__matrix_dict['Pu'] * eigenvectors_c[:, k]
-					f = -1j * self.__matrix_dict['B'] * forcings[:, k, i]
+					f = -1j * self.__matrix_dict['B_femWeight'] * forcings[:, k, i]
+					# f = -1j * forcings[:, k, i]
 					responses[:, k, i] = LU.solve(f)
 
 		#pdb.set_trace()
