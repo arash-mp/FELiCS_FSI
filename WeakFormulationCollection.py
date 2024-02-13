@@ -298,7 +298,7 @@ class WeakFormulationCollectionClass():
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
             u_f = fluc.u
             self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
-            # idrhoF = param.SolutionList.index('rho')
+            idrhoF = param.SolutionList.index('rho')
             # self.forcing_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
             # idpF = param.SolutionList.index('p')
             # self.forcing_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
@@ -369,7 +369,7 @@ class WeakFormulationCollectionClass():
         #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
         #self.response_vf += temporalVF
         self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
-        # idrhoF = param.SolutionList.index('rho')
+        idrhoF = param.SolutionList.index('rho')
         # self.response_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
         # idpF = param.SolutionList.index('p')
         # self.response_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
@@ -483,6 +483,8 @@ class WeakFormulationCollectionClass():
         BClist = []
         mesh=self.__FEMSpaces.P2.mesh
 
+        printDebug(True, '--------------------------------')
+        printDebug(True, '-- Setting boundary conditions...')
         self.__boundaries = self.__param.BCs.getBoundaries()
         self.__bcDict = self.__param.BCs.getBCsDict()
         VelocityComponents=self.__param.Case.getVelocityComponents()
@@ -567,7 +569,7 @@ class WeakFormulationCollectionClass():
         self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
         #self.__nVelocityComponents = self.__param.nVelocityComponents
         self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
-        print('-- Building Pu matrix...')
+        printDebug(True, '-- Building Pu matrix...')
 
         # Get the matrix that restricts the forcing in space
         forcingDom = self.__mean.forcingDomain
@@ -577,11 +579,11 @@ class WeakFormulationCollectionClass():
         if max(forcingDom.x.array[:], key=abs) == 0:
             forcingDom.x.array[:] =  1
             flagdom = False
-            print('-- No spatial restriction of forcing.')
+            printDebug(True, '-- No spatial restriction of forcing.')
         else:
             forcingDom.x.array[:] = np.rint(forcingDom.x.array[:])
             flagdom = True
-            print('-- Applying spatial restriction of forcing from MeanFlow file.')
+            printDebug(True, '-- Applying spatial restriction of forcing from MeanFlow file.')
 
             nfluctvar = len(self.__bcDict)      # counting velocity components as 
             nDim = self.__param.Case.nDim
@@ -616,12 +618,12 @@ class WeakFormulationCollectionClass():
         P = csr_matrix((np.ones(n), (row_ind,col_ind)), (m, n))
         
         # Used for debugging
-        # from matspy import spy
-        # import matplotlib
-        # matplotlib.use('TkAGG')
-        # spy(P,buckets=4000)
+        from matspy import spy
+        import matplotlib
+        matplotlib.use('TkAGG')
+        spy(P,buckets=4000)
         
-        print('-- Done.')
+        printDebug(True, '-- Done.')
         
         return P
 
@@ -630,7 +632,7 @@ class WeakFormulationCollectionClass():
         self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
         #self.__nVelocityComponents = self.__param.nVelocityComponents
         self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
-        print('-- Building Cr matrix...')
+        printDebug(True, '-- Building Cr matrix...')
 
         # Get the matrix that restricts the forcing in space
         responseDom = self.__mean.responseDomain
@@ -642,11 +644,11 @@ class WeakFormulationCollectionClass():
         if max(responseDom.x.array[:], key=abs) == 0:
             responseDom.x.array[:] = 1
             flagdom = False
-            print('-- No spatial restriction of response.')
+            printDebug(True, '-- No spatial restriction of response.')
         else:
             responseDom.x.array[:] = np.rint(responseDom.x.array[:])
             flagdom = True
-            print('-- Applying spatial restriction of response from MeanFlow file.')
+            printDebug(True, '-- Applying spatial restriction of response from MeanFlow file.')
 
             responseDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(responseDom, nfluctvar, nDim)
 
@@ -672,13 +674,13 @@ class WeakFormulationCollectionClass():
         n = len(index)
         row_ind = index
         Cr = csr_matrix((np.ones(n),(row_ind,row_ind)),(m,m))
-        print('-- Done.')
+        printDebug(True, '-- Done.')
         
         # Used for debugging
-        # from matspy import spy
-        # import matplotlib
-        # matplotlib.use('TkAGG')
-        # spy(Cr,buckets=4000)
+        from matspy import spy
+        import matplotlib
+        matplotlib.use('TkAGG')
+        spy(Cr,buckets=4000)
         # import sys
         # sys.exit()
         
