@@ -589,23 +589,23 @@ class linearSystem:
 			self.__matrix_dict['B_response'].tocsc()
 
 		self.__matrix_dict['B'] = self.__matrix_dict['B'].tocsc()
-		print('-- Getting matrices limiting response/forcing...')
+		printDebug(True, '-- Getting matrices limiting response/forcing...')
 		self.__matrix_dict['Pu'] = WeakFormulationClass.getPMat()
 		self.__matrix_dict['Cr'] = WeakFormulationClass.getCrMat()
 
-		print('-- Getting weighting matrix for forcing...')
+		printDebug(True, '-- Getting weighting matrix for forcing...')
 		self.__matrix_dict['Q'] = \
 		self.__matrix_dict['Pu'].transpose()*self.__matrix_dict['B']*\
 			self.__matrix_dict['Pu']
 		self.__matrix_dict['Q'] = self.__matrix_dict['Q'].tocsc()
 		nu = min(np.shape(self.__matrix_dict['Pu']))
-		print('-- Done.')
+		printDebug(True, '-- Done.')
 
 		tic_res = time.perf_counter()
 
 		if self.__param.Numerics.nCPU > 1:
 			# Parallel computation of the resolvent --------------------------------
-			print('-- Parallel computation of forcing and gains...')
+			printDebug(True, '-- Parallel computation of forcing and gains...')
 			pool = multiprocessing.Pool(self.__param.Numerics.nCPU)
 
 			args_map = [(linearSystem, 'Resolvent', self.__matrix_dict, \
@@ -622,7 +622,7 @@ class linearSystem:
 
 		else:
 			# Serial computation of the resolvent --------------------------------
-			print('-- Serial computation of forcing, gains, and responses...')
+			printDebug(True, '-- Serial computation of forcing, gains, and responses...')
 			# LUQ is obtained here as it cannot be pickled
 			self.__matrix_dict['LUQ'] = \
 				splin.splu(self.__matrix_dict['Q'], permc_spec=3)
@@ -642,7 +642,7 @@ class linearSystem:
 					return w
 
 				omega = self.__param.IOResolvent.Omegas[i]
-				print("-- Performing resolvent analysis for omega = " + str(omega))
+				printDebug(True, "-- Performing resolvent analysis for omega = " + str(omega))
 				OP = self.__matrix_dict['A']-omega*self.__matrix_dict['B']
 				OP = OP.tocsc()
 
@@ -705,7 +705,7 @@ class linearSystem:
 				fluctSolutObjList.append(fluctSolutResponse)
 
 		toc_res = time.perf_counter() - tic_res
-		print(f"-- Solving resolvent took: {toc_res:0.4f} seconds")
+		printDebug(True, f"-- Solving resolvent took: {toc_res:0.4f} seconds")
 		return fluctSolutObjList
 
 	def solveInputOutput(
@@ -927,8 +927,8 @@ class linearSystem:
 		# create eigenproblem solver
 		eps = SLEPc.EPS().create()
 		eps.setOperators(Ap,Bp)
-		eps.setProblemType(SLEPc.EPS.ProblemType.PGNHEP) 	# general non-Hermitian eigenproblem with positive semi-definite B
-		# eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP) 	# general non-Hermitian eigenproblem with semi-definite B
+		# eps.setProblemType(SLEPc.EPS.ProblemType.PGNHEP) 	# general non-Hermitian eigenproblem with positive semi-definite B
+		eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP) 	# general non-Hermitian eigenproblem with semi-definite B
 		if adjoint:
 				#calculate adjoint vectors
 				eps.setTwoSided(True)
