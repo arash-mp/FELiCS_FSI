@@ -618,10 +618,10 @@ class WeakFormulationCollectionClass():
         P = csr_matrix((np.ones(n), (row_ind,col_ind)), (m, n))
         
         # Used for debugging
-        from matspy import spy
-        import matplotlib
-        matplotlib.use('TkAGG')
-        spy(P,buckets=4000)
+        # from matspy import spy
+        # import matplotlib
+        # matplotlib.use('TkAGG')
+        # spy(P,buckets=4000)
         
         printDebug(True, '-- Done.')
         
@@ -677,10 +677,10 @@ class WeakFormulationCollectionClass():
         printDebug(True, '-- Done.')
         
         # Used for debugging
-        from matspy import spy
-        import matplotlib
-        matplotlib.use('TkAGG')
-        spy(Cr,buckets=4000)
+        # from matspy import spy
+        # import matplotlib
+        # matplotlib.use('TkAGG')
+        # spy(Cr,buckets=4000)
         # import sys
         # sys.exit()
         
