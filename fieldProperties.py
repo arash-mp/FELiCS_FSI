@@ -13,6 +13,10 @@ from tensorUtils import (
                     Tensor,
                     )
 
+from functions import (
+                printWarning, 
+                printDebug,
+                )
 
 class fieldProperties:
     """
@@ -240,10 +244,10 @@ class fieldProperties:
                         self._coordinateSystem,
                         )
         else:
-            if 'p' in self._transportedQuantities:
+            if 'p' in list(self._fieldDict.keys()):
                 return self._fieldDict['p']
             else:
-                return Constant(0)
+                return self.__zeroFieldTensor
 
     @property
     def phi(self):
