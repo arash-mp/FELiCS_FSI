@@ -100,7 +100,7 @@ class FEMSpacesClass():
 		self.FunctionSpaceList=[]
 		self.FunctionSpaceListExport=[]
 		for name in param.SolutionList:
-			printDebug(param.debug,'Adding finite element space for '+name+'...')
+			printDebug(param.debug,'-- Adding finite element space for '+name+'...')
 			if name=='u':
 				FE = VectorElement(
                        			elementTypeStr,
