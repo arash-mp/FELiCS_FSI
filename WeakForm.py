@@ -32,9 +32,6 @@ class WeakForm():
 			return True
 		else:
 			temp=rhs(self.__weakForm__)
-			#print(temp)
-			#print(temp.arguments())
-			#input(len(temp.arguments()))
 			if len(temp.arguments())<1:
 				return True
 			else:

@@ -57,17 +57,29 @@ def writeCSVGains(param,gains):
 				line.append(gains[j,i])
 			writer.writerow(line)
 
-def writeCSVSpectrum(param,spectrumDirect,spectrumAdjoint):
+def writeCSVSpectrum(param,spectrumDirect,spectrumAdjoint=0):
 	''' This file writes the gains to a CSV file in the solution directory provided by the user'''
 	import csv
 	print (param.Export.ExportFolder+'/spectrum.csv')
-	with open(param.Export.ExportFolder+'/spectrum.csv', mode='w') as writer_file:
-		writer = csv.writer(writer_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-		head=['omega_direct_r','omega_direct_i','omega_adjoint_r','omega_adjonint_i']
-		writer.writerow(head)
-		for i in range(0,len(spectrumDirect)):
-			line=[str(np.real(spectrumDirect[i])),str(np.imag(spectrumDirect[i])),str(np.real(spectrumAdjoint[i])),str(np.imag(spectrumAdjoint[i]))]
-			writer.writerow(line)
+	if param.Case.CalculateAdjoint:
+
+		with open(param.Export.ExportFolder+'/spectrum.csv', mode='w') as writer_file:
+			writer = csv.writer(writer_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+			head=['omega_direct_r','omega_direct_i','omega_adjoint_r','omega_adjonint_i']
+			writer.writerow(head)
+			for i in range(0,len(spectrumDirect)):
+				line=[str(np.real(spectrumDirect[i])),str(np.imag(spectrumDirect[i])),str(np.real(spectrumAdjoint[i])),str(np.imag(spectrumAdjoint[i]))]
+				writer.writerow(line)
+
+	else:
+		with open(param.Export.ExportFolder+'/spectrum.csv', mode='w') as writer_file:
+			writer = csv.writer(writer_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+			head=['omega_direct_r','omega_direct_i']
+			writer.writerow(head)
+			for i in range(0,len(spectrumDirect)):
+				line=[str(np.real(spectrumDirect[i])),str(np.imag(spectrumDirect[i]))]
+				writer.writerow(line)
+
 
 
 def writeLastGitCommit(param):
@@ -453,12 +465,15 @@ def ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow):
 
 		# convert the list of eVals to a np-array:
 		eValDirect = np.array(eValDirect)
-		eValAdjoint = np.array(eValAdjoint)
-
 		idxDirect  = np.argmax(np.imag(eValDirect))
-		idxAdjoint = np.argmax(np.imag(eValAdjoint))
 
-		writeCSVSpectrum(param,eValDirect,eValAdjoint)
+		if param.Case.CalculateAdjoint:
+			eValAdjoint = np.array(eValAdjoint)
+			idxAdjoint = np.argmax(np.imag(eValAdjoint))
+			writeCSVSpectrum(param,eValDirect,eValAdjoint)
+			
+		else:
+			writeCSVSpectrum(param,eValDirect)  
 
 		for fluctSolut in fluctSolutList:
 

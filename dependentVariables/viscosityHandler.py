@@ -79,6 +79,6 @@ class viscosityHandler:
             local_T = mean.T
             local_rho = mean.rho
             local_nulam = mean.nulam
-        fluct = (local_T + 3 * self.Ts) / (2 * (local_T + self.Ts)) * (-rho / local_rho)
+        fluct = (local_T + 3 * self.Ts) / (2 * (local_T + self.Ts)) * (-1 * rho / local_rho)
         nulam = local_nulam * fluct
         return nulam, fluct

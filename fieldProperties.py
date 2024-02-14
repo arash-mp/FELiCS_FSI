@@ -3,6 +3,15 @@ from dolfinx.fem import (
     Constant,
     Function,
 )
+# Local Libraries and methods
+from tensorUtils import (
+                    iGrad,
+                    iDiv,
+                    iDot,
+                    iIdentity,
+                    iT,
+                    Tensor,
+                    )
 
 
 class fieldProperties:
@@ -40,11 +49,15 @@ class fieldProperties:
 
     @property
     def alpha(self):
-        if self.isMeanFlowClass:
+        if self.isMeanFlowClass():
             if 'alpha' in list(self._fieldDict.keys()):
-                return self._fieldDict['alpha']
+                return  Tensor(
+                            self._fieldDict['alpha'],
+                            self._coordinateSystem,
+                            )
+                            
             else:
-                return self._zeroField
+                return self._zeroFieldTensor
         else:
             return self._fieldDict['alpha']
 
@@ -54,13 +67,22 @@ class fieldProperties:
 
     @property
     def cp(self):
-        return self._fieldDict['cp']
+        if self.isMeanFlowClass:
+            return Tensor(
+                        self._fieldDict['cp'],
+                        self._coordinateSystem,
+                        )
+        else:       
+            return self._fieldDict['cp']
 
     def D(self, specie):
         if 'D_' + specie in list(self._fieldDict.keys()):
-            return self._fieldDict['D_' + specie]
+            return Tensor(
+                        self._fieldDict['D_' + specie],
+                        self._coordinateSystem,
+                        )
         else:
-            return self._zeroField
+            return self._zeroFieldTensor
 
     @property
     def dQ(self):  # heat release
@@ -112,9 +134,36 @@ class fieldProperties:
     def forcing_r(self, solution):
         return self._fieldDict[solution + '_forcing_r']
 
+    def forcing(self,solution):
+        return Tensor(self.forcing_r(solution)+1j*self.forcing_i(solution), self._coordinateSystem)
+
     @property
-    def gamma(self):
-        return self._fieldDict['gamma']
+    def forcingDomain(self):
+        return self._fieldDict['forcingDomain']
+
+    @property
+    def gamma(self):    # Heat capacity ratio
+        return Tensor(
+            self._fieldDict['gamma'],
+            self._coordinateSystem,
+            )
+        
+    @property
+    def Pr(self):    # Prandtl number 
+        return Tensor(
+            self._fieldDict['Pr'],
+            self._coordinateSystem,
+            )
+    
+    @property
+    def UnitT(self):    # Real unit number in tensor form
+        from dolfinx.fem import Constant
+        from petsc4py import PETSc
+        mesh = self._fieldDict[list(self._fieldDict.keys())[0]].function_space.mesh
+        return Tensor(
+            Constant(mesh, PETSc.ScalarType(1.0 + 0j)),
+            self._coordinateSystem,
+            )
 
     @property
     def h(self):
@@ -122,9 +171,11 @@ class fieldProperties:
 
     @property
     def he(self):
-        # To be generalized for all dimensions
-        return self._fieldDict['he'] \
-               + 0.5 * (self.u[0] * self.u[0] + self.u[1] * self.u[1])
+        return Tensor(
+                    self._fieldDict['he'],
+                    self._coordinateSystem,
+                    ) \
+               + 0.5 * iDot(self.u, self.u)
 
     @property
     def hSpec(self):
@@ -140,10 +191,19 @@ class fieldProperties:
 
     @property
     def nulam(self):
-        if 'nulam' in list(self._fieldDict.keys()):
-            return self._fieldDict['nulam']
+        if self.isMeanFlowClass():
+            if 'nulam' in list(self._fieldDict.keys()):
+                return Tensor(
+                            self._fieldDict['nulam'],
+                            self._coordinateSystem,
+                            )
+            else:
+                return self._zeroFieldTensor
         else:
-            return self._zeroField
+            if 'nulam' in list(self._fieldDict.keys()):
+                return self._fieldDict['nulam']
+            else:
+                return self._zeroFieldTensor
 
     @property
     def nuTot(self):
@@ -156,12 +216,18 @@ class fieldProperties:
             nuTot.vector[:] += self._fieldDict['nuturb'].vector[:]
         if 'nuSGS' in list(self._fieldDict.keys()):
             nuTot.vector[:] += self._fieldDict['nuSGS'].vector[:]
-        return nuTot
+        return Tensor(
+                    nuTot,
+                    self._coordinateSystem,
+                    )
 
     @property
     def p(self):
-        if self.isMeanFlowClass:
-            return self._fieldDict['p']
+        if self.isMeanFlowClass():
+            return Tensor(
+                        self._fieldDict['p'],
+                        self._coordinateSystem,
+                        )
         else:
             if 'p' in self._transportedQuantities:
                 return self._fieldDict['p']
@@ -173,11 +239,18 @@ class fieldProperties:
         if 'phi' in list(self._fieldDict.keys()):
             return self._fieldDict['phi']
         else:
-            return self.__ZeroField
+            return self.__zeroFieldTensor
 
     @property
     def Q(self):  # heat release
         return self._fieldDict['Q']
+    
+    @property
+    def R_spe(self):  # Specific gas constant
+        return Tensor(
+            self._fieldDict['R_spe'],
+            self._coordinateSystem,
+            )
 
     @property
     def reaction(self):
@@ -185,21 +258,24 @@ class fieldProperties:
 
     @property
     def rho(self):
-        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
+        #if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
+        if self.isMeanFlowClass():
             if 'rho' in list(self._fieldDict.keys()):
-                return self._fieldDict['rho']
+                return Tensor(
+                            self._fieldDict['rho'],
+                            self._coordinateSystem,
+                            )
             else:
                 from dolfinx.fem import Constant
                 from petsc4py import PETSc
                 mesh = self._fieldDict[list(self._fieldDict.keys())[0]].function_space.mesh
                 return Constant(mesh, PETSc.ScalarType(1.0 + 0j))
         else:
-            if 'rho' in self._transportedQuantities:
+            #if 'rho' in self._transportedQuantities:
+            if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
-        #    elif self._param.Case.SetOfEquations['EquationOfState']['Equation'] == 'LowMach':
-        #        return -self._mean['rho']/self._mean['T']*self.T
             else:
-                return self._zeroField
+                return self._zeroFieldTensor
 
     @property
     def rhou(self):
@@ -213,11 +289,40 @@ class fieldProperties:
         if self.isMeanFlowClass():
             from dolfinx.fem import Constant
             if 'T' in list(self._fieldDict.keys()):
-                return self._fieldDict['T']
+                return Tensor(
+                            self._fieldDict['T'],
+                            self._coordinateSystem,
+                            )
             else:
-                return Constant(1) * self.__OneField
+                return Tensor(
+                            self._OneField,
+                            self._coordinateSystem,
+                            )
         else:
             return self._fieldDict['T']
+
+    @property
+    def tau(self):
+        if self.isMeanFlowClass():
+            mean_nu = self.nuTot
+            mean_u = self.u
+            tau_out = mean_nu * iGrad(mean_u)
+            if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
+                tau_out += iT(tau_out)
+                tau_out += -2.0/3.0 * mean_nu * \
+                            iDiv(mean_u) * iIdentity(iGrad(mean_u))
+                
+        else:
+            mean_nu = self._mean.nuTot
+            mean_u = self._mean.u
+            fluc_nu = self.nulam
+            tau_out = mean_nu * iGrad(self.u) + \
+                        fluc_nu * iGrad(mean_u)
+            if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
+                tau_out += iT(tau_out)
+                tau_out += -2.0/3.0 * mean_nu * iDiv(self.u) * iIdentity(iGrad(self.u))
+                tau_out += -2.0/3.0 * fluc_nu * iDiv(mean_u) * iIdentity(iGrad(self.u))
+        return tau_out
 
     @property
     def Tb(self):
@@ -242,21 +347,27 @@ class fieldProperties:
         return self._fieldDict['responseDomain']
 
     @property
-    def forcingDomain(self):
-        return self._fieldDict['forcingDomain']
-
-    @property
     def u(self):
         if self.isMeanFlowClass():
             if 'u' in list(self._fieldDict.keys()):
-                return self._fieldDict['u']
+                return Tensor(
+                            self._fieldDict['u'],
+                            self._coordinateSystem,
+                            )
             else:
-                return self._zeroVelocityField
+                return Tensor(
+                            self._zeroVelocityField,
+                            self._coordinateSystem,
+                            )
         else:
             if 'u' in self._transportedQuantities:
-                return self._fieldDict['u']
+                return  self._fieldDict['u']
             else:
-                return self._zeroVelocityField
+                return Tensor(
+                            self._zeroVelocityField,
+                            self._coordinateSystem,
+                            containsFluctuation = True,
+                            )
 
     @property
     def u_forcing_i(self):
@@ -265,6 +376,13 @@ class fieldProperties:
     @property
     def u_forcing_r(self):
         return self._fieldDict['u_forcing_r']
+
+    @property
+    def u_forcing(self):
+        return Tensor(
+                    self.u_forcing_r + 1j*self.u_forcing_i,
+                    self._coordinateSystem,
+                    )
 
     @property
     def ut(self):
@@ -277,15 +395,16 @@ class fieldProperties:
                 return Constant(mesh, 0.0)
         else:
             if  self._param.Case.TransVelFluc:
-                input('True')
-                #return self._fieldDict['ut']
                 return self._fieldDict['u'][2]
             else:
-                input('False')
                 return Constant(0)
 
     def Y(self, specie):
         if self.isMeanFlowClass():
-            return self._fieldDict[specie]
+            return Tensor(
+                self._fieldDict[specie],
+                self._coordinateSystem,
+                )
         else:
-            return self._fluc[self._transportedQuantities.index(specie)]
+            return self._fieldDict[specie]
+                        

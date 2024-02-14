@@ -3,16 +3,19 @@ from h5py import File
 from dolfinx.fem import Function
 
 # Local libraries and methods
-from functions import printWarning
+from functions import printWarning, printDebug
 from export import export
 from dependentVariables.viscosityHandler import viscosityHandler
 from fieldProperties import fieldProperties
 from dependentVariables.energyHandler import energyHandler
+from dependentVariables.equationOfStateHandler import equationOfStateHandler
+from tensorUtils import Tensor
 
 class meanFlowClass(
     fieldProperties,
     energyHandler,
     viscosityHandler,
+    equationOfStateHandler,
     export,
 ):
     """
@@ -27,17 +30,22 @@ class meanFlowClass(
     def __init__(
             self,
             param,
-            FEMSpaces
+            FEMSpaces,
     ):
         self._isMean = True
         self._isFluctuation = False
         self._param = param
         self._FEMSpaces = FEMSpaces
+        self._coordinateSystem = self._FEMSpaces.P2.mesh.coordinateSystem
         fieldProperties.__init__(self)
         viscosityHandler.__init__(self)
         self._meanflowFilename = None
         self.__Mixture = param.Case.Mixture
         self.__ZeroField = Function(self._FEMSpaces.P2)
+        self.__zeroFieldTensor = Tensor(
+                                       Function(self._FEMSpaces.P2),
+                                       self._coordinateSystem,
+                                       )
         self.__OneField = Function(self._FEMSpaces.P2)
         self.__OneField.x.array[:] = 1.0
         
@@ -129,10 +137,18 @@ class meanFlowClass(
 
         for specie in self._param.Case.Mixture.getSpeciesList('transported'):
             Sc = self._param.Case.Mixture.species[specie]['Sc']
+            nuTot = Function(self._ScalarFunctionSpace)
+
+            if 'nulam' in list(self._fieldDict.keys()):
+                nuTot.vector[:] += self._fieldDict['nulam'].vector[:]
+            if 'nuturb' in list(self._fieldDict.keys()):
+                nuTot.vector[:] += self._fieldDict['nuturb'].vector[:]
+            if 'nuSGS' in list(self._fieldDict.keys()):
+                nuTot.vector[:] += self._fieldDict['nuSGS'].vector[:]
             self._fieldDict['D_' + specie] \
-                = Function(self.nuTot.function_space)
+                = Function(self._FEMSpaces.P2)
             self._fieldDict['D_' + specie].vector[:] \
-                = self.nuTot.vector[:] / Sc
+                = nuTot.vector[:] / Sc
 
     def importMatFile(self):
         import scipy.io as spio
@@ -212,7 +228,8 @@ class meanFlowClass(
         indexMappingArray = mappingFunc(coordArray, coordinatesOfP2Mesh)
 
         fieldDict = {}
-        for name in self._getMeanFieldsToBeRead():
+        nameListMean = self._getMeanFieldsToBeRead()        
+        for name in nameListMean:
             if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
                 fieldDict[name] = Function(
                     self._FEMSpaces.FunctionSpaceVectorVelocity)
@@ -237,6 +254,11 @@ class meanFlowClass(
         if 'ut' in list(fieldDict.keys()):
             fieldDict['ut'].x.array[:] = 0.0
         self._fieldDict = fieldDict
+        #for key in list(fieldDict.keys()):
+        #    self._fieldDict[key] = Tensor(
+        #                            fieldDict[key],
+        #                            self.__coordSys,
+        #                            )
 
     def importFelicsFile(self):
         import h5py
@@ -390,7 +412,6 @@ class meanFlowClass(
         m = 0
 
         # Fill valsP2 with raw data
-        print(nameListMean)
         for name in nameListMean:
             if name[0] == 'u' and name not in ['ut_forcing_r',
                                                'ut_forcing_i']:
@@ -400,7 +421,6 @@ class meanFlowClass(
                 for component in self._param.Case.getVelocityComponents():
                     # Get the name in plus component
                     nameComponent = name[:1] + component + name[1:]
-                    print(nameComponent)
                     if nameComponent in list(self.__RawFlowDict.keys()):
                         valsP2[:, m] \
                             = np.array(self.__RawFlowDict[nameComponent])
@@ -478,7 +498,6 @@ class meanFlowClass(
                                                        self._param,
                                                        temp_vecP2[:, m])
                         else:
-                            print(name)
                             self._fieldDict[name].vector[:] \
                                 = np.array(temp_vecP2[:, m])
                         m += 1
@@ -845,6 +864,8 @@ class meanFlowClass(
     def _getMeanFieldsToBeRead(self):
         listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
+        listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
+        printDebug(True,"Mean flow fields to be read are "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
 
 class meanFlowVertexValues(fieldProperties):

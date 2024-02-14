@@ -29,17 +29,11 @@ from ufl import (
                 TrialFunctions,
                 dx,
                 SpatialCoordinate,
-                inner,
-                grad,
-                dot,
-                div,
                 FacetNormal,
                 as_tensor,
-                outer,
                 Measure,
                 rhs,
                 lhs,
-                conj,
                 )
 
 from dolfinx.fem import (
@@ -62,6 +56,7 @@ from dolfinx.cpp.la.petsc import (
                 create_matrix,
 )
 
+# SLEPc modification
 from petsc4py.PETSc import ScalarType
 
 #from fenics import  PETScMatrix, PETScVector,DirichletBC, as_backend_type
@@ -74,6 +69,13 @@ from functions import *
 import pdb
 import LinearSystem
 
+from tensorUtils import (
+    Tensor,
+    as_vector,
+    iInner,
+    iDot,
+    iConj,
+)
 
 class WeakFormulationCollectionClass():
     '''This class build the variational formulations for all relevant matrices
@@ -84,59 +86,23 @@ class WeakFormulationCollectionClass():
     -B_response (Resolvent response norm)
     The convention is such that the B matrix (time derivative) is always positive and real
     '''
-    def __init__(self,param,FEMSpaces,MeanFlow):
+    def __init__(self,param,FEMSpaces,mean):
         #from fenics import Function
         from itertools import compress
         from fluctuationClass import fluctuationClass
         from WeakForm import WeakForm
+        from tensorUtils import (
+            CoordinateSystem,
+            )
 
         # add the parameters of the constructor as attributs of the class to use them in DiscretizeFlow-method:
         self.__param = param
         self.__FEMSpaces = FEMSpaces
-        self.__MeanFlow = MeanFlow
-
-        ## changelog:
-        # changed param, MeanFlow, FEMSpaces to private Attributes with the __
-        # added getListOfDirichletBCs()-method
-
-
-        # Add all viscosities to total viscosity... This is temporary and should be shifted with respective Prandtl number to the diffusion term of the momentum equation
-        MF=self.__MeanFlow.fieldDict
-        MF['MuTot'] = Function(FEMSpaces.P2)
-        if self.__param.Case.MolViscModel in ['Constant']:
-            MF['MuTot'].x.array[:] = self.__param.Case.MolVisc
-        if 'nuturb' in list(MF.keys()):
-            MF['MuTot'].vector[:] = MF['MuTot'].vector[:]+MF['nuturb'].vector[:]
-        if 'nuSGS' in list(MF.keys()):
-            MF['MuTot'].vector[:] = MF['MuTot'].vector[:]+MF['nuSGS'].vector[:]
-        if self.__param.Case.MolViscModel in ['File']:
-            MF['MuTot'].vector[:] = MF['MuTot'].vector[:]+MF['nulam'].vector[:]
-        self.__param.IntegrationByParts=True
-
-        # Define test and trial functions
-        #if len(param.Case.getTransportedQuantityList())>1:
-        X=TestFunctions(self.__FEMSpaces.VMixed)
-        #else:
-        #    X=[]
-        #    X.append(TestFunction(FEMSpaces.P2))
-
-        fluctuationC=fluctuationClass(param,MeanFlow,FEMSpaces)
-        #self.hat=TrialFunctions(FEMSpaces.VMixed)
-        self.hat=fluctuationC.fluc
-
-        fluc={}
-        for sol in self.__param.SolutionList:
-            fluc[sol]=self.hat[self.__param.SolutionList.index(sol)]
-
-        # # gGet boundaries from file
-        # self.boundaries =
-        #
-        # MeshFunction('size_t',\
-        #     self.__FEMSpaces.P2.mesh(),\
-        #     self.__param.Case.MeshFilePath.split('.')[0] + '_facet_region.xml')
+        self.__mean = mean
+        mesh = self.__FEMSpaces.P2.mesh
 
         # Get class for integrating along boundaries
-        self.boundaries = self.__FEMSpaces.P2.mesh.facet_tags
+        self.boundaries = mesh.facet_tags
         self.ds = Measure("ds", subdomain_data=self.boundaries)
 
         # Get crossstreamwise wave number
@@ -146,12 +112,47 @@ class WeakFormulationCollectionClass():
         first_BC_flag=True
         for Boundary in self.__param.BCs.getBCsDict()[list(self.__param.BCs.getBCsDict().keys())[0]]:
             if first_BC_flag:
-                self.all_ds=self.ds(Boundary['ID'])
-                first_BC_flag=False
+                self.all_ds = self.ds(Boundary['ID'])
+                first_BC_flag = False
             else:
-                self.all_ds+=self.ds(Boundary['ID'])
+                self.all_ds += self.ds(Boundary['ID'])
+                
         # Get spatial coordinates
-        self.x = SpatialCoordinate(self.__FEMSpaces.P2.mesh)
+        self.x = SpatialCoordinate(mesh)
+        self._coordinateSystem = mesh.coordinateSystem
+        ## Define tensor coordinate system, we always assume the third dimension to be homogenous
+        #if param.Case.CoordinateSystem =='Cartesian':
+        #    self._coordinateSystem = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
+        #elif param.Case.CoordinateSystem =='Cylindrical':
+        #    self._coordinateSystem = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
+        #else:
+        #    printError('Coord. syst not yet implemented in tensor framework.')
+       # self.coordinateSystem = self.coord_sys
+        
+        # Define test and trial functions
+        fluctuationC = fluctuationClass(
+                                   param,
+                                   mean,
+                                   FEMSpaces,
+                                   self._coordinateSystem,
+                                   )
+        #self.hat=TrialFunctions(FEMSpaces.VMixed)
+        self.hat=fluctuationC.fluc
+
+        fluc={}
+        for sol in self.__param.SolutionList:
+            fluc[sol]=self.hat[self.__param.SolutionList.index(sol)]
+        
+        XTemp = TestFunctions(self.__FEMSpaces.VMixed)
+        
+        X=[]
+        for i in list(XTemp):
+            X.append(Tensor(
+                i,
+                self._coordinateSystem,
+                containsTestFunction=True,
+                ))
+            
 
         # Get radial coordinate
         if self.__param.Case.CoordinateSystem in ['Cylindrical']:
@@ -163,46 +164,56 @@ class WeakFormulationCollectionClass():
 
         # Get boundary normals
         self.n_BC=FacetNormal(self.__FEMSpaces.P2.mesh)
-
+        self.n = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), self._coordinateSystem)
         ## Initialize variatial formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
-            from Equations.Momentum.addMomentumEq import addMomentumEq
-            addMomentumEq(self,fluctuationC,X[0],MeanFlow,param)
+            from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
+            addMomentumEq(self,fluctuationC,X[0],mean,param)
+            
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
-            from Equations.Mass.addMassEq import addMassEq
-            addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],self.__MeanFlow,self.__param)
+            from Equations.Mass.addMassEq_tensorial import addMassEq
+            addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],mean,self.__param)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            from Equations.Enthalpy.addEnthalpyEq import addEnthalpyEq
-            addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],self.__MeanFlow,self.__param)
+            from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
+            print('-- Adding energy equation in enthalpy form.')
+            addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
+        
+        if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
+            printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
+            from Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
+            print('-- Adding energy equation in primitive-p form.')
+            addEnergyPEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
-            self.getResolventNorms(X,self.__param,MF)
+            self.getResolventNorms(X,self.__param,mean,fluctuationC)
 
         # Add species transport equation for all transported species
         transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
-            	from Equations.Species.addSpeciesEq import addSpeciesEq
-            	print('Adding Equation for species '+specie + ' in non-conservative form')
-            	addSpeciesEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
+                from Equations.Species.addSpeciesEq_tensorial import addSpeciesEq
+                print('-- Adding Equation for species '+specie + ' in non-conservative form')
+                addSpeciesEq(self,fluctuationC,X[i_eqn],mean,specie,self.__param)
+                
             elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
-            	from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
-            	print('Adding Equation for species '+specie +' in conservative form')
-            	addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.__MeanFlow,specie,self.__param)
+                # This eq has not been derived in tensor framework yet.
+                from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+                print('-- Adding Equation for species '+specie +' in conservative form')
+                addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self.__param)
 
         # Add reactions
-
+        # Reaction eqs not derived in tensor framework yet
         if self.__param.Case.Reaction:
             if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
                 from Reactions.GlobalReaction import GlobalReaction
                 ReactionModelName="WestbrookDryer_Max" #to be put in param
                 Reaction=GlobalReaction(self.__param.Case.Mixture.ReactionMechanism)
-                reactionRateMean=Reaction.computeMeanField(self.__MeanFlow,self.__FEMSpaces.P2)
-                reactionForm=Reaction.addReaction(self.__MeanFlow, X, fluctuationC, self.__param.SolutionList)
+                reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
+                reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.SolutionList)
                 self.A_vf.add(1j * reactionForm)
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
                 from Reactions.TwoStepReaction import TwoStepReaction
@@ -217,7 +228,7 @@ class WeakFormulationCollectionClass():
                 ReactionModelName="2S-SM2" #to be put in param
                 YCH4_lim=0.043*1e-4
                 #c2=C2SM2(YCH4_lim,2)
-                c2=self.__MeanFlow.reaction
+                c2=self.mean.reaction
                 self.TR=fluctuationC.T
                 self.rhoR=fluctuationC.rho
                 self.YCH4R=fluctuationC.Y('CH4')
@@ -230,7 +241,7 @@ class WeakFormulationCollectionClass():
                 self.v_YH2OR=X[self.__param.Case.getTransportedQuantityList().index('H2O')]
                 self.v_YCOR=X[self.__param.Case.getTransportedQuantityList().index('CO')]
                 self.v_YCO2R=X[self.__param.Case.getTransportedQuantityList().index('CO2')]
-                self.dQMean=self.__MeanFlow.dQ
+                self.dQMean=self.mean.dQ
                 self.order=2
                 self.dx=dx
 
@@ -243,15 +254,15 @@ class WeakFormulationCollectionClass():
 
                 self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
-                reaction=self.__MeanFlow.reaction
+                reaction=self.mean.reaction
                 self.v_NO  = X[self.__param.Case.getTransportedQuantityList().index('NO')]
                 self.v_NO2 = X[self.__param.Case.getTransportedQuantityList().index('NO2')]
-                self.T = self.__MeanFlow.T
-                self.phi = self.__MeanFlow.phi
+                self.T = self.mean.T
+                self.phi = self.mean.phi
                 self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
 
 ########################### Resolvent Norm  ############################
-    def getResolventNorms(self,X,param,MF):
+    def getResolventNorms(self,X,param,mean,fluc):
         ''' This function yields the norms for the resolvent analysis.
         Note that both the forcing and response norm must be real!'''
         #Initialize forcing and response
@@ -260,64 +271,82 @@ class WeakFormulationCollectionClass():
 
         # If the density field is inhomogeneous, the mean density
         # field must be taken into account, if not it is set to 1
-        if 'rho' in MF.keys():
-            barrho=MF['rho']
-        else:
-            barrho=1
+        barrho=mean.rho
 
         #In body forcing, forcing is allowed in the entire domain (later restricted by P matrix)
         if param.IOResolvent.ForcingMode=='Body':
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
-            for i in param.IOResolvent.ForcingCoeff:
-                # In case the coefficient correspionds to a velocity, i.e. i is smaller
-                # than the number of velocity components, the coefficient must be applied
-                # to the corresponding (second level) subspace of u, which correspionds to the right
-                # velocity component. If not, it is applied directly to the first level subspace,
-                # and the index is corrected by param.nVelocityComponents+1
-                if i<param.Case.getNVelocityComponents():
-                    self.forcing_vf += conj(X[0][i])*barrho*self.hat[0][i]*self.R*dx
-                else:
-                    self.forcing_vf += conj(X[i-param.nVelocityComponents+1])*\
-                        barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
-
+            printWarning("Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
+            u_f = fluc.u
+            self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+            #velocityForcingList = [0,0,0]
+            #for i in param.IOResolvent.ForcingCoeff:
+            #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
+            #    # than the number of velocity components, the coefficient must be applied
+            #    # to the corresponding (second level) subspace of u, which correspionds to the right
+            #    # velocity component. If not, it is applied directly to the first level subspace,
+            #    # and the index is corrected by param.nVelocityComponents+1
+            #    
+            #    if i<param.Case.getNVelocityComponents():
+            #        velocityForcingList[i] = self.hat[0][i]
+            #        #input(velocityForcingList)
+            #        #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
+            #        #self.forcing_vf += conj(self.X[0][i])*self.hat[0][i]*self.R*dx
+            #        
+            #    else:
+            #        self.forcing_vf += conj(self.X[i-param.nVelocityComponents+1])*\
+            #            barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
+            #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
+            #u_f = Tensor(self.hat[0], self.coord_sys)
+            #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
+            ##self.A_vf.add(( 1j*iDot(iGrad(iConj(X), self.m),fluc_rhou) ).ufl_tens*coord.J_hat*dx)
+            #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
+            #self.forcing_vf += barrho *iDot iConj(X)*self.hat[0][i]*self.R*dx
+            #self.forcing_vf += temporalVF
         # In boundary forcing, forcing is allowed only on the specific boundaries
         elif param.IOResolvent.ForcingMode=='Boundary':
-
+            raise Exception("Boundary forcing not implemented for Resolvent analysis in Tensor notation")
             # Create integrator for the respective boundaries
-            Ds = ds(subdomain_data=self.boundaries)
-
-            # Loop through forcing coefficients (The coefficients that are chosen by the user,
-            # corresponding to the respective equations)
-            for i in param.IOResolvent.ForcingCoeff:
-                # Loop through the forcing boundaries specified by the user
-                for k in param.IOResolvent.ForcingBoundaryIndices:
-                    # In case the coefficient correspionds to a velocity, i.e. i is smaller
-                    # than the number of velocity components, the coefficient must be applied
-                    # to the corresponding (second level) subspace of u, which correspionds to the right
-                    # velocity component. If not, it is applied directly to the first level subspace,
-                    # and the index is corrected by param.nVelocityComponents+1
-                    if i<param.Case.getNVelocityComponents():
-                        self.forcing_vf += X[0][i]*barrho*\
-                            self.hat[0][i]*self.R*Ds(int(k))
-                    else:
-                        self.forcing_vf += X[i-param.nVelocityComponents+1]*\
-                            barrho*self.hat[i-param.nVelocityComponents+1]\
-                            *self.R*Ds(int(k))
+#            Ds = ds(subdomain_data=self.boundaries)
+#
+#            # Loop through forcing coefficients (The coefficients that are chosen by the user,
+#            # corresponding to the respective equations)
+#            for i in param.IOResolvent.ForcingCoeff:
+#                # Loop through the forcing boundaries specified by the user
+#                for k in param.IOResolvent.ForcingBoundaryIndices:
+#                    # In case the coefficient correspionds to a velocity, i.e. i is smaller
+#                    # than the number of velocity components, the coefficient must be applied
+#                    # to the corresponding (second level) subspace of u, which correspionds to the right
+#                    # velocity component. If not, it is applied directly to the first level subspace,
+#                    # and the index is corrected by param.nVelocityComponents+1
+#                    if i<param.Case.getNVelocityComponents():
+#                        self.forcing_vf += self.X[0][i]*barrho*\
+#                            self.hat[0][i]*self.R*Ds(int(k))
+#                    else:
+#                        self.forcing_vf += self.X[i-param.nVelocityComponents+1]*\
+#                            barrho*self.hat[i-param.nVelocityComponents+1]\
+#                            *self.R*Ds(int(k))
 
         # Loop through response coefficients (The coefficients that are chosen by the user,
         # corresponding to the respective solutions to be maximized)
-        for i in param.IOResolvent.ResponseCoeff:
-            # In case the coefficient correspionds to a velocity, i.e. i is smaller
-            # than the number of velocity components, the coefficient must be applied
-            # to the corresponding (second level) subspace of u, which correspionds to the right
-            # velocity component. If not, it is applied directly to the first level subspace,
-            # and the index is corrected by param.nVelocityComponents+1
-            if i<param.Case.getNVelocityComponents():
-                self.response_vf += conj(X[0][i])*barrho*self.hat[0][i]*self.R*dx
-            else:
-                self.response_vf += conj(X[i-param.nVelocityComponents+1])*barrho*\
-                    self.hat[i-param.nVelocityComponents+1]*self.R*dx
+        #velocityResponseList = [0,0,0]
+        #for i in param.IOResolvent.ResponseCoeff:
+        #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
+        #    # than the number of velocity components, the coefficient must be applied
+        #    # to the corresponding (second level) subspace of u, which correspionds to the right
+        #    # velocity component. If not, it is applied directly to the first level subspace,
+        #    # and the index is corrected by param.nVelocityComponents+1
+        #    if i<param.Case.getNVelocityComponents():
+        #        velocityResponseList[i] = self.hat[0][i]
+        #   #     self.response_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
+        #    else:
+        #        self.response_vf += conj(self.X[i-param.nVelocityComponents+1])*barrho*\
+        #            self.hat[i-param.nVelocityComponents+1]*self.R*dx
+        #velocityComponents = Tensor(as_vector(velocityResponseList),self.coord_sys)
+        #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
+        #self.response_vf += temporalVF
+        self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
 
         # Prompt variational formulations in debug mode
         printDebug(param.debug,'Resolvent forcing norm is '+ str(self.forcing_vf))
@@ -391,9 +420,9 @@ class WeakFormulationCollectionClass():
 
             bcFunction.x.array[:] = 0.0
             for bc in bcs:
-            	dofs = bc.dof_indices()[0]
-            	bc_vals = 1.0
-            	bcFunction.x.array[dofs] = bc_vals
+                dofs = bc.dof_indices()[0]
+                bc_vals = 1.0
+                bcFunction.x.array[dofs] = bc_vals
             BC_Diriclet.setDiagonal(bcFunction.vector)
             BC_Diriclet.assemble()
         # In the next 12 lines the Imaginary and real parts of both the lhs and rhs matrix are combined to the
@@ -474,21 +503,21 @@ class WeakFormulationCollectionClass():
                                         self.__matrix_dict,
                                         self.__FEMSpaces,
                                         self.__param,
-                                        self.__MeanFlow,
+                                        self.__mean,
                                         )
 
     def getPMat(self):
         '''
         This function provides the P matrix, which restricts the forcing
         '''
-	
+    
         self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
         #self.__nVelocityComponents = self.__param.nVelocityComponents
         self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
         print('-- Building Pu matrix...')
 
         # Get the matrix that restricts the forcing in space
-        forcingDom = self.__MeanFlow.forcingDomain
+        forcingDom = self.__mean.forcingDomain
 
         # By default, the forcing is applied everywhere, but the corresponding
         # matrix is only zeros, so we check and convert to ones in the default setting
@@ -543,7 +572,7 @@ class WeakFormulationCollectionClass():
         print('-- Building Cr matrix...')
 
         # Get the matrix that restricts the forcing in space
-        responseDom = self.__MeanFlow.responseDomain
+        responseDom = self.__mean.responseDomain
 
         # By default, the forcing is applied everywhere, but the corresponding
         # matrix is only zeros, so we check and convert to ones in the default setting

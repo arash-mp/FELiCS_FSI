@@ -57,6 +57,20 @@ class CaseSettingsGUI():
 			self.analysisModeStr.set(self.Case.AnalysisMode)
 		else:
 			self.analysisModeStr.set(AllSettings['AnalysisMode']['default'])
+   
+		# Adjoint calculate check box
+		setCalculateAdjointColumn=analysisModeColumn
+		setCalculateAdjointRow=analysisModeRow+1
+		self.window.CalculateAdjointL = tk.Label(self.window, text="Calculate adjoint",font=labelFont())
+		self.window.CalculateAdjointL.grid (row = setCalculateAdjointRow+1, column = setCalculateAdjointColumn, rowspan = 1, columnspan = 1)
+		self.CalculateAdjointBool = tk.BooleanVar()
+		self.CalculateAdjointCB = tk.Checkbutton(self.window, text='', variable = self.CalculateAdjointBool,\
+							                      command=self.doNothing)
+		self.CalculateAdjointCB.grid(row =setCalculateAdjointRow+2 , column = setCalculateAdjointColumn, rowspan = 1, columnspan = 1)
+		if hasattr(self.Case,'CalculateAdjoint'):
+			self.CalculateAdjointBool.set(self.Case.CalculateAdjoint)
+		else:
+			self.CalculateAdjointBool.set(AllSettings['CalculateAdjoint']['default'])
 
 
 		# Model for Molecular Viscosity
@@ -134,7 +148,7 @@ class CaseSettingsGUI():
 		# velocity fluctuations check box
 		# set of equations Frame
 		setOfEquationsColumn=1
-		setOfEquationsRow=4
+		setOfEquationsRow=5
 		self.window.setOfEquationFrame = tk.LabelFrame(self.window, text="Set of equations",font=labelFont())
 		self.window.setOfEquationFrame.grid        (row = setOfEquationsRow, column = setOfEquationsColumn, rowspan = 1, columnspan = 5, sticky="")
 
@@ -382,7 +396,7 @@ class CaseSettingsGUI():
 
 		# Mesh File
 		MeshFilePathColumn=1
-		MeshFilePathRow=6
+		MeshFilePathRow=7
 		self.MeshFilePathB = tk.Button(self.window, text='Load Mesh File', command=self.askForMeshFilePath)
 		self.MeshFilePathB.grid         (row = MeshFilePathRow , column = MeshFilePathColumn, rowspan = 1, columnspan = 1)
 		self.MeshFilePathStr    = tk.StringVar()
@@ -395,7 +409,7 @@ class CaseSettingsGUI():
 
 		# Mixture File
 		MixtureFilePathColumn=1
-		MixtureFilePathRow=7
+		MixtureFilePathRow=8
 		self.MixtureFilePathB = tk.Button(self.window, text='Load Mixture File', command=self.askForMixtureFilePath)
 		self.MixtureFilePathB.grid         (row = MixtureFilePathRow , column = MixtureFilePathColumn, rowspan = 1, columnspan = 1)
 		self.MixtureFilePathStr    = tk.StringVar()
@@ -408,7 +422,7 @@ class CaseSettingsGUI():
 
 		# Species File
 		SpeciesFilePathColumn=1
-		SpeciesFilePathRow=8
+		SpeciesFilePathRow=9
 		self.SpeciesFilePathB = tk.Button(self.window, text='Load Species File', command=self.askForSpeciesFilePath)
 		self.SpeciesFilePathB.grid         (row = SpeciesFilePathRow , column = SpeciesFilePathColumn, rowspan = 1, columnspan = 1)
 		self.SpeciesFilePathStr    = tk.StringVar()
@@ -440,6 +454,7 @@ class CaseSettingsGUI():
 		mainGUI.param.Case.TurbulenceModel=self.turbulenceModelStr.get()
 		mainGUI.param.Case.m=float(self.mStr.get())
 		mainGUI.param.Case.AnalysisMode=self.analysisModeStr.get()
+		mainGUI.param.Case.CalculateAdjoint=self.CalculateAdjointBool.get()
 		mainGUI.param.Case.MolViscModel=self.molViscModelStr.get()
 		mainGUI.param.Case.MolViscPerturbModel=self.molViscPerturbModelStr.get()
 		mainGUI.param.Case.MolVisc=float(self.molViscStr.get())
@@ -479,6 +494,7 @@ class CaseSettingsGUI():
 				mainGUI.param.Case.MeshFilePath,
 				mainGUI.param.Case.nDim,
 				mainGUI.param.Case.getExtendedTransportedQuantityList(),
+				mainGUI.param.Case.CoordinateSystem,
 				)
 
 	def Cancel(self):

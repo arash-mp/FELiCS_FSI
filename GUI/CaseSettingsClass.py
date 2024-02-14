@@ -29,6 +29,7 @@ class CaseSettingsClass(Settings):
 			'MolViscPerturbModel':{'datatype':str,'default':'None'},
 			'MolVisc':{'datatype':int,'default':0.0},
 			'AnalysisMode':{'datatype':str,'default':'Modal'},
+			'CalculateAdjoint':{'datatype':bool,'default':True},
 			'TransVelFluc':{'datatype':bool,'default':False},
 			'SetOfEquations':{'datatype':dict,'default':{
 				'Momentum':{'Equation':'NSPrimitive','Variable':'u'},
@@ -93,7 +94,10 @@ class CaseSettingsClass(Settings):
 	def getExternalVelocityComponents(self):
 		''' Provides a list of velocity components, which are directed outside the dimensions of the mesh '''
 		if self.CoordinateSystem=='Cartesian':
-			VelCompList = []
+			if self.m!=0 and self.nDim==2:
+				VelCompList = ['z']
+			else:
+				VelCompList = []
 		elif self.CoordinateSystem=='Cylindrical':
 			VelCompList = ['t']
 
@@ -194,7 +198,6 @@ class CaseSettingsClass(Settings):
 	#		MeanList.append('molarMass')
 		if self.Reaction:
 			MeanList.append('dQ')
-		printDebug(True,"Mean flow fields to be read are " +str(MeanList))
 		return MeanList
 
 	def getNVelocityComponents(self):

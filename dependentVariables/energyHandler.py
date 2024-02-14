@@ -43,7 +43,8 @@ class energyHandler:
         if energyEquationType == 'Enthalpy':
             if 'T' in alreadyInitializedFields:
                 if self._isSolution:
-                    mean_cp = mean.cp.x.array[:]
+                    mean_cp = mean.fieldDict['cp'].x.array[:]
+                    #mean_cp = mean.cp.x.array[:]
                 else:
                     mean_cp = mean.cp
                 self._fieldDict['h'] = mean_cp * self._fieldDict['T']
@@ -70,5 +71,7 @@ class energyHandler:
             return ['cp', 'alpha','he','T','molarMass']
         if energyEquationType == 'ProgressVariableLinear': 
             return ['T', 'Tu', 'Tb'] 
+        if energyEquationType == 'primitive-p': 
+            return ['cp', 'T', 'p', 'gamma', 'Pr'] 
         else:
             return []

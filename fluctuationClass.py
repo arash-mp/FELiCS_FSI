@@ -34,6 +34,9 @@ from functions import (
 )
 from export import export
 
+from tensorUtils import (
+    Tensor,
+)
 
 class fluctuationClass(
     fieldProperties,
@@ -84,8 +87,7 @@ class fluctuationClass(
             param,
             mean,
             FEMSpaces,
-            postProcessing=False,
-            solution=None,
+            coordinateSystem,
     ):
         """
         Constructor of the fluctuationClass. This function initializes the
@@ -101,6 +103,7 @@ class fluctuationClass(
         """
         self._param = param
         self._FEMSpaces = FEMSpaces
+        self._coordinateSystem = coordinateSystem
         fieldProperties.__init__(
             self
         )
@@ -110,37 +113,33 @@ class fluctuationClass(
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroVelocityField \
             = Function(FEMSpaces.FunctionSpaceVectorVelocity)
+        self._zeroFieldTensor = Tensor(
+                                       Function(self._FEMSpaces.P2),
+                                       self._coordinateSystem,
+                                       containsFluctuation = True,
+                                       )
         self._fieldDict = {}
         self._mean = mean
         self._transportedQuantities = param.Case.getTransportedQuantityList()
 
-        # _fluc is constructed. If postProcessing == False it is a trial
-        # function, if True it is a Function
-        if not postProcessing:
-            self._fluc = TrialFunctions(FEMSpaces.VMixed)
-            for field in self._transportedQuantities:
-                indexOfFieldInList = self._transportedQuantities.index(field)
-                self._fieldDict[field] = self._fluc[indexOfFieldInList]
-        else:
-            self._fluc = Function(FEMSpaces.VMixed)
-            self._fluc.vector[:] = solution.astype(float)
-
-            for field in self._transportedQuantities:
-                if len(self._transportedQuantities)>1:
-                    indexOfFieldInList = self._transportedQuantities.\
-                    index(field)
-                    tempField = self._fluc.split()[indexOfFieldInList]
-                else:
-                    tempField = self._fluc
-                self._fieldDict[field] = tempField
+        # _fluc is constructed. 
+        self._fluc = TrialFunctions(FEMSpaces.VMixed)
+        for field in self._transportedQuantities:
+            indexOfFieldInList = self._transportedQuantities.index(field)
+            self._fieldDict[field] = Tensor(
+                                            self._fluc[indexOfFieldInList],
+                                            self._coordinateSystem,
+                                            containsFluctuation = True,
+                                            )
 
         # Check if two out of p, rho and T are in the fieldDict
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
             equationOfStateHandler.__init__(
                 self,
-                param,
-                mean,
+                # param,
+                # mean,
                 )
+            self._initializeEoSFluctuations()
 
         self._meanfieldDict = None
 
@@ -160,11 +159,12 @@ class fluctuationClass(
         )
 
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
-            equationOfStateHandler.__init__(
-                self,
-                param,
-                mean,
-                )
+            # equationOfStateHandler.__init__(
+            #     self,
+            #     param,
+            #     mean,
+            #     )
+            self._initializeEoSFluctuations()
 
         if param.Case.Reaction \
                 and param.Case.Mixture.getReactionMechanism()['type'] \
@@ -268,9 +268,9 @@ class fluctuationSolutions(
         self._zeroVelocityField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
         self._zeroVelocityField.x.array[:] = 0.0
 
-        if np.imag(gainValue) > 1e-10 * np.real(gainValue):
-            printWarning('The gain is a complex number, while it should be \
-            real. I will ignore this and take the real part!')
+        # if np.imag(gainValue) > 1e-10 * np.real(gainValue):
+        #     printWarning('The gain is a complex number, while it should be \
+        #     real. I will ignore this and take the real part!')
         self._gainValue = np.real(gainValue)
         self._omega = omega
         self._isResponseOrDirect = isResponseOrDirect
@@ -306,9 +306,10 @@ class fluctuationSolutions(
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
             equationOfStateHandler.__init__(
                 self,
-                self._param,
-                self._mean.getVertexValues(),
+                # self._param,
+                # self._mean.getVertexValues(),
                 )
+            self._initializeEoSFluctuations()
 
         fieldProperties.__init__(self)
         self._meanfieldDict = None
@@ -330,11 +331,12 @@ class fluctuationSolutions(
 
         # Check if two out of p, rho and T are in the fieldDict
         if sum(el in ['p','rho','T'] for el in list(self._fieldDict.keys())) == 2:
-            equationOfStateHandler.__init__(
-                self,
-                self._param,
-                self._mean.getVertexValues(),
-                )
+            # equationOfStateHandler.__init__(
+            #     self,
+            #     self._param,
+            #     self._mean.getVertexValues(),
+            #     )
+            self._initializeEoSFluctuations()
 
         if self._param.Case.Reaction \
                 and self._param.Case.Mixture.getReactionMechanism()['type'] \
