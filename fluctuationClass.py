@@ -26,9 +26,7 @@ from fieldProperties import fieldProperties
 from dependentVariables.energyHandler import energyHandler
 from dependentVariables.equationOfStateHandler import equationOfStateHandler
 from dependentVariables.heatReleaseHandler import heatReleaseHandler
-from dependentVariables.laminarDiffusionHandler import laminarDiffusionHandler
 from dependentVariables.momentumHandler import momentumHandler
-from dependentVariables.viscosityHandler import viscosityHandler
 from functions import (
     printError,
     printWarning,
@@ -41,9 +39,7 @@ from tensorUtils import (
 
 class fluctuationClass(
     fieldProperties,
-    viscosityHandler,
     heatReleaseHandler,
-    laminarDiffusionHandler,
     equationOfStateHandler,
     energyHandler,
     momentumHandler,
@@ -90,7 +86,7 @@ class fluctuationClass(
             mean,
             FEMSpaces,
             coordinateSystem,
-    ):
+        ):
         """
         Constructor of the fluctuationClass. This function initializes the
         fields
@@ -175,31 +171,9 @@ class fluctuationClass(
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: '\
                      + str(notInitializedFields))
 
-
-        viscosityHandler.__init__(
-            self
-        )
-
-        laminarDiffusionHandler.__init__(
-            self,
-            param,
-            mean
-        )
-
-        if param.Case.Reaction \
-                and param.Case.Mixture.getReactionMechanism()['type'] \
-                == '2S-SM2':
-            heatReleaseHandler.__init__(
-                self,
-                mean.reaction
-            )
-
-
 class fluctuationSolutions(
     fieldProperties,
-    viscosityHandler,
     heatReleaseHandler,
-    laminarDiffusionHandler,
     equationOfStateHandler,
     momentumHandler,
     energyHandler,
@@ -372,21 +346,6 @@ class fluctuationSolutions(
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields)
 
-        fieldProperties.__init__(self)
-        self._meanfieldDict = None
-
-        viscosityHandler.__init__(self)
-        laminarDiffusionHandler.__init__(
-            self,
-            self._param,
-            self._mean.getVertexValues()
-        )
-
-        if self._param.Case.Reaction \
-                and self._param.Case.Mixture.getReactionMechanism()['type'] \
-                == '2S-SM2':
-            heatReleaseHandler.__init__(self,
-                                        self._mean.getVertexValues().reaction)
         self._writeDictToH5(
             self._fieldDict,
             group,

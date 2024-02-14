@@ -5,7 +5,6 @@ from dolfinx.fem import Function
 # Local libraries and methods
 from functions import printWarning, printDebug
 from export import export
-from dependentVariables.viscosityHandler import viscosityHandler
 from fieldProperties import fieldProperties
 from dependentVariables.energyHandler import energyHandler
 from dependentVariables.equationOfStateHandler import equationOfStateHandler
@@ -14,7 +13,6 @@ from tensorUtils import Tensor
 class meanFlowClass(
     fieldProperties,
     energyHandler,
-    viscosityHandler,
     equationOfStateHandler,
     export,
 ):
@@ -22,7 +20,6 @@ class meanFlowClass(
     Parent classes:
     - export
     - fieldProperties
-    - viscosityHandler
 
     Child classes:
 
@@ -38,7 +35,6 @@ class meanFlowClass(
         self._FEMSpaces = FEMSpaces
         self._coordinateSystem = self._FEMSpaces.P2.mesh.coordinateSystem
         fieldProperties.__init__(self)
-        viscosityHandler.__init__(self)
         self._meanflowFilename = None
         self.__Mixture = param.Case.Mixture
         self.__zeroField = Function(self._FEMSpaces.P2)
@@ -120,24 +116,11 @@ class meanFlowClass(
 #
     def initLamDiff(self):
         from dolfinx.fem import Function
-        from dependentVariables.getAlpha import getAlpha
 
-        if self._param.Case.MolViscModel == 'Sutherland':
-            self._fieldDict['nulam'],\
-            self._fieldDict['nulam'].vector()[:] = self.getSutherlandVisc(
-                self.T,
-                self.rho
-            )
-            if 'rho' in self._param.Case.getTransportedQuantityList():
-                self._fieldDict['alpha'], \
-                self._fieldDict['alpha'].vector()[:] \
-                    = getAlpha(self._param,
-                               self._fieldDict,
-                               isMeanFlowClass=True)
-        else: 
-            if self._param.Case.MolViscModel == 'Constant':
-                self._fieldDict['nulam'], \
-                self._fieldDict['nulam'].x.array[:] = self.getConstVisc()
+        
+        if self._param.Case.MolViscModel == 'Constant':
+            self._fieldDict['nulam'] = Function(self._FEMSpaces.P2)
+            self._fieldDict['nulam'].x.array[:] = self._param.Case.MolVisc
 
         for specie in self._param.Case.Mixture.getSpeciesList('transported'):
             Sc = self._param.Case.Mixture.species[specie]['Sc']
