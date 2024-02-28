@@ -77,7 +77,7 @@ class equationOfStateHandler:
             # Type of equation of state
             EoSType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
             if not EoSType in ['Low-Mach', 'IdealGas']:
-                printError('Equation of State '+self._EoSModel()+\
+                printError('Equation of State '+self._EoSType+\
                         ' not defined.')
                 
             if mean == 'None':
@@ -147,7 +147,13 @@ class equationOfStateHandler:
         The EoS only clsoses the variables appearing in the other equations. So it is not necessary to determine
         additional fields. Therefore, this function only returns an empty list, but still exists and is called for 
         reasons of consistency'''
-        return []
+        EoSEquationType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
+        if EoSEquationType == 'Low-Mach':
+            return ['rho','T']
+        if EoSEquationType == 'None':
+            return []
+        else:
+            raise Exception('Equation of state type ' + EoSEquationType + ' not implemented.')
                 
     def _additionalFieldsToBeReadEoS(self):
         '''
@@ -158,6 +164,10 @@ class equationOfStateHandler:
         EoSEquationType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
         if EoSEquationType == 'IdealGas': 
             return ['R_spe']
-        else:
+        elif EoSEquationType == 'Low-Mach':
+            return ['rho','T']
+        elif EoSEquationType == 'None':
             return []
+        else:
+            raise Exception('Equation of state type ' + EoSEquationType + ' not implemented.')
 

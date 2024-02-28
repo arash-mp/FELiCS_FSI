@@ -77,7 +77,7 @@ class momentumHandler:
                                     ):
         alreadyDeterminedFields = list(self._fieldDict.keys())
         viscosityModel = self._param.Case.Mixture.Viscosity
-        if viscosityModel == 'const':
+        if viscosityModel['type'] == 'Constant':
             pass
         elif viscosityModel['type'] == 'Sutherland mean':
             if 'rho' in alreadyDeterminedFields and not 'nulam' in alreadyDeterminedFields:
@@ -87,6 +87,8 @@ class momentumHandler:
                 Ts = Mixture.Viscosity['Constants']['Ts']
                 nulam,fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
                 self._fieldDict['nulam'] = nulam 
+        else:
+            raise Exception("Viscosity model " + viscosityModel['type'] + " not implemented.")
 
     def _additionalFieldsToBeReadEnergy(self):
         pass

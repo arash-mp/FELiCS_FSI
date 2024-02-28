@@ -251,7 +251,7 @@ class CaseSettingsGUI():
 		self.window.energyTransportEquationL  = tk.Label(self.window.setOfEquationFrame, text='Energy', font=labelFont())
 		self.window.energyTransportEquationL.grid         (row = energyTransportEquationRow, column = energyTransportEquationColumn, rowspan = 1, columnspan = 1)
 		self.energyTransportEquationStr    = tk.StringVar()
-		energyTransportEquationCH = {'None', 'Enthalpy'}
+		energyTransportEquationCH = {'None', 'Enthalpy', 'ProgressVariableLinear'}
 		self.window.energyTransportEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.energyTransportEquationStr, *energyTransportEquationCH,command=self.doNothing)
 		self.window.energyTransportEquationM.grid         (row = energyTransportEquationRow+1 , column = energyTransportEquationColumn, rowspan = 1, columnspan = 1)
 		self.energyVariableStr    = tk.StringVar()
@@ -311,7 +311,7 @@ class CaseSettingsGUI():
 		self.window.equationOfStateL  = tk.Label(self.window.setOfEquationFrame, text='Equation of state', font=labelFont())
 		self.window.equationOfStateL.grid         (row = equationOfStateRow, column = equationOfStateColumn, rowspan = 1, columnspan = 1)
 		self.equationOfStateStr    = tk.StringVar()
-		equationOfStateCH = {'None', 'Low-Mach', 'KaiserCnF2023'}
+		equationOfStateCH = {'None', 'Low-Mach', 'IdealGas'}
 		self.window.equationOfStateM  = tk.OptionMenu(self.window.setOfEquationFrame, self.equationOfStateStr, *equationOfStateCH,command=self.doNothing)
 		self.window.equationOfStateM.grid         (row = equationOfStateRow+1 , column = equationOfStateColumn, rowspan = 1, columnspan = 1)
 		if hasattr(self.Case,'SetOfEquations'):
@@ -463,8 +463,8 @@ class CaseSettingsGUI():
 		mainGUI.param.Case.MeshFilePath=self.MeshFilePathStr.get()
 		mainGUI.param.Case.MixtureFilePath=self.MixtureFilePathStr.get()
 		mainGUI.param.Case.Mixture=MixtureClass(self.MixtureFilePathStr.get(),self.SpeciesFilePathStr.get())
-		mainGUI.param.Case.reactionMechanism = reactionMechanismClass(
-			main.param.Case.Mixture.getReactionMechanism()['type']) 
+		#mainGUI.param.Case.reactionMechanism = reactionMechanismClass(
+		#	self.Mixture.getReactionMechanism()['type']) 
 		mainGUI.param.Case.SpeciesFilePath=self.SpeciesFilePathStr.get()
 		setOfEquations = {}
 		setOfEquations['Momentum'] = {

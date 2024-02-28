@@ -346,17 +346,33 @@ class fieldProperties:
 
     @property
     def Tb(self):
-        if 'Tb' in list(self._fieldDict.keys()):
-            return self._fieldDict['Tb']
+        if self.isMeanFlowClass():
+            if 'Tb' in list(self._fieldDict.keys()):
+                return Tensor(
+                            self._fieldDict['Tb'],
+                            self._coordinateSystem,
+                            )
+        elif self.isMeanFlowVertexValuesClass():
+            if 'Tb' in list(self._fieldDict.keys()):
+                return self._fieldDict['Tb']
+                
         else:
-            return Constant(1) * self.__OneField
+            return self._fieldDict['Tb']
 
     @property
     def Tu(self):
-        if 'Tu' in list(self._fieldDict.keys()):
-            return self._fieldDict['Tu']
+        if self.isMeanFlowClass():
+            if 'Tu' in list(self._fieldDict.keys()):
+                return Tensor(
+                            self._fieldDict['Tu'],
+                            self._coordinateSystem,
+                            )
+        elif self.isMeanFlowVertexValuesClass():
+            if 'Tu' in list(self._fieldDict.keys()):
+                return self._fieldDict['Tu']
+                
         else:
-            return Constant(1) * self.__OneField
+            return self._fieldDict['Tu']
 
     @property
     def Tm(self):
