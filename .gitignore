@@ -5,6 +5,6 @@ ParameterFiles/
 __pycache__/
 .nfs*
 .idea/
-docs/build
+DOCUMENTATION/build
 public
 *env
