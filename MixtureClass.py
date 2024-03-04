@@ -8,7 +8,7 @@ class MixtureClass():
         from os import path
         #Set default values
         self.__Species__={}
-        self.__Reaction_mechanism__={'type':'none'}
+        self.__Reaction_mechanism__ = {'type':'None'}
         self.__Pr__ = 1.0
         self.__Viscosity__ = {'type':'Constant','Constants':{'nu':1.0}}
         if mixFilePath == '':
@@ -26,7 +26,6 @@ class MixtureClass():
                     break
                 try: 
                     keyword=line.split('=')[0].strip()
-                    print(keyword)
                     if keyword in keywords:
                         pos=len(keyword)
                         tempstring='self.__'+line[:pos]+'__'+line[pos:]
@@ -84,7 +83,7 @@ class MixtureClass():
         return self.__Species__
 
     @property
-    def ReactionMechanism(self):
+    def reactionMechanism(self):
         ''' Function returning the reaction mechanism '''
         return self.__Reaction_mechanism__
 

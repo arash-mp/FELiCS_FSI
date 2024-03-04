@@ -8,11 +8,13 @@ from export import export
 from fieldProperties import fieldProperties
 from dependentVariables.energyHandler import energyHandler
 from dependentVariables.equationOfStateHandler import equationOfStateHandler
+from dependentVariables.reactionHandler import reactionHandler
 from tensorUtils import Tensor
 
 class meanFlowClass(
     fieldProperties,
     energyHandler,
+    reactionHandler,
     equationOfStateHandler,
     export,
 ):
@@ -37,8 +39,8 @@ class meanFlowClass(
         fieldProperties.__init__(self)
         self._meanflowFilename = None
         self.__Mixture = param.Case.Mixture
-        self.__zeroField = Function(self._FEMSpaces.P2)
-        self.__zeroFieldTensor = Tensor(
+        self._zeroField = Function(self._FEMSpaces.P2)
+        self._zeroFieldTensor = Tensor(
                                        Function(self._FEMSpaces.P2),
                                        self._coordinateSystem,
                                        )
@@ -852,6 +854,7 @@ class meanFlowClass(
         listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
+        listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadReaction())
         printDebug(True,"Mean flow fields to be read are "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
     

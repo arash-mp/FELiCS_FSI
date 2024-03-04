@@ -26,14 +26,20 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     # This term is integrated by parts
     # Volume term from IbP
     # The volume term seems to introduce a small error (~1e-12) in cartesian nates wrt. previous implementation
-    self.A_vf.add(( 1j*fluc.Y(species)*iDiv(mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( 1j*mean.Y(species)*iDiv(mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( 1j*mean.Y(species)*iDiv(fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
-    # Boundary term from IbP
-    self.A_vf.add(( -1j*iDot(self.n,fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
-    self.A_vf.add(( -1j*iDot(self.n,mean.Y(species)*mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
-    self.A_vf.add(( -1j*iDot(self.n,mean.Y(species)*fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
-
+    ibp = True
+    if ibp:
+        self.A_vf.add(( 1j*fluc.Y(species)*iDiv(mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*mean.Y(species)*iDiv(mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*mean.Y(species)*iDiv(fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+        # Boundary term from IbP
+        self.A_vf.add(( -1j*iDot(self.n,fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
+        self.A_vf.add(( -1j*iDot(self.n,mean.Y(species)*mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
+        self.A_vf.add(( -1j*iDot(self.n,mean.Y(species)*fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
+    else:
+        self.A_vf.add(( -1j*iDot(iGrad(fluc.Y(species)),mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( -1j*iDot(iGrad(mean.Y(species)),mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( -1j*iDot(iGrad(mean.Y(species)),fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+        
 
 
     # ----------------------------------------- Diffusion term
@@ -41,9 +47,15 @@ def addSpeciesEq(self,fluc,X,mean,species,param):
     # volume part is added to the eqs. --> neglecting the boundary part allows to set a Neumann condition  
     self.A_vf.add(( -1j*mean.D(species)*(iDot(iGrad(fluc.Y(species)),iGrad(iConj(X)))) ).ufl_tens*J_hat*dx)
     self.A_vf.add(( -1j*fluc.D(species)*(iDot(iGrad(mean.Y(species)),iGrad(iConj(X)))) ).ufl_tens*J_hat*dx)
+    
+    #--------------------------------Reaction
+    #reaction = mean.RR_prefactor * mean.rho * (fluc.Y(species) - 2 * fluc.Y(species) * mean.Y(species))\
+    #                 + mean.RR_prefactor * fluc.rho * (mean.Y(species) - mean.Y(species) * mean.Y(species))
+    ##self.A_vf.add((1j * fluc.omega(species)*iConj(X)).ufl_tens*J_hat*dx)
+    #self.A_vf.add((1j * reaction*iConj(X)).ufl_tens*J_hat*dx)
+    
 
-
-    # ----------------------------------------- Source terms
+    # ----------------------------------------- input output analysis and body forcing
     if param.Case.AnalysisMode == 'Input-Output' and param.IOResolvent.ForcingMode == 'Body':
         self.A_vf.add(( mean.forcing(species)*iConj(X) ).ufl_tens*J_hat*dx)
         

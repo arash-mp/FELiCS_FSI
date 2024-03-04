@@ -171,10 +171,12 @@ class WeakFormulationCollectionClass():
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
             from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
             addMomentumEq(self,fluctuationC,X[0],mean,param)
+            print('-- Adding momentum equation.')
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from Equations.Mass.addMassEq_tensorial import addMassEq
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],mean,self.__param)
+            print('-- Adding continuity equation.')
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
@@ -196,14 +198,16 @@ class WeakFormulationCollectionClass():
             i_eqn=self.__param.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
                 from Equations.Species.addSpeciesEq_tensorial import addSpeciesEq
-                print('-- Adding Equation for species '+specie + ' in non-conservative form')
+                print('-- Adding equation for species '+specie + ' in non-conservative form')
                 addSpeciesEq(self,fluctuationC,X[i_eqn],mean,specie,self.__param)
                 
             elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
                 # This eq has not been derived in tensor framework yet.
                 from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
-                print('-- Adding Equation for species '+specie +' in conservative form')
+                print('-- Adding equation for species '+specie +' in conservative form')
                 addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self.__param)
+            else:
+                raise Exception('Species transport equation type ' + self.__param.Case.SetOfEquations['Species']['Equation'] + ' unknown' )
 
         # Add reactions
         # Reaction eqs not derived in tensor framework yet

@@ -253,6 +253,17 @@ class fieldProperties:
             return self.__zeroField
 
     @property
+    def RR_prefactor(self):
+        if self.isMeanFlowClass():
+            if 'RR_prefactor' in list(self._fieldDict.keys()):
+                return Tensor(
+                                self._fieldDict['RR_prefactor'],
+                                self._coordinateSystem,
+                                )
+        else:
+            return self._fieldDict['RR_prefactor']
+
+    @property
     def Q(self):  # heat release
         return self._fieldDict['Q']
     

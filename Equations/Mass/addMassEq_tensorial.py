@@ -25,7 +25,6 @@ def addMassEq(self,fluc,X,mean,param):
     if 'rho' in param.Case.getTransportedQuantityList():
         self.B_vf.add( (fluc.rho * iConj(X)).ufl_tens * J_hat * dx)
 
-
     # ------------------------ Advection terms
     # The advection term is integrated by parts
     # Volume term from IbP
@@ -41,5 +40,4 @@ def addMassEq(self,fluc,X,mean,param):
             # Correction wrt to index notation: We need to remove the rho*u term, not just the u! 
             self.A_vf.add(( 1j * iDot(self.n,fluc.rhou * iConj(X)) ).ufl_tens * J_hat * self.ds(boundary_index))
             # Then add the forcing at the boundary
-            self.A_vf.add(( -1 * iDot(self.n,mean.u_forcing) * iConj(X) ).ufl_tens * J_hat * self.ds(boundary_index))
-                
+            self.A_vf.add(( -1 * iDot(self.n,mean.u_forcing* mean.rho) * iConj(X) ).ufl_tens * J_hat * self.ds(boundary_index))

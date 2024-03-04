@@ -38,8 +38,8 @@ class reactionClass:
             ):
         self.__isDisretized == True
         if reactionMechanism in ['EBU_CnF_Kaiser2023']:
-            self.__rr = mean.rr_prefactor * mean.rho * (fluc.Y('progress') - 2 * fluc.Y('progress') * mean.Y('progress'))\
-                      + mean.rr_prefactor * fluc.rho * (mean.Y('progress') -     mean.Y('progress') * mean.Y('progress'))
+            self.__rr = mean.RR_prefactor * mean.rho * (fluc.Y('progress') - 2 * fluc.Y('progress') * mean.Y('progress'))\
+                      + mean.RR_prefactor * fluc.rho * (mean.Y('progress') -     mean.Y('progress') * mean.Y('progress'))
         else:
             printWarning('Reaction ' + self.__name + ' could not be discretized.') 
             self.__isDisretized == False

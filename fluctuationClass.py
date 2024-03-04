@@ -27,6 +27,7 @@ from dependentVariables.energyHandler import energyHandler
 from dependentVariables.equationOfStateHandler import equationOfStateHandler
 from dependentVariables.heatReleaseHandler import heatReleaseHandler
 from dependentVariables.momentumHandler import momentumHandler
+from dependentVariables.reactionHandler import reactionHandler
 from functions import (
     printError,
     printWarning,
@@ -39,7 +40,7 @@ from tensorUtils import (
 
 class fluctuationClass(
     fieldProperties,
-    heatReleaseHandler,
+    reactionHandler,
     equationOfStateHandler,
     energyHandler,
     momentumHandler,
@@ -151,7 +152,8 @@ class fluctuationClass(
                                   )
             neededVariables += self._getNeededFieldsForLinearEnergy()
             
-        #Delete duplicates
+
+        # Delete duplicates
         neededVariables = list(dict.fromkeys(neededVariables))
 
         # While not all needed fluctuations are calculated, try calculating them
@@ -171,12 +173,19 @@ class fluctuationClass(
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: '\
                      + str(notInitializedFields))
 
+        print(self._param.Case.Mixture.getReactionMechanism()['type'])
+        if not self._param.Case.Mixture.getReactionMechanism()['type'] == 'None':
+            reactionHandler.__init__(
+                self,
+                )
+            self._initializeReactions()
 class fluctuationSolutions(
     fieldProperties,
     heatReleaseHandler,
     equationOfStateHandler,
     momentumHandler,
     energyHandler,
+    reactionHandler,
     export,
 ):
     """
@@ -318,6 +327,13 @@ class fluctuationSolutions(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearEnergy()
+    
+        if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+            energyHandler.__init__(
+                self,
+                )
+            neededVariables += self._getNeededFieldsForLinearEnergy()
+    
 
         # While not all needed fluctuations are calculated, try calculating them
         n_try = 0
@@ -346,6 +362,13 @@ class fluctuationSolutions(
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields)
 
+        if not self._param.Case.Mixture.getReactionMechanism()['type'] == 'None':
+            reactionHandler.__init__(
+                self,
+                )
+            self._initializeReactions(
+                meanVertexValues,
+                )
         self._writeDictToH5(
             self._fieldDict,
             group,

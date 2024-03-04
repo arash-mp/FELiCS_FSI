@@ -115,7 +115,7 @@ class energyHandler:
         if energyEquationType == 'Enthalpy': 
             return ['cp', 'alpha','he','T','molarMass']
         if energyEquationType == 'ProgressVariableLinear': 
-            return ['T', 'Tu', 'Tb'] 
+            return ['T', 'Tu', 'Tb','rho'] 
         if energyEquationType == 'primitive-p': 
             return ['cp', 'T', 'p', 'gamma', 'Pr'] 
         else:

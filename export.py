@@ -368,6 +368,11 @@ class export:
 				# written to h5. Else the meanflow is written. In case of export
 				# of meanflow, no np.abs() is called on the data.
 				if exportAngle:
+					print(groupName)
+					print(type(groupName))
+					print(type(exportDict[groupName]))
+					print(type(np.abs(exportDict[groupName])))
+					print(exportDict[groupName])
 					currFlowVarGroup.create_dataset(
 					'magnitude',
 					data = np.abs(exportDict[groupName]),
@@ -377,7 +382,6 @@ class export:
 					data = np.angle(exportDict[groupName][:]),
 											)
 				else:
-					#currFlowVarGroup = hf.create_group(groupName)
 					currFlowVarGroup.create_dataset(
 					'magnitude',
 					data = np.real(exportDict[groupName]),)

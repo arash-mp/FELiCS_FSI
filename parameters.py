@@ -159,11 +159,6 @@ class parameters():
 		#SpeciesList
 		self.SpeciesList=self.Case.Mixture.getSpeciesList('transported')
 
-		#ChemistryModel
-		if len(self.Case.Mixture.ReactionMechanism.keys()):
-			self.ChemistryModel = self.Case.Mixture.ReactionMechanism['type']
-		else:
-			self.ChemistryModel = ''
 
 		self.ExportMode='both'
 

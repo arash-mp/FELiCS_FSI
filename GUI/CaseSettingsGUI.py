@@ -495,6 +495,7 @@ class CaseSettingsGUI():
 				mainGUI.param.Case.nDim,
 				mainGUI.param.Case.getExtendedTransportedQuantityList(),
 				mainGUI.param.Case.CoordinateSystem,
+				mainGUI.param.Case.m,
 				)
 
 	def Cancel(self):
