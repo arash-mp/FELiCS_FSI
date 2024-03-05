@@ -1,6 +1,6 @@
 # Third party libraries
 import numpy as np
-from dependentVariables.viscosityModels import *
+from FELiCS.dependentVariables.viscosityModels import *
 
 class momentumHandler:
     """

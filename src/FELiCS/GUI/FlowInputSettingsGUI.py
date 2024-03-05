@@ -1,5 +1,5 @@
 import tkinter as tk
-from GUI.GUISettings import labelFont
+from FELiCS.GUI.GUISettings import labelFont
 class FlowInputSettingsGUI():
 	def __init__(self,mainGUI):
 		'''Initializing the FlowInput GUI

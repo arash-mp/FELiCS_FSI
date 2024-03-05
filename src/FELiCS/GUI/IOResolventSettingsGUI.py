@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext
 
-from GUI.GUISettings import labelFont
+from FELiCS.GUI.GUISettings import labelFont
 class IOResolventSettingsGUI():
 	def __init__(self,mainGUI):
 		'''Initializing the Input-Output/Resolvent settings GUI

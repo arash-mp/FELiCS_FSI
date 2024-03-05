@@ -23,11 +23,11 @@ from ufl import (
 
 # Local libraries and methods
 from FELiCS.fieldProperties import fieldProperties
-from dependentVariables.energyHandler import energyHandler
-from dependentVariables.equationOfStateHandler import equationOfStateHandler
-from dependentVariables.heatReleaseHandler import heatReleaseHandler
-from dependentVariables.momentumHandler import momentumHandler
-from dependentVariables.reactionHandler import reactionHandler
+from FELiCS.dependentVariables.energyHandler import energyHandler
+from FELiCS.dependentVariables.equationOfStateHandler import equationOfStateHandler
+from FELiCS.dependentVariables.heatReleaseHandler import heatReleaseHandler
+from FELiCS.dependentVariables.momentumHandler import momentumHandler
+from FELiCS.dependentVariables.reactionHandler import reactionHandler
 from FELiCS.functions import (
     printError,
     printWarning,

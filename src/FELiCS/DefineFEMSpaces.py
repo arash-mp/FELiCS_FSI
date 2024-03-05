@@ -43,7 +43,7 @@ from FELiCS.functions import (
 						printDebug,
 						printError,
 					)
-from GUI.BCsSettingsClass import (
+from FELiCS.GUI.BCsSettingsClass import (
 	FELiCSMesh,
 	)
 

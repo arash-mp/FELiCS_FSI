@@ -1,4 +1,4 @@
-from .SettingsClass import Settings
+from FELiCS.GUI.SettingsClass import Settings
 class IOResolventSettingsClass(Settings):
 	def __init__(self):
 		'''Initializing the input-output/resolvent settings class

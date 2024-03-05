@@ -1,4 +1,4 @@
-from .SettingsClass import Settings
+from FELiCS.GUI.SettingsClass import Settings
 class ExportSettingsClass(Settings):
 	def __init__(self):
 		'''Initializing the export settings class

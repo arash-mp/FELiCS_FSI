@@ -1,4 +1,4 @@
-from .SettingsClass import Settings
+from FELiCS.GUI.SettingsClass import Settings
 class FlowInputSettingsClass(Settings):
 	def __init__(self):
 		'''Initializing the flow input settings class

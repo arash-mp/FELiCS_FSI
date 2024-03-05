@@ -1,9 +1,9 @@
 import dolfin as do
 
 # noinspection PyUnresolvedReferences
-import Reactions.janafspecie as janafspecie
+import FELiCS.Reactions.janafspecie as janafspecie
 # noinspection PyUnresolvedReferences
-import Reactions.janafopenfoam as janafopenfoam
+import FELiCS.Reactions.janafopenfoam as janafopenfoam
 
 
 """

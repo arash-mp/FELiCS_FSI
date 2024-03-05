@@ -169,23 +169,23 @@ class WeakFormulationCollectionClass():
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
-            from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
+            from FELiCS.Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
             addMomentumEq(self,fluctuationC,X[0],mean,param)
             print('-- Adding momentum equation.')
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
-            from Equations.Mass.addMassEq_tensorial import addMassEq
+            from FELiCS.Equations.Mass.addMassEq_tensorial import addMassEq
             addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],mean,self.__param)
             print('-- Adding continuity equation.')
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            from Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
+            from FELiCS.Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
             print('-- Adding energy equation in enthalpy form.')
             addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
             printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
-            from Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
+            from FELiCS.Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
             print('-- Adding energy equation in primitive-p form.')
             addEnergyPEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
 
@@ -197,13 +197,13 @@ class WeakFormulationCollectionClass():
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
-                from Equations.Species.addSpeciesEq_tensorial import addSpeciesEq
+                from FELiCS.Equations.Species.addSpeciesEq_tensorial import addSpeciesEq
                 print('-- Adding equation for species '+specie + ' in non-conservative form')
                 addSpeciesEq(self,fluctuationC,X[i_eqn],mean,specie,self.__param)
                 
             elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
                 # This eq has not been derived in tensor framework yet.
-                from Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+                from FELiCS.Equations.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
                 print('-- Adding equation for species '+specie +' in conservative form')
                 addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self.__param)
             else:
@@ -213,14 +213,14 @@ class WeakFormulationCollectionClass():
         # Reaction eqs not derived in tensor framework yet
         if self.__param.Case.Reaction:
             if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
-                from Reactions.GlobalReaction import GlobalReaction
+                from FELiCS.Reactions.GlobalReaction import GlobalReaction
                 ReactionModelName="WestbrookDryer_Max" #to be put in param
                 Reaction=GlobalReaction(self.__param.Case.Mixture.ReactionMechanism)
                 reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
                 reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.SolutionList)
                 self.A_vf.add(1j * reactionForm)
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
-                from Reactions.TwoStepReaction import TwoStepReaction
+                from FELiCS.Reactions.TwoStepReaction import TwoStepReaction
                 ReactionModelName="BFER" #to be put in param
                 Reaction=TwoStepReaction(ReactionModelName)
                 Reaction.computeMeanField(MF,self.__FEMSpaces.P2)
@@ -228,7 +228,7 @@ class WeakFormulationCollectionClass():
                 reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
                 self.A_vf.add(1j * reactionForm)
             elif self.__param.Case.Mixture.ReactionMechanism['type']=='2S-SM2':
-                from Reactions.c2sm2 import C2SM2
+                from FELiCS.Reactions.c2sm2 import C2SM2
                 ReactionModelName="2S-SM2" #to be put in param
                 YCH4_lim=0.043*1e-4
                 #c2=C2SM2(YCH4_lim,2)

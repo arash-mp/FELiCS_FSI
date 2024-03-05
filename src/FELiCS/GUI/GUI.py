@@ -49,32 +49,32 @@ class FELiCS_GUI():
 		
 	def openCaseSettingsGUI(self):
 		''' Function opening the case settings GUI'''
-		from GUI.CaseSettingsGUI import CaseSettingsGUI
+		from FELiCS.GUI.CaseSettingsGUI import CaseSettingsGUI
 		CaseSettingsGUI(self)
 
 	def openBaseFlowGUI(self):
 		''' Function opening the input flow settings GUI'''
-		from GUI.FlowInputSettingsGUI import FlowInputSettingsGUI
+		from FELiCS.GUI.FlowInputSettingsGUI import FlowInputSettingsGUI
 		FlowInputSettingsGUI(self)
 
 	def openBCGUI(self):
 		''' Function opening the boundary condition settings GUI'''
-		from GUI.BCsSettingsGUI import BCsSettingsGUI
+		from FELiCS.GUI.BCsSettingsGUI import BCsSettingsGUI
 		BCsSettingsGUI(self)
 	
 	def openIOResolventSettingsGUI(self):
 		''' Function opening the resolvent settings GUI'''
-		from GUI.IOResolventSettingsGUI import IOResolventSettingsGUI
+		from FELiCS.GUI.IOResolventSettingsGUI import IOResolventSettingsGUI
 		IOResolventSettingsGUI(self)
 
 	def openNumericsSettingsGUI(self):
 		''' Function opening the numeric settings GUI'''
-		from GUI.NumericsSettingsGUI import NumericsSettingsGUI
+		from FELiCS.GUI.NumericsSettingsGUI import NumericsSettingsGUI
 		NumericsSettingsGUI(self)
 		
 	def openExportSettingsGUI(self):
 		''' Function opening the export settings GUI'''
-		from GUI.ExportSettingsGUI import ExportSettingsGUI
+		from FELiCS.GUI.ExportSettingsGUI import ExportSettingsGUI
 		ExportSettingsGUI(self)
 	
 	def loadParameters(self):

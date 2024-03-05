@@ -1,4 +1,4 @@
-from . import janafopenfoam
+import FELiCS.Reactions.janafopenfoam as janafopenfoam
 
 
 class Janafspecie:

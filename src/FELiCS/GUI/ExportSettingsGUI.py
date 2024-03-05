@@ -6,7 +6,7 @@ class ExportSettingsGUI():
 		\t -mainGUI: The FELiCS main GUI object
 		'''
 		import tkinter as tk
-		from GUI.GUISettings import labelFont
+		from FELiCS.GUI.GUISettings import labelFont
 		from tkinter import scrolledtext
 		self.window =tk.Toplevel(mainGUI.window)
 		self.Export=mainGUI.param.Export

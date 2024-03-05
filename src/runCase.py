@@ -10,12 +10,11 @@ def runCase(param, useGUI):
 		terminal directly
 	'''
 	from   FELiCS.ExportSolution import ExportFromFile
-	import FELiCS.WeakFormulationCollection
-	import FELiCS.Import
-	import FELiCS.DefineFEMSpaces
+	import FELiCS.WeakFormulationCollection as WeakFormulationCollection
+	import FELiCS.Import as Import
+	import FELiCS.DefineFEMSpaces as DefineFEMSpaces
 	from   FELiCS.ExportSolution import ExportGUI,ExportFromFile
 	from   FELiCS.meanFlowClass import meanFlowClass
-	import FELiCS.global_variables as glob
 	from   FELiCS.fluctuationClass import fluctuationSolutions
 
 	mesh=param.BCs.getMesh()

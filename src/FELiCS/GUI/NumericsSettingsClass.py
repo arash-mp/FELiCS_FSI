@@ -1,4 +1,4 @@
-from .SettingsClass import Settings
+from FELiCS.GUI.SettingsClass import Settings
 class NumericsSettingsClass(Settings):
 	def __init__(self):
 		'''Initializing the numerics settings class

@@ -1,6 +1,6 @@
 import tkinter as tk
-from GUI.ToolTip import CreateToolTip
-from GUI.GUISettings import labelFont
+from FELiCS.GUI.ToolTip import CreateToolTip
+from FELiCS.GUI.GUISettings import labelFont
 class CaseSettingsGUI():
 	def __init__(self,mainGUI):
 		'''Initializing the caseSettings GUI

@@ -12,17 +12,17 @@ from FELiCS.functions import getLastGitCommit
 
 class parameters():
 	def __init__(self):
-		from GUI.CaseSettingsClass import CaseSettingsClass
+		from FELiCS.GUI.CaseSettingsClass import CaseSettingsClass
 		self.Case=CaseSettingsClass()
-		from GUI.FlowInputSettingsClass import FlowInputSettingsClass
+		from FELiCS.GUI.FlowInputSettingsClass import FlowInputSettingsClass
 		self.FlowInput=FlowInputSettingsClass()
-		from GUI.BCsSettingsClass import BCsSettingsClass
+		from FELiCS.GUI.BCsSettingsClass import BCsSettingsClass
 		self.BCs = BCsSettingsClass(self.Case.MeshFilePath)
-		from GUI.IOResolventSettingsClass import IOResolventSettingsClass
+		from FELiCS.GUI.IOResolventSettingsClass import IOResolventSettingsClass
 		self.IOResolvent = IOResolventSettingsClass()
-		from GUI.NumericsSettingsClass import NumericsSettingsClass
+		from FELiCS.GUI.NumericsSettingsClass import NumericsSettingsClass
 		self.Numerics = NumericsSettingsClass()
-		from GUI.ExportSettingsClass import ExportSettingsClass
+		from FELiCS.GUI.ExportSettingsClass import ExportSettingsClass
 		self.Export = ExportSettingsClass()
 		pass
 	def export(self, filestring):

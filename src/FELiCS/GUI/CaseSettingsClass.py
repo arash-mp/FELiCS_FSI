@@ -1,4 +1,4 @@
-from .SettingsClass import Settings
+from FELiCS.GUI.SettingsClass import Settings
 from FELiCS.MixtureClass import MixtureClass
 from FELiCS.reactionMechanism import reactionMechanismClass
 class CaseSettingsClass(Settings):

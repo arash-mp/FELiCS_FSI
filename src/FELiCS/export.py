@@ -34,7 +34,7 @@ from re import (
 	compile,
 	)
 
-from GUI.BCsSettingsClass import (
+from FELiCS.GUI.BCsSettingsClass import (
 	FELiCSMesh,
 	)
 

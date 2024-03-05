@@ -6,9 +6,9 @@ from dolfinx.fem import Function
 from FELiCS.functions import printWarning, printDebug
 from FELiCS.export import export
 from FELiCS.fieldProperties import fieldProperties
-from dependentVariables.energyHandler import energyHandler
-from dependentVariables.equationOfStateHandler import equationOfStateHandler
-from dependentVariables.reactionHandler import reactionHandler
+from FELiCS.dependentVariables.energyHandler import energyHandler
+from FELiCS.dependentVariables.equationOfStateHandler import equationOfStateHandler
+from FELiCS.dependentVariables.reactionHandler import reactionHandler
 from FELiCS.tensorUtils import Tensor
 
 class meanFlowClass(
@@ -60,7 +60,7 @@ class meanFlowClass(
             #    print('2')
             #    param.Case.Mixture.getReactionMechanism()['type']
             #    self.calculateSpeciesEnthalpy()
-            #    from Reactions.c2sm2 import C2SM2
+            #    from FELiCS.Reactions.c2sm2 import C2SM2
             #    YCH4_lim = 0.043 * 1e-4
             #    self.__reaction = C2SM2(YCH4_lim, 2)
             #    self.__reaction.computeSensitivities(self.T,
@@ -77,7 +77,7 @@ class meanFlowClass(
             #                                                self.Y('CO2'))
             #if param.Case.Mixture.ReactionMechanism['type'] == 'NOx':
             #    print('3')
-            #    from Reactions.NOx import NOx
+            #    from FELiCS.Reactions.NOx import NOx
             #    self.__reaction = NOx(2)
 
     def importDataFromFile(self):
@@ -720,9 +720,9 @@ class meanFlowClass(
     def calculateSpeciesEnthalpy(self):
         from fenics import project
         # noinspection PyUnresolvedReferences
-        import Reactions.janafspecie as janafspecie
+        import FELiCS.Reactions.janafspecie as janafspecie
         # noinspection PyUnresolvedReferences
-        import Reactions.janafopenfoam as janafopenfoam
+        import FELiCS.Reactions.janafopenfoam as janafopenfoam
         # initialize janafOF
         janaf = janafopenfoam.Janafopenfoam(2)
 

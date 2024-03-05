@@ -15,7 +15,7 @@ from mpi4py import MPI
 from ufl import triangle
 
 import gmsh
-from GUI.SettingsClass import Settings
+from FELiCS.GUI.SettingsClass import Settings
 import h5py
 import numpy as np
 import pdb
@@ -38,7 +38,7 @@ class FELiCSMesh(Mesh):
 		if inputMesh is None:
 			gmsh.initialize()
 			if __version__.find('0.4') >= 0:
-				from GUI.gmsh_helpers import gmsh_model_to_mesh, read_from_msh
+				from FELiCSGUI.gmsh_helpers import gmsh_model_to_mesh, read_from_msh
 				mesh, cell_tags, hi, facet_tags = read_from_msh(filename, cell_data=True, facet_data=True, gdim=gdim)
 				self.coordinatesGMSH = extract_gmsh_geometry(gmsh.model)
 			else:
