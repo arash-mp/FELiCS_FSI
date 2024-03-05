@@ -1,5 +1,5 @@
 from ufl import dx
-from tensorUtils import *
+from FELiCS.tensorUtils import *
 
 def addEnergyPEq(self,fluc,X,mean,param):
     '''
@@ -11,7 +11,7 @@ def addEnergyPEq(self,fluc,X,mean,param):
     The equation is implemented in PRIMITIVE variables. 
     '''
 
-    from functions import printDebug, printError, printWarning
+    from FELiCS.functions import printDebug, printError, printWarning
     printDebug(param.debug,"Adding energy-p equation in all mesh internal directions")
     
     # ------------------------ Define the tensorial operators

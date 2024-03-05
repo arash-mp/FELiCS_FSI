@@ -25,7 +25,7 @@ def addSpeciesConservativeEq(self,fluc,X,mean,species,param):
     NEED A VALIDATION CASE FOR IT!
     '''
     
-    from functions import printDebug, printError, printWarning
+    from FELiCS.functions import printDebug, printError, printWarning
     
     printWarning("The transport eq. of species in CONSERVATIVE form is not yet implemented in tensor framewore. Currently relies on OBSOLETE ufl form.")
     

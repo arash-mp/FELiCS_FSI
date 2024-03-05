@@ -1,6 +1,6 @@
-from tensorUtils import *
+from FELiCS.tensorUtils import *
 from ufl import dx
-from functions import printWarning, printError, printDebug
+from FELiCS.functions import printWarning, printError, printDebug
 
 def addSpeciesEq(self,fluc,X,mean,species,param):
     '''

@@ -38,7 +38,7 @@ from GUI.BCsSettingsClass import (
 	FELiCSMesh,
 	)
 
-from DefineFEMSpaces import (
+from FELiCS.DefineFEMSpaces import (
 	FEMSpacesClass,
 	)
 import pdb
@@ -108,7 +108,7 @@ class export:
 		# exportDictImag = {}
 		from dolfinx import plot
 		import pyvista
-		from functions import printWarning
+		from FELiCS.functions import printWarning
 		from scipy import interpolate
   
 		valueDict = {}

@@ -1,6 +1,6 @@
 # Third party libraries
 import numpy as np
-from functions import printError, printDebug
+from FELiCS.functions import printError, printDebug
 
 class equationOfStateHandler:
     """

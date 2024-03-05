@@ -39,7 +39,7 @@ elif sys.argv[1] == '-file': useGUI=False
 else: useGUI=True
 
 if __name__ == '__main__':
-	import PrintLogo
+	import FELiCS.PrintLogo
 	if useGUI: # Run program in GUI mode
 		window=FELiCS_GUI()
 	else: # Run program in terminal mode from settings file

@@ -4,7 +4,7 @@ from dolfinx.fem import (
     Function,
 )
 # Local Libraries and methods
-from tensorUtils import (
+from FELiCS.tensorUtils import (
                     iGrad,
                     iDiv,
                     iDot,
@@ -40,11 +40,11 @@ class fieldProperties:
         pass
 
     def isMeanFlowClass(self):
-        from meanFlowClass import meanFlowClass
+        from FELiCS.meanFlowClass import meanFlowClass
         return isinstance(self, meanFlowClass)
 
     def isMeanFlowVertexValuesClass(self):
-        from meanFlowClass import meanFlowVertexValues
+        from FELiCS.meanFlowClass import meanFlowVertexValues
         return isinstance(self, meanFlowVertexValues)
 
     @property

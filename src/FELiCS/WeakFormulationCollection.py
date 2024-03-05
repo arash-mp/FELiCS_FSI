@@ -64,12 +64,12 @@ from scipy.sparse import (
 	csr_matrix,
 	csc_matrix
 	)
-from functions import *
+from FELiCS.functions import *
 #from fenics import FunctionAssigner,Constant
 import pdb
-import LinearSystem
+import FELiCS.LinearSystem
 
-from tensorUtils import (
+from FELiCS.tensorUtils import (
     Tensor,
     as_vector,
     iInner,
@@ -89,9 +89,9 @@ class WeakFormulationCollectionClass():
     def __init__(self,param,FEMSpaces,mean):
         #from fenics import Function
         from itertools import compress
-        from fluctuationClass import fluctuationClass
-        from WeakForm import WeakForm
-        from tensorUtils import (
+        from FELiCS.fluctuationClass import fluctuationClass
+        from FELiCS.WeakForm import WeakForm
+        from FELiCS.tensorUtils import (
             CoordinateSystem,
             )
 

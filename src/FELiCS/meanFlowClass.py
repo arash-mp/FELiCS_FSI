@@ -3,13 +3,13 @@ from h5py import File
 from dolfinx.fem import Function
 
 # Local libraries and methods
-from functions import printWarning, printDebug
-from export import export
-from fieldProperties import fieldProperties
+from FELiCS.functions import printWarning, printDebug
+from FELiCS.export import export
+from FELiCS.fieldProperties import fieldProperties
 from dependentVariables.energyHandler import energyHandler
 from dependentVariables.equationOfStateHandler import equationOfStateHandler
 from dependentVariables.reactionHandler import reactionHandler
-from tensorUtils import Tensor
+from FELiCS.tensorUtils import Tensor
 
 class meanFlowClass(
     fieldProperties,
@@ -91,7 +91,7 @@ class meanFlowClass(
         # Check which type the input file is and read
         if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'h5':
             # In a hdf5 file the data is already interpolated on the mesh
-            # from Import import importHDF5File
+            # from FELiCS.Import import importHDF5File
             self.importHDF5File2()
         else:
             if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'fel':
@@ -141,7 +141,7 @@ class meanFlowClass(
 
     def importMatFile(self):
         import scipy.io as spio
-        from functions import printDebug
+        from FELiCS.functions import printDebug
         filePath = self._param.FlowInput.MeanFlowFilePath
         mat = spio.loadmat(filePath[:-4])
         printDebug(self._param.debug, 'The fields in the Matlab file are '
@@ -327,7 +327,7 @@ class meanFlowClass(
         import numpy as np
         from dolfinx.fem import Function
         from scipy import interpolate
-        from Import import ExpandForAverage, ContractAfterAverage
+        from FELiCS.Import import ExpandForAverage, ContractAfterAverage
         nameListMean = self._getMeanFieldsToBeRead()
         # Get mesh data
         mesh = self._ScalarFunctionSpace.mesh
@@ -492,7 +492,7 @@ class meanFlowClass(
                         m += 1
 
     def raiseNotInFileListWarning(self):
-        from functions import printWarning
+        from FELiCS.functions import printWarning
         for name in self.__notInFileList:
             printWarning("WARNING: Field " + name
                          + " not found in the import file! Assuming Field is \

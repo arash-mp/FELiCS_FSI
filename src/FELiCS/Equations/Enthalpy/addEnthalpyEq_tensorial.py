@@ -1,5 +1,5 @@
 from ufl import dx
-from tensorUtils import *
+from FELiCS.tensorUtils import *
 
 def addEnthalpyEq(self,fluc,X,mean,param):
     '''
@@ -7,7 +7,7 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     enthalpy conservation equation, in tensorial framework.
     '''
 
-    from functions import printDebug, printError, printWarning
+    from FELiCS.functions import printDebug, printError, printWarning
     printDebug(param.debug,"Adding transport equation for enthalpy in all mesh internal directions")
     
     # Coordinate system

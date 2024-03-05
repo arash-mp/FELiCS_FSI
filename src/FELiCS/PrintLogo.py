@@ -14,7 +14,7 @@ print("|_|  |___||____||_|  \___||___/  "+Style.RESET_ALL)
 #		  "+Fore.RED+"                
 #		  "+Fore.CYAN+"
 #		  "+Style.RESET_ALL+"
-from functions import getLastGitCommit
+from FELiCS.functions import getLastGitCommit
 label=getLastGitCommit()
 print('Git commit: '+str(label))
 

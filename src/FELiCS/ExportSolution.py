@@ -30,7 +30,7 @@ from dolfinx.fem import (
 						Function,
 )
 
-from functions import *
+from FELiCS.functions import *
 import numpy as np
 import matplotlib.tri as tri
 from colorama import Fore, Style

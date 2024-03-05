@@ -14,7 +14,7 @@ from ufl import (
     transpose,
     Constant,
 )
-from tensorUtils import (
+from FELiCS.tensorUtils import (
     Tensor,
     as_vector,
     iInner,
@@ -28,7 +28,7 @@ from tensorUtils import (
 )
 
 
-from functions import printWarning, printError, printDebug
+from FELiCS.functions import printWarning, printError, printDebug
 
 def addMomentumEq(self,fluc,X,mean,param):
     '''

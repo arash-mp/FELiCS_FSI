@@ -7,7 +7,7 @@
 class NOx:
 	def __init__(self, P):
 		import pathlib
-		from functions import loadCSV
+		from FELiCS.functions import loadCSV
 		tablePath=str(pathlib.Path(__file__).parent.absolute())+'/NOxTable.csv'
 		self.__Table=loadCSV(tablePath)
 

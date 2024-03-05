@@ -16,7 +16,7 @@ def addMomentumEq(self,fluc,X,mean,param):
 	from Equations.Momentum.MomentumEqPressureGradient import MomentumEqPressureGradient
 	from Equations.Momentum.MomentumEqDiffusionMario2 import MomentumEqDiffusion
 	from Equations.Momentum.MomentumEqDilatationMario2 import MomentumEqDilatation
-	from functions import printDebug
+	from FELiCS.functions import printDebug
 	printDebug(param.debug,"Adding transport equation for momentum in all mesh internal directions")
 	MomentumEqTimeDerivative(self,fluc,X,mean)
 	MomentumEqAdvection(self,fluc,X,mean,param)

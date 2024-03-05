@@ -22,19 +22,19 @@ from ufl import (
 )
 
 # Local libraries and methods
-from fieldProperties import fieldProperties
+from FELiCS.fieldProperties import fieldProperties
 from dependentVariables.energyHandler import energyHandler
 from dependentVariables.equationOfStateHandler import equationOfStateHandler
 from dependentVariables.heatReleaseHandler import heatReleaseHandler
 from dependentVariables.momentumHandler import momentumHandler
 from dependentVariables.reactionHandler import reactionHandler
-from functions import (
+from FELiCS.functions import (
     printError,
     printWarning,
 )
-from export import export
+from FELiCS.export import export
 
-from tensorUtils import (
+from FELiCS.tensorUtils import (
     Tensor,
 )
 

@@ -1,12 +1,12 @@
 from ufl import dx
-from tensorUtils import (
+from FELiCS.tensorUtils import (
     Tensor,
     as_vector,
     iGrad,
     iDot,
     iConj
 )
-from functions import printDebug, printError
+from FELiCS.functions import printDebug, printError
 
 def addMassEq(self,fluc,X,mean,param):
     '''

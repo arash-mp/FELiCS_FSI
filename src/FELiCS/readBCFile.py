@@ -15,7 +15,7 @@ def initBCdict(param, lineIDs, SolutionDict):
 	return bcDict
 
 def readBCFile(param, FEMSpaces):
-	from functions import printDebug
+	from FELiCS.functions import printDebug
 	from fenics import DirichletBC,MeshFunction
 	file = open(param.BCs.BCsFilePath,'r')
 	bcDict = eval(file.read())

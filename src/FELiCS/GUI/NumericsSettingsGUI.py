@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import scrolledtext
-from functions import printWarning
+from FELiCS.functions import printWarning
 from GUI.GUISettings import labelFont
 class NumericsSettingsGUI():
 	def __init__(self,mainGUI):

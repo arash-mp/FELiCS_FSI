@@ -8,7 +8,7 @@
 from h5py import File, string_dtype, AttributeManager
 import pdb
 import numpy as np
-from functions import getLastGitCommit
+from FELiCS.functions import getLastGitCommit
 
 class parameters():
 	def __init__(self):
@@ -145,10 +145,10 @@ class parameters():
 		'''This function provides the parameters in the \'old\' fashion for compatibility with the rest of the code. This is redundant information and as a consequence the with the adaptations in the rest of the code the \'old\' parameters as set here in the function will disappear. In the end this function will be obsolete and must be deleted. '''
 		# AdditionalVelocityComponents
 		from copy import copy
-		from functions import printDebug, printError
+		from FELiCS.functions import printDebug, printError
 		#from fenics import DirichletBC,MeshFunction
 		from dolfinx.fem import dirichletbc as DirichletBC
-		from DefineFEMSpaces import FEMSpacesClass
+		from FELiCS.DefineFEMSpaces import FEMSpacesClass
 
 		#nVelocityComponents
 		self.nVelocityComponents=len(self.Case.getInternalVelocityComponents())

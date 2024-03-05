@@ -1,4 +1,4 @@
-from functions import printWarning,printOK
+from FELiCS.functions import printWarning,printOK
 class MixtureClass():
     '''The mixtre class defines a mixture
     '''

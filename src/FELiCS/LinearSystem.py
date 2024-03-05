@@ -33,11 +33,11 @@ from ufl import (
 from functools import partial
 
 #Local libraries and methods
-from functions import (
+from FELiCS.functions import (
 	printError,
 	printWarning,
 	)
-from fluctuationClass import fluctuationSolutions
+from FELiCS.fluctuationClass import fluctuationSolutions
 
 import pdb
 

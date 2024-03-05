@@ -42,7 +42,7 @@ class IOResolventSettingsClass(Settings):
 	def complete(self):
 		''' Checking if all necessary case attributes are present '''
 		from os.path import isfile
-		from functions import printOK
+		from FELiCS.functions import printOK
 		#Only the mesh is absolutely necessary...'
 		EverythingPresent=True
 		if not len(self.Omegas)>0:

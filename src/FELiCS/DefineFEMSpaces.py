@@ -39,7 +39,7 @@ from os import (
 	mkdir,
 	)
 
-from functions import (
+from FELiCS.functions import (
 						printDebug,
 						printError,
 					)
@@ -47,7 +47,7 @@ from GUI.BCsSettingsClass import (
 	FELiCSMesh,
 	)
 
-from Mapping import Mapping
+from FELiCS.Mapping import Mapping
 import pdb
 
 class FEMSpacesClass():
