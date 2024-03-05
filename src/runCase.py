@@ -1,6 +1,6 @@
-from ExportSolution import ExportFromFile
-import WeakFormulationCollection
 import pdb
+import numpy as np
+import copy
 
 def runCase(param, useGUI):
 	'''This function runs the calculations preset in param
@@ -9,14 +9,14 @@ def runCase(param, useGUI):
 		useGUI: Boolean, True if program is run using GUI, False if run from
 		terminal directly
 	'''
-	import Import
-	import DefineFEMSpaces
-	from ExportSolution import ExportGUI,ExportFromFile
-	from meanFlowClass import meanFlowClass
-	import global_variables as glob
-	import numpy as np
-	from fluctuationClass import fluctuationSolutions
-	import copy
+	from   FELiCS.ExportSolution import ExportFromFile
+	import FELiCS.WeakFormulationCollection
+	import FELiCS.Import
+	import FELiCS.DefineFEMSpaces
+	from   FELiCS.ExportSolution import ExportGUI,ExportFromFile
+	from   FELiCS.meanFlowClass import meanFlowClass
+	import FELiCS.global_variables as glob
+	from   FELiCS.fluctuationClass import fluctuationSolutions
 
 	mesh=param.BCs.getMesh()
 	print('Defining FEMSpaces...')

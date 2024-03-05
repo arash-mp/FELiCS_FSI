@@ -21,9 +21,11 @@ Parameters
 
 """
 import sys
-from GUI.GUI import FELiCS_GUI
+
 from runCase import runCase
-from parameters import parameters
+
+from FELiCS.GUI.GUI import FELiCS_GUI
+from FELiCS.parameters import parameters
 
 # check if '-file' argument was added to run from file only. else start the GUI
 
