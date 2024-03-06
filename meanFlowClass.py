@@ -325,7 +325,8 @@ class meanFlowClass(
     def importXDMFFile(self):
         '''
         Can't give information about CoordinateSystemInputData.
-        And only can read 2-D fields
+        Instead it will read the coordinate system in case setting.
+        Only tested reading 2-D fields.
         '''
         import h5py
         import numpy as np
@@ -360,8 +361,13 @@ class meanFlowClass(
         if np.shape(Coordinate)[1]>=1:
             self.__RawFlowDict['x'] = Coordinate[:,0]
         if np.shape(Coordinate)[1]>=2:
-            self.__RawFlowDict['y'] = Coordinate[:,1]
-        self.__CoordinateSystemInputData = 'Unknown'
+            if self._param.Case.CoordinateSystem in ['Cartesian']:
+                self.__RawFlowDict['y'] = Coordinate[:,1]
+            elif self._param.Case.CoordinateSystem in ['Cylindrical']:
+                self.__RawFlowDict['r'] = Coordinate[:,1]
+        if np.shape(Coordinate)[1]>=3:
+            self.__RawFlowDict['z'] = Coordinate[:,1]
+
         
         
         # Copy all remaining fields to the self.__RawFlowDict
@@ -378,6 +384,7 @@ class meanFlowClass(
                             = np.array(field['real_u']['0'][:,count])
                     else:
                         self.__notInFileList.append(nameComponent)
+                    count += 1
                 del count
             else:
                 if name in list(field.keys()):
