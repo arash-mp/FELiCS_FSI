@@ -131,7 +131,7 @@ class export:
 					valueDict[fieldNameFieldToExport] = Function(self._FEMSpaces.FunctionSpaceVectorVelocityExport)
 					dofsCoordsCalc = exportObject[fieldNameFieldToExport].function_space.tabulate_dof_coordinates()
 					#indexVector = self.mappingFunc(dofsCoordsCalc[:, 0:2], dofsExport[:, 0:2])
-					tempSolutionArray = np.zeros((self._param.Case.nDim,dofsExport.shape[0] ), dtype=np.complex)
+					tempSolutionArray = np.zeros((self._param.Case.nDim,dofsExport.shape[0] ), dtype=complex)
 					for subSpaceNum in range(numSubSpaces):
 						indicesOfComponentExport = valueDict[fieldNameFieldToExport].function_space.sub(subSpaceNum).collapse()[1]
 						indicesOfComponentCalc = self._FEMSpaces.FunctionSpaceVectorVelocity.sub(subSpaceNum).collapse()[1]
@@ -181,7 +181,7 @@ class export:
 					if numSubSpaces > 1:
 						# calculate the complex solution of the vectorfield
 						ValueArray = ( flucRealCalc.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.sub(indexOfFieldInList).collapse().x.array )
-						tempSolutionArray = np.zeros((numSubSpaces, linearFunctionReal.function_space.mesh.coordinates().shape[0] ), dtype=np.complex)
+						tempSolutionArray = np.zeros((numSubSpaces, linearFunctionReal.function_space.mesh.coordinates().shape[0] ), dtype=complex)
 						vectorSpaceDofCoords = flucRealCalc.function_space.sub(indexOfFieldInList).collapse()[0].tabulate_dof_coordinates()
 
 						#indexVector = self.mappingFunc(vectorSpaceDofCoords[:, 0:2], dofsExport[:, 0:2])

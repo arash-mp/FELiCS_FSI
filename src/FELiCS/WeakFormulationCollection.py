@@ -67,7 +67,7 @@ from scipy.sparse import (
 from FELiCS.functions import *
 #from fenics import FunctionAssigner,Constant
 import pdb
-import FELiCS.LinearSystem
+import FELiCS.LinearSystem as LinearSystem
 
 from FELiCS.tensorUtils import (
     Tensor,

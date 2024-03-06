@@ -52,8 +52,8 @@ class Mapping:
         calcMesh = np.append(calcMesh,np.arange(len(calcMesh)).reshape(len(calcMesh),1),axis=1).round(11)
 
         # sort by x,y,z
-        exportMeshSorted = exportMesh[np.lexsort((exportMesh[:,2],exportMesh[:,1],exportMesh[:,0]))].astype(np.int)
-        calcMeshSorted = calcMesh[np.lexsort((calcMesh[:, 2], calcMesh[:, 1], calcMesh[:, 0]))].astype(np.int)
+        exportMeshSorted = exportMesh[np.lexsort((exportMesh[:,2],exportMesh[:,1],exportMesh[:,0]))].astype(int)
+        calcMeshSorted = calcMesh[np.lexsort((calcMesh[:, 2], calcMesh[:, 1], calcMesh[:, 0]))].astype(int)
 
         # find indices of sorted exportMesh in calcMesh
         index_array = np.vstack((calcMeshSorted[:, -1], exportMeshSorted[:, -1])).T
