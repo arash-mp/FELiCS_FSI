@@ -464,7 +464,7 @@ class CaseSettingsGUI():
 		mainGUI.param.Case.MixtureFilePath=self.MixtureFilePathStr.get()
 		mainGUI.param.Case.Mixture=MixtureClass(self.MixtureFilePathStr.get(),self.SpeciesFilePathStr.get())
 		mainGUI.param.Case.reactionMechanism = reactionMechanismClass(
-			main.param.Case.Mixture.getReactionMechanism()['type']) 
+		mainGUI.param.Case.Mixture.getReactionMechanism()['type']) 
 		mainGUI.param.Case.SpeciesFilePath=self.SpeciesFilePathStr.get()
 		setOfEquations = {}
 		setOfEquations['Momentum'] = {
