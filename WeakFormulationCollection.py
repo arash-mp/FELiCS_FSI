@@ -422,6 +422,11 @@ class WeakFormulationCollectionClass():
         #self.__WeakForm = WeakForm
         from copy import deepcopy
         # Check for type of case
+        
+        # Used for debugging
+        # from matspy import spy
+        # import matplotlib
+        # matplotlib.use('TkAGG')
 
         AnalysisMode = self.__param.Case.AnalysisMode
         FEMSpaces = self.__FEMSpaces
@@ -493,12 +498,16 @@ class WeakFormulationCollectionClass():
         # In the next 12 lines the Imaginary and real parts of both the lhs and rhs matrix are combined to the
         # sparse matrix A and B, respectively. Not needed matrices are deleted
         self.__matrix_dict['A'] = csr_matrix(A.getValuesCSR()[::-1], shape = A.size,dtype=complex)
+        # printDebug(True, '-- Display A-matrix')
+        # spy(self.__matrix_dict['A'],buckets=4000)
         del A
         if not AnalysisMode in ['Input-Output']:
             #BC_Diriclet_mat = as_backend_type(BC_Diriclet).mat()
             self.__matrix_dict['A'] = self.__matrix_dict['A'] + 10**30*(1+1j) * csr_matrix(BC_Diriclet.getValuesCSR()[::-1], shape = BC_Diriclet.size,dtype=complex)
             del BC_Diriclet
         self.__matrix_dict['B'] = csr_matrix(B.getValuesCSR()[::-1], shape = B.size,dtype=complex)
+        # printDebug(True, '-- Display B-matrix')
+        # spy(self.__matrix_dict['B'],buckets=4000)
         del B
         #tempMat=1*matrix_dict['B'].transpose()
         #tempMat[1,1]=100
@@ -511,6 +520,7 @@ class WeakFormulationCollectionClass():
             B_forcing = assemble_matrix(form(self.forcing_vf))
             B_forcing.assemble()
             self.__matrix_dict['B_forcing'] = csr_matrix(B_forcing.getValuesCSR()[::-1], shape = B_forcing.size,dtype=complex)
+
             del B_forcing
             B_response = assemble_matrix(form(self.response_vf))
             B_response.assemble()
@@ -578,30 +588,7 @@ class WeakFormulationCollectionClass():
                                         self.__FEMSpaces,
                                         self.__param,
                                         self.__mean,
-                                        )
-
-    # def __plot_coo_matrix(self,m_in):
-    #     import matplotlib.pyplot as plt
-    #     from scipy.sparse import coo_matrix
-        
-    #     # Prepare the coo matrix for plot
-    #     m = coo_matrix(m_in)
-            
-    #     fig = plt.figure()
-    #     ax = plt.gca()
-    #     # ax = fig.add_subplot(111, facecolor='black')
-    #     ax.plot(m.col, m.row, 's', color='white', ms=1)
-    #     ax.set_xlim(0, m.shape[1])
-    #     ax.set_ylim(0, m.shape[0])
-    #     ax.set_aspect('equal')
-    #     for spine in ax.spines.values():
-    #         spine.set_visible(False)
-    #     ax.invert_yaxis()
-    #     ax.set_aspect('equal')
-    #     ax.set_xticks([])
-    #     ax.set_yticks([])
-    #     plt.show()
-        
+                                        )        
 
     def getPMat(self):
         '''
@@ -613,7 +600,6 @@ class WeakFormulationCollectionClass():
         '''
     
         self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
-        #self.__nVelocityComponents = self.__param.nVelocityComponents
         self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
         printDebug(True, '-- Building Pu matrix...')
 
@@ -661,22 +647,14 @@ class WeakFormulationCollectionClass():
         n = len(index)
         row_ind = index
         col_ind = np.arange(n)
-        P = csr_matrix((np.ones(n), (row_ind,col_ind)), (m, n))
-        
-        # Used for debugging
-        # from matspy import spy
-        # import matplotlib
-        # matplotlib.use('TkAGG')
-        # spy(P,buckets=4000)
-        
+        P = csr_matrix((np.ones(n), (row_ind,col_ind)), (m, n))    
         printDebug(True, '-- Done.')
         
         return P
 
     def getCrMat(self):
         ''' This function provides the Cr matrix, which restricts the response '''
-        self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
-        #self.__nVelocityComponents = self.__param.nVelocityComponents
+        self.__response_coeff = self.__param.IOResolvent.ResponseCoeff
         self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
         printDebug(True, '-- Building Cr matrix...')
 
@@ -700,7 +678,8 @@ class WeakFormulationCollectionClass():
 
         index = np.empty(shape=(0,0))
 
-        for i in range(nfluctvar): # Always considers all fluctuations in the response for now
+        # Loop over fluctuations which are part of response coeff
+        for i in self.__response_coeff:
             if i < self.__nVelocityComponents:
                 dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]
             else:
@@ -719,15 +698,9 @@ class WeakFormulationCollectionClass():
         m = len(np.arange(*local_range))
         n = len(index)
         row_ind = index
-        Cr = csr_matrix((np.ones(n),(row_ind,row_ind)),(m,m))   # should we also add dtype=complex here?
+        col_ind = np.arange(n)
+        Cr = csr_matrix((np.ones(n),(row_ind,row_ind)),(m,m))
+        # Cr = csr_matrix((np.ones(n),(col_ind,row_ind)),(n,m))     # in theory this should be the size of Cr
         printDebug(True, '-- Done.')
-        
-        # Used for debugging
-        # from matspy import spy
-        # import matplotlib
-        # matplotlib.use('TkAGG')
-        # spy(Cr,buckets=4000)
-        # import sys
-        # sys.exit()
         
         return Cr
