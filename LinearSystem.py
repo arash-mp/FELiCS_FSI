@@ -266,24 +266,16 @@ class linearSystem:
 		for i in range(nGuesses):
 			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
 			printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
-			# EigValTemp, EigVecTemp = splin.eigs(
-			# 	A,
-			# 	k=self.__param.Numerics.nSolut,
-			# 	M=B,
-			# 	sigma=eigenValueGuess,
-			# 	ncv=200,
-			# 	maxiter=100,
-			# 	tol=self.__tol,
-			# 	return_eigenvectors=True,
-			# 	)
-			EigValTemp, EigVecTemp = self.__solveGeneralEigenproblemSLEPc(
-                                    	A, 
-                                     	B, 
-                                      	eigenValueGuess, 
-                                        self.__param.Numerics.nSolut,
-                                        toleig=self.__tol,
-                                        adjoint=False
-                                        )
+			EigValTemp, EigVecTemp = splin.eigs(
+			 	A,
+			 	k=self.__param.Numerics.nSolut,
+			 	M=B,
+			 	sigma=eigenValueGuess,
+			 	ncv=200,
+			 	maxiter=100,
+			 	tol=self.__tol,
+			 	return_eigenvectors=True,
+			 	)
 			index = list(range(i*nSol,(i+1)*nSol))
 			EigValTot[index] = EigValTemp
 			EigVecTot[:,index] = EigVecTemp
@@ -573,34 +565,48 @@ class linearSystem:
 
 		fluctSolutObjList = []
 
+		# Allocate matrices/vectors of the solutions
 		gains = np.zeros((self.__param.Numerics.nSolut,self.__n_omegas),\
 			'complex')
-
 		forcings = np.zeros((self.__n_dof,self.__param.Numerics.nSolut,\
 			self.__n_omegas),'complex')
-
 		responses = np.zeros((self.__n_dof,self.__param.Numerics.nSolut,\
 			self.__n_omegas),'complex')
 
+		# Get the matrices defining the forcing/response norms (compressed)
 		self.__matrix_dict['B_forcing'] = \
 			self.__matrix_dict['B_forcing'].tocsc()
-
 		self.__matrix_dict['B_response'] = \
 			self.__matrix_dict['B_response'].tocsc()
 
-		# The B matrix was used to impose FEM weights to matrices
-		self.__matrix_dict['B_femWeight'] = self.__matrix_dict['B_femWeight'].tocsc()
+		# Matrix containing the FEM-integration weights
+		self.__matrix_dict['B_femWeight'] = \
+      		self.__matrix_dict['B_femWeight'].tocsc()
   
 		printDebug(True, '--------------------------------')
 		printDebug(True, '-- Getting matrices limiting response/forcing...')
 		self.__matrix_dict['Pu'] = WeakFormulationClass.getPMat()
+		self.__matrix_dict['Pu'] = self.__matrix_dict['Pu'].tocsc()
 		self.__matrix_dict['Cr'] = WeakFormulationClass.getCrMat()
+		self.__matrix_dict['Cr'] = self.__matrix_dict['Cr'].tocsc()
   		# SD: it would make more sense to move this to WeakFormulationCollection!
 		# similarly to what we do with forcing_vf 
 
 		printDebug(True, '-- Getting weighting matrix for forcing...')
-		self.__matrix_dict['Q'] =  self.__matrix_dict['Pu'].transpose()*self.__matrix_dict['B_femWeight']*self.__matrix_dict['Pu']
-		# self.__matrix_dict['Q'] =  self.__matrix_dict['Pu'].transpose()*self.__matrix_dict['Pu']
+  		# Modified the weight matrix: 
+    	#	(i) the multiplication with Pu^T and Pu is necessary to 
+		#	apply the weigths only in domain of the restrictor. 
+		# 	(ii) TEMPORARY: we use "B_femWeight" instead of "B" to be
+		# 	able to force on any variable (e.g. in compressible case).
+		#	But a more consistent implementation must be done!
+		self.__matrix_dict['Q'] = \
+      			self.__matrix_dict['Pu'].transpose()*\
+      			self.__matrix_dict['B_femWeight']*\
+             	self.__matrix_dict['Pu']
+        # self.__matrix_dict['Q'] = \
+		# 		self.__matrix_dict['Pu'].transpose()*\
+        # 		self.__matrix_dict['B']*\
+		# 		self.__matrix_dict['Pu']
 		self.__matrix_dict['Q'] = self.__matrix_dict['Q'].tocsc()
 		nu = min(np.shape(self.__matrix_dict['Pu']))
 		printDebug(True, '-- Done.')
@@ -628,12 +634,23 @@ class linearSystem:
 			# Serial computation of the resolvent --------------------------------
 			printDebug(True, '--------------------------------')
 			printDebug(True, '-- Serial computation of forcing, gains, and responses...')
+   
 			# LUQ is obtained here as it cannot be pickled
 			self.__matrix_dict['LUQ'] = \
 				splin.splu(self.__matrix_dict['Q'], permc_spec=3)
 
 			for i in range(self.__n_omegas):
+				
+				# Frequency 
+				omega = self.__param.IOResolvent.Omegas[i]
+				printDebug(True, "-- Performing resolvent analysis for omega = " + str(omega))
+
 				def op(x):
+					'''
+					Build the linear system which is used to get the 
+					eigenvalue problem matrix of the resolvent:
+
+     				'''
 					y = self.__matrix_dict['Pu']*x
 					z = self.__matrix_dict['B_forcing']*y
 					y = LU.solve(z)
@@ -645,18 +662,16 @@ class linearSystem:
 					y = self.__matrix_dict['Pu'].transpose()*z
 					w = self.__matrix_dict['LUQ'].solve(y, trans='H')
 					return w
-
-				omega = self.__param.IOResolvent.Omegas[i]
-				printDebug(True, "-- Performing resolvent analysis for omega = " + str(omega))
+				
 				OP = self.__matrix_dict['A']-omega*self.__matrix_dict['B']
 				OP = OP.tocsc()
-
+				
 				# Get lower upper decomposition of OP (used in function op())
 				LU = splin.splu(OP,permc_spec=3)
-
+				
 				# Create handle for the linear operator defined by function op()
 				SOP = splin.LinearOperator((nu,nu),matvec=op,dtype='complex')
-
+				
 				# Perform eigenvalue decomposition of the linear
 				# operator defined in op() using the handl SOP
 				gains[:,i],eigenvectors_c = splin.eigs(SOP,
@@ -890,121 +905,6 @@ class linearSystem:
 		printDebug(True, '-- Max residuum of %s solutions (EUCLIDIAN norm): %12g' % (method,maxRes))
 
 		return fluctSolutObjList
-
-
-	def __solveGeneralEigenproblemSLEPc(
-     		self, 
-       		A, 
-         	B, 
-          	sigma, 
-           	nev, 
-            toleig=1.e-16, 
-            adjoint=False,
-            ):
-		"""
-		Solves the generalized eigenvalue problem (GEVP) 
-  		using the SLEPc and PETSc libraries.
-
-		Function arguments:
-		- A, B		Matrices defining the GEVP (A-wB)q = 0
-		- sigma 	Eigenvalue guesses
-		- nev 		Number of eigenvalues to converge
-		- toleig	(optional) precision of GEVP
-		- adjoint	(bool, optional) more optimal way to 
-					compute the adjoint GEVP
-
-		Function returns:
-		- eigVals, eigVecs
-
-		"""
-  
-		from slepc4py import SLEPc
-		from petsc4py import PETSc
-		Print = PETSc.Sys.Print
-		# finish assembling matrices
-		# A.assemble()
-		# B.assemble()
-		Ap = PETSc.Mat().createAIJ(size=A.shape,
-                                   csr=(A.indptr, A.indices,
-                                        A.data))
-		Bp = PETSc.Mat().createAIJ(size=B.shape,
-                                   csr=(B.indptr, B.indices,
-                                        B.data))
-		# create eigenproblem solver
-		eps = SLEPc.EPS().create()
-		eps.setOperators(Ap,Bp)
-		# eps.setProblemType(SLEPc.EPS.ProblemType.PGNHEP) 	# general non-Hermitian eigenproblem with positive semi-definite B
-		eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP) 	# general non-Hermitian eigenproblem with semi-definite B
-		if adjoint:
-				#calculate adjoint vectors
-				eps.setTwoSided(True)
-		eps.setTolerances(tol=toleig,max_it=200)
-		eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) 					# is standard, does not need to be set
-		#eps.setType(SLEPc.EPS.Type.ARNOLDI)
-		eps.getST().setType(SLEPc.ST.Type.SINVERT) 					# For stability analysis only
-		#eps.getST().setType(SLEPc.ST.Type.SHIFT)
-		#eps.getST().setShift(1000000)
-		eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE) 	# For stability
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_REAL)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_IMAGINARY)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_REAL)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE) 	# For resolvent
-		eps.setTarget(sigma) 										# sigma is None for resolvent
-		eps.setDimensions(nev=nev)
-		eps.getST().getKSP().getPC().setType('lu')
-		eps.getST().getKSP().getPC().setFactorSolverType('mumps')
-		eps.setFromOptions()
-		eps.setUp()
-		eps.solve()
-		dim = Ap.getSize()[0]
-		eigVals,  eigVecs  = np.empty(nev,complex), np.empty([nev,dim],complex)
-		if adjoint:
-				eigVecs_adjoint  =  np.empty([nev,dim],complex)
-		vec_real, vec_imag = Ap.getVecs()
-  
-		# Printing info about the run
-		infoIts = eps.getIterationNumber()
-		infoType = eps.getType()
-		infoNev, ncv, mpd = eps.getDimensions()
-		infoTol, infoMaxit = eps.getTolerances()
-		infoNconv = eps.getConverged()
-		printDebug(True, "-- *** SLEPc INFO ***")
-		printDebug(True, "-- Number of iterations of the method: %d" % infoIts)
-		printDebug(True, "-- Solution method: %s" % infoType)
-		printDebug(True, "-- Number of requested eigenvalues: %d" % infoNev)
-		printDebug(True, "-- Stopping condition: tol = %.4g, max_iter = %d" % (infoTol,infoMaxit))
-		printDebug(True, "-- Number of converged eigenpairs: %d" % infoNconv)
-		printDebug(True, "-- ")
-		printDebug(True, "--         k             ||Ax-kx||/||kx|| ")
-		printDebug(True, "-- -------------------- ------------------")
-  
-		for i in range(nev):
-				try:
-						eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
-						eigVecs[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
-      
-						# More info
-						infoErr = eps.computeError(i)
-						if eigVals[i].imag != 0.0:
-							printDebug(True, "-- %9f%+9f j %12g" % (eigVals[i].real, eigVals[i].imag, infoErr))
-						else:
-							printDebug(True, "-- %12f      %12g" % (eigVals[i].real, infoErr))
-
-						if adjoint:
-								# get adjoint solution
-								eps.getLeftEigenvector(i,vec_real,vec_imag)
-								eigVecs_adjoint[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
-						#print(eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
-				except:
-						print("Could not access eigenpair nb ", nev+1, "!")
-		eps.getST().getKSP().getPC().destroy()
-		eps.getST().getKSP().destroy()
-		eps.getST().destroy()
-		eps.destroy()
-		if adjoint:
-				return eigVals, eigVecs.T, eigVecs_adjoint.T
-		else:
-				return eigVals, eigVecs.T
 
 
 	def checkMatrix(self, eq='ux', searchPoint=[1, 2]):
