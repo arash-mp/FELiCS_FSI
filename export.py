@@ -337,14 +337,15 @@ class export:
 		for i, groupName in enumerate(list(exportDict.keys())):
 			#if exportDict[groupName].shape[0] == self._param.Case.nDim:
 			if groupName in ['u', 'rhou', 'u_forcing_r', 'u_forcing_i']:
+			if groupName in ['u', 'rhou', 'u_forcing_r', 'u_forcing_i']:
 				for i, component in enumerate(self._param.Case.getVelocityComponents()):
 					if 'u_' in groupName:
-					    uComponent = 'u' + component
-					    newGroupName = groupName.replace('u_', f'{uComponent}_')
-					    currFlowVarGroup = hf.create_group(newGroupName)
+						uComponent = 'u' + component
+						newGroupName = groupName.replace('u_', f'{uComponent}_')
+						currFlowVarGroup = hf.create_group(newGroupName)
 					else:
-					    uComponent = groupName + component
-					    currFlowVarGroup = hf.create_group(uComponent)
+						uComponent = groupName + component
+						currFlowVarGroup = hf.create_group(uComponent)
 
 					# if the boolean exportAngle is True, values of typ flucs are
 					# written to h5. Else the meanflow is written. In case of export
@@ -368,11 +369,11 @@ class export:
 				# written to h5. Else the meanflow is written. In case of export
 				# of meanflow, no np.abs() is called on the data.
 				if exportAngle:
-					print(groupName)
-					print(type(groupName))
-					print(type(exportDict[groupName]))
-					print(type(np.abs(exportDict[groupName])))
-					print(exportDict[groupName])
+					# print(groupName)
+					# print(type(groupName))
+					# print(type(exportDict[groupName]))
+					# print(type(np.abs(exportDict[groupName])))
+					# print(exportDict[groupName])
 					currFlowVarGroup.create_dataset(
 					'magnitude',
 					data = np.abs(exportDict[groupName]),
