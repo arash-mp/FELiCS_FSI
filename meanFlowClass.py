@@ -328,6 +328,7 @@ class meanFlowClass(
         from dolfinx.fem import Function
         from scipy import interpolate
         from Import import ExpandForAverage, ContractAfterAverage
+        printDebug(True, '-- Interpolating on FELiCS mesh...')
         nameListMean = self._getMeanFieldsToBeRead()
         # Get mesh data
         mesh = self._ScalarFunctionSpace.mesh
@@ -854,6 +855,11 @@ class meanFlowClass(
         listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
+        listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadReaction())
+        
+        # Delete duplicates
+        listOfFieldsToBeRead = list(dict.fromkeys(listOfFieldsToBeRead))
+        
         printDebug(True,"-- Mean flow fields to be read are: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
     
