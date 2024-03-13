@@ -100,7 +100,9 @@ class FEMSpacesClass():
 		self.FunctionSpaceList=[]
 		self.FunctionSpaceListExport=[]
 		for name in param.SolutionList:
-			printDebug(param.debug,'-- Adding finite element space for '+name+'...')
+			printDebug(param.debug,"-- Adding finite element space of order "+
+              f"{param.Numerics.PolynomialOrder[name]} for "+
+              f"{name}")
 			if name=='u':
 				FE = VectorElement(
                        			elementTypeStr,
