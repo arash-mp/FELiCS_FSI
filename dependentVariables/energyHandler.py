@@ -1,6 +1,7 @@
 # Third party libraries
 import numpy as np
 from dependentVariables.viscosityModels import *
+from dependentVariables.viscosityModels import *
 
 class energyHandler:
     """
@@ -41,6 +42,10 @@ class energyHandler:
                                             self,
                                             mean = 'None',
                                             ):
+    def _relateConservativeToPrimitiveVariablesEnergy(
+                                            self,
+                                            mean = 'None',
+                                            ):
         alreadyInitializedFields = list(self._fieldDict.keys())
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
 
@@ -50,7 +55,26 @@ class energyHandler:
         ############################################### 
         ################### Enthalpy ##################
         ############################################### 
+
+        if mean == 'None':
+            mean = self._mean
+
+        ############################################### 
+        ################### Enthalpy ##################
+        ############################################### 
         if energyEquationType == 'Enthalpy':
+            if sum(el in ['h','T'] for el in list(alreadyInitializedFields)) == 1:            
+                # so far cp is constant, which in reacting flows might be a strong assumption.
+                if 'T' in alreadyInitializedFields:
+                    if self._isSolution:
+                        mean_cp = mean.fieldDict['cp']
+                    else:
+                        mean_cp = mean.cp
+                    self._fieldDict['h'] = mean_cp * self._fieldDict['T']
+                elif 'h' in alreadyInitializedFields:
+                    raise Exception('Calculation of enthalpy, h, from temperature, T, not yet implemented. Check energyHandler.')
+                else:
+                    raise Exception('Enthalpy equation is chosen, however neither temperature, T, nor enthalpy, h, are available to calculate the respective other')
             if sum(el in ['h','T'] for el in list(alreadyInitializedFields)) == 1:            
                 # so far cp is constant, which in reacting flows might be a strong assumption.
                 if 'T' in alreadyInitializedFields:
@@ -79,6 +103,13 @@ class energyHandler:
                         self._fieldDict['T'] = self.Y('progress') * (mean_Tb - mean_Tu)
                     else:
                          raise Exception('ProgressVariableLinear is chosen, however, the progress variable is not available to calculate the temperature.')
+        
+        ############################################### 
+        ############### Energy-p linear ###############
+        ############################################### 
+        elif energyEquationType == 'primitive-p':
+            pass
+        
         else: 
             raise Exception("Energy equation type " + energyEquationType + " not known.")
 
@@ -86,6 +117,8 @@ class energyHandler:
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
         if energyEquationType == 'Enthalpy':
             return ['T', 'h', 'alpha']
+        if energyEquationType == 'primitive-p':
+            return ['rho', 'p', 'T']
         elif energyEquationType == 'ProgressVariableLinear':
             return ['T', 'progress']
 
@@ -116,7 +149,8 @@ class energyHandler:
             return ['cp', 'alpha','he','T','molarMass']
         if energyEquationType == 'ProgressVariableLinear': 
             return ['T', 'Tu', 'Tb','rho'] 
+            return ['T', 'Tu', 'Tb','rho'] 
         if energyEquationType == 'primitive-p': 
-            return ['rho', 'cp', 'T', 'p', 'gamma', 'Pr'] # Maybe not the best spot to have rho
+            return ['rho', 'cp', 'T', 'p', 'gamma', 'Pr']
         else:
             return []
