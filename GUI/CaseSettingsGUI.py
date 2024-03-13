@@ -251,7 +251,7 @@ class CaseSettingsGUI():
 		self.window.energyTransportEquationL  = tk.Label(self.window.setOfEquationFrame, text='Energy', font=labelFont())
 		self.window.energyTransportEquationL.grid         (row = energyTransportEquationRow, column = energyTransportEquationColumn, rowspan = 1, columnspan = 1)
 		self.energyTransportEquationStr    = tk.StringVar()
-		energyTransportEquationCH = {'None', 'Enthalpy', 'ProgressVariableLinear'}
+		energyTransportEquationCH = {'None', 'Enthalpy', 'ProgressVariableLinear', 'primitive-p'}
 		self.window.energyTransportEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.energyTransportEquationStr, *energyTransportEquationCH,command=self.doNothing)
 		self.window.energyTransportEquationM.grid         (row = energyTransportEquationRow+1 , column = energyTransportEquationColumn, rowspan = 1, columnspan = 1)
 		self.energyVariableStr    = tk.StringVar()
@@ -311,6 +311,7 @@ class CaseSettingsGUI():
 		self.window.equationOfStateL  = tk.Label(self.window.setOfEquationFrame, text='Equation of state', font=labelFont())
 		self.window.equationOfStateL.grid         (row = equationOfStateRow, column = equationOfStateColumn, rowspan = 1, columnspan = 1)
 		self.equationOfStateStr    = tk.StringVar()
+		equationOfStateCH = {'None', 'Low-Mach', 'IdealGas'}
 		equationOfStateCH = {'None', 'Low-Mach', 'IdealGas'}
 		self.window.equationOfStateM  = tk.OptionMenu(self.window.setOfEquationFrame, self.equationOfStateStr, *equationOfStateCH,command=self.doNothing)
 		self.window.equationOfStateM.grid         (row = equationOfStateRow+1 , column = equationOfStateColumn, rowspan = 1, columnspan = 1)
@@ -465,6 +466,8 @@ class CaseSettingsGUI():
 		mainGUI.param.Case.Mixture=MixtureClass(self.MixtureFilePathStr.get(),self.SpeciesFilePathStr.get())
 		#mainGUI.param.Case.reactionMechanism = reactionMechanismClass(
 		#	self.Mixture.getReactionMechanism()['type']) 
+		#mainGUI.param.Case.reactionMechanism = reactionMechanismClass(
+		#	self.Mixture.getReactionMechanism()['type']) 
 		mainGUI.param.Case.SpeciesFilePath=self.SpeciesFilePathStr.get()
 		setOfEquations = {}
 		setOfEquations['Momentum'] = {
@@ -495,6 +498,7 @@ class CaseSettingsGUI():
 				mainGUI.param.Case.nDim,
 				mainGUI.param.Case.getExtendedTransportedQuantityList(),
 				mainGUI.param.Case.CoordinateSystem,
+				mainGUI.param.Case.m,
 				mainGUI.param.Case.m,
 				)
 
