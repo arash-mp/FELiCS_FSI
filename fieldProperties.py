@@ -67,6 +67,12 @@ class fieldProperties:
                 return self._fieldDict['alpha']
             else:
                 return self._zeroField
+                return self._zeroField
+        if self.isMeanFlowVertexValuesClass():
+            if 'alpha' in list(self._fieldDict.keys()):
+                return self._fieldDict['alpha']
+            else:
+                return self._zeroField
         else:
             return self._fieldDict['alpha']
 
@@ -76,6 +82,7 @@ class fieldProperties:
 
     @property
     def cp(self):
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             return Tensor(
                         self._fieldDict['cp'],
@@ -92,6 +99,7 @@ class fieldProperties:
                         )
         else:
             return self._zeroField
+            return self._zeroField
 
     @property
     def dQ(self):  # heat release
@@ -99,6 +107,7 @@ class fieldProperties:
 
     @property
     def fieldDict(self):
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             import copy
             Output = copy.copy(self._fieldDict)
@@ -214,6 +223,13 @@ class fieldProperties:
             else:
                 return self._zeroField
         
+                return self._zeroField
+        elif self.isMeanFlowVertexValuesClass():
+            if 'nulam' in list(self._fieldDict.keys()):
+                return self._fieldDict['nulam']
+            else:
+                return self._zeroField
+        
         else:
             if 'nulam' in list(self._fieldDict.keys()):
                 return self._fieldDict['nulam']
@@ -238,22 +254,47 @@ class fieldProperties:
 
     @property
     def p(self):
-        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
-            return Tensor(
-                        self._fieldDict['p'],
-                        self._coordinateSystem,
-                        )
+        if self.isMeanFlowClass():
+            if 'p' in list(self._fieldDict.keys()):
+                return Tensor(
+                            self._fieldDict['p'],
+                            self._coordinateSystem,
+                            )
+            else:
+                printDebug(True, '-- Zero p mean value.')
+                return self._zeroField
+            
+        elif self.isMeanFlowVertexValuesClass():
+            if 'p' in list(self._fieldDict.keys()):
+                return self._fieldDict['p']
+            else:
+                printDebug(True, '-- Unit p vertex value.')
+                return self._oneField
+
         else:
             if 'p' in list(self._fieldDict.keys()):
                 return self._fieldDict['p']
             else:
-                return self.__zeroFieldTensor
-
+                printDebug(True, '-- Zero p fluc value.')
+                return self._zeroField
+            
     @property
     def phi(self):
         if 'phi' in list(self._fieldDict.keys()):
             return self._fieldDict['phi']
         else:
+            return self.__zeroField
+
+    @property
+    def RR_prefactor(self):
+        if self.isMeanFlowClass():
+            if 'RR_prefactor' in list(self._fieldDict.keys()):
+                return Tensor(
+                                self._fieldDict['RR_prefactor'],
+                                self._coordinateSystem,
+                                )
+        else:
+            return self._fieldDict['RR_prefactor']
             return self.__zeroField
 
     @property
@@ -298,21 +339,29 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
+                printDebug(True, '-- Unit rho mean value.')
                 return self._oneField
+            
         elif self.isMeanFlowVertexValuesClass():
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
+                printDebug(True, '-- Unit rho vertex value')
                 return self._oneField
+
         else:
-            #if 'rho' in self._transportedQuantities:
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
+                printDebug(True, '-- Zero rho fluc value')
                 return self._zeroField
 
     @property
     def rhou(self):
+        if 'rhou' in list(self._fieldDict.keys()):
+            return self._fieldDict['rhou']
+        else:
+            return self._mean.rho * self.u + self.rho * self._mean.u
         if 'rhou' in list(self._fieldDict.keys()):
             return self._fieldDict['rhou']
         else:
@@ -330,21 +379,26 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                return Tensor(
-                            self._OneField,
-                            self._coordinateSystem,
-                            )
+                printDebug(True, '-- Unit T mean value')
+                return self._oneField
+            
         elif self.isMeanFlowVertexValuesClass():
             if 'T' in list(self._fieldDict.keys()):
                 return self._fieldDict['T']
             else:
-                self._oneField
-                
+                printDebug(True, '-- Unit T vertex value')
+                return self._oneField
+
         else:
-            return self._fieldDict['T']
+            if 'T' in list(self._fieldDict.keys()):
+                return self._fieldDict['T']
+            else:
+                printDebug(True, '-- Zero T fluc value')
+                return self._zeroField
 
     @property
     def tau(self):
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             mean_nu = self.nuTot
             mean_u = self.u
@@ -378,7 +432,18 @@ class fieldProperties:
             if 'Tb' in list(self._fieldDict.keys()):
                 return self._fieldDict['Tb']
                 
+        if self.isMeanFlowClass():
+            if 'Tb' in list(self._fieldDict.keys()):
+                return Tensor(
+                            self._fieldDict['Tb'],
+                            self._coordinateSystem,
+                            )
+        elif self.isMeanFlowVertexValuesClass():
+            if 'Tb' in list(self._fieldDict.keys()):
+                return self._fieldDict['Tb']
+                
         else:
+            return self._fieldDict['Tb']
             return self._fieldDict['Tb']
 
     @property
@@ -393,7 +458,18 @@ class fieldProperties:
             if 'Tu' in list(self._fieldDict.keys()):
                 return self._fieldDict['Tu']
                 
+        if self.isMeanFlowClass():
+            if 'Tu' in list(self._fieldDict.keys()):
+                return Tensor(
+                            self._fieldDict['Tu'],
+                            self._coordinateSystem,
+                            )
+        elif self.isMeanFlowVertexValuesClass():
+            if 'Tu' in list(self._fieldDict.keys()):
+                return self._fieldDict['Tu']
+                
         else:
+            return self._fieldDict['Tu']
             return self._fieldDict['Tu']
 
     @property
@@ -406,6 +482,7 @@ class fieldProperties:
 
     @property
     def u(self):
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             if 'u' in list(self._fieldDict.keys()):
                 return Tensor(
@@ -445,6 +522,7 @@ class fieldProperties:
     @property
     def ut(self):
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             if 'ut' in list(self._fieldDict.keys()):
                 return self._fieldDict['u'][2]
             else:
@@ -458,6 +536,7 @@ class fieldProperties:
                 return Constant(0)
 
     def Y(self, specie):
+        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             return Tensor(
                 self._fieldDict[specie],
