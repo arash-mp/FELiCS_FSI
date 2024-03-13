@@ -312,7 +312,6 @@ class CaseSettingsGUI():
 		self.window.equationOfStateL.grid         (row = equationOfStateRow, column = equationOfStateColumn, rowspan = 1, columnspan = 1)
 		self.equationOfStateStr    = tk.StringVar()
 		equationOfStateCH = {'None', 'Low-Mach', 'IdealGas'}
-		equationOfStateCH = {'None', 'Low-Mach', 'IdealGas'}
 		self.window.equationOfStateM  = tk.OptionMenu(self.window.setOfEquationFrame, self.equationOfStateStr, *equationOfStateCH,command=self.doNothing)
 		self.window.equationOfStateM.grid         (row = equationOfStateRow+1 , column = equationOfStateColumn, rowspan = 1, columnspan = 1)
 		if hasattr(self.Case,'SetOfEquations'):
@@ -466,8 +465,6 @@ class CaseSettingsGUI():
 		mainGUI.param.Case.Mixture=MixtureClass(self.MixtureFilePathStr.get(),self.SpeciesFilePathStr.get())
 		#mainGUI.param.Case.reactionMechanism = reactionMechanismClass(
 		#	self.Mixture.getReactionMechanism()['type']) 
-		#mainGUI.param.Case.reactionMechanism = reactionMechanismClass(
-		#	self.Mixture.getReactionMechanism()['type']) 
 		mainGUI.param.Case.SpeciesFilePath=self.SpeciesFilePathStr.get()
 		setOfEquations = {}
 		setOfEquations['Momentum'] = {
@@ -498,7 +495,6 @@ class CaseSettingsGUI():
 				mainGUI.param.Case.nDim,
 				mainGUI.param.Case.getExtendedTransportedQuantityList(),
 				mainGUI.param.Case.CoordinateSystem,
-				mainGUI.param.Case.m,
 				mainGUI.param.Case.m,
 				)
 

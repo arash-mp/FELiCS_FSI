@@ -28,9 +28,6 @@ from dependentVariables.equationOfStateHandler import equationOfStateHandler
 from dependentVariables.heatReleaseHandler import heatReleaseHandler
 from dependentVariables.momentumHandler import momentumHandler
 from dependentVariables.reactionHandler import reactionHandler
-from dependentVariables.heatReleaseHandler import heatReleaseHandler
-from dependentVariables.momentumHandler import momentumHandler
-from dependentVariables.reactionHandler import reactionHandler
 from functions import (
     printError,
     printWarning,
@@ -44,10 +41,8 @@ from tensorUtils import (
 class fluctuationClass(
     fieldProperties,
     reactionHandler,
-    reactionHandler,
     equationOfStateHandler,
     energyHandler,
-    momentumHandler,
     momentumHandler,
     ):
     """
@@ -93,7 +88,6 @@ class fluctuationClass(
             FEMSpaces,
             coordinateSystem,
         ):
-        ):
         """
         Constructor of the fluctuationClass. This function initializes the
         fields
@@ -118,7 +112,6 @@ class fluctuationClass(
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroVelocityField \
             = Function(FEMSpaces.FunctionSpaceVectorVelocity)
-        self._zeroField = Tensor(
         self._zeroField = Tensor(
                                        Function(self._FEMSpaces.P2),
                                        self._coordinateSystem,
@@ -148,20 +141,9 @@ class fluctuationClass(
             neededVariables += self._getNeededFieldsForLinearMomentum()
 
         if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
-        # Get all the variables, which need to be present
-        neededVariables = []
-
-        if not param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
-            momentumHandler.__init__(
-                self,
-                )
-            neededVariables += self._getNeededFieldsForLinearMomentum()
-
-        if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
             equationOfStateHandler.__init__(
                 self,
                 )
-            neededVariables += self._getNeededFieldsForLinearEoS()
             neededVariables += self._getNeededFieldsForLinearEoS()
 
         if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
@@ -203,9 +185,7 @@ class fluctuationSolutions(
     heatReleaseHandler,
     equationOfStateHandler,
     momentumHandler,
-    momentumHandler,
     energyHandler,
-    reactionHandler,
     reactionHandler,
     export,
 ):
@@ -338,27 +318,8 @@ class fluctuationSolutions(
             neededVariables += self._getNeededFieldsForLinearMomentum()
 
         if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
-
-        # Get all the variables, which need to be present
-        neededVariables = []
-        if not self._param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
-            momentumHandler.__init__(
-                self,
-                )
-            neededVariables += self._getNeededFieldsForLinearMomentum()
-
-        if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
             equationOfStateHandler.__init__(
                 self,
-                )
-            neededVariables += self._getNeededFieldsForLinearEoS()
-
-        if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
-            energyHandler.__init__(
-                self,
-                )
-            neededVariables += self._getNeededFieldsForLinearEnergy()
-    
                 )
             neededVariables += self._getNeededFieldsForLinearEoS()
 

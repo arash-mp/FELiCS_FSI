@@ -51,10 +51,6 @@ class equationOfStateHandler:
                             self,
                             mean = 'None'
                             ):
-    def _initializeEoSFluctuations(
-                            self,
-                            mean = 'None'
-                            ):
         '''
         This function is used to set the links 
         between the different fluctuations
@@ -171,9 +167,6 @@ class equationOfStateHandler:
         EoSEquationType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
         if EoSEquationType == 'IdealGas': 
             return ['R_spe']
-        elif EoSEquationType == 'Low-Mach':
-            return ['rho','T']
-        elif EoSEquationType == 'None':
         elif EoSEquationType == 'Low-Mach':
             return ['rho','T']
         elif EoSEquationType == 'None':
