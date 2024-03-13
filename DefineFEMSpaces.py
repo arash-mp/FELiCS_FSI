@@ -112,7 +112,6 @@ class FEMSpacesClass():
                        			)	
 					
 			else:
-				print(param.Numerics.PolynomialOrder[name])
 				FE=FiniteElement(
                        			 elementTypeStr,
                        			 element_shape,
