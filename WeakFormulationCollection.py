@@ -173,7 +173,6 @@ class WeakFormulationCollectionClass():
             from Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
             printDebug(True, '-- Adding momentum equation for u-fluc -> X[0].')     # Hardcoded u' for mom eq.
             addMomentumEq(self,fluctuationC,X[0],mean,param)
-            print('-- Adding momentum equation.')
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from Equations.Mass.addMassEq_tensorial import addMassEq
@@ -190,7 +189,7 @@ class WeakFormulationCollectionClass():
             addEnthalpyEq(self,fluctuationC,X[idVar],mean,self.__param)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
-            printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
+            # printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
             from Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
             varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
             idVar = param.SolutionList.index(varEq)
