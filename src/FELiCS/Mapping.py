@@ -2,6 +2,11 @@
 import numpy as np
 import pdb
 
+from functions import (
+						printDebug,
+						printError,
+					)
+
 class Mapping:
     """
     This class contains mappings
@@ -18,9 +23,9 @@ class Mapping:
         self.VectorP1ExportCalcDofCoordinates = FEMSpaces.FunctionSpaceVectorVelocityExport.tabulate_dof_coordinates()
 
         self.VMixedVectorDofCoords = FEMSpaces.VMixed.sub(0).collapse()[0].tabulate_dof_coordinates()
-        print('Calculating mapping Vector from P2 Calculation Space to P1 Export Space...')
+        printDebug(True, '-- Calculating mapping Vector from P2 Calculation Space to P1 Export Space...')
         self.P2CalcToP1ExportIndecies = self._mappingFunc(self.P2CalcDofCoordinates, self.P1ExportDofCoordinates)
-        print('Calculating mapping Vector from VMixed Vector-P2-Sub Space to P1 Export Space...')
+        printDebug(True, '-- Calculating mapping Vector from VMixed Vector-P2-Sub Space to P1 Export Space...')
         self.VectorCalcToP1ExportIndecies = self._mappingFunc(self.VMixedVectorDofCoords, self.P1ExportDofCoordinates)
 
         # print('Calculating mapping Vector from Vector-Calc-P2 Space to Vector-P1-Export Space...')

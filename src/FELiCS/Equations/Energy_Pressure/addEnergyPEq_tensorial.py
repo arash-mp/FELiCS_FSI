@@ -20,7 +20,6 @@ def addEnergyPEq(self,fluc,X,mean,param):
     # ------------------------  Time derivative terms
     # Volume term: -omega*p_f*conj(X)
     self.B_vf.add(( fluc.p*iConj(X) ).ufl_tens*J_hat*dx)
-    OneT = mean.UnitT
     
     # ------------------------  Advection terms
     # NOTE: "." denotes the dot product bellow
@@ -44,8 +43,8 @@ def addEnergyPEq(self,fluc,X,mean,param):
     self.A_vf.add(( 1j*mean.gamma*iDot(iGrad(iConj(X)*mean.p),fluc.u) ).ufl_tens*J_hat*dx)
     self.A_vf.add(( 1j*mean.gamma*iDot(iGrad(iConj(X)*fluc.p),mean.u) ).ufl_tens*J_hat*dx)
     # Add boundary integral of (1) and (2)
-    self.A_vf.add(( -1j*(OneT+mean.gamma)*iDot(mean.u*fluc.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
-    self.A_vf.add(( -1j*(OneT+mean.gamma)*iDot(fluc.u*mean.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
+    self.A_vf.add(( -1j*(mean.gamma+1)*iDot(mean.u*fluc.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
+    self.A_vf.add(( -1j*(mean.gamma+1)*iDot(fluc.u*mean.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
 
 
     # ------------------------  Thermal diffusion term (Fourier law)
@@ -57,12 +56,13 @@ def addEnergyPEq(self,fluc,X,mean,param):
     kappa_f = fluc.nulam*mean.cp/mean.Pr
     # Volume term:  
     #   j*(gamma-1)[(grad(conj(X)).(kappa_m*grad(T_f)) + (grad(conj(X)).(kappa_f*grad(T_m))]*dx
-    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iGrad(iConj(X)),kappa_m*iGrad(fluc.T)) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iGrad(iConj(X)),kappa_f*iGrad(mean.T)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*(mean.gamma-1)*iDot(iGrad(iConj(X)),kappa_m*iGrad(fluc.T)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*(mean.gamma-1)*iDot(iGrad(iConj(X)),kappa_f*iGrad(mean.T)) ).ufl_tens*J_hat*dx)
     # Boundary term:
     #   -j*(gamma-1)[(conj(X)*kappa_m*grad(T_f)).n_bc + (conj(X)*kappa_f*grad(T_m)).n_bc]*ds
-    self.A_vf.add(( 1j*(mean.gamma-OneT)*iDot(iConj(X)*kappa_m*iGrad(fluc.T),self.n) ).ufl_tens*J_hat*self.all_ds)
-    self.A_vf.add(( 1j*(mean.gamma-OneT)*iDot(iConj(X)*kappa_f*iGrad(mean.T),self.n) ).ufl_tens*J_hat*self.all_ds)
+    #   --> Neglected to impose the proper BC
+    # self.A_vf.add(( 1j*(mean.gamma-1)*iDot(iConj(X)*kappa_m*iGrad(fluc.T),self.n) ).ufl_tens*J_hat*self.all_ds)
+    # self.A_vf.add(( 1j*(mean.gamma-1)*iDot(iConj(X)*kappa_f*iGrad(mean.T),self.n) ).ufl_tens*J_hat*self.all_ds)
     
     
     # ------------------------  Viscous diffusion term
@@ -71,8 +71,8 @@ def addEnergyPEq(self,fluc,X,mean,param):
     # which is integrated by parts,
     # Volume term:
     #   -j*(gamma-1)*[div(Tau) . u*conj(X)]*dx IS it really a minus in front?!?!?!
-    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iDiv(mean.tau),fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
-    self.A_vf.add(( -1j*(mean.gamma-OneT)*iDot(iDiv(fluc.tau),mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*(mean.gamma-1)*iDot(iDiv(mean.tau),fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
+    self.A_vf.add(( -1j*(mean.gamma-1)*iDot(iDiv(fluc.tau),mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
     
     # Boundary term:
     #   +j*(gamma-1)*[u . T*conj(X)]*ds 

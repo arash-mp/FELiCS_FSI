@@ -75,7 +75,7 @@ def addMomentumEq(self,fluc,X,mean,param):
                     
     else:
         ## ---- ALTERNATIVE: No integration by part, just one volume term
-        printDebug(param.debug, '--> Mom eq: convection term NOT integrated by part')
+        printDebug(param.debug, '-- -> Mom eq: convection term NOT integrated by part')
         # -- > Tensor implementation derived by hand
         self.A_vf.add(( -1j*iDot(iDot(iGrad(fluc.u),mean.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(mean.u),mean.rho*fluc.u),iConj(X)) ).ufl_tens*J_hat*dx)
@@ -91,7 +91,7 @@ def addMomentumEq(self,fluc,X,mean,param):
 
     else:
         # No integration by parts of the pressure term
-        printError('--> Mom eq: Pressure term without IbP not implemented in tensor framework.')
+        printError('-- -> Mom eq: Pressure term without IbP not implemented in tensor framework.')
 
 
 

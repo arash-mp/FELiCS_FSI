@@ -100,7 +100,9 @@ class FEMSpacesClass():
 		self.FunctionSpaceList=[]
 		self.FunctionSpaceListExport=[]
 		for name in param.SolutionList:
-			printDebug(param.debug,'Adding finite element space for '+name+'...')
+			printDebug(param.debug,"-- Adding finite element space of order "+
+              f"{param.Numerics.PolynomialOrder[name]} for "+
+              f"{name}")
 			if name=='u':
 				FE = VectorElement(
                        			elementTypeStr,
@@ -110,7 +112,6 @@ class FEMSpacesClass():
                        			)	
 					
 			else:
-				print(param.Numerics.PolynomialOrder[name])
 				FE=FiniteElement(
                        			 elementTypeStr,
                        			 element_shape,
@@ -119,7 +120,7 @@ class FEMSpacesClass():
 					
 			MixedList.append(FE)		
 
-		printDebug(param.debug,'The mixed finite element list is: ' + str(MixedList))
+		printDebug(param.debug,'-- The mixed finite element list is: ' + str(MixedList))
 
 		# Create a element of the mixed function space
 		MixedFE=MixedElement(MixedList)
@@ -151,17 +152,17 @@ class FEMSpacesClass():
 
 	def _projectField2allFEMSpaces(self, field, nfluctvar, nDim):
 		"""
-		This function is used to project the field on a FEM space to all the
+		This function is used to project the field of a FEM space to all the
 		FEM spaces used for fluctuations.
 		For example, this is useful to project the forcing/response limiter
 		in resolvent analyses to all the fluctuations fields.
-
-		NOTE: So far this function uses P2 for all variables!
 
 		INPUTS:
 			field: should be a FEM function, to be projected
 			nfluctvar: total number of fluctuation variables
 			nDim: number of spatial dimension = number of velocity components
+   
+		ToDo: We need a P1 version of the field for cases where some of the fluctuations are P1
 		"""
 
 		from dolfinx.fem import Function
@@ -171,15 +172,15 @@ class FEMSpacesClass():
 		fieldVMixed = Function(self.VMixed)
 		for i in range(self.VMixed.num_sub_spaces):
 			
-			if self.VMixed.sub(i).num_sub_spaces > 0:
+			if self.VMixed.sub(i).num_sub_spaces > 0: 	# Vector field, we go through sub-space
 
 				for j in range(self.VMixed.sub(i).num_sub_spaces):
 					space_ii, map_ii = self.VMixed.sub(i).sub(j).collapse()
 					fieldVMixed.x.array[map_ii] = field.x.array
 					
 			else:
-				# space_i, map_i = self.VMixed.sub(i).collapse()
-				space_i, map_i = self.VMixed.sub(0).sub(i).collapse() # Not sure why but this works also with P1 spaces
+				space_i, map_i = self.VMixed.sub(i).collapse() # Does not work for P1 spaces
+				# space_i, map_i = self.VMixed.sub(0).sub(0).collapse() # This is wrong! It assumes P2 and projects to wrong dofs!
 				fieldVMixed.x.array[map_i] = field.x.array
 
 

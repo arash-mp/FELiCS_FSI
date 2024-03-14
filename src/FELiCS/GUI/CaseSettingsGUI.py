@@ -251,7 +251,7 @@ class CaseSettingsGUI():
 		self.window.energyTransportEquationL  = tk.Label(self.window.setOfEquationFrame, text='Energy', font=labelFont())
 		self.window.energyTransportEquationL.grid         (row = energyTransportEquationRow, column = energyTransportEquationColumn, rowspan = 1, columnspan = 1)
 		self.energyTransportEquationStr    = tk.StringVar()
-		energyTransportEquationCH = {'None', 'Enthalpy', 'ProgressVariableLinear'}
+		energyTransportEquationCH = {'None', 'Enthalpy', 'ProgressVariableLinear', 'primitive-p'}
 		self.window.energyTransportEquationM  = tk.OptionMenu(self.window.setOfEquationFrame, self.energyTransportEquationStr, *energyTransportEquationCH,command=self.doNothing)
 		self.window.energyTransportEquationM.grid         (row = energyTransportEquationRow+1 , column = energyTransportEquationColumn, rowspan = 1, columnspan = 1)
 		self.energyVariableStr    = tk.StringVar()

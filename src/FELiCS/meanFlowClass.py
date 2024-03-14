@@ -328,6 +328,8 @@ class meanFlowClass(
         from dolfinx.fem import Function
         from scipy import interpolate
         from FELiCS.Import import ExpandForAverage, ContractAfterAverage
+
+        printDebug(True, '-- Interpolating on FELiCS mesh...')
         nameListMean = self._getMeanFieldsToBeRead()
         # Get mesh data
         mesh = self._ScalarFunctionSpace.mesh
@@ -494,7 +496,7 @@ class meanFlowClass(
     def raiseNotInFileListWarning(self):
         from FELiCS.functions import printWarning
         for name in self.__notInFileList:
-            printWarning("WARNING: Field " + name
+            printWarning("  -- Field " + name
                          + " not found in the import file! Assuming Field is \
                            zero...")
 
@@ -855,7 +857,11 @@ class meanFlowClass(
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadReaction())
-        printDebug(True,"Mean flow fields to be read are "+str(listOfFieldsToBeRead))
+        
+        # Delete duplicates
+        listOfFieldsToBeRead = list(dict.fromkeys(listOfFieldsToBeRead))
+        
+        printDebug(True,"-- Mean flow fields to be read are: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
     
 

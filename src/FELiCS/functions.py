@@ -312,7 +312,7 @@ def ExtrudeFelicsGridToVTK(coords2D, Tri2D, angularSteps):
 	# after finishing for the whole 3D domain bring tringulation entries explicity into tineger format
 	# pyvtk will give an error outherwise
 	for k in range(0,len(Tri3)):
-	    Tri3[k] = [int(kk) for kk in Tri3[k]]
+		Tri3[k] = [int(kk) for kk in Tri3[k]]
 	return Tri3, coords3D
 
 

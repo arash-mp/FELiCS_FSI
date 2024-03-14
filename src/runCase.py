@@ -9,23 +9,30 @@ def runCase(param, useGUI):
 		useGUI: Boolean, True if program is run using GUI, False if run from
 		terminal directly
 	'''
-	from   FELiCS.ExportSolution import ExportFromFile
-	import FELiCS.WeakFormulationCollection as WeakFormulationCollection
 	import FELiCS.Import as Import
 	import FELiCS.DefineFEMSpaces as DefineFEMSpaces
-	from   FELiCS.ExportSolution import ExportGUI,ExportFromFile
-	from   FELiCS.meanFlowClass import meanFlowClass
-	from   FELiCS.fluctuationClass import fluctuationSolutions
+	from FELiCS.ExportSolution import ExportGUI,ExportFromFile
+	from FELiCS.meanFlowClass import meanFlowClass
+	import FELiCS.global_variables as glob
+	import numpy as np
+	from FELiCS.fluctuationClass import fluctuationSolutions
+	import copy
+	from FELiCS.functions import (
+		printError,
+		printWarning,
+		printDebug,
+		)
 
 	mesh=param.BCs.getMesh()
-	print('Defining FEMSpaces...')
-	FEMSpaces         =DefineFEMSpaces.FEMSpacesClass(
-														param,
-														mesh,
-														)
+	printDebug(True,'--------------------------------')
+	printDebug(True,'-- Defining FEMSpaces...')
+	FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
+				param,
+				mesh,
+				)
 
-
-	print('Reading InputFlow...')
+	printDebug(True,'--------------------------------')
+	printDebug(True,'-- Reading InputFlow...')
 	MeanFlow = meanFlowClass(param, FEMSpaces)
 	MeanFlow.importDataFromFile()
 	if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
@@ -35,7 +42,8 @@ def runCase(param, useGUI):
 	meanflowFilename = 'meanflow.h5'
 	MeanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
-	print('Discretizing the Equations...')
+	printDebug(True,'--------------------------------')
+	printDebug(True,'-- Discretizing the Equations...')
 	WeakFormulation = WeakFormulationCollection.WeakFormulationCollectionClass(
 					param,
 					FEMSpaces,

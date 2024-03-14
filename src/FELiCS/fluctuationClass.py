@@ -173,12 +173,13 @@ class fluctuationClass(
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: '\
                      + str(notInitializedFields))
 
-        print(self._param.Case.Mixture.getReactionMechanism()['type'])
+        # print(self._param.Case.Mixture.getReactionMechanism()['type'])
         if not self._param.Case.Mixture.getReactionMechanism()['type'] == 'None':
             reactionHandler.__init__(
                 self,
                 )
             self._initializeReactions()
+            
 class fluctuationSolutions(
     fieldProperties,
     heatReleaseHandler,
@@ -334,6 +335,8 @@ class fluctuationSolutions(
                 )
             neededVariables += self._getNeededFieldsForLinearEnergy()
     
+        # Delete duplicates
+        neededVariables = list(dict.fromkeys(neededVariables))
 
         # While not all needed fluctuations are calculated, try calculating them
         n_try = 0

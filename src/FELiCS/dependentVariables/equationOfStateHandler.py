@@ -71,8 +71,7 @@ class equationOfStateHandler:
         alreadyDefinedQuantities = list(self._fieldDict.keys())
 
         #only do something if two out of the three variables (p,T,rho) are aleardy determined
-        if sum(el in ['rhou','u'] for el in list(alreadyDefinedQuantities)) == 2:
-            printDebug(True, f'-- Linearized EoS with input variables: {alreadyDefinedQuantities}')
+        if sum(el in ['rho','p', 'T'] for el in list(alreadyDefinedQuantities)) == 2:
             
             # Type of equation of state
             EoSType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
@@ -80,12 +79,13 @@ class equationOfStateHandler:
                 printError('Equation of State '+self._EoSType+\
                         ' not defined.')
                 
+            # Get the mean flow class     
             if mean == 'None':
                 mean = self._mean
 
-            
             # OPT.1 -- Calculate density from pressure and temperature
             if all(item in alreadyDefinedQuantities for item in ['p','T']):
+                printDebug(True, '-- Linearized EoS with input variables: [p, T] -> rho')
                 if self._isSolution:
                     mean_T  = mean.fieldDict['T']
                     mean_rho = mean.fieldDict['rho']
@@ -105,6 +105,7 @@ class equationOfStateHandler:
             
             # OPT.2 -- Calculate pressure from density and temperature
             elif all(item in alreadyDefinedQuantities for item in ['rho','T']):
+                printDebug(True, '-- Linearized EoS with input variables: [rho, T] -> p')
                 if EoSType == 'Low-Mach':
                     printError('Equation of State '+self._EoSModel()+\
                         ' not defined to obtain p-fluctuations.')
@@ -123,14 +124,12 @@ class equationOfStateHandler:
             
             # OPT.3 -- Calculate temperature from density and pressure
             elif all(item in alreadyDefinedQuantities for item in ['rho','p']):
+                printDebug(True, '-- Linearized EoS with input variables: [rho, p] -> T')
                 if self._isSolution:
                     mean_T = mean.fieldDict['T']
                     mean_rho = mean.fieldDict['rho']
-                    # mean_T = mean.T.x.array[:]
-                    # mean_rho = mean.rho.x.array[:]
                     if EoSType == 'IdealGas':
                         mean_Rspe = mean.fieldDict['R_spe']
-                        # mean_Rspe = mean.R_spe.x.array[:]
                 else:
                     mean_T = mean.T
                     mean_rho = mean.rho
@@ -141,7 +140,8 @@ class equationOfStateHandler:
                     self._fieldDict['T'] = -1 * self.rho / mean_rho * mean_T
                 elif EoSType == 'IdealGas':
                     self._fieldDict['T'] = (self.p - self.rho*mean_Rspe*mean_T)/(mean_Rspe*mean_rho)
-
+                    
+                    
     def _getNeededFieldsForLinearEoS(self):
         '''This is a standard function for handlers, which defines the additional Fields necessary to be determinied. 
         The EoS only clsoses the variables appearing in the other equations. So it is not necessary to determine
@@ -150,10 +150,13 @@ class equationOfStateHandler:
         EoSEquationType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
         if EoSEquationType == 'Low-Mach':
             return ['rho','T']
+        if EoSEquationType == 'IdealGas':
+            return ['rho', 'p', 'T']
         if EoSEquationType == 'None':
             return []
         else:
             raise Exception('Equation of state type ' + EoSEquationType + ' not implemented.')
+
                 
     def _additionalFieldsToBeReadEoS(self):
         '''

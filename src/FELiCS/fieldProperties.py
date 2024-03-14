@@ -13,6 +13,10 @@ from FELiCS.tensorUtils import (
                     Tensor,
                     )
 
+from functions import (
+                printWarning, 
+                printDebug,
+                )
 
 class fieldProperties:
     """
@@ -234,17 +238,30 @@ class fieldProperties:
 
     @property
     def p(self):
-        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
-            return Tensor(
-                        self._fieldDict['p'],
-                        self._coordinateSystem,
-                        )
-        else:
-            if 'p' in self._transportedQuantities:
+        if self.isMeanFlowClass():
+            if 'p' in list(self._fieldDict.keys()):
+                return Tensor(
+                            self._fieldDict['p'],
+                            self._coordinateSystem,
+                            )
+            else:
+                printDebug(True, '-- Zero p mean value.')
+                return self._zeroField
+            
+        elif self.isMeanFlowVertexValuesClass():
+            if 'p' in list(self._fieldDict.keys()):
                 return self._fieldDict['p']
             else:
-                return Constant(0)
+                printDebug(True, '-- Unit p vertex value.')
+                return self._oneField
 
+        else:
+            if 'p' in list(self._fieldDict.keys()):
+                return self._fieldDict['p']
+            else:
+                printDebug(True, '-- Zero p fluc value.')
+                return self._zeroField
+            
     @property
     def phi(self):
         if 'phi' in list(self._fieldDict.keys()):
@@ -277,6 +294,13 @@ class fieldProperties:
     @property
     def reaction(self):
         return self.__reaction
+    
+    @property
+    def spg(self):  # Sponge region term
+        return Tensor(
+            self._fieldDict['spg'],
+            self._coordinateSystem,
+            )
 
     @property
     def rho(self):
@@ -287,17 +311,21 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
+                printDebug(True, '-- Unit rho mean value.')
                 return self._oneField
+            
         elif self.isMeanFlowVertexValuesClass():
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
+                printDebug(True, '-- Unit rho vertex value')
                 return self._oneField
+
         else:
-            #if 'rho' in self._transportedQuantities:
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
+                printDebug(True, '-- Zero rho fluc value')
                 return self._zeroField
 
     @property
@@ -319,18 +347,22 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                return Tensor(
-                            self._OneField,
-                            self._coordinateSystem,
-                            )
+                printDebug(True, '-- Unit T mean value')
+                return self._oneField
+            
         elif self.isMeanFlowVertexValuesClass():
             if 'T' in list(self._fieldDict.keys()):
                 return self._fieldDict['T']
             else:
-                self._oneField
-                
+                printDebug(True, '-- Unit T vertex value')
+                return self._oneField
+
         else:
-            return self._fieldDict['T']
+            if 'T' in list(self._fieldDict.keys()):
+                return self._fieldDict['T']
+            else:
+                printDebug(True, '-- Zero T fluc value')
+                return self._zeroField
 
     @property
     def tau(self):

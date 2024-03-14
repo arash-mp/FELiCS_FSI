@@ -36,6 +36,7 @@ from functools import partial
 from FELiCS.functions import (
 	printError,
 	printWarning,
+	printDebug,
 	)
 from FELiCS.fluctuationClass import fluctuationSolutions
 
@@ -239,15 +240,16 @@ class linearSystem:
 		# EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut), 'complex')
 
 		if adjointFlag:
-
-			print("Solving adjoint GEVP")
+			printDebug(True,'--------------------------------')
+			printDebug(True, "-- Solving adjoint GEVP")
 			A, B, f = self.__preconditionMatrices(
 										self.__matrix_dict['A'].getH(),
 										self.__matrix_dict['B'],
 										self.__param.Numerics.Preconditioner,
 												)
 		else:
-			print("Solving direct GEVP")
+			printDebug(True,'--------------------------------')
+			printDebug(True, "-- Solving direct GEVP")
 			A, B, f = self.__preconditionMatrices(
 						self.__matrix_dict['A'],
 						self.__matrix_dict['B'],
@@ -263,21 +265,20 @@ class linearSystem:
 		# solve GEVP using eigs for each guess
 		for i in range(nGuesses):
 			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
-			print("-- Solving for guess: ", str(eigenValueGuess))
+			printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
 			EigValTemp, EigVecTemp = splin.eigs(
-				A,
-				k=self.__param.Numerics.nSolut,
-				M=B,
-				sigma=eigenValueGuess,
-				ncv=200,
-				maxiter=100,
-				tol=self.__tol,
-				return_eigenvectors=True,
-				)
+			 	A,
+			 	k=self.__param.Numerics.nSolut,
+			 	M=B,
+			 	sigma=eigenValueGuess,
+			 	ncv=200,
+			 	maxiter=100,
+			 	tol=self.__tol,
+			 	return_eigenvectors=True,
+			 	)
 			index = list(range(i*nSol,(i+1)*nSol))
 			EigValTot[index] = EigValTemp
 			EigVecTot[:,index] = EigVecTemp
-			print("-- Done.")
 
 		return EigValTot, EigVecTot
 
@@ -301,7 +302,7 @@ class linearSystem:
 		eng.addpath (__file__.rsplit('/',1)[0]+'/Matlab', nargout= 0 )
 
 		if adjointFlag:
-			print("Solving adjoint GEVP")
+			print("-- Solving adjoint GEVP")
 			# precondition matrices
 			A, B, f = self.__preconditionMatrices(
 								self.__matrix_dict['A'].getH(),
@@ -313,7 +314,7 @@ class linearSystem:
 
 
 		else:
-			print("Solving direct GEVP")
+			print("-- Solving direct GEVP")
 			A, B, f = self.__preconditionMatrices(
 								self.__matrix_dict['A'],
 								self.__matrix_dict['B'],
@@ -564,39 +565,57 @@ class linearSystem:
 
 		fluctSolutObjList = []
 
+		# Allocate matrices/vectors of the solutions
 		gains = np.zeros((self.__param.Numerics.nSolut,self.__n_omegas),\
 			'complex')
-
 		forcings = np.zeros((self.__n_dof,self.__param.Numerics.nSolut,\
 			self.__n_omegas),'complex')
-
 		responses = np.zeros((self.__n_dof,self.__param.Numerics.nSolut,\
 			self.__n_omegas),'complex')
 
+		# Get the matrices defining the forcing/response norms (compressed)
 		self.__matrix_dict['B_forcing'] = \
 			self.__matrix_dict['B_forcing'].tocsc()
-
 		self.__matrix_dict['B_response'] = \
 			self.__matrix_dict['B_response'].tocsc()
 
-		self.__matrix_dict['B'] = self.__matrix_dict['B'].tocsc()
-		print('-- Getting matrices limiting response/forcing...')
+		# Matrix containing the FEM-integration weights
+		self.__matrix_dict['B_femWeight'] = \
+      		self.__matrix_dict['B_femWeight'].tocsc()
+  
+		printDebug(True, '--------------------------------')
+		printDebug(True, '-- Getting matrices limiting response/forcing...')
 		self.__matrix_dict['Pu'] = WeakFormulationClass.getPMat()
+		self.__matrix_dict['Pu'] = self.__matrix_dict['Pu'].tocsc()
 		self.__matrix_dict['Cr'] = WeakFormulationClass.getCrMat()
+		self.__matrix_dict['Cr'] = self.__matrix_dict['Cr'].tocsc()
+  		# SD: it would make more sense to move this to WeakFormulationCollection!
+		# similarly to what we do with forcing_vf 
 
-		print('-- Getting weighting matrix for forcing...')
+		printDebug(True, '-- Getting weighting matrix for forcing...')
+  		# Modified the weight matrix: 
+    	#	(i) the multiplication with Pu^T and Pu is necessary to 
+		#	apply the weigths only in domain of the restrictor. 
+		# 	(ii) TEMPORARY: we use "B_femWeight" instead of "B" to be
+		# 	able to force on any variable (e.g. in compressible case).
+		#	But a more consistent implementation must be done!
 		self.__matrix_dict['Q'] = \
-		self.__matrix_dict['Pu'].transpose()*self.__matrix_dict['B']*\
-			self.__matrix_dict['Pu']
+      			self.__matrix_dict['Pu'].transpose()*\
+      			self.__matrix_dict['B_femWeight']*\
+             	self.__matrix_dict['Pu']
+        # self.__matrix_dict['Q'] = \
+		# 		self.__matrix_dict['Pu'].transpose()*\
+        # 		self.__matrix_dict['B']*\
+		# 		self.__matrix_dict['Pu']
 		self.__matrix_dict['Q'] = self.__matrix_dict['Q'].tocsc()
 		nu = min(np.shape(self.__matrix_dict['Pu']))
-		print('-- Done.')
+		printDebug(True, '-- Done.')
 
 		tic_res = time.perf_counter()
 
 		if self.__param.Numerics.nCPU > 1:
 			# Parallel computation of the resolvent --------------------------------
-			print('-- Parallel computation of forcing and gains...')
+			printDebug(True, '-- Parallel computation of forcing and gains...')
 			pool = multiprocessing.Pool(self.__param.Numerics.nCPU)
 
 			args_map = [(linearSystem, 'Resolvent', self.__matrix_dict, \
@@ -613,13 +632,25 @@ class linearSystem:
 
 		else:
 			# Serial computation of the resolvent --------------------------------
-			print('-- Serial computation of forcing, gains, and responses...')
+			printDebug(True, '--------------------------------')
+			printDebug(True, '-- Serial computation of forcing, gains, and responses...')
+   
 			# LUQ is obtained here as it cannot be pickled
 			self.__matrix_dict['LUQ'] = \
 				splin.splu(self.__matrix_dict['Q'], permc_spec=3)
 
 			for i in range(self.__n_omegas):
+				
+				# Frequency 
+				omega = self.__param.IOResolvent.Omegas[i]
+				printDebug(True, "-- Performing resolvent analysis for omega = " + str(omega))
+
 				def op(x):
+					'''
+					Build the linear system which is used to get the 
+					eigenvalue problem matrix of the resolvent:
+
+     				'''
 					y = self.__matrix_dict['Pu']*x
 					z = self.__matrix_dict['B_forcing']*y
 					y = LU.solve(z)
@@ -631,18 +662,16 @@ class linearSystem:
 					y = self.__matrix_dict['Pu'].transpose()*z
 					w = self.__matrix_dict['LUQ'].solve(y, trans='H')
 					return w
-
-				omega = self.__param.IOResolvent.Omegas[i]
-				print("-- Performing resolvent analysis for omega = " + str(omega))
+				
 				OP = self.__matrix_dict['A']-omega*self.__matrix_dict['B']
 				OP = OP.tocsc()
-
+				
 				# Get lower upper decomposition of OP (used in function op())
 				LU = splin.splu(OP,permc_spec=3)
-
+				
 				# Create handle for the linear operator defined by function op()
 				SOP = splin.LinearOperator((nu,nu),matvec=op,dtype='complex')
-
+				
 				# Perform eigenvalue decomposition of the linear
 				# operator defined in op() using the handl SOP
 				gains[:,i],eigenvectors_c = splin.eigs(SOP,
@@ -663,7 +692,8 @@ class linearSystem:
 				for k in range(self.__param.Numerics.nSolut):
 					# Write the respective forcing to results dictionary
 					forcings[:, k, i] = self.__matrix_dict['Pu'] * eigenvectors_c[:, k]
-					f = -1j * self.__matrix_dict['B'] * forcings[:, k, i]
+					f = -1j * self.__matrix_dict['B_femWeight'] * forcings[:, k, i]
+					# f = -1j * forcings[:, k, i]
 					responses[:, k, i] = LU.solve(f)
 
 		#pdb.set_trace()
@@ -696,7 +726,7 @@ class linearSystem:
 				fluctSolutObjList.append(fluctSolutResponse)
 
 		toc_res = time.perf_counter() - tic_res
-		print(f"-- Solving resolvent took: {toc_res:0.4f} seconds")
+		printDebug(True, f"-- Solving resolvent took: {toc_res:0.4f} seconds")
 		return fluctSolutObjList
 
 	def solveInputOutput(
@@ -801,7 +831,7 @@ class linearSystem:
 		if self.__param.Numerics.LinearAlgebraSolver=='python':
 			# Added possibility to run GEVP of different guesses in parallel
 			if self.__param.Numerics.nCPU > 1:
-				print("Entering parallel loop for GEVP")
+				print("-- Entering parallel loop for GEVP")
 				pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
 				args_map = [(linearSystem, 'GEVP', self.__matrix_dict, \
 					self.__param.Numerics.nSolut, arg, adjointFlag, self.__param.Numerics) for arg in \
@@ -869,14 +899,10 @@ class linearSystem:
 			if resTemp > maxRes:
 				maxRes = resTemp
 
-		end = time.time()
+		end = time.time() - start
 
-
-
-		print('Solving the GEVP took '+str(end)+'s')
-		print('The eigensolvers tolerance is set to '+str(self.__tol)+'...')
-		print(f'Maximum residuum of {method} solutions measured in \
-		EUCLIDIAN norm: ' +str(maxRes))
+		printDebug(True, '-- Solving the GEVP took %4g s' % end)
+		printDebug(True, '-- Max residuum of %s solutions (EUCLIDIAN norm): %12g' % (method,maxRes))
 
 		return fluctSolutObjList
 

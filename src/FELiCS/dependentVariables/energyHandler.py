@@ -79,6 +79,15 @@ class energyHandler:
                         self._fieldDict['T'] = self.Y('progress') * (mean_Tb - mean_Tu)
                     else:
                          raise Exception('ProgressVariableLinear is chosen, however, the progress variable is not available to calculate the temperature.')
+        
+        ############################################### 
+        ############### Energy-p linear ###############
+        ############################################### 
+        elif energyEquationType == 'primitive-p':
+            # In this type of energy eq. we use only primitive 
+            # variables so we don't need to define anything here.
+            pass
+        
         else: 
             raise Exception("Energy equation type " + energyEquationType + " not known.")
 
@@ -86,6 +95,8 @@ class energyHandler:
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
         if energyEquationType == 'Enthalpy':
             return ['T', 'h', 'alpha']
+        if energyEquationType == 'primitive-p':
+            return ['rho', 'p', 'T']
         elif energyEquationType == 'ProgressVariableLinear':
             return ['T', 'progress']
 
@@ -115,8 +126,8 @@ class energyHandler:
         if energyEquationType == 'Enthalpy': 
             return ['cp', 'alpha','he','T','molarMass']
         if energyEquationType == 'ProgressVariableLinear': 
-            return ['T', 'Tu', 'Tb','rho'] 
+            return ['T', 'Tu', 'Tb','rho']
         if energyEquationType == 'primitive-p': 
-            return ['cp', 'T', 'p', 'gamma', 'Pr'] 
+            return ['rho', 'cp', 'T', 'p', 'gamma', 'Pr']
         else:
             return []

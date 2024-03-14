@@ -168,29 +168,43 @@ class WeakFormulationCollectionClass():
         ## Initialize variatial formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
+        printDebug(True, '-- Primary fluctuations: %s.' % param.SolutionList)
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
             from FELiCS.Equations.Momentum.addMomentumEq_tensorial import addMomentumEq
+            printDebug(True, '-- Adding momentum equation for u-fluc -> X[0].')     # Hardcoded u' for mom eq.
             addMomentumEq(self,fluctuationC,X[0],mean,param)
-            print('-- Adding momentum equation.')
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from FELiCS.Equations.Mass.addMassEq_tensorial import addMassEq
-            addMassEq(self,fluctuationC,X[self.__param.SolutionList.index('p')],mean,self.__param)
-            print('-- Adding continuity equation.')
+            varEq = self.__param.Case.SetOfEquations['Mass']['Variable']
+            idVar = param.SolutionList.index(varEq)
+            printDebug(True, '-- Adding mass-balance equation for %s-fluc -> X[%d].' % (varEq,idVar))
+            addMassEq(self,fluctuationC,X[idVar],mean,self.__param)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from FELiCS.Equations.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
-            print('-- Adding energy equation in enthalpy form.')
-            addEnthalpyEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
+            varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
+            idVar = param.SolutionList.index(varEq)
+            printDebug(True, '-- Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
+            addEnthalpyEq(self,fluctuationC,X[idVar],mean,self.__param)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
-            printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
+            # printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
             from FELiCS.Equations.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
-            print('-- Adding energy equation in primitive-p form.')
-            addEnergyPEq(self,fluctuationC,X[self.__param.SolutionList.index('rho')],mean,self.__param)
+            varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
+            idVar = param.SolutionList.index(varEq)
+            printDebug(True, '-- Adding pressure-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
+            addEnergyPEq(self,fluctuationC,X[idVar],mean,self.__param)
+            
+        # Add sponge region only if the field was gieven in the mean flow file
+        if not('spg' in mean._meanFlowClass__notInFileList):
+            from FELiCS.Equations.addSpongeEq_tensorial import addSpongeEq
+            printDebug(True, '-- Adding sponge damping.')
+            addSpongeEq(self,fluctuationC,X,mean,self.__param)
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
             self.getResolventNorms(X,self.__param,mean,fluctuationC)
+            self.getResolventFEMWeights(X,self.__param,mean,fluctuationC)
 
         # Add species transport equation for all transported species
         transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
@@ -281,9 +295,17 @@ class WeakFormulationCollectionClass():
         if param.IOResolvent.ForcingMode=='Body':
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
-            printWarning("Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
+            printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
             u_f = fluc.u
             self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+            
+            # Below are arbitrary weights used for debugging resolvent considering other norms
+            # than the TKE one:
+            # idrhoF = param.SolutionList.index('rho')
+            # self.forcing_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
+            # idpF = param.SolutionList.index('p')
+            # self.forcing_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
+            
             #velocityForcingList = [0,0,0]
             #for i in param.IOResolvent.ForcingCoeff:
             #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
@@ -351,16 +373,59 @@ class WeakFormulationCollectionClass():
         #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
         #self.response_vf += temporalVF
         self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+        
+        # Below are arbitrary weights used for debugging resolvent considering other norms
+        # than the TKE one:
+        # idrhoF = param.SolutionList.index('rho')
+        # self.response_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
+        # idpF = param.SolutionList.index('p')
+        # self.response_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
 
         # Prompt variational formulations in debug mode
-        printDebug(param.debug,'Resolvent forcing norm is '+ str(self.forcing_vf))
-        printDebug(param.debug,'Resolvent response norm is '+ str(self.response_vf))
+        printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
+        printDebug(param.debug,'-- Resolvent response norm is '+ str(self.response_vf))
+        
+    def getResolventFEMWeights(self,X,param,mean,fluc):
+        ''' 
+        This function yields a matrix containing the FEM weights
+        corresponding to a diagonal unit matrix.
+        (Need to chat with Sophie to better define this)
+        '''
+        
+        # Initialize the matrix
+        self.fem_weighting = 0
+        J_hat = self._coordinateSystem.J_hat
+        
+        # Loop over all eqs, and multiply fluctuation
+        # with corresponding test function
+        for eqID in param.Case.SetOfEquations :
+            if not (param.Case.SetOfEquations[eqID]['Equation'] == 'None' or \
+                param.Case.SetOfEquations[eqID]['Variable'] == 'None'):
+                
+                #  Get the corresponding variable and its index in X
+                varName = param.Case.SetOfEquations[eqID]['Variable']
+                varIndex = param.SolutionList.index(varName)
+                
+                # Dynamically get the corresponding fluctuation field
+                fluc_var = getattr(fluc, '%s' % varName)
+                
+                # Multiply by corresponding X*
+                if varName == 'u': # For u we need the dot product with X
+                    self.fem_weighting += ( iDot(fluc_var, iConj(X[varIndex])) ).ufl_tens*J_hat*dx
+                else:
+                    self.fem_weighting += ( fluc_var*iConj(X[varIndex]) ).ufl_tens*J_hat*dx
 
+        
     def DiscretizeFlow(self):
         #self.__DiscretizeAndSolve = DiscretizeAndSolve
         #self.__WeakForm = WeakForm
         from copy import deepcopy
         # Check for type of case
+        
+        # Used for debugging
+        # from matspy import spy
+        # import matplotlib
+        # matplotlib.use('TkAGG')
 
         AnalysisMode = self.__param.Case.AnalysisMode
         FEMSpaces = self.__FEMSpaces
@@ -432,12 +497,16 @@ class WeakFormulationCollectionClass():
         # In the next 12 lines the Imaginary and real parts of both the lhs and rhs matrix are combined to the
         # sparse matrix A and B, respectively. Not needed matrices are deleted
         self.__matrix_dict['A'] = csr_matrix(A.getValuesCSR()[::-1], shape = A.size,dtype=complex)
+        # printDebug(True, '-- Display A-matrix')
+        # spy(self.__matrix_dict['A'],buckets=4000)
         del A
         if not AnalysisMode in ['Input-Output']:
             #BC_Diriclet_mat = as_backend_type(BC_Diriclet).mat()
             self.__matrix_dict['A'] = self.__matrix_dict['A'] + 10**30*(1+1j) * csr_matrix(BC_Diriclet.getValuesCSR()[::-1], shape = BC_Diriclet.size,dtype=complex)
             del BC_Diriclet
         self.__matrix_dict['B'] = csr_matrix(B.getValuesCSR()[::-1], shape = B.size,dtype=complex)
+        # printDebug(True, '-- Display B-matrix')
+        # spy(self.__matrix_dict['B'],buckets=4000)
         del B
         #tempMat=1*matrix_dict['B'].transpose()
         #tempMat[1,1]=100
@@ -446,14 +515,22 @@ class WeakFormulationCollectionClass():
         # must be constructed. So far only the L2 norm is implemented (To be extended!)
         if AnalysisMode in ['Resolvent']:
             #forcing_norm,response_norm=getResolventNorms(param,MF,FEMSpaces)
+            
             B_forcing = assemble_matrix(form(self.forcing_vf))
             B_forcing.assemble()
             self.__matrix_dict['B_forcing'] = csr_matrix(B_forcing.getValuesCSR()[::-1], shape = B_forcing.size,dtype=complex)
+
             del B_forcing
             B_response = assemble_matrix(form(self.response_vf))
             B_response.assemble()
             self.__matrix_dict['B_response'] = csr_matrix(B_response.getValuesCSR()[::-1], shape = B_response.size,dtype=complex)
             del B_response
+            
+            # FEM weighting matrix
+            B_femWeight = assemble_matrix(form(self.fem_weighting))
+            B_femWeight.assemble()
+            self.__matrix_dict['B_femWeight'] = csr_matrix(B_femWeight.getValuesCSR()[::-1], shape = B_femWeight.size,dtype=complex)
+            del B_femWeight
 
         return self.__buildSolutionObj()
 
@@ -461,6 +538,8 @@ class WeakFormulationCollectionClass():
         BClist = []
         mesh=self.__FEMSpaces.P2.mesh
 
+        printDebug(True, '--------------------------------')
+        printDebug(True, '-- Setting boundary conditions...')
         self.__boundaries = self.__param.BCs.getBoundaries()
         self.__bcDict = self.__param.BCs.getBCsDict()
         VelocityComponents=self.__param.Case.getVelocityComponents()
@@ -479,7 +558,7 @@ class WeakFormulationCollectionClass():
                 if self.__bcDict[k][mm]['type']=='Dirichlet':
 
 
-                    printDebug(self.__param.debug,"Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
+                    printDebug(self.__param.debug,"-- Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
                     if k in ['u'+ component for component in VelocityComponents]:
 
                         #if __version__.find('0.4.1') >= 0:
@@ -508,17 +587,20 @@ class WeakFormulationCollectionClass():
                                         self.__FEMSpaces,
                                         self.__param,
                                         self.__mean,
-                                        )
+                                        )        
 
     def getPMat(self):
         '''
         This function provides the P matrix, which restricts the forcing
+        in terms of variables and spatial region
+        
+        TODO This does not work properly if a P1-fluctuations is part
+        of the forcing/response norm! Indices of the DOFs will be wrong.
         '''
     
         self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
-        #self.__nVelocityComponents = self.__param.nVelocityComponents
         self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
-        print('-- Building Pu matrix...')
+        printDebug(True, '-- Building Pu matrix...')
 
         # Get the matrix that restricts the forcing in space
         forcingDom = self.__mean.forcingDomain
@@ -528,15 +610,15 @@ class WeakFormulationCollectionClass():
         if max(forcingDom.x.array[:], key=abs) == 0:
             forcingDom.x.array[:] =  1
             flagdom = False
-            print('-- No spatial restriction of forcing.')
+            printDebug(True, '-- No spatial restriction of forcing.')
         else:
             forcingDom.x.array[:] = np.rint(forcingDom.x.array[:])
             flagdom = True
-            print('-- Applying spatial restriction of forcing from MeanFlow file.')
+            printDebug(True, '-- Applying spatial restriction of forcing from MeanFlow file.')
 
-            nfluctvar = len(self.__bcDict)
+            nfluctvar = len(self.__bcDict)      # counting velocity components as 
             nDim = self.__param.Case.nDim
-            forcingDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(forcingDom, nfluctvar, nDim)
+            forcingDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(forcingDom, nfluctvar, nDim) # the last two inputs don't matter
 
         index = np.empty(shape=(0, 0))
 
@@ -564,16 +646,16 @@ class WeakFormulationCollectionClass():
         n = len(index)
         row_ind = index
         col_ind = np.arange(n)
-        P = csr_matrix((np.ones(n), (row_ind,col_ind)), (m, n))
-        print('-- Done.')
+        P = csr_matrix((np.ones(n), (row_ind,col_ind)), (m, n))    
+        printDebug(True, '-- Done.')
+        
         return P
 
     def getCrMat(self):
         ''' This function provides the Cr matrix, which restricts the response '''
-        self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
-        #self.__nVelocityComponents = self.__param.nVelocityComponents
+        self.__response_coeff = self.__param.IOResolvent.ResponseCoeff
         self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
-        print('-- Building Cr matrix...')
+        printDebug(True, '-- Building Cr matrix...')
 
         # Get the matrix that restricts the forcing in space
         responseDom = self.__mean.responseDomain
@@ -585,17 +667,18 @@ class WeakFormulationCollectionClass():
         if max(responseDom.x.array[:], key=abs) == 0:
             responseDom.x.array[:] = 1
             flagdom = False
-            print('-- No spatial restriction of response.')
+            printDebug(True, '-- No spatial restriction of response.')
         else:
             responseDom.x.array[:] = np.rint(responseDom.x.array[:])
             flagdom = True
-            print('-- Applying spatial restriction of response from MeanFlow file.')
+            printDebug(True, '-- Applying spatial restriction of response from MeanFlow file.')
 
             responseDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(responseDom, nfluctvar, nDim)
 
         index = np.empty(shape=(0,0))
 
-        for i in range(nfluctvar): # HARDCODED FOR U, V, P: incompressible 2D
+        # Loop over fluctuations which are part of response coeff
+        for i in self.__response_coeff:
             if i < self.__nVelocityComponents:
                 dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]
             else:
@@ -614,6 +697,9 @@ class WeakFormulationCollectionClass():
         m = len(np.arange(*local_range))
         n = len(index)
         row_ind = index
+        col_ind = np.arange(n)
         Cr = csr_matrix((np.ones(n),(row_ind,row_ind)),(m,m))
-        print('-- Done.')
+        # Cr = csr_matrix((np.ones(n),(col_ind,row_ind)),(n,m))     # in theory this should be the size of Cr
+        printDebug(True, '-- Done.')
+        
         return Cr
