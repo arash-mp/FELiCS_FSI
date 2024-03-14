@@ -449,22 +449,27 @@ class WeakFormulationCollectionClass():
         bcs= self.__getListOfDirichletBCs()
         n_dof=BC_Diriclet.size[0]
         if not self.A_vf.lhsIsZero():
-            if AnalysisMode in ['Input-Output']:
-                A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
-                A.assemble()
-            else:
-                A = assemble_matrix(form(self.A_vf.lhs))
-                A.assemble()
+            ###########################
+            ##### DEPRECATED ##########
+            ###########################
+            #if AnalysisMode in ['Input-Output']:
+            #    A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
+            #    A.assemble()
+            #else:
+            ###########################
+            A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
+            A.assemble()
         else:
             A = 0*BC_Diriclet
 
         if not self.B_vf.lhsIsZero():
-            B = assemble_matrix(form(self.B_vf.lhs))
+            B = assemble_matrix(form(self.B_vf.lhs), bcs=bcs)
             B.assemble()
         else:
             B = 0*BC_Diriclet
 
-        self.__matrix_dict={}
+        self.__matrix_dict={}  
+        self.__matrix_dict_petsc={}  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
 
 
         if AnalysisMode in ['Input-Output']:
@@ -479,7 +484,8 @@ class WeakFormulationCollectionClass():
             set_bc(forcing_vec_petsc, bcs)
 
             b_forcing = 1j * forcing_vec_petsc.array
-            self.__matrix_dict['b_forcing'] = b_forcing
+            self.__matrix_dict['b_forcing']       = b_forcing
+            self.__matrix_dict_petsc['b_forcing'] = b_forcing  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
             del b_forcing, forcing_vec_petsc
 
         # Get the BCs provided by the user
@@ -496,7 +502,8 @@ class WeakFormulationCollectionClass():
             BC_Diriclet.assemble()
         # In the next 12 lines the Imaginary and real parts of both the lhs and rhs matrix are combined to the
         # sparse matrix A and B, respectively. Not needed matrices are deleted
-        self.__matrix_dict['A'] = csr_matrix(A.getValuesCSR()[::-1], shape = A.size,dtype=complex)
+        self.__matrix_dict['A']       = csr_matrix(A.getValuesCSR()[::-1], shape = A.size,dtype=complex)
+        self.__matrix_dict_petsc['A'] = A  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
         # printDebug(True, '-- Display A-matrix')
         # spy(self.__matrix_dict['A'],buckets=4000)
         del A
@@ -505,6 +512,7 @@ class WeakFormulationCollectionClass():
             self.__matrix_dict['A'] = self.__matrix_dict['A'] + 10**30*(1+1j) * csr_matrix(BC_Diriclet.getValuesCSR()[::-1], shape = BC_Diriclet.size,dtype=complex)
             del BC_Diriclet
         self.__matrix_dict['B'] = csr_matrix(B.getValuesCSR()[::-1], shape = B.size,dtype=complex)
+        self.__matrix_dict_petsc['B'] = B  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
         # printDebug(True, '-- Display B-matrix')
         # spy(self.__matrix_dict['B'],buckets=4000)
         del B
@@ -519,18 +527,23 @@ class WeakFormulationCollectionClass():
             B_forcing = assemble_matrix(form(self.forcing_vf))
             B_forcing.assemble()
             self.__matrix_dict['B_forcing'] = csr_matrix(B_forcing.getValuesCSR()[::-1], shape = B_forcing.size,dtype=complex)
+            self.__matrix_dict_petsc['B_forcing'] = B_forcing #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
 
             del B_forcing
             B_response = assemble_matrix(form(self.response_vf))
             B_response.assemble()
             self.__matrix_dict['B_response'] = csr_matrix(B_response.getValuesCSR()[::-1], shape = B_response.size,dtype=complex)
+            self.__matrix_dict_petsc['B_response'] = B_response #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
             del B_response
             
             # FEM weighting matrix
             B_femWeight = assemble_matrix(form(self.fem_weighting))
             B_femWeight.assemble()
             self.__matrix_dict['B_femWeight'] = csr_matrix(B_femWeight.getValuesCSR()[::-1], shape = B_femWeight.size,dtype=complex)
+            self.__matrix_dict_petsc['B_femWeight'] = B_femWeight #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
             del B_femWeight
+
+        self.__matrix_dict_petsc['bcs'] = bcs
 
         return self.__buildSolutionObj()
 
@@ -584,6 +597,7 @@ class WeakFormulationCollectionClass():
     def __buildSolutionObj(self):
         return LinearSystem.linearSystem(
                                         self.__matrix_dict,
+                                        self.__matrix_dict_petsc, #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
                                         self.__FEMSpaces,
                                         self.__param,
                                         self.__mean,

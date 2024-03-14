@@ -23,7 +23,7 @@ class NumericsSettingsClass(Settings):
 			'nCPU':{'datatype':int,'default':1},
 			'Schemes':{'datatype':dict,'default':{'u':'CG'},'options':['CG']},
 			'PolynomialOrder':{'datatype':dict,'default':{'u':'2'},'options':[1,2]},
-			'LinearAlgebraSolver':{'datatype':str,'default':'python'},
+			'LinearAlgebraSolver':{'datatype':str,'default':'SLEPc'},
 			'Preconditioner':{'datatype':str,'default':'None'},
 		}
 		return SettingsDict

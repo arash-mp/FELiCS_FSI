@@ -124,6 +124,7 @@ class linearSystem:
 	def __init__(
 		self,
 		matrix_dict,
+		matrix_dict_petsc,
 		FEMSpaces,
 		param,
 		meanFlow,
@@ -148,6 +149,8 @@ class linearSystem:
 		self.__n_omegas = len(self.__param.IOResolvent.Omegas)
 		self.__meanFlow = meanFlow
 		self.__n_dof=np.shape(self.__matrix_dict['A'])[0]
+
+		self.__matrix_dict_petsc = matrix_dict_petsc #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
 
 		self.__tol = 1e-12
 
@@ -222,6 +225,90 @@ class linearSystem:
 
 		#pdb.set_trace()
 		return f_real.array + 1j*f_imag.array
+
+
+	def __solve_with_SLEPc(
+				self,
+				adjointFlag=False,
+				):
+		"""
+		Solves the GEVP with the a SLEPc eigenvalue solver
+
+		Function arguments:
+
+		Function returns:
+
+		"""
+
+		# EVal = np.zeros((self.__param.Numerics.nSolut), 'complex')
+		# EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut), 'complex')
+
+		#if adjointFlag:
+		#	printDebug(True,'--------------------------------')
+		#	printDebug(True, "-- Solving adjoint GEVP")
+		#	A, B, f = self.__preconditionMatrices(
+		#								self.__matrix_dict['A'].getH(),
+		#								self.__matrix_dict['B'],
+		#								self.__param.Numerics.Preconditioner,
+		#										)
+		#else:
+		#	printDebug(True,'--------------------------------')
+		#	printDebug(True, "-- Solving direct GEVP")
+		#	A, B, f = self.__preconditionMatrices(
+		#				self.__matrix_dict['A'],
+		#				self.__matrix_dict['B'],
+		#				self.__param.Numerics.Preconditioner
+		#										)
+
+		# Allocate space for complete matrices
+		nGuesses = len(self.__param.Numerics.EigenValueGuess)
+		nSol = self.__param.Numerics.nSolut
+		EigValTot = np.zeros((nSol*nGuesses),'complex')
+		EigVecTot = np.zeros((self.__n_dof,nSol*nGuesses),'complex')
+		if adjointFlag:
+			EigVecAdjTot = np.zeros((self.__n_dof,nSol*nGuesses),'complex')
+
+		# solve GEVP using eigs for each guess
+		for i in range(nGuesses):
+
+			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
+			printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
+
+			if adjointFlag:
+				EigValTemp, EigVecTemp, EigVecAdjTemp = self.__solveGeneralEigenproblem(\
+                                             self.__matrix_dict_petsc['A'], \
+                                             self.__matrix_dict_petsc['B'], \
+                                             sigma=eigenValueGuess, \
+                                             nev=self.__param.Numerics.nSolut, \
+                                             tol=self.__tol,\
+                                             max_it=200,\
+                                             adjoint=True, \
+                                             isForEigenProblem=True)
+
+			else:
+				EigValTemp, EigVecTemp = self.__solveGeneralEigenproblem(\
+                                             self.__matrix_dict_petsc['A'], \
+                                             self.__matrix_dict_petsc['B'], \
+                                             sigma=eigenValueGuess, \
+                                             nev=self.__param.Numerics.nSolut, \
+                                             tol=self.__tol,\
+                                             max_it=200,\
+                                             adjoint=adjointFlag, \
+                                             isForEigenProblem=True)
+
+
+			index = list(range(i*nSol,(i+1)*nSol))
+			EigValTot[index]   = EigValTemp
+			for j in range(nSol):
+				EigVecTot[:,i*nSol+j] = EigVecTemp[j,:]
+				if adjointFlag:
+					EigVecAdjTot[:,i*nSol+j] = EigVecAdjTemp[j,:]
+		if adjointFlag:
+			return EigValTot, EigVecTot, EigVecAdjTot
+		else:
+			return EigValTot, EigVecTot
+
+
 
 	def __solve_with_python(
 				self,
@@ -824,11 +911,36 @@ class linearSystem:
 
 		start= time.time()
 
-		EVal = np.zeros((self.__param.Numerics.nSolut*len(self.__param.Numerics.EigenValueGuess)), 'complex')
-		EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut*len(self.__param.Numerics.EigenValueGuess)), 'complex')
+		#EVal = np.zeros((self.__param.Numerics.nSolut*len(self.__param.Numerics.EigenValueGuess)), 'complex')
+		#EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut*len(self.__param.Numerics.EigenValueGuess)), 'complex')
+
+		if self.__param.Numerics.LinearAlgebraSolver=='SLEPc':
+			#TODO Sophie: add parallel run for slepc
+			## Added possibility to run GEVP of different guesses in parallel
+			#if self.__param.Numerics.nCPU > 1:
+			#	print("-- Entering parallel loop for GEVP")
+			#	pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
+			#	args_map = [(linearSystem, 'GEVP', self.__matrix_dict, \
+			#		self.__param.Numerics.nSolut, arg, adjointFlag, self.__param.Numerics) for arg in \
+			#		self.__param.Numerics.EigenValueGuess]
+			#	results_pool = pool.map(self.runInParallel, args_map)
+
+			#	for i in range(len(results_pool)):
+			#		index = list(range(i*self.__param.Numerics.nSolut, (i+1)*self.__param.Numerics.nSolut))
+			#		EVal[index] = results_pool[i][0]
+			#		EVec[:, index] = results_pool[i][1]
+
+			#	print("-- Assembled results from all guesses.")
+
+			#else:
+
+			if adjointFlag:
+				EVal, EVec, EVecAdj = self.__solve_with_SLEPc(adjointFlag)
+			else:
+				EVal, EVec = self.__solve_with_SLEPc(adjointFlag)
 
 
-		if self.__param.Numerics.LinearAlgebraSolver=='python':
+		elif self.__param.Numerics.LinearAlgebraSolver=='python':
 			# Added possibility to run GEVP of different guesses in parallel
 			if self.__param.Numerics.nCPU > 1:
 				print("-- Entering parallel loop for GEVP")
@@ -869,7 +981,8 @@ class linearSystem:
 		# check the residuum
 		maxRes = 0
 
-		fluctSolutObjList = []
+		fluctSolutObjList    = []
+		fluctSolutObjListAdj = []
 
 
 		if adjointFlag:
@@ -886,9 +999,21 @@ class linearSystem:
 									self.__FEMSpaces,
 									EVal[i],
 									EVec[:, i],
-									not adjointFlag,
+								        True,
 									 )
 			)
+
+			if adjointFlag:
+				fluctSolutObjListAdj.append(fluctuationSolutions(
+										self.__param,
+										self.__meanFlow,
+										self.__FEMSpaces,
+										EVal[i],
+										EVecAdj[:, i],
+										False,
+										 )
+				)
+
 
 			resTemp = self.__checkGEVP(
 					EVal[i],
@@ -903,6 +1028,9 @@ class linearSystem:
 
 		printDebug(True, '-- Solving the GEVP took %4g s' % end)
 		printDebug(True, '-- Max residuum of %s solutions (EUCLIDIAN norm): %12g' % (method,maxRes))
+
+		if adjointFlag:
+			fluctSolutObjList.extend(fluctSolutObjListAdj)
 
 		return fluctSolutObjList
 
@@ -1017,3 +1145,75 @@ class linearSystem:
 		# print("Coordinates corresponding to values > 10^20 ", coordinates, file=sys.stderr)
 
 		return
+
+
+	def __solveGeneralEigenproblem(self, A, B, sigma, nev, tol=1.e-16, max_it=200, adjoint=False, isForEigenProblem=True, isIncompressible=True):
+		from slepc4py import SLEPc
+		
+		# finish assembling matrices 
+		A.assemble()
+		B.assemble()
+		
+		# create eigenproblem solver 
+		eps = SLEPc.EPS().create()
+		eps.setOperators(A,B)
+		if isForEigenProblem and isIncompressible:
+			eps.setProblemType(SLEPc.EPS.ProblemType.PGNHEP) # general non-Hermitian eigenproblem with positive semi-definite M
+		
+		#calculate adjoint vectors
+		if adjoint:
+			eps.setTwoSided(True)
+		
+		eps.setTolerances(tol=tol,max_it=max_it)
+		
+		eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) # is standard, does not need to be set
+		#eps.setType(SLEPc.EPS.Type.ARNOLDI) 
+		eps.getST().setType(SLEPc.ST.Type.SINVERT)
+		#eps.getST().setType(SLEPc.ST.Type.SHIFT)
+		#eps.getST().setShift(1000000)
+		eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_REAL)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_IMAGINARY)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_REAL)
+		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE)
+		eps.setTarget(sigma)
+		eps.setDimensions(nev=nev)
+		
+		eps.getST().getKSP().getPC().setType('lu')
+		eps.getST().getKSP().getPC().setFactorSolverType('mumps')
+		
+		eps.setFromOptions()
+		eps.setUp()
+		
+		eps.solve()
+		
+		dim = A.getSize()[0]
+		eigVals,  eigVecs  = np.empty(nev,complex), np.empty([nev,dim],complex)
+		if adjoint:
+			eigVecs_adjoint  =  np.empty([nev,dim],complex)
+		vec_real, vec_imag = A.getVecs()
+		for i in range(nev):
+			try:
+				eigVals[i]   = eps.getEigenpair(i,vec_real,vec_imag)
+				eigVecs[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
+				if adjoint:
+				        # get adjoint solution
+				        eps.getLeftEigenvector(i,vec_real,vec_imag)
+				        eigVecs_adjoint[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
+				#print(eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+			
+			except:
+				print("Could not access eigenpair nb ", nev+1, "!")
+		
+		A.destroy()
+		B.destroy()
+		eps.getST().getKSP().getPC().destroy()
+		eps.getST().getKSP().destroy()
+		eps.getST().destroy()
+		eps.destroy()
+		if adjoint:
+		        return eigVals, eigVecs, eigVecs_adjoint
+		else:
+		        return eigVals, eigVecs
+	
+

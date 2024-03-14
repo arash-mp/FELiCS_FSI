@@ -55,11 +55,7 @@ def runCase(param, useGUI):
 
 	if param.Case.AnalysisMode=='Modal':
 		fluctSolutList = LinearAlgebraObj.\
-		solveGEVP(False)
-		if param.Case.CalculateAdjoint:
-			fluctSolutObjListAdjointGEVP = LinearAlgebraObj.\
-			solveGEVP(True)
-			fluctSolutList.extend(fluctSolutObjListAdjointGEVP)
+			         solveGEVP(param.Case.CalculateAdjoint)
 
 	elif param.Case.AnalysisMode=='Resolvent':
 		fluctSolutList = LinearAlgebraObj.solveResolvent(

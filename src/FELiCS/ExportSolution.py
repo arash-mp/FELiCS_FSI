@@ -466,7 +466,7 @@ def ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow):
 		# convert the list of eVals to a np-array:
 		eValDirect = np.array(eValDirect)
 		idxDirect  = np.argmax(np.imag(eValDirect))
-
+		
 		if param.Case.CalculateAdjoint:
 			eValAdjoint = np.array(eValAdjoint)
 			idxAdjoint = np.argmax(np.imag(eValAdjoint))

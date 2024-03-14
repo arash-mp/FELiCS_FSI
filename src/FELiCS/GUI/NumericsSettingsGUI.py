@@ -113,7 +113,7 @@ class NumericsSettingsGUI():
 		self.window.LinearAlgebraSolverFrame = tk.LabelFrame(self.window, text="Lin. Algebra Solver",font=labelFont())
 		self.window.LinearAlgebraSolverFrame.grid        (row = LinearAlgebraSolverRow, column = LinearAlgebraSolverColumn, rowspan = 1, columnspan = 2, sticky="")
 		self.window.LinearAlgebraSolverStr = tk.StringVar()
-		LinearAlgebraSolverChoices={'python','matlab','matrix export'}
+		LinearAlgebraSolverChoices={'SLEPc','python','matlab','matrix export'}
 		self.window.LinearAlgebraSolverMenu = tk.OptionMenu(self.window.LinearAlgebraSolverFrame,
 			self.window.LinearAlgebraSolverStr,
 			*LinearAlgebraSolverChoices,
