@@ -13,7 +13,7 @@ from FELiCS.tensorUtils import (
                     Tensor,
                     )
 
-from functions import (
+from FELiCS.functions import (
                 printWarning, 
                 printDebug,
                 )

@@ -2,7 +2,7 @@
 import numpy as np
 import pdb
 
-from functions import (
+from FELiCS.functions import (
 						printDebug,
 						printError,
 					)

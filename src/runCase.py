@@ -13,10 +13,10 @@ def runCase(param, useGUI):
 	import FELiCS.DefineFEMSpaces as DefineFEMSpaces
 	from FELiCS.ExportSolution import ExportGUI,ExportFromFile
 	from FELiCS.meanFlowClass import meanFlowClass
-	import FELiCS.global_variables as glob
 	import numpy as np
 	from FELiCS.fluctuationClass import fluctuationSolutions
 	import copy
+	import FELiCS.WeakFormulationCollection as WeakFormulationCollection
 	from FELiCS.functions import (
 		printError,
 		printWarning,
