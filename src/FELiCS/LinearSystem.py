@@ -1044,7 +1044,6 @@ class linearSystem:
 
 		end = time.time() - start
 
-		method   = "bla"
 		residuum = np.sqrt(np.sum(error[:]**2.))
 
 		printDebug(True, '-- Solving the GEVP took %4g s' % end)
@@ -1056,121 +1055,158 @@ class linearSystem:
 		return fluctSolutObjList
 
 
-	def checkMatrix(self, eq='ux', searchPoint=[1, 2]):
-		import csv
+        ###########################
+        ##### DEPRECATED ##########
+        ###########################
+#	def checkMatrix(self, eq='ux', searchPoint=[1, 2]):
+#		import csv
+#		"""
+#        This function is used for debugging. It can be used to examine matrix A
+#        at a given search point for a given equation.
+#        Inputs:
+#        - eq: equation - ux, uy, ut, p
+#        - searchPoint: search point as tuple [x,y]
+#        It prints
+#        - the diagonal element at calculated index
+#        - the matrix row corresponding to coordinate and variable
+#        - the amount of diagonal elements in the whole matrix that are > 10^20
+#        - the amount of diagonal elements belonging to the examined subspace
+#        that are > 10^20 and the coordinates they are located at
+#        Output:
+#        - returns index of matrix that corresponds to equation and closest 
+#        coordinate
+#        """
+#
+#		checkMat = self.__matrix_dict['A']
+#
+#		# GENERAL ATTRIBUTES
+#		mesh = self.__FEMSpaces.P2.mesh
+#		gdim = mesh.geometry.dim
+#		if eq == 'ux':
+#			dofs = self.__FEMSpaces.VMixed.sub(0).sub(0).collapse()[1]
+#		elif eq == 'uy':
+#			dofs = self.__FEMSpaces.VMixed.sub(0).sub(1).collapse()[1]
+#		elif eq == 'ut':
+#			dofs = self.__FEMSpaces.VMixed.sub(1).collapse()[1]
+#		elif eq == 'p' :
+#			dofs = self.__FEMSpaces.VMixed.sub(2).collapse()[1]
+#		else:
+#			print('equation not found', file=sys.stderr)
+#			return
+#
+#		# DOF COORDINATES OF MIXED SPACE
+#		nDofsVmixed = Function(self.__FEMSpaces.VMixed).vector[:].shape[0]
+#		dofs_coord = np.zeros((nDofsVmixed, gdim))
+#		for i in range(self.__FEMSpaces.VMixed.num_sub_spaces):
+#			if self.__FEMSpaces.VMixed.sub(i).num_sub_spaces > 0:
+#				for j in range(self.__FEMSpaces.VMixed.sub(i).num_sub_spaces):
+#					dofCoordsOfSubSpace = \
+#						self.__FEMSpaces.VMixed.sub(i).sub(j).collapse()[
+#							0].tabulate_dof_coordinates()[:, 0:gdim]
+#					indices = self.__FEMSpaces.VMixed.sub(i).sub(j).collapse()[
+#						1]
+#					dofs_coord[indices] = dofCoordsOfSubSpace
+#			else:
+#				dofCoordsOfSubSpace = self.__FEMSpaces.VMixed.sub(i).collapse()[
+#										  0].tabulate_dof_coordinates()[:,
+#									  0:gdim]
+#				indices = self.__FEMSpaces.VMixed.sub(i).collapse()[1]
+#				dofs_coord[indices] = dofCoordsOfSubSpace
+#		dofs_coord = dofs_coord.reshape((-1, gdim))
+#
+#		# FIND THE CLOSEST COORDINATE TO SEARCH POINT
+#		# FINDS ALL FOUR INDICES FOR GIVEN SEARCH POINT
+#		nearestIndex = np.where(list(
+#			map(lambda x: np.linalg.norm(x - searchPoint),
+#				dofs_coord)) == min(list(
+#			map(lambda x: np.linalg.norm(x - searchPoint),
+#				dofs_coord))))
+#		#print("closest coordinate: ", dofs_coord[nearestIndex[0][0]], file=sys.stderr)
+#		# CHECKS WHICH INDEX BELONGS TO EXAMINED SUBSPACE
+#		matchingIndices = np.empty(shape=(0, 0))
+#		for index in nearestIndex[0]:
+#			if index in dofs:
+#				matchingIndices = np.append(matchingIndices, index)
+#
+#		# PRINT MATRIX ROW CORRESPONDING TO COORDINATE
+#		for index in matchingIndices:
+#			#print("line ", index, " in A: ", np.shape(checkMat[int(index)]), file=sys.stderr)
+#			nonzeroList = checkMat[int(index)].nonzero()
+#			row = []
+#			for jndex in nonzeroList[1]:
+#				row.append(checkMat[int(index), jndex])
+#
+#		# PRINT EVERY MATRIX ELEMENT IN EVERY ROW CORRESPONDING TO EQUATION
+#		maxNonZeroNumb = 0
+#		for kindex in dofs:
+#			line = []
+#			line.append(dofs_coord[kindex][0])
+#			line.append(dofs_coord[kindex][1])
+#			nonzeroList = checkMat[kindex].nonzero()
+#			if len(nonzeroList[1]) > maxNonZeroNumb:
+#				maxNonZeroNumb = len(nonzeroList[1])
+#			row = []
+#			for lindex in nonzeroList[1]:
+#				row.append(checkMat[kindex, lindex])
+#			row.sort()
+#			line.extend(row)
+#
+#		# HOW MANY DIAGONAL ELEMENTS ARE > 10^20 IN THE WHOLE MATRIX?
+#		diagonal = checkMat.diagonal()
+#		homogDiric = sum(x > 10e20 for x in diagonal)
+#		#print("Amount of diagonal elements in whole matrix > 10^20: ", homogDiric, file=sys.stderr)
+#
+#		# HOW MANY DIAGONAL ELEMENTS BELONGING TO THE EXAMINED SUBSPACE ARE
+#		# > 10^20 AND AT WHAT COORDINATES ARE THEY LOCATED?
+#		counter = 0
+#		coordinates = []
+#		for index in dofs:
+#			if checkMat[index, index] > 10e20:
+#				counter += 1
+#				coordinates.append(tuple(dofs_coord[index, :]))
+#		#print("Amount of diagonal elements in examined subspace > 10^20: ", counter, file=sys.stderr)
+#		# print("Coordinates corresponding to values > 10^20 ", coordinates, file=sys.stderr)
+#
+#		return
+        ###########################
+        ###########################
+
+
+	def __solveGeneralEigenproblem(
+                self, 
+                A, 
+                B, 
+                sigma, 
+                nev, 
+                tol=1.e-16, 
+                max_it=200, 
+                adjoint=False, 
+                isForEigenProblem=True, 
+                isIncompressible=True):
+
+		#TODO Sophie: create better system to identify matrix kinds
+
 		"""
-        This function is used for debugging. It can be used to examine matrix A
-        at a given search point for a given equation.
-        Inputs:
-        - eq: equation - ux, uy, ut, p
-        - searchPoint: search point as tuple [x,y]
-        It prints
-        - the diagonal element at calculated index
-        - the matrix row corresponding to coordinate and variable
-        - the amount of diagonal elements in the whole matrix that are > 10^20
-        - the amount of diagonal elements belonging to the examined subspace
-        that are > 10^20 and the coordinates they are located at
-        Output:
-        - returns index of matrix that corresponds to equation and closest 
-        coordinate
-        """
+		Solves the generalized eigenvalue problem (GEVP) 
+  		using the SLEPc and PETSc libraries.
 
-		checkMat = self.__matrix_dict['A']
+		Function arguments:
+		- A, B		Matrices defining the GEVP (A-wB)q = 0
+		- sigma 	Eigenvalue guess
+		- nev 		Number of eigenvalues to compute
+		- tol	        (optional) precision of GEVP
+		- max_it	(optional) maximum number of iterations 
+		- adjoint	(bool, optional) more optimal way to 
+					compute the adjoint GEVP
+                - isForEigenProblem, isIncompressible 	    (optional) flags that can be set to determine the kind of matrices  
 
-		# GENERAL ATTRIBUTES
-		mesh = self.__FEMSpaces.P2.mesh
-		gdim = mesh.geometry.dim
-		if eq == 'ux':
-			dofs = self.__FEMSpaces.VMixed.sub(0).sub(0).collapse()[1]
-		elif eq == 'uy':
-			dofs = self.__FEMSpaces.VMixed.sub(0).sub(1).collapse()[1]
-		elif eq == 'ut':
-			dofs = self.__FEMSpaces.VMixed.sub(1).collapse()[1]
-		elif eq == 'p' :
-			dofs = self.__FEMSpaces.VMixed.sub(2).collapse()[1]
-		else:
-			print('equation not found', file=sys.stderr)
-			return
+		Function returns:
+		- eigVals, eigVecs, [eigVecs_adjoint,] error
 
-		# DOF COORDINATES OF MIXED SPACE
-		nDofsVmixed = Function(self.__FEMSpaces.VMixed).vector[:].shape[0]
-		dofs_coord = np.zeros((nDofsVmixed, gdim))
-		for i in range(self.__FEMSpaces.VMixed.num_sub_spaces):
-			if self.__FEMSpaces.VMixed.sub(i).num_sub_spaces > 0:
-				for j in range(self.__FEMSpaces.VMixed.sub(i).num_sub_spaces):
-					dofCoordsOfSubSpace = \
-						self.__FEMSpaces.VMixed.sub(i).sub(j).collapse()[
-							0].tabulate_dof_coordinates()[:, 0:gdim]
-					indices = self.__FEMSpaces.VMixed.sub(i).sub(j).collapse()[
-						1]
-					dofs_coord[indices] = dofCoordsOfSubSpace
-			else:
-				dofCoordsOfSubSpace = self.__FEMSpaces.VMixed.sub(i).collapse()[
-										  0].tabulate_dof_coordinates()[:,
-									  0:gdim]
-				indices = self.__FEMSpaces.VMixed.sub(i).collapse()[1]
-				dofs_coord[indices] = dofCoordsOfSubSpace
-		dofs_coord = dofs_coord.reshape((-1, gdim))
+		"""
 
-		# FIND THE CLOSEST COORDINATE TO SEARCH POINT
-		# FINDS ALL FOUR INDICES FOR GIVEN SEARCH POINT
-		nearestIndex = np.where(list(
-			map(lambda x: np.linalg.norm(x - searchPoint),
-				dofs_coord)) == min(list(
-			map(lambda x: np.linalg.norm(x - searchPoint),
-				dofs_coord))))
-		#print("closest coordinate: ", dofs_coord[nearestIndex[0][0]], file=sys.stderr)
-		# CHECKS WHICH INDEX BELONGS TO EXAMINED SUBSPACE
-		matchingIndices = np.empty(shape=(0, 0))
-		for index in nearestIndex[0]:
-			if index in dofs:
-				matchingIndices = np.append(matchingIndices, index)
-
-		# PRINT MATRIX ROW CORRESPONDING TO COORDINATE
-		for index in matchingIndices:
-			#print("line ", index, " in A: ", np.shape(checkMat[int(index)]), file=sys.stderr)
-			nonzeroList = checkMat[int(index)].nonzero()
-			row = []
-			for jndex in nonzeroList[1]:
-				row.append(checkMat[int(index), jndex])
-
-		# PRINT EVERY MATRIX ELEMENT IN EVERY ROW CORRESPONDING TO EQUATION
-		maxNonZeroNumb = 0
-		for kindex in dofs:
-			line = []
-			line.append(dofs_coord[kindex][0])
-			line.append(dofs_coord[kindex][1])
-			nonzeroList = checkMat[kindex].nonzero()
-			if len(nonzeroList[1]) > maxNonZeroNumb:
-				maxNonZeroNumb = len(nonzeroList[1])
-			row = []
-			for lindex in nonzeroList[1]:
-				row.append(checkMat[kindex, lindex])
-			row.sort()
-			line.extend(row)
-
-		# HOW MANY DIAGONAL ELEMENTS ARE > 10^20 IN THE WHOLE MATRIX?
-		diagonal = checkMat.diagonal()
-		homogDiric = sum(x > 10e20 for x in diagonal)
-		#print("Amount of diagonal elements in whole matrix > 10^20: ", homogDiric, file=sys.stderr)
-
-		# HOW MANY DIAGONAL ELEMENTS BELONGING TO THE EXAMINED SUBSPACE ARE
-		# > 10^20 AND AT WHAT COORDINATES ARE THEY LOCATED?
-		counter = 0
-		coordinates = []
-		for index in dofs:
-			if checkMat[index, index] > 10e20:
-				counter += 1
-				coordinates.append(tuple(dofs_coord[index, :]))
-		#print("Amount of diagonal elements in examined subspace > 10^20: ", counter, file=sys.stderr)
-		# print("Coordinates corresponding to values > 10^20 ", coordinates, file=sys.stderr)
-
-		return
-
-
-	def __solveGeneralEigenproblem(self, A, B, sigma, nev, tol=1.e-16, max_it=200, adjoint=False, isForEigenProblem=True, isIncompressible=True):
 		from slepc4py import SLEPc
-		
+
 		# finish assembling matrices 
 		A.assemble()
 		B.assemble()
