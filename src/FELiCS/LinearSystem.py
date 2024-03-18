@@ -275,7 +275,7 @@ class linearSystem:
 			printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
 
 			if adjointFlag:
-				EigValTemp, EigVecTemp, EigVecAdjTemp = self.__solveGeneralEigenproblem(\
+				EigValTemp, EigVecTemp, EigVecAdjTemp, error = self.__solveGeneralEigenproblem(\
                                              self.__matrix_dict_petsc['A'], \
                                              self.__matrix_dict_petsc['B'], \
                                              sigma=eigenValueGuess, \
@@ -286,7 +286,7 @@ class linearSystem:
                                              isForEigenProblem=True)
 
 			else:
-				EigValTemp, EigVecTemp = self.__solveGeneralEigenproblem(\
+				EigValTemp, EigVecTemp, error = self.__solveGeneralEigenproblem(\
                                              self.__matrix_dict_petsc['A'], \
                                              self.__matrix_dict_petsc['B'], \
                                              sigma=eigenValueGuess, \
@@ -304,167 +304,172 @@ class linearSystem:
 				if adjointFlag:
 					EigVecAdjTot[:,i*nSol+j] = EigVecAdjTemp[j,:]
 		if adjointFlag:
-			return EigValTot, EigVecTot, EigVecAdjTot
+			return EigValTot, EigVecTot, EigVecAdjTot, error
 		else:
-			return EigValTot, EigVecTot
+			return EigValTot, EigVecTot, error
+
+
+        ###########################
+        ##### DEPRECATED ##########
+        ###########################
+
+#	def __solve_with_python(
+#				self,
+#				adjointFlag=False,
+#				):
+#		"""
+#		Solves the GEVP with the python solver
+#
+#		Function arguments:
+#
+#		Function returns:
+#
+#		"""
+#
+#		# EVal = np.zeros((self.__param.Numerics.nSolut), 'complex')
+#		# EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut), 'complex')
+#
+#		if adjointFlag:
+#			printDebug(True,'--------------------------------')
+#			printDebug(True, "-- Solving adjoint GEVP")
+#			A, B, f = self.__preconditionMatrices(
+#										self.__matrix_dict['A'].getH(),
+#										self.__matrix_dict['B'],
+#										self.__param.Numerics.Preconditioner,
+#												)
+#		else:
+#			printDebug(True,'--------------------------------')
+#			printDebug(True, "-- Solving direct GEVP")
+#			A, B, f = self.__preconditionMatrices(
+#						self.__matrix_dict['A'],
+#						self.__matrix_dict['B'],
+#						self.__param.Numerics.Preconditioner
+#												)
+#
+#		# Allocate space for complete matrices
+#		nGuesses = len(self.__param.Numerics.EigenValueGuess)
+#		nSol = self.__param.Numerics.nSolut
+#		EigValTot = np.zeros((nSol*nGuesses),'complex')
+#		EigVecTot = np.zeros((self.__n_dof,nSol*nGuesses),'complex')
+#
+#		# solve GEVP using eigs for each guess
+#		for i in range(nGuesses):
+#			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
+#			printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
+#			EigValTemp, EigVecTemp = splin.eigs(
+#			 	A,
+#			 	k=self.__param.Numerics.nSolut,
+#			 	M=B,
+#			 	sigma=eigenValueGuess,
+#			 	ncv=200,
+#			 	maxiter=100,
+#			 	tol=self.__tol,
+#			 	return_eigenvectors=True,
+#			 	)
+#			index = list(range(i*nSol,(i+1)*nSol))
+#			EigValTot[index] = EigValTemp
+#			EigVecTot[:,index] = EigVecTemp
+#
+#		return EigValTot, EigVecTot
+#
+#	def __solve_with_matlab(
+#				self,
+#				adjointFlag=False,
+#				export=False
+#				):
+#		"""
+#		solves the GEVP using the matlab solver
+#
+#		Function Arguments:
+#		- export: Specifies if the solution should be exported.
+#		Default Value is False
+#
+#		Function returns:
+#
+#		"""
+#		import matlab.engine
+#		eng = matlab.engine.start_matlab()
+#		eng.addpath (__file__.rsplit('/',1)[0]+'/Matlab', nargout= 0 )
+#
+#		if adjointFlag:
+#			print("-- Solving adjoint GEVP")
+#			# precondition matrices
+#			A, B, f = self.__preconditionMatrices(
+#								self.__matrix_dict['A'].getH(),
+#								self.__matrix_dict['B'],
+#								self.__param.Numerics.Preconditioner,
+#								)
+#
+#			tol = 1e-12
+#
+#
+#		else:
+#			print("-- Solving direct GEVP")
+#			A, B, f = self.__preconditionMatrices(
+#								self.__matrix_dict['A'],
+#								self.__matrix_dict['B'],
+#								self.__param.Numerics.Preconditioner,
+#								)
+#
+#			tol = 10e-11
+#
+#		# save matrices to file
+#		savemat('A.mat',{'A':A})
+#		savemat('B.mat',{'B':B})
+#
+#		if export == True:
+#			print('Matrix exported. Ending program...')
+#			exit()
+#
+#		#run the GEVP solver in the matlab script
+#		if len(self.__param.Numerics.EigenValueGuess) == 1:
+#			eigenValueGuess = self.__param.Numerics.EigenValueGuess[0]
+#		else: printError('matlab GEVP solver only takes one eigenvalue guess')
+#
+#		temp = eng.MatlabEigs(self.__param.Numerics.nSolut,
+#			eigenValueGuess,
+#			200,
+#			100,
+#			tol,
+#			False,
+#			nargout=2)
+#
+#		#remove matrices
+#		os.remove("A.mat")
+#		os.remove("B.mat")
+#
+#		return np.array(temp[0]), np.array(temp[1])
 
 
 
-	def __solve_with_python(
-				self,
-				adjointFlag=False,
-				):
-		"""
-		Solves the GEVP with the python solver
-
-		Function arguments:
-
-		Function returns:
-
-		"""
-
-		# EVal = np.zeros((self.__param.Numerics.nSolut), 'complex')
-		# EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut), 'complex')
-
-		if adjointFlag:
-			printDebug(True,'--------------------------------')
-			printDebug(True, "-- Solving adjoint GEVP")
-			A, B, f = self.__preconditionMatrices(
-										self.__matrix_dict['A'].getH(),
-										self.__matrix_dict['B'],
-										self.__param.Numerics.Preconditioner,
-												)
-		else:
-			printDebug(True,'--------------------------------')
-			printDebug(True, "-- Solving direct GEVP")
-			A, B, f = self.__preconditionMatrices(
-						self.__matrix_dict['A'],
-						self.__matrix_dict['B'],
-						self.__param.Numerics.Preconditioner
-												)
-
-		# Allocate space for complete matrices
-		nGuesses = len(self.__param.Numerics.EigenValueGuess)
-		nSol = self.__param.Numerics.nSolut
-		EigValTot = np.zeros((nSol*nGuesses),'complex')
-		EigVecTot = np.zeros((self.__n_dof,nSol*nGuesses),'complex')
-
-		# solve GEVP using eigs for each guess
-		for i in range(nGuesses):
-			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
-			printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
-			EigValTemp, EigVecTemp = splin.eigs(
-			 	A,
-			 	k=self.__param.Numerics.nSolut,
-			 	M=B,
-			 	sigma=eigenValueGuess,
-			 	ncv=200,
-			 	maxiter=100,
-			 	tol=self.__tol,
-			 	return_eigenvectors=True,
-			 	)
-			index = list(range(i*nSol,(i+1)*nSol))
-			EigValTot[index] = EigValTemp
-			EigVecTot[:,index] = EigVecTemp
-
-		return EigValTot, EigVecTot
-
-	def __solve_with_matlab(
-				self,
-				adjointFlag=False,
-				export=False
-				):
-		"""
-		solves the GEVP using the matlab solver
-
-		Function Arguments:
-		- export: Specifies if the solution should be exported.
-		Default Value is False
-
-		Function returns:
-
-		"""
-		import matlab.engine
-		eng = matlab.engine.start_matlab()
-		eng.addpath (__file__.rsplit('/',1)[0]+'/Matlab', nargout= 0 )
-
-		if adjointFlag:
-			print("-- Solving adjoint GEVP")
-			# precondition matrices
-			A, B, f = self.__preconditionMatrices(
-								self.__matrix_dict['A'].getH(),
-								self.__matrix_dict['B'],
-								self.__param.Numerics.Preconditioner,
-								)
-
-			tol = 1e-12
-
-
-		else:
-			print("-- Solving direct GEVP")
-			A, B, f = self.__preconditionMatrices(
-								self.__matrix_dict['A'],
-								self.__matrix_dict['B'],
-								self.__param.Numerics.Preconditioner,
-								)
-
-			tol = 10e-11
-
-		# save matrices to file
-		savemat('A.mat',{'A':A})
-		savemat('B.mat',{'B':B})
-
-		if export == True:
-			print('Matrix exported. Ending program...')
-			exit()
-
-		#run the GEVP solver in the matlab script
-		if len(self.__param.Numerics.EigenValueGuess) == 1:
-			eigenValueGuess = self.__param.Numerics.EigenValueGuess[0]
-		else: printError('matlab GEVP solver only takes one eigenvalue guess')
-
-		temp = eng.MatlabEigs(self.__param.Numerics.nSolut,
-			eigenValueGuess,
-			200,
-			100,
-			tol,
-			False,
-			nargout=2)
-
-		#remove matrices
-		os.remove("A.mat")
-		os.remove("B.mat")
-
-		return np.array(temp[0]), np.array(temp[1])
-
-
-
-	def __checkGEVP(
-			self,
-			eigVal,
-			eigVec,
-			A,
-			B,
-			):
-		"""
-		Calculating the frombenius norm and the infinite norm of the
-		residuum of the solutions to a GEVP
-
-		Function arguments:
-		- eigVal:
-		- eigVec:
-		- A:
-		- B:
-
-		"""
-
-		# First normalize the vector (additionally with the norm of matrix A)
-		normA = sparse_norm(A)
-		eigVecNorm = eigVec/np.linalg.norm(eigVec)/normA
-		# Calculate residuum of Ax = omega Bx
-		residuum_vec=A@eigVecNorm-eigVal*B@eigVecNorm
-		residuum_euc = np.linalg.norm(residuum_vec)
-		return residuum_euc
+#	def __checkGEVP(
+#			self,
+#			eigVal,
+#			eigVec,
+#			A,
+#			B,
+#			):
+#		"""
+#		Calculating the frombenius norm and the infinite norm of the
+#		residuum of the solutions to a GEVP
+#
+#		Function arguments:
+#		- eigVal:
+#		- eigVec:
+#		- A:
+#		- B:
+#
+#		"""
+#
+#		# First normalize the vector (additionally with the norm of matrix A)
+#		normA = sparse_norm(A)
+#		eigVecNorm = eigVec/np.linalg.norm(eigVec)/normA
+#		# Calculate residuum of Ax = omega Bx
+#		residuum_vec=A@eigVecNorm-eigVal*B@eigVecNorm
+#		residuum_euc = np.linalg.norm(residuum_vec)
+#		return residuum_euc
+        ###########################
+        ###########################
 
 	def __ParallelGEVPPythonPickle(
 				self,
@@ -600,39 +605,44 @@ class linearSystem:
 		return gains, forcings, responses
 
 
-	def __preconditionMatrices(
-				self,
-				A,
-				B,
-				Preconditioner,
-				f=False,
-				):
-		"""
-		Performing a preconditioning of the matrices A,B
-
-		Function arguments:
-		- A:
-		- B:
-		- Preconditioner:
-		- f:
-
-		Function returns:
-		- A:
-		- B:
-		- f:
-
-		"""
-		if not Preconditioner == 'None':
-			if Preconditioner == 'Sum of row':
-				S = csr_matrix(1/abs(A).sum(1))
-				A = A.multiply(S)
-				B = B.multiply(S)
-
-				if not type(f) == bool:
-					f = np.multiply(np.squeeze(np.array(S.todense())),f)
-			else:
-				printError('Preconditioner '+ Preconditioner + ' not known.')
-		return A,B,f
+        ###########################
+        ##### DEPRECATED ##########
+        ###########################
+#	def __preconditionMatrices(
+#				self,
+#				A,
+#				B,
+#				Preconditioner,
+#				f=False,
+#				):
+#		"""
+#		Performing a preconditioning of the matrices A,B
+#
+#		Function arguments:
+#		- A:
+#		- B:
+#		- Preconditioner:
+#		- f:
+#
+#		Function returns:
+#		- A:
+#		- B:
+#		- f:
+#
+#		"""
+#		if not Preconditioner == 'None':
+#			if Preconditioner == 'Sum of row':
+#				S = csr_matrix(1/abs(A).sum(1))
+#				A = A.multiply(S)
+#				B = B.multiply(S)
+#
+#				if not type(f) == bool:
+#					f = np.multiply(np.squeeze(np.array(S.todense())),f)
+#			else:
+#				printError('Preconditioner '+ Preconditioner + ' not known.')
+#		return A,B,f
+        ###########################
+        ###########################
 
 	def solveResolvent(
 			self,
@@ -911,8 +921,14 @@ class linearSystem:
 
 		start= time.time()
 
+                ###########################
+                ##### DEPRECATED ##########
+                ###########################
+                #TODO Sophie: why was this here?
 		#EVal = np.zeros((self.__param.Numerics.nSolut*len(self.__param.Numerics.EigenValueGuess)), 'complex')
 		#EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut*len(self.__param.Numerics.EigenValueGuess)), 'complex')
+                ###########################
+                ###########################
 
 		if self.__param.Numerics.LinearAlgebraSolver=='SLEPc':
 			#TODO Sophie: add parallel run for slepc
@@ -935,39 +951,44 @@ class linearSystem:
 			#else:
 
 			if adjointFlag:
-				EVal, EVec, EVecAdj = self.__solve_with_SLEPc(adjointFlag)
+				EVal, EVec, EVecAdj, error = self.__solve_with_SLEPc(adjointFlag)
 			else:
-				EVal, EVec = self.__solve_with_SLEPc(adjointFlag)
+				EVal, EVec, error = self.__solve_with_SLEPc(adjointFlag)
 
 
-		elif self.__param.Numerics.LinearAlgebraSolver=='python':
-			# Added possibility to run GEVP of different guesses in parallel
-			if self.__param.Numerics.nCPU > 1:
-				print("-- Entering parallel loop for GEVP")
-				pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
-				args_map = [(linearSystem, 'GEVP', self.__matrix_dict, \
-					self.__param.Numerics.nSolut, arg, adjointFlag, self.__param.Numerics) for arg in \
-					self.__param.Numerics.EigenValueGuess]
-				results_pool = pool.map(self.runInParallel, args_map)
+                ###########################
+                ##### DEPRECATED ##########
+                ###########################
+		#elif self.__param.Numerics.LinearAlgebraSolver=='python':
+		#	# Added possibility to run GEVP of different guesses in parallel
+		#	if self.__param.Numerics.nCPU > 1:
+		#		print("-- Entering parallel loop for GEVP")
+		#		pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
+		#		args_map = [(linearSystem, 'GEVP', self.__matrix_dict, \
+		#			self.__param.Numerics.nSolut, arg, adjointFlag, self.__param.Numerics) for arg in \
+		#			self.__param.Numerics.EigenValueGuess]
+		#		results_pool = pool.map(self.runInParallel, args_map)
 
-				for i in range(len(results_pool)):
-					index = list(range(i*self.__param.Numerics.nSolut, (i+1)*self.__param.Numerics.nSolut))
-					EVal[index] = results_pool[i][0]
-					EVec[:, index] = results_pool[i][1]
+		#		for i in range(len(results_pool)):
+		#			index = list(range(i*self.__param.Numerics.nSolut, (i+1)*self.__param.Numerics.nSolut))
+		#			EVal[index] = results_pool[i][0]
+		#			EVec[:, index] = results_pool[i][1]
 
-				print("-- Assembled results from all guesses.")
+		#		print("-- Assembled results from all guesses.")
 
-			else:
+		#	else:
 
-				EVal, EVec = self.__solve_with_python(adjointFlag)
+		#		EVal, EVec = self.__solve_with_python(adjointFlag)
 
-		elif self.__param.Numerics.LinearAlgebraSolver in \
-		['matlab', 'matrix export']:
+		#elif self.__param.Numerics.LinearAlgebraSolver in \
+		#['matlab', 'matrix export']:
 
-			if self.__param.Numerics.LinearAlgebraSolver == 'matrix export':
-				EVal, EVec = self.__solve_with_matlab(adjointFlag, True)
-			else:
-				EVal, EVec = self.__solve_with_matlab(adjointFlag, False)
+		#	if self.__param.Numerics.LinearAlgebraSolver == 'matrix export':
+		#		EVal, EVec = self.__solve_with_matlab(adjointFlag, True)
+		#	else:
+		#		EVal, EVec = self.__solve_with_matlab(adjointFlag, False)
+                ###########################
+                ###########################
 
 		else:
 			printError(self.__param.Numerics.LinearAlgebraSolver+ \
@@ -978,17 +999,9 @@ class linearSystem:
 		for i in range(self.__param.Numerics.nSolut):
 			EVec[:,i] = EVec[:,i]/np.linalg.norm(EVec[:,i])
 
-		# check the residuum
-		maxRes = 0
 
 		fluctSolutObjList    = []
 		fluctSolutObjListAdj = []
-
-
-		if adjointFlag:
-			method = "Adjoint"
-		else:
-			method = "Direct"
 
 		for i in range(0,len(EVal)):
 
@@ -1015,19 +1028,27 @@ class linearSystem:
 				)
 
 
-			resTemp = self.__checkGEVP(
-					EVal[i],
-					EVec[:,i],
-					self.__matrix_dict['A'],
-					self.__matrix_dict['B'],
-					)
-			if resTemp > maxRes:
-				maxRes = resTemp
+                ###########################
+                ##### DEPRECATED ##########
+                ###########################
+		#	resTemp = self.__checkGEVP(
+		#			EVal[i],
+		#			EVec[:,i],
+		#			self.__matrix_dict['A'],
+		#			self.__matrix_dict['B'],
+		#			)
+		#	if resTemp > maxRes:
+		#		maxRes = resTemp
+                ###########################
+                ###########################
 
 		end = time.time() - start
 
+		method   = "bla"
+		residuum = np.sqrt(np.sum(error[:]**2.))
+
 		printDebug(True, '-- Solving the GEVP took %4g s' % end)
-		printDebug(True, '-- Max residuum of %s solutions (EUCLIDIAN norm): %12g' % (method,maxRes))
+		printDebug(True, '-- Residuum of solutions (calculated by SLEPc):  %12g' % (residuum))
 
 		if adjointFlag:
 			fluctSolutObjList.extend(fluctSolutObjListAdj)
@@ -1192,15 +1213,20 @@ class linearSystem:
 		if adjoint:
 			eigVecs_adjoint  =  np.empty([nev,dim],complex)
 		vec_real, vec_imag = A.getVecs()
+		error = np.empty(nev)
 		for i in range(nev):
 			try:
 				eigVals[i]   = eps.getEigenpair(i,vec_real,vec_imag)
 				eigVecs[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
 				if adjoint:
-				        # get adjoint solution
-				        eps.getLeftEigenvector(i,vec_real,vec_imag)
-				        eigVecs_adjoint[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
-				#print(eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+					# get adjoint solution
+					eps.getLeftEigenvector(i,vec_real,vec_imag)
+					eigVecs_adjoint[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
+					#TODO Sophie: which error to choose? How are they calculated exactly?
+					error[i] = eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)
+					#print("RELATIVE: ", eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+					#print("BACKWARD: ", eps.computeError(i, SLEPc.EPS.ErrorType.BACKWARD))
+					#print("ABSOLUTE: ", eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE))
 			
 			except:
 				print("Could not access eigenpair nb ", nev+1, "!")
@@ -1212,8 +1238,8 @@ class linearSystem:
 		eps.getST().destroy()
 		eps.destroy()
 		if adjoint:
-		        return eigVals, eigVecs, eigVecs_adjoint
+		        return eigVals, eigVecs, eigVecs_adjoint, error
 		else:
-		        return eigVals, eigVecs
+		        return eigVals, eigVecs, error
 	
 
