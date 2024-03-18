@@ -846,15 +846,15 @@ class linearSystem:
 
 		n_omegas=len(self.__param.IOResolvent.Omegas)
 
-		self.__matrix_dict['A'], self.__matrix_dict['B'], \
-		self.__matrix_dict['b_forcing'] = self.__preconditionMatrices(
-			self.__matrix_dict['A'],
-			self.__matrix_dict['B'],
-			 self.__param.Numerics.Preconditioner,
-			f=self.__matrix_dict['b_forcing'])
+		#self.__matrix_dict['A'], self.__matrix_dict['B'], \
+		#self.__matrix_dict['b_forcing'] = self.__preconditionMatrices(
+		#	self.__matrix_dict['A'],
+		#	self.__matrix_dict['B'],
+		#	 self.__param.Numerics.Preconditioner,
+		#	f=self.__matrix_dict['b_forcing'])
 
 		if self.__param.Numerics.nCPU > 1:
-
+			#TODO Sophie: implement parallel
 			pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
 			#func= partial(self.__ParallelInputOutputPickle,self.__matrix_dict)
 			args_map = [[linearSystem, 'InputOutput', self.__matrix_dict, \
@@ -872,14 +872,24 @@ class linearSystem:
 				print("Performing input-output analysis for omega="+str(omega))
 				### Get linear operator
 				# Define OP
-				OP=self.__matrix_dict['A']-omega*self.__matrix_dict['B']
+				OP=self.__matrix_dict_petsc['A']-omega*self.__matrix_dict_petsc['B']
 
-				# Make OP sparse vector
-				OP=OP.tocsc()
-				# Perform Lower-Upper decomposition
-				LU = splin.splu(OP,permc_spec=3)
-				# Use LU decomposition to solve the linear system
-				eigenvectors_c=LU.solve(self.__matrix_dict['b_forcing'])
+        			###########################
+        			##### DEPRECATED ##########
+        			###########################
+				#OP=self.__matrix_dict['A']-omega*self.__matrix_dict['B']
+
+				## Make OP sparse vector
+				#OP=OP.tocsc()
+				## Perform Lower-Upper decomposition
+				#LU = splin.splu(OP,permc_spec=3)
+				## Use LU decomposition to solve the linear system
+				#eigenvectors_c=LU.solve(self.__matrix_dict['b_forcing'])
+        			###########################
+        			###########################
+
+				# Use PETSC to solve linear system (with LU decomposition)
+				eigenvectors_c=self.__solveEquationSystem(OP, self.__matrix_dict_petsc['b_forcing'])
 				gains[:,i] = 1
 				responses[:,0,i] = eigenvectors_c
 
@@ -1278,4 +1288,34 @@ class linearSystem:
 		else:
 		        return eigVals, eigVecs, error
 	
+
+
+	def __solveEquationSystem(
+		self,
+		A,
+		b,
+		bcs=None):
+		
+		
+		from petsc4py import PETSc
+		solution,dummy = A.createVecs()
+		
+		solver = PETSc.KSP().create()
+		solver.setOperators(A)
+		solver.setType(PETSc.KSP.Type.PREONLY)
+		solver.getPC().setType(PETSc.PC.Type.LU)
+		solver.getPC().setFactorSolverType('mumps')
+		
+		solver.solve(b, solution)
+		
+		solutionArray = solution.getArray()
+		
+		solver.destroy()
+		A.destroy()
+		b.destroy()
+		dummy.destroy()
+		
+		return solutionArray
+
+
 
