@@ -293,7 +293,7 @@ class linearSystem:
                                              nev=self.__param.Numerics.nSolut, \
                                              tol=self.__tol,\
                                              max_it=200,\
-                                             adjoint=adjointFlag, \
+                                             adjoint=False, \
                                              isForEigenProblem=True)
 
 
@@ -682,9 +682,9 @@ class linearSystem:
   
 		printDebug(True, '--------------------------------')
 		printDebug(True, '-- Getting matrices limiting response/forcing...')
-		self.__matrix_dict['Pu'] = WeakFormulationClass.getPMat()
+		self.__matrix_dict['Pu'], self.__matrix_dict_petsc['Pu'] = WeakFormulationClass.getPMat()
 		self.__matrix_dict['Pu'] = self.__matrix_dict['Pu'].tocsc()
-		self.__matrix_dict['Cr'] = WeakFormulationClass.getCrMat()
+		self.__matrix_dict['Cr'], self.__matrix_dict_petsc['Cr'] = WeakFormulationClass.getCrMat()
 		self.__matrix_dict['Cr'] = self.__matrix_dict['Cr'].tocsc()
   		# SD: it would make more sense to move this to WeakFormulationCollection!
 		# similarly to what we do with forcing_vf 
@@ -699,7 +699,11 @@ class linearSystem:
 		self.__matrix_dict['Q'] = \
       			self.__matrix_dict['Pu'].transpose()*\
       			self.__matrix_dict['B_femWeight']*\
-             	self.__matrix_dict['Pu']
+             	        self.__matrix_dict['Pu']
+		self.__matrix_dict_petsc['Q'] = \
+      			self.__matrix_dict_petsc['Pu'].transposeMatMult(\
+                        self.__matrix_dict_petsc['B_femWeight'].matMult(\
+                        self.__matrix_dict_petsc['Pu']))
         # self.__matrix_dict['Q'] = \
 		# 		self.__matrix_dict['Pu'].transpose()*\
         # 		self.__matrix_dict['B']*\
@@ -742,6 +746,28 @@ class linearSystem:
 				omega = self.__param.IOResolvent.Omegas[i]
 				printDebug(True, "-- Performing resolvent analysis for omega = " + str(omega))
 
+				OP_petsc          = self.__matrix_dict_petsc['A']-omega*self.__matrix_dict_petsc['B']
+				resolventOperator = ResolventOperator(
+                                        OP_petsc, 
+                                        self.__matrix_dict_petsc['Q'], 
+                                        self.__matrix_dict_petsc['Pu'],
+                                        self.__matrix_dict_petsc['Cr'],
+                                        self.__matrix_dict_petsc['B_forcing'],
+                                        self.__matrix_dict_petsc['B_response'])
+	
+				# Perform eigenvalue decomposition of the linear
+				# operator defined in op() using the handl SOP
+				gains[:,i],eigenvectors_c = self.__solveSVDOfResolvent(
+                                                                        resolventOperator,
+									nev=self.__param.Numerics.nSolut,
+									tol=10-12,
+									max_it=100,
+									return_eigenvectors=True,
+									)
+
+
+
+
 				def op(x):
 					'''
 					Build the linear system which is used to get the 
@@ -766,20 +792,20 @@ class linearSystem:
 				# Get lower upper decomposition of OP (used in function op())
 				LU = splin.splu(OP,permc_spec=3)
 				
-				# Create handle for the linear operator defined by function op()
-				SOP = splin.LinearOperator((nu,nu),matvec=op,dtype='complex')
-				
-				# Perform eigenvalue decomposition of the linear
-				# operator defined in op() using the handl SOP
-				gains[:,i],eigenvectors_c = splin.eigs(SOP,
-									k=self.__param.Numerics.nSolut,
-									M=None,
-									sigma=None,
-									which='LM',
-									maxiter=100,
-									tol=10-12,
-									return_eigenvectors=True,
-									)
+				## Create handle for the linear operator defined by function op()
+				#SOP = splin.LinearOperator((nu,nu),matvec=op,dtype='complex')
+				#
+				## Perform eigenvalue decomposition of the linear
+				## operator defined in op() using the handl SOP
+				#gains[:,i],eigenvectors_c = splin.eigs(SOP,
+				#					k=self.__param.Numerics.nSolut,
+				#					M=None,
+				#					sigma=None,
+				#					which='LM',
+				#					maxiter=100,
+				#					tol=10-12,
+				#					return_eigenvectors=True,
+				#					)
 
 				# Write gains to results dictionary
 				gains[:, i] = np.real(gains[:, i])
@@ -1290,6 +1316,54 @@ class linearSystem:
 	
 
 
+	def __solveSVDOfResolvent(
+                self, 
+                resolventOperator, 
+                nev,
+                tol    = 1.e-12,
+                max_it = 200,
+                return_eigenvectors=False):
+
+		from slepc4py import SLEPc
+		from petsc4py import PETSc
+		
+		# R is matrix free, needs extra class
+		R = PETSc.Mat().createPython(resolventOperator.getSize())
+		R.setPythonContext(resolventOperator)
+		R.setUp()
+		
+		# create eigenproblem solver 
+		eps = SLEPc.EPS().create()
+		eps.setOperators(R)
+		eps.setDimensions(nev=nev)
+		#eps.setProblemType(SLEPc.EPS.ProblemType.HEP) 
+		eps.getST().getKSP().getPC().setType('none')
+		eps.setFromOptions()
+		eps.setUp()
+		
+		eps.solve()
+		
+		dim = resolventOperator.getSize()[0]
+		eigVals,  eigVecs  = np.empty(nev,complex), np.empty([nev,dim],complex)
+		vec_real, vec_imag = resolventOperator.getVecs()
+		for i in range(nev):
+		        try:
+		                eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
+		                eigVecs[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
+		                #print(eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+		        except:
+		                print("Could not access eigenpair nb ", nev+1, "!")
+		
+		eps.destroy()
+		R.destroy()
+		resolventOperator.destroySelf()
+		return eigVals, eigVecs
+
+
+
+
+
+
 	def __solveEquationSystem(
 		self,
 		A,
@@ -1316,6 +1390,82 @@ class linearSystem:
 		dummy.destroy()
 		
 		return solutionArray
+
+
+
+
+class ResolventOperator(object):
+
+        def __init__(self,
+                OP,
+                Q,
+                Pu,
+                Cr,
+                B_forcing,
+                B_response):
+
+                from petsc4py import PETSc
+
+                self._Z1, self._Z2  = OP.getVecs()
+                self._Y1, self._Y2  = Q.getVecs()
+                self._X1, self._X2  = Pu.getVecs()
+                self._W1, self._W2  = Cr.getVecs()
+
+                self._Qf = Q
+                self._Pu = Pu
+                self._Cr = Cr
+                self._Bf = B_forcing
+                self._Br = B_response
+
+                # create KSP1   
+                self._ksp1 = PETSc.KSP().create()
+                self._ksp1.setOperators(OP)
+                self._ksp1.setType(PETSc.KSP.Type.PREONLY)
+                self._ksp1.getPC().setType(PETSc.PC.Type.LU)
+                self._ksp1.getPC().setFactorSolverType('mumps')
+                self._ksp1.setUp()
+                # create KSP2   
+                self._ksp2 = PETSc.KSP().create()
+                self._ksp2.setOperators(OP.conjugate())
+                self._ksp2.setType(PETSc.KSP.Type.PREONLY)
+                self._ksp2.getPC().setType(PETSc.PC.Type.LU)
+                self._ksp2.getPC().setFactorSolverType('mumps')
+                self._ksp2.setUp()
+                # create KSP3   
+                self._ksp3 = PETSc.KSP().create()
+                self._ksp3.setOperators(Q.conjugate())
+                self._ksp3.setType(PETSc.KSP.Type.PREONLY)
+                self._ksp3.getPC().setType(PETSc.PC.Type.LU)
+                self._ksp3.getPC().setFactorSolverType('mumps')
+                self._ksp3.setUp()
+
+        def getSize(self):
+                return self._Qf.getSize()            
+
+        def getVecs(self):
+                return self._Qf.getVecs()
+
+        def mult(self, mat, X, Y):
+                # returns Y=mat*X
+
+                self._Pu.mult            (X,        self._Z1)
+                self._Bf.mult            (self._Z1, self._Z2)
+                self._ksp1.solve         (self._Z2, self._Z1)
+	
+                self._Cr.mult            (self._Z1, self._Z2)
+                self._Br.mult            (self._Z2, self._Z1)
+                self._Cr.multTranspose   (self._Z1, self._Z2)
+                self._ksp2.solveTranspose(self._Z2, self._Z1)
+
+                self._Bf.multTranspose   (self._Z1, self._Z2)
+                self._Pu.multTranspose   (self._Z2, self._X1)
+                self._ksp3.solveTranspose(self._X1, Y)
+  
+
+        def destroySelf(self):
+                self._ksp1.destroy()
+                self._ksp2.destroy()
+                self._ksp3.destroy()
 
 
 
