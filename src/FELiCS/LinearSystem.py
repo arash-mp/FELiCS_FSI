@@ -760,9 +760,8 @@ class linearSystem:
 				gains[:,i],eigenvectors_c = self.__solveSVDOfResolvent(
                                                                         resolventOperator,
 									nev=self.__param.Numerics.nSolut,
-									tol=10-12,
-									max_it=100,
-									return_eigenvectors=True,
+									tol=1.e-16,
+									max_it=200,
 									)
 
 
@@ -802,8 +801,8 @@ class linearSystem:
 				#					M=None,
 				#					sigma=None,
 				#					which='LM',
-				#					maxiter=100,
-				#					tol=10-12,
+				#					maxiter=200,
+				#					tol=1.e-16,
 				#					return_eigenvectors=True,
 				#					)
 
@@ -1320,9 +1319,8 @@ class linearSystem:
                 self, 
                 resolventOperator, 
                 nev,
-                tol    = 1.e-12,
-                max_it = 200,
-                return_eigenvectors=False):
+                tol    = 1.e-16,
+                max_it = 200):
 
 		from slepc4py import SLEPc
 		from petsc4py import PETSc
@@ -1336,7 +1334,10 @@ class linearSystem:
 		eps = SLEPc.EPS().create()
 		eps.setOperators(R)
 		eps.setDimensions(nev=nev)
-		#eps.setProblemType(SLEPc.EPS.ProblemType.HEP) 
+		eps.setTolerances(tol=tol,max_it=max_it)
+		#eps.setProblemType(SLEPc.EPS.ProblemType.GHEP) 
+		#eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) 
+		eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE)
 		eps.getST().getKSP().getPC().setType('none')
 		eps.setFromOptions()
 		eps.setUp()
@@ -1344,15 +1345,15 @@ class linearSystem:
 		eps.solve()
 		
 		dim = resolventOperator.getSize()[0]
-		eigVals,  eigVecs  = np.empty(nev,complex), np.empty([nev,dim],complex)
+		eigVals,  eigVecs  = np.empty(nev,complex), np.empty([dim,nev],complex)
 		vec_real, vec_imag = resolventOperator.getVecs()
 		for i in range(nev):
-		        try:
-		                eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
-		                eigVecs[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
-		                #print(eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
-		        except:
-		                print("Could not access eigenpair nb ", nev+1, "!")
+			try:
+				eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
+				eigVecs[:,i] = vec_real.getArray() + 1j * vec_imag.getArray()
+				print("SLEPc error: ", eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+			except:
+				print("Could not access eigenpair nb ", nev+1, "!")
 		
 		eps.destroy()
 		R.destroy()
@@ -1398,20 +1399,20 @@ class ResolventOperator(object):
 
         def __init__(self,
                 OP,
-                Q,
+                Qf,
                 Pu,
                 Cr,
                 B_forcing,
                 B_response):
 
+
                 from petsc4py import PETSc
 
-                self._Z1, self._Z2  = OP.getVecs()
-                self._Y1, self._Y2  = Q.getVecs()
-                self._X1, self._X2  = Pu.getVecs()
-                self._W1, self._W2  = Cr.getVecs()
+                self._size = Qf.getSize()
 
-                self._Qf = Q
+                self._Z1, self._Z2  = OP.getVecs()
+                self._Y1, self._Y2  = Qf.getVecs()
+
                 self._Pu = Pu
                 self._Cr = Cr
                 self._Bf = B_forcing
@@ -1424,26 +1425,32 @@ class ResolventOperator(object):
                 self._ksp1.getPC().setType(PETSc.PC.Type.LU)
                 self._ksp1.getPC().setFactorSolverType('mumps')
                 self._ksp1.setUp()
-                # create KSP2   
+                # create KSP2  
+		# TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). Thus we have to do an additional LU decomposistion.... Change as soon as this is included in the petsc4py! 
+                OP_H = OP.copy()
+                OP_H.conjugate()
+                OP_H.assemble()
+                #OP = OP.conjugate()
                 self._ksp2 = PETSc.KSP().create()
-                self._ksp2.setOperators(OP.conjugate())
+                self._ksp2.setOperators(OP_H)
                 self._ksp2.setType(PETSc.KSP.Type.PREONLY)
                 self._ksp2.getPC().setType(PETSc.PC.Type.LU)
                 self._ksp2.getPC().setFactorSolverType('mumps')
                 self._ksp2.setUp()
-                # create KSP3   
+                # create KSP3  
+                Qf.conjugate()
                 self._ksp3 = PETSc.KSP().create()
-                self._ksp3.setOperators(Q.conjugate())
+                self._ksp3.setOperators(Qf)
                 self._ksp3.setType(PETSc.KSP.Type.PREONLY)
                 self._ksp3.getPC().setType(PETSc.PC.Type.LU)
                 self._ksp3.getPC().setFactorSolverType('mumps')
                 self._ksp3.setUp()
 
         def getSize(self):
-                return self._Qf.getSize()            
+                return self._size
 
         def getVecs(self):
-                return self._Qf.getVecs()
+                return self._Y1, self._Y2
 
         def mult(self, mat, X, Y):
                 # returns Y=mat*X
@@ -1458,9 +1465,9 @@ class ResolventOperator(object):
                 self._ksp2.solveTranspose(self._Z2, self._Z1)
 
                 self._Bf.multTranspose   (self._Z1, self._Z2)
-                self._Pu.multTranspose   (self._Z2, self._X1)
-                self._ksp3.solveTranspose(self._X1, Y)
-  
+                self._Pu.multTranspose   (self._Z2, self._Y1)
+                self._ksp3.solveTranspose(self._Y1, Y)
+
 
         def destroySelf(self):
                 self._ksp1.destroy()

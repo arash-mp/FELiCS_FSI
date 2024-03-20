@@ -526,8 +526,8 @@ class WeakFormulationCollectionClass():
             
             B_forcing = assemble_matrix(form(self.forcing_vf))
             B_forcing.assemble()
-            self.__matrix_dict['B_forcing'] = csr_matrix(B_forcing.getValuesCSR()[::-1], shape = B_forcing.size,dtype=complex)
             self.__matrix_dict_petsc['B_forcing'] = B_forcing #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
+            self.__matrix_dict['B_forcing'] = csr_matrix(B_forcing.getValuesCSR()[::-1], shape = B_forcing.size,dtype=complex)
 
             del B_forcing
             B_response = assemble_matrix(form(self.response_vf))
