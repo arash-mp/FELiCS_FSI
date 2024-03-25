@@ -449,16 +449,12 @@ class WeakFormulationCollectionClass():
         bcs= self.__getListOfDirichletBCs()
         n_dof=BC_Diriclet.size[0]
         if not self.A_vf.lhsIsZero():
-            ###########################
-            ##### DEPRECATED ##########
-            ###########################
-            #if AnalysisMode in ['Input-Output']:
-            #    A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
-            #    A.assemble()
-            #else:
-            ###########################
-            A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
-            A.assemble()
+            if AnalysisMode in ['Input-Output']:
+                A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
+                A.assemble()
+            else:
+            	A = assemble_matrix(form(self.A_vf.lhs))
+            	A.assemble()
         else:
             A = 0*BC_Diriclet
 
@@ -503,7 +499,6 @@ class WeakFormulationCollectionClass():
         # In the next 12 lines the Imaginary and real parts of both the lhs and rhs matrix are combined to the
         # sparse matrix A and B, respectively. Not needed matrices are deleted
         self.__matrix_dict['A']       = csr_matrix(A.getValuesCSR()[::-1], shape = A.size,dtype=complex)
-        self.__matrix_dict_petsc['A'] = A  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
         # printDebug(True, '-- Display A-matrix')
         # spy(self.__matrix_dict['A'],buckets=4000)
         del A
@@ -511,8 +506,12 @@ class WeakFormulationCollectionClass():
             #BC_Diriclet_mat = as_backend_type(BC_Diriclet).mat()
             self.__matrix_dict['A'] = self.__matrix_dict['A'] + 10**30*(1+1j) * csr_matrix(BC_Diriclet.getValuesCSR()[::-1], shape = BC_Diriclet.size,dtype=complex)
             del BC_Diriclet
+        from petsc4py import PETSc
         self.__matrix_dict['B'] = csr_matrix(B.getValuesCSR()[::-1], shape = B.size,dtype=complex)
         self.__matrix_dict_petsc['B'] = B  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
+        A_petsc = PETSc.Mat().createAIJWithArrays(size=self.__matrix_dict['A'].get_shape(),csr=(self.__matrix_dict['A'].indptr, self.__matrix_dict['A'].indices, self.__matrix_dict['A'].data))
+        A_petsc.assemble() #TODO Sophie: why are the BCs still implemented like that? If not, we could just take the petsc matrix that was already assembled
+        self.__matrix_dict_petsc['A'] = A_petsc  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
         # printDebug(True, '-- Display B-matrix')
         # spy(self.__matrix_dict['B'],buckets=4000)
         del B

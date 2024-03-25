@@ -736,9 +736,9 @@ class linearSystem:
 			printDebug(True, '--------------------------------')
 			printDebug(True, '-- Serial computation of forcing, gains, and responses...')
    
-			# LUQ is obtained here as it cannot be pickled
-			self.__matrix_dict['LUQ'] = \
-				splin.splu(self.__matrix_dict['Q'], permc_spec=3)
+			## LUQ is obtained here as it cannot be pickled
+			#self.__matrix_dict['LUQ'] = \
+			#	splin.splu(self.__matrix_dict['Q'], permc_spec=3)
 
 			for i in range(self.__n_omegas):
 				
@@ -755,41 +755,42 @@ class linearSystem:
                                         self.__matrix_dict_petsc['B_forcing'],
                                         self.__matrix_dict_petsc['B_response'])
 	
-				# Perform eigenvalue decomposition of the linear
-				# operator defined in op() using the handl SOP
+				# Perform eigenvalue decomposition of the linear operator defined in the class "ResolventOperator"
+				# via the matrix vector multiplation "mult"
 				gains[:,i],eigenvectors_c = self.__solveSVDOfResolvent(
                                                                         resolventOperator,
 									nev=self.__param.Numerics.nSolut,
-									tol=1.e-16,
-									max_it=200,
+									tol=1.e-20,
+									max_it=1000,
 									)
 
 
+        			###########################
+        			##### DEPRECATED ##########
+        			###########################
+				#def op(x):
+				#	'''
+				#	Build the linear system which is used to get the 
+				#	eigenvalue problem matrix of the resolvent:
 
-
-				def op(x):
-					'''
-					Build the linear system which is used to get the 
-					eigenvalue problem matrix of the resolvent:
-
-     				'''
-					y = self.__matrix_dict['Pu']*x
-					z = self.__matrix_dict['B_forcing']*y
-					y = LU.solve(z)
-					y1 = self.__matrix_dict['Cr']*y 			# added line debug response limitation
-					z = self.__matrix_dict['B_response']*y1
-					z1 = self.__matrix_dict['Cr'].transpose()*z	# added line debug response limitation
-					y = LU.solve(z1, trans='H')
-					z = self.__matrix_dict['B_forcing'].transpose()*y
-					y = self.__matrix_dict['Pu'].transpose()*z
-					w = self.__matrix_dict['LUQ'].solve(y, trans='H')
-					return w
-				
-				OP = self.__matrix_dict['A']-omega*self.__matrix_dict['B']
-				OP = OP.tocsc()
-				
-				# Get lower upper decomposition of OP (used in function op())
-				LU = splin.splu(OP,permc_spec=3)
+     				#'''
+				#	y = self.__matrix_dict['Pu']*x
+				#	z = self.__matrix_dict['B_forcing']*y
+				#	y = LU.solve(z)
+				#	y1 = self.__matrix_dict['Cr']*y 			# added line debug response limitation
+				#	z = self.__matrix_dict['B_response']*y1
+				#	z1 = self.__matrix_dict['Cr'].transpose()*z	# added line debug response limitation
+				#	y = LU.solve(z1, trans='H')
+				#	z = self.__matrix_dict['B_forcing'].transpose()*y
+				#	y = self.__matrix_dict['Pu'].transpose()*z
+				#	w = self.__matrix_dict['LUQ'].solve(y, trans='H')
+				#	return w
+				#
+				#OP = self.__matrix_dict['A']-omega*self.__matrix_dict['B']
+				#OP = OP.tocsc()
+				##
+				## Get lower upper decomposition of OP (used in function op())
+				#LU = splin.splu(OP,permc_spec=3)
 				
 				## Create handle for the linear operator defined by function op()
 				#SOP = splin.LinearOperator((nu,nu),matvec=op,dtype='complex')
@@ -802,22 +803,54 @@ class linearSystem:
 				#					sigma=None,
 				#					which='LM',
 				#					maxiter=200,
-				#					tol=1.e-16,
+				#					tol=0, # "0" means machine precision
 				#					return_eigenvectors=True,
 				#					)
+        			###########################
+        			###########################
 
 				# Write gains to results dictionary
 				gains[:, i] = np.real(gains[:, i])
 
 				# Iterate through the first nSolut gains
 				# Maybe we don't need the loop here...
+                                # TODO Sophie: do this more elegantly
 				for k in range(self.__param.Numerics.nSolut):
 					# Write the respective forcing to results dictionary
-					forcings[:, k, i] = self.__matrix_dict['Pu'] * eigenvectors_c[:, k]
-					f = -1j * self.__matrix_dict['B_femWeight'] * forcings[:, k, i]
-					# f = -1j * forcings[:, k, i]
-					responses[:, k, i] = LU.solve(f)
 
+                                        # get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)
+					X1, X2 = self.__matrix_dict_petsc['Pu'].getVecs()
+					X1.setValues(range(0,len(eigenvectors_c[:,k])),eigenvectors_c[:,k])
+					Y1, Y2 = self.__matrix_dict_petsc['B_femWeight'].getVecs()
+
+					# forcings = Pu*eigenVectors
+					self.__matrix_dict_petsc['Pu'].mult(X1,X2)
+					forcings[:,k,i] = X2.getValues(range(0,X2.getSize()))
+
+					# Y1 = -1j * B_femWeight * forcings
+					self.__matrix_dict_petsc['B_femWeight'].mult(X2,Y1)
+					Y1.scale(-1j)
+
+					# solve (A-omega*B)*responses = Y1
+					resolventOperator.getKSP().solve(Y1,X2)
+					responses[:, k, i] = X2.getValues(range(0, X2.getSize()))
+
+
+        			###########################
+        			##### DEPRECATED ##########
+        			###########################
+				## Iterate through the first nSolut gains
+				## Maybe we don't need the loop here...
+				#for k in range(self.__param.Numerics.nSolut):
+				#	# Write the respective forcing to results dictionary
+				#	forcings[:, k, i] = self.__matrix_dict['Pu'] * eigenvectors_c[:, k]
+				#	f = -1j * self.__matrix_dict['B_femWeight'] * forcings[:, k, i]
+				#	# f = -1j * forcings[:, k, i]
+				#	responses[:, k, i] = LU.solve(f)
+        			###########################
+        			###########################
+
+				resolventOperator.destroySelf()
 		#pdb.set_trace()
 		# construct a fluctuationSolutions Object for the Response, Forcing of
 		# every Frequency
@@ -1335,7 +1368,7 @@ class linearSystem:
 		eps.setOperators(R)
 		eps.setDimensions(nev=nev)
 		eps.setTolerances(tol=tol,max_it=max_it)
-		#eps.setProblemType(SLEPc.EPS.ProblemType.GHEP) 
+		#eps.setProblemType(SLEPc.EPS.ProblemType.HEP) 
 		#eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) 
 		eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE)
 		eps.getST().getKSP().getPC().setType('none')
@@ -1351,13 +1384,13 @@ class linearSystem:
 			try:
 				eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
 				eigVecs[:,i] = vec_real.getArray() + 1j * vec_imag.getArray()
-				print("SLEPc error: ", eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+				print("SLEPc error relative: ", eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+				print("SLEPc error absolute: ", eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE))
 			except:
 				print("Could not access eigenpair nb ", nev+1, "!")
 		
 		eps.destroy()
 		R.destroy()
-		resolventOperator.destroySelf()
 		return eigVals, eigVecs
 
 
@@ -1430,7 +1463,6 @@ class ResolventOperator(object):
                 OP_H = OP.copy()
                 OP_H.conjugate()
                 OP_H.assemble()
-                #OP = OP.conjugate()
                 self._ksp2 = PETSc.KSP().create()
                 self._ksp2.setOperators(OP_H)
                 self._ksp2.setType(PETSc.KSP.Type.PREONLY)
@@ -1438,7 +1470,7 @@ class ResolventOperator(object):
                 self._ksp2.getPC().setFactorSolverType('mumps')
                 self._ksp2.setUp()
                 # create KSP3  
-                Qf.conjugate()
+                #Qf.conjugate()
                 self._ksp3 = PETSc.KSP().create()
                 self._ksp3.setOperators(Qf)
                 self._ksp3.setType(PETSc.KSP.Type.PREONLY)
@@ -1468,11 +1500,14 @@ class ResolventOperator(object):
                 self._Pu.multTranspose   (self._Z2, self._Y1)
                 self._ksp3.solveTranspose(self._Y1, Y)
 
+                return Y
+
+        def getKSP(self):
+                return self._ksp1
 
         def destroySelf(self):
                 self._ksp1.destroy()
                 self._ksp2.destroy()
                 self._ksp3.destroy()
-
 
 
