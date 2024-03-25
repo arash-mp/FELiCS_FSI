@@ -459,7 +459,7 @@ class WeakFormulationCollectionClass():
             A = 0*BC_Diriclet
 
         if not self.B_vf.lhsIsZero():
-            B = assemble_matrix(form(self.B_vf.lhs), bcs=bcs)
+            B = assemble_matrix(form(self.B_vf.lhs))
             B.assemble()
         else:
             B = 0*BC_Diriclet
