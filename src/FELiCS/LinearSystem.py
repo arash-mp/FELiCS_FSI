@@ -131,7 +131,7 @@ class linearSystem:
 		):
 		"""
 		The Constructor of the LinearSystem-Class. It constructs the
-		LinearSystem Object and initalizes the attributes of the object.
+		LinearSystem Object and initializes the attributes of the object.
 		The results attributes of the 3 possible
 		AnalysisModes are initalized.
 
@@ -154,77 +154,82 @@ class linearSystem:
 
 		self.__tol = 1e-12
 
-	def __IntegrateForcingVector(
-				self,
-				eigenvectors_imag,
-				eigenvectors_real
-				):
-		"""
-		Computes the Forcing-Vector for the Resolvent Analysis
+        ###########################
+        ##### DEPRECATED ##########
+        ###########################
+	#def __IntegrateForcingVector(
+	#			self,
+	#			eigenvectors_imag,
+	#			eigenvectors_real
+	#			):
+	#	"""
+	#	Computes the Forcing-Vector for the Resolvent Analysis
 
-		Function arguments:
-		- eigenvectors_imag: imaginatinal part of the eigenvector
-		- eigenvectors_real: real part of the eigenvector
+	#	Function arguments:
+	#	- eigenvectors_imag: imaginatinal part of the eigenvector
+	#	- eigenvectors_real: real part of the eigenvector
 
-		Function returns:
-		- f: forcing vector
-		"""
-		# Define the variational formulations for the forcings real
-		# and imaginary part
-		f_real_vf = 0
-		f_imag_vf = 0
+	#	Function returns:
+	#	- f: forcing vector
+	#	"""
+	#	# Define the variational formulations for the forcings real
+	#	# and imaginary part
+	#	f_real_vf = 0
+	#	f_imag_vf = 0
 
-		loop_count = 0
-		# Loop through all solutions
-		for i_name, name in enumerate(self.__param.SolutionList):
+	#	loop_count = 0
+	#	# Loop through all solutions
+	#	for i_name, name in enumerate(self.__param.SolutionList):
 
-			# if nSolut = 1, it shouldnt iterate over all solutions u, ut and p.
-			# It should just iterate over u
-			# so a switch is implemented, which leaves the outer loop abortive
-			loop_count = loop_count + 1
-			if loop_count > self.__param.Numerics.nSolut:
-				break
-			# If it is the velocity, all velocity components must be considered
-			if name == 'u':
-			# Loop through the velocity components
-				for (i_component, component) in enumerate(\
-				self.__param.VelocityComponents):
+	#		# if nSolut = 1, it shouldnt iterate over all solutions u, ut and p.
+	#		# It should just iterate over u
+	#		# so a switch is implemented, which leaves the outer loop abortive
+	#		loop_count = loop_count + 1
+	#		if loop_count > self.__param.Numerics.nSolut:
+	#			break
+	#		# If it is the velocity, all velocity components must be considered
+	#		if name == 'u':
+	#		# Loop through the velocity components
+	#			for (i_component, component) in enumerate(\
+	#			self.__param.VelocityComponents):
 
-					# Add the imaginary part and the real part for the
-					# respective component to the respective equation
-					# Here, the multiplication by '-i' is taken into account.
-					# Could also be added later, when the
-					# linear system is solved
-					f_real_vf += self.__R*eigenvectors_imag.\
-					split()[i_name].split()[i_component] \
-					*self.__X[i_name][i_component] *dx
+	#				# Add the imaginary part and the real part for the
+	#				# respective component to the respective equation
+	#				# Here, the multiplication by '-i' is taken into account.
+	#				# Could also be added later, when the
+	#				# linear system is solved
+	#				f_real_vf += self.__R*eigenvectors_imag.\
+	#				split()[i_name].split()[i_component] \
+	#				*self.__X[i_name][i_component] *dx
 
-					f_imag_vf += -self.__R*eigenvectors_real.split()[i_name].\
-					split()[i_component] \
-					*self.__X[i_name][i_component] *dx
+	#				f_imag_vf += -self.__R*eigenvectors_real.split()[i_name].\
+	#				split()[i_component] \
+	#				*self.__X[i_name][i_component] *dx
 
-			else:
-				# Add the imaginary part and the real part for
-				# the respective component to the respective equation
-				# Here, the multiplication by '-i' is taken into account.
-				# Could also be added later, when the
-				# linear system is solved
-				f_real_vf += self.__R*eigenvectors_imag.split()[i_name] \
-													  *self.__X[i_name] *dx
-				f_imag_vf += -self.__R*eigenvectors_real.split()[i_name] \
-													   *self.__X[i_name] *dx
+	#		else:
+	#			# Add the imaginary part and the real part for
+	#			# the respective component to the respective equation
+	#			# Here, the multiplication by '-i' is taken into account.
+	#			# Could also be added later, when the
+	#			# linear system is solved
+	#			f_real_vf += self.__R*eigenvectors_imag.split()[i_name] \
+	#												  *self.__X[i_name] *dx
+	#			f_imag_vf += -self.__R*eigenvectors_real.split()[i_name] \
+	#												   *self.__X[i_name] *dx
 
-			# Define the vectors, and assemple them using the
-			# variational formulation defined above
+	#		# Define the vectors, and assemple them using the
+	#		# variational formulation defined above
 
-		f_real =assemble_vector(form(f_real_vf))
-		f_real.assemble()
+	#	f_real =assemble_vector(form(f_real_vf))
+	#	f_real.assemble()
 
-		f_imag =assemble_vector(form(f_imag_vf))
-		f_imag.assemble()
+	#	f_imag =assemble_vector(form(f_imag_vf))
+	#	f_imag.assemble()
 
-		#pdb.set_trace()
-		return f_real.array + 1j*f_imag.array
+	#	#pdb.set_trace()
+	#	return f_real.array + 1j*f_imag.array
+        ###########################
+        ###########################
 
 
 	def __solve_with_SLEPc(
@@ -235,29 +240,15 @@ class linearSystem:
 		Solves the GEVP with the a SLEPc eigenvalue solver
 
 		Function arguments:
+                - adjointFlag       (bool, optional) If set to "True", the adjoint eigenvectors will be calculated additionally. If set to "False", only the direct eigenvectors will be returned.
 
 		Function returns:
-
+                - EigValTot         numpy array; returns the computed eigenvalues 
+                - EigVecTot         numpy array; returns the computed right-hand-side eigenvectors in one big array ("stacked" onto each other)
+                - EigVecAdjTot      numpy array, only returned if "adjointFlag=True"; returns the computed left-hand-side eigenvectors in one big array ("stacked" onto each other)
+                - error             numpy array; returns, for each eigenproblem solution, the corresponding relative residuum of the eigenproblem
 		"""
 
-		# EVal = np.zeros((self.__param.Numerics.nSolut), 'complex')
-		# EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut), 'complex')
-
-		#if adjointFlag:
-		#	printDebug(True,'--------------------------------')
-		#	printDebug(True, "-- Solving adjoint GEVP")
-		#	A, B, f = self.__preconditionMatrices(
-		#								self.__matrix_dict['A'].getH(),
-		#								self.__matrix_dict['B'],
-		#								self.__param.Numerics.Preconditioner,
-		#										)
-		#else:
-		#	printDebug(True,'--------------------------------')
-		#	printDebug(True, "-- Solving direct GEVP")
-		#	A, B, f = self.__preconditionMatrices(
-		#				self.__matrix_dict['A'],
-		#				self.__matrix_dict['B'],
-		#				self.__param.Numerics.Preconditioner
 		#										)
 
 		# Allocate space for complete matrices
@@ -650,14 +641,13 @@ class linearSystem:
 			):
 		"""
 		This function solves the resolvent problem's eigenvalue problem.
-		Matrices are taken from the global_variables module...
 
 		Function arguments:
-		-
+		- WeakFormulationClass
+
 		Function returns:
 		- fluctSolutObjList: List of fluctuation Objects, where each Object
 		contains one forcing or response
-
 		"""
 
 		fluctSolutObjList = []
@@ -736,9 +726,14 @@ class linearSystem:
 			printDebug(True, '--------------------------------')
 			printDebug(True, '-- Serial computation of forcing, gains, and responses...')
    
+        		###########################
+        		##### DEPRECATED ##########
+        		###########################
 			## LUQ is obtained here as it cannot be pickled
 			#self.__matrix_dict['LUQ'] = \
 			#	splin.splu(self.__matrix_dict['Q'], permc_spec=3)
+        		###########################
+        		###########################
 
 			for i in range(self.__n_omegas):
 				
@@ -760,8 +755,8 @@ class linearSystem:
 				gains[:,i],eigenvectors_c = self.__solveSVDOfResolvent(
                                                                         resolventOperator,
 									nev=self.__param.Numerics.nSolut,
-									tol=1.e-20,
-									max_it=1000,
+									tol=1.e-16,
+									max_it=200,
 									)
 
 
@@ -813,10 +808,10 @@ class linearSystem:
 				gains[:, i] = np.real(gains[:, i])
 
 				# Iterate through the first nSolut gains
-				# Maybe we don't need the loop here...
+				# Compute the respetive forcing and responses with the solution of the SVD ("eigenvetors_c")
+
                                 # TODO Sophie: do this more elegantly
 				for k in range(self.__param.Numerics.nSolut):
-					# Write the respective forcing to results dictionary
 
                                         # get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)
 					X1, X2 = self.__matrix_dict_petsc['Pu'].getVecs()
@@ -882,6 +877,7 @@ class linearSystem:
 
 		toc_res = time.perf_counter() - tic_res
 		printDebug(True, f"-- Solving resolvent took: {toc_res:0.4f} seconds")
+
 		return fluctSolutObjList
 
 	def solveInputOutput(
@@ -904,12 +900,18 @@ class linearSystem:
 
 		n_omegas=len(self.__param.IOResolvent.Omegas)
 
+       		###########################
+       		##### DEPRECATED ##########
+       		###########################
+                # not needed anymore, since the boundary conditions are not enforced on the csr matrix anymore
 		#self.__matrix_dict['A'], self.__matrix_dict['B'], \
 		#self.__matrix_dict['b_forcing'] = self.__preconditionMatrices(
 		#	self.__matrix_dict['A'],
 		#	self.__matrix_dict['B'],
 		#	 self.__param.Numerics.Preconditioner,
 		#	f=self.__matrix_dict['b_forcing'])
+       		###########################
+       		###########################
 
 		if self.__param.Numerics.nCPU > 1:
 			#TODO Sophie: implement parallel
@@ -977,13 +979,10 @@ class linearSystem:
 		solves the General Eigenvalue Problem
 
 		Function Attributes:
-		- adjoint: Bool-Variable, speficing if the Direct- or the
-		adjoint Eigenvalue-Problem is solved. The Default Value is false,
-		which solves the Direct-problem
+		- adjointFlag:  (bool, optional) if set to "True", the adjoint solution is computed alongside the direct solution. If "False" (default), only the direct solution is computed. 
 
 		Function returns:
-		- __results_GEVP: Dictionary containing the direct- and the adjoint
-		eigenvalues and eigenvectors
+		- __results_GEVP: Dictionary containing the direct- and (optionally) the adjoint eigenvalues and eigenvectors
 		"""
 
 
@@ -1099,6 +1098,7 @@ class linearSystem:
                 ###########################
                 ##### DEPRECATED ##########
                 ###########################
+		### the error is already computed during the petsc run
 		#	resTemp = self.__checkGEVP(
 		#			EVal[i],
 		#			EVec[:,i],
@@ -1264,13 +1264,14 @@ class linearSystem:
 		- nev 		Number of eigenvalues to compute
 		- tol	        (optional) precision of GEVP
 		- max_it	(optional) maximum number of iterations 
-		- adjoint	(bool, optional) more optimal way to 
-					compute the adjoint GEVP
+		- adjoint	(bool, optional) if set to "True", compute the adjoint GEVP alongside the direct one
                 - isForEigenProblem, isIncompressible 	    (optional) flags that can be set to determine the kind of matrices  
 
 		Function returns:
-		- eigVals, eigVecs, [eigVecs_adjoint,] error
-
+		- eigVals           numpy array; computed eigenvalues
+                - eigVecs           numpy array, 2D; computed eigenvectors
+                - eigVecs_adjoint   numpy array, 2D, only returned if "adjoint=True"; computed left-hand-side eigenvectors
+                - error             numpy array; for each eigenproblem solution, relative residuum of the eigenproblem
 		"""
 
 		from slepc4py import SLEPc
@@ -1384,8 +1385,8 @@ class linearSystem:
 			try:
 				eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
 				eigVecs[:,i] = vec_real.getArray() + 1j * vec_imag.getArray()
-				print("SLEPc error relative: ", eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
-				print("SLEPc error absolute: ", eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE))
+				print("SLEPc error: ", eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
+				#print("SLEPc error absolute: ", eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE))
 			except:
 				print("Could not access eigenpair nb ", nev+1, "!")
 		
@@ -1395,15 +1396,21 @@ class linearSystem:
 
 
 
-
-
-
 	def __solveEquationSystem(
 		self,
 		A,
-		b,
-		bcs=None):
-		
+		b):
+	
+		"""
+		Solves a linear equation system Ax=b, using the PETSc libraries.
+
+		Function arguments:
+		- A     PETSc matrix,  matrix of the linear system
+		- b     PETSc vector,  rhs of the linear system
+
+		Function returns:
+		- x     numpy array, solution of the linear equation system
+		"""
 		
 		from petsc4py import PETSc
 		solution,dummy = A.createVecs()
@@ -1416,19 +1423,28 @@ class linearSystem:
 		
 		solver.solve(b, solution)
 		
-		solutionArray = solution.getArray()
+		x = solution.getArray()
 		
 		solver.destroy()
 		A.destroy()
 		b.destroy()
 		dummy.destroy()
 		
-		return solutionArray
+		return x 
 
 
 
 
 class ResolventOperator(object):
+
+       """
+       This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed, to conduct the singular value decomposition of the system. 
+       It contains a method called "mult", which is called by the eigenvalue solver, and returns a matrix vector product of the represented matrix. 
+
+       Private attributes:
+       Protected attributes:
+       Public attributes:
+       """
 
         def __init__(self,
                 OP,
@@ -1451,16 +1467,16 @@ class ResolventOperator(object):
                 self._Bf = B_forcing
                 self._Br = B_response
 
-                # create KSP1   
+                # create KSP1: This is a solver for the System OP*x=y.
                 self._ksp1 = PETSc.KSP().create()
                 self._ksp1.setOperators(OP)
                 self._ksp1.setType(PETSc.KSP.Type.PREONLY)
                 self._ksp1.getPC().setType(PETSc.PC.Type.LU)
                 self._ksp1.getPC().setFactorSolverType('mumps')
                 self._ksp1.setUp()
-                # create KSP2  
+                # create KSP2: This is a solver for the System conj(OP)*x=y. It will later be used to solve the transposed system, thus effectively solving OP^H *x=y, which is the Hermitian transpose of the system.
 		# TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). Thus we have to do an additional LU decomposistion.... Change as soon as this is included in the petsc4py! 
-                OP_H = OP.copy()
+                OP_H = OP.copy()   #create a new matrix, s.t. the original one will not be overriden 
                 OP_H.conjugate()
                 OP_H.assemble()
                 self._ksp2 = PETSc.KSP().create()
@@ -1469,8 +1485,8 @@ class ResolventOperator(object):
                 self._ksp2.getPC().setType(PETSc.PC.Type.LU)
                 self._ksp2.getPC().setFactorSolverType('mumps')
                 self._ksp2.setUp()
-                # create KSP3  
-                #Qf.conjugate()
+                # create KSP3: This is a solver for the System Qf*x=y (will later be used to solve the transposed system).
+                #Qf.conjugate() #=> is this needed?
                 self._ksp3 = PETSc.KSP().create()
                 self._ksp3.setOperators(Qf)
                 self._ksp3.setType(PETSc.KSP.Type.PREONLY)
@@ -1485,20 +1501,21 @@ class ResolventOperator(object):
                 return self._Y1, self._Y2
 
         def mult(self, mat, X, Y):
-                # returns Y=mat*X
+                # returns Y=mat*X 
+                # mat = (Qf^T)^-1 * Pu^T * Bf^T * (OP^H)^-1 * Cr^T * Br * Cr * OP^-1 * Bf * Pu
 
-                self._Pu.mult            (X,        self._Z1)
-                self._Bf.mult            (self._Z1, self._Z2)
-                self._ksp1.solve         (self._Z2, self._Z1)
+                self._Pu.mult            (X,        self._Z1)  #Z1 = Pu*X
+                self._Bf.mult            (self._Z1, self._Z2)  #Z2 = Bf*Z1
+                self._ksp1.solve         (self._Z2, self._Z1)  #Z1 = OP^-1 * Z2
 	
-                self._Cr.mult            (self._Z1, self._Z2)
-                self._Br.mult            (self._Z2, self._Z1)
-                self._Cr.multTranspose   (self._Z1, self._Z2)
-                self._ksp2.solveTranspose(self._Z2, self._Z1)
+                self._Cr.mult            (self._Z1, self._Z2)  #Z2 = Cr*Z1
+                self._Br.mult            (self._Z2, self._Z1)  #Z1 = Br*Z2
+                self._Cr.multTranspose   (self._Z1, self._Z2)  #Z2 = Cr^T * Z1
+                self._ksp2.solveTranspose(self._Z2, self._Z1)  #Z1 = (OP^H)^-1 * Z2
 
-                self._Bf.multTranspose   (self._Z1, self._Z2)
-                self._Pu.multTranspose   (self._Z2, self._Y1)
-                self._ksp3.solveTranspose(self._Y1, Y)
+                self._Bf.multTranspose   (self._Z1, self._Z2)  #Z2 = Bf^T * Z1
+                self._Pu.multTranspose   (self._Z2, self._Y1)  #Y1 = Pu^T * Z2
+                self._ksp3.solveTranspose(self._Y1, Y)         #Y  = (Qf^T)^-1 * Y1
 
                 return Y
 
@@ -1506,6 +1523,7 @@ class ResolventOperator(object):
                 return self._ksp1
 
         def destroySelf(self):
+                """Clean-up the disc space to avoid memory leaks. Should be called if several resolvent SVDs are done one after the other.""" 
                 self._ksp1.destroy()
                 self._ksp2.destroy()
                 self._ksp3.destroy()
