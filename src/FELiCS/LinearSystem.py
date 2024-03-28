@@ -755,7 +755,7 @@ class linearSystem:
 				gains[:,i],eigenvectors_c = self.__solveSVDOfResolvent(
                                                                         resolventOperator,
 									nev=self.__param.Numerics.nSolut,
-									tol=1.e-16,
+									tol=1.e-13,
 									max_it=200,
 									)
 
@@ -1385,10 +1385,10 @@ class linearSystem:
 			try:
 				eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
 				eigVecs[:,i] = vec_real.getArray() + 1j * vec_imag.getArray()
-				print("SLEPc error: ", eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
-				#print("SLEPc error absolute: ", eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE))
+				printDebug(True,f"SLEPc error relative: {eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)}")
+				printDebug(True,f"SLEPc error absolute: {eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE)}")
 			except:
-				print("Could not access eigenpair nb ", nev+1, "!")
+				printWarning("Could not access eigenpair nb ", nev+1, "!")
 		
 		eps.destroy()
 		R.destroy()

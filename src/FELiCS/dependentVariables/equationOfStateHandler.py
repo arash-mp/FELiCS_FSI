@@ -112,14 +112,14 @@ class equationOfStateHandler:
                 elif EoSType == 'IdealGas':
                     if self._isSolution:
                         mean_T = mean.fieldDict['T']
-                        mean_p = mean.fieldDict['p']
+                        mean_rho = mean.fieldDict['rho']
                         mean_Rspe = mean.fieldDict['R_spe']
                     else:
                         mean_T = mean.T
-                        mean_p = mean.p
+                        mean_rho = mean.rho
                         mean_Rspe = mean.R_spe
                         
-                    self._fieldDict['p'] = mean_Rspe*(self.rho*mean_T + mean_p*self.T)
+                    self._fieldDict['p'] = mean_Rspe*(self.rho*mean_T + mean_rho*self.T)
                         
             
             # OPT.3 -- Calculate temperature from density and pressure

@@ -12,7 +12,6 @@ def addEnergyPEq(self,fluc,X,mean,param):
     '''
 
     from FELiCS.functions import printDebug, printError, printWarning
-    printDebug(param.debug,"Adding energy-p equation in all mesh internal directions")
     
     # ------------------------ Define the tensorial operators
     J_hat = self._coordinateSystem.J_hat
