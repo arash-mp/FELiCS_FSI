@@ -75,50 +75,6 @@ class linearSystem:
 	Public attributes:
 
 	"""
-	@staticmethod
-	def runInParallel(
-			args
-			):
-		"""
-		This Function acts as a Wrapper to make it possible to use the Pickle
-		methods inside the Pool.map() method, which creates several instances
-		of the Pickle-Method which one omega respectively. Each function is
-		then computed in its own subprocess, which makes it possible to use
-		several CPU-Cores.
-
-		Function arguments:
-		- args: List of arguments for the Pickle-Methods
-
-		Function returns:
-
-		"""
-		if args[1] == 'Resolvent':
-			# The content of this warning is due to the fact, that properties necessary to calculate the
-			# response cannot be pickled... A solution to this should be found...
-			return args[0].__ParallelResolventPickle(
-										args[0],
-										args[2],
-										args[3],
-										args[4],
-										)
-
-		elif args[1] == 'GEVP':
-			return args[0].__ParallelGEVPPythonPickle(
-										args[0],
-										args[2],
-										args[3],
-										args[4],
-										args[5],
-										args[6],
-										)
-
-		elif args[1] == 'InputOutput':
-			return args[0].__ParallelInputOutputPickle(
-										args[0],
-										args[2],
-										args[3],
-										)
-
 
 	def __init__(
 		self,
@@ -152,201 +108,6 @@ class linearSystem:
 		self.__matrix_dict_petsc = matrix_dict_petsc #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
 
 		self.__tol = 1e-12
-
-
-
-	def __solve_with_SLEPc(
-				self,
-				adjointFlag=False,
-				):
-		"""
-		Solves the GEVP with the a SLEPc eigenvalue solver
-
-		Function arguments:
-                - adjointFlag       (bool, optional) If set to "True", the adjoint eigenvectors will be calculated additionally. If set to "False", only the direct eigenvectors will be returned.
-
-		Function returns:
-                - EigValTot         numpy array; returns the computed eigenvalues 
-                - EigVecTot         numpy array; returns the computed right-hand-side eigenvectors in one big array ("stacked" onto each other)
-                - EigVecAdjTot      numpy array, only returned if "adjointFlag=True"; returns the computed left-hand-side eigenvectors in one big array ("stacked" onto each other)
-                - error             numpy array; returns, for each eigenproblem solution, the corresponding relative residuum of the eigenproblem
-		"""
-
-		#										)
-
-		# Allocate space for complete matrices
-		nGuesses = len(self.__param.Numerics.EigenValueGuess)
-		nSol = self.__param.Numerics.nSolut
-		EigValTot = np.zeros((nSol*nGuesses),'complex')
-		EigVecTot = np.zeros((self.__n_dof,nSol*nGuesses),'complex')
-		if adjointFlag:
-			EigVecAdjTot = np.zeros((self.__n_dof,nSol*nGuesses),'complex')
-
-		# solve GEVP using eigs for each guess
-		for i in range(nGuesses):
-
-			eigenValueGuess = self.__param.Numerics.EigenValueGuess[i]
-			printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
-
-			if adjointFlag:
-				EigValTemp, EigVecTemp, EigVecAdjTemp, error = self.__solveGeneralEigenproblem(\
-                                             self.__matrix_dict_petsc['A'], \
-                                             self.__matrix_dict_petsc['B'], \
-                                             sigma=eigenValueGuess, \
-                                             nev=self.__param.Numerics.nSolut, \
-                                             tol=self.__tol,\
-                                             max_it=200,\
-                                             adjoint=True, \
-                                             isForEigenProblem=True)
-
-			else:
-				EigValTemp, EigVecTemp, error = self.__solveGeneralEigenproblem(\
-                                             self.__matrix_dict_petsc['A'], \
-                                             self.__matrix_dict_petsc['B'], \
-                                             sigma=eigenValueGuess, \
-                                             nev=self.__param.Numerics.nSolut, \
-                                             tol=self.__tol,\
-                                             max_it=200,\
-                                             adjoint=False, \
-                                             isForEigenProblem=True)
-
-
-			index = list(range(i*nSol,(i+1)*nSol))
-			EigValTot[index]   = EigValTemp
-			for j in range(nSol):
-				EigVecTot[:,i*nSol+j] = EigVecTemp[j,:]
-				if adjointFlag:
-					EigVecAdjTot[:,i*nSol+j] = EigVecAdjTemp[j,:]
-		if adjointFlag:
-			return EigValTot, EigVecTot, EigVecAdjTot, error
-		else:
-			return EigValTot, EigVecTot, error
-
-
-
-	def __ParallelGEVPPickle(
-				self,
-				matrix_dict,
-				nSolut,
-				EigGuess,
-				FlagAdjoint,
-				Numerics,
-				):
-		"""
-		This function is used for distributing the GEVP associated
-		with different eigenvalue guesses to various CPUs.
-
-		"""
-		current = multiprocessing.current_process()
-		print("-- " + current.name + " running for omega = " + str(EigGuess))
-
-
-		#eigenvalues, eigenvectors = splin.eigs(
-		#								A,
-		#								k=nSolut,
-		#								M=B,
-		#								sigma=EigGuess,
-		#								ncv=200,
-		#								maxiter=200,
-		#								tol=1e-12,
-		#								return_eigenvectors=True,
-		#								)
-
-		if FlagAdjoint:
-			EVal, EVec, EVecAdj, error = self.__solve_with_SLEPc(adjointFlag=True)
-			return  EVal, EVec, EVecAdj, error 
-		else:
-			EVal, EVec, error = self.__solve_with_SLEPc(adjointFlag=False)
-			return  EVal, EVec, error 
-
-
-
-
-	def __ParallelInputOutputPickle(
-				self,
-				matrix_dict,
-				omega,
-				):
-		"""
-		 This function is used for distributing the input output analysis to
-		 various CPUs.
-
-		 Function arguments:
-		 - omega:
-
-		 Function returns:
-		 -eigenvectors_c:
-		 """
-		print("Performing input-output analysis for omega="+str(omega))
-		### Get linear operator
-		# Define OP
-		OP=matrix_dict['A']-omega*matrix_dict['B']
-		# Make OP sparse vector
-		OP=OP.tocsc()
-		# Perform Lower-Upper decomposition
-		LU = splin.splu(OP,permc_spec=3)
-		# Use LU decomposition to solve the linear system
-		eigenvectors_c=LU.solve(matrix_dict['b_forcing'])
-
-		return     eigenvectors_c
-
-
-	def __ParallelResolventPickle(
-					self,
-					matrix_dict,
-					nSolut,
-					omega,):
-		"""
-		This function is used for distributing the resolvent's
-		eigenvalueproblems to various CPUs.
-
-		"""
-		LUQ = splin.splu(matrix_dict['Q'],permc_spec=3)
-		nu = min(np.shape(matrix_dict['Pu']))
-		current = multiprocessing.current_process()
-		print("-- " + current.name + " running for omega = " + str(omega))
-		def op(x):
-			y = matrix_dict['Pu'] * x
-			z = matrix_dict['B_forcing'] * y
-			y = LU.solve(z)
-			y1 = matrix_dict['Cr'] * y
-			z = matrix_dict['B_response'] * y1
-			z1 = matrix_dict['Cr'].transpose() * z
-			y = LU.solve(z1, trans='H')
-			z = matrix_dict['B_forcing'].transpose() * y
-			y = matrix_dict['Pu'].transpose() * z
-			w = LUQ.solve(y, trans='H')
-			return w
-
-		OP = matrix_dict['A'] - omega * matrix_dict['B']
-		OP = OP.tocsc()
-		LU = splin.splu(OP,permc_spec=3)
-		SOP = splin.LinearOperator((nu,nu),matvec = op,dtype = 'complex')
-
-		gains,eigenvectors_c = splin.eigs(SOP,
-								k = nSolut,
-								M = None,
-								sigma = None,
-								which = 'LM',
-								maxiter = 100,
-								tol = 10-12,
-								return_eigenvectors = True,
-								)
-
-		# Write gains to results dictionary
-		gains = np.real(gains)
-
-		# Iterate through the first nSolut gains
-		nDOF = max(np.shape(matrix_dict['B']))
-		forcings = np.zeros((nDOF, nSolut), 'complex')
-		responses = np.zeros((nDOF, nSolut), 'complex')
-		for k in range(nSolut):
-			# Write the respective forcing to results dictionary
-			forcings[:, k] = matrix_dict['Pu'] * eigenvectors_c[:, k]
-			f = -1j * matrix_dict['B'] * forcings[:, k]
-			responses[:, k] = LU.solve(f)
-
-		return gains, forcings, responses
 
 
 
@@ -571,6 +332,8 @@ class linearSystem:
 
 		return fluctSolutObjList
 
+
+
 	def solveGEVP(
 				self,
 				adjointFlag=False,
@@ -588,45 +351,59 @@ class linearSystem:
 
 		start= time.time()
 
-                ###########################
-                ##### DEPRECATED ##########
-                ###########################
-                #TODO Sophie: Do we need this? Where there ever any problems with allocating space? The eigensolver needs much more RAM
-		#EVal = np.zeros((self.__param.Numerics.nSolut*len(self.__param.Numerics.EigenValueGuess)), 'complex')
-		#EVec = np.zeros((self.__n_dof, self.__param.Numerics.nSolut*len(self.__param.Numerics.EigenValueGuess)), 'complex')
-                ###########################
-                ###########################
+		guesses  = self.__param.Numerics.EigenValueGuess
+		nSol     = self.__param.Numerics.nSolut
 
-		if self.__param.Numerics.LinearAlgebraSolver=='SLEPc':
-			#TODO Sophie: add parallel run for slepc
-			## Added possibility to run GEVP of different guesses in parallel
-			#if self.__param.Numerics.nCPU > 1:
-			#	print("-- Entering parallel loop for GEVP")
-			#	pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
-			#	args_map = [(linearSystem, 'GEVP', self.__matrix_dict, \
-			#		self.__param.Numerics.nSolut, arg, adjointFlag, self.__param.Numerics) for arg in \
-			#		self.__param.Numerics.EigenValueGuess]
-			#	results_pool = pool.map(self.runInParallel, args_map)
+		# allocate solution arrays
+		EVal    = np.zeros((nSol*len(guesses)),'complex')  
+		EVec    = np.zeros((self.__n_dof,nSol*len(guesses)),'complex') 		
+		if adjointFlag: 			
+			EVecAdj = np.zeros((self.__n_dof,nSol*len(guesses)),'complex')
+		residui = np.zeros((nSol*len(guesses))) 
 
-			#	for i in range(len(results_pool)):
-			#		index = list(range(i*self.__param.Numerics.nSolut, (i+1)*self.__param.Numerics.nSolut))
-			#		EVal[index] = results_pool[i][0]
-			#		EVec[:, index] = results_pool[i][1]
 
-			#	print("-- Assembled results from all guesses.")
+		# Possibility to run GEVP of different guesses in parallel
+		if self.__param.Numerics.nCPU > 1:
+			print("-- Entering parallel loop for GEVP")
+			pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
+			args_map = [(linearSystem, 'GEVP', self.__matrix_dict_petsc, \
+				nSol, guess, adjointFlag, self.__param.Numerics) \
+                                for guess in guesses]
+			results_pool = pool.map(self.runInParallel, args_map)
 
-			#else:
+			for i in range(len(results_pool)):
+				index = list(range(i*nSol, (i+1)*nSol))
+				EVal[index]    = results_pool[i][0]
+				for j in range(nSol):
+					EVec[:,i*nSol+j] = results_pool[i][1][j,:]
+					if adjointFlag:
+						EVecAdj[:,i*nSol+j] = results_pool[i][2][j,:]
+						residui[index] = resoults_pool[i][3]
+					else:
+						residui[index] = resoults_pool[i][2]
 
-			if adjointFlag:
-				EVal, EVec, EVecAdj, error = self.__solve_with_SLEPc(adjointFlag)
-			else:
-				EVal, EVec, error = self.__solve_with_SLEPc(adjointFlag)
-
+			print("-- Assembled results from all guesses.")
 
 		else:
-			printError(self.__param.Numerics.LinearAlgebraSolver+ \
-			' is not a valid value for the linearAlgebraSolver flag!')
-			exit()
+			for i in range(len(guesses)):
+				if adjointFlag:
+					EigValTemp, EigVecTemp, EigVecAdjTemp, error = self.__solveGEVP_with_SLEPc(self.__matrix_dict_petsc,
+                        	                                                                 nSol,
+                        	                                                                 guesses[i],
+                        	                                                                 adjointFlag=True)
+				else:
+					EigValTemp, EigVecTemp, error                = self.__solveGEVP_with_SLEPc(self.__matrix_dict_petsc,
+                        	                                                                 nSol,
+                        	                                                                 guesses[i],
+        			                                                                 adjointFlag=False)
+				index = list(range(i*nSol,(i+1)*nSol))
+				EVal[index]    = EigValTemp
+				for j in range(nSol):
+					EVec[:,i*nSol+j] = EigVecTemp[j,:]
+					if adjointFlag:
+						EVecAdj[:,i*nSol+j] = EigVecAdjTemp[j,:]
+				residui[index] = error 
+
 
 		# normalize the solution
 		for i in range(self.__param.Numerics.nSolut):
@@ -663,15 +440,237 @@ class linearSystem:
 
 		end = time.time() - start
 
-		residuum = np.sqrt(np.sum(error[:]**2.))
+		residuum = np.sqrt(np.sum(residui[:]**2.))
 
 		printDebug(True, '-- Solving the GEVP took %4g s' % end)
-		printDebug(True, '-- Residuum of solutions (calculated by SLEPc):  %12g' % (residuum))
+		printDebug(True, '-- Residuum of solutions (Euclidian norm of all residui that are calculated by SLEPc):  %12g' % (residuum))
 
 		if adjointFlag:
 			fluctSolutObjList.extend(fluctSolutObjListAdj)
 
 		return fluctSolutObjList
+
+
+
+
+	def __solveGEVP_with_SLEPc(
+				self,
+                                matrix_dict_petsc, 
+                                nSol, 
+                                eigenValueGuess, 
+                                adjointFlag=False, 
+                                Numerics=None,
+				):
+		"""
+		Solves the GEVP with the a SLEPc eigenvalue solver
+
+		Function arguments:
+                - adjointFlag       (bool, optional) If set to "True", the adjoint eigenvectors will be calculated additionally. If set to "False", only the direct eigenvectors will be returned.
+
+		Function returns:
+                - EigValTot         numpy array; returns the computed eigenvalues 
+                - EigVecTot         numpy array; returns the computed right-hand-side eigenvectors in one big array ("stacked" onto each other)
+                - EigVecAdjTot      numpy array, only returned if "adjointFlag=True"; returns the computed left-hand-side eigenvectors in one big array ("stacked" onto each other)
+                - error             numpy array; returns, for each eigenproblem solution, the corresponding relative residuum of the eigenproblem
+		"""
+
+		# solve GEVP using SLEPc
+
+		printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
+
+		if adjointFlag:
+			EigVal, EigVec, EigVecAdj, error = self.__solveGeneralEigenproblem(\
+                                     self.__matrix_dict_petsc['A'], \
+                                     self.__matrix_dict_petsc['B'], \
+                                     sigma=eigenValueGuess, \
+                                     nev=nSol, \
+                                     tol=self.__tol,\
+                                     max_it=200,\
+                                     adjoint=True, \
+                                     isForEigenProblem=True)
+			return EigVal, EigVec, EigVecAdj, error
+
+		else:
+			EigVal, EigVec, error = self.__solveGeneralEigenproblem(\
+                                     self.__matrix_dict_petsc['A'], \
+                                     self.__matrix_dict_petsc['B'], \
+                                     sigma=eigenValueGuess, \
+                                     nev=nSol, \
+                                     tol=self.__tol,\
+                                     max_it=200,\
+                                     adjoint=False, \
+                                     isForEigenProblem=True)
+			return EigVal, EigVec, error
+
+
+
+	@staticmethod
+	def runInParallel(
+			args
+			):
+		"""
+		This Function acts as a Wrapper to make it possible to use the Pickle
+		methods inside the Pool.map() method, which creates several instances
+		of the Pickle-Method which one omega respectively. Each function is
+		then computed in its own subprocess, which makes it possible to use
+		several CPU-Cores.
+
+		Function arguments:
+		- args: List of arguments for the Pickle-Methods
+
+		Function returns:
+
+		"""
+		if args[1] == 'Resolvent':
+			# The content of this warning is due to the fact, that properties necessary to calculate the
+			# response cannot be pickled... A solution to this should be found...
+			return args[0].__ParallelResolventPickle(
+										args[0],
+										args[2],
+										args[3],
+										args[4],
+										)
+
+		elif args[1] == 'GEVP':
+			return args[0].__ParallelGEVPPythonPickle(
+										args[0],
+										args[2],
+										args[3],
+										args[4],
+										args[5],
+										args[6],
+										)
+
+		elif args[1] == 'InputOutput':
+			return args[0].__ParallelInputOutputPickle(
+										args[0],
+										args[2],
+										args[3],
+										)
+
+
+
+
+	def __ParallelGEVPPickle(
+				self,
+				matrix_dict,
+				nSolut,
+				EigGuess,
+				adjointFlag,
+				Numerics,
+				):
+		"""
+		This function is used for distributing the GEVP associated
+		with different eigenvalue guesses to various CPUs.
+
+		"""
+		current = multiprocessing.current_process()
+		print("-- " + current.name + " running for omega = " + str(EigGuess))
+
+
+		#eigenvalues, eigenvectors = splin.eigs(
+		#								A,
+		#								k=nSolut,
+		#								M=B,
+		#								sigma=EigGuess,
+		#								ncv=200,
+		#								maxiter=200,
+		#								tol=1e-12,
+		#								return_eigenvectors=True,
+		#								)
+
+		return self.__solveGEVP_withSLEPc(matrix_dict, nSolut, EigGuess, adjointFlag, Numerics)
+
+
+
+
+	def __ParallelInputOutputPickle(
+				self,
+				matrix_dict,
+				omega,
+				):
+		"""
+		 This function is used for distributing the input output analysis to
+		 various CPUs.
+
+		 Function arguments:
+		 - omega:
+
+		 Function returns:
+		 -eigenvectors_c:
+		 """
+		print("Performing input-output analysis for omega="+str(omega))
+		### Get linear operator
+		# Define OP
+		OP=matrix_dict['A']-omega*matrix_dict['B']
+		# Make OP sparse vector
+		OP=OP.tocsc()
+		# Perform Lower-Upper decomposition
+		LU = splin.splu(OP,permc_spec=3)
+		# Use LU decomposition to solve the linear system
+		eigenvectors_c=LU.solve(matrix_dict['b_forcing'])
+
+		return     eigenvectors_c
+
+
+	def __ParallelResolventPickle(
+					self,
+					matrix_dict,
+					nSolut,
+					omega,):
+		"""
+		This function is used for distributing the resolvent's
+		eigenvalueproblems to various CPUs.
+
+		"""
+		LUQ = splin.splu(matrix_dict['Q'],permc_spec=3)
+		nu = min(np.shape(matrix_dict['Pu']))
+		current = multiprocessing.current_process()
+		print("-- " + current.name + " running for omega = " + str(omega))
+		def op(x):
+			y = matrix_dict['Pu'] * x
+			z = matrix_dict['B_forcing'] * y
+			y = LU.solve(z)
+			y1 = matrix_dict['Cr'] * y
+			z = matrix_dict['B_response'] * y1
+			z1 = matrix_dict['Cr'].transpose() * z
+			y = LU.solve(z1, trans='H')
+			z = matrix_dict['B_forcing'].transpose() * y
+			y = matrix_dict['Pu'].transpose() * z
+			w = LUQ.solve(y, trans='H')
+			return w
+
+		OP = matrix_dict['A'] - omega * matrix_dict['B']
+		OP = OP.tocsc()
+		LU = splin.splu(OP,permc_spec=3)
+		SOP = splin.LinearOperator((nu,nu),matvec = op,dtype = 'complex')
+
+		gains,eigenvectors_c = splin.eigs(SOP,
+								k = nSolut,
+								M = None,
+								sigma = None,
+								which = 'LM',
+								maxiter = 100,
+								tol = 10-12,
+								return_eigenvectors = True,
+								)
+
+		# Write gains to results dictionary
+		gains = np.real(gains)
+
+		# Iterate through the first nSolut gains
+		nDOF = max(np.shape(matrix_dict['B']))
+		forcings = np.zeros((nDOF, nSolut), 'complex')
+		responses = np.zeros((nDOF, nSolut), 'complex')
+		for k in range(nSolut):
+			# Write the respective forcing to results dictionary
+			forcings[:, k] = matrix_dict['Pu'] * eigenvectors_c[:, k]
+			f = -1j * matrix_dict['B'] * forcings[:, k]
+			responses[:, k] = LU.solve(f)
+
+		return gains, forcings, responses
+
+
 
 	def __solveGeneralEigenproblem(
                 self, 
@@ -712,7 +711,8 @@ class linearSystem:
 		# finish assembling matrices 
 		A.assemble()
 		B.assemble()
-		
+
+
 		# create eigenproblem solver 
 		eps = SLEPc.EPS().create()
 		eps.setOperators(A,B)
@@ -726,15 +726,8 @@ class linearSystem:
 		eps.setTolerances(tol=tol,max_it=max_it)
 		
 		eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) # is standard, does not need to be set
-		#eps.setType(SLEPc.EPS.Type.ARNOLDI) 
 		eps.getST().setType(SLEPc.ST.Type.SINVERT)
-		#eps.getST().setType(SLEPc.ST.Type.SHIFT)
-		#eps.getST().setShift(1000000)
 		eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_REAL)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_IMAGINARY)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_REAL)
-		#eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE)
 		eps.setTarget(sigma)
 		eps.setDimensions(nev=nev)
 		
@@ -760,17 +753,12 @@ class linearSystem:
 					# get adjoint solution
 					eps.getLeftEigenvector(i,vec_real,vec_imag)
 					eigVecs_adjoint[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
-					#TODO Sophie: which error to choose? How are they calculated exactly?
-					error[i] = eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)
-					#print("RELATIVE: ", eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE))
-					#print("BACKWARD: ", eps.computeError(i, SLEPc.EPS.ErrorType.BACKWARD))
-					#print("ABSOLUTE: ", eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE))
+				error[i] = eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)
+				#printDebug(True,f"SLEPc error relative: {error[i]}")
 			
 			except:
-				print("Could not access eigenpair nb ", nev+1, "!")
+				printWarning("Could not access eigenpair nb ", nev+1, "!")
 		
-		A.destroy()
-		B.destroy()
 		eps.getST().getKSP().getPC().destroy()
 		eps.getST().getKSP().destroy()
 		eps.getST().destroy()
@@ -802,8 +790,6 @@ class linearSystem:
 		eps.setOperators(R)
 		eps.setDimensions(nev=nev)
 		eps.setTolerances(tol=tol,max_it=max_it)
-		#eps.setProblemType(SLEPc.EPS.ProblemType.HEP) 
-		#eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) 
 		eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE)
 		eps.getST().getKSP().getPC().setType('none')
 		eps.setFromOptions()
@@ -819,7 +805,7 @@ class linearSystem:
 				eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
 				eigVecs[:,i] = vec_real.getArray() + 1j * vec_imag.getArray()
 				printDebug(True,f"SLEPc error relative: {eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)}")
-				printDebug(True,f"SLEPc error absolute: {eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE)}")
+				#printDebug(True,f"SLEPc error absolute: {eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE)}")
 			except:
 				printWarning("Could not access eigenpair nb ", nev+1, "!")
 		
@@ -909,7 +895,7 @@ class ResolventOperator(object):
                 self._ksp1.setUp()
                 # create KSP2: This is a solver for the System conj(OP)*x=y. It will later be used to solve the transposed system, thus effectively solving OP^H *x=y, which is the Hermitian transpose of the system.
 		# TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). Thus we have to do an additional LU decomposistion.... Change as soon as this is included in the petsc4py! 
-                OP_H = OP.copy()   #create a new matrix, s.t. the original one will not be overriden 
+                OP_H = OP.copy()   #create a new matrix, s.t. the original one will not be overwritten 
                 OP_H.conjugate()
                 OP_H.assemble()
                 self._ksp2 = PETSc.KSP().create()
@@ -957,6 +943,9 @@ class ResolventOperator(object):
 
         def destroySelf(self):
                 """Clean-up the disc space to avoid memory leaks. Should be called if several resolvent SVDs are done one after the other.""" 
+                self._ksp1.getPC().destroy()
+                self._ksp2.getPC().destroy()
+                self._ksp3.getPC().destroy()
                 self._ksp1.destroy()
                 self._ksp2.destroy()
                 self._ksp3.destroy()
