@@ -161,21 +161,23 @@ class linearSystem:
 		tic_res = time.perf_counter()
 
 		if self.__param.Numerics.nCPU > 1:
-			# Parallel computation of the resolvent --------------------------------
-			printDebug(True, '-- Parallel computation of forcing and gains...')
-			pool = multiprocessing.Pool(self.__param.Numerics.nCPU)
+			printError('Parallel computation with "nCPU" > 1 is currently not working. (Will be added in the restructuring process.)') 			
+			exit()
+			## Parallel computation of the resolvent --------------------------------
+			#printDebug(True, '-- Parallel computation of forcing and gains...')
+			#pool = multiprocessing.Pool(self.__param.Numerics.nCPU)
 
-			args_map = [(linearSystem, 'Resolvent', self.__matrix_dict, \
-				self.__param.Numerics.nSolut, arg) for arg in \
-				self.__param.IOResolvent.Omegas]
-			#pool.map(run_in_parallel, args_map)
-			resultsPool = pool.map(self.runInParallel, args_map)
+			#args_map = [(linearSystem, 'Resolvent', self.__matrix_dict, \
+			#	self.__param.Numerics.nSolut, arg) for arg in \
+			#	self.__param.IOResolvent.Omegas]
+			##pool.map(run_in_parallel, args_map)
+			#resultsPool = pool.map(self.runInParallel, args_map)
 
-			# The gains, forcing, and responses are obtained in the parallel loop
-			for i in range(len(resultsPool)):
-				gains[:, i] = resultsPool[i][0]
-				forcings[:, :, i] = resultsPool[i][1]
-				responses[:, :, i] = resultsPool[i][2]
+			## The gains, forcing, and responses are obtained in the parallel loop
+			#for i in range(len(resultsPool)):
+			#	gains[:, i] = resultsPool[i][0]
+			#	forcings[:, :, i] = resultsPool[i][1]
+			#	responses[:, :, i] = resultsPool[i][2]
 
 		else:
 			# Serial computation of the resolvent --------------------------------
@@ -292,16 +294,17 @@ class linearSystem:
 
 
 		if self.__param.Numerics.nCPU > 1:
-			#TODO Sophie: implement parallel
-			pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
-			#func= partial(self.__ParallelInputOutputPickle,self.__matrix_dict)
-			args_map = [[linearSystem, 'InputOutput', self.__matrix_dict, \
-				arg] for arg in self.__param.IOResolvent.Omegas]
+			printError('Parallel computation with "nCPU" > 1 is currently not working. (Will be added in the restructuring process.)') 			
+			exit()
+			#pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
+			##func= partial(self.__ParallelInputOutputPickle,self.__matrix_dict)
+			#args_map = [[linearSystem, 'InputOutput', self.__matrix_dict, \
+			#	arg] for arg in self.__param.IOResolvent.Omegas]
 
-			resultsPool = pool.map(self.runInParallel, args_map)
-			for i in range(len(resultsPool)):
-				gains[:,i]	= 1
-				responses[:,0,i] = resultsPool[i]
+			#resultsPool = pool.map(self.runInParallel, args_map)
+			#for i in range(len(resultsPool)):
+			#	gains[:,i]	= 1
+			#	responses[:,0,i] = resultsPool[i]
 
 		else:
 			## Repeat analysis for every omega
@@ -364,25 +367,27 @@ class linearSystem:
 
 		# Possibility to run GEVP of different guesses in parallel
 		if self.__param.Numerics.nCPU > 1:
-			print("-- Entering parallel loop for GEVP")
-			pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
-			args_map = [(linearSystem, 'GEVP', self.__matrix_dict_petsc, \
-				nSol, guess, adjointFlag, self.__param.Numerics) \
-                                for guess in guesses]
-			results_pool = pool.map(self.runInParallel, args_map)
+			printError('Parallel computation with "nCPU" > 1 is currently not working. (Will be added in the restructuring process.)') 			
+			exit()
+			#print("-- Entering parallel loop for GEVP")
+			#pool=multiprocessing.Pool(processes=self.__param.Numerics.nCPU)
+			#args_map = [(linearSystem, 'GEVP', self.__matrix_dict_petsc, \
+			#	nSol, guess, adjointFlag, self.__param.Numerics) \
+                        #        for guess in guesses]
+			#results_pool = pool.map(self.runInParallel, args_map)
 
-			for i in range(len(results_pool)):
-				index = list(range(i*nSol, (i+1)*nSol))
-				EVal[index]    = results_pool[i][0]
-				for j in range(nSol):
-					EVec[:,i*nSol+j] = results_pool[i][1][j,:]
-					if adjointFlag:
-						EVecAdj[:,i*nSol+j] = results_pool[i][2][j,:]
-						residui[index] = resoults_pool[i][3]
-					else:
-						residui[index] = resoults_pool[i][2]
+			#for i in range(len(results_pool)):
+			#	index = list(range(i*nSol, (i+1)*nSol))
+			#	EVal[index]    = results_pool[i][0]
+			#	for j in range(nSol):
+			#		EVec[:,i*nSol+j] = results_pool[i][1][j,:]
+			#		if adjointFlag:
+			#			EVecAdj[:,i*nSol+j] = results_pool[i][2][j,:]
+			#			residui[index] = resoults_pool[i][3]
+			#		else:
+			#			residui[index] = resoults_pool[i][2]
 
-			print("-- Assembled results from all guesses.")
+			#print("-- Assembled results from all guesses.")
 
 		else:
 			for i in range(len(guesses)):
