@@ -668,7 +668,7 @@ class WeakFormulationCollectionClass():
 
         printDebug(True, '-- Done.')
 
-        return P, P_petsc
+        return P_petsc
 
     def getCrMat(self):
         ''' This function provides the Cr matrix, which restricts the response '''
@@ -727,4 +727,4 @@ class WeakFormulationCollectionClass():
 
         printDebug(True, '-- Done.')
         
-        return Cr, Cr_petsc
+        return Cr_petsc
