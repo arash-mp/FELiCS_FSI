@@ -42,6 +42,8 @@ from FELiCS.fluctuationClass import fluctuationSolutions
 
 import pdb
 
+
+
 class linearSystem:
 	"""
 	This Class provides methods to solve the Discretized System with the
@@ -51,7 +53,9 @@ class linearSystem:
 	can be called.
 
 	Private attributes:
-	- __matrix_dict: A dictionary containing the discretized-problem as
+	----------
+	__matrix_dict : dict
+		A dictionary containing the discretized-problem as
 	csr_matrices
 	- __FEMSpaces: A Object of the FEMSpaces-Class, containing the FE-Spaces
 	- __Preconditioner: String, defining the kind of used preconditioning of
@@ -72,26 +76,33 @@ class linearSystem:
 	- __tol: Given tolerance for the calculation of the eigenvalues
 
 	Protected attributes:
+	----------
 
 	Public attributes:
-
+	----------
+	
 	"""
+	
 	@staticmethod
 	def runInParallel(
 			args
 			):
-		"""
+		"""runInParallel Wrapper for parallel execution
+
 		This Function acts as a Wrapper to make it possible to use the Pickle
 		methods inside the Pool.map() method, which creates several instances
 		of the Pickle-Method which one omega respectively. Each function is
 		then computed in its own subprocess, which makes it possible to use
 		several CPU-Cores.
 
-		Function arguments:
-		- args: List of arguments for the Pickle-Methods
+		Parameters
+		----------
+		args : list
+			List of arguments for the Pickle-Methods
 
-		Function returns:
-
+		Returns
+		-------
+		Parallel Pickle Object
 		"""
 		if args[1] == 'Resolvent':
 			# The content of this warning is due to the fact, that properties necessary to calculate the
