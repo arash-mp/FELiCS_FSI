@@ -41,6 +41,8 @@ from FELiCS.functions import (
 from FELiCS.fluctuationClass import fluctuationSolutions
 
 
+
+
 class linearSystem:
 	"""
 	This Class provides methods to solve the Discretized System with the
@@ -50,7 +52,9 @@ class linearSystem:
 	can be called.
 
 	Private attributes:
-	- __matrix_dict: A dictionary containing the discretized-problem as
+	----------
+	__matrix_dict : dict
+		A dictionary containing the discretized-problem as
 	csr_matrices
 	- __FEMSpaces: A Object of the FEMSpaces-Class, containing the FE-Spaces
 	- __Preconditioner: String, defining the kind of used preconditioning of
@@ -71,10 +75,61 @@ class linearSystem:
 	- __tol: Given tolerance for the calculation of the eigenvalues
 
 	Protected attributes:
+	----------
 
 	Public attributes:
-
+	----------
+	
 	"""
+	
+	@staticmethod
+	def runInParallel(
+			args
+			):
+		"""runInParallel Wrapper for parallel execution
+
+		This Function acts as a Wrapper to make it possible to use the Pickle
+		methods inside the Pool.map() method, which creates several instances
+		of the Pickle-Method which one omega respectively. Each function is
+		then computed in its own subprocess, which makes it possible to use
+		several CPU-Cores.
+
+		Parameters
+		----------
+		args : list
+			List of arguments for the Pickle-Methods
+
+		Returns
+		-------
+		Parallel Pickle Object
+		"""
+		if args[1] == 'Resolvent':
+			# The content of this warning is due to the fact, that properties necessary to calculate the
+			# response cannot be pickled... A solution to this should be found...
+			return args[0].__ParallelResolventPickle(
+										args[0],
+										args[2],
+										args[3],
+										args[4],
+										)
+
+		elif args[1] == 'GEVP':
+			return args[0].__ParallelGEVPPythonPickle(
+										args[0],
+										args[2],
+										args[3],
+										args[4],
+										args[5],
+										args[6],
+										)
+
+		elif args[1] == 'InputOutput':
+			return args[0].__ParallelInputOutputPickle(
+										args[0],
+										args[2],
+										args[3],
+										)
+
 
 	def __init__(
 		self,
