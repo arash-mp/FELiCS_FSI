@@ -10,19 +10,21 @@ before_script:
   - pip3 install -U sphinx
   - pip3 install -U myst-parser
   - pip3 install -U sphinx-book-theme
+  - pip3 install -U sphinx-autoapi
 
 pages:
   script:
-  - cd docs
+  - cd DOCUMENTATION
   - mkdir ../public
   - python3 --version
   - pip list
-  - make html
+  #- make html
+  - sphinx-build -b html . _build
   - ls
-  - cp -r build/html/ ../public/.
+  - cp -r _build/ ../public/.
   - cd ..
-  - cp -r public/html/* public/
-  - rm -r public/html/
+  - cp -r public/* public/
+  #- rm -r public/
 
   artifacts:
     paths:
