@@ -7,5 +7,6 @@ __pycache__/
 .idea/
 DOCUMENTATION/_build
 DOCUMENTATION/build
+DOCUMENTATION/autoapi
 public
 *env
