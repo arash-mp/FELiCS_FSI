@@ -54,31 +54,33 @@ class linearSystem:
 	Private attributes:
 	----------
 	__matrix_dict : dict
-		A dictionary containing the discretized-problem as
-	csr_matrices
-	- __FEMSpaces: A Object of the FEMSpaces-Class, containing the FE-Spaces
-	- __Preconditioner: String, defining the kind of used preconditioning of
-	the matrices
-	- __nSolut: Desfines the number of Solutions
-	- __omegas: Given Eigenvalues (?)
-	- __n_omegas: Number of given Eigenvalues
-	- __nCPU: Defines the number of used CPU-cores to solve the linear-system
-	- __results_GEVP: A dictionary in which the solution of the GEVP is saved
+		A dictionary containing the discretized-problem as csr_matrices
+	__FEMSpaces : FEMSpaces
+		A Object of the FEMSpaces-Class, containing the FE-Spaces
+	__Preconditioner: String
+		defining the kind of used preconditioning of the matrices
+	__nSolut : Desfines the number of Solutions
+	__omegas : Given Eigenvalues (?)
+	__n_omegas : Number of given Eigenvalues
+	__nCPU : Defines the number of used CPU-cores to solve the linear-system
+	__results_GEVP : A dictionary in which the solution of the GEVP is saved
 	it contains complex-numpy arrays
-	- __results: A dictionary containing the solution of the InputOutput
+	__results : A dictionary containing the solution of the InputOutput
 	 Analysis
-	- __gains: The calculated Gains for the given forcing for the
+	__gains : The calculated Gains for the given forcing for the
 	Resolvent-Analysis
-	- __forcing: forcing-vector for the resolvent-analysis
-	- __response:
-	- __results_resolvent: Solution of the Resolvent-Analysis
-	- __tol: Given tolerance for the calculation of the eigenvalues
+	__forcing : forcing-vector for the resolvent-analysis
+	__response :
+	__results_resolvent : Solution of the Resolvent-Analysis
+	__tol : Given tolerance for the calculation of the eigenvalues
 
 	Protected attributes:
 	----------
 
+
 	Public attributes:
 	----------
+
 	
 	"""
 	
@@ -330,15 +332,15 @@ class linearSystem:
 	def solveInputOutput(
 		self
 		):
-		"""
+		"""solveInputOutput 
+
 		Computes the Input-Output Analysis
 
-		Function arguments:
+		Returns
+		-------
+		fluctSolutObjList
 
-		Function returns:
-		- fluctSolutObjList: List of fluctuation Objects, where each Object
-		contains one eigenvector and eigenvalue.
-
+			List of fluctuation Objects, where each Object contains one eigenvector and eigenvalue.
 		"""
 		fluctSolutObjList = []
 
