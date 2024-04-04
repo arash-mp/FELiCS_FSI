@@ -34,7 +34,8 @@ The validation Cases can be found [here](https://tubcloud.tu-berlin.de/s/3MQCKgK
 - If you add content to this file (`felics2.0/README.md`) that shall also appear on the web-based version, you have to manually copy the content to 
 
 ## how to write docstrings
+- We use the numpydoc docstring format
+- see https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html for good examples
 - see PostProcessing.py for example
 - https://numpydoc.readthedocs.io/en/latest/format.html
-- https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 - VSCode extension: autoDocstring - Python Docstring Generator is helpful!
