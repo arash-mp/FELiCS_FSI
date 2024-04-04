@@ -879,18 +879,22 @@ class linearSystem:
 		self,
 		A,
 		b):
-	
-		"""
-		Solves a linear equation system Ax=b, using the PETSc libraries.
 
-		Function arguments:
-		- A     PETSc matrix,  matrix of the linear system
-		- b     PETSc vector,  rhs of the linear system
+                """__solveEquationSystem  
+                Solves a linear equation system Ax=b, using the PETSc libraries.
 
-		Function returns:
-		- x     numpy array, solution of the linear equation system
-		"""
-		
+                Parameters
+                ----------
+                A : PETSc matrix
+                    matrix of the linear syste
+                b : PETSc vector
+                    rhs of the linear system
+
+                Returns
+                -------
+                x:  numpy array
+                    solution of the linear equation system
+                """
 		from petsc4py import PETSc
 		solution,dummy = A.createVecs()
 		
