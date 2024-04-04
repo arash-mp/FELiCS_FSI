@@ -24,7 +24,7 @@ pages:
   - cp -r _build/ ../public/.
   - cd ..
   - ls
-  - cp -r public/_build public/
+  - cp -r public/_build/* public/
   - rm -r public/_build
 
   artifacts:
