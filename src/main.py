@@ -19,7 +19,10 @@ Parameters
 ----------
 
 
-"""
+"""	
+
+import tkinter
+
 import sys
 
 from runCase import runCase
