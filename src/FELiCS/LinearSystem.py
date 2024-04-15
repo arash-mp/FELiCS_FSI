@@ -722,7 +722,8 @@ class linearSystem:
 		eps = SLEPc.EPS().create()
 		eps.setOperators(A,B)
 		if isForEigenProblem and isIncompressible:
-			eps.setProblemType(SLEPc.EPS.ProblemType.PGNHEP) # general non-Hermitian eigenproblem with positive semi-definite M
+			# eps.setProblemType(SLEPc.EPS.ProblemType.PGNHEP) # general non-Hermitian eigenproblem with positive semi-definite M
+			eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP) 	# general non-Hermitian eigenproblem with semi-definite B
 		
 		#calculate adjoint vectors
 		if adjoint:
