@@ -65,7 +65,7 @@ class export:
 	components.
 
 	"""
-	def __init__(self, param, FEMSpaces):
+	def __init__(self, param, FEMSpaces, mesh):
 		"""
 		constructor of the export-class
 
@@ -79,6 +79,7 @@ class export:
 		"""
 		self._FEMSpaces = FEMSpaces
 		self._param = param
+		self._mesh  = mesh
 
 		self._exportZeroScalarField = Function(self._FEMSpaces.P1Export)
 		self._exportZeroVectorField = Function(
@@ -112,7 +113,7 @@ class export:
 		from scipy import interpolate
   
 		valueDict = {}
-		dofsExport = self._FEMSpaces.P1Export.mesh.coordinates()
+		dofsExport = self._mesh.coordinates()
 		# get the index-vector for the mapping from P2 to P1-Export Space:
 		VectorCalcToP1ExportIndecies = self._FEMSpaces.mappingObj.VectorCalcToP1ExportIndecies
 		P2CalcToP1ExportIndecies = self._FEMSpaces.mappingObj.P2CalcToP1ExportIndecies

@@ -86,7 +86,7 @@ class WeakFormulationCollectionClass():
     -B_response (Resolvent response norm)
     The convention is such that the B matrix (time derivative) is always positive and real
     '''
-    def __init__(self,param,FEMSpaces,mean):
+    def __init__(self,param,FEMSpaces,mean,mesh):
         #from fenics import Function
         from itertools import compress
         from FELiCS.fluctuationClass import fluctuationClass
@@ -99,7 +99,6 @@ class WeakFormulationCollectionClass():
         self.__param = param
         self.__FEMSpaces = FEMSpaces
         self.__mean = mean
-        mesh = self.__FEMSpaces.P2.mesh
 
         # Get class for integrating along boundaries
         self.boundaries = mesh.facet_tags

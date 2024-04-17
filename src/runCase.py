@@ -33,7 +33,7 @@ def runCase(param, useGUI):
 
 	printDebug(True,'--------------------------------')
 	printDebug(True,'-- Reading InputFlow...')
-	MeanFlow = meanFlowClass(param, FEMSpaces)
+	MeanFlow = meanFlowClass(param, FEMSpaces, mesh)
 	MeanFlow.importDataFromFile()
 	if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
 		MeanFlow.exportBaseFlowAsHDF5()
@@ -47,7 +47,8 @@ def runCase(param, useGUI):
 	WeakFormulation = WeakFormulationCollection.WeakFormulationCollectionClass(
 					param,
 					FEMSpaces,
-					MeanFlow
+					MeanFlow,
+                    mesh
 					)
 	LinearAlgebraObj = WeakFormulation.DiscretizeFlow()
 

@@ -191,6 +191,9 @@ def printOK(string):
 def printWarning(string):
 	from colorama import Fore,Style
 	print(Fore.YELLOW+'WARNING! '+string+Style.RESET_ALL)
+def printDeprecatedWarning(string):
+	from colorama import Fore,Style
+	print(Fore.BLUE+'DEPRECATED WARNING: '+string+Style.RESET_ALL)
 def getReactionName(Reaction):
 	ReactionName=''
 	for specie in Reaction['educts']:

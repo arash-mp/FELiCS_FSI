@@ -30,12 +30,14 @@ class meanFlowClass(
             self,
             param,
             FEMSpaces,
+            mesh,
     ):
         self._isMean = True
         self._isFluctuation = False
         self._param = param
         self._FEMSpaces = FEMSpaces
-        self._coordinateSystem = self._FEMSpaces.P2.mesh.coordinateSystem
+        self._mesh = mesh
+        self._coordinateSystem = mesh.coordinateSystem
         fieldProperties.__init__(self)
         self._meanflowFilename = None
         self.__Mixture = param.Case.Mixture
@@ -154,7 +156,7 @@ class meanFlowClass(
         self._meanflowFilename = filename
         filehandler = File(f'{self._param.Export.ExportFolder}/{filename}', 'w')
         group = filehandler.create_group('meanflow')
-        export.__init__(self, self._param, self._FEMSpaces)
+        export.__init__(self, self._param, self._FEMSpaces, self._mesh)
         #self._meanfieldDict, dictImag = self._mapCalcToExport(self._fieldDict)
         self._meanfieldDict = self._mapCalcToExport(self._fieldDict)
         #exportDict = self._calculateVertexValuesFromDict(self._meanfieldDict,
@@ -850,7 +852,7 @@ class meanFlowClass(
         Function returns:
         instance of the class meanFlowVertexValues
         """
-        return meanFlowVertexValues(self._meanfieldDict, self._oneFieldArray)
+        return meanFlowVertexValues(self._meanfieldDict, self._oneFieldArray,self._FEMSpaces.exportMesh)
 
     def _getMeanFieldsToBeRead(self):
         listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
@@ -888,6 +890,7 @@ class meanFlowVertexValues(fieldProperties):
             self, 
             fieldDict, 
             oneField,
+            mesh,
             ):
         self._fieldDict = {}
         import numpy as np
@@ -897,8 +900,7 @@ class meanFlowVertexValues(fieldProperties):
             #tempMeanArray = fieldDict[key].compute_vertex_values()
             # The vector components (velocity u) need to be reshaped
             if fieldDict[key].function_space.num_sub_spaces > 1:
-                tempSolutionArray = np.zeros((fieldDict[key].function_space.num_sub_spaces,
-                                              fieldDict[key].function_space.mesh.coordinates().shape[0]),
+                tempSolutionArray = np.zeros((fieldDict[key].function_space.num_sub_spaces, mesh.coordinates().shape[0]),
                                              dtype=complex)
                 for subSpace in range(fieldDict[key].function_space.num_sub_spaces):
                     indicesOfSubSpace = fieldDict[key].function_space.sub(subSpace).collapse()[1]
