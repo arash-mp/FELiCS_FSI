@@ -96,6 +96,8 @@ class meanFlowClass(
         else:
             if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'fel':
                 self.importFelicsFile()
+            if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'xdmf':
+                self.importXDMFFile()
             if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'mat':
                 self.importMatFile()
             # If necessary perform coordinate transformation (so far only from
@@ -315,6 +317,84 @@ class meanFlowClass(
                 if name in list(h5file['MeanFlow'].keys()):
                     self.__RawFlowDict[name] \
                         = np.array(h5file['MeanFlow'][name])
+                else:
+                    self.__notInFileList.append(name)
+        # Check if dimensions of RawFlowDict are OK, if not, correct it
+        for key in list(self.__RawFlowDict.keys()):
+            if len(np.shape(self.__RawFlowDict[key])) > 1:
+                self.__RawFlowDict[key] = np.squeeze(self.__RawFlowDict[key])
+                
+    def importXDMFFile(self):
+        '''
+        Can't give information about CoordinateSystemInputData.
+        Instead it will read the coordinate system in case setting.
+        Only tested reading 2-D fields.
+        '''
+        import h5py
+        import numpy as np
+        Case = self._param.Case
+        FlowInput = self._param.FlowInput
+        # RawFlowDict is the dictionary directly loaded from the input file
+        self.__RawFlowDict = {}
+        # List of fields, which are not in the import file
+        self.__notInFileList = []
+        ## Get Mean flow names
+        nameListMean = self._getMeanFieldsToBeRead()
+        ## Get AVBP mesh file path
+        filePath = self._param.FlowInput.MeanFlowFilePath[:-4] + 'h5'
+        # Open hdf5 file
+        def hdf5_to_dict(group):
+            result = {}
+            for key, item in group.items():
+                if isinstance(item, h5py.Dataset):
+                    result[key] = item[()]  # Add dataset's value to the result dictionary
+                elif isinstance(item, h5py.Group):
+                    result[key] = hdf5_to_dict(item)  # Recursively call the function for subgroups
+            return result
+
+        with h5py.File(filePath, 'r') as h5file:
+            Coordinate = h5file['Mesh']['mesh']['geometry'][:]
+            field = hdf5_to_dict(h5file['Function'])
+
+        # Analyze dimension and coordinate system of input data based on the
+        # available coordinates. Copy the respective coordinates to the
+        # self.__RawFlowDict at the same time
+        self.__nDimRawData = np.shape(Coordinate)[1]
+        if np.shape(Coordinate)[1]>=1:
+            self.__RawFlowDict['x'] = Coordinate[:,0]
+        if np.shape(Coordinate)[1]>=2:
+            if self._param.Case.CoordinateSystem in ['Cartesian']:
+                self.__RawFlowDict['y'] = Coordinate[:,1]
+            elif self._param.Case.CoordinateSystem in ['Cylindrical']:
+                self.__RawFlowDict['r'] = Coordinate[:,1]
+        if np.shape(Coordinate)[1]>=3:
+            self.__RawFlowDict['z'] = Coordinate[:,1]
+
+        
+        
+        # Copy all remaining fields to the self.__RawFlowDict
+        for name in nameListMean:
+            if name[0] == 'u':
+                count = 0
+                for Component in self._param.Case.getVelocityComponents():
+                    nameComponent = name[:1] + Component + name[1:]
+                    if 'u' in list(field.keys()):
+                        self.__RawFlowDict[nameComponent] \
+                            = np.array(field['u']['0'][:,count])
+                    elif 'real_u' in list(field.keys()):
+                        self.__RawFlowDict[nameComponent] \
+                            = np.array(field['real_u']['0'][:,count])
+                    else:
+                        self.__notInFileList.append(nameComponent)
+                    count += 1
+                del count
+            else:
+                if name in list(field.keys()):
+                    self.__RawFlowDict[name] \
+                        = np.array(field[name]['0'])
+                elif 'real_' + name in field.keys():
+                    self.__RawFlowDict[name] \
+                        = np.array(field['real_'+name]['0'])
                 else:
                     self.__notInFileList.append(name)
         # Check if dimensions of RawFlowDict are OK, if not, correct it
