@@ -53,7 +53,6 @@ def runCase(param, useGUI):
 	LinearAlgebraObj = WeakFormulation.DiscretizeFlow()
 
 
-
 	if param.Case.AnalysisMode=='Modal':
 		fluctSolutList = LinearAlgebraObj.\
 			         solveGEVP(param.Case.CalculateAdjoint)
