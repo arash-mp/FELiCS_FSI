@@ -27,6 +27,7 @@ import sys
 
 from runCase import runCase
 
+
 from FELiCS.GUI.GUI import FELiCS_GUI
 from FELiCS.parameters import parameters
 
