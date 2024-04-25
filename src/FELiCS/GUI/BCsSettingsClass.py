@@ -24,9 +24,9 @@ from ufl import SpatialCoordinate
 from FELiCS.functions import printDeprecatedWarning
 
 class FELiCSMesh(Mesh):
-	'''
-	This class is an extension to the fenics mesh class
-	'''
+    '''
+    This class is an extension to the fenics mesh class
+    '''
     def __init__(
             self,
             coordinateSystem,
@@ -56,7 +56,7 @@ class FELiCSMesh(Mesh):
         except: #use old language 
             printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
             super().__init__(MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
-        #	#Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
+        #   #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
 
             self.dolfinxMesh = mesh
             self.facet_tags = facet_tags
@@ -67,7 +67,7 @@ class FELiCSMesh(Mesh):
             # save the coordinates in gmsh order:
             gmsh.open(filename)
 
-		#
+        #
     else:
         try:    #try new version of dolfinx 
             super().__init__(inputMesh, inputMesh.ufl_domain())
