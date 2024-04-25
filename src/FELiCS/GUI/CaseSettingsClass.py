@@ -179,11 +179,11 @@ class CaseSettingsClass(Settings):
             MeanList.append('responseDomain')
             MeanList.append('forcingDomain')
 
-		# Always look for a sponge variable in the mean flow file
+        # Always look for a sponge variable in the mean flow file
         # if not present it will be zero
         MeanList.append('spg')
 
-		# Add species, which are not transported
+        # Add species, which are not transported
         for specie in self.Mixture.getSpeciesList('constraint'):
             MeanList.append(specie)
 

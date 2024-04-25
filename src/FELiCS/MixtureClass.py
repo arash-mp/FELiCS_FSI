@@ -36,7 +36,7 @@ class MixtureClass():
                     printWarning('Cannot read line '+ str(lineNumber) + ' of Mixture File. The line is ignored...')
         #if self.getSpeciesList('transported'):
         #    self.readSpeciesDict(speciesFilePath)
-        
+   
 
 
     def getReactionMechanism(self):

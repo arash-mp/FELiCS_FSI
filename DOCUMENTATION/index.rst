@@ -21,6 +21,7 @@ Contents
 
    installation_guide
    tutorial_1
+   documentation_creation
 
 
 

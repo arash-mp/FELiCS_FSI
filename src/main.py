@@ -19,13 +19,14 @@ Parameters
 ----------
 
 
-"""	
+""" 
 
 import tkinter
 
 import sys
 
 from runCase import runCase
+
 
 from FELiCS.GUI.GUI import FELiCS_GUI
 from FELiCS.parameters import parameters
@@ -37,17 +38,17 @@ for i_argument,argument in enumerate(sys.argv):
         sys.argv[i_argument] = argument.replace(chr(8221), '')
 
 if len(sys.argv) == 1:
-	useGUI= True
+    useGUI= True
 elif sys.argv[1] == '-file': useGUI=False
 else: useGUI=True
 
 if __name__ == '__main__':
-	import FELiCS.PrintLogo
-	if useGUI: # Run program in GUI mode
-		window=FELiCS_GUI()
-	else: # Run program in terminal mode from settings file
-		SettingsFileName = sys.argv[2]
-		param=parameters()
-		param.importFromFile(SettingsFileName)
-		param.getOldParameters()
-		runCase(param,useGUI)
+    import FELiCS.PrintLogo
+    if useGUI: # Run program in GUI mode
+        window=FELiCS_GUI()
+    else: # Run program in terminal mode from settings file
+        SettingsFileName = sys.argv[2]
+        param=parameters()
+        param.importFromFile(SettingsFileName)
+        param.getOldParameters()
+        runCase(param,useGUI)

@@ -8,12 +8,12 @@ print("| __|| __|| |   (_)"+Fore.RED+"("+Fore.CYAN+"("+Style.RESET_ALL+"/ __|/ _
 print("| _| | _| | |__ | | | (__ \__ \  "+Style.RESET_ALL)
 print("|_|  |___||____||_|  \___||___/  "+Style.RESET_ALL)
 #
-#	from colorama import Fore,Style
-#	print(Fore.RED+'ERROR!!! '+string+' Aborting Program...'+Style.RESET_ALL)	
+#   from colorama import Fore,Style
+#   print(Fore.RED+'ERROR!!! '+string+' Aborting Program...'+Style.RESET_ALL)   
 #                 "+Fore.YELLOW+"
-#		  "+Fore.RED+"                
-#		  "+Fore.CYAN+"
-#		  "+Style.RESET_ALL+"
+#         "+Fore.RED+"                
+#         "+Fore.CYAN+"
+#         "+Style.RESET_ALL+"
 from FELiCS.functions import getLastGitCommit
 label=getLastGitCommit()
 print('Git commit: '+str(label))

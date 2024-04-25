@@ -14,8 +14,8 @@ from h5py import (
 )
 from dolfinx.fem import (
     Function,
-	FunctionSpace,
-	Constant,
+    FunctionSpace,
+    Constant,
 )
 from ufl import (
     TrialFunctions,
@@ -217,7 +217,7 @@ class fluctuationSolutions(
     - _FEMSpaces: FEMSpaces Object. Contains the high-dimensional calculation
         space
     - _mean: meanflow object. Instance of meanflowclass
-#	- _fieldDict: Contains the meanfield values in a dictionary
+#   - _fieldDict: Contains the meanfield values in a dictionary
     - _transportedQuantities
     - _param: FELiCS parameter object
     - _meshfilename: filename of the h5-file including the exportMesh

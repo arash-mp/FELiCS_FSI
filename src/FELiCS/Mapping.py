@@ -3,9 +3,9 @@ import numpy as np
 import pdb
 
 from FELiCS.functions import (
-						printDebug,
-						printError,
-					)
+                        printDebug,
+                        printError,
+                    )
 
 class Mapping:
     """
