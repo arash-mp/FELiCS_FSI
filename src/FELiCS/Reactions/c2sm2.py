@@ -225,11 +225,11 @@ class C2SM2:
         return dQ
 
     def Q(self, T, rho, Y_CH4, Y_CO, Y_O2, Y_CO2):
-	# Returning heat release rate as Function
+    # Returning heat release rate as Function
         return do.project(self.Q_(T, rho, Y_CH4, Y_CO, Y_O2, Y_CO2),Y_CH4.function_space())
 
     def dQ(self,fluc):
-	# Returning fluctuations in heat release
+    # Returning fluctuations in heat release
         QDict={}
         dQ1 = - self.h0r_1 * (self.Q1dT * fluc.T + self.Q1drho * fluc.rho + self.Q1dYCH4 * fluc.Y('CH4') + self.Q1dYO2 * fluc.Y('O2'))
         dQ2 = - self.h0r_2 * (self.Q2dT * fluc.T + self.Q2drho * fluc.rho + self.Q2dYCO * fluc.Y('CO') + self.Q2dYCO2 * fluc.Y('CO2') + self.Q2dYO2 * fluc.Y('O2'))

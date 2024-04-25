@@ -31,10 +31,10 @@ class ToolTip(object):
 
 def CreateToolTip(widgets, text):
     for widget in widgets:
-    	toolTip = ToolTip(widget)
-    	def enter(event):
-    	    toolTip.showtip(text)
-    	def leave(event):
-    	    toolTip.hidetip()
-    	widget.bind('<Enter>', enter)
-    	widget.bind('<Leave>', leave)
+        toolTip = ToolTip(widget)
+        def enter(event):
+            toolTip.showtip(text)
+        def leave(event):
+            toolTip.hidetip()
+        widget.bind('<Enter>', enter)
+        widget.bind('<Leave>', leave)

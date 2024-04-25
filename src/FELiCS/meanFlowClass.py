@@ -521,7 +521,7 @@ class meanFlowClass(
         Edit:
         User is now required to set the axis mentioned above within the gui 
         settings. A dropdown menu is provided were the user can choose from x,
-        y, z for both, 	the destination(B) and the origin axis(A)
+        y, z for both,  the destination(B) and the origin axis(A)
         """
 
         if (self.__nDimRawData == 3
