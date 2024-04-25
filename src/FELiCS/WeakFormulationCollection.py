@@ -18,7 +18,7 @@
 # ********************
 '''
 
-from dolfinx import __version__
+from dolfinx import __version__, default_scalar_type
 
 
 from ufl import (
@@ -39,8 +39,8 @@ from ufl import (
 from dolfinx.fem import (
                 Function,
                 dirichletbc,
-                form,
                 Constant,
+                form,
                 locate_dofs_topological,
 )
 from dolfinx.fem.petsc import (
@@ -440,7 +440,11 @@ class WeakFormulationCollectionClass():
         pattern = SparsityPattern(mesh.comm, [self.__FEMSpaces.VMixed.dofmap.index_map, self.__FEMSpaces.VMixed.dofmap.index_map],
                                                             [self.__FEMSpaces.VMixed.dofmap.index_map_bs, self.__FEMSpaces.VMixed.dofmap.index_map_bs])
         pattern.insert_diagonal(np.arange(len(bcFunction.vector.array), dtype=np.int32))
-        pattern.assemble()
+        try:
+            pattern.finalize()
+        except:
+            printDeprecatedWarning("dolfinx version is <0.7.0")
+            pattern.assemble()
         BC_Diriclet = create_matrix(mesh.comm, pattern)
         BC_Diriclet.setDiagonal(bcFunction.vector)
         BC_Diriclet.assemble()
