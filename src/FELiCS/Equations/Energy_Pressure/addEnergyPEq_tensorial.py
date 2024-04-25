@@ -15,7 +15,7 @@ def addEnergyPEq(self,fluc,X,mean,param):
     
     # ------------------------ Define the tensorial operators
     J_hat = self._coordinateSystem.J_hat
-    
+ 
     # ------------------------  Time derivative terms
     # Volume term: -omega*p_f*conj(X)
     self.B_vf.add(( fluc.p*iConj(X) ).ufl_tens*J_hat*dx)

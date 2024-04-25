@@ -61,9 +61,9 @@ from petsc4py.PETSc import ScalarType
 
 #from fenics import  PETScMatrix, PETScVector,DirichletBC, as_backend_type
 from scipy.sparse import (
-	csr_matrix,
-	csc_matrix
-	)
+    csr_matrix,
+    csc_matrix
+    )
 from FELiCS.functions import *
 #from fenics import FunctionAssigner,Constant
 import pdb
@@ -434,9 +434,9 @@ class WeakFormulationCollectionClass():
         bcFunction = Function(self.__FEMSpaces.VMixed)
         bcFunction.x.array[:] = 0.0
         # for bc in BClist:
-        # 	dofs = bc.dof_indices()[0]
-        # 	bc_vals = 1.0
-        # 	bcFunction.x.array[dofs] = bc_vals
+        #   dofs = bc.dof_indices()[0]
+        #   bc_vals = 1.0
+        #   bcFunction.x.array[dofs] = bc_vals
         mesh = self.__FEMSpaces.P2.mesh
         pattern = SparsityPattern(mesh.comm, [self.__FEMSpaces.VMixed.dofmap.index_map, self.__FEMSpaces.VMixed.dofmap.index_map],
                                                             [self.__FEMSpaces.VMixed.dofmap.index_map_bs, self.__FEMSpaces.VMixed.dofmap.index_map_bs])
@@ -453,8 +453,8 @@ class WeakFormulationCollectionClass():
                 A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
                 A.assemble()
             else:
-            	A = assemble_matrix(form(self.A_vf.lhs))
-            	A.assemble()
+                A = assemble_matrix(form(self.A_vf.lhs))
+                A.assemble()
         else:
             A = 0*BC_Diriclet
 

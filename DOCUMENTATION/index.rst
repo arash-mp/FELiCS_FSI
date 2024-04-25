@@ -21,7 +21,7 @@ Contents
 
    installation_guide
    tutorial_1
-   api/modules
+   documentation_creation
 
 
 
@@ -48,10 +48,10 @@ How to write a guide or documentation file
 
 How to write docstrings
 -------------
-
+- We use the numpydoc docstring format
+- see https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_numpy.html for good examples
 - see PostProcessing.py for example
 - https://numpydoc.readthedocs.io/en/latest/format.html
-- https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 - VSCode extension: autoDocstring - Python Docstring Generator is helpful!
 
 Indices and tables

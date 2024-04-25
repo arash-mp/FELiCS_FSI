@@ -17,7 +17,8 @@ def addEnthalpyEq(self,fluc,X,mean,param):
     self.B_vf.add(( mean.rho*fluc.h*iConj(X) ).ufl_tens*J_hat*dx)
     self.B_vf.add(( -1*fluc.p*iConj(X) ).ufl_tens*J_hat*dx)
     
-    
+
+ 
     # ------------------------  Advection terms
     # Add volume integral of advection terms that remain after partial integration:
     self.A_vf.add(( 1j*iDiv(iConj(X)*mean.rho*mean.u)*fluc.h ).ufl_tens*J_hat*dx)
