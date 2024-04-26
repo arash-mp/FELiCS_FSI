@@ -79,6 +79,7 @@ class export:
         """
         self._FEMSpaces = FEMSpaces
         self._param = param
+        self._exportMesh = FEMSpaces.exportMesh
 
         self._exportZeroScalarField = Function(self._FEMSpaces.P1Export)
         self._exportZeroVectorField = Function(
@@ -112,7 +113,7 @@ class export:
         from scipy import interpolate
   
         valueDict = {}
-        dofsExport = self._FEMSpaces.P1Export.mesh.coordinates()
+        dofsExport = self._exportMesh.coordinates()
         # get the index-vector for the mapping from P2 to P1-Export Space:
         VectorCalcToP1ExportIndecies = self._FEMSpaces.mappingObj.VectorCalcToP1ExportIndecies
         P2CalcToP1ExportIndecies = self._FEMSpaces.mappingObj.P2CalcToP1ExportIndecies
@@ -170,7 +171,7 @@ class export:
             linearFunctionImag = Function(self._FEMSpaces.VMixedExport)
 
 
-            dofsExport = linearFunctionReal.function_space.mesh.coordinates()
+            dofsExport = self._exportMesh.coordinates()
 
             for field in self._transportedQuantities:
                 if len(self._transportedQuantities) > 1:
@@ -181,7 +182,7 @@ class export:
                     if numSubSpaces > 1:
                         # calculate the complex solution of the vectorfield
                         ValueArray = ( flucRealCalc.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.sub(indexOfFieldInList).collapse().x.array )
-                        tempSolutionArray = np.zeros((numSubSpaces, linearFunctionReal.function_space.mesh.coordinates().shape[0] ), dtype=complex)
+                        tempSolutionArray = np.zeros((numSubSpaces, self._exportMesh.coordinates().shape[0] ), dtype=complex)
                         vectorSpaceDofCoords = flucRealCalc.function_space.sub(indexOfFieldInList).collapse()[0].tabulate_dof_coordinates()
 
                         #indexVector = self.mappingFunc(vectorSpaceDofCoords[:, 0:2], dofsExport[:, 0:2])
@@ -202,7 +203,9 @@ class export:
                         # Check if the transported quantity was obtained on P2 elts, otherwise we need to 
                         # interpolate from P1 to P2 meshes
                         if len(ValueArray) < len(dofsExport):
-                            dofsSolP1 = self._FEMSpaces.P1.mesh.coordinates()
+                            ##TODO: Sophie: changed the mesh from which I got the coordinates; before: mesh from P1 space. I don't know if this will
+                            ## be an issue when actual P1 elements are used.
+                            dofsSolP1 = self._exportMesh.coordinates()
                             printWarning(f'{field}-fluctuations obtained on P1-elts needs to be interpolated onto P2-elts mesh!')
                             tempSolutionArray = interpolate.griddata(dofsSolP1,ValueArray,dofsExport,method='linear')
        

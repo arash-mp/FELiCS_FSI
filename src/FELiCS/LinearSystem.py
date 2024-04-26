@@ -248,7 +248,11 @@ class linearSystem:
                 omega = self.__param.IOResolvent.Omegas[i]
                 printDebug(True, "-- Performing resolvent analysis for omega = " + str(omega))
 
-                OP_petsc          = self.__matrix_dict_petsc['A']-omega*self.__matrix_dict_petsc['B']
+                #Sophie: this is not working anymore for the newer dolfinx version, due to the different handling of the petsc library
+                #OP_petsc          = self.__matrix_dict_petsc['A']-omega*self.__matrix_dict_petsc['B']
+                OP_petsc          = self.__matrix_dict_petsc['A'].copy()
+                OP_petsc.axpy(-omega, self.__matrix_dict_petsc['B'])    # OP_petsc = A-omega*B
+
                 resolventOperator = ResolventOperator(
                                         OP_petsc, 
                                         self.__matrix_dict_petsc['Q'], 
@@ -370,7 +374,13 @@ class linearSystem:
                 print("Performing input-output analysis for omega="+str(omega))
                 ### Get linear operator
                 # Define OP
-                OP               = self.__matrix_dict_petsc['A']-omega*self.__matrix_dict_petsc['B']
+
+                #Sophie: this is not working anymore for the newer dolfinx version, due to the different handling of the petsc library
+                #OP          = self.__matrix_dict_petsc['A']-omega*self.__matrix_dict_petsc['B']
+                OP          = self.__matrix_dict_petsc['A'].copy()
+                OP.axpy(-omega, self.__matrix_dict_petsc['B'])    # OP_petsc = A-omega*B
+
+
                 # Use PETSC to solve linear system (with LU decomposition)
                 eigenvectors_c   = self.__solveEquationSystem(OP, self.__matrix_dict_petsc['b_forcing'])
                 gains[:,i]       = 1

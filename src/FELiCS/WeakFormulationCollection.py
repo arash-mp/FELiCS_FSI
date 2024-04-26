@@ -39,8 +39,8 @@ from ufl import (
 from dolfinx.fem import (
                 Function,
                 dirichletbc,
-                form,
                 Constant,
+                form,
                 locate_dofs_topological,
 )
 from dolfinx.fem.petsc import (
@@ -86,7 +86,7 @@ class WeakFormulationCollectionClass():
     -B_response (Resolvent response norm)
     The convention is such that the B matrix (time derivative) is always positive and real
     '''
-    def __init__(self,param,FEMSpaces,mean):
+    def __init__(self,param,FEMSpaces,mean,mesh):
         #from fenics import Function
         from itertools import compress
         from FELiCS.fluctuationClass import fluctuationClass
@@ -99,7 +99,8 @@ class WeakFormulationCollectionClass():
         self.__param = param
         self.__FEMSpaces = FEMSpaces
         self.__mean = mean
-        mesh = self.__FEMSpaces.P2.mesh
+
+        self.__mesh = mesh
 
         # Get class for integrating along boundaries
         self.boundaries = mesh.facet_tags
@@ -441,13 +442,29 @@ class WeakFormulationCollectionClass():
         pattern = SparsityPattern(mesh.comm, [self.__FEMSpaces.VMixed.dofmap.index_map, self.__FEMSpaces.VMixed.dofmap.index_map],
                                                             [self.__FEMSpaces.VMixed.dofmap.index_map_bs, self.__FEMSpaces.VMixed.dofmap.index_map_bs])
         pattern.insert_diagonal(np.arange(len(bcFunction.vector.array), dtype=np.int32))
-        pattern.assemble()
+        try:
+            pattern.finalize()
+        except:
+            printDeprecatedWarning("dolfinx version is <0.7.0")
+            pattern.assemble()
         BC_Diriclet = create_matrix(mesh.comm, pattern)
         BC_Diriclet.setDiagonal(bcFunction.vector)
         BC_Diriclet.assemble()
 
         bcs= self.__getListOfDirichletBCs()
         n_dof=BC_Diriclet.size[0]
+		
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            self.A_vf.setCorrectMeshObject(self.__mesh)
+            self.B_vf.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+
+
         if not self.A_vf.lhsIsZero():
             if AnalysisMode in ['Input-Output']:
                 A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
@@ -481,7 +498,8 @@ class WeakFormulationCollectionClass():
 
             b_forcing = 1j * forcing_vec_petsc.array
             self.__matrix_dict['b_forcing']       = b_forcing
-            self.__matrix_dict_petsc['b_forcing'] = 1j*forcing_vec_petsc  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
+            self.__matrix_dict_petsc['b_forcing'] = forcing_vec_petsc.copy()  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
+            self.__matrix_dict_petsc['b_forcing'].scale(1j)
             del b_forcing, forcing_vec_petsc
 
         # Get the BCs provided by the user
@@ -491,7 +509,11 @@ class WeakFormulationCollectionClass():
 
             bcFunction.x.array[:] = 0.0
             for bc in bcs:
-                dofs = bc.dof_indices()[0]
+                try:
+                    dofs = bc._cpp_object.dof_indices()[0]
+                except:
+                    printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                    dofs = bc.dof_indices()[0]
                 bc_vals = 1.0
                 bcFunction.x.array[dofs] = bc_vals
             BC_Diriclet.setDiagonal(bcFunction.vector)
@@ -599,7 +621,7 @@ class WeakFormulationCollectionClass():
                                         self.__matrix_dict_petsc, #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
                                         self.__FEMSpaces,
                                         self.__param,
-                                        self.__mean,
+                                        self.__mean
                                         )        
 
     def getPMat(self):

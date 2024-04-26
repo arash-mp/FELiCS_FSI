@@ -53,6 +53,15 @@ class WeakForm():
     def weakForm(self):
         return self.__weakForm__
 
+    # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+    # when using a newer version of dolfinx (version >= 0.6.*).
+    # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+    # but for now this works fine. 
+    def setCorrectMeshObject(self,meshObject):
+        sd = self.__weakForm__.subdomain_data()
+        domain, = list(sd.keys())  # Assuming single domain
+        domain._ufl_cargo = meshObject._cpp_object._cpp_object
+
 
     def analyseWeakForm(self):
 

@@ -21,6 +21,7 @@ import numpy as np
 import pdb
 from FELiCS.tensorUtils import CoordinateSystem
 from ufl import SpatialCoordinate
+from FELiCS.functions import printDeprecatedWarning
 
 class FELiCSMesh(Mesh):
     '''
@@ -31,13 +32,14 @@ class FELiCSMesh(Mesh):
             coordinateSystem,
             filename=None,
             gdim=0,
-                        m=0,
+            m=0,
             inputMesh=None,
             ):
 
         if inputMesh is None:
             gmsh.initialize()
             if __version__.find('0.4') >= 0:
+                printDeprecatedWarning("Dolfinx version <0.5.0 is used.")
                 from FELiCSGUI.gmsh_helpers import gmsh_model_to_mesh, read_from_msh
                 mesh, cell_tags, hi, facet_tags = read_from_msh(filename, cell_data=True, facet_data=True, gdim=gdim)
                 self.coordinatesGMSH = extract_gmsh_geometry(gmsh.model)
@@ -47,11 +49,23 @@ class FELiCSMesh(Mesh):
                 mesh_comm = MPI.COMM_WORLD
                 model_rank = 0
                 mesh, _, facet_tags = gmshio.model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=gdim)
-            Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
 
-            #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
 
-            self.mesh = mesh
+            try:    #try new version of dolfinx 
+                super().__init__(mesh, mesh.ufl_domain())
+                newMesh = Mesh(mesh, mesh.ufl_domain())
+            except: #use old language 
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                super().__init__(MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
+            #   #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
+
+            try: 
+                self.dolfinxMesh  = mesh
+                self._ccp_object  = mesh._cpp_object
+            except:
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                self.dolfinxMesh  = self
+                self._cpp_object  = mesh
             self.facet_tags = facet_tags
             self.gdim = gdim
             self._ufl_domain = mesh._ufl_domain
@@ -62,8 +76,19 @@ class FELiCSMesh(Mesh):
 
         #
         else:
-            Mesh.__init__(self, MPI.COMM_WORLD, inputMesh.topology, inputMesh.geometry, inputMesh.ufl_domain())
+            try:    #try new version of dolfinx 
+                super().__init__(inputMesh, inputMesh.ufl_domain())
+            except: #use old language 
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                super().__init__(MPI.COMM_WORLD, inputMesh.topology, inputMesh.geometry, inputMesh.ufl_domain())
             self.gdim = inputMesh.topology.dim
+            try: 
+                self.dolfinxMesh = inputMesh
+                self._ccp_object  = inputMesh._cpp_object
+            except:
+                self.dolfinxMesh = self 
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                self._cpp_object  = inputMesh
         
         x = SpatialCoordinate(self)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
@@ -83,6 +108,8 @@ class FELiCSMesh(Mesh):
                                     )
         else:
             printError('Coord. syst not yet implemented in tensor framework.')
+        self._coordinates = self.coordinates()
+
 
     def saveInFELiCSFormat(self, filename):
         '''
@@ -115,9 +142,15 @@ class FELiCSMesh(Mesh):
         this method calculates the meshCells array in the fenics representation
         """
         connectivityCells = self.topology.connectivity(2, 0)
-        self.meshCells = connectivityCells.array.reshape(
-        [self.topology.original_cell_index.shape[0], self.topology.cell_type.value]
-                                                        )
+
+
+        try:    #try new version of dolfinx 
+            self.meshCells = connectivityCells.array.reshape(
+                [self.topology.original_cell_index.shape[0], self.topology.cell_types[0].value])
+        except: #use old language. TODO: handle DEPRECATED stuff uniformly
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+            self.meshCells = connectivityCells.array.reshape(
+                [self.topology.original_cell_index.shape[0], self.topology.cell_type.value])
 
     def cells(self):
         """

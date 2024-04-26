@@ -30,12 +30,14 @@ class meanFlowClass(
             self,
             param,
             FEMSpaces,
+            mesh,
     ):
         self._isMean = True
         self._isFluctuation = False
         self._param = param
         self._FEMSpaces = FEMSpaces
-        self._coordinateSystem = self._FEMSpaces.P2.mesh.coordinateSystem
+        self._mesh = mesh
+        self._coordinateSystem = mesh.coordinateSystem
         fieldProperties.__init__(self)
         self._meanflowFilename = None
         self.__Mixture = param.Case.Mixture
@@ -129,15 +131,15 @@ class meanFlowClass(
             nuTot = Function(self._ScalarFunctionSpace)
 
             if 'nulam' in list(self._fieldDict.keys()):
-                nuTot.vector[:] += self._fieldDict['nulam'].vector[:]
+                nuTot.x.array[:] += self._fieldDict['nulam'].x.array[:]
             if 'nuturb' in list(self._fieldDict.keys()):
-                nuTot.vector[:] += self._fieldDict['nuturb'].vector[:]
+                nuTot.x.array[:] += self._fieldDict['nuturb'].x.array[:]
             if 'nuSGS' in list(self._fieldDict.keys()):
-                nuTot.vector[:] += self._fieldDict['nuSGS'].vector[:]
+                nuTot.x.array[:] += self._fieldDict['nuSGS'].x.array[:]
             self._fieldDict['D_' + specie] \
                 = Function(self._FEMSpaces.P2)
             self._fieldDict['D_' + specie].vector[:] \
-                = nuTot.vector[:] / Sc
+                = nuTot.x.array[:] / Sc
 
     def importMatFile(self):
         import scipy.io as spio
@@ -217,7 +219,7 @@ class meanFlowClass(
         indexMappingArray = mappingFunc(coordArray, coordinatesOfP2Mesh)
 
         fieldDict = {}
-        nameListMean = self._getMeanFieldsToBeRead()        
+        nameListMean = self._getMeanFieldsToBeRead()    
         for name in nameListMean:
             if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
                 fieldDict[name] = Function(
@@ -464,14 +466,14 @@ class meanFlowClass(
                                 == 'Azimuthal':
                             # For this case a azimuthal average is performed by
                             # using the function ContractFromAzimuthalAverage
-                            self._fieldDict[name].sub(idx).vector[dofIDX] \
+                            self._fieldDict[name].sub(idx).x.array[dofIDX] \
                                 = ContractAfterAverage(dof_coordinatesP2,
                                                        self._param,
                                                        temp_vecP2[:, m])
                         else:
                             # In this case a simple copy of the interpolation
                             # results is sufficient
-                            self._fieldDict[name].sub(idx).vector[dofIDX] \
+                            self._fieldDict[name].sub(idx).x.array[dofIDX] \
                                 = np.array(temp_vecP2[:, m])
                         # Increment m
                         m += 1
@@ -850,7 +852,7 @@ class meanFlowClass(
         Function returns:
         instance of the class meanFlowVertexValues
         """
-        return meanFlowVertexValues(self._meanfieldDict, self._oneFieldArray)
+        return meanFlowVertexValues(self._meanfieldDict, self._oneFieldArray,self._FEMSpaces.exportMesh)
 
     def _getMeanFieldsToBeRead(self):
         listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
@@ -888,6 +890,7 @@ class meanFlowVertexValues(fieldProperties):
             self, 
             fieldDict, 
             oneField,
+            mesh,
             ):
         self._fieldDict = {}
         import numpy as np
@@ -897,8 +900,7 @@ class meanFlowVertexValues(fieldProperties):
             #tempMeanArray = fieldDict[key].compute_vertex_values()
             # The vector components (velocity u) need to be reshaped
             if fieldDict[key].function_space.num_sub_spaces > 1:
-                tempSolutionArray = np.zeros((fieldDict[key].function_space.num_sub_spaces,
-                                              fieldDict[key].function_space.mesh.coordinates().shape[0]),
+                tempSolutionArray = np.zeros((fieldDict[key].function_space.num_sub_spaces, mesh.coordinates().shape[0]),
                                              dtype=complex)
                 for subSpace in range(fieldDict[key].function_space.num_sub_spaces):
                     indicesOfSubSpace = fieldDict[key].function_space.sub(subSpace).collapse()[1]
