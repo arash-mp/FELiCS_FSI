@@ -135,7 +135,6 @@ class linearSystem:
 
     def __init__(
         self,
-        matrix_dict,
         matrix_dict_petsc,
         FEMSpaces,
         param,
@@ -155,14 +154,12 @@ class linearSystem:
         - nSolut: Number of Solutions
         - nCPU: Number of used Cores for solving the linear system
         """
-        self.__matrix_dict = matrix_dict
+        self.__matrix_dict_petsc = matrix_dict_petsc 
         self.__param = param
         self.__FEMSpaces = FEMSpaces
         self.__n_omegas = len(self.__param.IOResolvent.Omegas)
         self.__meanFlow = meanFlow
-        self.__n_dof=np.shape(self.__matrix_dict['A'])[0]
-
-        self.__matrix_dict_petsc = matrix_dict_petsc #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
+        self.__n_dof=self.__matrix_dict_petsc['A'].getSizes()[0][0]
 
         self.__tol = 1e-12
 
