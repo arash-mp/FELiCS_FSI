@@ -2,7 +2,7 @@ import pdb
 import numpy as np
 import copy
 
-def runCase(param, useGUI):
+def runResolvent(param, useGUI):
     '''This function runs the calculations preset in param
     Input:
         param: Parameter objects (see parameters.py), defining the case
@@ -53,17 +53,8 @@ def runCase(param, useGUI):
     LinearAlgebraObj = WeakFormulation.DiscretizeFlow()
 
 
-    if param.Case.AnalysisMode=='Modal':
-        fluctSolutList = LinearAlgebraObj.\
-                     solveGEVP(param.Case.CalculateAdjoint)
-
-    elif param.Case.AnalysisMode=='Resolvent':
-        fluctSolutList = LinearAlgebraObj.solveResolvent(
+    fluctSolutList = LinearAlgebraObj.solveResolvent(
                                                                 WeakFormulation)
-
-    elif param.Case.AnalysisMode=='Input-Output':
-
-        fluctSolutList = LinearAlgebraObj.solveInputOutput()
 
     if useGUI:
         ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, WeakFormulation)

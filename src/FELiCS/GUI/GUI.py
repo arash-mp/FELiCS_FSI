@@ -130,9 +130,17 @@ class FELiCS_GUI():
     
     def runMain(self):
         ''' Function initiating the main part of the program '''
-        import time
-        from runCase import runCase
+
+        from runModal       import  runModal      
+        from runResolvent   import  runResolvent  
+        from runInputOutput import  runInputOutput
         
         self.param.getOldParameters()
-        useGUI=True
-        runCase(self.param,useGUI)  
+        mode = self.param.Case.AnalysisMode
+        if mode == "Modal":
+                runModal(self.param,useGUI=True)
+        elif mode == "Resolvent":
+                runResolvent(self.param,useGUI=True)
+        elif mode == "Input-Output":
+                runInputOutput(self.param,useGUI=True)
+

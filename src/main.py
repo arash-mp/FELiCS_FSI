@@ -25,8 +25,9 @@ import tkinter
 
 import sys
 
-from runCase import runCase
-
+from runModal       import  runModal      
+from runResolvent   import  runResolvent  
+from runInputOutput import  runInputOutput
 
 from FELiCS.GUI.GUI import FELiCS_GUI
 from FELiCS.parameters import parameters
@@ -51,4 +52,11 @@ if __name__ == '__main__':
         param=parameters()
         param.importFromFile(SettingsFileName)
         param.getOldParameters()
-        runCase(param,useGUI)
+
+        mode = param.Case.AnalysisMode
+        if mode == "Modal":
+                runModal(param,useGUI=False)
+        elif mode == "Resolvent":
+                runResolvent(param,useGUI=False)
+        elif mode == "Input-Output":
+                runInputOutput(param,useGUI=False)
