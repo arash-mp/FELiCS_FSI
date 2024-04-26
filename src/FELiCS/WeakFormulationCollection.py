@@ -683,9 +683,10 @@ class WeakFormulationCollectionClass():
         n = len(index)
         row_ind = index
         col_ind = np.arange(n)
-        P = csr_matrix((np.ones(n), (row_ind,col_ind)), (m, n))    
-  
-        P_petsc = PETSc.Mat().createAIJWithArrays(size=P.get_shape(),csr=(P.indptr, P.indices, P.data))
+
+        P_petsc = PETSc.Mat().createAIJ([m,n])
+        for i in range(n):
+            P_petsc.setValue(row_ind[i],col_ind[i],1.)
         P_petsc.assemble()
 
         printDebug(True, '-- Done.')
@@ -741,11 +742,13 @@ class WeakFormulationCollectionClass():
         n = len(index)
         row_ind = index
         col_ind = np.arange(n)
-        Cr = csr_matrix((np.ones(n),(row_ind,row_ind)),(m,m))
-        # Cr = csr_matrix((np.ones(n),(col_ind,row_ind)),(n,m))     # in theory this should be the size of Cr
 
-        Cr_petsc = PETSc.Mat().createAIJWithArrays(size=Cr.get_shape(),csr=(Cr.indptr, Cr.indices, Cr.data))
+        Cr_petsc = PETSc.Mat().createAIJ([m,m])
+        for row in row_ind:
+            Cr_petsc.setValue(row,row,1.)
         Cr_petsc.assemble()
+
+        ## Cr = csr_matrix((np.ones(n),(col_ind,row_ind)),(n,m))     # in theory this should be the size of Cr
 
         printDebug(True, '-- Done.')
         
