@@ -100,6 +100,8 @@ class WeakFormulationCollectionClass():
         self.__FEMSpaces = FEMSpaces
         self.__mean = mean
 
+        self.__mesh = mesh
+
         # Get class for integrating along boundaries
         self.boundaries = mesh.facet_tags
         self.ds = Measure("ds", subdomain_data=self.boundaries)
@@ -451,6 +453,14 @@ class WeakFormulationCollectionClass():
 
         bcs= self.__getListOfDirichletBCs()
         n_dof=BC_Diriclet.size[0]
+		
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        self.A_vf.setCorrectMeshObject(self.__mesh)
+        self.B_vf.setCorrectMeshObject(self.__mesh)
+
         if not self.A_vf.lhsIsZero():
             if AnalysisMode in ['Input-Output']:
                 A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
@@ -494,7 +504,7 @@ class WeakFormulationCollectionClass():
 
             bcFunction.x.array[:] = 0.0
             for bc in bcs:
-                dofs = bc.dof_indices()[0]
+                dofs = bc._cpp_object.dof_indices()[0]
                 bc_vals = 1.0
                 bcFunction.x.array[dofs] = bc_vals
             BC_Diriclet.setDiagonal(bcFunction.vector)
@@ -602,7 +612,7 @@ class WeakFormulationCollectionClass():
                                         self.__matrix_dict_petsc, #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
                                         self.__FEMSpaces,
                                         self.__param,
-                                        self.__mean,
+                                        self.__mean
                                         )        
 
     def getPMat(self):

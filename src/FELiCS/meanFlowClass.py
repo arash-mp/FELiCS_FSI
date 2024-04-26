@@ -156,7 +156,7 @@ class meanFlowClass(
         self._meanflowFilename = filename
         filehandler = File(f'{self._param.Export.ExportFolder}/{filename}', 'w')
         group = filehandler.create_group('meanflow')
-        export.__init__(self, self._param, self._FEMSpaces, self._mesh)
+        export.__init__(self, self._param, self._FEMSpaces)
         #self._meanfieldDict, dictImag = self._mapCalcToExport(self._fieldDict)
         self._meanfieldDict = self._mapCalcToExport(self._fieldDict)
         #exportDict = self._calculateVertexValuesFromDict(self._meanfieldDict,

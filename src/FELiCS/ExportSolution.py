@@ -426,8 +426,8 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulation):
 
 def ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow):
     # automated export from here on-Felics call wihtout gui --> no export-window: all frequencies and the first 2 leading modes
-    xy = FEMSpaces.P2.mesh.coordinates()
-    mesh_cells=FEMSpaces.P2.mesh.cells()
+    xy = FEMSpaces.exportMesh.coordinates()
+    mesh_cells= FEMSpaces.exportMesh.cells()
     # in the case of resolvent analysis: expport all frequencies and the first two leading modes
 
     if param.Case.AnalysisMode in ['Resolvent','Input-Output']:

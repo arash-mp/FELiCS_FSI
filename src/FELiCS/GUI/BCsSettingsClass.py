@@ -50,15 +50,17 @@ class FELiCSMesh(Mesh):
                 model_rank = 0
                 mesh, _, facet_tags = gmshio.model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=gdim)
 
-        #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
-        try:    #try new version of dolfinx 
-            super().__init__( mesh, mesh.ufl_domain())
-        except: #use old language 
-            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-            super().__init__(MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
-        #   #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
 
-            self.dolfinxMesh = mesh
+            try:    #try new version of dolfinx 
+                super().__init__(mesh, mesh.ufl_domain())
+                newMesh = Mesh(mesh, mesh.ufl_domain())
+            except: #use old language 
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                super().__init__(MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
+            #   #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
+
+            self.dolfinxMesh  = mesh
+            self._ccp_object  = mesh._cpp_object
             self.facet_tags = facet_tags
             self.gdim = gdim
             self._ufl_domain = mesh._ufl_domain
@@ -68,14 +70,15 @@ class FELiCSMesh(Mesh):
             gmsh.open(filename)
 
         #
-    else:
-        try:    #try new version of dolfinx 
-            super().__init__(inputMesh, inputMesh.ufl_domain())
-        except: #use old language 
-            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-            super().__init__(MPI.COMM_WORLD, inputMesh.topology, inputMesh.geometry, inputMesh.ufl_domain())
-        self.gdim = inputMesh.topology.dim
-        self.dolfinxMesh = inputMesh
+        else:
+            try:    #try new version of dolfinx 
+                super().__init__(inputMesh, inputMesh.ufl_domain())
+            except: #use old language 
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                super().__init__(MPI.COMM_WORLD, inputMesh.topology, inputMesh.geometry, inputMesh.ufl_domain())
+            self.gdim = inputMesh.topology.dim
+            self.dolfinxMesh = inputMesh
+            self._ccp_object  = inputMesh._cpp_object
         
         x = SpatialCoordinate(self)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
