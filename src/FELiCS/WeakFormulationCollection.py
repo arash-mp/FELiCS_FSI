@@ -494,7 +494,8 @@ class WeakFormulationCollectionClass():
 
             b_forcing = 1j * forcing_vec_petsc.array
             self.__matrix_dict['b_forcing']       = b_forcing
-            self.__matrix_dict_petsc['b_forcing'] = 1j*forcing_vec_petsc  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
+            self.__matrix_dict_petsc['b_forcing'] = forcing_vec_petsc.copy()  #store petsc matrices for PETSc/SLEPc; keep the others in as long as implementation is not finished
+            self.__matrix_dict_petsc['b_forcing'].scale(1j)
             del b_forcing, forcing_vec_petsc
 
         # Get the BCs provided by the user

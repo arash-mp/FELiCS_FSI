@@ -226,11 +226,11 @@ class fieldProperties:
         nuTot = Function(self._ScalarFunctionSpace)
 
         if 'nulam' in list(self._fieldDict.keys()):
-            nuTot.vector[:] += self._fieldDict['nulam'].vector[:]
+            nuTot.x.array[:] += self._fieldDict['nulam'].x.array[:]
         if 'nuturb' in list(self._fieldDict.keys()):
-            nuTot.vector[:] += self._fieldDict['nuturb'].vector[:]
+            nuTot.x.array[:] += self._fieldDict['nuturb'].x.array[:]
         if 'nuSGS' in list(self._fieldDict.keys()):
-            nuTot.vector[:] += self._fieldDict['nuSGS'].vector[:]
+            nuTot.x.array[:] += self._fieldDict['nuSGS'].x.array[:]
         return Tensor(
                     nuTot,
                     self._coordinateSystem,
