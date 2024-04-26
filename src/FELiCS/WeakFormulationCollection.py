@@ -18,7 +18,7 @@
 # ********************
 '''
 
-from dolfinx import __version__, default_scalar_type
+from dolfinx import __version__
 
 
 from ufl import (
@@ -458,8 +458,12 @@ class WeakFormulationCollectionClass():
         # when using a newer version of dolfinx (version >= 0.6.*).
         # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
         # but for now this works fine. 
-        self.A_vf.setCorrectMeshObject(self.__mesh)
-        self.B_vf.setCorrectMeshObject(self.__mesh)
+        try:
+            self.A_vf.setCorrectMeshObject(self.__mesh)
+            self.B_vf.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+
 
         if not self.A_vf.lhsIsZero():
             if AnalysisMode in ['Input-Output']:
@@ -505,7 +509,11 @@ class WeakFormulationCollectionClass():
 
             bcFunction.x.array[:] = 0.0
             for bc in bcs:
-                dofs = bc._cpp_object.dof_indices()[0]
+                try:
+                    dofs = bc._cpp_object.dof_indices()[0]
+                except:
+                    printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                    dofs = bc.dof_indices()[0]
                 bc_vals = 1.0
                 bcFunction.x.array[dofs] = bc_vals
             BC_Diriclet.setDiagonal(bcFunction.vector)

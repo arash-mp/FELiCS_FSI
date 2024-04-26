@@ -59,8 +59,13 @@ class FELiCSMesh(Mesh):
                 super().__init__(MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
             #   #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
 
-            self.dolfinxMesh  = mesh
-            self._ccp_object  = mesh._cpp_object
+            try: 
+                self.dolfinxMesh  = mesh
+                self._ccp_object  = mesh._cpp_object
+            except:
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                self.dolfinxMesh  = self
+                self._cpp_object  = mesh
             self.facet_tags = facet_tags
             self.gdim = gdim
             self._ufl_domain = mesh._ufl_domain
@@ -77,8 +82,13 @@ class FELiCSMesh(Mesh):
                 printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
                 super().__init__(MPI.COMM_WORLD, inputMesh.topology, inputMesh.geometry, inputMesh.ufl_domain())
             self.gdim = inputMesh.topology.dim
-            self.dolfinxMesh = inputMesh
-            self._ccp_object  = inputMesh._cpp_object
+            try: 
+                self.dolfinxMesh = inputMesh
+                self._ccp_object  = inputMesh._cpp_object
+            except:
+                self.dolfinxMesh = self 
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                self._cpp_object  = inputMesh
         
         x = SpatialCoordinate(self)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous

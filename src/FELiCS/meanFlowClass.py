@@ -220,7 +220,6 @@ class meanFlowClass(
 
         fieldDict = {}
         nameListMean = self._getMeanFieldsToBeRead()    
-        print("##################  ok1")
         for name in nameListMean:
             if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
                 fieldDict[name] = Function(
@@ -243,7 +242,6 @@ class meanFlowClass(
                         indexMappingArray]
                 else:
                     self.__notInFileList.append(name)
-        print("##################  ok2")
         if 'ut' in list(fieldDict.keys()):
             fieldDict['ut'].x.array[:] = 0.0
         self._fieldDict = fieldDict
@@ -480,7 +478,6 @@ class meanFlowClass(
                         # Increment m
                         m += 1
             else:
-                #print("##################  ok15")
                 if (not name in self.__notInFileList) or (
                         name in ['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt',
                                  'rstrt']):
