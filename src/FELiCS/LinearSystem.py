@@ -491,7 +491,7 @@ class linearSystem:
                                     self.__FEMSpaces,
                                     EVal[i],
                                     EVec[:, i],
-                                        True,
+                                    True,
                                      )
             )
 
@@ -500,7 +500,7 @@ class linearSystem:
                                         self.__param,
                                         self.__meanFlow,
                                         self.__FEMSpaces,
-                                        EVal[i],
+                                        np.conj(EVal[i]),
                                         EVecAdj[:, i],
                                         False,
                                          )

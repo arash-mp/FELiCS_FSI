@@ -57,6 +57,6 @@ def runResolvent(param, useGUI):
                                                                 WeakFormulation)
 
     if useGUI:
-        ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, WeakFormulation)
+        ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, WeakFormulation,mesh)
     else:
         ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow)
