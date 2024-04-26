@@ -88,7 +88,7 @@ def writeLastGitCommit(param):
     gitFile.write(commitLabel)
 
 
-def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulation):
+def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulationm, mesh):
 
     """
     Function exporting the eigenvectors to a format asked for by the user
@@ -299,7 +299,6 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulation):
     # Number of Solutions to write
     nSolutionFields = len(SolutionStrings)+param.nVelocityComponents-1
     # Get the mesh data...
-    mesh=FEMSpace.P2.mesh
     xy = mesh.coordinates()
     mesh_cells=mesh.cells()
 #   plt.ioff()
