@@ -468,7 +468,8 @@ class linearSystem:
                                                                                              adjointFlag=False)
                 index = list(range(i*nSol,(i+1)*nSol))
                 EVal[index]    = EigValTemp
-                EValAdj[index] = EigValAdjTemp
+                if adjointFlag:
+                    EValAdj[index] = EigValAdjTemp
                 for j in range(nSol):
                     EVec[:,i*nSol+j] = EigVecTemp[j,:]
                     if adjointFlag:
