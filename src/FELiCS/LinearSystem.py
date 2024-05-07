@@ -425,6 +425,7 @@ class linearSystem:
         EVal    = np.zeros((nSol*len(guesses)),'complex')  
         EVec    = np.zeros((self.__n_dof,nSol*len(guesses)),'complex')      
         if adjointFlag:             
+            EValAdj = np.zeros((nSol*len(guesses)),'complex')  
             EVecAdj = np.zeros((self.__n_dof,nSol*len(guesses)),'complex')
         residui = np.zeros((nSol*len(guesses))) 
 
@@ -456,17 +457,19 @@ class linearSystem:
         else:
             for i in range(len(guesses)):
                 if adjointFlag:
-                    EigValTemp, EigVecTemp, EigVecAdjTemp, error = self.__solveGEVP_with_SLEPc(self.__matrix_dict_petsc,
-                                                                                             nSol,
-                                                                                             guesses[i],
-                                                                                             adjointFlag=True)
+                    EigValTemp, EigValAdjTemp, EigVecTemp, EigVecAdjTemp, error = self.__solveGEVP_with_SLEPc(self.__matrix_dict_petsc,
+                                                                                                           nSol,
+                                                                                                           guesses[i],
+                                                                                                           adjointFlag=True)
                 else:
                     EigValTemp, EigVecTemp, error                = self.__solveGEVP_with_SLEPc(self.__matrix_dict_petsc,
                                                                                              nSol,
                                                                                              guesses[i],
-                                                                                     adjointFlag=False)
+                                                                                             adjointFlag=False)
                 index = list(range(i*nSol,(i+1)*nSol))
                 EVal[index]    = EigValTemp
+                if adjointFlag:
+                    EValAdj[index] = EigValAdjTemp
                 for j in range(nSol):
                     EVec[:,i*nSol+j] = EigVecTemp[j,:]
                     if adjointFlag:
@@ -547,20 +550,7 @@ class linearSystem:
 
         printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
 
-        if adjointFlag:
-            EigVal, EigVec, EigVecAdj, error = self.__solveGeneralEigenproblem(\
-                                     self.__matrix_dict_petsc['A'], \
-                                     self.__matrix_dict_petsc['B'], \
-                                     sigma=eigenValueGuess, \
-                                     nev=nSol, \
-                                     tol=self.__tol,\
-                                     max_it=200,\
-                                     adjoint=True, \
-                                     isForEigenProblem=True)
-            return EigVal, EigVec, EigVecAdj, error
-
-        else:
-            EigVal, EigVec, error = self.__solveGeneralEigenproblem(\
+        EigVal, EigVec, error = self.__solveGeneralEigenproblem(\
                                      self.__matrix_dict_petsc['A'], \
                                      self.__matrix_dict_petsc['B'], \
                                      sigma=eigenValueGuess, \
@@ -569,7 +559,20 @@ class linearSystem:
                                      max_it=200,\
                                      adjoint=False, \
                                      isForEigenProblem=True)
+        if not adjointFlag:
             return EigVal, EigVec, error
+
+        else:
+            EigValAdj, EigVecAdj, error = self.__solveGeneralEigenproblem(\
+                                     self.__matrix_dict_petsc['A'], \
+                                     self.__matrix_dict_petsc['B'], \
+                                     sigma=eigenValueGuess, \
+                                     nev=nSol, \
+                                     tol=self.__tol,\
+                                     max_it=200,\
+                                     adjoint=True, \
+                                     isForEigenProblem=True)
+            return EigVal, EigValAdj, EigVec, EigVecAdj,error 
 
 
 
@@ -751,7 +754,7 @@ class linearSystem:
                 max_it=200, 
                 adjoint=False, 
                 isForEigenProblem=True, 
-                isIncompressible=True):
+                ):
 
         #TODO Sophie: create better system to identify matrix kinds
 
@@ -781,24 +784,24 @@ class linearSystem:
         A.assemble()
         B.assemble()
 
+        if adjoint:
+            A.hermitianTranspose()
+            B.hermitianTranspose()
+            guess = np.conj(sigma)
+        else:
+            guess = sigma
 
         # create eigenproblem solver 
         eps = SLEPc.EPS().create()
         eps.setOperators(A,B)
-        if isForEigenProblem and isIncompressible:
-            # eps.setProblemType(SLEPc.EPS.ProblemType.PGNHEP) # general non-Hermitian eigenproblem with positive semi-definite M
-            eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP)     # general non-Hermitian eigenproblem with semi-definite B
-        
-        #calculate adjoint vectors
-        if adjoint:
-            eps.setTwoSided(True)
+        eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP)     # general non-Hermitian eigenproblem with semi-definite B
         
         eps.setTolerances(tol=tol,max_it=max_it)
         
-        eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) # is standard, does not need to be set
+        #eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) # is standard, does not need to be set
         eps.getST().setType(SLEPc.ST.Type.SINVERT)
         eps.setWhichEigenpairs(SLEPc.EPS.Which.TARGET_MAGNITUDE)
-        eps.setTarget(sigma)
+        eps.setTarget(guess)
         eps.setDimensions(nev=nev)
         
         eps.getST().getKSP().getPC().setType('lu')
@@ -819,10 +822,6 @@ class linearSystem:
             try:
                 eigVals[i]   = eps.getEigenpair(i,vec_real,vec_imag)
                 eigVecs[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
-                if adjoint:
-                    # get adjoint solution
-                    eps.getLeftEigenvector(i,vec_real,vec_imag)
-                    eigVecs_adjoint[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
                 error[i] = eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)
                 #printDebug(True,f"SLEPc error relative: {error[i]}")
             
@@ -833,10 +832,7 @@ class linearSystem:
         eps.getST().getKSP().destroy()
         eps.getST().destroy()
         eps.destroy()
-        if adjoint:
-                return eigVals, eigVecs, eigVecs_adjoint, error
-        else:
-                return eigVals, eigVecs, error
+        return eigVals, eigVecs, error
     
 
 
