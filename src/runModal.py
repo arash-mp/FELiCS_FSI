@@ -23,10 +23,7 @@ def runModal(param, useGUI):
         printDebug,
         )
 
-    #mesh=param.BCs.getMesh()
-    from FELiCS.SpaceDisc.Mesh import Mesh
-
-    mesh = Mesh(param)
+    mesh=param.BCs.getMesh()
 
     printDebug(True,'--------------------------------')
     printDebug(True,'-- Defining FEMSpaces...')
