@@ -61,6 +61,9 @@ class FEMSpacesClass():
     \t -mesh object"""
     def __init__(self,param,mesh, degree=2):
 
+        printDebug(True,'--------------------------------')
+        printDebug(True,'-- Defining FEMSpaces...')
+
         if param.BCs.dim==2:
             element_shape=triangle
         elif param.BCs.dim==3:

@@ -32,6 +32,7 @@ class meanFlowClass(
             FEMSpaces,
             mesh,
     ):
+
         self._isMean = True
         self._isFluctuation = False
         self._param = param
@@ -83,6 +84,9 @@ class meanFlowClass(
             #    self.__reaction = NOx(2)
 
     def importDataFromFile(self):
+        printDebug(True,'--------------------------------')
+        printDebug(True,'-- Reading InputFlow...')
+
         self._fieldDict = {}
         self.__notInFileList = []
         self.__RawFlowDict = {}

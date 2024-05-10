@@ -89,6 +89,9 @@ class WeakFormulationCollectionClass():
             CoordinateSystem,
             )
 
+        printDebug(True,'--------------------------------')
+        printDebug(True,'-- Discretizing the Equations...')
+
         # add the parameters of the constructor as attributs of the class to use them in DiscretizeFlow-method:
         self.__param = param
         self.__FEMSpaces = FEMSpaces
@@ -412,6 +415,7 @@ class WeakFormulationCollectionClass():
 
         
     def DiscretizeFlow(self):
+
         #self.__DiscretizeAndSolve = DiscretizeAndSolve
         #self.__WeakForm = WeakForm
         from copy import deepcopy

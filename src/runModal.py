@@ -17,39 +17,28 @@ def runModal(param, useGUI):
     from FELiCS.Fields.fluctuationClass import fluctuationSolutions
     import copy
     import FELiCS.Equation.WeakFormulationCollection as WeakFormulationCollection
-    from FELiCS.Misc.functions import (
-        printError,
-        printWarning,
-        printDebug,
-        )
 
+
+    ## Initialization
+    # mesh
     mesh=param.BCs.getMesh()
-
-    printDebug(True,'--------------------------------')
-    printDebug(True,'-- Defining FEMSpaces...')
-
+    # FEMSpaces
     FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
                 param,
                 mesh,
                 )
-
-    printDebug(True,'--------------------------------')
-    printDebug(True,'-- Reading InputFlow...')
-
-
+    # read in mean flow
     MeanFlow = meanFlowClass(param, FEMSpaces, mesh)
     MeanFlow.importDataFromFile()
-
     if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
         MeanFlow.exportBaseFlowAsHDF5()
-
-    # export the mapped Meanflow:
+    # export mean flow in "h5" file
     meanflowFilename = 'meanflow.h5'
     MeanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
-    printDebug(True,'--------------------------------')
-    printDebug(True,'-- Discretizing the Equations...')
 
+
+    ## create equations, discretize and solve
     WeakFormulation = WeakFormulationCollection.WeakFormulationCollectionClass(
                     param,
                     FEMSpaces,
@@ -64,6 +53,8 @@ def runModal(param, useGUI):
                      solveGEVP(param.Case.CalculateAdjoint)
 
 
+
+    ## export
     if useGUI:
         ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, WeakFormulation,mesh)
     else:
