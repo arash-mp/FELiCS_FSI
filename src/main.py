@@ -30,7 +30,7 @@ from runResolvent   import  runResolvent
 from runInputOutput import  runInputOutput
 
 from FELiCS.GUI.GUI import FELiCS_GUI
-from FELiCS.parameters import parameters
+from FELiCS.Parameters.parameters import parameters
 
 # check if '-file' argument was added to run from file only. else start the GUI
 
@@ -44,7 +44,7 @@ elif sys.argv[1] == '-file': useGUI=False
 else: useGUI=True
 
 if __name__ == '__main__':
-    import FELiCS.PrintLogo
+    import FELiCS.Misc.PrintLogo
     if useGUI: # Run program in GUI mode
         window=FELiCS_GUI()
     else: # Run program in terminal mode from settings file

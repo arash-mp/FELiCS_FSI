@@ -9,23 +9,28 @@ def runModal(param, useGUI):
         useGUI: Boolean, True if program is run using GUI, False if run from
         terminal directly
     '''
-    import FELiCS.Import as Import
-    import FELiCS.DefineFEMSpaces as DefineFEMSpaces
-    from FELiCS.ExportSolution import ExportGUI,ExportFromFile
-    from FELiCS.meanFlowClass import meanFlowClass
+    import FELiCS.IO.Import as Import
+    import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
+    from FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
+    from FELiCS.Fields.meanFlowClass import meanFlowClass
     import numpy as np
-    from FELiCS.fluctuationClass import fluctuationSolutions
+    from FELiCS.Fields.fluctuationClass import fluctuationSolutions
     import copy
-    import FELiCS.WeakFormulationCollection as WeakFormulationCollection
-    from FELiCS.functions import (
+    import FELiCS.Equation.WeakFormulationCollection as WeakFormulationCollection
+    from FELiCS.Misc.functions import (
         printError,
         printWarning,
         printDebug,
         )
 
-    mesh=param.BCs.getMesh()
+    #mesh=param.BCs.getMesh()
+    from FELiCS.SpaceDisc.Mesh import Mesh
+
+    mesh = Mesh(param)
+
     printDebug(True,'--------------------------------')
     printDebug(True,'-- Defining FEMSpaces...')
+
     FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
                 param,
                 mesh,
@@ -33,8 +38,11 @@ def runModal(param, useGUI):
 
     printDebug(True,'--------------------------------')
     printDebug(True,'-- Reading InputFlow...')
+
+
     MeanFlow = meanFlowClass(param, FEMSpaces, mesh)
     MeanFlow.importDataFromFile()
+
     if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
         MeanFlow.exportBaseFlowAsHDF5()
 
@@ -44,12 +52,14 @@ def runModal(param, useGUI):
 
     printDebug(True,'--------------------------------')
     printDebug(True,'-- Discretizing the Equations...')
+
     WeakFormulation = WeakFormulationCollection.WeakFormulationCollectionClass(
                     param,
                     FEMSpaces,
                     MeanFlow,
                     mesh
                     )
+
     LinearAlgebraObj = WeakFormulation.DiscretizeFlow()
 
 

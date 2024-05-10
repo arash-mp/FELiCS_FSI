@@ -1,6 +1,6 @@
 from FELiCS.GUI.SettingsClass import Settings
-from FELiCS.MixtureClass import MixtureClass
-from FELiCS.reactionMechanism import reactionMechanismClass
+from FELiCS.Equation.MixtureClass import MixtureClass
+from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
 class CaseSettingsClass(Settings):
     def __init__(self):
         '''Initializing the Case settings '''
@@ -49,7 +49,7 @@ class CaseSettingsClass(Settings):
             #'SetOfEquations':{'datatype':dict,'default':{'Navier-Stokes':'Primitive Variables','Energy':'None','Species': 'None', 'equationOfState': 'None'}}
     def importSettings(self,settingFilePath):
         ''' Loading Case parameters from file '''
-        from FELiCS.reactionMechanism import reactionMechanismClass
+        from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
         CaseSettingsDict=self.getAllSettingsDict()
         if not settingFilePath =='':
             file = open(settingFilePath)
@@ -72,7 +72,7 @@ class CaseSettingsClass(Settings):
         """
         This function adapts the inherited function of same name from the SettingsClass
         """
-        from FELiCS.reactionMechanism import reactionMechanismClass
+        from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
         super().importFromH5File(h5FileName);
         #The Mixture is not loaded but constructed from the inputs
         self.Mixture = MixtureClass(
@@ -142,7 +142,7 @@ class CaseSettingsClass(Settings):
         return SolutionList
 
     def getMeanFlowFieldNames(self):
-        from FELiCS.functions import printDebug
+        from FELiCS.Misc.functions import printDebug
         ''' This function provides the mean fields which mus be read in.'''
 
         MeanList=[]
@@ -211,7 +211,7 @@ class CaseSettingsClass(Settings):
     def complete(self):
         ''' Checking if all necessary case attributes are present '''
         from os.path import isfile
-        from FELiCS.functions import printOK
+        from FELiCS.Misc.functions import printOK
         #Only the mesh is absolutely necessary...'
         EverythingPresent=True
         if not isfile(self.MeshFilePath):

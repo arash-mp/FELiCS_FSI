@@ -36,7 +36,7 @@ class FlowInputSettingsClass(Settings):
     def complete(self):
         ''' Checking if all necessary case attributes are present '''
         from os.path import isfile
-        from FELiCS.functions import printOK
+        from FELiCS.Misc.functions import printOK
         #Only the mesh is absolutely necessary...'
         if isfile(self.MeanFlowFilePath):
             EverythingPresent=True

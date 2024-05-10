@@ -9,15 +9,15 @@ def runInputOutput(param, useGUI):
         useGUI: Boolean, True if program is run using GUI, False if run from
         terminal directly
     '''
-    import FELiCS.Import as Import
-    import FELiCS.DefineFEMSpaces as DefineFEMSpaces
-    from FELiCS.ExportSolution import ExportGUI,ExportFromFile
-    from FELiCS.meanFlowClass import meanFlowClass
+    import FELiCS.IO.Import as Import
+    import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
+    from FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
+    from FELiCS.Fields.meanFlowClass import meanFlowClass
     import numpy as np
-    from FELiCS.fluctuationClass import fluctuationSolutions
+    from FELiCS.Fields.fluctuationClass import fluctuationSolutions
     import copy
-    import FELiCS.WeakFormulationCollection as WeakFormulationCollection
-    from FELiCS.functions import (
+    import FELiCS.Equation.WeakFormulationCollection as WeakFormulationCollection
+    from FELiCS.Misc.functions import (
         printError,
         printWarning,
         printDebug,
