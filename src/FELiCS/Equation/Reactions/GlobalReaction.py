@@ -17,6 +17,7 @@ from ufl import (
     conj,
 )
 
+
 class GlobalReaction():
     def __init__(self, reaction_mechanism):
         self.mixtureDirectory = "Mixture" #to be put in param

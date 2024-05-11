@@ -135,6 +135,7 @@ class linearSystem:
 
     def __init__(
         self,
+        equationCollection,
         matrix_dict_petsc,
         FEMSpaces,
         param,
@@ -154,6 +155,7 @@ class linearSystem:
         - nSolut: Number of Solutions
         - nCPU: Number of used Cores for solving the linear system
         """
+        self.__eqColl = equationCollection
         self.__matrix_dict_petsc = matrix_dict_petsc 
         self.__param = param
         self.__FEMSpaces = FEMSpaces
@@ -415,6 +417,8 @@ class linearSystem:
         - __results_GEVP: Dictionary containing the direct- and (optionally) the adjoint eigenvalues and eigenvectors
         """
 
+        A = self.__eqColl.getLinearOperator(self.__meanFlow)
+        B = self.__eqColl.getWeightMatrix  (self.__meanFlow)
 
         start= time.time()
 
@@ -457,15 +461,17 @@ class linearSystem:
         else:
             for i in range(len(guesses)):
                 if adjointFlag:
-                    EigValTemp, EigValAdjTemp, EigVecTemp, EigVecAdjTemp, error = self.__solveGEVP_with_SLEPc(self.__matrix_dict_petsc,
-                                                                                                           nSol,
-                                                                                                           guesses[i],
-                                                                                                           adjointFlag=True)
+                    EigValTemp, EigValAdjTemp, EigVecTemp, EigVecAdjTemp, error = self.__solveGEVP_with_SLEPc(A,
+                                                                                                              B,
+                                                                                                              nSol,
+                                                                                                              guesses[i],
+                                                                                                              adjointFlag=True)
                 else:
-                    EigValTemp, EigVecTemp, error                = self.__solveGEVP_with_SLEPc(self.__matrix_dict_petsc,
-                                                                                             nSol,
-                                                                                             guesses[i],
-                                                                                             adjointFlag=False)
+                    EigValTemp, EigVecTemp, error = self.__solveGEVP_with_SLEPc(A,
+                                                                                B,
+                                                                                nSol,
+                                                                                guesses[i],
+                                                                                adjointFlag=False)
                 index = list(range(i*nSol,(i+1)*nSol))
                 EVal[index]    = EigValTemp
                 if adjointFlag:
@@ -525,14 +531,14 @@ class linearSystem:
 
 
 
-    def __solveGEVP_with_SLEPc(
-                self,
-                                matrix_dict_petsc, 
-                                nSol, 
-                                eigenValueGuess, 
-                                adjointFlag=False, 
-                                Numerics=None,
-                ):
+    def __solveGEVP_with_SLEPc(self,
+                               A,
+                               B,
+                               nSol, 
+                               eigenValueGuess, 
+                               adjointFlag=False, 
+                               Numerics=None,
+                               ):
         """
         Solves the GEVP with the a SLEPc eigenvalue solver
 
@@ -550,9 +556,10 @@ class linearSystem:
 
         printDebug(True, "-- Solving for guess: %4a" % eigenValueGuess)
 
+
         EigVal, EigVec, error = self.__solveGeneralEigenproblem(\
-                                     self.__matrix_dict_petsc['A'], \
-                                     self.__matrix_dict_petsc['B'], \
+                                     A, \
+                                     B, \
                                      sigma=eigenValueGuess, \
                                      nev=nSol, \
                                      tol=self.__tol,\
@@ -564,8 +571,8 @@ class linearSystem:
 
         else:
             EigValAdj, EigVecAdj, error = self.__solveGeneralEigenproblem(\
-                                     self.__matrix_dict_petsc['A'], \
-                                     self.__matrix_dict_petsc['B'], \
+                                     A, \
+                                     B, \
                                      sigma=eigenValueGuess, \
                                      nev=nSol, \
                                      tol=self.__tol,\

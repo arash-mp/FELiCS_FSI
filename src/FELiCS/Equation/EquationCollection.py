@@ -69,6 +69,7 @@ from   FELiCS.Misc.tensorUtils import (
     iDot,
     iConj,
 )
+from .WeakForm import WeakForm
 
 class EquationCollectionClass():
     '''This class build the variational formulations for all relevant matrices
@@ -83,7 +84,6 @@ class EquationCollectionClass():
         #from fenics import Function
         from itertools import compress
         from FELiCS.Fields.fluctuationClass import fluctuationClass
-        from FELiCS.Equation.WeakForm import WeakForm
         from FELiCS.Misc.tensorUtils import (
             CoordinateSystem,
             )
@@ -134,7 +134,8 @@ class EquationCollectionClass():
 
         # initialize Dirichlet boundary conditions
         self.BCs = self.__getListOfDirichletBCs()
-      
+
+
 
         ## TEST AND TRIAL FUNCTIONS
         # Define test and trial functions
@@ -146,6 +147,7 @@ class EquationCollectionClass():
                                    )
         #self.hat=TrialFunctions(FEMSpaces.VMixed)
         self.hat=fluctuationC.fluc
+        self.fluctuationC = fluctuationC
 
         fluc={}
         for sol in self.__param.SolutionList:
@@ -160,6 +162,7 @@ class EquationCollectionClass():
                 self._coordinateSystem,
                 containsTestFunction=True,
                 ))
+        self.X = X
             
 
         # Get radial coordinate
@@ -171,7 +174,7 @@ class EquationCollectionClass():
             self.R=Constant(self.__FEMSpaces.P2.mesh, PETSc.ScalarType(1.0))
 
 
-        ## Initialize variatial formulations
+        ## Initialize variational formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
         printDebug(True, '-- Primary fluctuations: %s.' % param.SolutionList)
@@ -259,61 +262,61 @@ class EquationCollectionClass():
             else:
                 raise Exception('Species transport equation type ' + self.__param.Case.SetOfEquations['Species']['Equation'] + ' unknown' )
 
-        # Add reactions
-        # Reaction eqs not derived in tensor framework yet
-        if self.__param.Case.Reaction:
-            if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
-                from FELiCS.Equation.Reactions.GlobalReaction import GlobalReaction
-                ReactionModelName="WestbrookDryer_Max" #to be put in param
-                Reaction=GlobalReaction(self.__param.Case.Mixture.ReactionMechanism)
-                reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
-                reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.SolutionList)
-                self.A_vf.add(1j * reactionForm)
-            elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
-                from FELiCS.Equation.Reactions.TwoStepReaction import TwoStepReaction
-                ReactionModelName="BFER" #to be put in param
-                Reaction=TwoStepReaction(ReactionModelName)
-                Reaction.computeMeanField(MF,self.__FEMSpaces.P2)
-                Reaction.testM()
-                reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
-                self.A_vf.add(1j * reactionForm)
-            elif self.__param.Case.Mixture.ReactionMechanism['type']=='2S-SM2':
-                from FELiCS.Equation.Reactions.c2sm2 import C2SM2
-                ReactionModelName="2S-SM2" #to be put in param
-                YCH4_lim=0.043*1e-4
-                #c2=C2SM2(YCH4_lim,2)
-                c2=self.mean.reaction
-                self.TR=fluctuationC.T
-                self.rhoR=fluctuationC.rho
-                self.YCH4R=fluctuationC.Y('CH4')
-                self.YO2R=fluctuationC.Y('O2')
-                self.YCOR=fluctuationC.Y('CO')
-                self.YCO2R=fluctuationC.Y('CO2')
-                self.v_eneR=X[self.__param.Case.getTransportedQuantityList().index('rho')]
-                self.v_YCH4R=X[self.__param.Case.getTransportedQuantityList().index('CH4')]
-                self.v_YO2R=X[self.__param.Case.getTransportedQuantityList().index('O2')]
-                self.v_YH2OR=X[self.__param.Case.getTransportedQuantityList().index('H2O')]
-                self.v_YCOR=X[self.__param.Case.getTransportedQuantityList().index('CO')]
-                self.v_YCO2R=X[self.__param.Case.getTransportedQuantityList().index('CO2')]
-                self.dQMean=self.mean.dQ
-                self.order=2
-                self.dx=dx
+        ## Add reactions
+        ## Reaction eqs not derived in tensor framework yet
+        #if self.__param.Case.Reaction:
+        #    if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
+        #        from FELiCS.Equation.Reactions.GlobalReaction import GlobalReaction
+        #        ReactionModelName="WestbrookDryer_Max" #to be put in param
+        #        Reaction=GlobalReaction(self.__param.Case.Mixture.ReactionMechanism)
+        #        reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
+        #        reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.SolutionList)
+        #        self.A_vf.add(1j * reactionForm)
+        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
+        #        from FELiCS.Equation.Reactions.TwoStepReaction import TwoStepReaction
+        #        ReactionModelName="BFER" #to be put in param
+        #        Reaction=TwoStepReaction(ReactionModelName)
+        #        Reaction.computeMeanField(MF,self.__FEMSpaces.P2)
+        #        Reaction.testM()
+        #        reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
+        #        self.A_vf.add(1j * reactionForm)
+        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='2S-SM2':
+        #        from FELiCS.Equation.Reactions.c2sm2 import C2SM2
+        #        ReactionModelName="2S-SM2" #to be put in param
+        #        YCH4_lim=0.043*1e-4
+        #        #c2=C2SM2(YCH4_lim,2)
+        #        c2=self.mean.reaction
+        #        self.TR=fluctuationC.T
+        #        self.rhoR=fluctuationC.rho
+        #        self.YCH4R=fluctuationC.Y('CH4')
+        #        self.YO2R=fluctuationC.Y('O2')
+        #        self.YCOR=fluctuationC.Y('CO')
+        #        self.YCO2R=fluctuationC.Y('CO2')
+        #        self.v_eneR=X[self.__param.Case.getTransportedQuantityList().index('rho')]
+        #        self.v_YCH4R=X[self.__param.Case.getTransportedQuantityList().index('CH4')]
+        #        self.v_YO2R=X[self.__param.Case.getTransportedQuantityList().index('O2')]
+        #        self.v_YH2OR=X[self.__param.Case.getTransportedQuantityList().index('H2O')]
+        #        self.v_YCOR=X[self.__param.Case.getTransportedQuantityList().index('CO')]
+        #        self.v_YCO2R=X[self.__param.Case.getTransportedQuantityList().index('CO2')]
+        #        self.dQMean=self.mean.dQ
+        #        self.order=2
+        #        self.dx=dx
 
-                #c2.computeSensitivities(MeanFlow.T,
-                #                        MeanFlow.rho,
-                #                        MeanFlow.Y('CH4'),
-                #                        MeanFlow.Y('CO'),
-                #                        MeanFlow.Y('O2'),
-                #                        MeanFlow.Y('CO2'))
+        #        #c2.computeSensitivities(MeanFlow.T,
+        #        #                        MeanFlow.rho,
+        #        #                        MeanFlow.Y('CH4'),
+        #        #                        MeanFlow.Y('CO'),
+        #        #                        MeanFlow.Y('O2'),
+        #        #                        MeanFlow.Y('CO2'))
 
-                self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
-            elif self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
-                reaction=self.mean.reaction
-                self.v_NO  = X[self.__param.Case.getTransportedQuantityList().index('NO')]
-                self.v_NO2 = X[self.__param.Case.getTransportedQuantityList().index('NO2')]
-                self.T = self.mean.T
-                self.phi = self.mean.phi
-                self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
+        #        self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
+        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
+        #        reaction=self.mean.reaction
+        #        self.v_NO  = X[self.__param.Case.getTransportedQuantityList().index('NO')]
+        #        self.v_NO2 = X[self.__param.Case.getTransportedQuantityList().index('NO2')]
+        #        self.T = self.mean.T
+        #        self.phi = self.mean.phi
+        #        self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
             self.getResolventNorms(X,self.__param,mean,fluctuationC)
@@ -692,7 +695,8 @@ class EquationCollectionClass():
 
     def __buildSolutionObj(self):
         return LinearSystem.linearSystem(
-                                        self.__matrix_dict_petsc, 
+                                        self,
+                                        self.__matrix_dict_petsc,
                                         self.__FEMSpaces,
                                         self.__param,
                                         self.__mean

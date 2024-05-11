@@ -1,6 +1,7 @@
 import pdb
 import numpy as np
 import copy
+import time
 
 def runModal(param, useGUI):
     '''This function runs the calculations preset in param
@@ -15,10 +16,14 @@ def runModal(param, useGUI):
     import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
     from   FELiCS.Fields.meanFlowClass import meanFlowClass
     from   FELiCS.Fields.fluctuationClass import fluctuationSolutions
-    import FELiCS.Equation.EquationCollection as EquationCollection
+    from   FELiCS.Equation.EquationCollection import EquationCollectionClass
+    from   FELiCS.Misc.functions import printDebug
 
+    from   FELiCS.Solvers.LinearSolver import LinearSolver 
 
-    ## Initialization
+    #-----------------------------------------------------------------------
+    ## INITIALIZATION
+    #-----------------------------------------------------------------------
     # mesh
     mesh=param.BCs.getMesh()
     # FEMSpaces
@@ -34,27 +39,66 @@ def runModal(param, useGUI):
     # export mean flow in "h5" file
     meanflowFilename = 'meanflow.h5'
     MeanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+   
+    # equation
+    equation = EquationCollectionClass(
+                                      param,
+                                      FEMSpaces,
+                                      MeanFlow,
+                                      mesh
+                                      )
 
 
 
-    ## create equations, discretize and solve
-    equationColl = EquationCollection.EquationCollectionClass(
-                    param,
-                    FEMSpaces,
-                    MeanFlow,
-                    mesh
-                    )
+    #-----------------------------------------------------------------------
+    ## MAIN PART
+    #-----------------------------------------------------------------------
+    # get matrices for eigenproblem
+    A = equation.getLinearOperator(MeanFlow)
+    B = equation.getWeightMatrix  (MeanFlow)
 
-    LinearAlgebraObj = equationColl.DiscretizeFlow()
+    # get parameters for eigenproblem
+    guesses  = param.Numerics.EigenValueGuess
+    nSol     = param.Numerics.nSolut
+    adjoint  = param.Case.CalculateAdjoint
+
+    # track time
+    start= time.time()
+
+    # solve eigenproblem for each guess
+    #solution = ...
+    for guess in guesses:
+        solution_eigenProblem = LinearSolver.solveGeneralEigenproblem(A,
+                                                                      B,
+                                                                      guess,
+                                                                      nSol,
+                                                                      adjoint=False)
+        #solution.append(solution_eigenProblem)....
+        if adjoint==True:
+            solution_eigenProblem_adjoint = LinearSolver.solveGeneralEigenproblem(A,
+                                                                      B,
+                                                                      guess,
+                                                                      nSol,
+                                                                      adjoint=True)
+
+            #solution.append(solution_eigenProblem_adjoint)....
+
+    # end tracking time
+    end = time.time() - start
+    printDebug(True, '-- Solving the GEVP took %4g s' % end)
+             
 
 
+    LinearAlgebraObj = equation.DiscretizeFlow()
     fluctSolutList = LinearAlgebraObj.\
                      solveGEVP(param.Case.CalculateAdjoint)
 
 
-
-    ## export
+    #-----------------------------------------------------------------------
+    ## EXPORT SOLUTION
+    #-----------------------------------------------------------------------
     if useGUI:
         ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, equationColl,mesh)
     else:
         ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow)
+
