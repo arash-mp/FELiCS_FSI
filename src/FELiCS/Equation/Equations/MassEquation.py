@@ -12,44 +12,51 @@ from .EquationBluePrint import EquationBluePrint
 
 class MassEquation(EquationBluePrint):
 
-    def addWeightMatrixExpression(self,eqColl,fluc,X,param):
-        J_hat = eqColl._coordinateSystem.J_hat
+    def __init__(self,eqColl,fluc,X,param):
+ 
+        # Disclaimers
+        if param.NumericalScheme in ['Discontinuous Galerkin']:
+            printError('Discontinuous Galerkin not implemented in tensorial framework.')        
+    
+        # variables    
+        self.J_hat  = eqColl._coordinateSystem.J_hat
+        self.param  = param
+        self.fluc   = fluc
+        self.X      = X
+        self.n      = eqColl.n
+        self.all_ds = eqColl.all_ds
+        self.ds     = eqColl.ds
+
+    def addWeightMatrixExpression(self, weakForm, mean):
  
         # ------------------------ Time derivative term used
         # Only if density fluctuations are considered
-        if 'rho' in param.Case.getTransportedQuantityList():
-            eqColl.B_vf.add( (fluc.rho * iConj(X)).ufl_tens * J_hat * dx)
+        if 'rho' in self.param.Case.getTransportedQuantityList():
+            weakForm.add( (self.fluc.rho * iConj(self.X)).ufl_tens * self.J_hat * dx)
     
 
-    def addLinearExpression(self,eqColl,fluc,X,mean,param):
+    def addLinearExpression(self, weakForm, mean):
 
         '''
         This function builds the weak form of the linearized
         mass conservation equation, in tensorial framework.
         '''
-    
-        # Disclaimers
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')        
-    
-        J_hat = eqColl._coordinateSystem.J_hat
-
-           # ------------------------ Advection terms
+              # ------------------------ Advection terms
         # The advection term is integrated by parts
         # Volume term from IbP
-        eqColl.A_vf.add((  1j * iDot(iGrad(iConj(X)),fluc.rhou)).ufl_tens * J_hat * dx)
+        weakForm.add((  1j * iDot(iGrad(iConj(self.X)),self.fluc.rhou)).ufl_tens * self.J_hat * dx)
         # Boundary term from IbP
-        eqColl.A_vf.add(( -1j * iDot(eqColl.n,fluc.rhou * iConj(X)) ).ufl_tens * J_hat * eqColl.all_ds)
+        weakForm.add(( -1j * iDot(self.n,self.fluc.rhou * iConj(self.X)) ).ufl_tens * self.J_hat * self.all_ds)
     
         # ------------------------ BC term for Input/Output analysis
-        if param.Case.AnalysisMode in ['Input-Output']:
+        if self.param.Case.AnalysisMode in ['Input-Output']:
             # Iterate through all boundaries, at which forcing is applied
-            for boundary_index in param.IOResolvent.ForcingBoundaryIndices:
+            for boundary_index in self.param.IOResolvent.ForcingBoundaryIndices:
                 # First subtract the boundary term from advection
                 # Correction wrt to index notation: We need to remove the rho*u term, not just the u! 
-                eqColl.A_vf.add(( 1j * iDot(eqColl.n,fluc.rhou * iConj(X)) ).ufl_tens * J_hat * eqColl.ds(boundary_index))
+                weakForm.add(( 1j * iDot(self.n,self.fluc.rhou * iConj(self.X)) ).ufl_tens * self.J_hat * self.ds(boundary_index))
                 # Then add the forcing at the boundary
-                eqColl.A_vf.add(( -1 * iDot(eqColl.n,mean.u_forcing* mean.rho) * iConj(X) ).ufl_tens * J_hat * eqColl.ds(boundary_index))
+                weakForm.add(( -1 * iDot(self.n,mean.u_forcing* mean.rho) * iConj(self.X) ).ufl_tens * self.J_hat * self.ds(boundary_index))
 
 
     def addNonlinearExpression(self):

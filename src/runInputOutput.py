@@ -10,12 +10,11 @@ def runInputOutput(param, useGUI):
         terminal directly
     '''
     import FELiCS.IO.Import as Import
+    from   FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
+
     import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
-    from FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
-    from FELiCS.Fields.meanFlowClass import meanFlowClass
-    import numpy as np
-    from FELiCS.Fields.fluctuationClass import fluctuationSolutions
-    import copy
+    from   FELiCS.Fields.meanFlowClass import meanFlowClass
+    from   FELiCS.Fields.fluctuationClass import fluctuationSolutions
     import FELiCS.Equation.EquationCollection as EquationCollection
 
     ## Initialization

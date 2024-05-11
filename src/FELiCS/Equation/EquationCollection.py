@@ -163,22 +163,37 @@ class EquationCollectionClass():
         # Get boundary normals
         self.n_BC=FacetNormal(self.__FEMSpaces.P2.mesh)
         self.n = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), self._coordinateSystem)
+
+
         ## Initialize variatial formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
         printDebug(True, '-- Primary fluctuations: %s.' % param.SolutionList)
+ 
+        # create equation list from parameters
+        self.equationList = []
+
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
-            from FELiCS.Equation.Momentum.addMomentumEq_tensorial import addMomentumEq
+            from FELiCS.Equation.Equations.MomentumEquation import MomentumEquation
             printDebug(True, '-- Adding momentum equation for u-fluc -> X[0].')     # Hardcoded u' for mom eq.
-            addMomentumEq(self,fluctuationC,X[0],mean,param)
+
+            momentum = MomentumEquation(self,fluctuationC,X[0],param)
+            self.equationList.append(momentum)
+
+            momentum.addLinearExpression(self.A_vf,mean)
+            momentum.addWeightMatrixExpression(self.B_vf,mean)
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from FELiCS.Equation.Equations.MassEquation import MassEquation
             varEq = self.__param.Case.SetOfEquations['Mass']['Variable']
             idVar = param.SolutionList.index(varEq)
             printDebug(True, '-- Adding mass-balance equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            MassEquation().addLinearExpression(self,fluctuationC,X[idVar],mean,self.__param)
-            MassEquation().addWeightMatrixExpression(self,fluctuationC,X[idVar],self.__param)
+
+            mass = MassEquation(self,fluctuationC,X[idVar],self.__param)
+            self.equationList.append(mass)
+
+            mass.addLinearExpression(self.A_vf,mean)
+            mass.addWeightMatrixExpression(self.B_vf,mean)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from FELiCS.Equation.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
@@ -277,6 +292,72 @@ class EquationCollectionClass():
                 self.T = self.mean.T
                 self.phi = self.mean.phi
                 self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
+
+        # initialize Dirichlet boundary conditions
+        self.BCs = self.__getListOfDirichletBCs()
+
+#################################################################################
+
+    def getLinearOperator(self, meanFlow):
+
+        # create ufl object with the linear equation system 
+        A_ufl = WeakForm()
+        for equation in self.equationList:
+            equation.addLinearExpression(A_ufl, meanFlow)
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            A_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        A = assemble_matrix(form(A_ufl.lhs), bcs=self.BCs)
+        A.assemble()
+
+        return A
+
+
+    def getWeightMatrix(self, meanFlow):
+
+        # create ufl object with the weight matrix expression ("time derivative")
+        B_ufl   = WeakForm()
+        for equation in self.equationList:
+            equation.addWeightMatrixExpression(B_ufl, meanFlow)
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            A_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        B = assemble_matrix(form(B_ufl.lhs), bcs=self.BCs)
+        B.assemble()
+
+        return B
+
+
+    def getNonlinearExpression(self, meanFlow):
+        printError("The method 'getNonlinearExpression' is not yet implemented.")
+
+        #N_ufl = WeakForm()
+        #for equation in self.equationList:
+        #    equation.addNonlinearExpression(N_ufl, meanFlow)
+
+        #N = assemble_vector(form(N_ufl.rhs))
+
+        #return N
 
 ########################### Resolvent Norm  ############################
     def getResolventNorms(self,X,param,mean,fluc):
