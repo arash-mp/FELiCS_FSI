@@ -30,9 +30,9 @@ from FELiCS.Misc.tensorUtils import (
 
 from FELiCS.Misc.functions import printWarning, printError, printDebug
 
-from .EquationBluePrint import EquationBluePrint 
+from .EquationTemplate import EquationTemplate
 
-class MomentumEquation(EquationBluePrint):
+class MomentumEquation(EquationTemplate):
 
     def __init__(self,eqColl,fluc,X,param):
  
@@ -40,14 +40,8 @@ class MomentumEquation(EquationBluePrint):
         if param.NumericalScheme in ['Discontinuous Galerkin']:
             printError('Discontinuous Galerkin not implemented in tensorial framework.')
     
-        # variables    
-        self.J_hat  = eqColl._coordinateSystem.J_hat
-        self.param  = param
-        self.fluc   = fluc
-        self.X      = X
-        self.n      = eqColl.n
-        self.all_ds = eqColl.all_ds
-        self.ds     = eqColl.ds
+        # initialize variables in template class
+        super().__init__(eqColl,fluc,X,param)
 
 
     def addWeightMatrixExpression(self,weakForm,mean):

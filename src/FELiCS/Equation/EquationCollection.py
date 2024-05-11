@@ -58,12 +58,11 @@ from dolfinx.cpp.la.petsc import (
 
 # SLEPc modification
 from petsc4py.PETSc import ScalarType
-
-from FELiCS.Misc.functions import *
 import pdb
-import FELiCS.Solvers.LinearSystem as LinearSystem
 
-from FELiCS.Misc.tensorUtils import (
+import FELiCS.Solvers.LinearSystem as LinearSystem
+from   FELiCS.Misc.functions import *
+from   FELiCS.Misc.tensorUtils import (
     Tensor,
     as_vector,
     iInner,
@@ -170,6 +169,8 @@ class EquationCollectionClass():
         self.B_vf = WeakForm()
         printDebug(True, '-- Primary fluctuations: %s.' % param.SolutionList)
  
+        # initialize Dirichlet boundary conditions
+        self.BCs = self.__getListOfDirichletBCs()
         # create equation list from parameters
         self.equationList = []
 
@@ -196,19 +197,29 @@ class EquationCollectionClass():
             mass.addWeightMatrixExpression(self.B_vf,mean)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            from FELiCS.Equation.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
+            from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
             varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
             idVar = param.SolutionList.index(varEq)
             printDebug(True, '-- Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            addEnthalpyEq(self,fluctuationC,X[idVar],mean,self.__param)
+
+            enthalpy = EnthalpyEquation(self,fluctuationC,X[idVar],self.__param)
+            self.equationList.append(enthalpy)
+
+            enthalpy.addLinearExpression(self.A_vf,mean)
+            enthalpy.addWeightMatrixExpression(self.B_vf,mean)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
             # printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
-            from FELiCS.Equation.Energy_Pressure.addEnergyPEq_tensorial import addEnergyPEq
+            from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
             varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
             idVar = param.SolutionList.index(varEq)
             printDebug(True, '-- Adding pressure-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            addEnergyPEq(self,fluctuationC,X[idVar],mean,self.__param)
+
+            energyP = EnergyPressureEquation(self,fluctuationC,X[idVar],self.__param)
+            self.equationList.append(energyP)
+
+            energyP.addLinearExpression(self.A_vf,mean)
+            energyP.addWeightMatrixExpression(self.B_vf,mean)
             
         # Add sponge region only if the field was gieven in the mean flow file
         if not('spg' in mean._meanFlowClass__notInFileList):
@@ -293,8 +304,6 @@ class EquationCollectionClass():
                 self.phi = self.mean.phi
                 self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
 
-        # initialize Dirichlet boundary conditions
-        self.BCs = self.__getListOfDirichletBCs()
 
 #################################################################################
 
@@ -531,7 +540,7 @@ class EquationCollectionClass():
         BC_Diriclet.setDiagonal(bcFunction.vector)
         BC_Diriclet.assemble()
 
-        bcs= self.__getListOfDirichletBCs()
+        bcs= self.BCs
         n_dof=BC_Diriclet.size[0]
 		
         # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
