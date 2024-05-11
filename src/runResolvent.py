@@ -16,7 +16,7 @@ def runResolvent(param, useGUI):
     import numpy as np
     from FELiCS.Fields.fluctuationClass import fluctuationSolutions
     import copy
-    import FELiCS.Equation.WeakFormulationCollection as WeakFormulationCollection
+    import FELiCS.Equation.EquationCollection as EquationCollection
 
 
     ## Initialization
@@ -38,20 +38,20 @@ def runResolvent(param, useGUI):
 
 
     ## create equations, discretize and solve
-    WeakFormulation = WeakFormulationCollection.WeakFormulationCollectionClass(
+    equationColl = EquationCollection.EquationCollectionClass(
                     param,
                     FEMSpaces,
                     MeanFlow,
                     mesh
                     )
-    LinearAlgebraObj = WeakFormulation.DiscretizeFlow()
+    LinearAlgebraObj = equationColl.DiscretizeFlow()
 
 
     fluctSolutList = LinearAlgebraObj.solveResolvent(
-                                                                WeakFormulation)
+            equationColl)
 
     ## export
     if useGUI:
-        ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, WeakFormulation,mesh)
+        ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, equationColl,mesh)
     else:
         ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow)

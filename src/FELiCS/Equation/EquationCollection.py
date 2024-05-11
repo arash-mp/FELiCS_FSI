@@ -71,7 +71,7 @@ from FELiCS.Misc.tensorUtils import (
     iConj,
 )
 
-class WeakFormulationCollectionClass():
+class EquationCollectionClass():
     '''This class build the variational formulations for all relevant matrices
     Currently these are:
     -A (imag and real)
@@ -173,11 +173,12 @@ class WeakFormulationCollectionClass():
             addMomentumEq(self,fluctuationC,X[0],mean,param)
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
-            from FELiCS.Equation.Mass.addMassEq_tensorial import addMassEq
+            from FELiCS.Equation.Equations.MassEquation import MassEquation
             varEq = self.__param.Case.SetOfEquations['Mass']['Variable']
             idVar = param.SolutionList.index(varEq)
             printDebug(True, '-- Adding mass-balance equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            addMassEq(self,fluctuationC,X[idVar],mean,self.__param)
+            MassEquation().addLinearExpression(self,fluctuationC,X[idVar],mean,self.__param)
+            MassEquation().addWeightMatrixExpression(self,fluctuationC,X[idVar],self.__param)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from FELiCS.Equation.Enthalpy.addEnthalpyEq_tensorial import addEnthalpyEq
