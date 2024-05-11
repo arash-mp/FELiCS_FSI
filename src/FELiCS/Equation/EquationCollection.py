@@ -89,7 +89,7 @@ class EquationCollectionClass():
             )
 
         printDebug(True,'--------------------------------')
-        printDebug(True,'-- Discretizing the Equations...')
+        printDebug(True,'-- Initializing the equations...')
 
         # add the parameters of the constructor as attributs of the class to use them in DiscretizeFlow-method:
         self.__param = param
@@ -98,22 +98,9 @@ class EquationCollectionClass():
 
         self.__mesh = mesh
 
-        # Get class for integrating along boundaries
-        self.boundaries = mesh.facet_tags
-        self.ds = Measure("ds", subdomain_data=self.boundaries)
-
         # Get crossstreamwise wave number
         self.m = self.__param.Case.m
-
-        # Get all boundaries (So far hard coded)
-        first_BC_flag=True
-        for Boundary in self.__param.BCs.getBCsDict()[list(self.__param.BCs.getBCsDict().keys())[0]]:
-            if first_BC_flag:
-                self.all_ds = self.ds(Boundary['ID'])
-                first_BC_flag = False
-            else:
-                self.all_ds += self.ds(Boundary['ID'])
-                
+               
         # Get spatial coordinates
         self.x = SpatialCoordinate(mesh)
         self._coordinateSystem = mesh.coordinateSystem
@@ -125,7 +112,31 @@ class EquationCollectionClass():
         #else:
         #    printError('Coord. syst not yet implemented in tensor framework.')
        # self.coordinateSystem = self.coord_sys
-        
+ 
+
+        ## BOUNDARIES
+        # Get class for integrating along boundaries
+        self.boundaries = mesh.facet_tags
+        self.ds = Measure("ds", subdomain_data=self.boundaries)
+
+        # Get all boundaries (So far hard coded)
+        first_BC_flag=True
+        for Boundary in self.__param.BCs.getBCsDict()[list(self.__param.BCs.getBCsDict().keys())[0]]:
+            if first_BC_flag:
+                self.all_ds = self.ds(Boundary['ID'])
+                first_BC_flag = False
+            else:
+                self.all_ds += self.ds(Boundary['ID'])
+ 
+        # Get boundary normals
+        self.n_BC=FacetNormal(self.__FEMSpaces.P2.mesh)
+        self.n = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), self._coordinateSystem)
+
+        # initialize Dirichlet boundary conditions
+        self.BCs = self.__getListOfDirichletBCs()
+      
+
+        ## TEST AND TRIAL FUNCTIONS
         # Define test and trial functions
         fluctuationC = fluctuationClass(
                                    param,
@@ -159,19 +170,13 @@ class EquationCollectionClass():
             from petsc4py import PETSc
             self.R=Constant(self.__FEMSpaces.P2.mesh, PETSc.ScalarType(1.0))
 
-        # Get boundary normals
-        self.n_BC=FacetNormal(self.__FEMSpaces.P2.mesh)
-        self.n = Tensor(as_vector((self.n_BC[0], self.n_BC[1], 0.0)), self._coordinateSystem)
-
 
         ## Initialize variatial formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
         printDebug(True, '-- Primary fluctuations: %s.' % param.SolutionList)
  
-        # initialize Dirichlet boundary conditions
-        self.BCs = self.__getListOfDirichletBCs()
-        # create equation list from parameters
+        ## create equation list from parameters
         self.equationList = []
 
         if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
@@ -221,15 +226,16 @@ class EquationCollectionClass():
             energyP.addLinearExpression(self.A_vf,mean)
             energyP.addWeightMatrixExpression(self.B_vf,mean)
             
-        # Add sponge region only if the field was gieven in the mean flow file
+        # Add sponge region only if the field was given in the mean flow file
         if not('spg' in mean._meanFlowClass__notInFileList):
-            from FELiCS.Equation.addSpongeEq_tensorial import addSpongeEq
+            from FELiCS.Equation.Equations.SpongeTerm import SpongeTerm
             printDebug(True, '-- Adding sponge damping.')
-            addSpongeEq(self,fluctuationC,X,mean,self.__param)
 
-        if self.__param.Case.AnalysisMode in ['Resolvent']:
-            self.getResolventNorms(X,self.__param,mean,fluctuationC)
-            self.getResolventFEMWeights(X,self.__param,mean,fluctuationC)
+            sponge = SpongeTerm(self,fluctuationC,X,self.__param)
+            self.equationList.append(sponge)
+
+            sponge.addLinearExpression(self.A_vf,mean)
+            sponge.addWeightMatrixExpression(self.B_vf,mean)
 
         # Add species transport equation for all transported species
         transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
@@ -303,6 +309,10 @@ class EquationCollectionClass():
                 self.T = self.mean.T
                 self.phi = self.mean.phi
                 self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
+
+        if self.__param.Case.AnalysisMode in ['Resolvent']:
+            self.getResolventNorms(X,self.__param,mean,fluctuationC)
+            self.getResolventFEMWeights(X,self.__param,mean,fluctuationC)
 
 
 #################################################################################
