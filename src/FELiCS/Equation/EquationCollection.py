@@ -242,15 +242,20 @@ class EquationCollectionClass():
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
-                from FELiCS.Equation.Species.addSpeciesEq_tensorial import addSpeciesEq
+                from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
                 print('-- Adding equation for species '+specie + ' in non-conservative form')
-                addSpeciesEq(self,fluctuationC,X[i_eqn],mean,specie,self.__param)
+
+                species = SpeciesEquation(self,fluctuationC,X[i_eqn],specie,self.__param)
+                self.equationList.append(species)
+
+                species.addLinearExpression(self.A_vf,mean)
+                species.addWeightMatrixExpression(self.B_vf,mean)
                 
-            elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
-                # This eq has not been derived in tensor framework yet.
-                from FELiCS.Equation.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
-                print('-- Adding equation for species '+specie +' in conservative form')
-                addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self.__param)
+            #elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
+            #    # This eq has not been derived in tensor framework yet.
+            #    from FELiCS.Equation.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+            #    print('-- Adding equation for species '+specie +' in conservative form')
+            #    addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self.__param)
             else:
                 raise Exception('Species transport equation type ' + self.__param.Case.SetOfEquations['Species']['Equation'] + ' unknown' )
 
