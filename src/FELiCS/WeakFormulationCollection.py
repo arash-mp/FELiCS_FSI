@@ -649,7 +649,9 @@ class WeakFormulationCollectionClass():
         col_ind = np.arange(n)
 
         P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
         for i in range(n):
+            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
             P_petsc.setValue(row_ind[i],col_ind[i],1.)
         P_petsc.assemble()
 
@@ -708,6 +710,7 @@ class WeakFormulationCollectionClass():
         col_ind = np.arange(n)
 
         Cr_petsc = PETSc.Mat().createAIJ([m,m])
+        Cr_petsc.setUp()
         for row in row_ind:
             Cr_petsc.setValue(row,row,1.)
         Cr_petsc.assemble()
