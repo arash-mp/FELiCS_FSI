@@ -44,7 +44,7 @@ class LinearSolver:
                 B, 
                 sigma, 
                 nev, 
-                tol=1.e-16, 
+                tol=1.e-12, 
                 max_it=200, 
                 adjoint=False, 
                 isForEigenProblem=True, 

@@ -32,30 +32,27 @@ def runModal(param, useGUI):
                 mesh,
                 )
     # read in mean flow
-    MeanFlow = meanFlowClass(param, FEMSpaces, mesh)
-    MeanFlow.importDataFromFile()
+    meanFlow = meanFlowClass(param, FEMSpaces, mesh)
+    meanFlow.importDataFromFile()
     if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-        MeanFlow.exportBaseFlowAsHDF5()
+        meanFlow.exportBaseFlowAsHDF5()
     # export mean flow in "h5" file
     meanflowFilename = 'meanflow.h5'
-    MeanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
-   
+    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
     # equation
     equation = EquationCollectionClass(
                                       param,
                                       FEMSpaces,
-                                      MeanFlow,
+                                      meanFlow,
                                       mesh
                                       )
-
-
 
     #-----------------------------------------------------------------------
     ## MAIN PART
     #-----------------------------------------------------------------------
     # get matrices for eigenproblem
-    A = equation.getLinearOperator(MeanFlow)
-    B = equation.getWeightMatrix  (MeanFlow)
+    A = equation.getLinearOperator(meanFlow)
+    B = equation.getWeightMatrix  (meanFlow)
 
     # get parameters for eigenproblem
     guesses  = param.Numerics.EigenValueGuess
@@ -85,9 +82,8 @@ def runModal(param, useGUI):
 
     # end tracking time
     end = time.time() - start
-    printDebug(True, '-- Solving the GEVP took %4g s' % end)
+    printDebug(True, '-- Solving the general eigenproblem took %4g s' % end)
              
-
 
     LinearAlgebraObj = equation.DiscretizeFlow()
     fluctSolutList = LinearAlgebraObj.\
@@ -98,7 +94,7 @@ def runModal(param, useGUI):
     ## EXPORT SOLUTION
     #-----------------------------------------------------------------------
     if useGUI:
-        ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, equationColl,mesh)
+        ExportGUI(param, fluctSolutList, meanFlow,FEMSpaces, equation,mesh)
     else:
-        ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow)
+        ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
 
