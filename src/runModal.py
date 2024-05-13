@@ -20,7 +20,7 @@ def runModal(param, useGUI):
     from   FELiCS.Misc.functions import printDebug
 
     from   FELiCS.Solvers.LinearSolver import LinearSolver 
-
+    from   FELiCS.Fields.ModeCollection import ModeCollection
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
@@ -63,36 +63,37 @@ def runModal(param, useGUI):
     start= time.time()
 
     # solve eigenproblem for each guess
-    #solution = ...
+    solution = ModeCollection()
     for guess in guesses:
-        solution_eigenProblem = LinearSolver.solveGeneralEigenproblem(A,
+        tmp                   = LinearSolver.solveGeneralEigenproblem(A,
                                                                       B,
                                                                       guess,
                                                                       nSol,
                                                                       adjoint=False)
-        #solution.append(solution_eigenProblem)....
+        solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=False)
         if adjoint==True:
-            solution_eigenProblem_adjoint = LinearSolver.solveGeneralEigenproblem(A,
+            tmp               = LinearSolver.solveGeneralEigenproblem(A,
                                                                       B,
                                                                       guess,
                                                                       nSol,
                                                                       adjoint=True)
 
-            #solution.append(solution_eigenProblem_adjoint)....
+            solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
 
     # end tracking time
     end = time.time() - start
     printDebug(True, '-- Solving the general eigenproblem took %4g s' % end)
              
 
-    LinearAlgebraObj = equation.DiscretizeFlow()
-    fluctSolutList = LinearAlgebraObj.\
-                     solveGEVP(param.Case.CalculateAdjoint)
+    #LinearAlgebraObj = equation.DiscretizeFlow()
+    #fluctSolutList = LinearAlgebraObj.\
+    #                 solveGEVP(param.Case.CalculateAdjoint)
 
 
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION
     #-----------------------------------------------------------------------
+    fluctSolutList = solution.getOldSolutionObject()
     if useGUI:
         ExportGUI(param, fluctSolutList, meanFlow,FEMSpaces, equation,mesh)
     else:
