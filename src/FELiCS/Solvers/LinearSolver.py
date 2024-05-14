@@ -106,8 +106,6 @@ class LinearSolver:
         
         dim = A.getSize()[0]
         eigVals,  eigVecs  = np.empty(nev,complex), np.empty([nev,dim],complex)
-        if adjoint:
-            eigVecs_adjoint  =  np.empty([nev,dim],complex)
         vec_real, vec_imag = A.getVecs()
         error = np.empty(nev)
         for i in range(nev):

@@ -1,4 +1,4 @@
-from dolfinx import Function
+from dolfinx.fem import Function
 
 
 class Field:

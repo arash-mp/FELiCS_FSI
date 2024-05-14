@@ -5,12 +5,9 @@ from .Field import Field
 
 class Mode(Field):
 
-    def __init__(FEMSpace, mesh):
-        super().__init(FEMSpace, mesh)
-        # omega /lambda
-        # guess
-        #  
-
+    def __init__(self,FEMSpace, mesh):
+        super().__init__(FEMSpace, mesh)
+        self.isAdjoint = False
 
     def setGain(self,gain):
         self._gain = gain
@@ -30,6 +27,8 @@ class Mode(Field):
     def setGuess(self,guess):
         self._guess = guess
         
+    def setError(self,error):
+        self._error = error
 
 
     def getGain(self):
@@ -69,6 +68,13 @@ class Mode(Field):
             return self._guess
         except: 
             printError('For this mode object no guess was defined. Returning 0..')
+            return 0.
+
+    def getError(self):
+        try:
+            return self._error
+        except: 
+            printError('For this mode object no error was defined. Returning 0..')
             return 0.
 
 

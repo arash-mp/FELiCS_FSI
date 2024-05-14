@@ -47,6 +47,7 @@ def runModal(param, useGUI):
                                       mesh
                                       )
 
+
     #-----------------------------------------------------------------------
     ## MAIN PART
     #-----------------------------------------------------------------------
@@ -63,14 +64,14 @@ def runModal(param, useGUI):
     start= time.time()
 
     # solve eigenproblem for each guess
-    solution = ModeCollection()
+    solution = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
         tmp                   = LinearSolver.solveGeneralEigenproblem(A,
                                                                       B,
                                                                       guess,
                                                                       nSol,
-                                                                      adjoint=False)
-        solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=False)
+                                                                      )
+        solution.appendSolutionOfEigenProblem(tmp, guess)
         if adjoint==True:
             tmp               = LinearSolver.solveGeneralEigenproblem(A,
                                                                       B,
@@ -85,15 +86,10 @@ def runModal(param, useGUI):
     printDebug(True, '-- Solving the general eigenproblem took %4g s' % end)
              
 
-    #LinearAlgebraObj = equation.DiscretizeFlow()
-    #fluctSolutList = LinearAlgebraObj.\
-    #                 solveGEVP(param.Case.CalculateAdjoint)
-
-
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION
     #-----------------------------------------------------------------------
-    fluctSolutList = solution.getOldSolutionObject()
+    fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
     if useGUI:
         ExportGUI(param, fluctSolutList, meanFlow,FEMSpaces, equation,mesh)
     else:
