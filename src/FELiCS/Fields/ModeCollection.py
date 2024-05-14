@@ -28,6 +28,12 @@ class ModeCollection():
             mode.function.x.array[:] = eigVecs[i,:]
             self.modeList.append(mode)
 
+    def getMaximumError(self):
+        import numpy as np
+        error = []
+        for mode in self.modeList:
+            error.append(mode.getError())
+        return np.amax(error)
 
 
     def getOldSolutionObject(self, meanFlow, param, FEMSpaces):

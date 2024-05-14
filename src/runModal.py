@@ -84,6 +84,8 @@ def runModal(param, useGUI):
     # end tracking time
     end = time.time() - start
     printDebug(True, '-- Solving the general eigenproblem took %4g s' % end)
+    residuum_max = solution.getMaximumError()
+    printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
              
 
     #-----------------------------------------------------------------------

@@ -445,7 +445,7 @@ class CaseSettingsGUI():
         '''Passing the settings to the parameters object of the mainGUI
         \t Input:
         \t -mainGUI: Needed to pass the changes in the parameter file'''
-        from FELiCS.MixtureClass import MixtureClass
+        from FELiCS.Equation.MixtureClass import MixtureClass
         from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
         #from loadSpecies import loadSpecies
         mainGUI.param.Case.nDim=int(self.nDimStr.get())
