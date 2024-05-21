@@ -56,9 +56,6 @@ FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
             mesh,
             )
 
-# add two custom scalar spaces for k and epsilon 
-#FEMSpaces.addCustomScalarSpaceToMixedSpace()
-#FEMSpaces.addCustomScalarSpaceToMixedSpace()
 
 # initialize mean flow class
 meanFlow = meanFlowClass(param, FEMSpaces, mesh)
@@ -102,11 +99,11 @@ meanFlow.C_2epsilon    = 1.92
 test  = TestFunctions (FEMSpaces.VMixed)
 trial = TrialFunctions(FEMSpaces.VMixed)
 fluc_u       = trial[0]
-fluc_k       = trial[1]
-fluc_epsilon = trial[1]
+fluc_k       = trial[2]
+fluc_epsilon = trial[3]
 X_u          =  test[0]
-X_k          =  test[1]
-X_epsilon    =  test[1]
+X_k          =  test[2]
+X_epsilon    =  test[3]
 
 # 2: add custom equations
 momentum_RANS = MomentumEquation(equation, X_u,       fluc_u, fluc_k, fluc_epsilon)  

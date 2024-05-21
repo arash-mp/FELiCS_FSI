@@ -16,6 +16,7 @@ class CaseSettingsClass(Settings):
                 tempStr='self.'+key+'='+str(CaseSettingsDict[key]['default'])
             exec(tempStr)
         self.reactionMechanism = reactionMechanismClass('None') 
+        self.customSolutions=[]
 
 
     def getAllSettingsDict(self):
@@ -36,7 +37,9 @@ class CaseSettingsClass(Settings):
                 'Mass': {'Equation':'Continuity','Variable':'p'},
                 'Energy'    : {'Equation':'None','Variable':'None'},
                 'Species': {'Equation':'None','Variable':'None'},
-                'EquationOfState': {'Equation':'None'    ,'Variable':'None'}
+                'EquationOfState': {'Equation':'None'    ,'Variable':'None'},
+                'Custom1': {'Equation':'None'    ,'Variable':'None'},
+                'Custom2': {'Equation':'None'    ,'Variable':'None'}
                 }
                 },
             'Reaction':{'datatype':bool,'default':False},
@@ -124,7 +127,21 @@ class CaseSettingsClass(Settings):
             if self.SetOfEquations['Species']['Variable'] == 'Y':
                 for species in list(self.Mixture.getSpeciesList('transported')):
                     SolutionList.append(species)
+
+        # Add custom variables if they are given in the parameter file. 
+        # TODO Sophie: think of something better, also: variable number of additional equations
+        try:
+            if not self.SetOfEquations['Custom1']['Variable'] == 'None':
+                SolutionList.append(self.SetOfEquations['Custom1']['Variable'])
+        except:
+            pass
+        try:
+            if not self.SetOfEquations['Custom2']['Variable'] == 'None':
+                SolutionList.append(self.SetOfEquations['Custom2']['Variable'])
+        except:
+            pass
         return SolutionList
+
 
     def getExtendedTransportedQuantityList(self):
         ''' Like getTransportedQuantitiyList but with all velocity components '''

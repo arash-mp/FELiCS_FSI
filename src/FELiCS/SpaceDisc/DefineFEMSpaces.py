@@ -65,17 +65,17 @@ class FEMSpacesClass():
         printDebug(True,'-- Defining FEMSpaces...')
 
         if param.BCs.dim==2:
-            element_shape=triangle
+            self.element_shape=triangle
         elif param.BCs.dim==3:
-            element_shape = tetrahedron
-        elementTypeStr='CG'
+            self.element_shape = tetrahedron
+        self.elementTypeStr='CG'
         self._nVelocityComponents = len(param.Case.getVelocityComponents())
 
         # refine the mesh to get the exportMesh:
         exportMesh_dolfinx = refine(mesh.dolfinxMesh)
         exportMesh         = FELiCSMesh(param.Case.CoordinateSystem,inputMesh=exportMesh_dolfinx)
-        exportMesh.gdim = param.Case.nDim
-        meshfileName = f'{param.Case.AnalysisMode}_mesh.h5'
+        exportMesh.gdim    = param.Case.nDim
+        meshfileName       = f'{param.Case.AnalysisMode}_mesh.h5'
 
         exportMesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/{meshfileName}')
 
@@ -87,19 +87,19 @@ class FEMSpacesClass():
             velocityOrder = 2
         self.FunctionSpaceVectorVelocity = VectorFunctionSpace(
             mesh.dolfinxMesh,
-            (elementTypeStr,
+            (self.elementTypeStr,
              velocityOrder),
             dim = self._nVelocityComponents,
             )
         self.FunctionSpaceVectorVelocityExport = VectorFunctionSpace(
             exportMesh.dolfinxMesh,
-            (elementTypeStr,
+            (self.elementTypeStr,
              1),
             dim = self._nVelocityComponents
             )
 
         # Collect all of them in a list
-        MixedList=[]
+        self.MixedList=[]
 
         # Then a scalar for all the remaining quantities
         self.FunctionSpaceList=[]
@@ -110,50 +110,68 @@ class FEMSpacesClass():
               f"{name}")
             if name=='u':
                 FE = VectorElement(
-                                elementTypeStr,
-                                element_shape,
+                                self.elementTypeStr,
+                                self.element_shape,
                                 param.Numerics.PolynomialOrder['u'],
                         dim = self._nVelocityComponents,
                                 )   
                     
             else:
                 FE=FiniteElement(
-                                 elementTypeStr,
-                                 element_shape,
+                                 self.elementTypeStr,
+                                 self.element_shape,
                                  param.Numerics.PolynomialOrder[name],
                                  )
                     
-            MixedList.append(FE)        
+            self.MixedList.append(FE)        
 
-        printDebug(param.debug,'-- The mixed finite element list is: ' + str(MixedList))
+        printDebug(param.debug,'-- The mixed finite element list is: ' + str(self.MixedList))
 
         # Create a element of the mixed function space
-        MixedFE=MixedElement(MixedList)
+        MixedFE=MixedElement(self.MixedList)
 
         # Create a function space containing of mixed elements on the given mesh
         self.VMixed = FunctionSpace(mesh.dolfinxMesh,MixedFE)
 
         self.FunctionSpaceVectorVelocityP1 = VectorFunctionSpace(
             mesh.dolfinxMesh,
-            (elementTypeStr,
+            (self.elementTypeStr,
              1),
             dim=self._nVelocityComponents,
         )
         self.FunctionSpaceListExport=[]
 
 #       # Get function spaces for first order and second order elements...
-        self.P1=FunctionSpace(mesh.dolfinxMesh,FiniteElement(elementTypeStr, element_shape, 1))
-        self.P2=FunctionSpace(mesh.dolfinxMesh,FiniteElement(elementTypeStr, element_shape, 2))
+        self.P1=FunctionSpace(mesh.dolfinxMesh,FiniteElement(self.elementTypeStr, self.element_shape, 1))
+        self.P2=FunctionSpace(mesh.dolfinxMesh,FiniteElement(self.elementTypeStr, self.element_shape, 2))
 
 #       # Create a function space containing of mixed elements on the given mesh
         self.VMixedExport = FunctionSpace(exportMesh.dolfinxMesh,MixedFE)
 
         # Get a function space for the velocity components
         # Get function spaces for first order and second order elements...
-        self.P1Export = FunctionSpace(exportMesh.dolfinxMesh,FiniteElement(elementTypeStr, element_shape, 1))
-        self.P2Export = FunctionSpace(exportMesh.dolfinxMesh,FiniteElement(elementTypeStr, element_shape, 2))
+        self.P1Export = FunctionSpace(exportMesh.dolfinxMesh,FiniteElement(self.elementTypeStr, self.element_shape, 1))
+        self.P2Export = FunctionSpace(exportMesh.dolfinxMesh,FiniteElement(self.elementTypeStr, self.element_shape, 2))
 
         self.mappingObj = Mapping(self)
+
+    def addCustomScalarSpaceToMixedSpace(self,mesh,order):
+        FE=FiniteElement(
+                         self.elementTypeStr,
+                         self.element_shape,
+                         order,
+                         )
+        self.MixedList.append(FE)
+
+        # Create a element of the mixed function space
+        MixedFE=MixedElement(self.MixedList)
+        # Create a function space containing of mixed elements on the given mesh
+        self.VMixed = FunctionSpace(mesh.dolfinxMesh,MixedFE)
+#       # Create a function space containing of mixed elements on the export mesh
+        self.VMixedExport = FunctionSpace(self.exportMesh.dolfinxMesh,MixedFE)
+
+        #self.mappingObj = Mapping(self)
+
 
     def _projectField2allFEMSpaces(self, field, nfluctvar, nDim):
         """

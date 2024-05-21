@@ -189,8 +189,8 @@ class EquationCollectionClass():
             momentum = MomentumEquation(self,fluctuationC,X[0],param)
             self.equationList.append(momentum)
 
-            momentum.addLinearExpression(self.A_vf,mean)
-            momentum.addWeightMatrixExpression(self.B_vf,mean)
+            #momentum.addLinearExpression(self.A_vf,mean)
+            #momentum.addWeightMatrixExpression(self.B_vf,mean)
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from FELiCS.Equation.Equations.MassEquation import MassEquation
@@ -201,8 +201,8 @@ class EquationCollectionClass():
             mass = MassEquation(self,fluctuationC,X[idVar],self.__param)
             self.equationList.append(mass)
 
-            mass.addLinearExpression(self.A_vf,mean)
-            mass.addWeightMatrixExpression(self.B_vf,mean)
+            #mass.addLinearExpression(self.A_vf,mean)
+            #mass.addWeightMatrixExpression(self.B_vf,mean)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
@@ -213,8 +213,8 @@ class EquationCollectionClass():
             enthalpy = EnthalpyEquation(self,fluctuationC,X[idVar],self.__param)
             self.equationList.append(enthalpy)
 
-            enthalpy.addLinearExpression(self.A_vf,mean)
-            enthalpy.addWeightMatrixExpression(self.B_vf,mean)
+            #enthalpy.addLinearExpression(self.A_vf,mean)
+            #enthalpy.addWeightMatrixExpression(self.B_vf,mean)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
             # printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
@@ -226,8 +226,8 @@ class EquationCollectionClass():
             energyP = EnergyPressureEquation(self,fluctuationC,X[idVar],self.__param)
             self.equationList.append(energyP)
 
-            energyP.addLinearExpression(self.A_vf,mean)
-            energyP.addWeightMatrixExpression(self.B_vf,mean)
+            #energyP.addLinearExpression(self.A_vf,mean)
+            #energyP.addWeightMatrixExpression(self.B_vf,mean)
             
         # Add sponge region only if the field was given in the mean flow file
         if not('spg' in mean._meanFlowClass__notInFileList):
@@ -237,8 +237,8 @@ class EquationCollectionClass():
             sponge = SpongeTerm(self,fluctuationC,X,self.__param)
             self.equationList.append(sponge)
 
-            sponge.addLinearExpression(self.A_vf,mean)
-            sponge.addWeightMatrixExpression(self.B_vf,mean)
+            #sponge.addLinearExpression(self.A_vf,mean)
+            #sponge.addWeightMatrixExpression(self.B_vf,mean)
 
         # Add species transport equation for all transported species
         transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
@@ -251,8 +251,8 @@ class EquationCollectionClass():
                 species = SpeciesEquation(self,fluctuationC,X[i_eqn],specie,self.__param)
                 self.equationList.append(species)
 
-                species.addLinearExpression(self.A_vf,mean)
-                species.addWeightMatrixExpression(self.B_vf,mean)
+                #species.addLinearExpression(self.A_vf,mean)
+                #species.addWeightMatrixExpression(self.B_vf,mean)
                 
             #elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
             #    # This eq has not been derived in tensor framework yet.
@@ -675,7 +675,7 @@ class EquationCollectionClass():
         self.__boundaries = self.__param.BCs.getBoundaries()
         self.__bcDict = self.__param.BCs.getBCsDict()
         VelocityComponents=self.__param.Case.getVelocityComponents()
-        SolutionList=self.__param.Case.getTransportedQuantityList()
+        SolutionList=self.__param.SolutionList#Case.getTransportedQuantityList()
         for k,m in zip(list(self.__bcDict.keys()),range(0,len(self.__bcDict.keys()))):
             # Get index of equation/variable i_eqn and if needed the index of the velocity component
             if k[0]=='u' and k[1] in VelocityComponents:

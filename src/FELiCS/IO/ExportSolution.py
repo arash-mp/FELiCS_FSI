@@ -442,6 +442,7 @@ def ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow):
                 indexOmega = param.IOResolvent.Omegas.index(fluctSolut.omega)
                 gains[fluctSolut.gainNumber, indexOmega] = fluctSolut.gainValue
 
+
             fileName = f'{param.Case.AnalysisMode}_Omega{np.round(fluctSolut.omega, 3)}_{fluctSolut.solutionKind}_gain{fluctSolut.gainNumber}.h5'
             fluctSolut.exportSolution(fileName, 'o')
             ct += 1
