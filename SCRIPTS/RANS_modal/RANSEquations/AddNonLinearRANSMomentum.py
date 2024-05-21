@@ -62,8 +62,6 @@ def Momentum_LinearTerms(funcSpace, nu, C_mu, u, p, k, epsilon, Xu):
     NSE_variational +=\
         + 1j * 2/3 * k * conj(Xu[i]) * n_BC[i] * ds 
     
-     
-    
 
     
                 

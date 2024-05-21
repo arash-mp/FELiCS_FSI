@@ -39,24 +39,40 @@ param.importFromFile(SettingsFileName)
 param.getOldParameters()
 
 
+
 #-----------------------------------------------------------------------
-## INITIALIZATION
+## INITIALIZATION OF RANS EQUATIONS
 #-----------------------------------------------------------------------
 # mesh
 mesh=param.BCs.getMesh()
+
 # FEMSpaces
 FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
             param,
             mesh,
             )
-# read in mean flow
+
+# add two custom scalar spaces for k and epsilon 
+#FEMSpaces.addCustomScalarSpaceToMixedSpace()
+#FEMSpaces.addCustomScalarSpaceToMixedSpace()
+
+# initialize mean flow class
 meanFlow = meanFlowClass(param, FEMSpaces, mesh)
+
+# add two custom mean flow quantities
+meanFlow.addCustomMeanFlowQuantity('k')
+meanFlow.addCustomMeanFlowQuantity('epsilon')
+
+#import mean flow data from file
 meanFlow.importDataFromFile()
+
 # export mean flow in "h5" file
 if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
     meanFlow.exportBaseFlowAsHDF5()
 meanflowFilename = 'meanflow.h5'
 meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+
+   
 # equation
 equation = EquationCollectionClass(
                                   param,
@@ -65,12 +81,11 @@ equation = EquationCollectionClass(
                                   mesh
                                   )
 
+## add custom equations
+## 1.  
+#equation.equationList.append()
 
-#-----------------------------------------------------------------------
-## INITIALIZATION OF RANS EQUATIONS
-#-----------------------------------------------------------------------
-
-
+#print(type(meanFlow._fieldDict['k']))
 
 
 #-----------------------------------------------------------------------
@@ -107,6 +122,7 @@ for guess in guesses:
                                                     adjoint=True)
 
         solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
+
 
 # end tracking time
 end = time.time() - start

@@ -53,6 +53,7 @@ class meanFlowClass(
             self._oneFieldArray,
             self._coordinateSystem, 
             )
+        self._customMeanFlowQuantities=[]
         
         #self.addDerivativeFieldsToMean()
         #self.initLamDiff()
@@ -327,6 +328,7 @@ class meanFlowClass(
         for key in list(self.__RawFlowDict.keys()):
             if len(np.shape(self.__RawFlowDict[key])) > 1:
                 self.__RawFlowDict[key] = np.squeeze(self.__RawFlowDict[key])
+
 
     def InterpolateOnFELiCSMesh(self):
 
@@ -863,13 +865,19 @@ class meanFlowClass(
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadReaction())
-        
+       
+        listOfFieldsToBeRead.extend(self._customMeanFlowQuantities[:])
+
         # Delete duplicates
         listOfFieldsToBeRead = list(dict.fromkeys(listOfFieldsToBeRead))
         
         printDebug(True,"-- Mean flow fields to be read are: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
     
+
+    def addCustomMeanFlowQuantity(self,key):
+        self._customMeanFlowQuantities.append(key)
+
 
 class meanFlowVertexValues(fieldProperties):
     """
