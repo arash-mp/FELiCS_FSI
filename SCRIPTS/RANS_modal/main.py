@@ -4,6 +4,10 @@ import copy
 import time
 import sys
 
+from   ufl import (TrialFunctions,
+                   TestFunctions,
+                   )
+
 from   FELiCS.Parameters.parameters import parameters
 
 import FELiCS.IO.Import as Import
@@ -41,7 +45,7 @@ param.getOldParameters()
 
 
 #-----------------------------------------------------------------------
-## INITIALIZATION OF RANS EQUATIONS
+## INITIALIZATION 
 #-----------------------------------------------------------------------
 # mesh
 mesh=param.BCs.getMesh()
@@ -72,7 +76,6 @@ if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
 meanflowFilename = 'meanflow.h5'
 meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
-   
 # equation
 equation = EquationCollectionClass(
                                   param,
@@ -81,11 +84,38 @@ equation = EquationCollectionClass(
                                   mesh
                                   )
 
-## add custom equations
-## 1.  
-#equation.equationList.append()
+#-----------------------------------------------------------------------
+## ADD CUSTOM EQUATIONS 
+#-----------------------------------------------------------------------
+from RANSEquations.MomentumEquation import MomentumEquation
+from RANSEquations.KEquation        import KEquation
+from RANSEquations.EpsilonEquation  import EpsilonEquation
 
-#print(type(meanFlow._fieldDict['k']))
+
+# 1: define parameters
+meanFlow.C_mu          = 0.09
+meanFlow.sigma_k       = 1.00
+meanFlow.sigma_epsilon = 1.30
+meanFlow.C_1epsilon    = 1.44
+meanFlow.C_2epsilon    = 1.92
+   
+test  = TestFunctions (FEMSpaces.VMixed)
+trial = TrialFunctions(FEMSpaces.VMixed)
+fluc_u       = trial[0]
+fluc_k       = trial[1]
+fluc_epsilon = trial[1]
+X_u          =  test[0]
+X_k          =  test[1]
+X_epsilon    =  test[1]
+
+# 2: add custom equations
+momentum_RANS = MomentumEquation(equation, X_u,       fluc_u, fluc_k, fluc_epsilon)  
+k_RANS        = KEquation       (equation, X_k,       fluc_u, fluc_k, fluc_epsilon)
+epsilon_RANS  = EpsilonEquation (equation, X_epsilon, fluc_u, fluc_k, fluc_epsilon)
+
+equation.equationList.append(momentum_RANS)
+equation.equationList.append(epsilon_RANS)
+equation.equationList.append(k_RANS)
 
 
 #-----------------------------------------------------------------------
