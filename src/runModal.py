@@ -21,6 +21,7 @@ def runModal(param, useGUI):
 
     from   FELiCS.Solvers.LinearSolver import LinearSolver 
     from   FELiCS.Fields.ModeCollection import ModeCollection
+
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
@@ -34,9 +35,9 @@ def runModal(param, useGUI):
     # read in mean flow
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
     meanFlow.importDataFromFile()
+    # export mean flow in "h5" file
     if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
         meanFlow.exportBaseFlowAsHDF5()
-    # export mean flow in "h5" file
     meanflowFilename = 'meanflow.h5'
     meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
     # equation
@@ -46,6 +47,7 @@ def runModal(param, useGUI):
                                       meanFlow,
                                       mesh
                                       )
+
 
 
     #-----------------------------------------------------------------------
@@ -66,18 +68,20 @@ def runModal(param, useGUI):
     # solve eigenproblem for each guess
     solution = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
-        tmp                   = LinearSolver.solveGeneralEigenproblem(A,
-                                                                      B,
-                                                                      guess,
-                                                                      nSol,
-                                                                      )
+        tmp     = LinearSolver.solveGeneralEigenproblem(A,
+                                                        B,
+                                                        guess,
+                                                        nSol,
+                                                        )
+
         solution.appendSolutionOfEigenProblem(tmp, guess)
+
         if adjoint==True:
-            tmp               = LinearSolver.solveGeneralEigenproblem(A,
-                                                                      B,
-                                                                      guess,
-                                                                      nSol,
-                                                                      adjoint=True)
+            tmp = LinearSolver.solveGeneralEigenproblem(A,
+                                                        B,
+                                                        guess,
+                                                        nSol,
+                                                        adjoint=True)
 
             solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
 
@@ -86,7 +90,11 @@ def runModal(param, useGUI):
     printDebug(True, '-- Solving the general eigenproblem took %4g s' % end)
     residuum_max = solution.getMaximumError()
     printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
-             
+
+
+
+
+
 
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION

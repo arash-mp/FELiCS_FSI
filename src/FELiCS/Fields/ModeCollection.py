@@ -35,6 +35,10 @@ class ModeCollection():
             error.append(mode.getError())
         return np.amax(error)
 
+    def getNearestMode(self,gain=None,eigenValue=None,guess=None,gain=None,waveNumber=None,frequency=None):
+        #ToDo: get nearest mode to one of the above. Change handling of parameters
+        pass
+
 
     def getOldSolutionObject(self, meanFlow, param, FEMSpaces):
         # this is a wrapper for the old solution class, should be removed at the end of restructuring

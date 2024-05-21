@@ -377,6 +377,7 @@ class EquationCollectionClass():
 
     def getNonlinearExpression(self, meanFlow):
         printError("The method 'getNonlinearExpression' is not yet implemented.")
+        exit()
 
         #N_ufl = WeakForm()
         #for equation in self.equationList:
@@ -385,6 +386,25 @@ class EquationCollectionClass():
         #N = assemble_vector(form(N_ufl.rhs))
 
         #return N
+
+
+    def getForcingForInputOutput(self,meanFlow):
+        from dolfinx.fem.petsc import set_bc
+
+        # create ufl object with the linear equation system 
+        A_ufl = WeakForm()
+        for equation in self.equationList:
+            equation.addLinearExpression(A_ufl, meanFlow)
+
+        # assemble forcing vector
+        forcing = assemble_vector(form(A_ufl.rhs))
+        forcing.assemble()
+        set_bc(forcing, self.BCs)
+        forcing.scale(1j)
+
+        return forcing
+
+
 
 ########################### Resolvent Norm  ############################
     def getResolventNorms(self,X,param,mean,fluc):
