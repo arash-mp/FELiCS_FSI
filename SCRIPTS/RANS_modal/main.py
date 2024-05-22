@@ -95,6 +95,9 @@ meanFlow.sigma_k       = 1.00
 meanFlow.sigma_epsilon = 1.30
 meanFlow.C_1epsilon    = 1.44
 meanFlow.C_2epsilon    = 1.92
+
+#meanFlow.k = TensorObject(meanFlow._fieldDict["k"])
+#meanFlow.epsilon = TensorObject(meanFlow._fieldDict["epsilon"])
    
 test  = TestFunctions (FEMSpaces.VMixed)
 trial = TrialFunctions(FEMSpaces.VMixed)
@@ -104,6 +107,13 @@ fluc_epsilon = trial[3]
 X_u          =  test[0]
 X_k          =  test[2]
 X_epsilon    =  test[3]
+
+#fluc_u = equation.fluctuationC._fieldDict["u"]
+#fluc_k = equation.fluctuationC._fieldDict["k"]
+#fluc_epsilon = equation.fluctuationC._fieldDict["epsilon"]
+#X_u          =  equation.X[0]
+#X_k          =  equation.X[2]
+#X_epsilon    =  equation.X[3]
 
 # 2: add custom equations
 momentum_RANS = MomentumEquation(equation, X_u,       fluc_u, fluc_k, fluc_epsilon)  
