@@ -1,4 +1,3 @@
-# Third party libraries
 import numpy as np
 from FELiCS.Equation.dependentVariables.viscosityModels import *
 
@@ -6,7 +5,7 @@ class energyHandler:
     """
     This class is used to link the temperature with the transported variable
     (e.g. enthalpy, sensible energy...). Depending on which state variable
-    is linearized (or alreaddy known), the respective other is calculated.
+    is linearized (or already known), the respective other is calculated.
 
     Parent classes:
 
@@ -29,18 +28,27 @@ class energyHandler:
         Initializing the class and link temperature with transported energy variable
         (e.g. enthalpy, sensible energy...)
 
-        Function arguments:
+        Parameters:
         - param: FELiCS parameter object
         - mean: FELiCS mean flow object
 
-        Function returns:
+        Returns:
         """
         pass
 
     def _relateConservativeToPrimitiveVariablesEnergy(
                                             self,
-                                            mean = 'None',
+                                            mean='None',
                                             ):
+        """
+        Relates the conservative variables to primitive variables for energy equation.
+
+        Parameters:
+        - mean: FELiCS mean flow object
+
+        Returns:
+        """
+
         alreadyInitializedFields = list(self._fieldDict.keys())
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
 
@@ -51,7 +59,7 @@ class energyHandler:
         ################### Enthalpy ##################
         ############################################### 
         if energyEquationType == 'Enthalpy':
-            if sum(el in ['h','T'] for el in list(alreadyInitializedFields)) == 1:            
+            if sum(el in ['h', 'T'] for el in list(alreadyInitializedFields)) == 1:            
                 # so far cp is constant, which in reacting flows might be a strong assumption.
                 if 'T' in alreadyInitializedFields:
                     if self._isSolution:
@@ -68,7 +76,7 @@ class energyHandler:
         ########### Progress Variable linear ##########
         ############################################### 
         elif energyEquationType == 'ProgressVariableLinear':
-            if sum(el in ['progress','T'] for el in list(alreadyInitializedFields)) == 1:            
+            if sum(el in ['progress', 'T'] for el in list(alreadyInitializedFields)) == 1:            
                     if 'progress' in alreadyInitializedFields:
                         if self._isSolution:
                             mean_Tu  = mean.Tu
@@ -92,6 +100,13 @@ class energyHandler:
             raise Exception("Energy equation type " + energyEquationType + " not known.")
 
     def _getNeededFieldsForLinearEnergy(self):
+        """
+        Returns the list of fields needed for linear energy equation.
+
+        Returns:
+        - List of fields needed for linear energy equation.
+        """
+
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
         if energyEquationType == 'Enthalpy':
             return ['T', 'h', 'alpha']
@@ -102,8 +117,17 @@ class energyHandler:
 
     def _initializeMolecularHeatDiffusionFluctuation(
                                     self,
-                                    mean = 'None'
+                                    mean='None'
                                     ):
+        """
+        Initializes the molecular heat diffusion fluctuation.
+
+        Parameters:
+        - mean: FELiCS mean flow object
+
+        Returns:
+        """
+
         alreadyDeterminedFields = list(self._fieldDict.keys())
         viscosityModel = self._param.Case.Mixture.Viscosity
         if viscosityModel == 'const':
@@ -118,15 +142,22 @@ class energyHandler:
                     mean_alpha = mean.alpha
                 Mixture = self._param.Case.Mixture
                 Ts = Mixture.Viscosity['Constants']['Ts']
-                foobar,fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
+                foobar, fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
                 self._fieldDict['alpha'] = mean_alpha * fluc
 
     def _additionalFieldsToBeReadEnergy(self):
+        """
+        Returns the list of additional fields to be read for energy equation.
+
+        Returns:
+        - List of additional fields to be read for energy equation.
+        """
+
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
         if energyEquationType == 'Enthalpy': 
-            return ['cp', 'alpha','he','T','molarMass']
+            return ['cp', 'alpha', 'he', 'T', 'molarMass']
         if energyEquationType == 'ProgressVariableLinear': 
-            return ['T', 'Tu', 'Tb','rho']
+            return ['T', 'Tu', 'Tb', 'rho']
         if energyEquationType == 'primitive-p': 
             return ['rho', 'cp', 'T', 'p', 'gamma', 'Pr']
         else:

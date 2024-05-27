@@ -28,24 +28,37 @@ class momentumHandler:
         Initializing the class and link temperature with transported energy variable
         (e.g. enthalpy, sensible energy...)
 
-        Function arguments:
+        Parameters:
         - param: FELiCS parameter object
         - mean: FELiCS mean flow object
 
-        Function returns:
+        Returns:
+        None
         """
         pass
 
     def _getNeededFieldsForLinearMomentum(self):
+        """
+        Get the list of fields needed for linear momentum equation.
+
+        Returns:
+        list: List of field names
+        """
         outList = ['u', 'rhou','p']
         if not self._param.Case.Mixture.Viscosity['type'] == 'Constant': 
             outList.append('nulam')
         return outList
 
-    def _relateConservativeToPrimitiveVariablesMomentum(self, mean = 'None'):
+    def _relateConservativeToPrimitiveVariablesMomentum(self, mean='None'):
         '''
-        This function checks if conservative and/or primitive variable is already defined. 
-        If only one of them is, it relates the one to the respective other.
+        Check if conservative and/or primitive variable is already defined. 
+        If only one of them is, relate it to the respective other.
+
+        Parameters:
+        - mean: FELiCS mean flow object
+
+        Returns:
+        None
         '''
         alreadyDeterminedFields = list(self._fieldDict.keys())        
         if mean == 'None':
@@ -71,10 +84,16 @@ class momentumHandler:
             elif 'u' in alreadyDeterminedFields:
                 self._fieldDict['rhou'] = self.u * mean_rho + mean_u * self.rho
 
-    def _initializeMolecularMomentumDiffusionFluctuation(
-                                    self,
-                                    mean = 'None'
-                                    ):
+    def _initializeMolecularMomentumDiffusionFluctuation(self, mean='None'):
+        """
+        Initialize molecular momentum diffusion fluctuation.
+
+        Parameters:
+        - mean: FELiCS mean flow object
+
+        Returns:
+        None
+        """
         alreadyDeterminedFields = list(self._fieldDict.keys())
         viscosityModel = self._param.Case.Mixture.Viscosity
         if viscosityModel['type'] == 'Constant':
@@ -91,4 +110,10 @@ class momentumHandler:
             raise Exception("Viscosity model " + viscosityModel['type'] + " not implemented.")
 
     def _additionalFieldsToBeReadEnergy(self):
+        """
+        Additional fields to be read for energy equation.
+
+        Returns:
+        None
+        """
         pass

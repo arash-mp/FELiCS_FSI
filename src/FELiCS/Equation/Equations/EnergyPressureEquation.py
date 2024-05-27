@@ -28,46 +28,92 @@ from FELiCS.Misc.tensorUtils import (
 )
 
 
-from FELiCS.Misc.functions import printWarning, printError, printDebug
 
-from .EquationTemplate import EquationTemplate
 
 class EnergyPressureEquation(EquationTemplate):
+    """
+    Class representing the energy-pressure equation in FELiCS.
 
-    def __init__(self,eqColl,fluc,X,param):
- 
+    Parameters:
+    -----------
+    eqColl : EquationCollection
+        The equation collection object.
+    fluc : Fluctuations
+        The fluctuations object.
+    X : Function
+        The solution function.
+    param : Parameters
+        The parameters object.
+    """
+
+    def __init__(self, eqColl, fluc, X, param):
+        """
+        Initialize the EnergyPressureEquation object.
+
+        Parameters:
+        -----------
+        eqColl : EquationCollection
+            The equation collection object.
+        fluc : Fluctuations
+            The fluctuations object.
+        X : Function
+            The solution function.
+        param : Parameters
+            The parameters object.
+        """
         # Disclaimer
         if param.NumericalScheme in ['Discontinuous Galerkin']:
             printError('Discontinuous Galerkin not implemented in tensorial framework.')
-    
+
         # initialize variables in template class
-        super().__init__(eqColl,fluc,X,param)
+        super().__init__(eqColl, fluc, X, param)
 
 
-    def addWeightMatrixExpression(self,weakForm,mean):
+    def addWeightMatrixExpression(self, weakForm, mean):
+        """
+        Add the weight matrix expression to the weak form.
+
+        Parameters:
+        -----------
+        weakForm : Form
+            The weak form object.
+        mean : Function
+            The mean function.
+        """
         # Time derivative terms
         # Volume term: -omega*p_f*conj(X)
-        weakForm.add(( self.fluc.p*iConj(self.X) ).ufl_tens*self.J_hat*dx)
-     
+        weakForm.add((self.fluc.p * iConj(self.X)).ufl_tens * self.J_hat * dx)
+
     def addNonlinearExpression(self):
+        """
+        Add the nonlinear expression to the weak form.
+        """
         pass
 
-    def addLinearExpression(self,weakForm,mean):
-        '''
+    def addLinearExpression(self, weakForm, mean):
+        """
+        Add the linear expression to the weak form.
+
         This function builds the weak form of the linearized
         energy conservation equation, in tensorial framework.
         The formulation is based on the total energy conservation
         for a compressible fluid, expressed in terms of pressure by
         substituting the Perfect gas law and continuity eq.
-        The equation is implemented in PRIMITIVE variables. 
-        '''
-   
+        The equation is implemented in PRIMITIVE variables.
+
+        Parameters:
+        -----------
+        weakForm : Form
+            The weak form object.
+        mean : Function
+            The mean function.
+        """
         J_hat = self.J_hat
-        X     = self.X
-        fluc  = self.fluc
-   
+        X = self.X
+        fluc = self.fluc
+
         # ------------------------  Advection terms
-        # NOTE: "." denotes the dot product bellow
+        # NOTE: "." denotes the dot product below
         # This includes two groups of terms:
         #   1)  -j*u.grad(p) = -j*(u_f.grad(p_m) + u_m.grad(p_f))
         #   2)  -j*gamma*p*div(u) =  -j*gamma*(p_f*div(u_m) + p_m*div(u_f))

@@ -1,4 +1,7 @@
 from ufl import dx
+from FELiCS.Misc.functions import printDebug, printError
+from .EquationTemplate import EquationTemplate
+
 from FELiCS.Misc.tensorUtils import (
     Tensor,
     as_vector,
@@ -6,32 +9,61 @@ from FELiCS.Misc.tensorUtils import (
     iDot,
     iConj
 )
-from FELiCS.Misc.functions import printDebug, printError
 
-from .EquationTemplate import EquationTemplate
 
 class SpongeTerm(EquationTemplate):
+    """
+    Class representing the sponge term in the equation.
+    """
 
-    def __init__(self,eqColl,fluc,X,param):
- 
+    def __init__(self, eqColl, fluc, X, param):
+        """
+        Initialize the SpongeTerm object.
+
+        Parameters:
+        -----------
+        eqColl : EquationCollection
+            The equation collection object.
+        fluc : Fluctuations
+            The fluctuations object.
+        X : list
+            The list of solution variables.
+        param : Parameters
+            The parameters object.
+        """
         # Disclaimers
         if param.NumericalScheme in ['Discontinuous Galerkin']:
             printError('Discontinuous Galerkin not implemented in tensorial framework.')        
 
         # initialize variables in template class
-        super().__init__(eqColl,fluc,X,param)
+        super().__init__(eqColl, fluc, X, param)
 
 
     def addWeightMatrixExpression(self, weakForm, mean):
+        """
+        Add the weight matrix expression to the weak form.
+
+        Parameters:
+        -----------
+        weakForm : ufl.Form
+            The weak form object.
+        mean : MeanField
+            The mean field object.
+        """
         # nothing to add
         pass
 
     def addLinearExpression(self, weakForm, mean):
-        '''
-        This function builds the weak form of the sponge
-        term in tensorial framework.
-        '''
-    
+        """
+        Add the linear expression to the weak form.
+
+        Parameters:
+        -----------
+        weakForm : ufl.Form
+            The weak form object.
+        mean : MeanField
+            The mean field object.
+        """
         J_hat = self.J_hat
         fluc  = self.fluc
         X     = self.X
@@ -71,7 +103,8 @@ class SpongeTerm(EquationTemplate):
         #     weakForm.add(( -1j*mean.spg*fluc.rho*iConj(X[id_rho]) ).ufl_tens*J_hat*dx)
 
     def addNonlinearExpression(self):
+        """
+        Add the nonlinear expression to the weak form.
+        """
         # not yet implemented
         pass
-
-

@@ -28,32 +28,57 @@ from FELiCS.Misc.tensorUtils import (
 )
 
 
-from FELiCS.Misc.functions import printWarning, printError, printDebug
 
-from .EquationTemplate import EquationTemplate
 
 class SpeciesEquation(EquationTemplate):
+    """Class representing the species transport equation."""
 
-    def __init__(self,eqColl,fluc,X,species,param):
- 
+    def __init__(self, eqColl, fluc, X, species, param):
+        """
+        Initialize the SpeciesEquation class.
+
+        Parameters:
+        - eqColl (EquationCollection): The equation collection.
+        - fluc (Fluctuations): The fluctuation object.
+        - X (Function): The solution function.
+        - species (str): The species name.
+        - param (Parameter): The parameter object.
+        """
         # Disclaimer
         if param.NumericalScheme in ['Discontinuous Galerkin']:
             printError('Discontinuous Galerkin not implemented in tensorial framework.')
     
         # initialize variables in template class
-        super().__init__(eqColl,fluc,X,param)
+        super().__init__(eqColl, fluc, X, param)
 
         self.species = species
 
 
-    def addWeightMatrixExpression(self,weakForm,mean):
+    def addWeightMatrixExpression(self, weakForm, mean):
+        """
+        Add the weight matrix expression to the weak form.
+
+        Parameters:
+        - weakForm (Form): The weak form.
+        - mean (MeanFlow): The mean flow object.
+        """
         # Time derivative term
-        weakForm.add(( self.fluc.Y(self.species)*iConj(self.X)*mean.rho ).ufl_tens*self.J_hat*dx)
+        weakForm.add((self.fluc.Y(self.species) * iConj(self.X) * mean.rho).ufl_tens * self.J_hat * dx)
 
     def addNonlinearExpression(self):
+        """
+        Add the nonlinear expression to the weak form.
+        """
         pass
 
-    def addLinearExpression(self,weakForm,mean):
+    def addLinearExpression(self, weakForm, mean):
+        """
+        Add the linear expression to the weak form.
+
+        Parameters:
+        - weakForm (Form): The weak form.
+        - mean (MeanFlow): The mean flow object.
+        """
         '''
         This function builds the weak form of the linearized
         species transport equation in convective form, in the
