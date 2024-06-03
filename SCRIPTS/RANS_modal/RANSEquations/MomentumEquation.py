@@ -64,11 +64,20 @@ class MomentumEquation(EquationTemplate):
             + 1j * C_mu * k * k / epsilon * Dx(du[i],j) * Dx(conj(Xu[i]), j) * dx \
             + 1j * C_mu * k * k / epsilon * Dx(du[j],i) * Dx(conj(Xu[i]), j) * dx) 
         weakForm.add(\
+            - 1j * C_mu * k * k / epsilon * Dx(du[i],j) * conj(Xu[i]) * n_BC[j] * ds \
+            - 1j * C_mu * k * k / epsilon * Dx(du[j],i) * conj(Xu[i]) * n_BC[j] * ds)
+        weakForm.add(\
             + 2j * C_mu * k / epsilon * dk * Dx(u[i],j) * Dx(conj(Xu[i]), j) * dx \
             + 2j * C_mu * k / epsilon * dk * Dx(u[j],i) * Dx(conj(Xu[i]), j) * dx) 
         weakForm.add(\
+            - 2j * C_mu * k / epsilon * dk * Dx(u[i],j) * conj(Xu[j]) * n_BC[i] * ds \
+            - 2j * C_mu * k / epsilon * dk * Dx(u[j],i) * conj(Xu[i]) * n_BC[j] * ds)
+        weakForm.add(\
             - 1j * C_mu * k * k / epsilon / epsilon * depsilon * Dx(u[i],j) * Dx(conj(Xu[i]), j) * dx \
             - 1j * C_mu * k * k / epsilon / epsilon * depsilon * Dx(u[j],i) * Dx(conj(Xu[i]), j) * dx) 
+        weakForm.add(\
+            + 1j * C_mu * k * k / epsilon / epsilon * depsilon * Dx(u[i],j) * conj(Xu[j]) * n_BC[i] * ds \
+            + 1j * C_mu * k * k / epsilon / epsilon * depsilon * Dx(u[j],i) * conj(Xu[i]) * n_BC[j] * ds)
         '''
         k term and its boundary term
         '''

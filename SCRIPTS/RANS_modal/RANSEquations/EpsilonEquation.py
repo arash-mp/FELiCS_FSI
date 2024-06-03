@@ -94,6 +94,9 @@ class EpsilonEquation(EquationTemplate):
         '''
         weakForm.add(\
             + 1j * nu * Dx(depsilon, i) * Dx(conj(Xepsilon), i) * dx )
+        #TODO: remove this term if Neumann is set for depsilon 
+        weakForm.add(\
+    	     - 1j * nu * Dx(depsilon, i) * n_BC[i] * conj(Xepsilon) * ds) 
         '''
         Difussion terms due to turbulent viscosity and their boundary terms (commend for zero gradient bc)
         '''
@@ -103,6 +106,13 @@ class EpsilonEquation(EquationTemplate):
             + 1j * dmudk * Dx(epsilon, i) * Dx(conj(Xepsilon), i) * dx )
         weakForm.add(\
             + 1j * dmude * Dx(epsilon, i) * Dx(conj(Xepsilon), i) * dx )
+        #TODO: remove this term if Neumann is set for depsilon 
+        weakForm.add(\
+            - 1j * nu_e * Dx(depsilon, i) * n_BC[i] * conj(Xepsilon) * ds )
+        weakForm.add(\
+            - 1j * dmudk * Dx(epsilon, i) * n_BC[i] * conj(Xepsilon) * ds )
+        weakForm.add(\
+            - 1j * dmude * Dx(epsilon, i) * n_BC[i] * conj(Xepsilon) * ds ) 
         '''
         C1 terms(contains Pk, not in weak formulation) 
         '''

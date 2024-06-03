@@ -86,6 +86,8 @@ class KEquation(EquationTemplate):
         '''
         weakForm.add(\
             + 1j * nu * Dx(dk, i) * Dx(conj(Xk), i) * dx )
+        weakForm.add(\
+             - 1j * nu * Dx(dk, i) * n_BC[i] * conj(Xk) * ds)     
         '''
         Difussion terms due to turbulent viscosity and their boundary terms (commend for zero gradient bc)
         '''
@@ -94,6 +96,12 @@ class KEquation(EquationTemplate):
             + 1j * C_mu / Sigma_k * 2 * k * dk / epsilon * Dx(k, i) * Dx(conj(Xk), i) * dx )
         weakForm.add(\
             - 1j * C_mu / Sigma_k * k * k / epsilon / epsilon * depsilon * Dx(k, i) * Dx(conj(Xk), i) * dx )
+        #TODO: remove the first line of this term if Neumann is set for dk & depsilon
+        weakForm.add(\
+            - 1j * C_mu / Sigma_k * k * k / epsilon * Dx(dk, i) * n_BC[i] * conj(Xk) * ds  \
+            - 1j * C_mu / Sigma_k * 2 * k * dk / epsilon * Dx(k, i) * n_BC[i] * conj(Xk) * ds)
+        weakForm.add(\
+            + 1j * C_mu / Sigma_k * k * k / epsilon / epsilon * depsilon * Dx(k, i) * n_BC[i] * conj(Xk) * ds)
         '''
         Pk terms (not in weak form)
         '''
