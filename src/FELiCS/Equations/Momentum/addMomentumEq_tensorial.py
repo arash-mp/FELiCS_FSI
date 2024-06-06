@@ -58,14 +58,14 @@ def addMomentumEq(self,fluc,X,mean,param):
         # Volume term from integration by parts
 
         # version0: standard formulation 
-        #self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
-        #self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
-        #self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
 
         # version1: Done by Sophie: using conservative form for stabilization
-        self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*mean.u ), fluc.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*fluc.u ), mean.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),fluc.rho*mean.u ), mean.u) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*mean.u ), fluc.u) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*fluc.u ), mean.u) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),fluc.rho*mean.u ), mean.u) ).ufl_tens*J_hat*dx)
 
         # Boundary term from integration by parts
         self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(fluc.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
