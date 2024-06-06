@@ -19,6 +19,7 @@ from FELiCS.tensorUtils import (
     as_vector,
     iInner,
     iDot,
+    iDotT,
     iDiv,
     iGrad,
     iConj,
@@ -29,6 +30,7 @@ from FELiCS.tensorUtils import (
 
 
 from FELiCS.functions import printWarning, printError, printDebug
+from FELiCS.Equations.Mass.addMassEq_tensorial import addMassEq
 
 def addMomentumEq(self,fluc,X,mean,param):
     '''
@@ -51,36 +53,50 @@ def addMomentumEq(self,fluc,X,mean,param):
     # ------------------------ Time derivative term
     self.B_vf.add(( iDot(mean.rho*fluc.u,iConj(X)) ).ufl_tens*J_hat*dx)
     # ------------------------ Convective terms
-    int_by_parts = False
-    if int_by_parts:
+    int_by_parts = True
+    if param.Case.CoordinateSystem =='Cartesian' and int_by_parts:
         # Volume term from integration by parts
-        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
+
+        # version0: standard formulation 
+        #self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
+
+        # version1: Done by Sophie: using conservative form for stabilization
+        self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*mean.u ), fluc.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*fluc.u ), mean.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),fluc.rho*mean.u ), mean.u) ).ufl_tens*J_hat*dx)
+
         # Boundary term from integration by parts
-        if param.Case.CoordinateSystem =='Cartesian':
-            self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(fluc.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
-            self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(mean.u,iConj(X)),fluc.u),self.n) ).ufl_tens*J_hat*self.all_ds)
-            self.A_vf.add(( -1j*fluc.rho*iDot(iDot(iOuter(mean.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
-        elif param.Case.CoordinateSystem =='Cylindrical':
-            # In cyl , a singular term error arise for the boundary term in the tensor framework
-            # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
-            # This should be fixed later on
-            # Thomas: The solution is not to not integrate aloing the axis. Anyway there will not be any fluxes on the axis.
-            self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(self.X[0])),mean.u),self.n) )*self.x[1]*self.all_ds)
-            self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
-            self.A_vf.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
-        else:
-            printError('Coord. syst not yet implemented in tensor framework.')
+        self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(fluc.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
+        self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(mean.u,iConj(X)),fluc.u),self.n) ).ufl_tens*J_hat*self.all_ds)
+        self.A_vf.add(( -1j*fluc.rho*iDot(iDot(iOuter(mean.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
+
+        #elif param.Case.CoordinateSystem =='Cylindrical':
+        #    # In cyl , a singular term error arise for the boundary term in the tensor framework
+        #    # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
+        #    # This should be fixed later on
+        #    # Thomas: The solution is not to not integrate aloing the axis. Anyway there will not be any fluxes on the axis.
+        #    self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(self.X[0])),mean.u),self.n) )*self.x[1]*self.all_ds)
+        #    self.A_vf.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
+        #    self.A_vf.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
+        #else:
+        #    printError('Coord. syst not yet implemented in tensor framework.')
                     
-    else:
+    elif param.Case.CoordinateSystem == 'Cylindrical' or not int_by_parts:
         ## ---- ALTERNATIVE: No integration by part, just one volume term
         printDebug(param.debug, '-- -> Mom eq: convection term NOT integrated by part')
         # -- > Tensor implementation derived by hand
+        # Done by Sophie: using conservative form for stabilization
+        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(mean.rho*mean.u, fluc.u)), iConj(X)) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(mean.rho*fluc.u, mean.u)), iConj(X)) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(fluc.rho*mean.u, mean.u)), iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(fluc.u),mean.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(mean.u),mean.rho*fluc.u),iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(mean.u),fluc.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
 
+    else:
+        printError('Coord. syst not yet implemented in tensor framework.')
 
     # ------------------------ Pressure gradient terms
     int_by_parts = True  
@@ -112,4 +128,7 @@ def addMomentumEq(self,fluc,X,mean,param):
             self.A_vf.add(( 1j*mean.nuTot*iDot(iDot(iGrad(fluc.u),self.n),iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index))
             # Version with full viscous tensor (not assuming constant viscosity) --> Not working as expected for now
             #self.A_vf.add((1j*mean.nuTot*iDot(iDot(iGrad(fluc.u, self.m)+iT(iGrad(fluc.u, self.m)),),iConj(X))).ufl_tens*J_hat*self.ds(boundary_index))
-            
+           
+
+
+
