@@ -58,14 +58,14 @@ def addMomentumEq(self,fluc,X,mean,param):
         # Volume term from integration by parts
 
         # version0: standard formulation 
-        self.A_vf.add(( 0.5*1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 0.5*1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 0.5*1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
+        self.A_vf.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
 
-        # version1: Done by Sophie: using conservative form for stabilization
-        self.A_vf.add(( 0.5*1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*mean.u ), fluc.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 0.5*1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*fluc.u ), mean.u) ).ufl_tens*J_hat*dx)
-        self.A_vf.add(( 0.5*1j*iDot(iDotT(iGrad(iConj(X)),fluc.rho*mean.u ), mean.u) ).ufl_tens*J_hat*dx)
+        ## version1: Done by Sophie: use conservative form
+        #self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*mean.u ), fluc.u) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),mean.rho*fluc.u ), mean.u) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( 1j*iDot(iDotT(iGrad(iConj(X)),fluc.rho*mean.u ), mean.u) ).ufl_tens*J_hat*dx)
 
         # Boundary term from integration by parts
         self.A_vf.add(( -1j*mean.rho*iDot(iDot(iOuter(fluc.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
@@ -87,13 +87,16 @@ def addMomentumEq(self,fluc,X,mean,param):
         ## ---- ALTERNATIVE: No integration by part, just one volume term
         printDebug(param.debug, '-- -> Mom eq: convection term NOT integrated by part')
         # -- > Tensor implementation derived by hand
-        # Done by Sophie: using conservative form for stabilization
-        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(mean.rho*mean.u, fluc.u)), iConj(X)) ).ufl_tens*J_hat*dx)
-        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(mean.rho*fluc.u, mean.u)), iConj(X)) ).ufl_tens*J_hat*dx)
-        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(fluc.rho*mean.u, mean.u)), iConj(X)) ).ufl_tens*J_hat*dx)
+
+        # version0: standard formulation 
         self.A_vf.add(( -1j*iDot(iDot(iGrad(fluc.u),mean.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(mean.u),mean.rho*fluc.u),iConj(X)) ).ufl_tens*J_hat*dx)
         self.A_vf.add(( -1j*iDot(iDot(iGrad(mean.u),fluc.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
+
+        ## version1: Done by Sophie: use conservative form
+        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(mean.rho*mean.u, fluc.u)), iConj(X)) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(mean.rho*fluc.u, mean.u)), iConj(X)) ).ufl_tens*J_hat*dx)
+        #self.A_vf.add(( -1j * iDot( iDiv( iOuter(fluc.rho*mean.u, mean.u)), iConj(X)) ).ufl_tens*J_hat*dx)
 
     else:
         printError('Coord. syst not yet implemented in tensor framework.')
