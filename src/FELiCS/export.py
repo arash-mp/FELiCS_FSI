@@ -79,7 +79,7 @@ class export:
         """
         self._FEMSpaces = FEMSpaces
         self._param = param
-        self._exportMesh = FEMSpaces.exportMesh
+        self._exportMesh   = FEMSpaces.exportMesh
 
         self._exportZeroScalarField = Function(self._FEMSpaces.P1Export)
         self._exportZeroVectorField = Function(
@@ -203,9 +203,12 @@ class export:
                         # Check if the transported quantity was obtained on P2 elts, otherwise we need to 
                         # interpolate from P1 to P2 meshes
                         if len(ValueArray) < len(dofsExport):
-                            ##TODO: Sophie: changed the mesh from which I got the coordinates; before: mesh from P1 space. I don't know if this will
-                            ## be an issue when actual P1 elements are used.
-                            dofsSolP1 = self._exportMesh.coordinates()
+                            ##TODO: Sophie: I changed the command, since for the newer dolfinx versions (>0.5.0) the FelicsMesh cannot be given to the FunctionSpace anymore.
+                            ## This command should be wrapped in the future.
+                            #dofsSolP1 = self._FEMSpaces.P1.mesh.coordinates()
+                            meshP1 = self._FEMSpaces.P1.mesh
+                            gdim   = meshP1.topology.dim
+                            dofsSolP1 = meshP1.geometry.x[:, 0:gdim]
                             printWarning(f'{field}-fluctuations obtained on P1-elts needs to be interpolated onto P2-elts mesh!')
                             tempSolutionArray = interpolate.griddata(dofsSolP1,ValueArray,dofsExport,method='linear')
        
