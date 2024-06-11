@@ -31,8 +31,10 @@ class Field:
 
 
     def getCoefficientArray(self):
-        return self.function.x.array
-
+        import numpy as np
+        array = np.empty(len(self.function.x.array[:]),dtype=complex)
+        array[:] = self.function.x.array[:]
+        return array
 
     def setCoefficientArray(self, array): 
         self.function.x.array[:] = array[:]
@@ -44,3 +46,4 @@ class Field:
     def conjugate(self):
         import numpy as np
         self.setCoefficientArray(np.conj(self.getCoefficientArray()))
+

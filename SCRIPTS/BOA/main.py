@@ -22,6 +22,7 @@ from   FELiCS.Misc.functions import printDebug
 from   FELiCS.Solvers.LinearSolver import LinearSolver 
 from   FELiCS.Fields.ModeCollection import ModeCollection
 from   FELiCS.Fields.Field import Field
+from   FELiCS.Fields.Mode import Mode
 from   FELiCS.Misc.tensorUtils import Tensor
 
 
@@ -96,7 +97,7 @@ adjoint  = param.Case.CalculateAdjoint
 # track time
 start= time.time()
 
-# solve eigenproblem for each guess
+# solve direct eigenproblem for each guess
 solution = ModeCollection(FEMSpaces.VMixed, mesh)
 for guess in guesses:
     tmp     = LinearSolver.solveGeneralEigenproblem(A,
@@ -104,17 +105,19 @@ for guess in guesses:
                                                     guess,
                                                     nSol,
                                                     )
-
     solution.appendSolutionOfEigenProblem(tmp, guess)
 
-    if adjoint==True:
-        tmp = LinearSolver.solveGeneralEigenproblem(A,
-                                                    B,
-                                                    guess,
-                                                    nSol,
-                                                    adjoint=True)
 
-        solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
+mode_direct       = solution.getLeadingMode()
+guess             = mode_direct.getEigenValue()
+
+# solve adjoint eigenproblem only for the leading eigenvalue
+tmp = LinearSolver.solveGeneralEigenproblem(A,
+                                            B,
+                                            guess,
+                                            1,
+                                            adjoint=True)
+solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
 
 
 # end tracking time
@@ -127,13 +130,12 @@ printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
 mode_direct  = solution.getLeadingMode(adjoint=False)
 mode_adjoint = solution.getLeadingMode(adjoint=True)
 
-
 #-----------------------------------------------------------------------
 ## SOLVE ADJOINT BASEFLOW EQUATION 
 #-----------------------------------------------------------------------
 ### manipulate velocity and get right-hand-side of base flow equation from a finite difference (epsilon = 1.e-8)
 # TODO: Sophie: this is a quick (and dirty) implementation. Re-write once the restructuring of FELiCS has progressed sufficiently
-epsilon        = 1.e-8
+epsilon        = 1.e-4
 u_mean         = meanFlow._fieldDict['u']
 [u_dir,p_dir]  = mode_direct.getListOfSingleFields()
 coeff          = u_dir.getCoefficientArray()
@@ -159,13 +161,33 @@ baseFlow_adjoint.setCoefficientArray(baseFlow_adjoint_array)
 baseFlow_adjoint.conjugate()
 
 
+solution.popList()
+newMode = Mode(FEMSpaces.VMixed, mesh)
+newMode.function.x.array[:] = baseFlow_adjoint.function.x.array[:]
+#newMode.function.x.array[:] = mode_adjoint.function.x.array[:]
+newMode.setEigenValue(0.0)
+newMode.isAdjoint = True
+solution.appendMode(newMode)
+
 #-----------------------------------------------------------------------
 ## CALCULATE GRADIENT WITH RESPECT TO GEOMETRY DEFORMATIONS 
 #-----------------------------------------------------------------------
+#geometryDeformer = CylinderBSpline()
+#
+#N = geometryDeformer.getNumberOfParameters()
+#for i in range(N):
+#    geometryDeformer.changeMesh(parameterIndex = i)
+#    # change of nonlinear operator
+#
+#    # change of linear operator
+#
+#    geometryDeformer.changeMeshBackToOriginalState(parameterIndex = i)
 
 
 
-
+#-----------------------------------------------------------------------
+## WRITE FUNCITON VALUE AND FUNCTION GRADIENT INTO FILES 
+#-----------------------------------------------------------------------
 
 # f is the growth rate (imaginary part) of the leading eigenvalue
 f =  np.imag(mode_direct.getEigenValue())

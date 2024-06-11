@@ -61,13 +61,14 @@ def writeCSVSpectrum(param,spectrumDirect,spectrumAdjoint=0):
     ''' This file writes the gains to a CSV file in the solution directory provided by the user'''
     import csv
     printDebug(True, "-- Spectrum saved in: %s/spectrum.csv" % param.Export.ExportFolder)
-    if param.Case.CalculateAdjoint:
+    #TODO Sophie: how to handle different numbers of solutions for adjoint/direct?
+    if param.Case.CalculateAdjoint and len(spectrumDirect)==len(spectrumAdjoint):
 
         with open(param.Export.ExportFolder+'/spectrum.csv', mode='w') as writer_file:
             writer = csv.writer(writer_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             head=['omega_direct_r','omega_direct_i','omega_adjoint_r','omega_adjonint_i']
             writer.writerow(head)
-            for i in range(0,len(spectrumDirect)):
+            for i in range(0,len(spectrumDirect),len(spectrumAdjoint)):
                 line=[str(np.real(spectrumDirect[i])),str(np.imag(spectrumDirect[i])),str(np.real(spectrumAdjoint[i])),str(np.imag(spectrumAdjoint[i]))]
                 writer.writerow(line)
 

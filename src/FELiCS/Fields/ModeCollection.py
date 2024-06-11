@@ -24,7 +24,7 @@ class ModeCollection():
         for i in range(numberOfModes):
             mode = Mode(self.femSpace, self.mesh)
             mode.isAdjoint = adjoint
-            mode.setError(error)
+            mode.setError(error[i])
             mode.setGuess(guess)
             mode.setEigenValue(eigVals[i])
             mode.function.x.array[:] = eigVecs[i,:]
@@ -35,7 +35,10 @@ class ModeCollection():
         error = []
         for mode in self.modeList:
             error.append(mode.getError())
-        return np.amax(error)
+        if len(self.modeList)==0:
+            pass #TODO: throw error
+        else:
+            return np.amax(error)
 
     def getNearestMode(self,gain=None,eigenValue=None,guess=None,waveNumber=None,frequency=None):
         #ToDo: get nearest mode to one of the above. Change handling of parameters
@@ -53,12 +56,12 @@ class ModeCollection():
                         growthRateMax = np.imag(eigenValue)
                         leadingMode = mode
         elif adjoint:
-            growthRateMax = 9990.
+            growthRateMin = 9990.
             for mode in self.modeList:
                 if mode.isAdjoint == adjoint:
                     eigenValue = mode.getEigenValue()
-                    if np.imag(eigenValue) < growthRateMax:
-                        growthRateMax = np.imag(eigenValue)
+                    if np.imag(eigenValue) < growthRateMin:
+                        growthRateMin = np.imag(eigenValue)
                         leadingMode = mode
                     
         return leadingMode
@@ -86,3 +89,6 @@ class ModeCollection():
 
     def getSize(self):
         return len(self.modeList)
+
+    def popList(self):
+        return self.modeList.pop()
