@@ -363,7 +363,7 @@ class EquationCollectionClass():
         # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
         # but for now this works fine. 
         try:
-            A_ufl.setCorrectMeshObject(self.__mesh)
+            B_ufl.setCorrectMeshObject(self.__mesh)
         except:
             printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
@@ -403,7 +403,6 @@ class EquationCollectionClass():
         forcing.scale(1j)
 
         return forcing
-
 
 
 ########################### Resolvent Norm  ############################

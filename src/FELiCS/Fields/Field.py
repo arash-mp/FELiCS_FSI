@@ -12,8 +12,22 @@ class Field:
 
 
 
-    def getListOfSingleFunctions(self):#
-        ##ToDo: return single functions if e.g. mixed Function
-        pass
+    def getListOfSingleFields(self):
+        listOfFields = []
+
+        numberOfSubSpaces = self.space.num_sub_spaces
+
+        if numberOfSubSpaces == 0: 
+            listOfFields.append(self)
+            return listOfFields
+
+        for i in range(numberOfSubSpaces):
+            space, mapping            = self.space.sub(i).collapse()
+            field                     = Field(space, self.mesh)
+            field.function.x.array[:] = self.function.x.array[mapping]
+            listOfFields.append(field)
+
+        return listOfFields
+
 
 

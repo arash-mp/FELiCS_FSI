@@ -1,3 +1,5 @@
+import numpy as np
+
 from .Mode import Mode
 
 from .fluctuationClass import fluctuationSolutions
@@ -40,6 +42,28 @@ class ModeCollection():
         pass
 
 
+    def getLeadingMode(self,adjoint=False):
+        leadingMode   = None
+        if not adjoint:
+            growthRateMax = -9990.
+            for mode in self.modeList:
+                if mode.isAdjoint == adjoint:
+                    eigenValue = mode.getEigenValue()
+                    if np.imag(eigenValue) > growthRateMax:
+                        growthRateMax = np.imag(eigenValue)
+                        leadingMode = mode
+        elif adjoint:
+            growthRateMax = 9990.
+            for mode in self.modeList:
+                if mode.isAdjoint == adjoint:
+                    eigenValue = mode.getEigenValue()
+                    if np.imag(eigenValue) < growthRateMax:
+                        growthRateMax = np.imag(eigenValue)
+                        leadingMode = mode
+                    
+        return leadingMode
+
+
     def getOldSolutionObject(self, meanFlow, param, FEMSpaces):
         # this is a wrapper for the old solution class, should be removed at the end of restructuring
         fluctSolutObjList    = []
@@ -58,3 +82,7 @@ class ModeCollection():
             )
 
         return fluctSolutObjList
+
+
+    def getSize(self):
+        return len(self.modeList)
