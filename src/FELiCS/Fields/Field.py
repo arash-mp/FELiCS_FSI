@@ -30,4 +30,17 @@ class Field:
         return listOfFields
 
 
+    def getCoefficientArray(self):
+        return self.function.x.array
 
+
+    def setCoefficientArray(self, array): 
+        self.function.x.array[:] = array[:]
+
+    def getPetscVector(self):
+        from petsc4py import PETSc
+        return PETSc.Vec().createWithArray(self.getCoefficientArray())
+
+    def conjugate(self):
+        import numpy as np
+        self.setCoefficientArray(np.conj(self.getCoefficientArray()))

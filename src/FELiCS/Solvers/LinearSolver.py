@@ -211,6 +211,48 @@ class LinearSolver:
         return x 
 
 
+    @staticmethod
+    def solveTransposeEquationSystem(
+        A,
+        b):
+
+        """
+        Solves a linear equation system A^T x=b, using the PETSc libraries.
+        
+        Parameters
+        ----------
+        A : PETSc matrix
+            matrix of the linear syste
+        b : PETSc vector
+            rhs of the linear system
+        
+        Returns
+        -------
+        x:  numpy array
+            solution of the linear equation system
+        """
+        from petsc4py import PETSc
+        solution,dummy = A.createVecs()
+        
+        solver = PETSc.KSP().create()
+        solver.setOperators(A)
+        solver.setType(PETSc.KSP.Type.PREONLY)
+        solver.getPC().setType(PETSc.PC.Type.LU)
+        solver.getPC().setFactorSolverType('mumps')
+        
+        solver.solveTranspose(b, solution)
+        
+        x = solution.getArray()
+        
+        solver.destroy()
+        A.destroy()
+        b.destroy()
+        dummy.destroy()
+        
+        return x 
+
+
+
 
 
 class ResolventOperator(object):

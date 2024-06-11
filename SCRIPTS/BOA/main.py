@@ -21,6 +21,7 @@ from   FELiCS.Misc.functions import printDebug
 
 from   FELiCS.Solvers.LinearSolver import LinearSolver 
 from   FELiCS.Fields.ModeCollection import ModeCollection
+from   FELiCS.Fields.Field import Field
 from   FELiCS.Misc.tensorUtils import Tensor
 
 
@@ -81,7 +82,7 @@ equation = EquationCollectionClass(
 
 
 #-----------------------------------------------------------------------
-## MAIN PART
+## SOLVE EIGENPROBLEM
 #-----------------------------------------------------------------------
 # get matrices for eigenproblem
 A = equation.getLinearOperator(meanFlow)
@@ -126,27 +127,48 @@ printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
 mode_direct  = solution.getLeadingMode(adjoint=False)
 mode_adjoint = solution.getLeadingMode(adjoint=True)
 
-field_list = mode_direct.getListOfSingleFields()
 
-print(len(field_list))
+#-----------------------------------------------------------------------
+## SOLVE ADJOINT BASEFLOW EQUATION 
+#-----------------------------------------------------------------------
+### manipulate velocity and get right-hand-side of base flow equation from a finite difference (epsilon = 1.e-8)
+# TODO: Sophie: this is a quick (and dirty) implementation. Re-write once the restructuring of FELiCS has progressed sufficiently
+epsilon        = 1.e-8
+u_mean         = meanFlow._fieldDict['u']
+[u_dir,p_dir]  = mode_direct.getListOfSingleFields()
+coeff          = u_dir.getCoefficientArray()
+coeff          = u_mean.x.array[:] + epsilon * coeff
+u_dir.setCoefficientArray(coeff)
+meanFlow._fieldDict['u'] = u_dir.function
+
+# calculate disturbed operator and return "u" to its old value
+A_1 = equation.getLinearOperator(meanFlow)
+meanFlow._fieldDict['u'] = u_mean
+
+# calculate finite difference of operator and multiplicate its transpose with the adjoint eigenvector
+A_1.axpy(-1., A)      #A_1 = A_1 - A
+A_1.scale(1./epsilon) #A_1 = A_1 / epsilon
+mode_adjoint_petsc = mode_adjoint.getPetscVector()
+rhs                = mode_adjoint.getPetscVector() #gets a petsc vector of correct length
+mode_adjoint_petsc.conjugate()
+A_1.multTranspose(mode_adjoint_petsc, rhs)
+
+baseFlow_adjoint_array = LinearSolver.solveTransposeEquationSystem(A, rhs)
+baseFlow_adjoint       = Field(FEMSpaces.VMixed, mesh)
+baseFlow_adjoint.setCoefficientArray(baseFlow_adjoint_array)
+baseFlow_adjoint.conjugate()
+
+
+#-----------------------------------------------------------------------
+## CALCULATE GRADIENT WITH RESPECT TO GEOMETRY DEFORMATIONS 
+#-----------------------------------------------------------------------
 
 
 
-# solve adjoint equation system to get adjoint baseFlow
-# 0.: field: getListOfFields, getPetscVector, getCoefficientArray
-# 1. get u_dir from mode (method in field?)
-# 2. u_dir = eps*u_dir + u_mean
-# 3. save u_mean, put u_dir in dict
-#A_1 = equation.getLinearOperator(meanFlow)
-#BL  = (A_1 - L) / eps
-# BL^T * conj(mode_adjoint )
-#solution = LinearSolver.solveTransposeEquationSystem(A, b)
-# base flow = conj(solution)
 
 
-
-
-f = 1.
+# f is the growth rate (imaginary part) of the leading eigenvalue
+f =  np.imag(mode_direct.getEigenValue())
 df = [0.3,0.4]
 np.save("f.npy", f)
 np.save("df.npy", df)
