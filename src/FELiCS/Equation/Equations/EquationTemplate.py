@@ -12,6 +12,7 @@ class EquationTemplate(ABC):
         self.n      = eqColl.n
         self.all_ds = eqColl.all_ds
         self.ds     = eqColl.ds
+        self.coordinateSystem  = eqColl._coordinateSystem
 
 
     @abstractmethod

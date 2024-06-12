@@ -83,11 +83,11 @@ equation = EquationCollectionClass(
 
 
 #-----------------------------------------------------------------------
-## SOLVE EIGENPROBLEM
+## SOLVE EIGENPROBLEM AND CALCULATE RHS OF ADJOINT BASEFLOW EQUATION
 #-----------------------------------------------------------------------
 # get matrices for eigenproblem
-A = equation.getLinearOperator(meanFlow)
-B = equation.getWeightMatrix  (meanFlow)
+A  = equation.getLinearOperator(meanFlow)
+B  = equation.getWeightMatrix  (meanFlow)
 
 # get parameters for eigenproblem
 guesses  = param.Numerics.EigenValueGuess
@@ -129,76 +129,50 @@ printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
 # get leading modes
 mode_direct  = solution.getLeadingMode(adjoint=False)
 mode_adjoint = solution.getLeadingMode(adjoint=True)
+eigenValue   = mode_direct.getEigenValue()
+printDebug(True, '------------------------------------------------ ')
+printDebug(True, '-- Leading eigenvalue:  ' + str(eigenValue))
+printDebug(True, '------------------------------------------------ ')
 
-#-----------------------------------------------------------------------
-## SOLVE ADJOINT BASEFLOW EQUATION 
-#-----------------------------------------------------------------------
-### manipulate velocity and get right-hand-side of base flow equation from a finite difference (epsilon = 1.e-8)
-# TODO: Sophie: this is a quick (and dirty) implementation. Re-write once the restructuring of FELiCS has progressed sufficiently
-epsilon        = 1.e-4
-u_mean         = meanFlow._fieldDict['u']
-[u_dir,p_dir]  = mode_direct.getListOfSingleFields()
-coeff          = u_dir.getCoefficientArray()
-coeff          = u_mean.x.array[:] + epsilon * coeff
-u_dir.setCoefficientArray(coeff)
-meanFlow._fieldDict['u'] = u_dir.function
-
-# calculate disturbed operator and return "u" to its old value
-A_1 = equation.getLinearOperator(meanFlow)
-meanFlow._fieldDict['u'] = u_mean
-
-# calculate finite difference of operator and multiplicate its transpose with the adjoint eigenvector
-A_1.axpy(-1., A)      #A_1 = A_1 - A
-A_1.scale(1./epsilon) #A_1 = A_1 / epsilon
+# scale modes s.t. mode_adjoint^H * B * mode_direct = 1
+mode_direct_petsc  = mode_direct.getPetscVector()
 mode_adjoint_petsc = mode_adjoint.getPetscVector()
-rhs                = mode_adjoint.getPetscVector() #gets a petsc vector of correct length
-mode_adjoint_petsc.conjugate()
-A_1.multTranspose(mode_adjoint_petsc, rhs)
+temp               = mode_direct.getPetscVector() # gets a petsc vector "temp" of correct length
+B.mult(mode_direct_petsc, temp)                   # temp = B*mode_direct
+factor = np.sqrt(temp.dot(mode_adjoint_petsc))    # factor = sqrt(mode_adjoint ^H temp)
 
-baseFlow_adjoint_array = LinearSolver.solveTransposeEquationSystem(A, rhs)
-baseFlow_adjoint       = Field(FEMSpaces.VMixed, mesh)
-baseFlow_adjoint.setCoefficientArray(baseFlow_adjoint_array)
-baseFlow_adjoint.conjugate()
-
-
-solution.popList()
-newMode = Mode(FEMSpaces.VMixed, mesh)
-newMode.function.x.array[:] = baseFlow_adjoint.function.x.array[:]
-#newMode.function.x.array[:] = mode_adjoint.function.x.array[:]
-newMode.setEigenValue(0.0)
-newMode.isAdjoint = True
-solution.appendMode(newMode)
-
-#-----------------------------------------------------------------------
-## CALCULATE GRADIENT WITH RESPECT TO GEOMETRY DEFORMATIONS 
-#-----------------------------------------------------------------------
-#geometryDeformer = CylinderBSpline()
-#
-#N = geometryDeformer.getNumberOfParameters()
-#for i in range(N):
-#    geometryDeformer.changeMesh(parameterIndex = i)
-#    # change of nonlinear operator
-#
-#    # change of linear operator
-#
-#    geometryDeformer.changeMeshBackToOriginalState(parameterIndex = i)
+mode_direct_petsc.scale(1./factor)
+mode_adjoint_petsc.scale(np.conj(1./factor))
+mode_direct.setCoefficientArray(mode_direct_petsc.getArray())
+mode_adjoint.setCoefficientArray(mode_adjoint_petsc.getArray())
 
 
+# calculate rhs of adjoint base flow equation system (because this set of BCs is needed)
+[u_direct, p_direct]              = mode_direct.getListOfSingleFields()
+meanFlow._fieldDict['u_bilinear'] = u_direct.function
+BL                                = equation.getBilinearOperator(meanFlow)
 
-#-----------------------------------------------------------------------
-## WRITE FUNCITON VALUE AND FUNCTION GRADIENT INTO FILES 
-#-----------------------------------------------------------------------
-
-# f is the growth rate (imaginary part) of the leading eigenvalue
-f =  np.imag(mode_direct.getEigenValue())
-df = [0.3,0.4]
-np.save("f.npy", f)
-np.save("df.npy", df)
+mode_adjoint_petsc = mode_adjoint.getPetscVector()
+rhs                = mode_adjoint.getPetscVector() # get petsc vector of correct size
+BL.multHermitian(mode_adjoint_petsc, rhs)          # rhs = BL^H * mode_adjoint
 
 
 #-----------------------------------------------------------------------
 ## EXPORT SOLUTION
 #-----------------------------------------------------------------------
-fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
-ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+# f is the growth rate (imaginary part) of the leading eigenvalue
+f =  np.imag(eigenValue)
+np.save("f.npy", f)
+
+np.save("mode_direct.npy",  mode_direct.getCoefficientArray())
+np.save("mode_adjoint.npy", mode_adjoint.getCoefficientArray())
+np.save("rhs.npy", rhs.getArray())
+
+## export modes in standard felics format
+#solution_onlyLeading = ModeCollection(FEMSpaces.VMixed, mesh)
+#solution_onlyLeading.appendMode(mode_direct)
+#solution_onlyLeading.appendMode(mode_adjoint)
+#fluctSolutList = solution_onlyLeading.getOldSolutionObject(meanFlow, param, FEMSpaces)
+#ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+
 

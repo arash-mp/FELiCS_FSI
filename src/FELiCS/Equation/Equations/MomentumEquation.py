@@ -128,3 +128,14 @@ class MomentumEquation(EquationTemplate):
                 # Version with full viscous tensor (not assuming constant viscosity) --> Not working as expected for now
                 #self.A_vf.add((1j*mean.nuTot*iDot(iDot(iGrad(fluc.u, self.m)+iT(iGrad(fluc.u, self.m)),),iConj(X))).ufl_tens*J_hat*self.ds(boundary_index))
             
+    def addBilinearExpression(self, weakForm, mean):
+        # Sophie: first and quick implementation for the BOA project. Only for incompressible flow and strong formulation (only convection term)
+        u_bil = Tensor( mean._fieldDict['u_bilinear'], self.coordinateSystem)
+        fluc  = self.fluc
+        X     = self.X
+        J_hat = self.J_hat
+
+        weakForm.add(( -1j*iDot(iDot(iGrad(fluc.u),mean.rho*u_bil),iConj(X)) ).ufl_tens*J_hat*dx)
+        weakForm.add(( -1j*iDot(iDot(iGrad(u_bil),mean.rho*fluc.u),iConj(X)) ).ufl_tens*J_hat*dx)
+
+

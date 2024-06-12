@@ -388,6 +388,34 @@ class EquationCollectionClass():
         #return N
 
 
+    def getBilinearOperator(self, meanFlow):
+
+        # create ufl object with the linear equation system 
+        BL_ufl = WeakForm()
+        for equation in self.equationList:
+            try:
+                equation.addBilinearExpression(BL_ufl, meanFlow)
+            except:
+                pass
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            BL_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        BL = assemble_matrix(form(BL_ufl.lhs), bcs=self.BCs)
+        BL.assemble()
+
+        return BL
+
+
     def getForcingForInputOutput(self,meanFlow):
         from dolfinx.fem.petsc import set_bc
 

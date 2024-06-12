@@ -204,8 +204,8 @@ class LinearSolver:
         x = solution.getArray()
         
         solver.destroy()
-        A.destroy()
-        b.destroy()
+        #A.destroy()
+        #b.destroy()
         dummy.destroy()
         
         return x 
@@ -245,8 +245,8 @@ class LinearSolver:
         x = solution.getArray()
         
         solver.destroy()
-        A.destroy()
-        b.destroy()
+        #A.destroy()
+        #b.destroy()
         dummy.destroy()
         
         return x 
