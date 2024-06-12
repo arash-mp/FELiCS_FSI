@@ -89,18 +89,17 @@ equation = EquationCollectionClass(
 #-----------------------------------------------------------------------
 ## CALCULATE GRADIENT WITH RESPECT TO GEOMETRY DEFORMATIONS 
 #-----------------------------------------------------------------------
-A_0  = equation.getLinearOperator(meanFlow)
+N_0  = equation.getNonlinearExpression(meanFlow)
+
+exit()
 
 epsilon = 1.e-4 #epsilon for finite difference mesh deformation
 
 
 # create and read fields
 a_i  = np.load("params.npy")
-mode_direct  = Mode(FEMSpaces.VMixed, mesh) 
-mode_adjoint = Mode(FEMSpaces.VMixed, mesh) 
-
-mode_direct.setCoefficientArray(np.load("mode_direct.npy"))
-mode_adjoint.setCoefficientArray(np.load("mode_adjoint.npy"))
+baseFlow_adjoint  = Field(FEMSpaces.VMixed, mesh) 
+baseFlow_adjoint.setCoefficientArray(np.load("baseFlow_adjoint.npy"))
 
 
 # deform mesh
@@ -114,14 +113,9 @@ for i in range(N):
 
     geometryDeformer.deformMesh(a_i)
     
-    A_deformed  = equation.getLinearOperator(meanFlow)
-    A_deformed.axpy(-1., A_0)
-    A_deformed.scale(1./epsilon)
-    mode_direct_petsc  = mode_direct.getPetscVector()
-    mode_adjoint_petsc = mode_direct.getPetscVector()
-    result             = mode_direct.getPetscVector()
-    A_deformed.mult(mode_direct_petsc, result)
-    sensitivity1[i]   = result.dot(mode_adjoint_petsc)
+    N_deformed  = equation.getNonlinearExpression(meanFlow)
+    baseFlow_adjoint_petsc  = mode_direct.getPetscVector()
+    sensitivity2[i] = N_deformed.dot(baseFlow_adjoint_petsc)
 
     geometryDeformer.restoreMesh()
 

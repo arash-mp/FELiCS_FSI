@@ -376,16 +376,15 @@ class EquationCollectionClass():
 
 
     def getNonlinearExpression(self, meanFlow):
-        printError("The method 'getNonlinearExpression' is not yet implemented.")
-        exit()
+        from dolfinx.fem.petsc import set_bc
+        N_ufl = WeakForm()
+        for equation in self.equationList:
+            equation.addNonlinearExpression(N_ufl, meanFlow)
 
-        #N_ufl = WeakForm()
-        #for equation in self.equationList:
-        #    equation.addNonlinearExpression(N_ufl, meanFlow)
+        N = assemble_vector(form(N_ufl.rhs))
+        set_bc(N, self.BCs)
 
-        #N = assemble_vector(form(N_ufl.rhs))
-
-        #return N
+        return N
 
 
     def getBilinearOperator(self, meanFlow):
