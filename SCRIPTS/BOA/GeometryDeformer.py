@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import dolfinx
 import numpy as np
+import copy
+from FELiCS.Misc.functions import printWarning
 
 class GeometryDeformer(ABC):
 
@@ -13,12 +15,13 @@ class GeometryDeformer(ABC):
         bc_facet_dofs = facets.indices[facets.values==1001]
         self.bc_dofs  = dolfinx.mesh.compute_incident_entities(self.mesh.topology,bc_facet_dofs, self.mesh.topology.dim-1, 0)
         
-        self.x_save = [None]*len(self.x[self.bc_dofs])
-        i=0
-        for dof in self.bc_dofs:
-            self.x_save[i] = np.empty(3)
-            self.x_save[i][:] = self.x[dof][:]
-            i+=1
+        self.x_save = copy.deepcopy(self.x[self.bc_dofs])
+        #self.x_save = [None]*len(self.x[self.bc_dofs])
+        #i=0
+        #for dof in self.bc_dofs:
+        #    self.x_save[i]    = np.empty(3)
+        #    self.x_save[i]    = copy.deepcopy(self.x[dof])
+        #    i+=1
 
     @abstractmethod
     def getNumberOfParameters(self):
@@ -31,7 +34,7 @@ class GeometryDeformer(ABC):
     def restoreMesh(self):
         i=0
         for dof in self.bc_dofs:
-            self.x[dof][:] = self.x_save[i][:]
+            self.x[dof] = self.x_save[i]
             i+=1
         self.isDeformed = False
 
@@ -51,6 +54,10 @@ class CylinderBSpline2Pts(GeometryDeformer):
         import scipy.interpolate as interpolate
         import geomdl as g
         from   geomdl import BSpline
+
+        if self.isDeformed:
+            #TODO: printWarning
+            printWarning('CAUTION: deforming an already deformed mesh...')
 
         curve = BSpline.Curve()
         
@@ -77,6 +84,7 @@ class CylinderBSpline2Pts(GeometryDeformer):
         for dof in self.bc_dofs:
             self.x[dof][1] = spline(self.x[dof][0])
 
+        self.isDeformed=True
 
 
 

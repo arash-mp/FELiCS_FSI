@@ -88,12 +88,8 @@ equation = EquationCollectionClass(
 A  = equation.getLinearOperator(meanFlow)
 
 # create and read fields
-mode_direct  = Mode(FEMSpaces.VMixed, mesh) 
-mode_adjoint = Mode(FEMSpaces.VMixed, mesh) 
 rhs          = Field(FEMSpaces.VMixed, mesh) 
 
-mode_direct.setCoefficientArray(np.load("mode_direct.npy"))
-mode_adjoint.setCoefficientArray(np.load("mode_adjoint.npy"))
 rhs.setCoefficientArray(np.load("rhs.npy"))
 
 # solve the adjoint equation system

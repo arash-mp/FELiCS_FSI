@@ -102,14 +102,15 @@ mode_adjoint = Mode(FEMSpaces.VMixed, mesh)
 mode_direct.setCoefficientArray(np.load("mode_direct.npy"))
 mode_adjoint.setCoefficientArray(np.load("mode_adjoint.npy"))
 
+factor = np.load("factor.npy")
 
 # deform mesh
-epsilon = 1.e-6
+epsilon = 1.e-8
 
 geometryDeformer = CylinderBSpline2Pts(mesh, equation.boundaries)
 N = geometryDeformer.getNumberOfParameters()
-sensitivity1 = np.empty(N,dtype=complex)
-for i in range(N):
+sensitivity1 = np.zeros(N,dtype=complex)
+for i in range(0,N):
     a_i[i] = a_i[i] + epsilon
 
     geometryDeformer.deformMesh(a_i)
@@ -123,8 +124,10 @@ for i in range(N):
     A_deformed.mult(mode_direct_petsc, result)
     sensitivity1[i]   = result.dot(mode_adjoint_petsc)
 
+    a_i[i] = a_i[i] - epsilon
     geometryDeformer.restoreMesh()
 
+sensitivity1 = sensitivity1 / factor
 
 printDebug(True, '------------------------------------------------ ')
 printDebug(True, '-- sensitivities part 1:  ' + str(np.imag(sensitivity1)))

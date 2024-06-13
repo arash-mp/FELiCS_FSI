@@ -134,17 +134,21 @@ printDebug(True, '------------------------------------------------ ')
 printDebug(True, '-- Leading eigenvalue:  ' + str(eigenValue))
 printDebug(True, '------------------------------------------------ ')
 
+# calculate scaling factor mode_adjoint^H * B * mode_direct
+
+
+
 # scale modes s.t. mode_adjoint^H * B * mode_direct = 1
 mode_direct_petsc  = mode_direct.getPetscVector()
 mode_adjoint_petsc = mode_adjoint.getPetscVector()
 temp               = mode_direct.getPetscVector() # gets a petsc vector "temp" of correct length
 B.mult(mode_direct_petsc, temp)                   # temp = B*mode_direct
-factor = np.sqrt(temp.dot(mode_adjoint_petsc))    # factor = sqrt(mode_adjoint ^H temp)
+factor = temp.dot(mode_adjoint_petsc)             # factor = mode_adjoint ^H temp
 
-mode_direct_petsc.scale(1./factor)
-mode_adjoint_petsc.scale(np.conj(1./factor))
-mode_direct.setCoefficientArray(mode_direct_petsc.getArray())
-mode_adjoint.setCoefficientArray(mode_adjoint_petsc.getArray())
+#mode_direct_petsc.scale(1./np.sqrt(factor))
+#mode_adjoint_petsc.scale(np.conj(1./np.sqrt(factor)))
+#mode_direct.setCoefficientArray(mode_direct_petsc.getArray())
+#mode_adjoint.setCoefficientArray(mode_adjoint_petsc.getArray())
 
 
 # calculate rhs of adjoint base flow equation system (because this set of BCs is needed)
@@ -163,6 +167,8 @@ BL.multHermitian(mode_adjoint_petsc, rhs)          # rhs = BL^H * mode_adjoint
 # f is the growth rate (imaginary part) of the leading eigenvalue
 f =  np.imag(eigenValue)
 np.save("f.npy", f)
+
+np.save("factor.npy", factor)
 
 np.save("mode_direct.npy",  mode_direct.getCoefficientArray())
 np.save("mode_adjoint.npy", mode_adjoint.getCoefficientArray())

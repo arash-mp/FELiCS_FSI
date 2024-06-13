@@ -100,13 +100,15 @@ a_i  = np.load("params.npy")
 baseFlow_adjoint  = Field(FEMSpaces.VMixed, mesh) 
 baseFlow_adjoint.setCoefficientArray(np.load("baseFlow_adjoint.npy"))
 
+factor = np.load("factor.npy")
+
 # deform mesh
-epsilon = 1.e-6
+epsilon = 1.e-8
 
 geometryDeformer = CylinderBSpline2Pts(mesh, equation.boundaries)
 N = geometryDeformer.getNumberOfParameters()
-sensitivity2 = np.empty(N,dtype=complex)
-for i in range(N):
+sensitivity2 = np.zeros(N,dtype=complex)
+for i in range(0,N):
     a_i[i] = a_i[i] + epsilon
 
     geometryDeformer.deformMesh(a_i)
@@ -115,9 +117,13 @@ for i in range(N):
     N_deformed.axpy( -1., N_0)
     N_deformed.scale(1./epsilon)
     baseFlow_adjoint_petsc  = baseFlow_adjoint.getPetscVector()
-    sensitivity2[i] = -N_deformed.dot(baseFlow_adjoint_petsc) 
+    sensitivity2[i] = N_deformed.dot(baseFlow_adjoint_petsc) 
 
+    a_i[i] = a_i[i] - epsilon
     geometryDeformer.restoreMesh()
+
+
+sensitivity2 = sensitivity2 / factor
 
 printDebug(True, '------------------------------------------------ ')
 printDebug(True, '-- sensitivities part 2:  ' + str(np.imag(sensitivity2)))
