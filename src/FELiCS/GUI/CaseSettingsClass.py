@@ -166,6 +166,9 @@ class CaseSettingsClass(Settings):
         # Add velocity components
         MeanList.append('u')
 
+        # Add pressure
+        MeanList.append('p')
+
         # If necessary, add density and enthalpy diffusion
         if 'rho' in self.getTransportedQuantityList():
             MeanList.append('rho')

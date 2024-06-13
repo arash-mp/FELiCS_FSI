@@ -63,9 +63,9 @@ class MassEquation(EquationTemplate):
               # ------------------------ Advection terms
         # The advection term is integrated by parts
         # Volume term from IbP
-        weakForm.add((  1j * iDot(iGrad(iConj(self.X)),self.mean.rho*self.mean.u)).ufl_tens * self.J_hat * dx)
+        weakForm.add((  1j * iDot(iGrad(iConj(self.X)),mean.rho*mean.u)).ufl_tens * self.J_hat * dx)
         # Boundary term from IbP
-        weakForm.add(( -1j * iDot(self.n,self.mean.rho*self.mean.u * iConj(self.X)) ).ufl_tens * self.J_hat * self.all_ds)
+        weakForm.add(( -1j * iDot(self.n,mean.rho*mean.u * iConj(self.X)) ).ufl_tens * self.J_hat * self.all_ds)
     
 
 

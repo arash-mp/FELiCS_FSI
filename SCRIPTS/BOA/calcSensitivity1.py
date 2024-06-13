@@ -126,8 +126,10 @@ for i in range(N):
     geometryDeformer.restoreMesh()
 
 
-#print(sensitivity1)
+printDebug(True, '------------------------------------------------ ')
+printDebug(True, '-- sensitivities part 1:  ' + str(np.imag(sensitivity1)))
+printDebug(True, '------------------------------------------------ ')
 
-np.save("sensitivity1.py", np.real(sensitivity1))
+np.save("sensitivity1.npy", sensitivity1)
 
 

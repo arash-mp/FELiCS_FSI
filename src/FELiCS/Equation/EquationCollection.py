@@ -381,6 +381,17 @@ class EquationCollectionClass():
         for equation in self.equationList:
             equation.addNonlinearExpression(N_ufl, meanFlow)
 
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            N_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
         N = assemble_vector(form(N_ufl.rhs))
         set_bc(N, self.BCs)
 
