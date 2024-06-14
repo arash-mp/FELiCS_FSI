@@ -103,7 +103,7 @@ baseFlow_adjoint.setCoefficientArray(np.load("baseFlow_adjoint.npy"))
 factor = np.load("factor.npy")
 
 # deform mesh
-epsilon = 1.e-8
+epsilon = 1.e-6
 
 geometryDeformer = CylinderBSpline2Pts(mesh, equation.boundaries)
 N = geometryDeformer.getNumberOfParameters()
@@ -126,7 +126,7 @@ for i in range(0,N):
 sensitivity2 = sensitivity2 / factor
 
 printDebug(True, '------------------------------------------------ ')
-printDebug(True, '-- sensitivities part 2:  ' + str(np.imag(sensitivity2)))
+printDebug(True, '-- sensitivities part 2:  ' + str((sensitivity2)))
 printDebug(True, '------------------------------------------------ ')
 
 

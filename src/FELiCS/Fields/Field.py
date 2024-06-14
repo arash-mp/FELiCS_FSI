@@ -1,4 +1,4 @@
-from dolfinx.fem import Function
+from dolfinx.fem import Function, petsc
 
 
 class Field:
@@ -39,6 +39,9 @@ class Field:
     def setCoefficientArray(self, array): 
         self.function.x.array[:] = array[:]
 
+    def setConstantValue(self, value): 
+        self.function.x.array[:] = value
+
     def getPetscVector(self):
         from petsc4py import PETSc
         return PETSc.Vec().createWithArray(self.getCoefficientArray())
@@ -46,4 +49,9 @@ class Field:
     def conjugate(self):
         import numpy as np
         self.setCoefficientArray(np.conj(self.getCoefficientArray()))
+
+    def setBoundaryConditions(self, bcs):
+        petscArray = self.getPetscVector()
+        petsc.set_bc(petscArray,bcs)
+        self.setCoefficientArray(petscArray.getArray())
 

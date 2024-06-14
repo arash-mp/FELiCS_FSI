@@ -379,7 +379,11 @@ class EquationCollectionClass():
         from dolfinx.fem.petsc import set_bc
         N_ufl = WeakForm()
         for equation in self.equationList:
-            equation.addNonlinearExpression(N_ufl, meanFlow)
+            #TODO Sophie: temporary try-except-block. All equations should have an appropriate nonlinear formulation
+            try:
+                equation.addNonlinearExpression(N_ufl, meanFlow)
+            except:
+                pass
 
         #####################################################################################################
         # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
@@ -703,7 +707,7 @@ class EquationCollectionClass():
 
         return self.__buildSolutionObj()
 
-    def __getListOfDirichletBCs(self):
+    def __getListOfDirichletBCs(self, listOfComponents=None):
         BClist = []
         mesh=self.__FEMSpaces.P2.mesh
 
@@ -728,7 +732,7 @@ class EquationCollectionClass():
 
 
                     printDebug(self.__param.debug,"-- Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
-                    if k in ['u'+ component for component in VelocityComponents]:
+                    if k in ['u'+ component for component in VelocityComponents] :
 
                         #if __version__.find('0.4.1') >= 0:
                         BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component), 1, self.boundaries.indices[self.boundaries.values==self.__bcDict[k][mm]['ID']]), self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component)) )

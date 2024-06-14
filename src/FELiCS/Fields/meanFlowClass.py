@@ -96,7 +96,20 @@ class meanFlowClass(
         self.__VectorFunctionSpace = self._FEMSpaces.FunctionSpaceVectorVelocity
         self.__CoordinateSystemInputData = 'Unknown'
         # Check which type the input file is and read
-        if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'h5':
+        if self._param.FlowInput.MeanFlowFilePath == '':
+            # no mean flow file, set everything to zero
+            fieldDict = {}
+            nameListMean = self._getMeanFieldsToBeRead()    
+            for name in nameListMean:
+                if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
+                    fieldDict[name] = Function(
+                        self._FEMSpaces.FunctionSpaceVectorVelocity)
+                else:
+                    fieldDict[name] = Function(self._FEMSpaces.P2)
+
+            self._fieldDict = fieldDict
+
+        elif self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'h5':
             # In a hdf5 file the data is already interpolated on the mesh
             # from FELiCS.Import import importHDF5File
             self.importHDF5File2()

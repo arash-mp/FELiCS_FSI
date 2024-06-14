@@ -171,7 +171,6 @@ class LinearSolver:
 
     @staticmethod
     def solveEquationSystem(
-        self,
         A,
         b):
 

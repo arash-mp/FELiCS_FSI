@@ -91,7 +91,7 @@ equation = EquationCollectionClass(
 #-----------------------------------------------------------------------
 A_0  = equation.getLinearOperator(meanFlow)
 
-epsilon = 1.e-4 #epsilon for finite difference mesh deformation
+epsilon = 1.e-6 #epsilon for finite difference mesh deformation
 
 
 # create and read fields
@@ -130,7 +130,8 @@ for i in range(0,N):
 sensitivity1 = sensitivity1 / factor
 
 printDebug(True, '------------------------------------------------ ')
-printDebug(True, '-- sensitivities part 1:  ' + str(np.imag(sensitivity1)))
+#printDebug(True, '-- sensitivities part 1:  ' + str(np.imag(sensitivity1)))
+printDebug(True, '-- sensitivities part 1:  ' + str((sensitivity1)))
 printDebug(True, '------------------------------------------------ ')
 
 np.save("sensitivity1.npy", sensitivity1)
