@@ -379,11 +379,7 @@ class EquationCollectionClass():
         from dolfinx.fem.petsc import set_bc
         N_ufl = WeakForm()
         for equation in self.equationList:
-            #TODO Sophie: temporary try-except-block. All equations should have an appropriate nonlinear formulation
-            try:
-                equation.addNonlinearExpression(N_ufl, meanFlow)
-            except:
-                pass
+            equation.addNonlinearExpression(N_ufl, meanFlow)
 
         #####################################################################################################
         # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
@@ -437,6 +433,16 @@ class EquationCollectionClass():
         A_ufl = WeakForm()
         for equation in self.equationList:
             equation.addLinearExpression(A_ufl, meanFlow)
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            A_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
 
         # assemble forcing vector
         forcing = assemble_vector(form(A_ufl.rhs))
@@ -659,13 +665,13 @@ class EquationCollectionClass():
             A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
             A.assemble()
         else:
-            A = 0*BC_Diriclet
+            A = BC_Diriclet.scale(0.)
 
         if not self.B_vf.lhsIsZero():
             B = assemble_matrix(form(self.B_vf.lhs), bcs=bcs)
             B.assemble()
         else:
-            B = 0*BC_Diriclet
+            B = BC_Diriclet.scale(0.)
 
         self.__matrix_dict_petsc={}  
 

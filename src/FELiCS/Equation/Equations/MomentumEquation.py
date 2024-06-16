@@ -63,25 +63,25 @@ class MomentumEquation(EquationTemplate):
         J_hat = self.J_hat
 
         # ------------------------ Convective terms
-        int_by_parts = False
-        if int_by_parts:
+        int_by_parts = True
+        if int_by_parts and self.param.Case.CoordinateSystem=='Cartesian':
             # Volume term from integration by parts
-            weadForm.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
-            weadForm.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
-            weadForm.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
+            weakForm.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)
+            weakForm.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*fluc.u)),mean.u) ).ufl_tens*J_hat*dx)
+            weakForm.add(( 1j*iDot(iDiv(iOuter(iConj(X),fluc.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
             # Boundary term from integration by parts
             if self.param.Case.CoordinateSystem =='Cartesian':
                 weakForm.add(( -1j*mean.rho*iDot(iDot(iOuter(fluc.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
                 weakForm.add(( -1j*mean.rho*iDot(iDot(iOuter(mean.u,iConj(X)),fluc.u),self.n) ).ufl_tens*J_hat*self.all_ds)
                 weakForm.add(( -1j*fluc.rho*iDot(iDot(iOuter(mean.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
-            elif self.param.Case.CoordinateSystem =='Cylindrical':
-                # In cyl , a singular term error arise for the boundary term in the tensor framework
-                # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
-                # This should be fixed later on
-                # Thomas: The solution is not to not integrate aloing the axis. Anyway there will not be any fluxes on the axis.
-                weakForm.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(self.X[0])),mean.u),self.n) )*self.x[1]*self.all_ds)
-                weakForm.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
-                weakForm.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
+            #elif self.param.Case.CoordinateSystem =='Cylindrical':
+            #    # In cyl , a singular term error arise for the boundary term in the tensor framework
+            #    # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
+            #    # This should be fixed later on
+            #    # Thomas: The solution is not to not integrate aloing the axis. Anyway there will not be any fluxes on the axis.
+            #    weakForm.add(( -1j*mean.rho*dot(dot(outer(conj(fluc.u),conj(self.X[0])),mean.u),self.n) )*self.x[1]*self.all_ds)
+            #    weakForm.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
+            #    weakForm.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
             else:
                 printError('Coord. syst not yet implemented in tensor framework.')
                         
@@ -132,19 +132,19 @@ class MomentumEquation(EquationTemplate):
         J_hat = self.J_hat
 
         # ------------------------ Convective terms
-        int_by_parts = False
-        if int_by_parts:
+        int_by_parts = True
+        if int_by_parts and self.param.Case.CoordinateSystem=='Cartesian':
             # Volume term from integration by parts
             weakForm.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),mean.u) ).ufl_tens*J_hat*dx)
             # Boundary term from integration by parts
             if self.param.Case.CoordinateSystem =='Cartesian':
                 weakForm.add(( -1j*mean.rho*iDot(iDot(iOuter(mean.u,iConj(X)),mean.u),self.n) ).ufl_tens*J_hat*self.all_ds)
-            elif self.param.Case.CoordinateSystem =='Cylindrical':
-                # In cyl , a singular term error arise for the boundary term in the tensor framework
-                # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
-                # This should be fixed later on
-                # Thomas: The solution is not to not integrate aloing the axis. Anyway there will not be any fluxes on the axis.
-                weakForm.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),mean.u),self.n) )*self.x[1]*self.all_ds)
+            #elif self.param.Case.CoordinateSystem =='Cylindrical':
+            #    # In cyl , a singular term error arise for the boundary term in the tensor framework
+            #    # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
+            #    # This should be fixed later on
+            #    # Thomas: The solution is not to not integrate aloing the axis. Anyway there will not be any fluxes on the axis.
+            #    weakForm.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),mean.u),self.n) )*self.x[1]*self.all_ds)
             else:
                 printError('Coord. syst not yet implemented in tensor framework.')
                         
