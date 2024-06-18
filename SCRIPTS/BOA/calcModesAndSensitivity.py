@@ -59,11 +59,11 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     [u,p] = baseFlow.getListOfSingleFields()
     meanFlow._fieldDict['u'] = u.function
 
-    ## export mean flow in "h5" file
-    #if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-    #    meanFlow.exportBaseFlowAsHDF5()
-    #meanflowFilename = 'meanflow.h5'
-    #meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+    # export mean flow in "h5" file
+    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
+        meanFlow.exportBaseFlowAsHDF5()
+    meanflowFilename = 'meanflow.h5'
+    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
     # equation
     equation = EquationCollectionClass(
