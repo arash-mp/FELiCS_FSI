@@ -27,7 +27,7 @@ from   GeometryDeformer import CylinderBSpline2Pts
 #from   GeometryDeformer import CylinderBSpline1Pts 
 
 
-def calculateSensitivityFromModes(settingsFileName, baseFlow_array):
+def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensitivity):
 
     #-----------------------------------------------------------------------
     ## INITIALIZATION 
@@ -39,7 +39,7 @@ def calculateSensitivityFromModes(settingsFileName, baseFlow_array):
 
     # mesh
     mesh=param.BCs.getMesh()
-    
+   
     # FEMSpaces
     FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
                 param,
@@ -58,13 +58,12 @@ def calculateSensitivityFromModes(settingsFileName, baseFlow_array):
     baseFlow.setCoefficientArray(baseFlow_array)
     [u,p] = baseFlow.getListOfSingleFields()
     meanFlow._fieldDict['u'] = u.function
-    #meanFlow._fieldDict['u'].x.array[:] = u.getCoefficientArray()
 
-    # export mean flow in "h5" file
-    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-        meanFlow.exportBaseFlowAsHDF5()
-    meanflowFilename = 'meanflow.h5'
-    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+    ## export mean flow in "h5" file
+    #if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
+    #    meanFlow.exportBaseFlowAsHDF5()
+    #meanflowFilename = 'meanflow.h5'
+    #meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
     # equation
     equation = EquationCollectionClass(
@@ -126,8 +125,6 @@ def calculateSensitivityFromModes(settingsFileName, baseFlow_array):
     printDebug(True, '-- Leading eigenvalue:  ' + str(eigenValue))
     printDebug(True, '------------------------------------------------ ')
     
-    # calculate scaling factor mode_adjoint^H * B * mode_direct
-    
     
     
     # scale modes s.t. mode_adjoint^H * B * mode_direct = 1
@@ -151,19 +148,6 @@ def calculateSensitivityFromModes(settingsFileName, baseFlow_array):
     ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
 
 
-    #-----------------------------------------------------------------------
-    ## CALCULATE RHS OF ADJOINT BASEFLOW EQUATION
-    #-----------------------------------------------------------------------
-    # calculate rhs of adjoint base flow equation system (because this set of BCs is needed)
-    [u_direct, p_direct]              = mode_direct.getListOfSingleFields()
-    meanFlow._fieldDict['u_bilinear'] = u_direct.function
-    BL                                = equation.getBilinearOperator(meanFlow)
-    
-    mode_adjoint_petsc = mode_adjoint.getPetscVector()
-    rhs                = mode_adjoint.getPetscVector() # get petsc vector of correct size
-    BL.multHermitian(mode_adjoint_petsc, rhs)          # rhs = BL^H * mode_adjoint
-    #dolfinx.fem.petsc.set_bc(rhs, equation.BCs)
-
 
     #-----------------------------------------------------------------------
     ## CALCULATE GRADIENT WITH RESPECT TO GEOMETRY DEFORMATIONS - Part I
@@ -179,6 +163,8 @@ def calculateSensitivityFromModes(settingsFileName, baseFlow_array):
     geometryDeformer = CylinderBSpline2Pts(mesh, equation.boundaries)
     N_param          = geometryDeformer.getNumberOfParameters()
     sensitivity1     = np.zeros(N_param,dtype=complex)
+    sensitivity2     = np.zeros(N_param,dtype=complex)
+    baseFlowSens     = Field(FEMSpaces.VMixed, mesh)
     for i in range(0,N_param):
         a_i[i] = a_i[i] + epsilon
     
@@ -194,18 +180,29 @@ def calculateSensitivityFromModes(settingsFileName, baseFlow_array):
         dolfinx.fem.petsc.set_bc(result, equation.BCs)
         sensitivity1[i]   = result.dot(mode_adjoint_petsc)
     
+
+        baseFlowSens.setCoefficientArray(baseFlowSensitivity[i])
+        [u_direct, p_direct]              = baseFlowSens.getListOfSingleFields()
+        meanFlow._fieldDict['u_bilinear'] = u_direct.function
+        BL                                = equation.getBilinearOperator(meanFlow)
+        BL.mult(mode_direct_petsc, result)
+        dolfinx.fem.petsc.set_bc(result, equation.BCs)
+        sensitivity2[i]  = result.dot(mode_adjoint_petsc)
+
+
         a_i[i] = a_i[i] - epsilon
         geometryDeformer.restoreMesh()
     
-    sensitivity1 = sensitivity1 
     
     printDebug(True, '------------------------------------------------ ')
-    #printDebug(True, '-- sensitivities part 1:  ' + str(np.imag(sensitivity1)))
     printDebug(True, '-- sensitivities part 1:  ' + str((sensitivity1)))
+    printDebug(True, '------------------------------------------------ ')
+    printDebug(True, '------------------------------------------------ ')
+    printDebug(True, '-- sensitivities part 2:  ' + str((sensitivity2)))
     printDebug(True, '------------------------------------------------ ')
 
 
-    return sensitivity1, mode_direct.getEigenValue(), rhs
+    return sensitivity1, sensitivity2, mode_direct.getEigenValue()
 
 
     

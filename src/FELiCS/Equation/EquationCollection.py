@@ -117,13 +117,13 @@ class EquationCollectionClass():
         ## BOUNDARIES
         # Get class for integrating along boundaries
         self.boundaries = mesh.facet_tags
-        self.ds = Measure("ds", subdomain_data=self.boundaries)
+        self.ds         = Measure("ds", subdomain_data=self.boundaries)
 
         # Get all boundaries (So far hard coded)
         first_BC_flag=True
         for Boundary in self.__param.BCs.getBCsDict()[list(self.__param.BCs.getBCsDict().keys())[0]]:
             if first_BC_flag:
-                self.all_ds = self.ds(Boundary['ID'])
+                self.all_ds  = self.ds(Boundary['ID'])
                 first_BC_flag = False
             else:
                 self.all_ds += self.ds(Boundary['ID'])
@@ -369,13 +369,13 @@ class EquationCollectionClass():
         #####################################################################################################
 
         # assemble petsc matrix
-        B = assemble_matrix(form(B_ufl.lhs), bcs=self.BCs)
+        B = assemble_matrix(form(B_ufl.lhs), self.BCs)
         B.assemble()
 
         return B
 
 
-    def getNonlinearExpression(self, meanFlow):
+    def getNonlinearExpression(self, meanFlow, setBC=True):
         from dolfinx.fem.petsc import set_bc
         N_ufl = WeakForm()
         for equation in self.equationList:
@@ -393,7 +393,8 @@ class EquationCollectionClass():
         #####################################################################################################
 
         N = assemble_vector(form(N_ufl.rhs))
-        set_bc(N, self.BCs)
+        if setBC:
+            set_bc(N, self.BCs)
 
         return N
 

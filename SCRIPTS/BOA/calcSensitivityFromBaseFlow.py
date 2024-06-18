@@ -71,15 +71,17 @@ def calculateSensitivityFromBaseFlow(settingsFileName, baseFlow_array, rhs):
     ## CALCULATE ADJOINT BASEFLOW
     #-----------------------------------------------------------------------
     A  = equation.getLinearOperator(meanFlow)
+    A_H = A.copy()   #create a new matrix, s.t. the original one will not be overwritten 
+    A_H.conjugate()
+    A_H.assemble()
     
     # solve the adjoint equation system
-    rhs.conjugate()
+    dolfinx.fem.petsc.set_bc(rhs, equation.BCs)
     baseFlow_adjoint = Field(FEMSpaces.VMixed, mesh)
-    baseFlow_adjoint.setCoefficientArray(LinearSolver.solveTransposeEquationSystem(A, rhs))
-    baseFlow_adjoint.conjugate()
-    baseFlow_petsc = baseFlow_adjoint.getPetscVector()
-    dolfinx.fem.petsc.set_bc(baseFlow_petsc, equation.BCs)
-    baseFlow_adjoint.setCoefficientArray(baseFlow_petsc.getArray())
+    baseFlow_adjoint.setCoefficientArray(LinearSolver.solveTransposeEquationSystem(A_H, rhs))
+    baseFlow_adjoint_petsc = baseFlow_adjoint.getPetscVector()
+    dolfinx.fem.petsc.set_bc(baseFlow_adjoint_petsc, equation.BCs)
+    baseFlow_adjoint.setCoefficientArray(baseFlow_adjoint_petsc.getArray())
     
 
     #-----------------------------------------------------------------------
@@ -97,13 +99,14 @@ def calculateSensitivityFromBaseFlow(settingsFileName, baseFlow_array, rhs):
    
 
     # get reference nonlinear expression
-    N_0  = equation.getNonlinearExpression(meanFlow)
+    N_0  = equation.getNonlinearExpression(meanFlow)    
+
     
     # create and read fields
     a_i  = np.load("params.npy")
     
     # deform mesh
-    epsilon = 1.e-6
+    epsilon = 1.e-8
     
     geometryDeformer = CylinderBSpline2Pts(mesh, equation.boundaries)
     N_param          = geometryDeformer.getNumberOfParameters()

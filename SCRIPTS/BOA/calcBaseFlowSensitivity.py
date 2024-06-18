@@ -2,9 +2,8 @@ import pdb
 import numpy as np
 import copy
 import time
-
+import sys
 import dolfinx
-
 
 from   FELiCS.Parameters.parameters import parameters
 
@@ -23,18 +22,19 @@ from   FELiCS.Fields.Field import Field
 from   FELiCS.Fields.Mode import Mode
 from   FELiCS.Misc.tensorUtils import Tensor
 
+from   GeometryDeformer import CylinderBSpline2Pts 
 
 
-def calculateBaseFlow(settingsFileName):
+def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array):
 
-    #-----------------------------------------------------------------------
-    ## INITIALIZATION 
-    #-----------------------------------------------------------------------
-    # read parameters
     param=parameters()
     param.importFromFile(settingsFileName)
     param.getOldParameters()
-
+    
+    
+    #-----------------------------------------------------------------------
+    ## INITIALIZATION 
+    #-----------------------------------------------------------------------
     # mesh
     mesh=param.BCs.getMesh()
     
@@ -51,11 +51,20 @@ def calculateBaseFlow(settingsFileName):
     #import mean flow data from file
     meanFlow.importDataFromFile()
 
+
     ## export mean flow in "h5" file
     #if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
     #    meanFlow.exportBaseFlowAsHDF5()
     #meanflowFilename = 'meanflow.h5'
     #meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+
+
+    # load base flow into meanFlow object
+    baseFlow = Field(FEMSpaces.VMixed, mesh)
+    baseFlow.setCoefficientArray(baseFlow_array)
+    [u,p] = baseFlow.getListOfSingleFields()
+    meanFlow._fieldDict['u'] = u.function
+    meanFlow._fieldDict['p'] = p.function
 
     # equation
     equation = EquationCollectionClass(
@@ -66,29 +75,8 @@ def calculateBaseFlow(settingsFileName):
                                       )
     
     #-----------------------------------------------------------------------
-    ## CALCULATE BASE FLOW 
+    ## CALCULATE delta N / delta a_i and dq/da_i: 
     #-----------------------------------------------------------------------
-    
-    # initialize field 
-    baseFlow   = Field(FEMSpaces.VMixed, mesh)
-    try:
-        # try reading previously saved base flow file
-        array = np.load('baseFlow.npy')
-        if (len(array) == len(baseFlow.getCoefficientArray())):
-            baseFlow.setCoefficientArray(array)
-        else:
-            a = notInitializedVariable #do something to trigger "except" statement
-    except:
-        # create initial solution by setting velocity component ux=1
-        mapping = baseFlow.space.sub(0).sub(0).collapse()[1]
-        baseFlow.function.x.array[mapping] = 1.
-    
-    
-    # set boundary conditions for the velocity components at cylinder wall, identifier "1001"
-    baseFlow.function.sub(0).sub(0).x.array[dolfinx.fem.locate_dofs_topological(FEMSpaces.VMixed.sub(0).sub(0), 1, equation.boundaries.find(1001))] = 0. 
-    baseFlow.function.sub(0).sub(1).x.array[dolfinx.fem.locate_dofs_topological(FEMSpaces.VMixed.sub(0).sub(1), 1, equation.boundaries.find(1001))] = 0. 
-    
-    
     # set target function for nonlinear sponge
     [u_t,p_t] = baseFlow.getListOfSingleFields()
     mapping_ux = u_t.space.sub(0).collapse()[1]
@@ -98,56 +86,45 @@ def calculateBaseFlow(settingsFileName):
     p_t.function.x.array[:]          = 0.
     meanFlow._fieldDict['u_target'] = u_t.function
     meanFlow._fieldDict['p_target'] = p_t.function
-    
-    
-    ## start Newton solver
-    
-    # track time
-    start= time.time()
-    
-    i=0
-    residuum=1.
+   
 
-    [u,p] = baseFlow.getListOfSingleFields()
-    meanFlow._fieldDict['u'] = u.function
-    meanFlow._fieldDict['p'] = p.function
-    N = equation.getNonlinearExpression(meanFlow)
-    while(residuum > 3.e-11 and i<20):
-        i+=1
+    # get reference nonlinear expression
+    A    = equation.getLinearOperator(meanFlow)
+    N_0  = equation.getNonlinearExpression(meanFlow)    
+
+    # create and read fields
+    a_i  = np.load("params.npy")
     
-        # solve equation system
-        L = equation.getLinearOperator(meanFlow)
-        newtonSummand_array = LinearSolver.solveEquationSystem(L,N)
+    # deform mesh
+    epsilon = 1.e-8
     
-        # update baseFlow
-        baseFlow_array = baseFlow.getCoefficientArray() + newtonSummand_array
-        baseFlow.setCoefficientArray(baseFlow_array)
+    geometryDeformer = CylinderBSpline2Pts(mesh, equation.boundaries)
+    N_param          = geometryDeformer.getNumberOfParameters()
+    baseFlowSensitivity = [None]*N_param
+    for i in range(0,N_param):
+        a_i[i] = a_i[i] + epsilon
+    
+        geometryDeformer.deformMesh(a_i)
         
-        [u,p] = baseFlow.getListOfSingleFields()
-        meanFlow._fieldDict['u'] = u.function
-        meanFlow._fieldDict['p'] = p.function
-        N = equation.getNonlinearExpression(meanFlow)
-        residuum = np.linalg.norm(N.getArray())
-        printDebug(True, "-- Base flow iteration: "+str(i)+"; Residuum: %4g " % residuum)
+        N_deformed  = equation.getNonlinearExpression(meanFlow)
+        #N_deformed.axpy( -1., N_0) # does not need to be substracted, is zero
+        N_deformed.scale(1./epsilon)
+
+        baseFlowSensitivity[i] = Field(FEMSpaces.VMixed, mesh)
+        baseFlowSensitivity[i].setCoefficientArray(LinearSolver.solveEquationSystem(A, N_deformed))
     
-    
-    
-    # end tracking time
-    end = time.time() - start
-    printDebug(True, '-- Solving the base flow problem took %4g s' % end)
-    printDebug(True, '-- Residuum:  %12g' % (residuum))
-    
-    # save base flow as numpy file, to accelerate future base flow calculations
-    np.save("baseFlow.npy",  baseFlow.getCoefficientArray())
+        a_i[i] = a_i[i] - epsilon
+        geometryDeformer.restoreMesh()
+   
 
  
-    ## export base flow in modes-format 
+    ## export leading modes in standard felics format
     #baseFlow_0   = Mode(FEMSpaces.VMixed, mesh)
     #baseFlow_0.setEigenValue(0.)
-    #baseFlow_0.setCoefficientArray(baseFlow.getCoefficientArray())
+    #baseFlow_0.setCoefficientArray(baseFlowSensitivity[0].getCoefficientArray())
     #baseFlow_1   = Mode(FEMSpaces.VMixed, mesh)
     #baseFlow_1.setEigenValue(0.)
-    #baseFlow_1.setCoefficientArray(baseFlow.getCoefficientArray())
+    #baseFlow_1.setCoefficientArray(baseFlowSensitivity[1].getCoefficientArray())
     #baseFlow_1.isAdjoint=True
     #solution_onlyLeading = ModeCollection(FEMSpaces.VMixed, mesh)
     #solution_onlyLeading.appendMode(baseFlow_0)
@@ -155,6 +132,9 @@ def calculateBaseFlow(settingsFileName):
     #fluctSolutList = solution_onlyLeading.getOldSolutionObject(meanFlow, param, FEMSpaces)
     #ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
 
-    return baseFlow
+
+    return baseFlowSensitivity
+
+
 
 

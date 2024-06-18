@@ -11,11 +11,15 @@ class GeometryDeformer(ABC):
         self.facets     = facets
         self.isDeformed = False
 
-        self.x = mesh.geometry.x
-        bc_facet_dofs = facets.indices[facets.values==1001]
-        self.bc_dofs  = dolfinx.mesh.compute_incident_entities(self.mesh.topology,bc_facet_dofs, self.mesh.topology.dim-1, 0)
+        self.x         = mesh.geometry.x
+        self.x_dolfinx = mesh.dolfinxMesh.geometry.x
+        self.x_cpp     = mesh._cpp_object.geometry.x
+
+        bc_facet_dofs  = facets.indices[facets.values==1001]
+        self.bc_dofs   = dolfinx.mesh.compute_incident_entities(self.mesh.topology,bc_facet_dofs, self.mesh.topology.dim-1, 0)
+
         
-        self.x_save = copy.deepcopy(self.x[self.bc_dofs])
+        self.x_save   = copy.deepcopy(self.x[self.bc_dofs])
         #self.x_save = [None]*len(self.x[self.bc_dofs])
         #i=0
         #for dof in self.bc_dofs:
@@ -34,7 +38,7 @@ class GeometryDeformer(ABC):
     def restoreMesh(self):
         i=0
         for dof in self.bc_dofs:
-            self.x[dof] = self.x_save[i]
+            self.x[dof]         = self.x_save[i]
             i+=1
         self.isDeformed = False
 
@@ -70,7 +74,7 @@ class CylinderBSpline2Pts(GeometryDeformer):
         # Set knot vector
         curve.knotvector = [0, 0, 0, 0, 1, 1, 1, 1]
         
-        curve.delta = 1.e-3
+        curve.delta = 1.e-4
         curve_points = curve.evalpts
         N = len(curve_points)
         x_val = np.empty(N)
@@ -82,9 +86,58 @@ class CylinderBSpline2Pts(GeometryDeformer):
         spline = interpolate.CubicSpline(x_val, y_val)
         
         for dof in self.bc_dofs:
-            self.x[dof][1] = spline(self.x[dof][0])
+            self.x[dof][1]         = spline(self.x[dof][0])
+            self.x_dolfinx[dof][1] = spline(self.x[dof][0])
+            self.x_cpp[dof][1]     = spline(self.x[dof][0])
 
         self.isDeformed=True
 
+
+#
+#class CylinderBSpline1Pt(GeometryDeformer):
+#
+#    def __init__(self,mesh,facets):
+#        super().__init__(mesh, facets)
+#        self.NumberOfParams = 1
+#
+#    def getNumberOfParameters(self):
+#        return self.NumberOfParams
+#
+#    def deformMesh(self, parameters):
+#        import scipy.interpolate as interpolate
+#        import geomdl as g
+#        from   geomdl import BSpline
+#
+#        if self.isDeformed:
+#            #TODO: printWarning
+#            printWarning('CAUTION: deforming an already deformed mesh...')
+#
+#        curve = BSpline.Curve()
+#        
+#        # Set degree
+#        curve.degree = 3
+#        
+#        # Set control points
+#        curve.ctrlpts = [[-0.5, 0, 0], [0., parameters[0], 0], [0.5, 0, 0]]
+#        
+#        # Set knot vector
+#        curve.knotvector = [0, 0, 0, 1, 1, 1]
+#        
+#        curve.delta = 1.e-4
+#        curve_points = curve.evalpts
+#        N = len(curve_points)
+#        x_val = np.empty(N)
+#        y_val = np.empty(N)
+#        for i in range(N):
+#            x_val[i] = curve_points[i][0]
+#            y_val[i] = curve_points[i][1]
+#        
+#        spline = interpolate.CubicSpline(x_val, y_val)
+#        
+#        for dof in self.bc_dofs:
+#            self.x[dof][1] = spline(self.x[dof][0])
+#
+#        self.isDeformed=True
+#
 
 
