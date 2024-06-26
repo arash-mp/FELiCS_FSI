@@ -29,6 +29,7 @@ class CaseSettingsClass(Settings):
             'MolViscModel':{'datatype':str,'default':'Constant'},
             'MolViscPerturbModel':{'datatype':str,'default':'None'},
             'MolVisc':{'datatype':int,'default':0.0},
+            'MolViscRampFactors':{'datatype':int,'default':[1.]},
             'AnalysisMode':{'datatype':str,'default':'Modal'},
             'CalculateAdjoint':{'datatype':bool,'default':True},
             'TransVelFluc':{'datatype':bool,'default':False},

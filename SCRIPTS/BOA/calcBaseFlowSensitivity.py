@@ -59,12 +59,16 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array):
     #meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
 
-    # load base flow into meanFlow object
+    # load base flow into meanFlow object if the mean flow field is zero
     baseFlow = Field(FEMSpaces.VMixed, mesh)
-    baseFlow.setCoefficientArray(baseFlow_array)
-    [u,p] = baseFlow.getListOfSingleFields()
-    meanFlow._fieldDict['u'] = u.function
-    meanFlow._fieldDict['p'] = p.function
+    if np.linalg.norm(meanFlow._fieldDict['u'].x.array[:]) < 1.e-8:
+        baseFlow.setCoefficientArray(baseFlow_array)
+        [u,p] = baseFlow.getListOfSingleFields()
+        meanFlow._fieldDict['u'] = u.function
+        meanFlow._fieldDict['p'] = p.function
+    elif np.linalg.norm(meanFlow._fieldDict['p'].x.array[:]) < 1.e-8:
+        print('Error: for the sensitivities the pressure field is needed, please provide it alongside the velocity field.')
+        exit()
 
     # equation
     equation = EquationCollectionClass(
