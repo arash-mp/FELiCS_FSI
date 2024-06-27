@@ -22,10 +22,9 @@ from   FELiCS.Fields.Field import Field
 from   FELiCS.Fields.Mode import Mode
 from   FELiCS.Misc.tensorUtils import Tensor
 
-from   GeometryDeformer import CylinderBSpline2Pts 
+from   CaseHandler import CaseHandler
 
-
-def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array):
+def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerParameters):
 
     param=parameters()
     param.importFromFile(settingsFileName)
@@ -78,6 +77,8 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array):
                                       mesh
                                       )
     
+    caseHandler = CaseHandler(settingsFileName, param, mesh, equation.boundaries)
+
     #-----------------------------------------------------------------------
     ## CALCULATE delta N / delta a_i and dq/da_i: 
     #-----------------------------------------------------------------------
@@ -96,13 +97,12 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array):
     A    = equation.getLinearOperator(meanFlow)
     N_0  = equation.getNonlinearExpression(meanFlow)    
 
-    # create and read fields
-    a_i  = np.load("params.npy")
     
     # deform mesh
     epsilon = 1.e-8
+    a_i     = optimizerParameters
     
-    geometryDeformer = CylinderBSpline2Pts(mesh, equation.boundaries)
+    geometryDeformer = caseHandler.getGeometryDeformer() 
     N_param          = geometryDeformer.getNumberOfParameters()
     baseFlowSensitivity = [None]*N_param
     for i in range(0,N_param):
@@ -116,12 +116,11 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array):
 
         baseFlowSensitivity[i] = Field(FEMSpaces.VMixed, mesh)
         baseFlowSensitivity[i].setCoefficientArray(LinearSolver.solveEquationSystem(A, N_deformed))
-    
+   
         a_i[i] = a_i[i] - epsilon
         geometryDeformer.restoreMesh()
    
 
- 
     ## export leading modes in standard felics format
     #baseFlow_0   = Mode(FEMSpaces.VMixed, mesh)
     #baseFlow_0.setEigenValue(0.)
@@ -137,7 +136,11 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array):
     #ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
 
 
-    return baseFlowSensitivity
+    baseFlowSensitivity_array=[]
+    for sens in baseFlowSensitivity:
+        baseFlowSensitivity_array.append(sens.getCoefficientArray())
+
+    return baseFlowSensitivity_array
 
 
 

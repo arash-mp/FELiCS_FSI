@@ -22,12 +22,10 @@ from   FELiCS.Fields.Field import Field
 from   FELiCS.Fields.Mode import Mode
 from   FELiCS.Misc.tensorUtils import Tensor
 
-
-from   GeometryDeformer import CylinderBSpline2Pts 
-#from   GeometryDeformer import CylinderBSpline1Pts 
+from   CaseHandler import CaseHandler
 
 
-def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensitivity):
+def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensitivity, optimizerParameters):
 
     #-----------------------------------------------------------------------
     ## INITIALIZATION 
@@ -73,6 +71,8 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
                                       meanFlow,
                                       mesh
                                       )
+
+    caseHandler = CaseHandler(settingsFileName, param, mesh, equation.boundaries)
 
     #-----------------------------------------------------------------------
     ## SOLVE EIGENPROBLEM AND SCALE LEADING MODES
@@ -156,12 +156,12 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     A_0  = equation.getLinearOperator(meanFlow)
     
     # create and read fields
-    a_i  = np.load("params.npy")
+    a_i  = optimizerParameters 
     
     # deform mesh
     epsilon = 1.e-8
     
-    geometryDeformer = CylinderBSpline2Pts(mesh, equation.boundaries)
+    geometryDeformer = caseHandler.getGeometryDeformer() 
     N_param          = geometryDeformer.getNumberOfParameters()
     sensitivity1     = np.zeros(N_param,dtype=complex)
     sensitivity2     = np.zeros(N_param,dtype=complex)

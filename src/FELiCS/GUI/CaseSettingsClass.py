@@ -29,7 +29,6 @@ class CaseSettingsClass(Settings):
             'MolViscModel':{'datatype':str,'default':'Constant'},
             'MolViscPerturbModel':{'datatype':str,'default':'None'},
             'MolVisc':{'datatype':int,'default':0.0},
-            'MolViscRampFactors':{'datatype':int,'default':[1.]},
             'AnalysisMode':{'datatype':str,'default':'Modal'},
             'CalculateAdjoint':{'datatype':bool,'default':True},
             'TransVelFluc':{'datatype':bool,'default':False},
@@ -51,10 +50,13 @@ class CaseSettingsClass(Settings):
         return CaseSettingsDict
 
             #'SetOfEquations':{'datatype':dict,'default':{'Navier-Stokes':'Primitive Variables','Energy':'None','Species': 'None', 'equationOfState': 'None'}}
-    def importSettings(self,settingFilePath):
+    def importSettings(self,settingFilePath,CaseSettingsDict=None):
         ''' Loading Case parameters from file '''
         from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
-        CaseSettingsDict=self.getAllSettingsDict()
+       
+        if CaseSettingsDict == None:
+            CaseSettingsDict=self.getAllSettingsDict()
+            
         if not settingFilePath =='':
             file = open(settingFilePath)
 
