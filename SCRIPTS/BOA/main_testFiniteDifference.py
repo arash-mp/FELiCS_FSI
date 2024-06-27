@@ -43,7 +43,7 @@ baseFlowSensitivity_array                       = calculateBaseFlowSensitivity (
 sensitivity1, sensitivity2, eigenValue_0        = calculateModesAndSensitivity (settingsFileName_eigenSystem, baseFlow_array, baseFlowSensitivity_array, a_0)
 
 # write out solutions s.t. the shapedescender can read them
-np.save("f.npy",  eigenValue)
+np.save("f.npy",  eigenValue_0)
 np.save("df.npy", (sensitivity1 + sensitivity2))
 epsilon = 1.e-4
 
@@ -58,8 +58,6 @@ for i in range(len(a_0)):
     a_i[i] = a_i[i] - epsilon 
 
 np.save("FD_-4.npy", FD)
-
-
 
 
 
