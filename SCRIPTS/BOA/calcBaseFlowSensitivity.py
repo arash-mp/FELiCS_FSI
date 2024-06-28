@@ -24,7 +24,7 @@ from   FELiCS.Misc.tensorUtils import Tensor
 
 from   CaseHandler import CaseHandler
 
-def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerParameters):
+def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerParameters, deformed = False):
 
     param=parameters()
     param.importFromFile(settingsFileName)
@@ -79,44 +79,57 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerPara
     
     caseHandler = CaseHandler(settingsFileName, param, mesh, equation.boundaries)
 
+    # deform mesh at beginning - only for testing /debugging
+    if deformed == True:
+        geometryDeformer = caseHandler.getGeometryDeformer()
+        geometryDeformer.deformMesh(optimizerParameters)
+        geometryDeformer.isDeformed = False
+
     #-----------------------------------------------------------------------
     ## CALCULATE delta N / delta a_i and dq/da_i: 
     #-----------------------------------------------------------------------
     # set target function for nonlinear sponge
+    targetValues = caseHandler.getTargetValuesForSponge()
     [u_t,p_t] = baseFlow.getListOfSingleFields()
     mapping_ux = u_t.space.sub(0).collapse()[1]
     mapping_uy = u_t.space.sub(1).collapse()[1]
-    u_t.function.x.array[mapping_ux] = 1.
-    u_t.function.x.array[mapping_uy] = 0.
-    p_t.function.x.array[:]          = 0.
+    u_t.function.x.array[mapping_ux] = targetValues[0]
+    u_t.function.x.array[mapping_uy] = targetValues[1]
+    p_t.function.x.array[:]          = targetValues[2]
     meanFlow._fieldDict['u_target'] = u_t.function
     meanFlow._fieldDict['p_target'] = p_t.function
-   
 
     # get reference nonlinear expression
-    A    = equation.getLinearOperator(meanFlow)
     N_0  = equation.getNonlinearExpression(meanFlow)    
 
-    
+    # get linear solver  
+    A        = equation.getLinearOperator(meanFlow)
+    solver_A = LinearSolver.createEquationSystemSolver(A)
+
     # deform mesh
     epsilon = 1.e-8
     a_i     = optimizerParameters
     
-    geometryDeformer = caseHandler.getGeometryDeformer() 
-    N_param          = geometryDeformer.getNumberOfParameters()
+    geometryDeformer    = caseHandler.getGeometryDeformer() 
+    N_param             = geometryDeformer.getNumberOfParameters()
     baseFlowSensitivity = [None]*N_param
     for i in range(0,N_param):
+        printDebug(True, "-------------------------------------------------------------" )
+        printDebug(True, "-- Calculating base flow sensitivity to parameter number "+str(i+1)+"...")
+        printDebug(True, "-------------------------------------------------------------" )
+
         a_i[i] = a_i[i] + epsilon
     
         geometryDeformer.deformMesh(a_i)
         
         N_deformed  = equation.getNonlinearExpression(meanFlow)
-        #N_deformed.axpy( -1., N_0) # does not need to be substracted, is zero
+        N_deformed.axpy( -1., N_0) # does not need to be substracted, is zero
         N_deformed.scale(1./epsilon)
 
-        baseFlowSensitivity[i] = Field(FEMSpaces.VMixed, mesh)
-        baseFlowSensitivity[i].setCoefficientArray(LinearSolver.solveEquationSystem(A, N_deformed))
-   
+        baseFlowSensitivity[i]     = Field(FEMSpaces.VMixed, mesh)
+        baseFlowSensitivity_array  = LinearSolver.solveEquationSystemWithPredefinedSolver(solver_A, N_deformed)
+        baseFlowSensitivity[i].setCoefficientArray(baseFlowSensitivity_array)
+
         a_i[i] = a_i[i] - epsilon
         geometryDeformer.restoreMesh()
    

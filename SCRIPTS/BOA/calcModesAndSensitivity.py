@@ -25,7 +25,7 @@ from   FELiCS.Misc.tensorUtils import Tensor
 from   CaseHandler import CaseHandler
 
 
-def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensitivity, optimizerParameters):
+def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensitivity, optimizerParameters, deformed = False):
 
     #-----------------------------------------------------------------------
     ## INITIALIZATION 
@@ -74,6 +74,13 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
 
     caseHandler = CaseHandler(settingsFileName, param, mesh, equation.boundaries)
 
+
+    # deform mesh at beginning - only for testing /debugging
+    if deformed == True:
+        geometryDeformer = caseHandler.getGeometryDeformer()
+        geometryDeformer.deformMesh(optimizerParameters)
+        geometryDeformer.isDeformed = False
+
     #-----------------------------------------------------------------------
     ## SOLVE EIGENPROBLEM AND SCALE LEADING MODES
     #-----------------------------------------------------------------------
@@ -89,6 +96,10 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     # track time
     start= time.time()
     
+    printDebug(True, "-------------------------------------------------------------" )
+    printDebug(True, "-- Calculating modes and eigenvalues...")
+    printDebug(True, "-------------------------------------------------------------" )
+
     # solve direct eigenproblem for each guess
     solution = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
@@ -153,24 +164,32 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     #-----------------------------------------------------------------------
     ## CALCULATE GRADIENT WITH RESPECT TO GEOMETRY DEFORMATIONS - Part I
     #-----------------------------------------------------------------------
+    # undisturbed linear operator
     A_0  = equation.getLinearOperator(meanFlow)
-    
-    # create and read fields
+
+    # parameters that are used in the optimization process
     a_i  = optimizerParameters 
     
-    # deform mesh
+    # epsilon for mesh deformation
     epsilon = 1.e-8
-    
+   
+    # initialize stuff     
     geometryDeformer = caseHandler.getGeometryDeformer() 
     N_param          = geometryDeformer.getNumberOfParameters()
     sensitivity1     = np.zeros(N_param,dtype=complex)
     sensitivity2     = np.zeros(N_param,dtype=complex)
     baseFlowSens     = Field(FEMSpaces.VMixed, mesh)
+
     for i in range(0,N_param):
+        printDebug(True, "-------------------------------------------------------------" )
+        printDebug(True, "-- Calculating eigenvalue sensitivity to parameter number "+str(i+1)+"...")
+        printDebug(True, "-------------------------------------------------------------" )
+
         a_i[i] = a_i[i] + epsilon
     
         geometryDeformer.deformMesh(a_i)
-        
+       
+        # calculate first sensitivity part: with the partial derivative of the linear operator
         A_deformed  = equation.getLinearOperator(meanFlow)
         A_deformed.axpy(-1., A_0)
         A_deformed.scale(1./epsilon)
@@ -181,7 +200,8 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
         dolfinx.fem.petsc.set_bc(result, equation.BCs)
         sensitivity1[i]   = result.dot(mode_adjoint_petsc)
     
-
+       
+        # calculate second sensitivity part: with the base flow sensitivities
         baseFlowSens.setCoefficientArray(baseFlowSensitivity[i])
         [u_direct, p_direct]              = baseFlowSens.getListOfSingleFields()
         meanFlow._fieldDict['u_bilinear'] = u_direct.function

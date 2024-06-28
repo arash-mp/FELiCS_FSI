@@ -27,7 +27,7 @@ from   FELiCS.Misc.tensorUtils import Tensor
 
 from   CaseHandler import CaseHandler
 
-def calculateBaseFlow(settingsFileName):
+def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = False):
 
     #-----------------------------------------------------------------------
     ## INITIALIZATION 
@@ -68,6 +68,13 @@ def calculateBaseFlow(settingsFileName):
                                       )
 
     caseHandler = CaseHandler(settingsFileName, param, mesh, equation.boundaries)
+
+    # deform mesh at beginning - only for testing /debugging
+    if deformed == True:
+        geometryDeformer = caseHandler.getGeometryDeformer()
+        geometryDeformer.deformMesh(optimizerParameters)
+        geometryDeformer.isDeformed = False
+
 
     #-----------------------------------------------------------------------
     ## CALCULATE BASE FLOW 
@@ -122,14 +129,17 @@ def calculateBaseFlow(settingsFileName):
     target_residuum = 1.e-11
     # track time
     start= time.time()
-   
-    nulam_target = meanFlow._fieldDict['nulam'].x.array[:]
-    viscosityRampFactors = param.Case.MolViscRampFactors
+  
+    nulam_target = Field(FEMSpaces.P2, mesh)
+    nulam_target.setCoefficientArray(meanFlow._fieldDict['nulam'].x.array[:])
 
-    for viscFactor in viscosityRampFactors:
-        # set the viscosity for this ramp loop
-        meanFlow._fieldDict['nulam'].x.array[:] = nulam_target * viscFactor
+
+    for viscFactor in param.Case.MolViscRampFactors:
+        # set the viscosity for this Newton-Ramp loop
+        meanFlow._fieldDict['nulam'].x.array[:] = nulam_target.getCoefficientArray() * viscFactor
+        printDebug(True, "-------------------------------------------------------------" )
         printDebug(True, "-- viscosity factor for base flow run:  %4g " % viscFactor)
+        printDebug(True, "-------------------------------------------------------------" )
 
         # calculate the base flow
         i=0
@@ -144,6 +154,8 @@ def calculateBaseFlow(settingsFileName):
             # solve equation system
             L = equation.getLinearOperator(meanFlow)
             newtonSummand_array = LinearSolver.solveEquationSystem(L,N)
+            L.destroy()
+            N.destroy()
         
             # update baseFlow
             baseFlow_array = baseFlow.getCoefficientArray() + newtonSummand_array
@@ -155,7 +167,10 @@ def calculateBaseFlow(settingsFileName):
             meanFlow._fieldDict['p'] = p.function
             N = equation.getNonlinearExpression(meanFlow)
             residuum = np.linalg.norm(N.getArray())
+            printDebug(True, "-------------------------------------------------------------" )
             printDebug(True, "-- Base flow iteration: "+str(i)+"; Residuum: %4g " % residuum)
+            printDebug(True, "-------------------------------------------------------------" )
+
 
     
     # end tracking time

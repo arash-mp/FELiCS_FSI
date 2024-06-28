@@ -203,8 +203,6 @@ class LinearSolver:
         x = solution.getArray()
         
         solver.destroy()
-        #A.destroy()
-        #b.destroy()
         dummy.destroy()
         
         return x 
@@ -244,11 +242,70 @@ class LinearSolver:
         x = solution.getArray()
         
         solver.destroy()
-        #A.destroy()
-        #b.destroy()
         dummy.destroy()
         
         return x 
+
+
+    @staticmethod
+    def createEquationSystemSolver(
+        A):
+
+        """__solveEquationSystem  
+        Creates a KSP petsc solver to solve a linear equation system. This is useful if several linear equation systems with the same matrix are solved, 
+        since it stores the preconditioner and the calculation time is significantly reduced.
+        To solve the equation system use the method "solveEquationSystemWithPredefinedSolver".
+        
+        Parameters
+        ----------
+        A : PETSc matrix
+            matrix of the linear system
+        
+        Returns
+        -------
+        solver:  PETSc KSP solver
+                 solver for the given matrix 
+        """
+        from petsc4py import PETSc
+        
+        solver = PETSc.KSP().create()
+        solver.setOperators(A)
+        solver.setType(PETSc.KSP.Type.PREONLY)
+        solver.getPC().setType(PETSc.PC.Type.LU)
+        solver.getPC().setFactorSolverType('mumps')
+        
+        return solver 
+
+
+    @staticmethod
+    def solveEquationSystemWithPredefinedSolver(
+        solver,
+        b):
+
+        """__solveEquationSystem  
+        Solves a linear equation system Ax=b, using the PETSc libraries.
+        
+        Parameters
+        ----------
+        solver : PETSc KSP solver
+                 created with the method "createEquationSystemSolver"
+        b : PETSc vector
+            rhs of the linear system
+        
+        Returns
+        -------
+        x:  numpy array
+            solution of the linear equation system
+        """
+        from petsc4py import PETSc
+        solution = b.copy()
+        
+        solver.solve(b, solution)
+        
+        x = solution.getArray()
+        
+        return x 
+
 
 
 

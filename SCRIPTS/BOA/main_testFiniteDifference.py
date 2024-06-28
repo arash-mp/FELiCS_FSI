@@ -42,30 +42,41 @@ baseFlow_array                                  = calculateBaseFlow            (
 baseFlowSensitivity_array                       = calculateBaseFlowSensitivity (settingsFileName_baseFlow, baseFlow_array, a_0) 
 sensitivity1, sensitivity2, eigenValue_0        = calculateModesAndSensitivity (settingsFileName_eigenSystem, baseFlow_array, baseFlowSensitivity_array, a_0)
 
-# write out solutions s.t. the shapedescender can read them
-np.save("f.npy",  eigenValue_0)
-np.save("df.npy", (sensitivity1 + sensitivity2))
-epsilon = 1.e-4
+print("################## Eigenvalue:", eigenValue_0)
 
-a_i = a_0
-FD  = np.empty(len(a_0),dtype=complex)
-for i in range(len(a_0)):
-    a_i[i] = a_i[i] + epsilon 
-    baseFlow_array                            = calculateBaseFlow            (settingsFileName_baseFlow)
-    baseFlowSensitivity_array                 = calculateBaseFlowSensitivity (settingsFileName_baseFlow, baseFlow_array, a_i) 
-    sensitivity1, sensitivity2, eigenValue_i  = calculateModesAndSensitivity (settingsFileName_eigenSystem, baseFlow_array, baseFlowSensitivity_array, a_i)
-    FD[i] = (eigenValue_i - eigenValue_0)/epsilon
-    a_i[i] = a_i[i] - epsilon 
-
-np.save("FD_-4.npy", FD)
+np.save("OutputTest/f.npy",  eigenValue_0)
+np.save("OutputTest/df.npy", (sensitivity1 + sensitivity2))
 
 
+for j in range(5,12):
 
-print("##################", eigenValue)
-print("##################", (sensitivity1)) 
-print("##################", (sensitivity2) )
-print("##################", (sensitivity1 + sensitivity2))
+    epsilon = 10**(-j)
+    a_i = a_0
+    FD  = np.empty(len(a_0),dtype=complex)
+    for i in range(len(a_0)):
+        a_i[i] = a_i[i] + epsilon 
+        baseFlow_array                                = calculateBaseFlow            (settingsFileName_baseFlow, a_i, deformed = True)
+        baseFlowSensitivity_array                     = calculateBaseFlowSensitivity (settingsFileName_baseFlow, baseFlow_array, a_i, deformed = True) 
+        sensitivity1_i, sensitivity2_i, eigenValue_i  = calculateModesAndSensitivity (settingsFileName_eigenSystem, baseFlow_array, baseFlowSensitivity_array, a_i, deformed = True)
+        FD[i] = (eigenValue_i - eigenValue_0)/epsilon
+        a_i[i] = a_i[i] - epsilon  
+        print("################## Eigenvalue:", eigenValue_0)
+        print("################## Sensitivities:")
+        print(i, np.real(sensitivity1[i]+sensitivity2[i]), np.imag(sensitivity1[i]+sensitivity2[i]))
+        print('################## Finite Difference, epsilon= ', epsilon)
+        print(i, np.real(FD[i]), np.imag(FD[i]))
 
+    
+    np.save("OutputTest/FD_-"+str(j)+".npy", FD)
+    
+    
+    print("################## Eigenvalue:", eigenValue_0)
+    print("################## Sensitivities:")
+    for i in range(len(a_0)):
+        print(i, np.real(sensitivity1[i]+sensitivity2[i]), np.imag(sensitivity1[i]+sensitivity2[i]))
+    print('################## Finite Difference, epsilon= ', epsilon)
+    for i in range(len(a_0)):
+        print(i, np.real(FD[i]), np.imag(FD[i]))
 
 
 ##-----------------------------------------------------------------------
