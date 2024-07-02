@@ -164,8 +164,9 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     #-----------------------------------------------------------------------
     ## CALCULATE GRADIENT WITH RESPECT TO GEOMETRY DEFORMATIONS - Part I
     #-----------------------------------------------------------------------
-    # undisturbed linear operator
+    # get undisturbed operators (#TODO: cannot use the ones from above - why?)
     A_0  = equation.getLinearOperator(meanFlow)
+    B_0  = equation.getWeightMatrix  (meanFlow)
 
     # parameters that are used in the optimization process
     a_i  = optimizerParameters 
@@ -189,25 +190,35 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     
         geometryDeformer.deformMesh(a_i)
        
-        # calculate first sensitivity part: with the partial derivative of the linear operator
+        ## calculate the first sensitivity part: with the partial derivative of the linear operator and the weight matrix
+        # (A_deformed - A_0)/epsilon
         A_deformed  = equation.getLinearOperator(meanFlow)
-        A_deformed.axpy(-1., A_0)
-        A_deformed.scale(1./epsilon)
+        A_deformed.axpy(-1., A_0)    # A_deformed -= A_0
+        A_deformed.scale(1./epsilon) # A_deformed /= epsilon
+
+        # (B_deformed - B_0)/epsilon 
+        B_deformed  = equation.getWeightMatrix  (meanFlow)
+        B_deformed.axpy(-1., B_0)     # B_deformed -= B_0
+        B_deformed.scale(1./epsilon)  # B_deformed /= epsilon 
+
+        # multiply with eigenvalue
+        A_deformed.axpy(-eigenValue, B_deformed) # A_deformed -= eigenValue * B_deformed
+
+        # multiply with the adjoint eigenvector (from left) and the direct eigenvector (from right)  
         mode_direct_petsc  = mode_direct.getPetscVector()
         mode_adjoint_petsc = mode_adjoint.getPetscVector()
         result             = mode_direct.getPetscVector()
         A_deformed.mult(mode_direct_petsc, result)
         dolfinx.fem.petsc.set_bc(result, equation.BCs)
         sensitivity1[i]   = result.dot(mode_adjoint_petsc)
-    
        
-        # calculate second sensitivity part: with the base flow sensitivities
+        ## calculate the second sensitivity part: with the base flow sensitivities
         baseFlowSens.setCoefficientArray(baseFlowSensitivity[i])
-        [u_direct, p_direct]              = baseFlowSens.getListOfSingleFields()
-        meanFlow._fieldDict['u_bilinear'] = u_direct.function
+        [u_sens, p_sens]                  = baseFlowSens.getListOfSingleFields()
+        meanFlow._fieldDict['u_bilinear'] = u_sens.function
         BL                                = equation.getBilinearOperator(meanFlow)
         BL.mult(mode_direct_petsc, result)
-        dolfinx.fem.petsc.set_bc(result, equation.BCs)
+        #dolfinx.fem.petsc.set_bc(result, equation.BCs)
         sensitivity2[i]  = result.dot(mode_adjoint_petsc)
 
 
@@ -223,7 +234,7 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     printDebug(True, '------------------------------------------------ ')
 
 
-    return sensitivity1, sensitivity2, mode_direct.getEigenValue()
+    return sensitivity1, sensitivity2, eigenValue 
 
 
     

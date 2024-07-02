@@ -123,7 +123,7 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerPara
         geometryDeformer.deformMesh(a_i)
         
         N_deformed  = equation.getNonlinearExpression(meanFlow)
-        N_deformed.axpy( -1., N_0) # does not need to be substracted, is zero
+        N_deformed.axpy( -1., N_0) # does not need to be substracted, is zero (only for base flow...)
         N_deformed.scale(1./epsilon)
 
         baseFlowSensitivity[i]     = Field(FEMSpaces.VMixed, mesh)
