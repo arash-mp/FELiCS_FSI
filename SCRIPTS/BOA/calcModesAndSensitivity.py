@@ -111,16 +111,16 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
         solution.appendSolutionOfEigenProblem(tmp, guess)
     
     
-    mode_direct       = solution.getLeadingMode()
-    guess             = mode_direct.getEigenValue()
-    
-    # solve adjoint eigenproblem only for the leading eigenvalue
-    tmp = LinearSolver.solveGeneralEigenproblem(A,
-                                                B,
-                                                guess,
-                                                1,
-                                                adjoint=True)
-    solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
+        # mode_direct_temp       = solution.getLeadingMode()
+        # guess                   = mode_direct_temp.getEigenValue()
+        
+        # solve adjoint eigenproblem only for the leading eigenvalue
+        tmp = LinearSolver.solveGeneralEigenproblem(A,
+                                                    B,
+                                                    guess,
+                                                    1,
+                                                    adjoint=True)
+        solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
     
     
     # end tracking time
@@ -130,14 +130,19 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
     
     # get leading modes
+    # mode_direct  = solution.getLeadingMode(adjoint=False)
+    # mode_adjoint = solution.getLeadingMode(adjoint=True)
+    # eigenValue   = mode_direct.getEigenValue()
+    # printDebug(True, '------------------------------------------------ ')
+    # printDebug(True, '-- Leading eigenvalue:  ' + str(eigenValue))
+    # printDebug(True, '------------------------------------------------ ')
+    
+
+    fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+     
     mode_direct  = solution.getLeadingMode(adjoint=False)
     mode_adjoint = solution.getLeadingMode(adjoint=True)
-    eigenValue   = mode_direct.getEigenValue()
-    printDebug(True, '------------------------------------------------ ')
-    printDebug(True, '-- Leading eigenvalue:  ' + str(eigenValue))
-    printDebug(True, '------------------------------------------------ ')
-    
-    
     
     # scale modes s.t. mode_adjoint^H * B * mode_direct = 1
     mode_direct_petsc  = mode_direct.getPetscVector()
@@ -153,11 +158,11 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
    
   
     # export leading modes in standard felics format
-    solution_onlyLeading = ModeCollection(FEMSpaces.VMixed, mesh)
-    solution_onlyLeading.appendMode(mode_direct)
-    solution_onlyLeading.appendMode(mode_adjoint)
-    fluctSolutList = solution_onlyLeading.getOldSolutionObject(meanFlow, param, FEMSpaces)
-    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+    # solution_onlyLeading = ModeCollection(FEMSpaces.VMixed, mesh)
+    # solution_onlyLeading.appendMode(mode_direct)
+    # solution_onlyLeading.appendMode(mode_adjoint)
+    # fluctSolutList = solution_onlyLeading.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    
 
 
 

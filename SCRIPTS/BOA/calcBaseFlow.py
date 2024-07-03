@@ -25,7 +25,27 @@ from   FELiCS.Fields.Field import Field
 from   FELiCS.Fields.Mode import Mode
 from   FELiCS.Misc.tensorUtils import Tensor
 
+from ufl import VectorElement
+from dolfinx.fem import Function, FunctionSpace
+
 from   CaseHandler import CaseHandler
+
+
+def save_baseflow(mesh, u):
+
+    # Write felics baseflow file
+    with h5py.File("base_flow_4_plot.fel", 'w') as f:
+        f.create_dataset('/MeanFlow/x', data=mesh.geometry.x[:,0])
+        f.create_dataset('/MeanFlow/y', data=mesh.geometry.x[:,1])
+        f.create_dataset('/MeanFlow/ux', data=u.sub(0).collapse().x.array)
+        f.create_dataset('/MeanFlow/uy', data=u.sub(1).collapse().x.array)
+
+    # Write solution
+    xdmf = dolfinx.io.XDMFFile(MPI.COMM_WORLD, "base_flow.xdmf", "w")
+    xdmf.write_mesh(mesh)
+    xdmf.write_function(u)
+    xdmf.close()
+
 
 def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = False):
 
@@ -182,20 +202,28 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
     np.save("baseFlow.npy",  baseFlow.getCoefficientArray())
 
 
+    # Interpolate solution on first order Lagrange Functionspace for XDMF export
+
+    meshX = mesh.dolfinxMesh
+    P1_first = VectorElement('CG', meshX.ufl_cell(), 1)
+    Sol = FunctionSpace(meshX, P1_first)
+    u_sol = Function(Sol)
+    u_sol.interpolate(u.function)
+
+    save_baseflow(meshX, u_sol)
+
     # export base flow in modes-format 
-    baseFlow_0   = Mode(FEMSpaces.VMixed, mesh)
-    baseFlow_0.setEigenValue(0.)
-    baseFlow_0.setCoefficientArray(baseFlow.getCoefficientArray())
-    baseFlow_1   = Mode(FEMSpaces.VMixed, mesh)
-    baseFlow_1.setEigenValue(0.)
-    baseFlow_1.isAdjoint = True
-    solution = ModeCollection(FEMSpaces.VMixed, mesh)
-    solution.appendMode(baseFlow_0)
-    solution.appendMode(baseFlow_1)
-    fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
-    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+    # baseFlow_0   = Mode(FEMSpaces.VMixed, mesh)
+    # baseFlow_0.setEigenValue(0.)
+    # baseFlow_0.setCoefficientArray(baseFlow.getCoefficientArray())
+    # baseFlow_1   = Mode(FEMSpaces.VMixed, mesh)
+    # baseFlow_1.setEigenValue(0.)
+    # baseFlow_1.isAdjoint = True
+    # solution = ModeCollection(FEMSpaces.VMixed, mesh)
+    # solution.appendMode(baseFlow_0)
+    # solution.appendMode(baseFlow_1)
+    # fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    # ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
 
 
     return baseFlow.getCoefficientArray()
-
-

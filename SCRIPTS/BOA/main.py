@@ -28,11 +28,11 @@ a_i  = np.load("params.npy")
 #-----------------------------------------------------------------------
 # MAIN PART 
 #-----------------------------------------------------------------------
-
+print('~~~~~ base flow ~~~~~~~')
 baseFlow_array                                  = calculateBaseFlow            (settingsFileName_baseFlow)
-
+print('~~~~~ base flow sensitivity ~~~~~~~')
 baseFlowSensitivity_array                       = calculateBaseFlowSensitivity (settingsFileName_baseFlow, baseFlow_array, a_i) 
-
+print('~~~~~ modes and sensitivity ~~~~~~~')
 sensitivity1, sensitivity2, eigenValue          = calculateModesAndSensitivity (settingsFileName_eigenSystem, baseFlow_array, baseFlowSensitivity_array, a_i)
 
 
