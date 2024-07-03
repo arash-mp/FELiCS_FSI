@@ -40,6 +40,14 @@ class ModeCollection():
         else:
             return np.amax(error)
 
+    def getDirectEigenValueSpectrum(self):
+        spectrum = []
+        for mode in self.modeList:
+            if not mode.isAdjoint:
+                spectrum.append(mode.getEigenValue())
+        return spectrum
+
+
     def getNearestMode(self,gain=None,eigenValue=None,guess=None,waveNumber=None,frequency=None):
         #ToDo: get nearest mode to one of the above. Change handling of parameters
         pass

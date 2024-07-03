@@ -31,7 +31,13 @@ from dolfinx.fem import Function, FunctionSpace
 from   CaseHandler import CaseHandler
 
 
-def save_baseflow(mesh, u):
+def saveBaseflow(mesh, u_original):
+
+    # Interpolate on P1 elements
+    P1_first = VectorElement('CG', mesh.ufl_cell(), 1)
+    Sol      = FunctionSpace(mesh, P1_first)
+    u        = Function(Sol)
+    u.interpolate(u_original.function)
 
     # Write felics baseflow file
     with h5py.File("base_flow_4_plot.fel", 'w') as f:
@@ -203,14 +209,7 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
 
 
     # Interpolate solution on first order Lagrange Functionspace for XDMF export
-
-    meshX = mesh.dolfinxMesh
-    P1_first = VectorElement('CG', meshX.ufl_cell(), 1)
-    Sol = FunctionSpace(meshX, P1_first)
-    u_sol = Function(Sol)
-    u_sol.interpolate(u.function)
-
-    save_baseflow(meshX, u_sol)
+    saveBaseflow(mesh.dolfinxMesh, u)
 
     # export base flow in modes-format 
     # baseFlow_0   = Mode(FEMSpaces.VMixed, mesh)

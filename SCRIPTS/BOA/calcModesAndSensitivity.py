@@ -8,7 +8,7 @@ import dolfinx
 from   FELiCS.Parameters.parameters import parameters
 
 import FELiCS.IO.Import as Import
-from   FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
+import FELiCS.IO.ExportSolution as Export 
 
 import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
 from   FELiCS.Fields.meanFlowClass import meanFlowClass
@@ -81,6 +81,7 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
         geometryDeformer.deformMesh(optimizerParameters)
         geometryDeformer.isDeformed = False
 
+
     #-----------------------------------------------------------------------
     ## SOLVE EIGENPROBLEM AND SCALE LEADING MODES
     #-----------------------------------------------------------------------
@@ -110,14 +111,13 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
                                                         )
         solution.appendSolutionOfEigenProblem(tmp, guess)
     
-    
-        # mode_direct_temp       = solution.getLeadingMode()
-        # guess                   = mode_direct_temp.getEigenValue()
-        
+        # get leading eigenvalue
+        eigenValue    = solution.getLeadingMode().getEigenValue()
+         
         # solve adjoint eigenproblem only for the leading eigenvalue
         tmp = LinearSolver.solveGeneralEigenproblem(A,
                                                     B,
-                                                    guess,
+                                                    eigenValue,
                                                     1,
                                                     adjoint=True)
         solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
@@ -130,19 +130,11 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
     
     # get leading modes
-    # mode_direct  = solution.getLeadingMode(adjoint=False)
-    # mode_adjoint = solution.getLeadingMode(adjoint=True)
-    # eigenValue   = mode_direct.getEigenValue()
-    # printDebug(True, '------------------------------------------------ ')
-    # printDebug(True, '-- Leading eigenvalue:  ' + str(eigenValue))
-    # printDebug(True, '------------------------------------------------ ')
-    
-
-    fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
-    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
-     
     mode_direct  = solution.getLeadingMode(adjoint=False)
     mode_adjoint = solution.getLeadingMode(adjoint=True)
+    printDebug(True, '------------------------------------------------ ')
+    printDebug(True, '-- Leading eigenvalue:  ' + str(eigenValue))
+    printDebug(True, '------------------------------------------------ ')
     
     # scale modes s.t. mode_adjoint^H * B * mode_direct = 1
     mode_direct_petsc  = mode_direct.getPetscVector()
@@ -155,15 +147,21 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
     mode_adjoint_petsc.scale(np.conj(1./np.sqrt(factor)))
     mode_direct.setCoefficientArray(mode_direct_petsc.getArray())
     mode_adjoint.setCoefficientArray(mode_adjoint_petsc.getArray())
-   
-  
-    # export leading modes in standard felics format
-    # solution_onlyLeading = ModeCollection(FEMSpaces.VMixed, mesh)
-    # solution_onlyLeading.appendMode(mode_direct)
-    # solution_onlyLeading.appendMode(mode_adjoint)
-    # fluctSolutList = solution_onlyLeading.getOldSolutionObject(meanFlow, param, FEMSpaces)
-    
 
+    ## export all modes and all eigenvalues in standard felics format
+    #fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    #ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+
+    # export leading modes in standard felics format
+    solution_onlyLeading = ModeCollection(FEMSpaces.VMixed, mesh)
+    solution_onlyLeading.appendMode(mode_direct)
+    solution_onlyLeading.appendMode(mode_adjoint)
+    fluctSolutList = solution_onlyLeading.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    Export.ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+
+    # export full (direct) spectrum (and overwrite the spectrum from the other export function, which only writes the leading eigenvalue)
+    spectrum_direct = solution.getDirectEigenValueSpectrum()
+    Export.writeCSVSpectrum(param,spectrum_direct)
 
 
     #-----------------------------------------------------------------------
