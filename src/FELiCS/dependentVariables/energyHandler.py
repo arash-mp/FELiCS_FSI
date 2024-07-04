@@ -8,18 +8,31 @@ class energyHandler:
     (e.g. enthalpy, sensible energy...). Depending on which state variable
     is linearized (or alreaddy known), the respective other is calculated.
 
-    Parent classes:
+    Parameters:
+    ----------
+    None
 
-    Child classes:
-    - fluctuationClass
-    - fluctuationSolution
-    - meanFlowClass
+    Attributes:
+    ----------
+    None
 
-    Private attributes:
+    Methods:
+    -------
+    __init__():
+        Initializing the class and link temperature with transported energy variable
+        (e.g. enthalpy, sensible energy...)
 
-    Protected attributes:
+    _relateConservativeToPrimitiveVariablesEnergy(mean='None'):
+        Relates conservative variables to primitive variables for energy calculation.
 
-    Public attributes:
+    _getNeededFieldsForLinearEnergy():
+        Returns the needed fields for linear energy calculation.
+
+    _initializeMolecularHeatDiffusionFluctuation(mean='None'):
+        Initializes molecular heat diffusion fluctuation.
+
+    _additionalFieldsToBeReadEnergy():
+        Returns additional fields to be read for energy calculation.
 
     """
 
