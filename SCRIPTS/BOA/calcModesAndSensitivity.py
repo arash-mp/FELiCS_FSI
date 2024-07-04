@@ -110,17 +110,18 @@ def calculateModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensi
                                                         nSol,
                                                         )
         solution.appendSolutionOfEigenProblem(tmp, guess)
-    
-        # get leading eigenvalue
-        eigenValue    = solution.getLeadingMode().getEigenValue()
-         
-        # solve adjoint eigenproblem only for the leading eigenvalue
-        tmp = LinearSolver.solveGeneralEigenproblem(A,
-                                                    B,
-                                                    eigenValue,
-                                                    1,
-                                                    adjoint=True)
-        solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
+
+
+    # get leading eigenvalue
+    eigenValue    = solution.getLeadingMode().getEigenValue()
+     
+    # solve adjoint eigenproblem only for the leading eigenvalue
+    tmp = LinearSolver.solveGeneralEigenproblem(A,
+                                                B,
+                                                eigenValue,
+                                                1,
+                                                adjoint=True)
+    solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
     
     
     # end tracking time
