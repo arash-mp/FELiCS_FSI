@@ -34,6 +34,7 @@ from ufl import (
                 Measure,
                 rhs,
                 lhs,
+                conj,
                 )
 
 from dolfinx.fem import (
@@ -145,7 +146,7 @@ class EquationCollectionClass():
                                    FEMSpaces,
                                    self._coordinateSystem,
                                    )
-        #self.hat=TrialFunctions(FEMSpaces.VMixed)
+        self.trialFunctionsFEM = TrialFunctions(FEMSpaces.VMixed)
         self.hat=fluctuationC.fluc
         self.fluctuationC = fluctuationC
 
@@ -154,6 +155,7 @@ class EquationCollectionClass():
             fluc[sol]=self.hat[self.__param.SolutionList.index(sol)]
         
         XTemp = TestFunctions(self.__FEMSpaces.VMixed)
+        self.testFunctionsFEM = XTemp
         
         X=[]
         for i in list(XTemp):
@@ -373,6 +375,49 @@ class EquationCollectionClass():
         B.assemble()
 
         return B
+
+
+    def getFEMWeightMatrix(self):
+
+        # create ufl object with the full FEM weight matrix expression
+        W_ufl     = WeakForm()
+        test_FEM  = self.testFunctionsFEM
+        trial_FEM = self.trialFunctionsFEM
+
+        # go through all (scalar) function spaces in the mixed function space 
+        i=0
+        for test in test_FEM:
+            try:    # try if the function space is a "VectorFunctionSpace"
+                j=0
+                for subTest in test:
+                    W_ufl.add(conj(subTest)*trial_FEM[i][j]*dx)
+                    j+=1
+
+            except: # function space is scalar
+                W_ufl.add(conj(test)*trial_FEM[i]*dx)
+            i+=1
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            W_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        W = assemble_matrix(form(W_ufl.lhs), [])#self.BCs) #without BCs
+        W.assemble()
+
+        return W
+
+
+
+
+
 
 
     def getNonlinearExpression(self, meanFlow, setBC=True):
