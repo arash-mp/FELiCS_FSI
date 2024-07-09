@@ -1,0 +1,245 @@
+import pdb
+import numpy as np
+import copy
+import time
+import sys
+import dolfinx
+
+from   FELiCS.Parameters.parameters import parameters
+
+import FELiCS.IO.Import as Import
+import FELiCS.IO.ExportSolution as Export 
+
+import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
+from   FELiCS.Fields.meanFlowClass import meanFlowClass
+from   FELiCS.Fields.fluctuationClass import fluctuationSolutions
+from   FELiCS.Equation.EquationCollection import EquationCollectionClass
+from   FELiCS.Misc.functions import printDebug
+
+from   FELiCS.Solvers.LinearSolver import LinearSolver 
+from   FELiCS.Fields.ModeCollection import ModeCollection
+from   FELiCS.Fields.Field import Field
+from   FELiCS.Fields.Mode import Mode
+from   FELiCS.Misc.tensorUtils import Tensor
+
+from   CaseHandler import CaseHandler
+
+
+def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, baseFlowSensitivity, optimizerParameters, deformed = False):
+
+    #-----------------------------------------------------------------------
+    ## INITIALIZATION 
+    #-----------------------------------------------------------------------
+    # read parameters
+    param=parameters()
+    param.importFromFile(settingsFileName)
+    param.getOldParameters()
+
+    # mesh
+    mesh=param.BCs.getMesh()
+   
+    # FEMSpaces
+    FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
+                param,
+                mesh,
+                )
+    
+    
+    # initialize mean flow class
+    meanFlow = meanFlowClass(param, FEMSpaces, mesh)
+    
+    #import mean flow data from file
+    meanFlow.importDataFromFile()
+
+    # load base flow into meanFlow object
+    if np.linalg.norm(meanFlow._fieldDict['u'].x.array[:]) < 1.e-8:
+        baseFlow = Field(FEMSpaces.VMixed, mesh)
+        baseFlow.setCoefficientArray(baseFlow_array)
+        [u,p] = baseFlow.getListOfSingleFields()
+        meanFlow._fieldDict['u'] = u.function
+
+    # export mean flow in "h5" file
+    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
+        meanFlow.exportBaseFlowAsHDF5()
+    meanflowFilename = 'meanflow.h5'
+    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+
+    # equation
+    equation = EquationCollectionClass(
+                                      param,
+                                      FEMSpaces,
+                                      meanFlow,
+                                      mesh
+                                      )
+
+    caseHandler = CaseHandler(settingsFileName, param, mesh, equation.boundaries)
+
+
+    # deform mesh at beginning - only for testing /debugging
+    if deformed == True:
+        geometryDeformer = caseHandler.getGeometryDeformer()
+        geometryDeformer.deformMesh(optimizerParameters)
+        geometryDeformer.isDeformed = False
+
+
+    #-----------------------------------------------------------------------
+    ## SOLVE RESOLVENT EIGENPROBLEM AND SCALE MODES 
+    #-----------------------------------------------------------------------
+    # get matrices for eigenproblem
+    A  = equation.getLinearOperator(meanFlow)
+    B  = equation.getWeightMatrix  (meanFlow)
+    
+    # get parameters for eigenproblem
+    guesses  = param.Numerics.EigenValueGuess
+    nSol     = param.Numerics.nSolut
+    adjoint  = param.Case.CalculateAdjoint
+    
+    # track time
+    start= time.time()
+    
+    printDebug(True, "-------------------------------------------------------------" )
+    printDebug(True, "-- Calculating modes and eigenvalues...")
+    printDebug(True, "-------------------------------------------------------------" )
+
+    # solve direct eigenproblem for each guess
+    solution = ModeCollection(FEMSpaces.VMixed, mesh)
+    for guess in guesses:
+        tmp     = LinearSolver.solveGeneralEigenproblem(A,
+                                                        B,
+                                                        guess,
+                                                        nSol,
+                                                        )
+        solution.appendSolutionOfEigenProblem(tmp, guess)
+
+
+    # get leading eigenvalue
+    eigenValue    = solution.getLeadingMode().getEigenValue()
+     
+    # solve adjoint eigenproblem only for the leading eigenvalue
+    tmp = LinearSolver.solveGeneralEigenproblem(A,
+                                                B,
+                                                eigenValue,
+                                                1,
+                                                adjoint=True)
+    solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
+    
+    
+    # end tracking time
+    end = time.time() - start
+    printDebug(True, '-- Solving the general eigenproblem took %4g s' % end)
+    residuum_max = solution.getMaximumError()
+    printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
+    
+    # get leading modes
+    mode_direct  = solution.getLeadingMode(adjoint=False)
+    mode_adjoint = solution.getLeadingMode(adjoint=True)
+    printDebug(True, '------------------------------------------------ ')
+    printDebug(True, '-- Leading eigenvalue:  ' + str(eigenValue))
+    printDebug(True, '------------------------------------------------ ')
+    
+    # scale modes s.t. mode_adjoint^H * B * mode_direct = 1
+    mode_direct_petsc  = mode_direct.getPetscVector()
+    mode_adjoint_petsc = mode_adjoint.getPetscVector()
+    temp               = mode_direct.getPetscVector() # gets a petsc vector "temp" of correct length
+    B.mult(mode_direct_petsc, temp)                   # temp = B*mode_direct
+    factor = temp.dot(mode_adjoint_petsc)             # factor = mode_adjoint ^H temp
+    
+    mode_direct_petsc.scale(1./np.sqrt(factor))
+    mode_adjoint_petsc.scale(np.conj(1./np.sqrt(factor)))
+    mode_direct.setCoefficientArray(mode_direct_petsc.getArray())
+    mode_adjoint.setCoefficientArray(mode_adjoint_petsc.getArray())
+
+    ## export all modes and all eigenvalues in standard felics format
+    #fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    #ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+
+    # export leading modes in standard felics format
+    solution_onlyLeading = ModeCollection(FEMSpaces.VMixed, mesh)
+    solution_onlyLeading.appendMode(mode_direct)
+    solution_onlyLeading.appendMode(mode_adjoint)
+    fluctSolutList = solution_onlyLeading.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    Export.ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+
+    # export full (direct) spectrum (and overwrite the spectrum from the other export function, which only writes the leading eigenvalue)
+    spectrum_direct = solution.getDirectEigenValueSpectrum()
+    Export.writeCSVSpectrum(param,spectrum_direct)
+
+
+    #-----------------------------------------------------------------------
+    ## CALCULATE GRADIENT WITH RESPECT TO GEOMETRY DEFORMATIONS - Part I
+    #-----------------------------------------------------------------------
+    # get undisturbed operators (#TODO: cannot use the ones from above - why?)
+    A_0  = equation.getLinearOperator(meanFlow)
+    B_0  = equation.getWeightMatrix  (meanFlow)
+
+    # parameters that are used in the optimization process
+    a_i  = optimizerParameters 
+    
+    # epsilon for mesh deformation
+    epsilon = 1.e-8
+   
+    # initialize stuff     
+    geometryDeformer = caseHandler.getGeometryDeformer() 
+    N_param          = geometryDeformer.getNumberOfParameters()
+    sensitivity1     = np.zeros(N_param,dtype=complex)
+    sensitivity2     = np.zeros(N_param,dtype=complex)
+    baseFlowSens     = Field(FEMSpaces.VMixed, mesh)
+
+    for i in range(0,N_param):
+        printDebug(True, "-------------------------------------------------------------" )
+        printDebug(True, "-- Calculating eigenvalue sensitivity to parameter number "+str(i+1)+"...")
+        printDebug(True, "-------------------------------------------------------------" )
+
+        a_i[i] = a_i[i] + epsilon
+    
+        geometryDeformer.deformMesh(a_i)
+       
+        ## calculate the first sensitivity part: with the partial derivative of the linear operator and the weight matrix
+        # (A_deformed - A_0)/epsilon
+        A_deformed  = equation.getLinearOperator(meanFlow)
+        A_deformed.axpy(-1., A_0)    # A_deformed -= A_0
+        A_deformed.scale(1./epsilon) # A_deformed /= epsilon
+
+        # (B_deformed - B_0)/epsilon 
+        B_deformed  = equation.getWeightMatrix  (meanFlow)
+        B_deformed.axpy(-1., B_0)     # B_deformed -= B_0
+        B_deformed.scale(1./epsilon)  # B_deformed /= epsilon 
+
+        # multiply with eigenvalue
+        A_deformed.axpy(-eigenValue, B_deformed) # A_deformed -= eigenValue * B_deformed
+
+        # multiply with the adjoint eigenvector (from left) and the direct eigenvector (from right)  
+        mode_direct_petsc  = mode_direct.getPetscVector()
+        mode_adjoint_petsc = mode_adjoint.getPetscVector()
+        result             = mode_direct.getPetscVector()
+        A_deformed.mult(mode_direct_petsc, result)
+        dolfinx.fem.petsc.set_bc(result, equation.BCs)
+        sensitivity1[i]   = result.dot(mode_adjoint_petsc)
+       
+        ## calculate the second sensitivity part: with the base flow sensitivities
+        baseFlowSens.setCoefficientArray(baseFlowSensitivity[i])
+        [u_sens, p_sens]                  = baseFlowSens.getListOfSingleFields()
+        meanFlow._fieldDict['u_bilinear'] = u_sens.function
+        BL                                = equation.getBilinearOperator(meanFlow)
+        BL.mult(mode_direct_petsc, result)
+        #dolfinx.fem.petsc.set_bc(result, equation.BCs)
+        sensitivity2[i]  = result.dot(mode_adjoint_petsc)
+
+
+        a_i[i] = a_i[i] - epsilon
+        geometryDeformer.restoreMesh()
+    
+    
+    printDebug(True, '------------------------------------------------ ')
+    printDebug(True, '-- sensitivities part 1:  ' + str((sensitivity1)))
+    printDebug(True, '------------------------------------------------ ')
+    printDebug(True, '------------------------------------------------ ')
+    printDebug(True, '-- sensitivities part 2:  ' + str((sensitivity2)))
+    printDebug(True, '------------------------------------------------ ')
+
+
+    return sensitivity1, sensitivity2, eigenValue 
+
+
+    
+
