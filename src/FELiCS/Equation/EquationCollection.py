@@ -700,24 +700,26 @@ class EquationCollectionClass():
         # when using a newer version of dolfinx (version >= 0.6.*).
         # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
         # but for now this works fine. 
-        try:
-            self.A_vf.setCorrectMeshObject(self.__mesh)
-            self.B_vf.setCorrectMeshObject(self.__mesh)
-        except:
-            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #try:
+        #    self.A_vf.setCorrectMeshObject(self.__mesh)
+        #    self.B_vf.setCorrectMeshObject(self.__mesh)
+        #except:
+        #    printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
 
 
-        if not self.A_vf.lhsIsZero():
-            A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
-            A.assemble()
-        else:
-            A = BC_Diriclet.scale(0.)
+        #if not self.A_vf.lhsIsZero():
+        #    A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
+        #    A.assemble()
+        #else:
+        #    A = BC_Diriclet.scale(0.)
 
-        if not self.B_vf.lhsIsZero():
-            B = assemble_matrix(form(self.B_vf.lhs), bcs=bcs)
-            B.assemble()
-        else:
-            B = BC_Diriclet.scale(0.)
+        #if not self.B_vf.lhsIsZero():
+        #    B = assemble_matrix(form(self.B_vf.lhs), bcs=bcs)
+        #    B.assemble()
+        #else:
+        #    B = BC_Diriclet.scale(0.)
+        A = self.getLinearOperator(self.__mean)
+        B = self.getWeightMatrix(self.__mean)
 
         self.__matrix_dict_petsc={}  
 
@@ -756,11 +758,18 @@ class EquationCollectionClass():
         from petsc4py import PETSc
         self.__matrix_dict_petsc['B'] = B  
         self.__matrix_dict_petsc['A'] = A
-        del A,B
+        #del A,B
 
         if AnalysisMode in ['Resolvent']:
             #forcing_norm,response_norm=getResolventNorms(param,MF,FEMSpaces)
             
+            try:
+                sd = self.forcing_vf.subdomain_data()
+                domain, = list(sd.keys())  # Assuming single domain
+                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
+                #self.forcing_vf.setCorrectMeshObject(self.__mesh)
+            except:
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
             B_forcing = assemble_matrix(form(self.forcing_vf))
             B_forcing.assemble()
             self.__matrix_dict_petsc['B_forcing'] = B_forcing 
@@ -890,6 +899,8 @@ class EquationCollectionClass():
                 index = np.append(index, dofsIterator)
 
         index.sort()
+
+        index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
         # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
         local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
         m = len(np.arange(*local_range))
@@ -907,6 +918,38 @@ class EquationCollectionClass():
         printDebug(True, '-- Done.')
 
         return P_petsc
+
+
+    def getSimplePMat(self):
+        '''
+        This is a (very!) temporary alternative: does NOT use limiters, does ONLY work for incompressible equations
+        '''
+    
+        from petsc4py import PETSc
+
+        index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
+        # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
+        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
+        m = len(np.arange(*local_range))
+        n = len(index)
+        row_ind = index
+        col_ind = np.arange(n)
+
+        P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
+        for i in range(n):
+            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
+            P_petsc.setValue(row_ind[i],col_ind[i],1.)
+        P_petsc.assemble()
+
+        printDebug(True, '-- Done.')
+
+        return P_petsc
+
+
+
+
+
 
     def getCrMat(self):
         ''' This function provides the Cr matrix, which restricts the response '''

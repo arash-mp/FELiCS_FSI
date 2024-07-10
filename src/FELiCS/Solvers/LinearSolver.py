@@ -169,6 +169,7 @@ class LinearSolver:
         return eigVals, eigVecs
 
 
+
     @staticmethod
     def solveEquationSystem(
         A,

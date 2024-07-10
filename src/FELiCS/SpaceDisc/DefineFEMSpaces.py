@@ -185,7 +185,8 @@ class FEMSpacesClass():
             nfluctvar: total number of fluctuation variables
             nDim: number of spatial dimension = number of velocity components
    
-        ToDo: We need a P1 version of the field for cases where some of the fluctuations are P1
+        (ToDo: We need a P1 version of the field for cases where some of the fluctuations are P1)
+        Update Sophie: Completed. Any polynomial order for any field can be used now (in this method)
         """
 
         from dolfinx.fem import Function
@@ -199,12 +200,15 @@ class FEMSpacesClass():
 
                 for j in range(self.VMixed.sub(i).num_sub_spaces):
                     space_ii, map_ii = self.VMixed.sub(i).sub(j).collapse()
-                    fieldVMixed.x.array[map_ii] = field.x.array
+                    targetFunction = Function(space_ii)
+                    targetFunction.interpolate(field)
+                    fieldVMixed.x.array[map_ii] = targetFunction.x.array
                     
             else:
-                space_i, map_i = self.VMixed.sub(i).collapse() # Does not work for P1 spaces
-                # space_i, map_i = self.VMixed.sub(0).sub(0).collapse() # This is wrong! It assumes P2 and projects to wrong dofs!
-                fieldVMixed.x.array[map_i] = field.x.array
+                space_i, map_i = self.VMixed.sub(i).collapse() 
+                targetFunction = Function(space_i)
+                targetFunction.interpolate(field)
+                fieldVMixed.x.array[map_i] = targetFunction.x.array
 
 
 

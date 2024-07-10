@@ -92,6 +92,9 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
     # get parameters for eigenproblem
     omegas   = param.IOResolvent.Omegas
     nSol     = param.Numerics.nSolut
+    nOmegas  = len(omegas)
+    nDofs    = A.getSizes()[0][0]
+
     
     # track time
     start= time.time()
@@ -105,40 +108,57 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
 #################################################################################################
 ################# "CONSTRUCTION SITE" ###########################################################
 #################################################################################################
-#################################################################################################
-    Restrictor_forcing  = equation.getPMat()
-    Restrictur_response = equation.getCrMat()
+###########i######################################################################################
 
-    WeightMatrix        = equation.getFEMWeightMatrix()
+    # TODO Sophie: This only workes without restrictors - for now. 
+    # If restrictors for forcing and response are introduced, 
+    # also the weight matrices Q_f & Q_u for the norms of forcing f and response u
+    # have to be implemented differently.
+    P_f  = equation.getSimplePMat()
+    P_u  = P_f.copy() 
 
-    exit()
+    W    = equation.getFEMWeightMatrix()
 
-    self.__matrix_dict_petsc['Q'] = \
-            self.__matrix_dict_petsc['Pu'].transposeMatMult(\
-                    WeightMatrix.matMult(\
-                    self.__matrix_dict_petsc['Pu']))
+    Q_f  = P_f.transposeMatMult(W.matMult(P_f))  
+    Q_u  = Q_f.copy()
 
-    for omega in omegas:
+    print("P_f: ",P_f.getSize())
+    print("P_u: ",P_u.getSize())
+    print("W:   ",W.getSize())
+    print("Q_f: ",Q_f.getSize())
+    print("Q_u: ",Q_u.getSize())
+
+
+    gains = np.zeros((nSol,nOmegas),'complex')
+    forcings = np.zeros((nDofs,nSol,nOmegas),'complex')
+    responses = np.zeros((nDofs,nSol,nOmegas),'complex')
+
+
+
+
+    for i, omega in enumerate(omegas):
 
         printDebug(True, "-- Performing resolvent analysis for omega = " + str(omega))
 
-        OP_petsc          = self.__matrix_dict_petsc['A'].copy()
-        OP_petsc.axpy(-omega, self.__matrix_dict_petsc['B'])    # OP_petsc = A-omega*B
+
+        # R = A-omega*B
+        R = A.copy()
+        R.axpy(-omega, B)    
 
         resolventOperator = ResolventOperator(
-                                        OP_petsc, 
-                                        self.__matrix_dict_petsc['Q'], 
-                                        self.__matrix_dict_petsc['Pu'],
-                                        self.__matrix_dict_petsc['Cr'],
-                                        self.__matrix_dict_petsc['B_forcing'],
-                                        self.__matrix_dict_petsc['B_response'])
-    
+                                        R,
+                                        W,
+                                        Q_f,
+                                        Q_u,
+                                        P_f,
+                                        P_u)
+
         # Perform eigenvalue decomposition of the linear operator defined in the class "ResolventOperator"
         # via the matrix vector multiplation "mult"
         gains[:,i],eigenvectors_c = LinearSolver.solveSVDOfResolvent(
                             resolventOperator,
                             nev=nSol,
-                            tol=1.e-13,
+                            tol=1.e-8,
                             max_it=200,
                             )
 
@@ -148,22 +168,22 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
         # Iterate through the first nSolut gains
         # Compute the respetive forcing and responses with the solution of the SVD ("eigenvetors_c")
                         # TODO Sophie: do this more elegantly
-        for k in range(self.__param.Numerics.nSolut):
+        for k in range(nSol):
 
             # get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)
-            X1, X2 = self.__matrix_dict_petsc['Pu'].getVecs()
+            X1, X2 = P_f.getVecs()
             X1.setValues(range(0,len(eigenvectors_c[:,k])),eigenvectors_c[:,k])
-            Y1, Y2 = self.__matrix_dict_petsc['B_femWeight'].getVecs()
+            Y1, Y2 = W.getVecs()
 
             # forcings = Pu*eigenVectors
-            self.__matrix_dict_petsc['Pu'].mult(X1,X2)
+            P_f.mult(X1,X2)
             forcings[:,k,i] = X2.getValues(range(0,X2.getSize()))
 
             # Y1 = -1j * B_femWeight * forcings
-            self.__matrix_dict_petsc['B_femWeight'].mult(X2,Y1)
+            W.mult(X2,Y1)
 
             # Y1 = -1j * B_femWeight * forcings
-            self.__matrix_dict_petsc['B_femWeight'].mult(X2,Y1)
+            W.mult(X2,Y1)
             Y1.scale(-1j)
 
             # solve (A-omega*B)*responses = Y1
@@ -172,56 +192,49 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
 
             resolventOperator.destroySelf()
 
-        # construct a fluctuationSolutions Object for the Response, Forcing of
-        # every Frequency
-        for i, omega in enumerate(self.__param.IOResolvent.Omegas):
-            for gainNumb in range(responses.shape[1]):
-                fluctSolutForcing = fluctuationSolutions(
-                                    self.__param,
-                                    self.__meanFlow,
-                                    self.__FEMSpaces,
-                                    self.__param.IOResolvent.Omegas[i],
-                                    forcings[:,gainNumb,i],
-                                    False,
-                                    gainNumb,
-                                    gains[gainNumb, i],
-                                    )
-                fluctSolutResponse = fluctuationSolutions(
-                                    self.__param,
-                                    self.__meanFlow,
-                                    self.__FEMSpaces,
-                                    self.__param.IOResolvent.Omegas[i],
-                                    responses[:,gainNumb, i],
-                                    True,
-                                    gainNumb,
-                                    gains[gainNumb, i],
-                                    )
 
-                fluctSolutObjList.append(fluctSolutForcing)
-                fluctSolutObjList.append(fluctSolutResponse)
+    # construct a fluctuationSolutions Object for the Response, Forcing of
+    # every Frequency
+    for i, omega in enumerate(omegas):
+        for gainNumb in range(responses.shape[1]):
+            fluctSolutForcing = fluctuationSolutions(
+                                param,
+                                meanFlow,
+                                FEMSpaces,
+                                omegas[i],
+                                forcings[:,gainNumb,i],
+                                False,
+                                gainNumb,
+                                gains[gainNumb, i],
+                                )
+            fluctSolutResponse = fluctuationSolutions(
+                                param,
+                                meanFlow,
+                                FEMSpaces,
+                                omegas[i],
+                                responses[:,gainNumb, i],
+                                True,
+                                gainNumb,
+                                gains[gainNumb, i],
+                                )
 
-        toc_res = time.perf_counter() - tic_res
-        printDebug(True, f"-- Solving resolvent took: {toc_res:0.4f} seconds")
+            fluctSolutObjList.append(fluctSolutForcing)
+            fluctSolutObjList.append(fluctSolutResponse)
 
-        return fluctSolutObjList
+    toc_res = time.perf_counter() - tic_res
+    printDebug(True, f"-- Solving resolvent took: {toc_res:0.4f} seconds")
+
+    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+    exit()
 
 
 #################################################################################################
 #################################################################################################
 
 
-    # get leading eigenvalue
-    eigenValue    = solution.getLeadingMode().getEigenValue()
+    # get objectiveFunctional 
+    eigenValue  = solution.getLeadingMode().getEigenValue()
      
-    # solve adjoint eigenproblem only for the leading eigenvalue
-    tmp = LinearSolver.solveGeneralEigenproblem(A,
-                                                B,
-                                                eigenValue,
-                                                1,
-                                                adjoint=True)
-    solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
-    
-    
     # end tracking time
     end = time.time() - start
     printDebug(True, '-- Solving the resolvent eigenproblem took %4g s' % end)
@@ -342,6 +355,8 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
     
 
 
+#### For BOA: Q_f^-1 * H
+#### R = A-i*omega*B
 
 class ResolventOperator(object):
 
@@ -355,48 +370,48 @@ class ResolventOperator(object):
         """
 
         def __init__(self,
-                OP,
-                Qf,
-                Pu,
-                Cr,
-                B_forcing,
-                B_response):
+                     R,
+                     W,
+                     Q_f,
+                     Q_u,
+                     P_f,
+                     P_u):
 
 
                 from petsc4py import PETSc
 
-                self._size = Qf.getSize()
+                self._size = Q_u.getSize()
 
-                self._Z1, self._Z2  = OP.getVecs()
-                self._Y1, self._Y2  = Qf.getVecs()
+                self._Z1, self._Z2  = R.getVecs()
+                self._Y1, self._Y2  = Q_u.getVecs()
 
-                self._Pu = Pu
-                self._Cr = Cr
-                self._Bf = B_forcing
-                self._Br = B_response
+                self._P_f = P_f
+                self._P_u = P_u
+                self._Q_u = Q_u
+                self._W   = W
 
-                # create KSP1: This is a solver for the System OP*x=y.
+                # create KSP1: This is a solver for the System R*x=y.
                 self._ksp1 = PETSc.KSP().create()
-                self._ksp1.setOperators(OP)
+                self._ksp1.setOperators(R)
                 self._ksp1.setType(PETSc.KSP.Type.PREONLY)
                 self._ksp1.getPC().setType(PETSc.PC.Type.LU)
                 self._ksp1.getPC().setFactorSolverType('mumps')
                 self._ksp1.setUp()
                 # create KSP2: This is a solver for the System conj(OP)*x=y. It will later be used to solve the transposed system, thus effectively solving OP^H *x=y, which is the Hermitian transpose of the system.
                 # TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). Thus we have to do an additional LU decomposistion.... Change as soon as this is included in the petsc4py! 
-                OP_H = OP.copy()   #create a new matrix, s.t. the original one will not be overwritten 
-                OP_H.conjugate()
-                OP_H.assemble()
+                R_H = R.copy()   #create a new matrix, s.t. the original one will not be overwritten 
+                R_H.conjugate()
+                R_H.assemble()
                 self._ksp2 = PETSc.KSP().create()
-                self._ksp2.setOperators(OP_H)
+                self._ksp2.setOperators(R_H)
                 self._ksp2.setType(PETSc.KSP.Type.PREONLY)
                 self._ksp2.getPC().setType(PETSc.PC.Type.LU)
                 self._ksp2.getPC().setFactorSolverType('mumps')
                 self._ksp2.setUp()
-                # create KSP3: This is a solver for the System Qf*x=y (will later be used to solve the transposed system).
-                #Qf.conjugate() #=> is this needed?
+                ## create KSP3: This is a solver for the System Qf*x=y (will later be used to solve the transposed system).
+                ##Qf.conjugate() #=> is this needed?
                 self._ksp3 = PETSc.KSP().create()
-                self._ksp3.setOperators(Qf)
+                self._ksp3.setOperators(Q_f)
                 self._ksp3.setType(PETSc.KSP.Type.PREONLY)
                 self._ksp3.getPC().setType(PETSc.PC.Type.LU)
                 self._ksp3.getPC().setFactorSolverType('mumps')
@@ -410,21 +425,27 @@ class ResolventOperator(object):
 
         def mult(self, mat, X, Y):
                 # returns Y=mat*X 
-                # mat = (Qf^T)^-1 * Pu^T * Bf^T * (OP^H)^-1 * Cr^T * Br * Cr * OP^-1 * Bf * Pu
+                # mat = P_f^T * W^T * (R^H)^-1 * P_u * Q_u * P_u^T * R^-1 * W * P_f
 
-                self._Pu.mult            (X,        self._Z1)  #Z1 = Pu*X
-                self._Bf.mult            (self._Z1, self._Z2)  #Z2 = Bf*Z1
-                self._ksp1.solve         (self._Z2, self._Z1)  #Z1 = OP^-1 * Z2
-    
-                self._Cr.mult            (self._Z1, self._Z2)  #Z2 = Cr*Z1
-                self._Br.mult            (self._Z2, self._Z1)  #Z1 = Br*Z2
-                self._Cr.multTranspose   (self._Z1, self._Z2)  #Z2 = Cr^T * Z1
-                self._ksp2.solveTranspose(self._Z2, self._Z1)  #Z1 = (OP^H)^-1 * Z2
+                self._P_f.mult           (X,        self._Z1)  #Z1 = P_f*X
+                self._W.mult             (self._Z1, self._Z2)  #Z2 = W*Z1
+                self._ksp1.solve         (self._Z2, self._Z1)  #Z1 = R^-1 * Z2
+   
+                print("Z1: ",self._Z1.getSize())
+                print("Z2: ",self._Z2.getSize())
+                print("Y1: ",self._Y1.getSize())
+                print("Y2: ",self._Y2.getSize())
+                print("P_u: ",self._P_u.getSize())
+                self._P_u.multTranspose  (self._Z1, self._Y2)  #Y2 = P_u^T*Z1
+                self._Q_u.mult           (self._Y2, self._Y1)  #Y1 = Q_u*Y2
+                self._P_u.mult           (self._Y1, self._Z2)  #Z2 = P_u * Y1
+                self._ksp2.solveTranspose(self._Z2, self._Z1)  #Z1 = (R^H)^-1 * Z2
 
-                self._Bf.multTranspose   (self._Z1, self._Z2)  #Z2 = Bf^T * Z1
-                self._Pu.multTranspose   (self._Z2, self._Y1)  #Y1 = Pu^T * Z2
-                self._ksp3.solveTranspose(self._Y1, Y)         #Y  = (Qf^T)^-1 * Y1
+                self._W.multTranspose    (self._Z1, self._Z2)  #Z2 = W^T * Z1
+                self._P_f.multTranspose  (self._Z2, self._Y1)  #Y1  = P_f^T * Z2
+                self._ksp3.solveTranspose(self._Y1, Y)         #Y  = (Q_f^T)^-1 * Y1
 
+                print("Y calculated!")
                 return Y
 
         def getKSP(self):
