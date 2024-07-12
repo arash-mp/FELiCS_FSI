@@ -25,10 +25,39 @@ from   FELiCS.Fields.Field import Field
 from   FELiCS.Fields.Mode import Mode
 from   FELiCS.Misc.tensorUtils import Tensor
 
-from ufl import VectorElement
-from dolfinx.fem import Function, FunctionSpace
+from ufl import VectorElement, SpatialCoordinate, exp
+from dolfinx.fem import Function, FunctionSpace, Expression
 
 from   CaseHandler import CaseHandler
+
+def saveToFelFile(FEMSpaces, u_original):
+    x = Function(FEMSpaces.P2)
+    y = Function(FEMSpaces.P2)
+    ux_export = Function(FEMSpaces.P2)
+    uy_export = Function(FEMSpaces.P2)
+    #x.interpolate(Expression("x[0]"))    
+    #y.interpolate(Expression("y[0]"))    
+    # Write felics baseflow file
+    domain = FEMSpaces.P2.mesh
+    x_exp = SpatialCoordinate(domain)
+    p = exp(x_exp[0])
+    expr = Expression(p, FEMSpaces.P2.element.interpolation_points())
+    x.interpolate(expr)
+    p = exp(x_exp[1])
+    expr = Expression(p, FEMSpaces.P2.element.interpolation_points())
+    y.interpolate(expr)
+    p = exp(u_original.function[0])
+    expr = Expression(p, FEMSpaces.P2.element.interpolation_points())
+    ux_export.interpolate(expr)
+    p = exp(u_original.function[1])
+    expr = Expression(p, FEMSpaces.P2.element.interpolation_points())
+    uy_export.interpolate(expr)
+
+    with h5py.File("base_flow_for_standalone.fel", 'w') as f:
+        f.create_dataset('/MeanFlow/x', data=x.x.array)
+        f.create_dataset('/MeanFlow/y', data=y.x.array)
+        f.create_dataset('/MeanFlow/ux', data=ux_export.x.array)
+        f.create_dataset('/MeanFlow/uy', data=uy_export.x.array)
 
 
 def saveBaseflow(mesh, u_original):
@@ -210,7 +239,7 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
 
     # Interpolate solution on first order Lagrange Functionspace for XDMF export
     saveBaseflow(mesh.dolfinxMesh, u)
-
+    saveToFelFile(FEMSpaces,u)
     # export base flow in modes-format 
     # baseFlow_0   = Mode(FEMSpaces.VMixed, mesh)
     # baseFlow_0.setEigenValue(0.)

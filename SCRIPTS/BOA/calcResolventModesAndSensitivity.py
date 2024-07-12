@@ -190,9 +190,9 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
             resolventOperator.getKSP().solve(Y1,X2)
             responses[:, k, i] = X2.getValues(range(0, X2.getSize()))
 
-            resolventOperator.destroySelf()
+    resolventOperator.destroySelf()
 
-
+    fluctSolutList = []
     # construct a fluctuationSolutions Object for the Response, Forcing of
     # every Frequency
     for i, omega in enumerate(omegas):
@@ -218,13 +218,13 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
                                 gains[gainNumb, i],
                                 )
 
-            fluctSolutObjList.append(fluctSolutForcing)
-            fluctSolutObjList.append(fluctSolutResponse)
+            fluctSolutList.append(fluctSolutForcing)
+            fluctSolutList.append(fluctSolutResponse)
 
-    toc_res = time.perf_counter() - tic_res
-    printDebug(True, f"-- Solving resolvent took: {toc_res:0.4f} seconds")
+    #toc_res = time.perf_counter() - tic_res
+    #printDebug(True, f"-- Solving resolvent took: {toc_res:0.4f} seconds")
 
-    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+    Export.ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
     exit()
 
 
