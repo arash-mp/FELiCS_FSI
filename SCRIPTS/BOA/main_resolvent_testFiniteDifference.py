@@ -57,7 +57,7 @@ for j in range(5,12):
         a_i[i] = a_i[i] + epsilon 
         baseFlow_array                          = calculateBaseFlow            (settingsFileName_baseFlow, a_i, deformed = True)
         baseFlowSensitivity_array               = calculateBaseFlowSensitivity (settingsFileName_baseFlow, baseFlow_array, a_i, deformed = True) 
-        sensitivity1_i, sensitivity2_i, gain_i  = calculateModesAndSensitivity (settingsFileName_eigenSystem, baseFlow_array, baseFlowSensitivity_array, a_i, deformed = True)
+        sensitivity1_i, sensitivity2_i, gain_i  = calculateResolventModesAndSensitivity (settingsFileName_eigenSystem, baseFlow_array, baseFlowSensitivity_array, a_i, deformed = True)
         FD[i] = (gain_i - gain_0)/epsilon
         a_i[i] = a_i[i] - epsilon  
         print("################## Resolvent gain:", gain_0)

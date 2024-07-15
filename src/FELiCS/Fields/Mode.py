@@ -7,7 +7,8 @@ class Mode(Field):
 
     def __init__(self,FEMSpace, mesh):
         super().__init__(FEMSpace, mesh)
-        self.isAdjoint = False
+        self.isAdjoint  = False
+        self.isResponse = False
 
     def setGain(self,gain):
         self._gain = gain
