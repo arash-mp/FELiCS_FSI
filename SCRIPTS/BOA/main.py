@@ -21,9 +21,8 @@ for i_argument,argument in enumerate(sys.argv):
 settingsFileName_baseFlow    = sys.argv[2]
 settingsFileName_eigenSystem = sys.argv[3]
 
-
 # Read the given parameters. They have to fit the case in the GeometryDeformer
-a_i  = np.load("params.npy")
+a_i  = np.load("/params.npy")
 
 #-----------------------------------------------------------------------
 # MAIN PART 

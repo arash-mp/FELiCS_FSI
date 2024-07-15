@@ -27,37 +27,37 @@ from   FELiCS.Misc.tensorUtils import Tensor
 
 from ufl import VectorElement, SpatialCoordinate, exp
 from dolfinx.fem import Function, FunctionSpace, Expression
-
+from dolfinx.mesh import  locate_entities
 from   CaseHandler import CaseHandler
 
-def saveToFelFile(FEMSpaces, u_original):
-    x = Function(FEMSpaces.P2)
-    y = Function(FEMSpaces.P2)
-    ux_export = Function(FEMSpaces.P2)
-    uy_export = Function(FEMSpaces.P2)
-    #x.interpolate(Expression("x[0]"))    
-    #y.interpolate(Expression("y[0]"))    
-    # Write felics baseflow file
-    domain = FEMSpaces.P2.mesh
-    x_exp = SpatialCoordinate(domain)
-    p = exp(x_exp[0])
-    expr = Expression(p, FEMSpaces.P2.element.interpolation_points())
-    x.interpolate(expr)
-    p = exp(x_exp[1])
-    expr = Expression(p, FEMSpaces.P2.element.interpolation_points())
-    y.interpolate(expr)
-    p = exp(u_original.function[0])
-    expr = Expression(p, FEMSpaces.P2.element.interpolation_points())
-    ux_export.interpolate(expr)
-    p = exp(u_original.function[1])
-    expr = Expression(p, FEMSpaces.P2.element.interpolation_points())
-    uy_export.interpolate(expr)
+def saveToFelFile(mesh,FEMSpaces, u_original):
+    #Define functions for source of interpolation in first order
+    x_source = Function(FEMSpaces.P1,dtype=float)
+    y_source = Function(FEMSpaces.P1,dtype=float)
+    
+    #Define functions for the target of the interpolation in P2
+    x_target = Function(FEMSpaces.P2,dtype=float)
+    y_target = Function(FEMSpaces.P2,dtype=float)
+    ux_target = Function(FEMSpaces.P2)
+    uy_target = Function(FEMSpaces.P2)
+    
+    # Get coordinates in P1 FEM spaces
+    x_source.x.array[:] = mesh.geometry.x[:,0]
+    y_source.x.array[:] = mesh.geometry.x[:,1]
+    # Interpolate coordinates on P2 FEM space
+    x_target.interpolate(x_source)
+    y_target.interpolate(y_source)
+  
+    # Interpolate from P2 vector FEM space to P2 FEM space
+    ux_target.interpolate(u_original.function.sub(0))
+    uy_target.interpolate(u_original.function.sub(1))
 
-    with h5py.File("base_flow_for_standalone.fel", 'w') as f:
-        f.create_dataset('/MeanFlow/x', data=x.x.array)
-        f.create_dataset('/MeanFlow/y', data=y.x.array)
-        f.create_dataset('/MeanFlow/ux', data=ux_export.x.array)
-        f.create_dataset('/MeanFlow/uy', data=uy_export.x.array)
+    # write base flow file
+    with h5py.File("base_flow_for_FELiCS.fel", 'w') as f:
+        f.create_dataset('/MeanFlow/x', data=x_target.x.array)
+        f.create_dataset('/MeanFlow/y', data=y_target.x.array)
+        f.create_dataset('/MeanFlow/ux', data=ux_target.x.array)
+        f.create_dataset('/MeanFlow/uy', data=uy_target.x.array)
 
 
 def saveBaseflow(mesh, u_original):
@@ -239,7 +239,7 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
 
     # Interpolate solution on first order Lagrange Functionspace for XDMF export
     saveBaseflow(mesh.dolfinxMesh, u)
-    saveToFelFile(FEMSpaces,u)
+    saveToFelFile(mesh,FEMSpaces,u)
     # export base flow in modes-format 
     # baseFlow_0   = Mode(FEMSpaces.VMixed, mesh)
     # baseFlow_0.setEigenValue(0.)
