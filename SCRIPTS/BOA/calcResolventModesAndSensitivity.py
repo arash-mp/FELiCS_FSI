@@ -5,6 +5,8 @@ import time
 import sys
 import dolfinx
 
+from   petsc4py import PETSc
+
 from   FELiCS.Parameters.parameters import parameters
 
 import FELiCS.IO.Import as Import
@@ -154,7 +156,7 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
         gains[:,i],eigenvectors_c = LinearSolver.solveSVDOfResolvent(
                             resolventOperator,
                             nev=nSol,
-                            tol=1.e-8,
+                            tol=1.e-13,
                             max_it=200,
                             )
 
@@ -260,19 +262,22 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
     ## SCALE MODES TO AVOID ADDITIONAL FACTOR IN SENSITIVITY 
     #-----------------------------------------------------------------------
     # get petsc vector for velocity field
-    dummyMode        = Mode(FEMSpaces.FunctionSpaceVectorVelocity, mesh)
-    vec_petsc_small1 = dummyMode.getPetscVector()
-    vec_petsc_small2 = dummyMode.getPetscVector()
+    dummyMode_small  = Mode(FEMSpaces.FunctionSpaceVectorVelocity, mesh)
+    vec_petsc_small1 = dummyMode_small.getPetscVector()
+    vec_petsc_small2 = dummyMode_small.getPetscVector()
+
+    dummyMode_big  = Mode(FEMSpaces.VMixed, mesh)
+    vec_petsc_big1 = dummyMode_big.getPetscVector()
+    vec_petsc_big2 = dummyMode_big.getPetscVector()
 
     for mode in solution_onlyLeading.modeList:
         # scale only forcing modes
         if mode.isResponse==False:
             mode_petsc    = mode.getPetscVector()
-            vec_petsc_big = mode.getPetscVector()
             P_f.multTranspose(mode_petsc, vec_petsc_small1)
             Q_f.mult(vec_petsc_small1, vec_petsc_small2)
-            P_f.mult(vec_petsc_small2, vec_petsc_big)
-            factor = vec_petsc_big.dot(mode_petsc)
+            P_f.mult(vec_petsc_small2, vec_petsc_big1)
+            factor = vec_petsc_big1.dot(mode_petsc)
             mode_petsc.scale(1./np.sqrt(factor))
             mode.setCoefficientArray(mode_petsc.getArray())
 
@@ -308,65 +313,131 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
     
         geometryDeformer.deformMesh(a_i)
 
+
+        ## 1. create operators for inner derivative of resolvent operator 
+        # (A_deformed - A_0)/epsilon
+        A_deformed  = equation.getLinearOperator(meanFlow)
+        A_deformed.axpy(-1., A_0)    # A_deformed -= A_0
+        A_deformed.scale(1./epsilon) # A_deformed /= epsilon
+
+        # (B_deformed - B_0)/epsilon 
+        B_deformed  = equation.getWeightMatrix  (meanFlow)
+        B_deformed.axpy(-1., B_0)     # B_deformed -= B_0
+        B_deformed.scale(1./epsilon)  # B_deformed /= epsilon 
+
+        # multiply with gain and add to A_deformed
+        A_deformed.axpy(-omega, B_deformed) # A_deformed -= omega * B_deformed
+
+        ## add operator with base flow sensitivity - second part of inner resolventoperator derivative
+        baseFlowSens.setCoefficientArray(baseFlowSensitivity[i])
+        [u_sens, p_sens]                  = baseFlowSens.getListOfSingleFields()
+        meanFlow._fieldDict['u_bilinear'] = u_sens.function
+        A_deformed.axpy(1.,equation.getBilinearOperator(meanFlow))
+
+        ## 2. create partial derivative of weight matrix
+        W_deformed = equation.getFEMWeightMatrix()
+        W_deformed.axpy(-1., W)     
+        W_deformed.scale(1./epsilon)  
+        Q_f_deformed  = P_f.transposeMatMult(W_deformed.matMult(P_f))  
+        Q_u_deformed  = Q_f_deformed.copy() 
+
         # inner loop over all gains
         for mode in solution_onlyLeading.modeList:
             if mode.isResponse==False:
                 gain  = mode.getGain()
                 omega = mode.getFrequency()
 
-                mode_petsc  = mode.getPetscVector()
+                forcing_petsc  = mode.getPetscVector()
+
 
                 ################################
-                ## 1. calculate sensitivity of R
+                ## 1. create ksp (equation solver) for R #TODO: connect this with the resolvent calculation - else the preconditioner is newly computed
                 ################################
-                ## calculate the first sensitivity part: with the partial derivative of the linear operator and the weight matrix
-                # (A_deformed - A_0)/epsilon
-                A_deformed  = equation.getLinearOperator(meanFlow)
-                A_deformed.axpy(-1., A_0)    # A_deformed -= A_0
-                A_deformed.scale(1./epsilon) # A_deformed /= epsilon
+                R = A_0.copy()
+                R.axpy(-omega, B_0)    
+                ksp_R = PETSc.KSP().create()
+                ksp_R.setOperators(R)
+                ksp_R.setType(PETSc.KSP.Type.PREONLY)
+                ksp_R.getPC().setType(PETSc.PC.Type.LU)
+                ksp_R.getPC().setFactorSolverType('mumps')
+                ksp_R.setUp()
+ 
+ 
+                ################################
+                ## 2. calculate gain*response 
+                ################################
+                response_petsc = mode.getPetscVector()
+                W.mult(forcing_petsc, vec_petsc_big1)
+                ksp_R.solve(vec_petsc_big1, response_petsc)
 
-                # (B_deformed - B_0)/epsilon 
-                B_deformed  = equation.getWeightMatrix  (meanFlow)
-                B_deformed.axpy(-1., B_0)     # B_deformed -= B_0
-                B_deformed.scale(1./epsilon)  # B_deformed /= epsilon 
+                ################################
+                ## 3. put everything together 
+                ################################
+                # Q_f part
+                P_f.multTranspose(forcing_petsc, vec_petsc_small1)
+                Q_f_deformed.mult(vec_petsc_small1, vec_petsc_small2)
+                P_f.mult(vec_petsc_small2, vec_petsc_big1)
+                vec_petsc_big1.scale(gain)
+                sensitivity_R[i]  -= vec_petsc_big1.dot(forcing_petsc)
 
-                # multiply with gain
-                A_deformed.axpy(-omega, B_deformed) # A_deformed -= omega * B_deformed
+                #value  = -vec_petsc_big1.dot(forcing_petsc)
+                #print("Q_f: ", value)
 
-                # multiply with the complex conjugate forcing (from left) and the forcing (from right)  
-                result             = mode.getPetscVector()
-                A_deformed.mult(mode_petsc, result)
-                dolfinx.fem.petsc.set_bc(result, equation.BCs)
-                sensitivity_R[i]  += result.dot(mode_petsc)
-       
-                ## calculate the second sensitivity part: with the base flow sensitivities
-                baseFlowSens.setCoefficientArray(baseFlowSensitivity[i])
-                [u_sens, p_sens]                  = baseFlowSens.getListOfSingleFields()
-                meanFlow._fieldDict['u_bilinear'] = u_sens.function
-                BL                                = equation.getBilinearOperator(meanFlow)
-                BL.mult(mode_petsc, result)
-                sensitivity_R[i]  += result.dot(mode_petsc)
+
+                # Q_u part
+                P_u.multTranspose(response_petsc,vec_petsc_small1)
+                Q_u_deformed.mult(vec_petsc_small1, vec_petsc_small2)
+                P_u.mult(vec_petsc_small2, vec_petsc_big1)
+                sensitivity_R[i]  += vec_petsc_big1.dot(response_petsc)
+
+                #value  = vec_petsc_big1.dot(response_petsc)
+                #print("Q_u: ", value)
+
+                # W part
+                W_deformed.mult(forcing_petsc, vec_petsc_big1)
+                ksp_R.solve(vec_petsc_big1, vec_petsc_big2)
+                P_u.multTranspose(vec_petsc_big2, vec_petsc_small1)
+                Q_u.mult(vec_petsc_small1, vec_petsc_small2)
+                P_u.mult(vec_petsc_small2, vec_petsc_big1)
+                sensitivity_R[i]  += 2.*np.real(vec_petsc_big1.dot(response_petsc))
+
+                #value = 2.*np.real(vec_petsc_big1.dot(response_petsc))
+                #print("W  : ", value)
+
+                # R part
+                A_deformed.mult(response_petsc, vec_petsc_big1)
+                ksp_R.solve(vec_petsc_big1, vec_petsc_big2)
+                P_u.multTranspose(vec_petsc_big2, vec_petsc_small1)
+                Q_u.mult(vec_petsc_small1, vec_petsc_small2)
+                P_u.mult(vec_petsc_small2, vec_petsc_big1)
+                sensitivity_R[i]  -= 2.*np.real(vec_petsc_big1.dot(response_petsc))
+
+                #value  = -2.*np.real(vec_petsc_big1.dot(response_petsc))
+                #print("R  : ", value)
 
 
         a_i[i] = a_i[i] - epsilon
         geometryDeformer.restoreMesh()
  
+        #printDebug(True, "-------------------------------------------------------------" )
+        #printDebug(True, "-- "+str(sensitivity_R[i]))
+        #printDebug(True, "-------------------------------------------------------------" )
+
 
     printDebug(True, "-------------------------------------------------------------" )
-    printDebug(True, "-- INNER DERIVATIVE OF RESOLVENT OPERATOR R (NOT YET THE GRADIENT): "+str(sensitivity_R))
+    printDebug(True, "-- GRADIENT OF RESOLVENT GAIN SUM: "+str(np.real(sensitivity_R)))
     printDebug(True, "-------------------------------------------------------------" )
-
 
     
-    printDebug(True, '------------------------------------------------ ')
-    printDebug(True, '-- sensitivities part 1:  ' + str((sensitivity1)))
-    printDebug(True, '------------------------------------------------ ')
-    printDebug(True, '------------------------------------------------ ')
-    printDebug(True, '-- sensitivities part 2:  ' + str((sensitivity2)))
-    printDebug(True, '------------------------------------------------ ')
+    #printDebug(True, '------------------------------------------------ ')
+    #printDebug(True, '-- sensitivities part 1:  ' + str((sensitivity1)))
+    #printDebug(True, '------------------------------------------------ ')
+    #printDebug(True, '------------------------------------------------ ')
+    #printDebug(True, '-- sensitivities part 2:  ' + str((sensitivity2)))
+    #printDebug(True, '------------------------------------------------ ')
 
 
-    return sensitivity1, sensitivity2, gainSum 
+    return sensitivity_R, sensitivity2, gainSum 
 
 
     
