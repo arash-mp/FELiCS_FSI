@@ -414,8 +414,87 @@ class EquationCollectionClass():
 
         return W
 
+  
+    # TODO Sophie: This is a very quick implementation. Tensor framework needed!
+    def getFEMDiffusionMatrix(self,diffusionFactor,sponge=None):
 
+        # create ufl object with the full FEM weight matrix expression
+        D_ufl     = WeakForm()
+        test_FEM  = self.testFunctionsFEM
+        trial_FEM = self.trialFunctionsFEM
 
+        # go through all (scalar) function spaces in the mixed function space 
+        i=0
+        for test in test_FEM:
+            #try:    # try if the function space is a "VectorFunctionSpace"
+            try:
+                j=0
+                for subTest in test:
+                    D_ufl.add(conj(subTest)*trial_FEM[i][j]*dx)
+                    D_ufl.add(diffusionFactor*(Dx(conj(subTest),0)*Dx(trial_FEM[i][j],0)+Dx(conj(subTest),1)*Dx(trial_FEM[i][j],1))*dx)
+                    if sponge != None:
+                        D_ufl.add(sponge*conj(subTest)*trial_FEM[i][j]*dx)
+                    j+=1
+            except: # function space is scalar
+                D_ufl.add(conj(test)*trial_FEM[i]*dx)
+                D_ufl.add(diffusionFactor*(Dx(conj(test),0)*Dx(trial_FEM[i],0)+Dx(conj(test),1)*Dx(trial_FEM[i],1))*dx)
+                if sponge != None:
+                    D_ufl.add(sponge*conj(test)*trial_FEM[i]*dx)
+            i+=1
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            D_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        D = assemble_matrix(form(D_ufl.lhs), self.BCs) 
+        D.assemble()
+
+        return D
+
+    def getFullRHS(self,func):
+
+        # create ufl object with the full FEM weight matrix expression
+        rhs_ufl   = WeakForm()
+        test_FEM  = self.testFunctionsFEM
+        func_i    = func.split()
+
+        # go through all (scalar) function spaces in the mixed function space 
+        i=0
+        for test in test_FEM:
+            try:    # try if the function space is a "VectorFunctionSpace"
+                j=0
+                for subTest in test:
+                    rhs_ufl.add(conj(subTest)*func_i[i][j]*dx)
+                    j+=1
+
+            except: # function space is scalar
+                rhs_ufl.add(conj(test)*func_i[i]*dx)
+            i+=1
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            rhs_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        rhs = assemble_vector(form(-rhs_ufl.rhs))
+        rhs.assemble()
+
+        return rhs
 
 
 

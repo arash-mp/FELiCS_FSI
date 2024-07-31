@@ -54,11 +54,11 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
     meanFlow.importDataFromFile()
 
     # load base flow into meanFlow object
-    if np.linalg.norm(meanFlow._fieldDict['u'].x.array[:]) < 1.e-8:
-        baseFlow = Field(FEMSpaces.VMixed, mesh)
-        baseFlow.setCoefficientArray(baseFlow_array)
-        [u,p] = baseFlow.getListOfSingleFields()
-        meanFlow._fieldDict['u'] = u.function
+    #if np.linalg.norm(meanFlow._fieldDict['u'].x.array[:]) < 1.e-8:
+    baseFlow = Field(FEMSpaces.VMixed, mesh)
+    baseFlow.setCoefficientArray(baseFlow_array)
+    [u,p] = baseFlow.getListOfSingleFields()
+    meanFlow._fieldDict['u'] = u.function
 
     # export mean flow in "h5" file
     if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':

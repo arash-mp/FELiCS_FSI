@@ -9,6 +9,7 @@ from   FELiCS.Parameters.parameters import parameters
 
 import FELiCS.IO.Import as Import
 from   FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
+import FELiCS.IO.ExportSolution as Export 
 
 import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
 from   FELiCS.Fields.meanFlowClass import meanFlowClass
@@ -51,11 +52,11 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerPara
     meanFlow.importDataFromFile()
 
 
-    ## export mean flow in "h5" file
-    #if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-    #    meanFlow.exportBaseFlowAsHDF5()
-    #meanflowFilename = 'meanflow.h5'
-    #meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+    # export mean flow in "h5" file
+    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
+        meanFlow.exportBaseFlowAsHDF5()
+    meanflowFilename = 'meanflow.h5'
+    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
 
 
     # load base flow into meanFlow object if the mean flow field is zero
@@ -85,6 +86,27 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerPara
         geometryDeformer.deformMesh(optimizerParameters)
         geometryDeformer.isDeformed = False
 
+
+    #-----------------------------------------------------------------------
+    ## PUT MEAN FIELD IN BASE FLOW OBJECT (WHEN CALCULATED EXTERNALLY)
+    #-----------------------------------------------------------------------
+    # interlopate pressure onto P1 space
+    p_mean = dolfinx.fem.Function(FEMSpaces.P1)
+    p_mean.interpolate(meanFlow._fieldDict['p'])
+    meanFlow._fieldDict['p'] = p_mean
+
+    # fill base flow field object
+    mapping            = baseFlow.space.sub(0).sub(0).collapse()[1]
+    mappingu           = meanFlow._fieldDict['u']._V.sub(0).collapse()[1]
+    baseFlow.function.x.array[mapping] = meanFlow._fieldDict['u'].x.array[mappingu]
+    mapping            = baseFlow.space.sub(0).sub(1).collapse()[1]
+    mappingu           = meanFlow._fieldDict['u']._V.sub(1).collapse()[1]
+    baseFlow.function.x.array[mapping] = meanFlow._fieldDict['u'].x.array[mappingu]
+    mapping            = baseFlow.space.sub(1).collapse()[1]
+    baseFlow.function.x.array[mapping] = meanFlow._fieldDict['p'].x.array[:]
+
+
+
     #-----------------------------------------------------------------------
     ## CALCULATE delta N / delta a_i and dq/da_i: 
     #-----------------------------------------------------------------------
@@ -96,9 +118,137 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerPara
     u_t.function.x.array[mapping_ux] = targetValues[0]
     u_t.function.x.array[mapping_uy] = targetValues[1]
     p_t.function.x.array[:]          = targetValues[2]
+    # set wrong target values s.t. the sponge has no effect
+    meanFlow._fieldDict['u_target'] = meanFlow._fieldDict['u']
+    meanFlow._fieldDict['p_target'] = meanFlow._fieldDict['p']
+    #meanFlow._fieldDict['u_target'] = u_t.function
+    #meanFlow._fieldDict['p_target'] = p_t.function
+
+    p_mean = dolfinx.fem.Function(FEMSpaces.P1)
+    p_mean.interpolate(meanFlow._fieldDict['p'])
+    meanFlow._fieldDict['p'] = p_mean
+
+    # get reference nonlinear expression
+    N_0  = equation.getNonlinearExpression(meanFlow)    
+
+    ##########
+    # smooth and treat with sponge => does not help for 1st order;  
+    D        = equation.getFEMDiffusionMatrix(3.e-6, sponge=None)#meanFlow._fieldDict['spg'])
+    solver_D = LinearSolver.createEquationSystemSolver(D)
+    #residuum_vec  = LinearSolver.solveEquationSystemWithPredefinedSolver(solver_D, N_0)
+    #residuum = Field(FEMSpaces.VMixed,mesh)
+    #residuum.setCoefficientArray(residuum_vec)
+    #N_0  = equation.getFullRHS(residuum.function)
+    ##########
+
+    # get linear solver  
+    A        = equation.getLinearOperator(meanFlow)
+    solver_A = LinearSolver.createEquationSystemSolver(A)
+
+    printDebug(True, "-------------------------------------------------------------" )
+    printDebug(True, "-- Calculating new base flow...")
+    printDebug(True, "-------------------------------------------------------------" )
+
+    # 1st order
+    baseFlow_sens_1_array  = LinearSolver.solveEquationSystemWithPredefinedSolver(solver_A, N_0)
+
+    baseFlow_sens_1 = Field(FEMSpaces.VMixed, mesh)
+    baseFlow_sens_1.setCoefficientArray(baseFlow_sens_1_array)
+
+    ###########
+    ## smooth and treat with sponge 
+    #rhs = equation.getFullRHS(baseFlow_sens_1.function)
+    #baseFlow_sens_1_array  = LinearSolver.solveEquationSystemWithPredefinedSolver(solver_D, rhs)
+    #baseFlow_sens_1.setCoefficientArray(baseFlow_sens_1_array)
+    ###########
+
+
+    # 2nd order
+    [u_sens, p_sens]                  = baseFlow_sens_1.getListOfSingleFields()
+    meanFlow._fieldDict['u_bilinear'] = u_sens.function
+    A_q = equation.getBilinearOperator(meanFlow)
+    vec1, vec2 = A_q.getVecs() 
+    vec1.setValues(range(0,len(baseFlow_sens_1_array[:])), baseFlow_sens_1_array[:])
+    A_q.multTranspose(vec1, vec2)
+
+    ############
+    ### smooth and treat with sponge 
+    ##residuum_vec  = LinearSolver.solveEquationSystemWithPredefinedSolver(solver_D, vec2)
+    ##residuum = Field(FEMSpaces.VMixed,mesh)
+    ##residuum.setCoefficientArray(residuum_vec)
+    ##vec2  = equation.getFullRHS(residuum.function)
+    ############
+
+    baseFlow_sens_2_array  = LinearSolver.solveEquationSystemWithPredefinedSolver(solver_A, vec2)
+    baseFlow_sens_2 = Field(FEMSpaces.VMixed, mesh)
+    baseFlow_sens_2.setCoefficientArray(baseFlow_sens_2_array)
+
+    ###########
+    ## smooth and treat with sponge => does not help for 1st order;  
+    #rhs = equation.getFullRHS(baseFlow_sens_2.function)
+    #baseFlow_sens_2_array  = LinearSolver.solveEquationSystemWithPredefinedSolver(solver_D, rhs)
+    #baseFlow_sens_2.setCoefficientArray(baseFlow_sens_2_array)
+    ###########
+
+
+    # update base flow and mean flow
+    baseFlow.setCoefficientArray(baseFlow.getCoefficientArray() + baseFlow_sens_1_array[:] + 0.5*baseFlow_sens_2_array[:])
+    #baseFlow.setCoefficientArray(baseFlow.getCoefficientArray() + baseFlow_sens_1_array[:])
+    [u,p] = baseFlow.getListOfSingleFields()
+    meanFlow._fieldDict['u'] = u.function
+    meanFlow._fieldDict['p'] = p.function
+ 
+    # now: set correct target values for sponge
     meanFlow._fieldDict['u_target'] = u_t.function
     meanFlow._fieldDict['p_target'] = p_t.function
 
+
+    #######################################
+    ######## export as resolvent mode #####
+    ########   (for debugging)        #####
+    #######################################
+    #omegas   = param.IOResolvent.Omegas
+    #nSol     = 1 
+    #nDofs    = A.getSizes()[0][0]
+    #nOmegas  = len(omegas)
+    #gains             = np.zeros((nSol,nOmegas),'complex')
+    #forcings          = np.zeros((nDofs,nSol,nOmegas),'complex')
+    #responses         = np.zeros((nDofs,nSol,nOmegas),'complex')
+    #responses[:,0,0]  = baseFlow.getCoefficientArray()
+    #forcings[:,0,0]   = baseFlow_sens_1_array[:] + 1j*baseFlow_sens_2_array[:]
+    #fluctSolutList    = []
+    #for i, omega in enumerate(omegas):
+    #    for gainNumb in range(responses.shape[1]):
+    #        fluctSolutForcing = fluctuationSolutions(
+    #                            param,
+    #                            meanFlow,
+    #                            FEMSpaces,
+    #                            omegas[i],
+    #                            forcings[:,gainNumb,i],
+    #                            False,
+    #                            gainNumb,
+    #                            gains[gainNumb, i],
+    #                            )
+    #        fluctSolutResponse = fluctuationSolutions(
+    #                            param,
+    #                            meanFlow,
+    #                            FEMSpaces,
+    #                            omegas[i],
+    #                            responses[:,gainNumb, i],
+    #                            True,
+    #                            gainNumb,
+    #                            gains[gainNumb, i],
+    #                            )
+
+    #        fluctSolutList.append(fluctSolutForcing)
+    #        fluctSolutList.append(fluctSolutResponse)
+
+
+    #Export.ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+    #exit()
+    #######################################
+    #######################################
+    
     # get reference nonlinear expression
     N_0  = equation.getNonlinearExpression(meanFlow)    
 
@@ -153,7 +303,7 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerPara
     for sens in baseFlowSensitivity:
         baseFlowSensitivity_array.append(sens.getCoefficientArray())
 
-    return baseFlowSensitivity_array
+    return baseFlowSensitivity_array, baseFlow.getCoefficientArray()
 
 
 

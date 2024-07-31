@@ -7,8 +7,7 @@ from   FELiCS.Parameters.parameters import parameters
 from calcBaseFlow                      import calculateBaseFlow
 
 from calcModesAndSensitivity           import calculateModesAndSensitivity
-from calcResolventModesAndSensitivity  import calculateResolventModesAndSensitivity
-from calcBaseFlowSensitivity           import calculateBaseFlowSensitivity
+from calcNSResiduum                    import calculateNavierStokesResiduum
 
 
 #-----------------------------------------------------------------------
@@ -32,19 +31,13 @@ a_i  = np.load("params.npy")
 print('~~~~~ base flow ~~~~~~~')
 baseFlow_array                                  = calculateBaseFlow            (settingsFileName_baseFlow)
 print('~~~~~ base flow sensitivity ~~~~~~~')
-baseFlowSensitivity_array, baseFlow_array       = calculateBaseFlowSensitivity (settingsFileName_baseFlow, baseFlow_array, a_i) 
-print('~~~~~ modes and sensitivity ~~~~~~~')
-sensitivity1, sensitivity2, gain                = calculateResolventModesAndSensitivity (settingsFileName_eigenSystem, baseFlow_array, baseFlowSensitivity_array, a_i)
+residuum                                        = calculateNavierStokesResiduum (settingsFileName_baseFlow, baseFlow_array, a_i) 
 
 
 # write out solutions s.t. the shapedescender can read them
-np.save("f_30_tilde_o2.npy",  gain)
-np.save("df_30_tilde_o2.npy", (sensitivity1 + sensitivity2))
+np.save("F.npy",  residuum)
 
-print("##################", gain)
-print("##################", (sensitivity1)) 
-print("##################", (sensitivity2) )
-print("##################", (sensitivity1 + sensitivity2))
+print("residuum: ", residuum)
 
 
 
