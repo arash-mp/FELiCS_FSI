@@ -104,30 +104,37 @@ class parameters():
             self.FlowInput.importFromH5File(filestring)
             self.BCs.importFromH5File(filestring)
             self.BCs.readDomainData(
-                                self.Case.MeshFilePath,
+                self.Case.MeshFilePath,
                 self.Case.getExtendedTransportedQuantityList(),
                 self.Case.CoordinateSystem,
-                                self.Case.m,
-                                )
+                self.Case.m,)
             self.IOResolvent.importFromH5File(filestring)
             self.Numerics.importFromH5File(filestring)
             self.Export.importFromH5File(filestring)
         else:
 
+
+
+
+
             self.Case.importSettings(filestring)
             self.FlowInput.importSettings(filestring)
             self.BCs.importSettings(filestring)
             self.BCs.readDomainData(
-                                self.Case.MeshFilePath,
-                                self.Case.nDim,
-                                self.Case.getExtendedTransportedQuantityList(),
-                                self.Case.CoordinateSystem,
-                                self.Case.m,
-                                )
+                self.Case.MeshFilePath,
+                self.Case.nDim,
+                self.Case.getExtendedTransportedQuantityList(),
+                self.Case.CoordinateSystem,
+                self.Case.m,)
             self.IOResolvent.importSettings(filestring)
             self.Numerics.importSettings(filestring)
             self.Export.importSettings(filestring)
             self.getOldParameters()
+
+
+
+
+
     def complete(self):
         '''Check all parameters for completeness and consistency'''
         #Check all sub parameter groups for completeness.

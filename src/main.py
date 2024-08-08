@@ -30,7 +30,7 @@ from runResolvent   import  runResolvent
 from runInputOutput import  runInputOutput
 
 from FELiCS.GUI.GUI import FELiCS_GUI
-from FELiCS.Parameters.parameters import parameters
+from FELiCS.Parameters.parametersClass import parameters
 
 # check if '-file' argument was added to run from file only. else start the GUI
 
