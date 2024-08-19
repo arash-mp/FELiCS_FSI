@@ -38,12 +38,10 @@ sensitivity1, sensitivity2, gain                = calculateResolventModesAndSens
 
 
 # write out solutions s.t. the shapedescender can read them
-np.save("f_30_tilde_o2.npy",  gain)
-np.save("df_30_tilde_o2.npy", (sensitivity1 + sensitivity2))
+np.save("f.npy",  gain)
+np.save("df.npy", (sensitivity1 + sensitivity2))
 
 print("##################", gain)
-print("##################", (sensitivity1)) 
-print("##################", (sensitivity2) )
 print("##################", (sensitivity1 + sensitivity2))
 
 

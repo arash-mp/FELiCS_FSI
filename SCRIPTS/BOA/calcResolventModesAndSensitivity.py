@@ -54,11 +54,11 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
     meanFlow.importDataFromFile()
 
     # load base flow into meanFlow object
-    #if np.linalg.norm(meanFlow._fieldDict['u'].x.array[:]) < 1.e-8:
-    baseFlow = Field(FEMSpaces.VMixed, mesh)
-    baseFlow.setCoefficientArray(baseFlow_array)
-    [u,p] = baseFlow.getListOfSingleFields()
-    meanFlow._fieldDict['u'] = u.function
+    if np.linalg.norm(meanFlow._fieldDict['u'].x.array[:]) < 1.e-8:
+        baseFlow = Field(FEMSpaces.VMixed, mesh)
+        baseFlow.setCoefficientArray(baseFlow_array)
+        [u,p] = baseFlow.getListOfSingleFields()
+        meanFlow._fieldDict['u'] = u.function
 
     # export mean flow in "h5" file
     if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
@@ -156,7 +156,7 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
         gains[:,i],eigenvectors_c = LinearSolver.solveSVDOfResolvent(
                             resolventOperator,
                             nev=nSol,
-                            tol=1.e-13,
+                            tol=1.e-16,
                             max_it=200,
                             )
 
@@ -232,8 +232,14 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
     end = time.time() - start
     printDebug(True, '-- Solving the resolvent eigenproblem took %4g s' % end)
 
+    ###########################
+    ### for debugging ##########
+    #sensitivity_R    = np.zeros(8,dtype=complex)
+    #sensitivity1     = np.zeros(8,dtype=complex)
+    #sensitivity2     = np.zeros(8,dtype=complex)
+    #return sensitivity_R, sensitivity2, gainSum 
+    ###########################
 #    Export.ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
-
 
     #-----------------------------------------------------------------------
     ## PUT DOMINANT MODES INTO NEW STRUCTURE. 
@@ -383,7 +389,6 @@ def calculateResolventModesAndSensitivity(settingsFileName, baseFlow_array, base
                 #value  = -vec_petsc_big1.dot(forcing_petsc)
                 #print("Q_f: ", value)
 
-
                 # Q_u part
                 P_u.multTranspose(response_petsc,vec_petsc_small1)
                 Q_u_deformed.mult(vec_petsc_small1, vec_petsc_small2)
@@ -513,7 +518,7 @@ class ResolventOperator(object):
 
         def mult(self, mat, X, Y):
                 # returns Y=mat*X 
-                # mat = P_f^T * W^T * (R^H)^-1 * P_u * Q_u * P_u^T * R^-1 * W * P_f
+                # mat = (Q_f^T)^-1 * P_f^T * W^T * (R^H)^-1 * P_u * Q_u * P_u^T * R^-1 * W * P_f
 
                 self._P_f.mult           (X,        self._Z1)  #Z1 = P_f*X
                 self._W.mult             (self._Z1, self._Z2)  #Z2 = W*Z1
