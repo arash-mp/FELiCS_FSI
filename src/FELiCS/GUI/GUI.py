@@ -5,7 +5,7 @@ class FELiCS_GUI():
         '''Initialiizng the main GUI object'''
         import tkinter as tk
         from os import getcwd
-        from FELiCS.Parameters.parameters import parameters
+        from FELiCS.Parameters.parametersClass import parameters
         # Get the working directory
         self.workDir = getcwd() 
         # Initialize the parameter object
