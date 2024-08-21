@@ -173,7 +173,8 @@ class LinearSolver:
     @staticmethod
     def solveEquationSystem(
         A,
-        b):
+        b,
+        destroy=False):
 
         """__solveEquationSystem  
         Solves a linear equation system Ax=b, using the PETSc libraries.
@@ -203,8 +204,14 @@ class LinearSolver:
         
         x = solution.getArray()
         
+        solver.getPC().destroy()
         solver.destroy()
         dummy.destroy()
+        solution.destroy()
+
+        if destroy:
+            A.destroy()
+            b.destroy()
         
         return x 
 
@@ -212,7 +219,8 @@ class LinearSolver:
     @staticmethod
     def solveTransposeEquationSystem(
         A,
-        b):
+        b,
+        destroy=False):
 
         """
         Solves a linear equation system A^T x=b, using the PETSc libraries.
@@ -242,8 +250,14 @@ class LinearSolver:
         
         x = solution.getArray()
         
+        solver.getPC().destroy()
         solver.destroy()
         dummy.destroy()
+        solution.destroy()
+
+        if destroy:
+            A.destroy()
+            b.destroy()
         
         return x 
 
@@ -281,7 +295,8 @@ class LinearSolver:
     @staticmethod
     def solveEquationSystemWithPredefinedSolver(
         solver,
-        b):
+        b,
+        destroy=False):
 
         """__solveEquationSystem  
         Solves a linear equation system Ax=b, using the PETSc libraries.
@@ -304,6 +319,11 @@ class LinearSolver:
         solver.solve(b, solution)
         
         x = solution.getArray()
+
+        solution.destroy()
+
+        if destroy:
+            b.destroy()
         
         return x 
 

@@ -5,6 +5,7 @@ from   FELiCS.Parameters.parameters import parameters
 
 
 from calcBaseFlow                import calculateBaseFlow
+from calcMeanFlow                import calculateMeanFlow
 
 from calcModesAndSensitivity     import calculateModesAndSensitivity
 from calcBaseFlowSensitivity     import calculateBaseFlowSensitivity
@@ -22,13 +23,14 @@ settingsFileName_baseFlow    = sys.argv[2]
 settingsFileName_eigenSystem = sys.argv[3]
 
 # Read the given parameters. They have to fit the case in the GeometryDeformer
-a_i  = np.load("/params.npy")
+a_i  = np.load("params.npy")
 
 #-----------------------------------------------------------------------
 # MAIN PART 
 #-----------------------------------------------------------------------
 print('~~~~~ base flow ~~~~~~~')
 baseFlow_array                                  = calculateBaseFlow            (settingsFileName_baseFlow)
+#baseFlow_array                                  = calculateMeanFlow            (settingsFileName_baseFlow)
 print('~~~~~ base flow sensitivity ~~~~~~~')
 baseFlowSensitivity_array                       = calculateBaseFlowSensitivity (settingsFileName_baseFlow, baseFlow_array, a_i) 
 print('~~~~~ modes and sensitivity ~~~~~~~')

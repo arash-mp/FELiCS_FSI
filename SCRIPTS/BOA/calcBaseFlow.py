@@ -30,7 +30,7 @@ from dolfinx.fem import Function, FunctionSpace, Expression
 from dolfinx.mesh import  locate_entities
 from   CaseHandler import CaseHandler
 
-def saveToFelFile(mesh,FEMSpaces, u_original):
+def saveToFelFile(mesh,FEMSpaces, u_original, sponge):
     #Define functions for source of interpolation in first order
     x_source = Function(FEMSpaces.P1,dtype=float)
     y_source = Function(FEMSpaces.P1,dtype=float)
@@ -58,6 +58,7 @@ def saveToFelFile(mesh,FEMSpaces, u_original):
         f.create_dataset('/MeanFlow/y', data=y_target.x.array)
         f.create_dataset('/MeanFlow/ux', data=ux_target.x.array)
         f.create_dataset('/MeanFlow/uy', data=uy_target.x.array)
+        f.create_dataset('/MeanFlow/spg', data=sponge.x.array)
 
 
 def saveBaseflow(mesh, u_original):
@@ -239,7 +240,7 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
 
     # Interpolate solution on first order Lagrange Functionspace for XDMF export
     saveBaseflow(mesh.dolfinxMesh, u)
-    saveToFelFile(mesh,FEMSpaces,u)
+    saveToFelFile(mesh,FEMSpaces,u, meanFlow._fieldDict['spg'])
     # export base flow in modes-format 
     # baseFlow_0   = Mode(FEMSpaces.VMixed, mesh)
     # baseFlow_0.setEigenValue(0.)

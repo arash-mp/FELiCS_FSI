@@ -87,6 +87,19 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerPara
         geometryDeformer.isDeformed = False
 
 
+    # set target function for nonlinear sponge
+    targetValues = caseHandler.getTargetValuesForSponge()
+    [u_t,p_t] = baseFlow.getListOfSingleFields()
+    mapping_ux = u_t.space.sub(0).collapse()[1]
+    mapping_uy = u_t.space.sub(1).collapse()[1]
+    u_t.function.x.array[mapping_ux] = targetValues[0]
+    u_t.function.x.array[mapping_uy] = targetValues[1]
+    p_t.function.x.array[:]          = targetValues[2]
+    meanFlow._fieldDict['u_target'] = u_t.function
+    meanFlow._fieldDict['p_target'] = p_t.function
+
+
+
     #-----------------------------------------------------------------------
     #-----------------------------------------------------------------------
     #-----------------------------------------------------------------------
@@ -118,19 +131,9 @@ def calculateBaseFlowSensitivity(settingsFileName, baseFlow_array, optimizerPara
     #-----------------------------------------------------------------------
     ## CALCULATE delta N / delta a_i and dq/da_i: 
     #-----------------------------------------------------------------------
-    ## set target function for nonlinear sponge
-    #targetValues = caseHandler.getTargetValuesForSponge()
-    #[u_t,p_t] = baseFlow.getListOfSingleFields()
-    #mapping_ux = u_t.space.sub(0).collapse()[1]
-    #mapping_uy = u_t.space.sub(1).collapse()[1]
-    #u_t.function.x.array[mapping_ux] = targetValues[0]
-    #u_t.function.x.array[mapping_uy] = targetValues[1]
-    #p_t.function.x.array[:]          = targetValues[2]
     ## set wrong target values s.t. the sponge has no effect
     #meanFlow._fieldDict['u_target'] = meanFlow._fieldDict['u']
     #meanFlow._fieldDict['p_target'] = meanFlow._fieldDict['p']
-    ##meanFlow._fieldDict['u_target'] = u_t.function
-    ##meanFlow._fieldDict['p_target'] = p_t.function
 
     #p_mean = dolfinx.fem.Function(FEMSpaces.P1)
     #p_mean.interpolate(meanFlow._fieldDict['p'])

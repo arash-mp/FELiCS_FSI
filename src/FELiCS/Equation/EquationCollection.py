@@ -498,7 +498,6 @@ class EquationCollectionClass():
 
 
 
-
     def getNonlinearExpression(self, meanFlow, setBC=True):
         from dolfinx.fem.petsc import set_bc
         N_ufl = WeakForm()
