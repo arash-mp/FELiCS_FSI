@@ -1,12 +1,13 @@
-import json
 from FELiCS.GUI.SettingsClass import Settings
 class NumericsSettingsClass(Settings):
     def __init__(self):
-        ''' Initializing the numerics settings class '''
+        '''Initializing the numerics settings class
+        '''
         super().__init__()
         self._settingsKind = 'Numerics'
         SettingsDict=self.getAllSettingsDict()
         for key in list(SettingsDict.keys()):
+        
             if type(SettingsDict[key]['default']) in [dict]:
                 quotation=''
             else:
@@ -15,7 +16,7 @@ class NumericsSettingsClass(Settings):
             exec(tempStr)
 
     def getAllSettingsDict(self):
-        ''' Function returning all numerics settings with default values '''
+        '''Function returning all numerics settings with default values'''
         SettingsDict={\
             'nSolut':{'datatype':int,'default':3},
             'EigenValueGuess':{'datatype':list,'default':[1.0]},
@@ -32,14 +33,27 @@ class NumericsSettingsClass(Settings):
         SettingsDict=self.getAllSettingsDict()
         if not settingFilePath =='':
             file = open(settingFilePath)
-            data = json.load(file)
-            for key,item in data.items():
-                setattr(self,key,item)
+
+            #Read whole file
+            lines = file.readlines()
+            # Add every line of the file as an attribute to the object
+            
+            for line in lines:
+                beforeEqualSign = line.split('=')[0].strip()
+                afterEqualSign = line.split('=')[1].strip()
+                if beforeEqualSign in list(SettingsDict.keys()):
+                    exec('self.tempVariable = ' + afterEqualSign)
+                    if type(SettingsDict[beforeEqualSign]['default']) == type(self.tempVariable):
+                        exec('self.'+line)
+                    elif SettingsDict[beforeEqualSign]['datatype'] == list and type(self.tempVariable) in [float,int,complex]:
+                        self.tempVariable = list([self.tempVariable])
+                        exec('self.'+beforeEqualSign + '=' + str(self.tempVariable))
+            del self.tempVariable
             file.close()
 
     def complete(self,variableList):
         ''' Checking if all necessary case attributes are present '''
-        # Check inputs for completeness and correctness ...'
+        #Check inputs for completeness and correctness ...'
         from FELiCS.Misc.functions import printWarning
         EverythingPresent=True
         CaseSettingsDict=self.getAllSettingsDict()
@@ -56,4 +70,5 @@ class NumericsSettingsClass(Settings):
                 printWarning("Polynomial orders are not correctly chosen...")
                 EverythingPresent=False
                 break
+
         return EverythingPresent

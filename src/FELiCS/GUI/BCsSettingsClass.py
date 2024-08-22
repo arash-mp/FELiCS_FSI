@@ -1,4 +1,3 @@
-import json
 from os.path import isfile
 from os import system, path
 
@@ -206,9 +205,13 @@ class BCsSettingsClass(Settings):
         SettingsDict=self.getAllSettingsDict()
         if not settingFilePath =='':
             file = open(settingFilePath)
-            data = json.load(file)
-            for key,item in data.items():
-                setattr(self,key,item)
+
+            #Read whole file
+            lines = file.readlines()
+            # Add every line of the file as an attribute to the object
+            for line in lines:
+                if line.split('=')[0].strip() in list(SettingsDict.keys()):
+                    exec('self.'+line)
             file.close()
 
     def initBCsDict(self,VariableList):
