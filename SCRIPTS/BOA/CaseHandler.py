@@ -22,6 +22,11 @@ class CaseHandler:
             self.initialValuesForBaseFlow = [1.,0.,0.] #ux, uy, p
             self.geometryDeformer = geo.CylinderBSpline2Pts(mesh,boundaryFacets)
 
+        elif self.case == 'CylinderSophie':
+            self.targetValuesForSponge    = [1.,0.,0.5] #ux, uy, p
+            self.initialValuesForBaseFlow = [1.,0.,0.5] #ux, uy, p
+            self.geometryDeformer = geo.CylinderBSpline2Pts(mesh,boundaryFacets)
+
         elif self.case == 'ProfileBSpline8Pts':
             self.targetValuesForSponge    = [1.5,0.,0.] #ux, uy, p
             self.initialValuesForBaseFlow = [1.5,0.,0.] #ux, uy, p

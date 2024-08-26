@@ -30,6 +30,32 @@ class Field:
         return listOfFields
 
 
+
+    def setListOfSingleFields(self, listOfFields):
+        numberOfSubSpaces = self.space.num_sub_spaces
+
+        if numberOfSubSpaces == 0:
+            try:
+                self.setCoefficientArray(listOfFields[0].getCoefficientArray())
+            except:
+                print("ERROR")
+                #TODO: Throw error!
+            return 
+
+        for i in range(numberOfSubSpaces):
+            try:
+                space, mapping                 = self.space.sub(i).collapse()
+                self.function.x.array[mapping] = listOfFields[i].getCoefficientArray()
+            except:
+                print("ERROR")
+                #TODO: Throw error!
+
+        return 
+
+
+
+
+
     def getCoefficientArray(self):
         import numpy as np
         array = np.empty(len(self.function.x.array[:]),dtype=complex)
