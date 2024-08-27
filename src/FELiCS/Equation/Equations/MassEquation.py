@@ -1,6 +1,4 @@
 from ufl import dx
-from FELiCS.Misc.functions import printDebug, printError
-from .EquationTemplate import EquationTemplate
 
 from FELiCS.Misc.tensorUtils import (
     Tensor,
@@ -10,6 +8,9 @@ from FELiCS.Misc.tensorUtils import (
     iConj
 )
 
+from FELiCS.Misc.functions import printDebug, printError
+
+from .EquationTemplate import EquationTemplate
 
 class MassEquation(EquationTemplate):
     """

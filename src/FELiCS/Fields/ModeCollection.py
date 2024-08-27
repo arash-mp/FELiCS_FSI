@@ -35,7 +35,7 @@ class ModeCollection():
             error.append(mode.getError())
         return np.amax(error)
 
-    def getNearestMode(self,gain=None,eigenValue=None,guess=None,gain=None,waveNumber=None,frequency=None):
+    def getNearestMode(self,gain=None,eigenValue=None,guess=None,waveNumber=None,frequency=None):
         #ToDo: get nearest mode to one of the above. Change handling of parameters
         pass
 

@@ -28,6 +28,9 @@ from FELiCS.Misc.tensorUtils import (
 )
 
 
+from FELiCS.Misc.functions import printWarning, printError, printDebug
+
+from .EquationTemplate import EquationTemplate
 
 
 class SpeciesEquation(EquationTemplate):
