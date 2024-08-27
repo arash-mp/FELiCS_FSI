@@ -52,8 +52,6 @@ def runInputOutput(param, useGUI):
 
 
 
-
-
     #-----------------------------------------------------------------------
     ## MAIN PART
     #-----------------------------------------------------------------------
@@ -64,8 +62,6 @@ def runInputOutput(param, useGUI):
 
     # get parameters for input/output analysis
     omegas   = param.IOResolvent.Omegas
-
-    exit()
 
     # track time
     start= time.time()
@@ -79,37 +75,12 @@ def runInputOutput(param, useGUI):
 
         solutionVector = LinearSolver.solveEquationSystem(operator, forcing)
         
-        solution.appendModeFromVector(solutionVector, gain=1) 
-
-#                # Use PETSC to solve linear system (with LU decomposition)
-#                eigenvectors_c   = self.__solveEquationSystem(OP, self.__matrix_dict_petsc['b_forcing'])
-#                gains[:,i]       = 1
-#                responses[:,0,i] = eigenvectors_c
-#
-#        for i in range(len(self.__param.IOResolvent.Omegas)):
-#            # construct for each EVal and EVec a fluctuationSolution
-#            for gainNumb in range(responses.shape[1]):
-#                fluctSolutObjList.append(fluctuationSolutions(
-#                        self.__param,
-#                        self.__meanFlow,
-#                        self.__FEMSpaces,
-#                        self.__param.IOResolvent.Omegas[i],
-#                        responses[:,gainNumb,i],
-#                        True,
-#                        gainNumb,
-#                        gains[gainNumb,i]
-#                        ))
-#
-
+        solution.appendModeFromVector(solutionVector, frequency = omega, gain = 1) 
 
 
     # end tracking time
     end = time.time() - start
     printDebug(True, '-- Solving the input/output problem took %4g s' % end)
-    residuum_max = solution.getMaximumError()
-    printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
-
-
 
 
     #-----------------------------------------------------------------------
@@ -119,4 +90,4 @@ def runInputOutput(param, useGUI):
     if useGUI:
         ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, equationColl,mesh)
     else:
-        ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow)
+        ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)

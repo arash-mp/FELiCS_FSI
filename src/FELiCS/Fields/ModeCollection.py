@@ -14,6 +14,19 @@ class ModeCollection():
     def appendMode(self,mode):
         self.modeList.append(mode)
 
+    def appendModeFromVector(self, vector, gain=None, eigenValue = None, guess = None, waveNumber = None, frequency = None, isAdjoint = False):
+        mode = Mode(self.femSpace, self.mesh)
+        #mode.setCoefficientArray(vector)
+        mode.function.x.array[:] = vector
+
+        mode.setGain(gain)
+        mode.setEigenValue(eigenValue)
+        mode.setGuess(guess)
+        mode.setWaveNumber(waveNumber)
+        mode.setFrequency(frequency)
+        mode.isAdjoint = isAdjoint
+
+        self.appendMode(mode)
 
     def appendSolutionOfEigenProblem(self, solution, guess, adjoint=False):
         [eigVals, eigVecs, error] = solution
@@ -45,16 +58,32 @@ class ModeCollection():
         fluctSolutObjList    = []
         fluctSolutObjListAdj = []
 
-        for mode in self.modeList:
-            # construct for each EVal and EVec a fluctuationSolution
-            fluctSolutObjList.append(fluctuationSolutions(
-                                    param,
-                                    meanFlow,
-                                    FEMSpaces,
-                                    mode.getEigenValue(),
-                                    mode.function.x.array[:],
-                                    mode.isAdjoint==False,
-                                     )
-            )
+        if param.Case.AnalysisMode == "Modal":
+            for mode in self.modeList:
+                # construct for each EVal and EVec a fluctuationSolution
+                fluctSolutObjList.append(fluctuationSolutions(
+                                        param,
+                                        meanFlow,
+                                        FEMSpaces,
+                                        mode.getEigenValue(),
+                                        mode.function.x.array[:],
+                                        mode.isAdjoint==False,
+                                         )
+                )
+        elif param.Case.AnalysisMode == "Input-Output":
+            for mode in self.modeList:
+                fluctSolutObjList.append(fluctuationSolutions(
+                                        param,
+                                        meanFlow,
+                                        FEMSpaces,
+                                        mode.getFrequency(),
+                                        mode.function.x.array[:],
+                                        mode.isAdjoint==False,
+                                        0,
+                                        mode.getGain()
+                                         )
+                )
+
+
 
         return fluctSolutObjList
