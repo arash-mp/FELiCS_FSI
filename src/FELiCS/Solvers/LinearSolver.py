@@ -210,9 +210,105 @@ class LinearSolver:
         return x 
 
 
+class ResolventOperator(object):         
+    """         
+    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed, to conduct the 
+    singular value decomposition of the system.         It contains a method called "mult", which is called by the eigenvalue solver, 
+    and returns a matrix vector product of the represented matrix.         
+
+    Private attributes:         
+    Protected attributes:         
+    Public attributes:         
+    """         
+
+    def __init__(self,                      
+            R,                      
+            W,                      
+            Q_f,                      
+            Q_u,                      
+            P_f,                      
+            P_u):                 
+
+        from petsc4py import PETSc                 
+
+        self._size = Q_u.getSize()                 
+
+        self._Z1, self._Z2  = R.getVecs()                 
+        self._Y1, self._Y2  = Q_u.getVecs()                 
+
+        self._P_f = P_f                 
+        self._P_u = P_u                 
+        self._Q_u = Q_u                 
+        self._W   = W                 
+
+        # create KSP1: This is a solver for the System R*x=y.                 
+        self._ksp1 = PETSc.KSP().create()                 
+        self._ksp1.setOperators(R)                 
+        self._ksp1.setType(PETSc.KSP.Type.PREONLY)                 
+        self._ksp1.getPC().setType(PETSc.PC.Type.LU)                 
+        self._ksp1.getPC().setFactorSolverType('mumps')                 
+        self._ksp1.setUp()                 
+        # create KSP2: This is a solver for the System conj(OP)*x=y. It will later be used to solve the transposed system, thus 
+        #effectively solving OP^H *x=y, which is the Hermitian transpose of the system.                 
+        # TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). 
+        # Thus we have to do an additional LU decomposistion.... Change as soon as this is included in the petsc4py!                 
+        R_H = R.copy()   #create a new matrix, s.t. the original one will not be overwritten                 
+        R_H.conjugate()                 
+        R_H.assemble()                 
+        self._ksp2 = PETSc.KSP().create()                 
+        self._ksp2.setOperators(R_H)                 
+        self._ksp2.setType(PETSc.KSP.Type.PREONLY)                 
+        self._ksp2.getPC().setType(PETSc.PC.Type.LU)                 
+        self._ksp2.getPC().setFactorSolverType('mumps')                 
+        self._ksp2.setUp()                 
+        ## create KSP3: This is a solver for the System Qf*x=y (will later be used to solve the transposed system).                 
+        ##Qf.conjugate() #=> is this needed?                 
+        self._ksp3 = PETSc.KSP().create()                 
+        self._ksp3.setOperators(Q_f)                 
+        self._ksp3.setType(PETSc.KSP.Type.PREONLY)                 
+        self._ksp3.getPC().setType(PETSc.PC.Type.LU)                 
+        self._ksp3.getPC().setFactorSolverType('mumps')                 
+        self._ksp3.setUp()         
+
+    def getSize(self):                 
+        return self._size         
+
+    def getVecs(self):                 
+        return self._Y1, self._Y2         
+
+    def mult(self, mat, X, Y):                 
+        # returns Y=mat*X                 
+        # mat = (Q_f^T)^-1 * P_f^T * W^T * (R^H)^-1 * P_u * Q_u * P_u^T * R^-1 * W * P_f                 
+        self._P_f.mult           (X,        self._Z1)  #Z1 = P_f*X                 
+        self._W.mult             (self._Z1, self._Z2)  #Z2 = W*Z1                 
+        self._ksp1.solve         (self._Z2, self._Z1)  #Z1 = R^-1 * Z2                    #
+
+        self._P_u.multTranspose  (self._Z1, self._Y2)  #Y2 = P_u^T*Z1                 
+        self._Q_u.mult           (self._Y2, self._Y1)  #Y1 = Q_u*Y2                 
+        self._P_u.mult           (self._Y1, self._Z2)  #Z2 = P_u * Y1                 
+        self._ksp2.solveTranspose(self._Z2, self._Z1)  #Z1 = (R^H)^-1 * Z2                 
+        #
+        self._W.multTranspose    (self._Z1, self._Z2)  #Z2 = W^T * Z1                 
+        self._P_f.multTranspose  (self._Z2, self._Y1)  #Y1  = P_f^T * Z2                 
+        self._ksp3.solveTranspose(self._Y1, Y)         #Y  = (Q_f^T)^-1 * Y1                 
+
+        return Y         
+
+    def getKSP(self):                 
+        return self._ksp1         
+
+    def destroySelf(self):                 
+        """Clean-up the disc space to avoid memory leaks. Should be called if several resolvent SVDs are done one after the other."""                 
+        self._ksp1.getPC().destroy()                 
+        self._ksp2.getPC().destroy()                 
+        self._ksp3.getPC().destroy()                 
+        self._ksp1.destroy()                 
+        self._ksp2.destroy()                 
+        self._ksp3.destroy() 
 
 
-class ResolventOperator(object):
+
+class ResolventOperator_old(object):
 
         """
         This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed, to conduct the singular value decomposition of the system. 
