@@ -34,6 +34,7 @@ from ufl import (
                 Measure,
                 rhs,
                 lhs,
+                conj,
                 )
 
 from dolfinx.fem import (
@@ -117,13 +118,13 @@ class EquationCollectionClass():
         ## BOUNDARIES
         # Get class for integrating along boundaries
         self.boundaries = mesh.facet_tags
-        self.ds = Measure("ds", subdomain_data=self.boundaries)
+        self.ds         = Measure("ds", subdomain_data=self.boundaries)
 
         # Get all boundaries (So far hard coded)
         first_BC_flag=True
         for Boundary in self.__param.BCs.getBCsDict()[list(self.__param.BCs.getBCsDict().keys())[0]]:
             if first_BC_flag:
-                self.all_ds = self.ds(Boundary['ID'])
+                self.all_ds  = self.ds(Boundary['ID'])
                 first_BC_flag = False
             else:
                 self.all_ds += self.ds(Boundary['ID'])
@@ -145,7 +146,7 @@ class EquationCollectionClass():
                                    FEMSpaces,
                                    self._coordinateSystem,
                                    )
-        #self.hat=TrialFunctions(FEMSpaces.VMixed)
+        self.trialFunctionsFEM = TrialFunctions(FEMSpaces.VMixed)
         self.hat=fluctuationC.fluc
         self.fluctuationC = fluctuationC
 
@@ -154,6 +155,7 @@ class EquationCollectionClass():
             fluc[sol]=self.hat[self.__param.SolutionList.index(sol)]
         
         XTemp = TestFunctions(self.__FEMSpaces.VMixed)
+        self.testFunctionsFEM = XTemp
         
         X=[]
         for i in list(XTemp):
@@ -189,8 +191,8 @@ class EquationCollectionClass():
             momentum = MomentumEquation(self,fluctuationC,X[0],param)
             self.equationList.append(momentum)
 
-            momentum.addLinearExpression(self.A_vf,mean)
-            momentum.addWeightMatrixExpression(self.B_vf,mean)
+            #momentum.addLinearExpression(self.A_vf,mean)
+            #momentum.addWeightMatrixExpression(self.B_vf,mean)
             
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from FELiCS.Equation.Equations.MassEquation import MassEquation
@@ -201,8 +203,8 @@ class EquationCollectionClass():
             mass = MassEquation(self,fluctuationC,X[idVar],self.__param)
             self.equationList.append(mass)
 
-            mass.addLinearExpression(self.A_vf,mean)
-            mass.addWeightMatrixExpression(self.B_vf,mean)
+            #mass.addLinearExpression(self.A_vf,mean)
+            #mass.addWeightMatrixExpression(self.B_vf,mean)
 
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
@@ -213,8 +215,8 @@ class EquationCollectionClass():
             enthalpy = EnthalpyEquation(self,fluctuationC,X[idVar],self.__param)
             self.equationList.append(enthalpy)
 
-            enthalpy.addLinearExpression(self.A_vf,mean)
-            enthalpy.addWeightMatrixExpression(self.B_vf,mean)
+            #enthalpy.addLinearExpression(self.A_vf,mean)
+            #enthalpy.addWeightMatrixExpression(self.B_vf,mean)
         
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
             # printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
@@ -226,8 +228,8 @@ class EquationCollectionClass():
             energyP = EnergyPressureEquation(self,fluctuationC,X[idVar],self.__param)
             self.equationList.append(energyP)
 
-            energyP.addLinearExpression(self.A_vf,mean)
-            energyP.addWeightMatrixExpression(self.B_vf,mean)
+            #energyP.addLinearExpression(self.A_vf,mean)
+            #energyP.addWeightMatrixExpression(self.B_vf,mean)
             
         # Add sponge region only if the field was given in the mean flow file
         if not('spg' in mean._meanFlowClass__notInFileList):
@@ -237,8 +239,8 @@ class EquationCollectionClass():
             sponge = SpongeTerm(self,fluctuationC,X,self.__param)
             self.equationList.append(sponge)
 
-            sponge.addLinearExpression(self.A_vf,mean)
-            sponge.addWeightMatrixExpression(self.B_vf,mean)
+            #sponge.addLinearExpression(self.A_vf,mean)
+            #sponge.addWeightMatrixExpression(self.B_vf,mean)
 
         # Add species transport equation for all transported species
         transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
@@ -251,8 +253,8 @@ class EquationCollectionClass():
                 species = SpeciesEquation(self,fluctuationC,X[i_eqn],specie,self.__param)
                 self.equationList.append(species)
 
-                species.addLinearExpression(self.A_vf,mean)
-                species.addWeightMatrixExpression(self.B_vf,mean)
+                #species.addLinearExpression(self.A_vf,mean)
+                #species.addWeightMatrixExpression(self.B_vf,mean)
                 
             #elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
             #    # This eq has not been derived in tensor framework yet.
@@ -363,29 +365,189 @@ class EquationCollectionClass():
         # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
         # but for now this works fine. 
         try:
-            A_ufl.setCorrectMeshObject(self.__mesh)
+            B_ufl.setCorrectMeshObject(self.__mesh)
         except:
             printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
 
         # assemble petsc matrix
-        B = assemble_matrix(form(B_ufl.lhs), bcs=self.BCs)
+        B = assemble_matrix(form(B_ufl.lhs), self.BCs)
         B.assemble()
 
         return B
 
 
-    def getNonlinearExpression(self, meanFlow):
-        printError("The method 'getNonlinearExpression' is not yet implemented.")
-        exit()
+    def getFEMWeightMatrix(self):
 
-        #N_ufl = WeakForm()
-        #for equation in self.equationList:
-        #    equation.addNonlinearExpression(N_ufl, meanFlow)
+        # create ufl object with the full FEM weight matrix expression
+        W_ufl     = WeakForm()
+        test_FEM  = self.testFunctionsFEM
+        trial_FEM = self.trialFunctionsFEM
 
-        #N = assemble_vector(form(N_ufl.rhs))
+        # go through all (scalar) function spaces in the mixed function space 
+        i=0
+        for test in test_FEM:
+            try:    # try if the function space is a "VectorFunctionSpace"
+                j=0
+                for subTest in test:
+                    W_ufl.add(conj(subTest)*trial_FEM[i][j]*dx)
+                    j+=1
 
-        #return N
+            except: # function space is scalar
+                W_ufl.add(conj(test)*trial_FEM[i]*dx)
+            i+=1
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            W_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        W = assemble_matrix(form(W_ufl.lhs), [])#self.BCs) #without BCs
+        W.assemble()
+
+        return W
+
+  
+    # TODO Sophie: This is a very quick implementation. Tensor framework needed!
+    def getFEMDiffusionMatrix(self,diffusionFactor,sponge=None):
+
+        # create ufl object with the full FEM weight matrix expression
+        D_ufl     = WeakForm()
+        test_FEM  = self.testFunctionsFEM
+        trial_FEM = self.trialFunctionsFEM
+
+        # go through all (scalar) function spaces in the mixed function space 
+        i=0
+        for test in test_FEM:
+            #try:    # try if the function space is a "VectorFunctionSpace"
+            try:
+                j=0
+                for subTest in test:
+                    D_ufl.add(conj(subTest)*trial_FEM[i][j]*dx)
+                    D_ufl.add(diffusionFactor*(Dx(conj(subTest),0)*Dx(trial_FEM[i][j],0)+Dx(conj(subTest),1)*Dx(trial_FEM[i][j],1))*dx)
+                    if sponge != None:
+                        D_ufl.add(sponge*conj(subTest)*trial_FEM[i][j]*dx)
+                    j+=1
+            except: # function space is scalar
+                D_ufl.add(conj(test)*trial_FEM[i]*dx)
+                D_ufl.add(diffusionFactor*(Dx(conj(test),0)*Dx(trial_FEM[i],0)+Dx(conj(test),1)*Dx(trial_FEM[i],1))*dx)
+                if sponge != None:
+                    D_ufl.add(sponge*conj(test)*trial_FEM[i]*dx)
+            i+=1
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            D_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        D = assemble_matrix(form(D_ufl.lhs), self.BCs) 
+        D.assemble()
+
+        return D
+
+    def getFullRHS(self,func):
+
+        # create ufl object with the full FEM weight matrix expression
+        rhs_ufl   = WeakForm()
+        test_FEM  = self.testFunctionsFEM
+        func_i    = func.split()
+
+        # go through all (scalar) function spaces in the mixed function space 
+        i=0
+        for test in test_FEM:
+            try:    # try if the function space is a "VectorFunctionSpace"
+                j=0
+                for subTest in test:
+                    rhs_ufl.add(conj(subTest)*func_i[i][j]*dx)
+                    j+=1
+
+            except: # function space is scalar
+                rhs_ufl.add(conj(test)*func_i[i]*dx)
+            i+=1
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            rhs_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        rhs = assemble_vector(form(-rhs_ufl.rhs))
+        rhs.assemble()
+
+        return rhs
+
+
+
+    def getNonlinearExpression(self, meanFlow, setBC=True):
+        from dolfinx.fem.petsc import set_bc
+        N_ufl = WeakForm()
+        for equation in self.equationList:
+            equation.addNonlinearExpression(N_ufl, meanFlow)
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            N_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        N = assemble_vector(form(N_ufl.rhs))
+        if setBC:
+            set_bc(N, self.BCs)
+
+        return N
+
+
+    def getBilinearOperator(self, meanFlow):
+
+        # create ufl object with the linear equation system 
+        BL_ufl = WeakForm()
+        for equation in self.equationList:
+            try:
+                equation.addBilinearExpression(BL_ufl, meanFlow)
+            except:
+                pass
+
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            BL_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        BL = assemble_matrix(form(BL_ufl.lhs), bcs=self.BCs)
+        BL.assemble()
+
+        return BL
 
 
     def getForcingForInputOutput(self,meanFlow):
@@ -395,6 +557,16 @@ class EquationCollectionClass():
         A_ufl = WeakForm()
         for equation in self.equationList:
             equation.addLinearExpression(A_ufl, meanFlow)
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            A_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
 
         # assemble forcing vector
         forcing = assemble_vector(form(A_ufl.rhs))
@@ -403,7 +575,6 @@ class EquationCollectionClass():
         forcing.scale(1j)
 
         return forcing
-
 
 
 ########################### Resolvent Norm  ############################
@@ -425,6 +596,17 @@ class EquationCollectionClass():
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
             u_f = fluc.u
             self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+            
+            # printDebug(True, "-- Using Chu's disturbance energy for forcing norm!")
+            # idu = 0
+            # idrho = param.SolutionList.index('rho')
+            # idp = param.SolutionList.index('p')
+            # self.forcing_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
+            # self.forcing_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
+            #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
+            # self.forcing_vf += (fluc.p*iConj(X[idp])/(mean.p*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
+            # self.forcing_vf += (-1*fluc.p*iConj(X[idrho])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
+            # self.forcing_vf += (-1*fluc.rho*iConj(X[idp])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
             
             # Below are arbitrary weights used for debugging resolvent considering other norms
             # than the TKE one:
@@ -500,6 +682,17 @@ class EquationCollectionClass():
         #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
         #self.response_vf += temporalVF
         self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+        
+        # printDebug(True, "-- Using Chu's disturbance energy for response norm!")
+        # idu = 0
+        # idrho = param.SolutionList.index('rho')
+        # idp = param.SolutionList.index('p')
+        # self.response_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
+        # self.response_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
+        #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
+        # self.response_vf += (fluc.p*iConj(X[idp])/(mean.p*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
+        # self.response_vf += (-1*fluc.p*iConj(X[idrho])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
+        # self.response_vf += (-1*fluc.rho*iConj(X[idp])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
         
         # Below are arbitrary weights used for debugging resolvent considering other norms
         # than the TKE one:
@@ -585,24 +778,26 @@ class EquationCollectionClass():
         # when using a newer version of dolfinx (version >= 0.6.*).
         # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
         # but for now this works fine. 
-        try:
-            self.A_vf.setCorrectMeshObject(self.__mesh)
-            self.B_vf.setCorrectMeshObject(self.__mesh)
-        except:
-            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #try:
+        #    self.A_vf.setCorrectMeshObject(self.__mesh)
+        #    self.B_vf.setCorrectMeshObject(self.__mesh)
+        #except:
+        #    printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
 
 
-        if not self.A_vf.lhsIsZero():
-            A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
-            A.assemble()
-        else:
-            A = 0*BC_Diriclet
+        #if not self.A_vf.lhsIsZero():
+        #    A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
+        #    A.assemble()
+        #else:
+        #    A = BC_Diriclet.scale(0.)
 
-        if not self.B_vf.lhsIsZero():
-            B = assemble_matrix(form(self.B_vf.lhs), bcs=bcs)
-            B.assemble()
-        else:
-            B = 0*BC_Diriclet
+        #if not self.B_vf.lhsIsZero():
+        #    B = assemble_matrix(form(self.B_vf.lhs), bcs=bcs)
+        #    B.assemble()
+        #else:
+        #    B = BC_Diriclet.scale(0.)
+        A = self.getLinearOperator(self.__mean)
+        B = self.getWeightMatrix(self.__mean)
 
         self.__matrix_dict_petsc={}  
 
@@ -641,11 +836,18 @@ class EquationCollectionClass():
         from petsc4py import PETSc
         self.__matrix_dict_petsc['B'] = B  
         self.__matrix_dict_petsc['A'] = A
-        del A,B
+        #del A,B
 
         if AnalysisMode in ['Resolvent']:
             #forcing_norm,response_norm=getResolventNorms(param,MF,FEMSpaces)
             
+            try:
+                sd = self.forcing_vf.subdomain_data()
+                domain, = list(sd.keys())  # Assuming single domain
+                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
+                #self.forcing_vf.setCorrectMeshObject(self.__mesh)
+            except:
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
             B_forcing = assemble_matrix(form(self.forcing_vf))
             B_forcing.assemble()
             self.__matrix_dict_petsc['B_forcing'] = B_forcing 
@@ -666,7 +868,7 @@ class EquationCollectionClass():
 
         return self.__buildSolutionObj()
 
-    def __getListOfDirichletBCs(self):
+    def __getListOfDirichletBCs(self, listOfComponents=None):
         BClist = []
         mesh=self.__FEMSpaces.P2.mesh
 
@@ -675,7 +877,7 @@ class EquationCollectionClass():
         self.__boundaries = self.__param.BCs.getBoundaries()
         self.__bcDict = self.__param.BCs.getBCsDict()
         VelocityComponents=self.__param.Case.getVelocityComponents()
-        SolutionList=self.__param.Case.getTransportedQuantityList()
+        SolutionList=self.__param.SolutionList#Case.getTransportedQuantityList()
         for k,m in zip(list(self.__bcDict.keys()),range(0,len(self.__bcDict.keys()))):
             # Get index of equation/variable i_eqn and if needed the index of the velocity component
             if k[0]=='u' and k[1] in VelocityComponents:
@@ -691,7 +893,7 @@ class EquationCollectionClass():
 
 
                     printDebug(self.__param.debug,"-- Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
-                    if k in ['u'+ component for component in VelocityComponents]:
+                    if k in ['u'+ component for component in VelocityComponents] :
 
                         #if __version__.find('0.4.1') >= 0:
                         BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component), 1, self.boundaries.indices[self.boundaries.values==self.__bcDict[k][mm]['ID']]), self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component)) )
@@ -775,6 +977,8 @@ class EquationCollectionClass():
                 index = np.append(index, dofsIterator)
 
         index.sort()
+
+        index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
         # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
         local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
         m = len(np.arange(*local_range))
@@ -783,13 +987,47 @@ class EquationCollectionClass():
         col_ind = np.arange(n)
 
         P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
         for i in range(n):
+            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
             P_petsc.setValue(row_ind[i],col_ind[i],1.)
         P_petsc.assemble()
 
         printDebug(True, '-- Done.')
 
         return P_petsc
+
+
+    def getSimplePMat(self):
+        '''
+        This is a (very!) temporary alternative: does NOT use limiters, does ONLY work for incompressible equations
+        '''
+    
+        from petsc4py import PETSc
+
+        index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
+        # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
+        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
+        m = len(np.arange(*local_range))
+        n = len(index)
+        row_ind = index
+        col_ind = np.arange(n)
+
+        P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
+        for i in range(n):
+            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
+            P_petsc.setValue(row_ind[i],col_ind[i],1.)
+        P_petsc.assemble()
+
+        printDebug(True, '-- Done.')
+
+        return P_petsc
+
+
+
+
+
 
     def getCrMat(self):
         ''' This function provides the Cr matrix, which restricts the response '''
@@ -842,6 +1080,7 @@ class EquationCollectionClass():
         col_ind = np.arange(n)
 
         Cr_petsc = PETSc.Mat().createAIJ([m,m])
+        Cr_petsc.setUp()
         for row in row_ind:
             Cr_petsc.setValue(row,row,1.)
         Cr_petsc.assemble()

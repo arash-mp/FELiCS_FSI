@@ -334,7 +334,8 @@ class fluctuationSolutions(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearEnergy()
-    
+   
+
         # Delete duplicates
         neededVariables = list(dict.fromkeys(neededVariables))
 

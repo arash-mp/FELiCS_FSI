@@ -102,9 +102,38 @@ class SpongeTerm(EquationTemplate):
         #     id_rho = param.SolutionList.index('rho')
         #     weakForm.add(( -1j*mean.spg*fluc.rho*iConj(X[id_rho]) ).ufl_tens*J_hat*dx)
 
-    def addNonlinearExpression(self):
+    def addNonlinearExpression(self, weakForm, mean):
         """
         Add the nonlinear expression to the weak form.
         """
-        # not yet implemented
-        pass
+ 
+        J_hat = self.J_hat
+        fluc  = self.fluc
+        X     = self.X
+        param = self.param
+        
+        # Looping over all linearized equations
+        for eqID in param.Case.SetOfEquations :
+            if not (param.Case.SetOfEquations[eqID]['Equation'] == 'None' or \
+                param.Case.SetOfEquations[eqID]['Variable'] == 'None'):
+                
+                #  Get the corresponding variable
+                varID = param.Case.SetOfEquations[eqID]['Variable']
+                varNum = param.SolutionList.index(varID)
+                printDebug(True, "-- -> Sponge term for %s-fluc -> X[%d]." % (varID,varNum))
+                
+                # Dynamically get the corresponding fluctuation field
+                mean_var = getattr(mean, '%s' % varID)
+
+                # Apply the sponge
+                if varID == 'u': # For u we need the dot product with X
+                    target_u = Tensor(mean._fieldDict['u_target'], self.coordinateSystem)
+                    weakForm.add(( -1j*mean.spg*iDot(mean_var-target_u,iConj(X[varNum])) ).ufl_tens*J_hat*dx)
+                elif varID == 'p':
+                    target_p = Tensor(mean._fieldDict['p_target'], self.coordinateSystem)
+                    weakForm.add(( -1j*mean.spg*(mean_var-target_p)*iConj(X[varNum]) ).ufl_tens*J_hat*dx)
+                else:
+                    weakForm.add(( -1j*mean.spg*mean_var*iConj(X[varNum]) ).ufl_tens*J_hat*dx)
+            
+
+

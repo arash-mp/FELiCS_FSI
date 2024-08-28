@@ -169,10 +169,12 @@ class LinearSolver:
         return eigVals, eigVecs
 
 
+
     @staticmethod
     def solveEquationSystem(
         A,
-        b):
+        b,
+        destroy=False):
 
         """__solveEquationSystem  
         Solves a linear equation system Ax=b, using the PETSc libraries.
@@ -202,10 +204,126 @@ class LinearSolver:
         
         x = solution.getArray()
         
+        solver.getPC().destroy()
         solver.destroy()
-        A.destroy()
-        b.destroy()
         dummy.destroy()
+        solution.destroy()
+
+        if destroy:
+            A.destroy()
+            b.destroy()
+        
+        return x 
+
+
+    @staticmethod
+    def solveTransposeEquationSystem(
+        A,
+        b,
+        destroy=False):
+
+        """
+        Solves a linear equation system A^T x=b, using the PETSc libraries.
+        
+        Parameters
+        ----------
+        A : PETSc matrix
+            matrix of the linear syste
+        b : PETSc vector
+            rhs of the linear system
+        
+        Returns
+        -------
+        x:  numpy array
+            solution of the linear equation system
+        """
+        from petsc4py import PETSc
+        solution,dummy = A.createVecs()
+        
+        solver = PETSc.KSP().create()
+        solver.setOperators(A)
+        solver.setType(PETSc.KSP.Type.PREONLY)
+        solver.getPC().setType(PETSc.PC.Type.LU)
+        solver.getPC().setFactorSolverType('mumps')
+        
+        solver.solveTranspose(b, solution)
+        
+        x = solution.getArray()
+        
+        solver.getPC().destroy()
+        solver.destroy()
+        dummy.destroy()
+        solution.destroy()
+
+        if destroy:
+            A.destroy()
+            b.destroy()
+        
+        return x 
+
+
+    @staticmethod
+    def createEquationSystemSolver(
+        A):
+
+        """__solveEquationSystem  
+        Creates a KSP petsc solver to solve a linear equation system. This is useful if several linear equation systems with the same matrix are solved, 
+        since it stores the preconditioner and the calculation time is significantly reduced.
+        To solve the equation system use the method "solveEquationSystemWithPredefinedSolver".
+        
+        Parameters
+        ----------
+        A : PETSc matrix
+            matrix of the linear system
+        
+        Returns
+        -------
+        solver:  PETSc KSP solver
+                 solver for the given matrix 
+        """
+        from petsc4py import PETSc
+        
+        solver = PETSc.KSP().create()
+        solver.setOperators(A)
+        solver.setType(PETSc.KSP.Type.PREONLY)
+        solver.getPC().setType(PETSc.PC.Type.LU)
+        solver.getPC().setFactorSolverType('mumps')
+        
+        return solver 
+
+
+    @staticmethod
+    def solveEquationSystemWithPredefinedSolver(
+        solver,
+        b,
+        destroy=False):
+
+        """__solveEquationSystem  
+        Solves a linear equation system Ax=b, using the PETSc libraries.
+        
+        Parameters
+        ----------
+        solver : PETSc KSP solver
+                 created with the method "createEquationSystemSolver"
+        b : PETSc vector
+            rhs of the linear system
+        
+        Returns
+        -------
+        x:  numpy array
+            solution of the linear equation system
+        """
+        from petsc4py import PETSc
+        solution = b.copy()
+        
+        solver.solve(b, solution)
+        
+        x = solution.getArray()
+
+        solution.destroy()
+
+        if destroy:
+            b.destroy()
         
         return x 
 
@@ -305,6 +423,10 @@ class ResolventOperator(object):
         self._ksp1.destroy()                 
         self._ksp2.destroy()                 
         self._ksp3.destroy() 
+
+
+
+
 
 
 
