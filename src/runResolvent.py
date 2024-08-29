@@ -1,6 +1,7 @@
 import pdb
 import numpy as np
 import copy
+import time
 
 def runResolvent(param, useGUI):
     '''This function runs the calculations preset in param
@@ -16,6 +17,7 @@ def runResolvent(param, useGUI):
     from   FELiCS.Fields.meanFlowClass import meanFlowClass
     from   FELiCS.Fields.fluctuationClass import fluctuationSolutions
     from   FELiCS.Equation.EquationCollection import EquationCollectionClass
+    from   FELiCS.Misc.functions import printDebug
 
     from   FELiCS.Solvers.LinearSolver import LinearSolver, ResolventOperator 
 
@@ -59,7 +61,7 @@ def runResolvent(param, useGUI):
     P_u = P_f.copy()
 
     Q_f = P_f.transposeMatMult(W.matMult(P_f))
-    Q_u = Q_u.copy()
+    Q_u = Q_f.copy()
 
 
     # get parameters for resolvent analysis
@@ -69,7 +71,7 @@ def runResolvent(param, useGUI):
     nDofs    = A.getSizes()[0][0]
 
 
-    gain      = np.zeros((nSol, nOmegas),'comlex')
+    gains     = np.zeros((nSol, nOmegas),'complex')
     forcings  = np.zeros((nDofs, nSol, nOmegas),'complex')
     responses = np.zeros((nDofs, nSol, nOmegas),'complex') 
 
