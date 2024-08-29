@@ -58,7 +58,8 @@ def runResolvent(param, useGUI):
     W = equation.getFEMWeightMatrix()
 
     P_f = equation.getSimplePMat()
-    P_u = P_f.copy()
+    P_u = P_f.copy() 
+
 
     Q_f = P_f.transposeMatMult(W.matMult(P_f))
     Q_u = Q_f.copy()
