@@ -1,5 +1,5 @@
 from FELiCS.GUI.SettingsClass import Settings
-import json
+
 class IOResolventSettingsClass(Settings):
     def __init__(self):
         '''Initializing the input-output/resolvent settings class
@@ -26,23 +26,6 @@ class IOResolventSettingsClass(Settings):
         }
         return CaseSettingsDict
 
-    def importSettings(self,settingFilePath):
-        ''' Loading Mean Flow parameters from file '''
-        SettingsDict=self.getAllSettingsDict()
-        if not settingFilePath =='':
-            file = open(settingFilePath)
-            data = json.load(file)
-            for key,item in data.items():
-                if key == 'EigenValueGuess' and isinstance(item, list):
-                    for EV_guess_raw in item:
-                        if isinstance(EV_guess_raw, list):
-                            EV_guess = [complex(EV_guess_raw[0],EV_guess_raw[1])]
-                        else:
-                            EV_guess = [EV_guess_raw]
-                        setattr(self,key,EV_guess) # set attribute as list of all EV_guesses later
-                else:
-                    setattr(self,key,item)
-            file.close()
 
     def complete(self):
         ''' Checking if all necessary case attributes are present '''

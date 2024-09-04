@@ -113,7 +113,6 @@ class parameters():
             self.Numerics.importFromH5File(filestring)
             self.Export.importFromH5File(filestring)
         else:
-
             self.Case.importSettings(filestring)
             self.FlowInput.importSettings(filestring)
             self.BCs.importSettings(filestring)

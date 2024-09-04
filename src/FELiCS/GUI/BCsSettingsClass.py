@@ -1,28 +1,15 @@
-from os.path import isfile
-from os import system, path
-
-from dolfinx import __version__
-from dolfinx.mesh import (
-    locate_entities,
-    locate_entities_boundary,
-    meshtags,
-    meshtags_from_entities,
-    Mesh,
-    )
-from dolfinx.io import gmshio
-from mpi4py import MPI
-
-from ufl import triangle
-
-import json
-import gmsh
-from FELiCS.GUI.SettingsClass import Settings
-import h5py
+from FELiCS.GUI.SettingsClass   import Settings
+from FELiCS.Misc.tensorUtils    import CoordinateSystem
+from FELiCS.Misc.functions      import printDeprecatedWarning
+from os.path                    import isfile
+from os                         import path
+from mpi4py                     import MPI
+from ufl                        import SpatialCoordinate
+from dolfinx                    import __version__
+from dolfinx.mesh               import Mesh
 import numpy as np
-import pdb
-from FELiCS.Misc.tensorUtils import CoordinateSystem
-from ufl import SpatialCoordinate
-from FELiCS.Misc.functions import printDeprecatedWarning
+import gmsh
+import h5py
 
 class FELiCSMesh(Mesh):
     '''
@@ -201,23 +188,8 @@ class BCsSettingsClass(Settings):
             BCsFile=open(self.BCsFilePath,'w')
             BCsFile.write(str(self.__BCsDict__))
 
-    def importSettings(self,settingFilePath):
+    # def importSettings(self,settingFilePath):
         ''' Loading BCs parameters from file, without checking the consistency of BCs and mesh. To read the BCs with checking, use importBCsDict() '''
-        SettingsDict=self.getAllSettingsDict()
-        if not settingFilePath =='':
-            file = open(settingFilePath)
-            data = json.load(file)
-            for key,item in data.items():
-                if key == 'EigenValueGuess' and isinstance(item, list):
-                    for EV_guess_raw in item:
-                        if isinstance(EV_guess_raw, list):
-                            EV_guess = complex(EV_guess_raw[0],EV_guess_raw[1])
-                        else:
-                            EV_guess = EV_guess_raw
-                        setattr(self,key,EV_guess) # set attribute as list of all EV_guesses later
-                else:
-                    setattr(self,key,item)
-            file.close()
 
 
     def initBCsDict(self,VariableList):
