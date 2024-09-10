@@ -48,5 +48,4 @@ class NumericsSettingsClass(Settings):
                 printWarning("Polynomial orders are not correctly chosen...")
                 EverythingPresent=False
                 break
-
         return EverythingPresent

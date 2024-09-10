@@ -26,7 +26,6 @@ class IOResolventSettingsClass(Settings):
         }
         return CaseSettingsDict
 
-
     def complete(self):
         ''' Checking if all necessary case attributes are present '''
         from os.path import isfile

@@ -18,7 +18,6 @@ class CaseSettingsClass(Settings):
             exec(tempStr)
         self.reactionMechanism = reactionMechanismClass('None') 
 
-
     def getAllSettingsDict(self):
         '''Function returning all CaseSettings with default values'''
         CaseSettingsDict={\
@@ -49,19 +48,6 @@ class CaseSettingsClass(Settings):
 
             #'SetOfEquations':{'datatype':dict,'default':{'Navier-Stokes':'Primitive Variables','Energy':'None','Species': 'None', 'equationOfState': 'None'}}
 
-    def importFromH5File(self, h5FileName):
-        """
-        This function adapts the inherited function of same name from the SettingsClass
-        """
-        from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
-        super().importFromH5File(h5FileName);
-        #The Mixture is not loaded but constructed from the inputs
-        self.Mixture = MixtureClass(
-            self.MixtureFilePath,
-            self.SpeciesFilePath,
-            )
-        self.reactionMechanism = reactionMechanismClass(self.Mixture.getReactionMechanism()['type']) 
-
     def getInternalVelocityComponents(self):
         ''' Provides a list of velocity components, which are directed within the dimensions of the mesh '''
         if self.CoordinateSystem=='Cartesian':
@@ -70,7 +56,6 @@ class CaseSettingsClass(Settings):
                 VelCompList.append('z')
         elif self.CoordinateSystem=='Cylindrical':
             VelCompList = ['x','r']
-
         return VelCompList
 
     def getExternalVelocityComponents(self):
@@ -125,11 +110,9 @@ class CaseSettingsClass(Settings):
     def getMeanFlowFieldNames(self):
         from FELiCS.Misc.functions import printDebug
         ''' This function provides the mean fields which mus be read in.'''
-
         MeanList=[]
         # Add velocity components
         MeanList.append('u')
-
         # If necessary, add density and enthalpy diffusion
         if 'rho' in self.getTransportedQuantityList():
             MeanList.append('rho')
@@ -140,7 +123,6 @@ class CaseSettingsClass(Settings):
             MeanList.append(specie)
             if self.MolViscModel == 'File' or self.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('D_'+specie)
-
         # If Input-Output analysis is used, the forcing must be read in (at least curently) for
         # every conservative variable ()...
         if self.AnalysisMode in ['Input-Output']:
@@ -154,20 +136,16 @@ class CaseSettingsClass(Settings):
                 else:
                     MeanList.append(entry+'_forcing_r')
                     MeanList.append(entry+'_forcing_i')
-
         # If Resolvent analysis is used, we always read forcing and response domains
         if self.AnalysisMode in ['Resolvent']:
             MeanList.append('responseDomain')
             MeanList.append('forcingDomain')
-
         # Always look for a sponge variable in the mean flow file
         # if not present it will be zero
         MeanList.append('spg')
-
         # Add species, which are not transported
         for specie in self.Mixture.getSpeciesList('constraint'):
             MeanList.append(specie)
-
         if self.TurbulenceModel in ['File']:
             MeanList.append('nuturb')
         if self.MolViscModel in ['File'] or self.MolViscPerturbModel in ['Sutherland mean']:

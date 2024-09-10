@@ -2,8 +2,7 @@ from FELiCS.GUI.SettingsClass import Settings
 
 class FlowInputSettingsClass(Settings):
     def __init__(self):
-        '''Initializing the flow input settings class
-        '''
+        '''Initializing the flow input settings class'''
         super().__init__()
         self._settingsKind = 'FlowInput'
         FlowInputSettingsDict=self.getAllSettingsDict()
@@ -19,7 +18,6 @@ class FlowInputSettingsClass(Settings):
             'AveragingAxis':{'datatype':str,'default':'x'}\
         }
         return CaseSettingsDict
-
 
     def complete(self):
         ''' Checking if all necessary case attributes are present '''

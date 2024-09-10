@@ -62,7 +62,6 @@ class FELiCSMesh(Mesh):
             # save the coordinates in gmsh order:
             gmsh.open(filename)
 
-        #
         else:
             try:    #try new version of dolfinx 
                 super().__init__(inputMesh, inputMesh.ufl_domain())
@@ -131,7 +130,6 @@ class FELiCSMesh(Mesh):
         """
         connectivityCells = self.topology.connectivity(2, 0)
 
-
         try:    #try new version of dolfinx 
             self.meshCells = connectivityCells.array.reshape(
                 [self.topology.original_cell_index.shape[0], self.topology.cell_types[0].value])
@@ -182,15 +180,10 @@ class BCsSettingsClass(Settings):
 
     def exportBCs(self):
         ''' Exports the BCDict to file filename'''
-
         print('Saving BCs...')
         if not self.BCsFilePath == '':
             BCsFile=open(self.BCsFilePath,'w')
             BCsFile.write(str(self.__BCsDict__))
-
-    # def importSettings(self,settingFilePath):
-        ''' Loading BCs parameters from file, without checking the consistency of BCs and mesh. To read the BCs with checking, use importBCsDict() '''
-
 
     def initBCsDict(self,VariableList):
         ''' Initialize BCsDict '''
@@ -229,12 +222,10 @@ class BCsSettingsClass(Settings):
                             BCsDict[Variable].append(BC)
                         else:
                             printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
-
                 else:
                     printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
             # Finally, copy local BCsDict to the object
             self.__BCsDict__=BCsDict
-
 
     def setBC(self,field,BoundaryID,BCType,BCvalue):
         ''' Setting the Boundary condition of a single variable '''
@@ -248,8 +239,7 @@ class BCsSettingsClass(Settings):
         This function writes the BCs set in the GUI to a private object calles __BCsDict__
         \tInput:
         \t\t-BCsTypeStr: A dictionary containing the type of the BC for each variable and boundary
-        \t\t-BCsValueStr: A dictionary containing the value of the BCs
-        '''
+        \t\t-BCsValueStr: A dictionary containing the value of the BCs'''
         BCsDict={}
         for Variable in list(BCTypeStr.keys()):
             BCsDict[Variable]=[]
@@ -261,6 +251,7 @@ class BCsSettingsClass(Settings):
         ''' The BCsDict is a private variable of the class.
         This function returns the BCsDict '''
         return self.__BCsDict__
+    
     def setBCsDict(self,BCsDict):
         ''' The BCsDict is a private variable of the class.
         This function returns the BCsDict '''
@@ -271,13 +262,14 @@ class BCsSettingsClass(Settings):
         This function reads both the IDs of the boundary conditions from the mesh and stores them
         in a private list of the class and also the boundary nodes and stores them in __boundaries__'''
         from numpy import unique
-
         # get a list of all kinds of BC indices
         self.__BCIDs__ = unique(felicsMesh.facet_tags.values)
         self.__boundaries__ = felicsMesh.facet_tags
+
     def getBCIDs(self):
         ''' Returning a list containing all indices of the boundary conditions'''
         return self.__BCIDs__
+    
     def getBoundaries(self):
         ''' Returning the boundary nodes'''
         return self.__boundaries__
@@ -293,54 +285,29 @@ class BCsSettingsClass(Settings):
             EverythingPresent=False
         return EverythingPresent
 
-    def readDomainData(
-                        self,
-                        Meshfile, 
-                        gDim, 
-                        ExtendedTransportedQuantityList,
-                        coordinateSystem,
-                        m,
-                        ):
+    def readDomainData(self,Meshfile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
         ''' Input: Mesfile
         Read all the domain data from the meshfile '''
-        self.readMesh(
-                            Meshfile, 
-                            gDim,
-                            coordinateSystem,
-                            m
-                            )
+        self.readMesh(Meshfile,gDim,coordinateSystem,m)
         self.readBCInfo(Meshfile, self.getMesh())
         self.initBCsDict(ExtendedTransportedQuantityList)
         self.importBCsDict(ExtendedTransportedQuantityList)
 
-    def readMesh(
-                    self,
-                    MeshFile, 
-                    dim, 
-                    coordinateSystem,
-                    m,
-                    ):
+    def readMesh(self,MeshFile,dim,coordinateSystem,m):
         '''
-            Reading Meshfile and saving it as private object
+        Reading Meshfile and saving it as private object
 
-            Function Arguments:
-            - MeshFile: File of a gmsh-meshfile. File needs to be in .msh format
-            - gdim: Geometrical Dimension of the mesh. This argument is needed
-            by the gmsh helper-functions, which read in the mesh
+        Function Arguments:
+        - MeshFile: File of a gmsh-meshfile. File needs to be in .msh format
+        - gdim: Geometrical Dimension of the mesh. This argument is needed
+        by the gmsh helper-functions, which read in the mesh
 
-            Function returns:
-
+        Function returns:
         '''
         if not MeshFile == '' and path.isfile(MeshFile):
-            self.__mesh__ = FELiCSMesh(
-                                                coordinateSystem,
-                                                MeshFile,
-                                                dim,
-                                                m,
-                                                )
+            self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,dim,m)
             self.dim = self.__mesh__.gdim
 
     def getMesh(self):
         ''' Function is returning the mesh '''
         return self.__mesh__
-        

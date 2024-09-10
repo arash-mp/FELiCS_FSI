@@ -2,13 +2,11 @@ from FELiCS.GUI.SettingsClass import Settings
 
 class ExportSettingsClass(Settings):
     def __init__(self):
-        '''Initializing the export settings class
-        '''
+        '''Initializing the export settings class'''
         super().__init__()
         self._settingsKind = 'Export'
         SettingsDict=self.getAllSettingsDict()
         for key in list(SettingsDict.keys()):
-
             if type(SettingsDict[key]['default']) in [str]:
                 quotation='\"'
             else:
@@ -27,7 +25,6 @@ class ExportSettingsClass(Settings):
             'h5':{'datatype':bool,'default':True}
         }
         return CaseSettingsDict
-
 
     def complete(self,variableList):
         ''' Checking if all necessary case attributes are present '''
