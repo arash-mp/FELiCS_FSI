@@ -24,16 +24,17 @@ class Settings(ABC):
         if not settingFilePath =='':
             file = open(settingFilePath)
             data = json.load(file)
-            for key,item in data.items():
-                if key == 'EigenValueGuess' and isinstance(item, list):
-                    for EV_guess_raw in item:
-                        if isinstance(EV_guess_raw, list):
-                            EV_guess = [complex(EV_guess_raw[0],EV_guess_raw[1])]
+            for setting,value in data.items():
+                if setting == 'EigenValueGuess' and isinstance(value, list):
+                    EV_guesses=[]
+                    for EV_guess in value:
+                        if isinstance(EV_guess, list):
+                            EV_guesses.append(complex(EV_guess[0],EV_guess[1]))
                         else:
-                            EV_guess = [EV_guess_raw]
-                        setattr(self,key,EV_guess) # set attribute as list of all EV_guesses later
+                            EV_guesses.append(EV_guess)
+                        setattr(self,setting,EV_guesses)
                 else:
-                    setattr(self,key,item)
+                    setattr(self,setting,value)
             file.close()
             #The Mixture and reaction are not loaded but constructed from the inputs
             self.Mixture = MixtureClass(

@@ -15,15 +15,7 @@ class FELiCSMesh(Mesh):
     '''
     This class is an extension to the fenics mesh class
     '''
-    def __init__(
-            self,
-            coordinateSystem,
-            filename=None,
-            gdim=0,
-            m=0,
-            inputMesh=None,
-            ):
-
+    def __init__(self, coordinateSystem, filename=None, gdim=0, m=0, inputMesh=None):
         if inputMesh is None:
             gmsh.initialize()
             if __version__.find('0.4') >= 0:
@@ -37,8 +29,6 @@ class FELiCSMesh(Mesh):
                 mesh_comm = MPI.COMM_WORLD
                 model_rank = 0
                 mesh, _, facet_tags = gmshio.model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=gdim)
-
-
             try:    #try new version of dolfinx 
                 super().__init__(mesh, mesh.ufl_domain())
                 newMesh = Mesh(mesh, mesh.ufl_domain())
@@ -46,7 +36,6 @@ class FELiCSMesh(Mesh):
                 printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
                 super().__init__(MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
             #   #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
-
             try: 
                 self.dolfinxMesh  = mesh
                 self._ccp_object  = mesh._cpp_object
@@ -58,10 +47,8 @@ class FELiCSMesh(Mesh):
             self.gdim = gdim
             self._ufl_domain = mesh._ufl_domain
             self.calcConnectivity()
-
             # save the coordinates in gmsh order:
             gmsh.open(filename)
-
         else:
             try:    #try new version of dolfinx 
                 super().__init__(inputMesh, inputMesh.ufl_domain())
@@ -76,7 +63,6 @@ class FELiCSMesh(Mesh):
                 self.dolfinxMesh = self 
                 printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
                 self._cpp_object  = inputMesh
-        
         x = SpatialCoordinate(self)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
         if coordinateSystem =='Cartesian':
@@ -97,6 +83,27 @@ class FELiCSMesh(Mesh):
             printError('Coord. syst not yet implemented in tensor framework.')
         self._coordinates = self.coordinates()
 
+    def getMesh(self):
+        ''' Function is returning the mesh '''
+        return self.__mesh__
+
+    def getBCsDict(self):
+        ''' The BCsDict is a private variable of the class.
+        This function returns the BCsDict '''
+        return self.__BCsDict__
+    
+    def setBCsDict(self,BCsDict):
+        ''' The BCsDict is a private variable of the class.
+        This function returns the BCsDict '''
+        self.__BCsDict__ = BCsDict
+
+    def getBCIDs(self):
+        ''' Returning a list containing all indices of the boundary conditions'''
+        return self.__BCIDs__
+    
+    def getBoundaries(self):
+        ''' Returning the boundary nodes'''
+        return self.__boundaries__
 
     def saveInFELiCSFormat(self, filename):
         '''
@@ -129,7 +136,6 @@ class FELiCSMesh(Mesh):
         this method calculates the meshCells array in the fenics representation
         """
         connectivityCells = self.topology.connectivity(2, 0)
-
         try:    #try new version of dolfinx 
             self.meshCells = connectivityCells.array.reshape(
                 [self.topology.original_cell_index.shape[0], self.topology.cell_types[0].value])
@@ -144,7 +150,6 @@ class FELiCSMesh(Mesh):
         """
         self.calcConnectivity()
         return self.meshCells
-
 
     def coordinates(self):
         """
@@ -247,16 +252,6 @@ class BCsSettingsClass(Settings):
                 BCsDict[Variable].append({'ID':ID,'type':BCTypeStr[Variable][ID].get(),'value':float(BCValueStr[Variable][ID].get())})
         self.__BCsDict__=BCsDict
 
-    def getBCsDict(self):
-        ''' The BCsDict is a private variable of the class.
-        This function returns the BCsDict '''
-        return self.__BCsDict__
-    
-    def setBCsDict(self,BCsDict):
-        ''' The BCsDict is a private variable of the class.
-        This function returns the BCsDict '''
-        self.__BCsDict__ = BCsDict
-
     def readBCInfo(self,MeshFilePath, felicsMesh):
         ''' Input: - MeshFilePath
         This function reads both the IDs of the boundary conditions from the mesh and stores them
@@ -265,14 +260,6 @@ class BCsSettingsClass(Settings):
         # get a list of all kinds of BC indices
         self.__BCIDs__ = unique(felicsMesh.facet_tags.values)
         self.__boundaries__ = felicsMesh.facet_tags
-
-    def getBCIDs(self):
-        ''' Returning a list containing all indices of the boundary conditions'''
-        return self.__BCIDs__
-    
-    def getBoundaries(self):
-        ''' Returning the boundary nodes'''
-        return self.__boundaries__
 
     def complete(self,BCVariableList):
         ''' Checking if all necessary case attributes are present. A Variable List, as well as the index list of boundaries needs to be provided, to check if all necessary boundaries are set. '''
@@ -307,7 +294,3 @@ class BCsSettingsClass(Settings):
         if not MeshFile == '' and path.isfile(MeshFile):
             self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,dim,m)
             self.dim = self.__mesh__.gdim
-
-    def getMesh(self):
-        ''' Function is returning the mesh '''
-        return self.__mesh__
