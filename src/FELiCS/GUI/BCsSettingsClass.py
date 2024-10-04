@@ -83,28 +83,6 @@ class FELiCSMesh(Mesh):
             printError('Coord. syst not yet implemented in tensor framework.')
         self._coordinates = self.coordinates()
 
-    def getMesh(self):
-        ''' Function is returning the mesh '''
-        return self.__mesh__
-
-    def getBCsDict(self):
-        ''' The BCsDict is a private variable of the class.
-        This function returns the BCsDict '''
-        return self.__BCsDict__
-    
-    def setBCsDict(self,BCsDict):
-        ''' The BCsDict is a private variable of the class.
-        This function returns the BCsDict '''
-        self.__BCsDict__ = BCsDict
-
-    def getBCIDs(self):
-        ''' Returning a list containing all indices of the boundary conditions'''
-        return self.__BCIDs__
-    
-    def getBoundaries(self):
-        ''' Returning the boundary nodes'''
-        return self.__boundaries__
-
     def saveInFELiCSFormat(self, filename):
         '''
         This function saves the computational mesh in the FELiCS format
@@ -182,6 +160,28 @@ class BCsSettingsClass(Settings):
             'dim':{'datatype':int,'default':0}
         }
         return SettingsDict
+    
+    def getMesh(self):
+        ''' Function is returning the mesh '''
+        return self.__mesh__
+
+    def getBCsDict(self):
+        ''' The BCsDict is a private variable of the class.
+        This function returns the BCsDict '''
+        return self.__BCsDict__
+    
+    def setBCsDict(self,BCsDict):
+        ''' The BCsDict is a private variable of the class.
+        This function returns the BCsDict '''
+        self.__BCsDict__ = BCsDict
+
+    def getBCIDs(self):
+        ''' Returning a list containing all indices of the boundary conditions'''
+        return self.__BCIDs__
+    
+    def getBoundaries(self):
+        ''' Returning the boundary nodes'''
+        return self.__boundaries__
 
     def exportBCs(self):
         ''' Exports the BCDict to file filename'''
@@ -201,6 +201,9 @@ class BCsSettingsClass(Settings):
             for BCID in BCIDList:
                 BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
         self.__BCsDict__=BCsDict
+
+
+
 
     def importBCsDict(self,VariableList):
         ''' Import a boundary condition file with checking the consistency of BCs and mesh. To read the BCs without checking use importSettings()'''
@@ -231,6 +234,9 @@ class BCsSettingsClass(Settings):
                     printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
             # Finally, copy local BCsDict to the object
             self.__BCsDict__=BCsDict
+
+
+
 
     def setBC(self,field,BoundaryID,BCType,BCvalue):
         ''' Setting the Boundary condition of a single variable '''
