@@ -183,28 +183,6 @@ class BCsSettingsClass(Settings):
             'dim':{'datatype':int,'default':0}
         }
         return SettingsDict
-    
-    def getMesh(self):
-        ''' Function is returning the mesh '''
-        return self.__mesh__
-
-    def getBCsDict(self):
-        ''' The BCsDict is a private variable of the class.
-        This function returns the BCsDict '''
-        return self.__BCsDict__
-    
-    def setBCsDict(self,BCsDict):
-        ''' The BCsDict is a private variable of the class.
-        This function returns the BCsDict '''
-        self.__BCsDict__ = BCsDict
-
-    def getBCIDs(self):
-        ''' Returning a list containing all indices of the boundary conditions'''
-        return self.__BCIDs__
-    
-    def getBoundaries(self):
-        ''' Returning the boundary nodes'''
-        return self.__boundaries__
 
     def exportBCs(self):
         ''' Exports the BCDict to file filename'''
