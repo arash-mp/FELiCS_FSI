@@ -20,11 +20,11 @@ sys.path.insert(0, os.path.abspath('../..'))
 # sys.path.insert(0, os.path.abspath('../Reactions/'))
 
 
-extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'autoapi.extension'] # 'sphinx.ext.autodoc', 
-autoapi_dirs = ['../src']
+extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'autoapi.extension']#, 'sphinx.ext.inheritance_diagram'] # 'sphinx.ext.autodoc', 
+autoapi_dirs = ['../src/']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
+# autoapi_options = ['show-inheritance', 'show-inheritance-diagram']
 
 
 # -- Options for HTML output -------------------------------------------------

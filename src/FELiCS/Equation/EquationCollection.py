@@ -377,6 +377,7 @@ class EquationCollectionClass():
 
     def getNonlinearExpression(self, meanFlow):
         printError("The method 'getNonlinearExpression' is not yet implemented.")
+        exit()
 
         #N_ufl = WeakForm()
         #for equation in self.equationList:
@@ -385,6 +386,25 @@ class EquationCollectionClass():
         #N = assemble_vector(form(N_ufl.rhs))
 
         #return N
+
+
+    def getForcingForInputOutput(self,meanFlow):
+        from dolfinx.fem.petsc import set_bc
+
+        # create ufl object with the linear equation system 
+        A_ufl = WeakForm()
+        for equation in self.equationList:
+            equation.addLinearExpression(A_ufl, meanFlow)
+
+        # assemble forcing vector
+        forcing = assemble_vector(form(A_ufl.rhs))
+        forcing.assemble()
+        set_bc(forcing, self.BCs)
+        forcing.scale(1j)
+
+        return forcing
+
+
 
 ########################### Resolvent Norm  ############################
     def getResolventNorms(self,X,param,mean,fluc):
@@ -405,6 +425,17 @@ class EquationCollectionClass():
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
             u_f = fluc.u
             self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+            
+            # printDebug(True, "-- Using Chu's disturbance energy for forcing norm!")
+            # idu = 0
+            # idrho = param.SolutionList.index('rho')
+            # idp = param.SolutionList.index('p')
+            # self.forcing_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
+            # self.forcing_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
+            #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
+            # self.forcing_vf += (fluc.p*iConj(X[idp])/(mean.p*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
+            # self.forcing_vf += (-1*fluc.p*iConj(X[idrho])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
+            # self.forcing_vf += (-1*fluc.rho*iConj(X[idp])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
             
             # Below are arbitrary weights used for debugging resolvent considering other norms
             # than the TKE one:
@@ -480,6 +511,17 @@ class EquationCollectionClass():
         #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
         #self.response_vf += temporalVF
         self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+        
+        # printDebug(True, "-- Using Chu's disturbance energy for response norm!")
+        # idu = 0
+        # idrho = param.SolutionList.index('rho')
+        # idp = param.SolutionList.index('p')
+        # self.response_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
+        # self.response_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
+        #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
+        # self.response_vf += (fluc.p*iConj(X[idp])/(mean.p*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
+        # self.response_vf += (-1*fluc.p*iConj(X[idrho])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
+        # self.response_vf += (-1*fluc.rho*iConj(X[idp])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
         
         # Below are arbitrary weights used for debugging resolvent considering other norms
         # than the TKE one:
@@ -763,7 +805,9 @@ class EquationCollectionClass():
         col_ind = np.arange(n)
 
         P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
         for i in range(n):
+            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
             P_petsc.setValue(row_ind[i],col_ind[i],1.)
         P_petsc.assemble()
 
@@ -822,6 +866,7 @@ class EquationCollectionClass():
         col_ind = np.arange(n)
 
         Cr_petsc = PETSc.Mat().createAIJ([m,m])
+        Cr_petsc.setUp()
         for row in row_ind:
             Cr_petsc.setValue(row,row,1.)
         Cr_petsc.assemble()

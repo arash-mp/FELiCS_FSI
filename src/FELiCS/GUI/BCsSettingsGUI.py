@@ -1,5 +1,6 @@
 import tkinter as tk
 from FELiCS.GUI.GUISettings import labelFont
+from FELiCS.functions import printDeprecatedWarning
 class BCsSettingsGUI():
     def __init__(self,mainGUI):
         '''Initializing the BCs GUI
@@ -120,8 +121,13 @@ class BCsSettingsGUI():
         canvas.get_tk_widget().grid             (row = 3, column = 1, rowspan = 1, columnspan = 10, pady=(20,20), sticky=     "N")
         for i in self.BCIDs:
             # Get the lines of the loops boundary
-            
-            LinesLocal=compute_incident_entities( mesh.mesh , list(borderIDX[Lines==i]), 1, 0)
+           
+            try:
+                LinesLocal=compute_incident_entities( mesh._cpp_object.topology , list(borderIDX[Lines==i]), 1, 0)
+            except:
+                LinesLocal=compute_incident_entities( mesh.mesh , list(borderIDX[Lines==i]), 1, 0)
+                printDeprecatedWarning("dolfinx version is <0.7.0")
+
 ####            # Get their coordinates and plot the lines
             verts=[]
 ####            

@@ -12,7 +12,6 @@ class Mode(Field):
     def setGain(self,gain):
         self._gain = gain
 
-
     def setFrequency(self,frequency):
         self._frequency = frequency
 

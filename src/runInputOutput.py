@@ -1,6 +1,7 @@
 import pdb
 import numpy as np
 import copy
+import time
 
 def runInputOutput(param, useGUI):
     '''This function runs the calculations preset in param
@@ -15,9 +16,17 @@ def runInputOutput(param, useGUI):
     import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
     from   FELiCS.Fields.meanFlowClass import meanFlowClass
     from   FELiCS.Fields.fluctuationClass import fluctuationSolutions
-    import FELiCS.Equation.EquationCollection as EquationCollection
+    from   FELiCS.Equation.EquationCollection import EquationCollectionClass
+    from   FELiCS.Misc.functions import printDebug
 
-    ## Initialization
+    from   FELiCS.Solvers.LinearSolver import LinearSolver 
+    from   FELiCS.Fields.ModeCollection import ModeCollection
+    from   FELiCS.Fields.Mode import Mode
+
+
+    #-----------------------------------------------------------------------
+    ## INITIALIZATION
+    #-----------------------------------------------------------------------
     # mesh
     mesh=param.BCs.getMesh()
     # FEMSpaces
@@ -26,29 +35,59 @@ def runInputOutput(param, useGUI):
                 mesh,
                 )
     # read in mean flow
-    MeanFlow = meanFlowClass(param, FEMSpaces, mesh)
-    MeanFlow.importDataFromFile()
-    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-        MeanFlow.exportBaseFlowAsHDF5()
+    meanFlow = meanFlowClass(param, FEMSpaces, mesh)
+    meanFlow.importDataFromFile()
     # export mean flow in "h5" file
+    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
+        meanFlow.exportBaseFlowAsHDF5()
     meanflowFilename = 'meanflow.h5'
-    MeanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+    # equation
+    equation = EquationCollectionClass(
+                                      param,
+                                      FEMSpaces,
+                                      meanFlow,
+                                      mesh
+                                      )
 
 
-    ## create equations, discretize and solve
-    equationColl = EquationCollection.EquationCollectionClass(
-                    param,
-                    FEMSpaces,
-                    MeanFlow,
-                    mesh
-                    )
-    LinearAlgebraObj = equationColl.DiscretizeFlow()
 
-    fluctSolutList = LinearAlgebraObj.solveInputOutput()
+    #-----------------------------------------------------------------------
+    ## MAIN PART
+    #-----------------------------------------------------------------------
+    # get matrices for eigenproblem
+    A       = equation.getLinearOperator(meanFlow)
+    B       = equation.getWeightMatrix  (meanFlow)
+    forcing = equation.getForcingForInputOutput(meanFlow) 
+
+    # get parameters for input/output analysis
+    omegas   = param.IOResolvent.Omegas
+
+    # track time
+    start= time.time()
+
+    # solve equation system 
+    solution = ModeCollection(FEMSpaces.VMixed, mesh)
+    for omega in omegas:
+        # define operator
+        operator = A.copy()
+        operator.axpy(-omega, B) #petsc command: operator = A - omega*B
+
+        solutionVector = LinearSolver.solveEquationSystem(operator, forcing)
+        
+        solution.appendModeFromVector(solutionVector, frequency = omega, gain = 1) 
 
 
-    ## export
+    # end tracking time
+    end = time.time() - start
+    printDebug(True, '-- Solving the input/output problem took %4g s' % end)
+
+
+    #-----------------------------------------------------------------------
+    ## EXPORT SOLUTION
+    #-----------------------------------------------------------------------
+    fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
     if useGUI:
         ExportGUI(param, fluctSolutList, MeanFlow,FEMSpaces, equationColl,mesh)
     else:
-        ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow)
+        ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
