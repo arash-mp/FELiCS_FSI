@@ -577,6 +577,85 @@ class EquationCollectionClass():
         return forcing
 
 
+        B_forcing = assemble_matrix(form(self.forcing_vf))
+        B_forcing.assemble()
+        self.__matrix_dict_petsc['B_forcing'] = B_forcing 
+        del B_forcing
+
+        B_response = assemble_matrix(form(self.response_vf))
+        B_response.assemble()
+        self.__matrix_dict_petsc['B_response'] = B_response 
+        del B_response
+ 
+
+
+    def getResolventNorm_response(self, meanFlow):
+
+        # create ufl object with the linear equation system 
+        W_r_ufl = WeakForm()
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            W_r_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        W_response = assemble_matrix(form(self.response_vf))
+        W_response.assemble()
+
+        return W_response
+
+
+    def getResolventNorm_forcing(self, meanFlow):
+
+        # create ufl object with the linear equation system 
+        W_f_ufl = WeakForm()
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            W_f_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        W_forcing = assemble_matrix(form(self.forcing_vf))
+        W_forcing.assemble()
+
+        return W_forcing
+
+
+    def getResolventWeighting_FEM(self, meanFlow):
+
+        # create ufl object with the linear equation system 
+        W_FEM_ufl = WeakForm()
+        #####################################################################################################
+        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+        # when using a newer version of dolfinx (version >= 0.6.*).
+        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+        # but for now this works fine. 
+        try:
+            W_FEM_ufl.setCorrectMeshObject(self.__mesh)
+        except:
+            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+        #####################################################################################################
+
+        # assemble petsc matrix
+        W_FEM = assemble_matrix(form(self.fem_weighting))
+        W_FEM.assemble()
+
+        return W_FEM
+
+
+
 ########################### Resolvent Norm  ############################
     def getResolventNorms(self,X,param,mean,fluc):
         ''' This function yields the norms for the resolvent analysis.
@@ -704,7 +783,7 @@ class EquationCollectionClass():
         # Prompt variational formulations in debug mode
         printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
         printDebug(param.debug,'-- Resolvent response norm is '+ str(self.response_vf))
-        
+
     def getResolventFEMWeights(self,X,param,mean,fluc):
         ''' 
         This function yields a matrix containing the FEM weights
@@ -1024,7 +1103,95 @@ class EquationCollectionClass():
 
         return P_petsc
 
+    def getShrinkerMat_response(self):
+        '''
+        This is a (very!) temporary alternative: does NOT use limiters, does ONLY work for incompressible equations
+        '''
+    
+        from petsc4py import PETSc
 
+        # Loop over fluctuations which are part of response coeff
+        self.__response_coeff = self.__param.IOResolvent.ResponseCoeff
+        indexList = []
+        for i in self.__param.IOResolvent.ResponseCoeff:
+            if i < self.__nVelocityComponents:
+                indexList.append(self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1])
+            else:
+                indexList.append(self.__FEMSpaces.VMixed.sub(i - self.__nVelocityComponents + 1).collapse()[1])
+
+        # ged indices which are meant by "responseCoeff" in the parameter file
+        size = 0
+        for i in indexList:
+            size += len(i)
+        index = np.zeros(size, dtype=int)
+        scalarSize = len(indexList[0])
+        for i in range(len(indexList)):
+            index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
+
+
+        #index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
+        # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
+        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
+        m = len(np.arange(*local_range))
+        n = len(index)
+        row_ind = index
+        col_ind = np.arange(n)
+
+        P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
+        for i in range(n):
+            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
+            P_petsc.setValue(row_ind[i],col_ind[i],1.)
+        P_petsc.assemble()
+
+        printDebug(True, '-- Done.')
+
+        return P_petsc
+
+    def getShrinkerMat_forcing(self):
+        '''
+        This is a (very!) temporary alternative: does NOT use limiters, does ONLY work for incompressible equations
+        '''
+    
+        from petsc4py import PETSc
+
+        # Loop over fluctuations which are part of response coeff
+        self.__response_coeff = self.__param.IOResolvent.ResponseCoeff
+        indexList = []
+        for i in self.__param.IOResolvent.ForcingCoeff:
+            if i < self.__nVelocityComponents:
+                indexList.append(self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1])
+            else:
+                indexList.append(self.__FEMSpaces.VMixed.sub(i - self.__nVelocityComponents + 1).collapse()[1])
+
+        # ged indices which are meant by "responseCoeff" in the parameter file
+        size = 0
+        for i in indexList:
+            size += len(i)
+        index = np.zeros(size, dtype=int)
+        scalarSize = len(indexList[0])
+        for i in range(len(indexList)):
+            index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
+
+
+        #index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
+        # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
+        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
+        m = len(np.arange(*local_range))
+        n = len(index)
+        row_ind = index
+        col_ind = np.arange(n)
+
+        P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
+        for i in range(n):
+            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
+            P_petsc.setValue(row_ind[i],col_ind[i],1.)
+        P_petsc.assemble()
+
+        printDebug(True, '-- Done.')
+
+        return P_petsc
 
 
 
