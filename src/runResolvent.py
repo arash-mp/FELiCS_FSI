@@ -53,16 +53,16 @@ def runResolvent(param, useGUI):
     ## MAIN PART
     #-----------------------------------------------------------------------
     # get matrices for resolvent analysis
-    A = equation.getLinearOperator(meanFlow)
-    B = equation.getWeightMatrix  (meanFlow)
-    W = equation.getFEMWeightMatrix()
+    A     = equation.getLinearOperator(meanFlow)
+    B     = equation.getWeightMatrix  (meanFlow)
+    W_FEM = equation.getFEMWeightMatrix()
 
-    P_f = equation.getSimplePMat()
-    P_u = P_f.copy() 
+    P_forcing  = equation.getSimplePMat()
+    P_response = P_forcing.copy() 
 
 
-    Q_f = P_f.transposeMatMult(W.matMult(P_f))
-    Q_u = Q_f.copy()
+    W_forcing  = P_forcing.transposeMatMult(W_FEM.matMult(P_forcing))
+    W_response = W_forcing.copy()
 
 
     # get parameters for resolvent analysis
@@ -89,11 +89,11 @@ def runResolvent(param, useGUI):
         R.axpy(-omega, B)            
         resolventOperator = ResolventOperator(                                         
                 R,                                         
-                W,                                         
-                Q_f,                                         
-                Q_u,                                         
-                P_f,                                         
-                P_u)
+                W_FEM,                                         
+                W_forcing,                                         
+                W_response,                                         
+                P_forcing,                                         
+                P_response)
         # Perform eigenvalue decomposition of the linear operator defined in the class "ResolventOperator"         
         # via the matrix vector multiplation "mult"
         gains[:,i],eigenvectors_c = LinearSolver.solveSVDOfResolvent(
@@ -111,19 +111,19 @@ def runResolvent(param, useGUI):
         for k in range(nSol):
             
             # get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)             
-            X1, X2 = P_f.getVecs()             
+            X1, X2 = P_forcing.getVecs()             
             X1.setValues(range(0,len(eigenvectors_c[:,k])),eigenvectors_c[:,k])             
-            Y1, Y2 = W.getVecs()             
+            Y1, Y2 = W_FEM.getVecs()             
 
             # forcings = Pu*eigenVectors             
-            P_f.mult(X1,X2)             
+            P_forcing.mult(X1,X2)             
             forcings[:,k,i] = X2.getValues(range(0,X2.getSize()))             
 
             # Y1 = -1j * B_femWeight * forcings             
-            W.mult(X2,Y1)             
+            W_FEM.mult(X2,Y1)             
 
             # Y1 = -1j * B_femWeight * forcings             
-            W.mult(X2,Y1)             
+            W_FEM.mult(X2,Y1)             
             Y1.scale(-1j)             
 
             # solve (A-omega*B)*responses = Y1             
