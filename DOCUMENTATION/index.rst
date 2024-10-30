@@ -27,7 +27,7 @@ Contents
 Validation Cases
 -------------
 
-The validation cases can be downloaded `here <https://tubcloud.tu-berlin.de/s/rnDcmGePjgPX4kc>`_
+The validation cases can be downloaded from `this gitlab repository <https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests>`_ . 
 
 Governing Equations
 -------------
