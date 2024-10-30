@@ -21,7 +21,7 @@
 - [A nice guide to Solving PDEs in Python](https://fenicsproject.org/pub/tutorial/pdf/fenics-tutorial-vol1.pdf)
 
 ## Validation Cases
-The validation Cases can be found [here](https://tubcloud.tu-berlin.de/s/rnDcmGePjgPX4kc)
+The validation cases can be downloaded from [this gitlab repository](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests).
 
 ## How to write a guide or documentation file
 - All guides and documentation files should be written in markdown or rst file format. 
