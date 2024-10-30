@@ -55,21 +55,21 @@ def runResolvent(param, useGUI):
     # get matrices for resolvent analysis
     A          = equation.getLinearOperator(meanFlow)
     B          = equation.getWeightMatrix  (meanFlow)
-    #W_FEM      = equation.getFEMWeightMatrix()
-    W_FEM      = equation.getResolventWeighting_FEM(meanFlow)
+    W_FEM      = equation.getResolventWeighting_FEM(meanFlow)  #=> including tensorial stuff
 
     P_forcing  = equation.getPMat()
-    P_shrink_f = equation.getShrinkerMat_forcing()
+    P_shrink_f = equation.getSimplePMat()   #shrinker mat for forcing=> write routine
 
     P_shrink_r = equation.getShrinkerMat_response()
-    P_response = equation.getCrMat().matMult(P_shrink_r)
+    P_response = P_shrink_r.transposeMatMult(equation.getCrMat())
 
     W_f_big    = equation.getResolventNorm_forcing (meanFlow)
     W_r_big    = equation.getResolventNorm_response(meanFlow)
 
     #W_forcing  = P_shrink_f.transposeMatMult( W_FEM.matMult(P_shrink_f))
-    W_forcing  = P_forcing.transposeMatMult(W_FEM.matMult(P_forcing))
-    #W_forcing  = P_shrink_f.transposeMatMult( W_f_big.matMult(P_shrink_f))
+    #W_forcing  = P_forcing.transposeMatMult(W_FEM.matMult(P_forcing))
+
+    W_forcing  = P_shrink_f.transposeMatMult(W_f_big.matMult(P_shrink_f))
     W_response = P_shrink_r.transposeMatMult(W_r_big.matMult(P_shrink_r))
 
 

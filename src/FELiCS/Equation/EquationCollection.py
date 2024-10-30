@@ -459,6 +459,8 @@ class EquationCollectionClass():
 
         return D
 
+
+
     def getFullRHS(self,func):
 
         # create ufl object with the full FEM weight matrix expression

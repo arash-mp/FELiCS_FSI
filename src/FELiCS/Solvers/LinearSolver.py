@@ -396,14 +396,14 @@ class ResolventOperator(object):
 
     def mult(self, mat, X, Y):                 
         # returns Y=mat*X                 
-        # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response * W_response * P_response^T * R^-1 * W_FEM * P_forcing                 
+        # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcng                 
         self._P_forcing.mult            (X,        self._Z1)  #Z1 = P_f*X                 
         self._W_FEM.mult                (self._Z1, self._Z2)  #Z2 = W_FEM*Z1                 
         self._ksp1.solve                (self._Z2, self._Z1)  #Z1 = OP^-1 * Z2                    #
 
-        self._P_response.multTranspose  (self._Z1, self._Y2)  #Y2 = P_r^T*Z1                 
+        self._P_response.mult           (self._Z1, self._Y2)  #Y2 = P_r*Z1                 
         self._W_response.mult           (self._Y2, self._Y1)  #Y1 = W_r*Y2                 
-        self._P_response.mult           (self._Y1, self._Z2)  #Z2 = P_r * Y1                 
+        self._P_response.multTranspose  (self._Y1, self._Z2)  #Z2 = P_r^T*Y1                 
         self._ksp2.solveTranspose       (self._Z2, self._Z1)  #Z1 = (OP^H)^-1 * Z2                 
         #
         self._W_FEM.multTranspose       (self._Z1, self._Z2)  #Z2 = W_FEM^T * Z1                 
