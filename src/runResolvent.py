@@ -188,5 +188,3 @@ def runResolvent(param, useGUI):
     else:
         ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
 
-
-
