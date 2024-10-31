@@ -16,8 +16,9 @@
 ## Guides
 - [Installation Guide](DOCUMENTATION/installation_guide.md)
 - [Tutorial 1](DOCUMENTATION/tutorial_1.md)
-- [Governing Equations](https://www.overleaf.com/project/65fc3be353efc8edb72ec27e)
-- [Best Practice Guidelines for Coding](https://www.overleaf.com/project/664f097a091050639ff51820)
+- [Governing Equations, Gitlab Documentation](DOCUMENTATION/GoverningEquations/resolvent.md)
+- [Governing Equations, Overleaf](https://www.overleaf.com/project/65fc3be353efc8edb72ec27e)
+- [Best Practice Guidielines for Coding](https://www.overleaf.com/project/664f097a091050639ff51820)
 - [A nice guide to Solving PDEs in Python](https://fenicsproject.org/pub/tutorial/pdf/fenics-tutorial-vol1.pdf)
 
 ## Validation Cases
