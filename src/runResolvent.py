@@ -129,9 +129,6 @@ def runResolvent(param, useGUI):
 
             # Y1 = -1j * B_femWeight * forcings             
             W_FEM.mult(X2,Y1)             
-
-            # Y1 = -1j * B_femWeight * forcings             
-            W_FEM.mult(X2,Y1)             
             Y1.scale(-1j)             
 
             # solve (A-omega*B)*responses = Y1             
