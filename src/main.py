@@ -60,5 +60,3 @@ if __name__ == '__main__':
         elif mode == "Input-Output":
                 runInputOutput(param,useGUI=False)
 
-
-

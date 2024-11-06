@@ -24,18 +24,18 @@ Contents
    documentation_creation
 
 
-
 Validation Cases
 -------------
+The validation cases can be downloaded from `this gitlab repository <https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests>`_ . 
 
-The validation cases can be downloaded `here <https://tubcloud.tu-berlin.de/s/3MQCKgK7JKGSDdx>`_
-
-
-External Guides
+Governing Equations
 -------------
+The Governing equations are documented in the following `overleaf document <https://www.overleaf.com/project/65fc3be353efc8edb72ec27e>`_
 
-- `A nice guide to Solving PDEs in Python <https://fenicsproject.org/pub/tutorial/pdf/fenics-tutorial-vol1.pdf>`_
-- `Best Practice Guidelines for Coding <https://www.overleaf.com/project/61dd7ece45e8fc038220b1b0>`_
+Coding Guidelines
+-------------
+Our Best Practice Guidelines for Coding in FELiCS are documented in the following `overleaf document <https://www.overleaf.com/project/664f097a091050639ff51820>`_
+A nice guide to Solving PDEs in Python can be found on  `fenicsproject.org <https://fenicsproject.org/pub/tutorial/pdf/fenics-tutorial-vol1.pdf>`_
 
 
 How to write a guide or documentation file

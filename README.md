@@ -11,19 +11,17 @@
 |_|  |___||____||_|  \___||___/
 ```
 
-
-## Guides and Documentation
-
-The web-based documentation can be found here: [laboratory-for-flow-instabilities-and-dynamics.gitlab-pages.tu-berlin.de/felics2.0/](https://laboratory-for-flow-instabilities-and-dynamics.gitlab-pages.tu-berlin.de/felics2.0/)
+## [Click here to access Documentation](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/)
 
 ## Guides
 - [Installation Guide](DOCUMENTATION/installation_guide.md)
 - [Tutorial 1](DOCUMENTATION/tutorial_1.md)
-- [Best Practice Guidelines for Coding](https://www.overleaf.com/project/61dd7ece45e8fc038220b1b0)
+- [Governing Equations](https://www.overleaf.com/project/65fc3be353efc8edb72ec27e)
+- [Best Practice Guidelines for Coding](https://www.overleaf.com/project/664f097a091050639ff51820)
 - [A nice guide to Solving PDEs in Python](https://fenicsproject.org/pub/tutorial/pdf/fenics-tutorial-vol1.pdf)
 
 ## Validation Cases
-The validation Cases can be found [here](https://tubcloud.tu-berlin.de/s/rnDcmGePjgPX4kc)
+The validation cases can be downloaded from [this gitlab repository](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests).
 
 ## How to write a guide or documentation file
 - All guides and documentation files should be written in markdown or rst file format. 
