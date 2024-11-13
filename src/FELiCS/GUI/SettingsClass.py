@@ -8,6 +8,7 @@ from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
 class Settings(ABC):
     def __init__(self):
         pass
+
     @abstractmethod
     def getAllSettingsDict(self):
         pass
@@ -21,25 +22,25 @@ class Settings(ABC):
         settingFilePath : txt
             path to .json file containing settings
         """
-        if not settingFilePath =='':
-            file = open(settingFilePath)
-            data = json.load(file)
-            for setting,value in data.items():
-                if setting == 'EigenValueGuess' and isinstance(value, list):
-                    EV_guesses=[]
-                    for EV_guess in value:
-                        if isinstance(EV_guess, list):
-                            EV_guesses.append(complex(EV_guess[0],EV_guess[1]))
-                        else:
-                            EV_guesses.append(EV_guess)
-                        setattr(self,setting,EV_guesses)
+        file = open(settingFilePath)
+        data = json.load(file)
+        for setting,value in data.items():
+            if setting == 'EigenValueGuess':    # EigenValueGuess specific handling to import complex numbers
+                if isinstance(value, list):
+                    if not value:
+                        value = []
+                    elif isinstance(value[0],str):
+                        value = list(map(complex,value))
+                    else:
+                        value = value
                 else:
-                    setattr(self,setting,value)
-            file.close()
-            #The Mixture and reaction are not loaded but constructed from the inputs
-            self.Mixture = MixtureClass(
-                self.MixtureFilePath,
-                self.SpeciesFilePath,
-                )
-            #print(self.Mixture.getReactionMechanism())
-            #self.reactionMechanism = reactionMechanismClass(self.Mixture.getReactionMechanism()['type'])
+                    if isinstance(value,str):
+                        value = [complex(value)]
+                    else:
+                        value = [value]
+            setattr(self,setting,value)
+        file.close()
+        self.Mixture = MixtureClass(
+            self.MixtureFilePath,
+            self.SpeciesFilePath,
+            )
