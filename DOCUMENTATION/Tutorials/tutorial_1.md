@@ -71,12 +71,12 @@ settings in the .geo file. The result should look similar to
 Fig. [2](#fig:MeshingAfter).
 
 
-![](_static/tutorial_1/Meshing1.png) <a id="fig:MeshingBefore"></a>
+![](../_static/tutorial_1/Meshing1.png) <a id="fig:MeshingBefore"></a>
 
 <p style="text-align: center;">Figure 1: Meshing user interface</p>
 
 
-![](_static/tutorial_1/Meshing2.png) <a id="fig:MeshingAfter"></a>
+![](../_static/tutorial_1/Meshing2.png) <a id="fig:MeshingAfter"></a>
 
 <p style="text-align: center;">Figure 2: Meshing user interface: after mesh was created</p>
 
@@ -85,19 +85,19 @@ Now we would like to save the mesh we just created. To do so, click on
 *File*$\rightarrow$*Export\...* as illustrated in
 Fig [3](#fig:saveMesh).
 
-![](_static/tutorial_1/Meshing4.png) <a id="fig:saveMesh" width=700></a>
+![](../_static/tutorial_1/Meshing4.png) <a id="fig:saveMesh" width=700></a>
 
 <p style="text-align: center;">Figure 3: Meshing user interface: export mesh</p>
 
 Then choose .msh as the file extension for the new file (see
 Fig. [4](#fig:saveMesh2)),
 
-![](_static/tutorial_1/Meshing3.png) <a id="fig:saveMesh2"></a>
+![](../_static/tutorial_1/Meshing3.png) <a id="fig:saveMesh2"></a>
 
 <p style="text-align: center;">Figure 4: Meshing user interface: save mesh</p>
 
 
-![](_static/tutorial_1/Meshing5.png) <a id="fig:saveMesh3" width=800></a>
+![](../_static/tutorial_1/Meshing5.png) <a id="fig:saveMesh3" width=800></a>
 
 <p style="text-align: center;">Figure 5: Meshing user interface: MSH options</p>
 
@@ -139,12 +139,12 @@ pops up showing the resulting base flow. By using the magnifier glass
 the section around the cylinder can be magnified as seen in
 Fig [7](#fig:BaseFlow2).
 
-![](_static/tutorial_1/BaseFlow2.png) <a id="fig:BaseFlow1" width=800></a>
+![](../_static/tutorial_1/BaseFlow2.png) <a id="fig:BaseFlow1" width=800></a>
 
 <p style="text-align: center;">Figure 6: Base Flow</p>
 
 
-![](_static/tutorial_1/BaseFlow1.png) <a id="fig:BaseFlow2" width=800></a>
+![](../_static/tutorial_1/BaseFlow1.png) <a id="fig:BaseFlow2" width=800></a>
 
 <p style="text-align: center;">Figure 7: Base Flow: close-up</p>
 
@@ -170,7 +170,7 @@ settings file must be created via the button
 \"`Create/Export Settings to File`\" on the top right. Insert a file
 name and save it with the file extension `.set` .
 
-![](_static/tutorial_1/GUI.png) <a id="fig:Settings1" width=400></a>
+![](../_static/tutorial_1/GUI.png) <a id="fig:Settings1" width=400></a>
 
 <p style="text-align: center;">Figure 8: GUI</p>
 
@@ -197,7 +197,7 @@ Load the mesh file \"`SphereWake.msh`\" we just created and make sure
 that the setup window looks similar to
 Fig. [9](#fig:Settings2). Then save and close.
 
-![](_static/tutorial_1/CaseSettings.png) <a id="Settings2" width=700></a>
+![](../_static/tutorial_1/CaseSettings.png) <a id="Settings2" width=700></a>
 
 <p style="text-align: center;">Figure 9: Settings</p>
 
@@ -207,7 +207,7 @@ GUI. Load the MeanFlow File `sphere_base_flow.hdf5`, which was created
 by `FlowSolver.py`, like shown in
 Fig. [10](#fig:Settings3) and click on \"`Save&Close`\".
 
-![](_static/tutorial_1/MeanFlowSettings.png) <a id="fig:Settings3" width=400></a>
+![](../_static/tutorial_1/MeanFlowSettings.png) <a id="fig:Settings3" width=400></a>
 
 <p style="text-align: center;">Figure 10: Mean Flow Settings</p>
 
@@ -245,7 +245,7 @@ valued) Neumann boundary condition.
 The resulting boundary condition window should look now like the one
 illustrated in Fig [11](#fig:Settings8).
 
-![](_static/tutorial_1/BoundaryConditions.png) <a id="fig:Settings8" width=700></a>
+![](../_static/tutorial_1/BoundaryConditions.png) <a id="fig:Settings8" width=700></a>
 
 <p style="text-align: center;">Figure 11: Boundary Conditions</p>
 
@@ -268,7 +268,7 @@ the corresponding button. Change the settings as follows:
     (*Resolvent Analysis* and *Input-Output Analysis*) are fully
     parallelized, no speed up can be expected for the *Modal Analysis*.
 
-![](_static/tutorial_1/NumericsSettings.png) <a id="Settings9" width=700></a>
+![](../_static/tutorial_1/NumericsSettings.png) <a id="Settings9" width=700></a>
 
 <p style="text-align: center;">Figure 12: Numerics Settings</p>
 
@@ -280,7 +280,7 @@ select the out folder in the working directory. The export mode is
 chosen to be `vtk`, so that a file readable with paraView is exported to
 the output folder
 
-![](_static/tutorial_1/OutputSettings.png) <a id="fig:Settings10" width=400></a>
+![](../_static/tutorial_1/OutputSettings.png) <a id="fig:Settings10" width=400></a>
 
 <p style="text-align: center;">Figure 13: Output Settings</p>
 
@@ -296,7 +296,7 @@ illustrated. First the stability spectrum is shown as in
 Fig [14](#fig:Settings11). The direct modes are shown by blue crosses,
 while the adjoint modes are shown by red circles:
 
-![](_static/tutorial_1/ResultsPlot.png) <a id="fig:Settings11" width=600></a>
+![](../_static/tutorial_1/ResultsPlot.png) <a id="fig:Settings11" width=600></a>
 
 <p style="text-align: center;">Figure 14: Results</p>
 
@@ -306,7 +306,7 @@ mode shape related to an eigenvalue in the spectrum can be both plotted
 to the screen (as seen in Fig [15](#fig:Settings12) after magnifying close to the cylinder) as
 well as exported to the output directory.
 
-![](_static/tutorial_1/ResultsPlot3.png) <a id="fig:Settings12" width=600></a>
+![](../_static/tutorial_1/ResultsPlot3.png) <a id="fig:Settings12" width=600></a>
 
 <p style="text-align: center;">Figure 15: Results: Mode shapes</p>
 
