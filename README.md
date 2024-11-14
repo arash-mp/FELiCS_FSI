@@ -19,7 +19,7 @@ Short Intro Text: where do you find what (installation, guide for developer, gui
 
 ## [Click here to access Documentation](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/)
 
-## For Developer
+## For Developers
 
 ### Validation Cases
 The validation cases can be downloaded from [this gitlab repository](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests).
