@@ -369,7 +369,8 @@ class EquationCollectionClass():
         #####################################################################################################
 
         # assemble petsc matrix
-        B = assemble_matrix(form(B_ufl.lhs), bcs=self.BCs)
+        #B = assemble_matrix(form(B_ufl.lhs), bcs=self.BCs)
+        B = assemble_matrix(form(B_ufl.lhs), bcs=[]) # no boundaries applied, else there is a but when computing the eigenvalue problem
         B.assemble()
 
         return B
