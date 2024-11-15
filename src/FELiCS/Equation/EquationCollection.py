@@ -341,15 +341,13 @@ class EquationCollectionClass():
                     #    index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
 
                     # u, rho, p
-                    self.resolventResponseIndices = self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1] # whole size of VMixed
-                    print ("###### CHU CHU CHU")
+                    self.resolventResponseIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
                 elif param.IOResolvent.ResponseNorm == 'TKE':
                     # u
                     self.resolventResponseIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
                 if param.IOResolvent.ForcingNorm == 'Chu':
                     # u, rho, p
-                    self.resolventForcingIndices = self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1] # whole size of VMixed
-                    print ("###### CHU CHU CHU")
+                    self.resolventForcingIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
                 elif param.IOResolvent.ForcingNorm == 'TKE':
                     # u
                     self.resolventForcingIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
@@ -713,7 +711,6 @@ class EquationCollectionClass():
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
-            
             try:
                 if param.IOResolvent.ForcingNorm == 'Chu':
                     printDebug(True, "-- Using Chu's disturbance energy (rho-T) for forcing norm.")

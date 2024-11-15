@@ -20,6 +20,8 @@ class IOResolventSettingsClass(Settings):
             'Omegas':{'datatype':list,'default':[]},
             'ForcingBoundaryIndices':{'datatype':list,'default':[]},
             'ForcingMode':{'datatype':str,'default':'Body'},
+            'ForcingNorm':{'datatype':str,'default':'TKE'},
+            'ResponseNorm':{'datatype':str,'default':'TKE'},
             'ForcingCoeff':{'datatype':list,'default':[]},
             'ResponseCoeff':{'datatype':list,'default':[]}\
         }
@@ -50,9 +52,15 @@ class IOResolventSettingsClass(Settings):
             printOK('Set frequencies!')
         if not self.ForcingCoeff:
             EverythingPresent=False
-            printOK('Set forcing norms!')
+            printOK('Set variables used for forcing term in ForcingCoeff')
         if not self.ResponseCoeff:
             EverythingPresent=False
-            printOK('Set response norms!')
+            printOK('Set variables used for response term in ResponseCoeff')
+        if not self.ResponseNorm:
+            EverythingPresent=False
+            printOK('Set norm type for response in ResponseNorm')
+        if not self.ForcingNorm:
+            EverythingPresent=False
+            printOK('Set norm type for response in ForcingNorm')
 
         return EverythingPresent
