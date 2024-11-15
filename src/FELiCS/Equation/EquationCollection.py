@@ -321,8 +321,41 @@ class EquationCollectionClass():
         #        self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
-            self.getResolventNorms(X,self.__param,mean,fluctuationC)
-            self.getResolventFEMWeights(X,self.__param,mean,fluctuationC)
+            self.computeResolventNorms     (X,self.__param,mean,fluctuationC)
+            self.computeResolventFEMWeights(X,self.__param,mean,fluctuationC)
+
+            # get indices for forcing and response, depending on used norm, to use when creating the shrinker matrices
+            index_u =  param.SolutionList.index('u')
+            try:  # TODO: initialize the norm in the settings with a default value if not given in the settings file
+                if param.IOResolvent.ResponseNorm == 'Chu':
+                    # TODO: (next step) initialize the indices with the name of the variables! Here: all are used, hard-coded, as a quick fix for Simon
+                    #index_rho = param.SolutionList.index('rho')
+                    #index_T   = param.SolutionList.index('T')
+                    ## add up index lists 
+                    #size = 0
+                    #for i in indexList:
+                    #    size += len(i)
+                    #index = np.zeros(size, dtype=int)
+                    #scalarSize = len(indexList[0])
+                    #for i in range(len(indexList)):
+                    #    index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
+
+                    # u, rho, p
+                    self.resolventResponseIndices = self.__FEMSpaces.VMixed.collapse()[1]
+                elif param.IOResolvent.ResponseNorm == 'TKE':
+                    # u
+                    self.resolventResponseIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+                if param.IOResolvent.ForcingNorm == 'Chu':
+                    # u, rho, p
+                    self.resolventForcingIndices = self.__FEMSpaces.VMixed.collapse()[1]
+                elif param.IOResolvent.ForcingNorm == 'TKE':
+                    # u
+                    self.resolventForcingIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+            except: # use TKE as  default
+                # u
+                self.resolventResponseIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+                self.resolventForcingIndices  = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+
 
 
 #################################################################################
@@ -371,8 +404,10 @@ class EquationCollectionClass():
         #####################################################################################################
 
         # assemble petsc matrix
-        #B = assemble_matrix(form(B_ufl.lhs), bcs=self.BCs)
-        B = assemble_matrix(form(B_ufl.lhs), bcs=[]) # no boundaries applied, else there is a but when computing the eigenvalue problem
+        if self.__param.Case.AnalysisMode in ['Resolvent']:
+            B = assemble_matrix(form(B_ufl.lhs), bcs=self.BCs)
+        else:
+            B = assemble_matrix(form(B_ufl.lhs), bcs=[]) # no boundaries applied, else there is a but when computing the eigenvalue problem
         B.assemble()
 
         return B
@@ -660,7 +695,7 @@ class EquationCollectionClass():
 
 
 ########################### Resolvent Norm  ############################
-    def getResolventNorms(self,X,param,mean,fluc):
+    def computeResolventNorms(self,X,param,mean,fluc):
         ''' This function yields the norms for the resolvent analysis.
         Note that both the forcing and response norm must be real!'''
         #Initialize forcing and response
@@ -676,118 +711,45 @@ class EquationCollectionClass():
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
-            u_f = fluc.u
-            self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
             
-            # printDebug(True, "-- Using Chu's disturbance energy for forcing norm!")
-            # idu = 0
-            # idrho = param.SolutionList.index('rho')
-            # idp = param.SolutionList.index('p')
-            # self.forcing_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
-            # self.forcing_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
-            #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
-            # self.forcing_vf += (fluc.p*iConj(X[idp])/(mean.p*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-            # self.forcing_vf += (-1*fluc.p*iConj(X[idrho])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-            # self.forcing_vf += (-1*fluc.rho*iConj(X[idp])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-            
-            # Below are arbitrary weights used for debugging resolvent considering other norms
-            # than the TKE one:
-            # idrhoF = param.SolutionList.index('rho')
-            # self.forcing_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
-            # idpF = param.SolutionList.index('p')
-            # self.forcing_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
-            
-            #velocityForcingList = [0,0,0]
-            #for i in param.IOResolvent.ForcingCoeff:
-            #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
-            #    # than the number of velocity components, the coefficient must be applied
-            #    # to the corresponding (second level) subspace of u, which correspionds to the right
-            #    # velocity component. If not, it is applied directly to the first level subspace,
-            #    # and the index is corrected by param.nVelocityComponents+1
-            #    
-            #    if i<param.Case.getNVelocityComponents():
-            #        velocityForcingList[i] = self.hat[0][i]
-            #        #input(velocityForcingList)
-            #        #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
-            #        #self.forcing_vf += conj(self.X[0][i])*self.hat[0][i]*self.R*dx
-            #        
-            #    else:
-            #        self.forcing_vf += conj(self.X[i-param.nVelocityComponents+1])*\
-            #            barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
-            #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
-            #u_f = Tensor(self.hat[0], self.coord_sys)
-            #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
-            ##self.A_vf.add(( 1j*iDot(iGrad(iConj(X), self.m),fluc_rhou) ).ufl_tens*coord.J_hat*dx)
-            #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
-            #self.forcing_vf += barrho *iDot iConj(X)*self.hat[0][i]*self.R*dx
-            #self.forcing_vf += temporalVF
+            try:
+                if param.IOResolvent.ForcingNorm == 'Chu':
+                    printDebug(True, "-- Using Chu's disturbance energy (rho-T) for forcing norm.")
+                    idu   = param.SolutionList.index('u')
+                    idrho = param.SolutionList.index('rho')
+                    idT   = param.SolutionList.index('T')
+                    self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
+                    self.forcing_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
+                    self.forcing_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
+            except:  #if no norm is set, TKE norm is used. 
+                printDebug(True, "-- Using TKE energy for forcing norm.")
+                self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+                self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
+                
         # In boundary forcing, forcing is allowed only on the specific boundaries
         elif param.IOResolvent.ForcingMode=='Boundary':
             raise Exception("Boundary forcing not implemented for Resolvent analysis in Tensor notation")
-            # Create integrator for the respective boundaries
-#            Ds = ds(subdomain_data=self.boundaries)
-#
-#            # Loop through forcing coefficients (The coefficients that are chosen by the user,
-#            # corresponding to the respective equations)
-#            for i in param.IOResolvent.ForcingCoeff:
-#                # Loop through the forcing boundaries specified by the user
-#                for k in param.IOResolvent.ForcingBoundaryIndices:
-#                    # In case the coefficient correspionds to a velocity, i.e. i is smaller
-#                    # than the number of velocity components, the coefficient must be applied
-#                    # to the corresponding (second level) subspace of u, which correspionds to the right
-#                    # velocity component. If not, it is applied directly to the first level subspace,
-#                    # and the index is corrected by param.nVelocityComponents+1
-#                    if i<param.Case.getNVelocityComponents():
-#                        self.forcing_vf += self.X[0][i]*barrho*\
-#                            self.hat[0][i]*self.R*Ds(int(k))
-#                    else:
-#                        self.forcing_vf += self.X[i-param.nVelocityComponents+1]*\
-#                            barrho*self.hat[i-param.nVelocityComponents+1]\
-#                            *self.R*Ds(int(k))
 
-        # Loop through response coefficients (The coefficients that are chosen by the user,
-        # corresponding to the respective solutions to be maximized)
-        #velocityResponseList = [0,0,0]
-        #for i in param.IOResolvent.ResponseCoeff:
-        #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
-        #    # than the number of velocity components, the coefficient must be applied
-        #    # to the corresponding (second level) subspace of u, which correspionds to the right
-        #    # velocity component. If not, it is applied directly to the first level subspace,
-        #    # and the index is corrected by param.nVelocityComponents+1
-        #    if i<param.Case.getNVelocityComponents():
-        #        velocityResponseList[i] = self.hat[0][i]
-        #   #     self.response_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
-        #    else:
-        #        self.response_vf += conj(self.X[i-param.nVelocityComponents+1])*barrho*\
-        #            self.hat[i-param.nVelocityComponents+1]*self.R*dx
-        #velocityComponents = Tensor(as_vector(velocityResponseList),self.coord_sys)
-        #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
-        #self.response_vf += temporalVF
-        self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
-        
-        # printDebug(True, "-- Using Chu's disturbance energy for response norm!")
-        # idu = 0
-        # idrho = param.SolutionList.index('rho')
-        # idp = param.SolutionList.index('p')
-        # self.response_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
-        # self.response_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
-        #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
-        # self.response_vf += (fluc.p*iConj(X[idp])/(mean.p*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-        # self.response_vf += (-1*fluc.p*iConj(X[idrho])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-        # self.response_vf += (-1*fluc.rho*iConj(X[idp])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-        
-        # Below are arbitrary weights used for debugging resolvent considering other norms
-        # than the TKE one:
-        # idrhoF = param.SolutionList.index('rho')
-        # self.response_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
-        # idpF = param.SolutionList.index('p')
-        # self.response_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
+          
+        try:
+           if param.IOResolvent.ResponseNorm == 'Chu':
+               printDebug(True, "-- Using Chu's disturbance energy (rho-T) for response norm.")
+               idu =  param.SolutionList.index('u')
+               idrho = param.SolutionList.index('rho')
+               idT = param.SolutionList.index('T')
+               self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
+               self.response_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
+               self.response_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
+         
+        except: # standard is param.IOResolvent.ResponseNorm == 'TKE':
+            printDebug(True, "-- Using TKE energy for response norm.")
+            self.response_vf += (barrho*iDot(fluc.u,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
 
-        # Prompt variational formulations in debug mode
-        printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
-        printDebug(param.debug,'-- Resolvent response norm is '+ str(self.response_vf))
+        ## Prompt variational formulations in debug mode
+        #printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
+        #printDebug(param.debug,'-- Resolvent response norm is '+ str(self.response_vf))
 
-    def getResolventFEMWeights(self,X,param,mean,fluc):
+    def computeResolventFEMWeights(self,X,param,mean,fluc):
         ''' 
         This function yields a matrix containing the FEM weights
         corresponding to a diagonal unit matrix.
@@ -818,137 +780,6 @@ class EquationCollectionClass():
                     self.fem_weighting += ( fluc_var*iConj(X[varIndex]) ).ufl_tens*J_hat*dx
 
         
-    def DiscretizeFlow(self):
-
-        #self.__DiscretizeAndSolve = DiscretizeAndSolve
-        #self.__WeakForm = WeakForm
-        from copy import deepcopy
-        # Check for type of case
-        
-        # Used for debugging
-        # from matspy import spy
-        # import matplotlib
-        # matplotlib.use('TkAGG')
-
-        AnalysisMode = self.__param.Case.AnalysisMode
-        FEMSpaces = self.__FEMSpaces
-        #Get the Dirichlet BCs set by the user in a list...
-        # BClist= self.__getListOfDirichletBCs()
-        bcFunction = Function(self.__FEMSpaces.VMixed)
-        bcFunction.x.array[:] = 0.0
-        # for bc in BClist:
-        #   dofs = bc.dof_indices()[0]
-        #   bc_vals = 1.0
-        #   bcFunction.x.array[dofs] = bc_vals
-        mesh = self.__FEMSpaces.P2.mesh
-        pattern = SparsityPattern(mesh.comm, [self.__FEMSpaces.VMixed.dofmap.index_map, self.__FEMSpaces.VMixed.dofmap.index_map],
-                                                            [self.__FEMSpaces.VMixed.dofmap.index_map_bs, self.__FEMSpaces.VMixed.dofmap.index_map_bs])
-        pattern.insert_diagonal(np.arange(len(bcFunction.vector.array), dtype=np.int32))
-        try:
-            pattern.finalize()
-        except:
-            printDeprecatedWarning("dolfinx version is <0.7.0")
-            pattern.assemble()
-        BC_Diriclet = create_matrix(mesh.comm, pattern)
-        BC_Diriclet.setDiagonal(bcFunction.vector)
-        BC_Diriclet.assemble()
-
-        bcs= self.BCs
-        n_dof=BC_Diriclet.size[0]
-		
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        #try:
-        #    self.A_vf.setCorrectMeshObject(self.__mesh)
-        #    self.B_vf.setCorrectMeshObject(self.__mesh)
-        #except:
-        #    printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-
-
-        #if not self.A_vf.lhsIsZero():
-        #    A = assemble_matrix(form(self.A_vf.lhs), bcs=bcs)
-        #    A.assemble()
-        #else:
-        #    A = BC_Diriclet.scale(0.)
-
-        #if not self.B_vf.lhsIsZero():
-        #    B = assemble_matrix(form(self.B_vf.lhs), bcs=bcs)
-        #    B.assemble()
-        #else:
-        #    B = BC_Diriclet.scale(0.)
-        A = self.getLinearOperator(self.__mean)
-        B = self.getWeightMatrix(self.__mean)
-
-        self.__matrix_dict_petsc={}  
-
-        if AnalysisMode in ['Input-Output']:
-            if not self.A_vf.rhsIsZero():
-                forcing_vec_petsc = assemble_vector(form(self.A_vf.rhs))
-                forcing_vec_petsc.assemble()
-            else:
-                forcing_vec_petsc = PETScVector()
-                forcing_vec_petsc.init(n_dof)
-
-            from dolfinx.fem.petsc import set_bc
-            set_bc(forcing_vec_petsc, bcs)
-
-            #b_forcing = 1j*forcing_vec
-            self.__matrix_dict_petsc['b_forcing'] = forcing_vec_petsc.copy()  
-            self.__matrix_dict_petsc['b_forcing'].scale(1j)
-            del forcing_vec_petsc
-
-        # Get the BCs provided by the user
-        # Aplly the BCs
-        ## Boundary conditions are applied via penalisation method manually. This is in order to keep the rhs matrix invertible.
-        else:
-
-            bcFunction.x.array[:] = 0.0
-            for bc in bcs:
-                try:
-                    dofs = bc._cpp_object.dof_indices()[0]
-                except:
-                    printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-                    dofs = bc.dof_indices()[0]
-                bc_vals = 1.0
-                bcFunction.x.array[dofs] = bc_vals
-            BC_Diriclet.setDiagonal(bcFunction.vector)
-            BC_Diriclet.assemble()
-        from petsc4py import PETSc
-        self.__matrix_dict_petsc['B'] = B  
-        self.__matrix_dict_petsc['A'] = A
-        #del A,B
-
-        if AnalysisMode in ['Resolvent']:
-            #forcing_norm,response_norm=getResolventNorms(param,MF,FEMSpaces)
-            
-            try:
-                sd = self.forcing_vf.subdomain_data()
-                domain, = list(sd.keys())  # Assuming single domain
-                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
-                #self.forcing_vf.setCorrectMeshObject(self.__mesh)
-            except:
-                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-            B_forcing = assemble_matrix(form(self.forcing_vf))
-            B_forcing.assemble()
-            self.__matrix_dict_petsc['B_forcing'] = B_forcing 
-            del B_forcing
-
-            B_response = assemble_matrix(form(self.response_vf))
-            B_response.assemble()
-            self.__matrix_dict_petsc['B_response'] = B_response 
-            del B_response
-            
-            # FEM weighting matrix
-            B_femWeight = assemble_matrix(form(self.fem_weighting))
-            B_femWeight.assemble()
-            self.__matrix_dict_petsc['B_femWeight'] = B_femWeight 
-            del B_femWeight
-
-        self.__matrix_dict_petsc['bcs'] = bcs
-
-        return self.__buildSolutionObj()
 
     def __getListOfDirichletBCs(self, listOfComponents=None):
         BClist = []
@@ -997,266 +828,102 @@ class EquationCollectionClass():
                             #    BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn), 1, self.boundaries.find(self.__bcDict[k][mm]['ID'])), self.__FEMSpaces.VMixed.sub(i_eqn)) )
         return BClist
 
-    def __buildSolutionObj(self):
-        return LinearSystem.linearSystem(
-                                        self,
-                                        self.__matrix_dict_petsc,
-                                        self.__FEMSpaces,
-                                        self.__param,
-                                        self.__mean
-                                        )        
 
-    def getPMat(self):
-        '''
-        This function provides the P matrix, which restricts the forcing
-        in terms of variables and spatial region
+
+    def getRestrictorMatResponse(self):
+        from petsc4py import PETSc
         
-        TODO This does not work properly if a P1-fluctuations is part
-        of the forcing/response norm! Indices of the DOFs will be wrong.
-        '''
-    
-        from petsc4py import PETSc
-
-        self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
-        self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
-        printDebug(True, '-- Building Pu matrix...')
-
-        # Get the matrix that restricts the forcing in space
-        forcingDom = self.__mean.forcingDomain
-
-        # By default, the forcing is applied everywhere, but the corresponding
-        # matrix is only zeros, so we check and convert to ones in the default setting
-        if max(forcingDom.x.array[:], key=abs) == 0:
-            forcingDom.x.array[:] =  1
-            flagdom = False
-            printDebug(True, '-- No spatial restriction of forcing.')
-        else:
-            forcingDom.x.array[:] = np.rint(forcingDom.x.array[:])
-            flagdom = True
-            printDebug(True, '-- Applying spatial restriction of forcing from MeanFlow file.')
-
-            nfluctvar = len(self.__bcDict)      # counting velocity components as 
-            nDim = self.__param.Case.nDim
-            forcingDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(forcingDom, nfluctvar, nDim) # the last two inputs don't matter
-
-        index = np.empty(shape=(0, 0))
-
-        for i in self.__forcing_coeff:
-            if i < self.__nVelocityComponents:
-                dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]
-            else:
-                dofsIterator = self.__FEMSpaces.VMixed.sub(i - self.__nVelocityComponents + 1).collapse()[1]
-
-            # Only goes through the index loop if spatial limiter given
-            if flagdom:
-                for index_local in dofsIterator:
-                    #if round(forcingDomainVMixed.vector()[index_local]) == 1:
-                    if forcingDomainVMixed.x.array[index_local] == 1:
-                        index = np.append(index, index_local)
-                        # Rounding added there since mesh interpolation can result
-                        # in non-integer values of the limiter domain flag
-            else:
-                index = np.append(index, dofsIterator)
-
-        index.sort()
-
-        index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
-        # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
-        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
-        m = len(np.arange(*local_range))
-        n = len(index)
-        row_ind = index
-        col_ind = np.arange(n)
-
-        P_petsc = PETSc.Mat().createAIJ([m,n])
-        P_petsc.setUp()
-        for i in range(n):
-            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
-            P_petsc.setValue(row_ind[i],col_ind[i],1.)
-        P_petsc.assemble()
-
-        printDebug(True, '-- Done.')
-
-        return P_petsc
-
-
-    def getSimplePMat(self):
-        '''
-        This is a (very!) temporary alternative: does NOT use limiters, does ONLY work for incompressible equations
-        '''
-    
-        from petsc4py import PETSc
-
-        index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
-        # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
-        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
-        m = len(np.arange(*local_range))
-        n = len(index)
-        row_ind = index
-        col_ind = np.arange(n)
-
-        P_petsc = PETSc.Mat().createAIJ([m,n])
-        P_petsc.setUp()
-        for i in range(n):
-            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
-            P_petsc.setValue(row_ind[i],col_ind[i],1.)
-        P_petsc.assemble()
-
-        printDebug(True, '-- Done.')
-
-        return P_petsc
-
-    def getShrinkerMat_response(self):
-        '''
-        This is a (very!) temporary alternative: does NOT use limiters, does ONLY work for incompressible equations
-        '''
-    
-        from petsc4py import PETSc
-
-        # Loop over fluctuations which are part of response coeff
-        self.__response_coeff = self.__param.IOResolvent.ResponseCoeff
-        indexList = []
-        for i in self.__param.IOResolvent.ResponseCoeff:
-            if i < self.__nVelocityComponents:
-                indexList.append(self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1])
-            else:
-                indexList.append(self.__FEMSpaces.VMixed.sub(i - self.__nVelocityComponents + 1).collapse()[1])
-
-        # ged indices which are meant by "responseCoeff" in the parameter file
-        size = 0
-        for i in indexList:
-            size += len(i)
-        index = np.zeros(size, dtype=int)
-        scalarSize = len(indexList[0])
-        for i in range(len(indexList)):
-            index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
-
-
-        #index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
-        # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
-        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
-        m = len(np.arange(*local_range))
-        n = len(index)
-        row_ind = index
-        col_ind = np.arange(n)
-
-        P_petsc = PETSc.Mat().createAIJ([m,n])
-        P_petsc.setUp()
-        for i in range(n):
-            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
-            P_petsc.setValue(row_ind[i],col_ind[i],1.)
-        P_petsc.assemble()
-
-        printDebug(True, '-- Done.')
-
-        return P_petsc
-
-    def getShrinkerMat_forcing(self):
-        '''
-        This is a (very!) temporary alternative: does NOT use limiters, does ONLY work for incompressible equations
-        '''
-    
-        from petsc4py import PETSc
-
-        # Loop over fluctuations which are part of response coeff
-        self.__response_coeff = self.__param.IOResolvent.ResponseCoeff
-        indexList = []
-        for i in self.__param.IOResolvent.ForcingCoeff:
-            if i < self.__nVelocityComponents:
-                indexList.append(self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1])
-            else:
-                indexList.append(self.__FEMSpaces.VMixed.sub(i - self.__nVelocityComponents + 1).collapse()[1])
-
-        # ged indices which are meant by "responseCoeff" in the parameter file
-        size = 0
-        for i in indexList:
-            size += len(i)
-        index = np.zeros(size, dtype=int)
-        scalarSize = len(indexList[0])
-        for i in range(len(indexList)):
-            index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
-
-
-        #index = self.__FEMSpaces.VMixed.sub(0).collapse()[1]
-        # see: https://fenicsproject.discourse.group/t/fenicsx-method-which-is-equaivalent-to-dofmap-dofs-in-fenics/9152/3
-        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
-        m = len(np.arange(*local_range))
-        n = len(index)
-        row_ind = index
-        col_ind = np.arange(n)
-
-        P_petsc = PETSc.Mat().createAIJ([m,n])
-        P_petsc.setUp()
-        for i in range(n):
-            # P_petsc.setValue(row_ind[i],col_ind[i],1.,1)
-            P_petsc.setValue(row_ind[i],col_ind[i],1.)
-        P_petsc.assemble()
-
-        printDebug(True, '-- Done.')
-
-        return P_petsc
-
-
-
-
-    def getCrMat(self):
-        ''' This function provides the Cr matrix, which restricts the response '''
-        from petsc4py import PETSc
-
-        self.__response_coeff = self.__param.IOResolvent.ResponseCoeff
-        self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
-        printDebug(True, '-- Building Cr matrix...')
-
-        # Get the matrix that restricts the forcing in space
-        responseDom = self.__mean.responseDomain
-
-        # By default, the forcing is applied everywhere, but the corresponding
-        # matrix is only zeros, so we check and convert to ones in the default setting
-        nfluctvar = len(self.__bcDict)
-        nDim = self.__param.Case.nDim
-        if max(responseDom.x.array[:], key=abs) == 0:
-            responseDom.x.array[:] = 1
-            flagdom = False
+        
+        # First we check if forcingDom is zero everywhere = no spatial limiter
+        if max(self.__mean.getVertexValues().responseDomain, key=abs) == 0:
+            forcDomVal = 1                      # Setting 1 to everywhere
             printDebug(True, '-- No spatial restriction of response.')
         else:
-            responseDom.x.array[:] = np.rint(responseDom.x.array[:])
-            flagdom = True
-            printDebug(True, '-- Applying spatial restriction of response from MeanFlow file.')
+            forcDomVal = self.__mean.responseDomain    # using actual values
+            printDebug(True, '-- Spatial restriction of response.')
 
-            responseDomainVMixed = self.__FEMSpaces._projectField2allFEMSpaces(responseDom, nfluctvar, nDim)
 
-        index = np.empty(shape=(0,0))
+        range_all        = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
 
-        # Loop over fluctuations which are part of response coeff
-        for i in self.__response_coeff:
-            if i < self.__nVelocityComponents:
-                dofsIterator = self.__FEMSpaces.VMixed.sub(0).sub(i).collapse()[1]
-            else:
-                dofsIterator = self.__FEMSpaces.VMixed.sub(i - self.__nVelocityComponents + 1).collapse()[1]
+        m = len(np.arange(*range_all))
 
-            # Only goes through the index loop if spatial limiter given
-            if flagdom:
-                for index_local in dofsIterator:
-                    if round(responseDomainVMixed.x.array[index_local]) == 1:
-                        index = np.append(index, index_local)
-            else:
-                index = np.append(index, dofsIterator)
+        P_petsc = PETSc.Mat().createAIJ([m,m])
+        P_petsc.setUp()
+        for i in range(m):
+            P_petsc.setValue(i,i,1.)
+        P_petsc.assemble()
 
-        index.sort()
-        local_range = self.__FEMSpaces.VMixed.dofmap.index_map.local_range
-        m = len(np.arange(*local_range))
-        n = len(index)
-        row_ind = index
-        col_ind = np.arange(n)
+        return P_petsc
 
-        Cr_petsc = PETSc.Mat().createAIJ([m,m])
-        Cr_petsc.setUp()
-        for row in row_ind:
-            Cr_petsc.setValue(row,row,1.)
-        Cr_petsc.assemble()
 
-        ## Cr = csr_matrix((np.ones(n),(col_ind,row_ind)),(n,m))     # in theory this should be the size of Cr
 
-        printDebug(True, '-- Done.')
+    def getRestrictorMatForcing(self):
+        from petsc4py import PETSc
         
-        return Cr_petsc
+        # First we check if forcingDom is zero everywhere = no spatial limiter
+        if max(self.__mean.getVertexValues().forcingDomain, key=abs) == 0:
+            forcDomVal = 1                      # Setting 1 to everywhere
+            printDebug(True, '-- No spatial restriction of forcing.')
+        else:
+            forcDomVal = self.__mean.forcingDomain    # using actual values
+            printDebug(True, '-- Spatial restriction of forcing.')
+
+        range_all        = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+
+        m = len(np.arange(*range_all))
+
+        P_petsc = PETSc.Mat().createAIJ([m,m])
+        P_petsc.setUp()
+        for i in range(m):
+            P_petsc.setValue(i,i,1.)
+        P_petsc.assemble()
+
+        return P_petsc
+
+
+    def getShrinkerMatResponse(self):
+        # creates a (possibly rectangular) matrix which serves the purpose to "shrink" the solution (response) vector to the requested size 
+        # (e.g. only consider the velocity components when using the response norm "TKE")
+    
+        from petsc4py import PETSc
+
+        indices_response = self.resolventResponseIndices  # depending on the response norm
+        range_all        = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+
+        n = len(indices_response)
+        m = len(np.arange(*range_all))
+
+        P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
+        j = 0
+        for i in indices_response:
+            P_petsc.setValue(i,j,1.)
+            j+=1
+        P_petsc.assemble()
+
+        return P_petsc
+
+
+    def getShrinkerMatForcing(self):
+        # creates a (possibly rectangular) matrix which serves the purpose to "shrink" the forcing vector to the requested size 
+        # (e.g. only consider the velocity components when using the forcing norm "TKE")
+    
+        from petsc4py import PETSc
+
+        indices_forcing  = self.resolventForcingIndices  # depending on the forcing norm
+        range_all        = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+
+        n = len(indices_forcing)
+        m = len(np.arange(*range_all))
+
+        P_petsc = PETSc.Mat().createAIJ([m,n])
+        P_petsc.setUp()
+        j = 0
+        for i in indices_forcing:
+            P_petsc.setValue(i,j,1.)
+            j+=1
+        P_petsc.assemble()
+
+        return P_petsc
+
+

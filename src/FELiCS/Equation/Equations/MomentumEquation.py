@@ -79,7 +79,7 @@ class MomentumEquation(EquationTemplate):
         J_hat = self.J_hat
 
         # ------------------------ Convective terms
-        int_by_parts = True
+        int_by_parts = False
         if int_by_parts and self.param.Case.CoordinateSystem=='Cartesian':
             # Volume term from integration by parts
             weakForm.add(( 1j*iDot(iDiv(iOuter(iConj(X),mean.rho*mean.u)),fluc.u) ).ufl_tens*J_hat*dx)

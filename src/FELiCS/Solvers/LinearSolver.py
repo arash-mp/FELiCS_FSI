@@ -355,9 +355,11 @@ class ResolventOperator(object):
         self._P_response = RestrictorMatrix_response                 
         self._W_FEM      = FEMWeightMatrix_fullSystem                 
         self._W_response = FEMWeightMatrix_responseNorm                 
+        self._W_forcing  = FEMWeightMatrix_forcingNorm             
 
         self._Z1, self._Z2  = ResolventOperator.getVecs()                 
         self._Y1, self._Y2  = self._W_response.getVecs()                 
+        self._X1, self._X2  = self._W_forcing.getVecs()                 
 
         # create KSP1: This is a solver for the System Operator*x=y.                 
         self._ksp1 = PETSc.KSP().create()                 
@@ -396,7 +398,7 @@ class ResolventOperator(object):
 
     def mult(self, mat, X, Y):                 
         # returns Y=mat*X                 
-        # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcng                 
+        # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcing                 
         self._P_forcing.mult            (X,        self._Z1)  #Z1 = P_f*X                 
         self._W_FEM.mult                (self._Z1, self._Z2)  #Z2 = W_FEM*Z1                 
         self._ksp1.solve                (self._Z2, self._Z1)  #Z1 = OP^-1 * Z2                    #
@@ -405,7 +407,7 @@ class ResolventOperator(object):
         self._W_response.mult           (self._Y2, self._Y1)  #Y1 = W_r*Y2                 
         self._P_response.multTranspose  (self._Y1, self._Z2)  #Z2 = P_r^T*Y1                 
         self._ksp2.solveTranspose       (self._Z2, self._Z1)  #Z1 = (OP^H)^-1 * Z2                 
-        #
+
         self._W_FEM.multTranspose       (self._Z1, self._Z2)  #Z2 = W_FEM^T * Z1                 
         self._P_forcing.multTranspose   (self._Z2, self._Y1)  #Y1  = P_f^T * Z2                 
         self._ksp3.solve                (self._Y1, Y)         #Y  = (W_f^T)^-1 * Y1                 
