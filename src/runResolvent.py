@@ -57,7 +57,7 @@ def runResolvent(param, useGUI):
     B          = equation.getWeightMatrix  (meanFlow)
     W_FEM      = equation.getResolventWeighting_FEM(meanFlow)  #=> including tensorial stuff
 
-    P_shrink_f = equation.getShrinkerMatForcing()   #shrinker mat for forcing=> write routine
+    P_shrink_f = equation.getShrinkerMatForcing()   
     P_forcing  = equation.getRestrictorMatForcing().matMult(P_shrink_f)
 
     P_shrink_r = equation.getShrinkerMatResponse()

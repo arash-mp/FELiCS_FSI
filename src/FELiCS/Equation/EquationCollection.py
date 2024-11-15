@@ -863,17 +863,22 @@ class EquationCollectionClass():
         # create quadratic petsc matrix and fill it with the restrictor values
         range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
         m         = len(np.arange(*range_all))
-        P_petsc   = PETSc.Mat().createAIJ([m,m])
-        P_petsc.setUp()
+        array     = np.empty(m,dtype=complex)
+        count = 0
         for index in indices:
             if len(index) == len(responseRestrictor_scalarP1.x.array[:]):
-                array = responseRestrictor_scalarP1.x.array[:]
+                array[count:count+len(index)] = responseRestrictor_scalarP1.x.array[:]
             elif len(index) == len(responseRestrictor_scalarP2.x.array[:]):
-                array = responseRestrictor_scalarP2.x.array[:]
-            j = 0
-            for i in index:
-                P_petsc.setValue(i,i,array[j])
-                j+=1
+                array[count:count+len(index)] = responseRestrictor_scalarP2.x.array[:]
+            count += len(index)
+
+        vec_diag = PETSc.Vec().createSeq(m)
+        vec_diag.setValues(np.arange(m,dtype=np.int32),array[:])
+        vec_diag.assemble()
+
+        P_petsc   = PETSc.Mat().createAIJ([m,m])
+        P_petsc.setUp()
+        P_petsc.setDiagonal(vec_diag)
         P_petsc.assemble()
 
         return P_petsc
@@ -918,20 +923,26 @@ class EquationCollectionClass():
                 except:
                     notFinished = False
 
+
         # create quadratic petsc matrix and fill it with the restrictor values
         range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
         m         = len(np.arange(*range_all))
-        P_petsc   = PETSc.Mat().createAIJ([m,m])
-        P_petsc.setUp()
+        array     = np.empty(m,dtype=complex)
+        count = 0
         for index in indices:
             if len(index) == len(forcingRestrictor_scalarP1.x.array[:]):
-                array = forcingRestrictor_scalarP1.x.array[:]
+                array[count:count+len(index)] = forcingRestrictor_scalarP1.x.array[:]
             elif len(index) == len(forcingRestrictor_scalarP2.x.array[:]):
-                array = forcingRestrictor_scalarP2.x.array[:]
-            j = 0
-            for i in index:
-                P_petsc.setValue(i,i,array[j])
-                j+=1
+                array[count:count+len(index)] = forcingRestrictor_scalarP2.x.array[:]
+            count += len(index)
+
+        vec_diag = PETSc.Vec().createSeq(m)
+        vec_diag.setValues(np.arange(m,dtype=np.int32),array[:])
+        vec_diag.assemble()
+
+        P_petsc   = PETSc.Mat().createAIJ([m,m])
+        P_petsc.setUp()
+        P_petsc.setDiagonal(vec_diag)
         P_petsc.assemble()
 
         return P_petsc
@@ -946,11 +957,14 @@ class EquationCollectionClass():
         indices_response = self.resolventResponseIndices  # depending on the response norm
         range_all        = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
 
-        n = len(indices_response)
-        m = len(np.arange(*range_all))
+        n        = len(indices_response)
+        m        = len(np.arange(*range_all))
+        array    = np.empty(n)
+        array[:] = 1.
 
         P_petsc = PETSc.Mat().createAIJ([m,n])
         P_petsc.setUp()
+        #P_petsc.setValues(indices_response, np.arange(n,dtype=np.int32), array)
         j = 0
         for i in indices_response:
             P_petsc.setValue(i,j,1.)
