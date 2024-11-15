@@ -326,37 +326,32 @@ class EquationCollectionClass():
 
             # get indices for forcing and response, depending on used norm, to use when creating the shrinker matrices
             index_u =  param.SolutionList.index('u')
-            try:  # TODO: initialize the norm in the settings with a default value if not given in the settings file
-                if param.IOResolvent.ResponseNorm == 'Chu':
-                    # TODO: (next step) initialize the indices with the name of the variables! Here: all are used, hard-coded, as a quick fix for Simon
-                    #index_rho = param.SolutionList.index('rho')
-                    #index_T   = param.SolutionList.index('T')
-                    ## add up index lists 
-                    #size = 0
-                    #for i in indexList:
-                    #    size += len(i)
-                    #index = np.zeros(size, dtype=int)
-                    #scalarSize = len(indexList[0])
-                    #for i in range(len(indexList)):
-                    #    index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
+            if param.IOResolvent.ResponseNorm == 'Chu':
+                # TODO: (next step) initialize the indices with the name of the variables! Here: all are used, hard-coded, as a quick fix for Simon
+                #index_rho = param.SolutionList.index('rho')
+                #index_T   = param.SolutionList.index('T')
+                ## add up index lists 
+                #size = 0
+                #for i in indexList:
+                #    size += len(i)
+                #index = np.zeros(size, dtype=int)
+                #scalarSize = len(indexList[0])
+                #for i in range(len(indexList)):
+                #    index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
 
-                    # u, rho, p
-                    self.resolventResponseIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
-                elif param.IOResolvent.ResponseNorm == 'TKE':
-                    # u
-                    self.resolventResponseIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
-                if param.IOResolvent.ForcingNorm == 'Chu':
-                    # u, rho, p
-                    self.resolventForcingIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
-                elif param.IOResolvent.ForcingNorm == 'TKE':
-                    # u
-                    self.resolventForcingIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
-            except: # use TKE as  default
+                # u, rho, p
+                self.resolventResponseIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
+            elif param.IOResolvent.ResponseNorm == 'TKE':
                 # u
                 self.resolventResponseIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
-                self.resolventForcingIndices  = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+            if param.IOResolvent.ForcingNorm == 'Chu':
+                # u, rho, p
+                self.resolventForcingIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
+            elif param.IOResolvent.ForcingNorm == 'TKE':
+                # u
+                self.resolventForcingIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
 
-
+            # TODO: raise Error if the norm is set with a wrong value!!!
 
 #################################################################################
 
@@ -711,38 +706,38 @@ class EquationCollectionClass():
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
-            try:
-                if param.IOResolvent.ForcingNorm == 'Chu':
-                    printDebug(True, "-- Using Chu's disturbance energy (rho-T) for forcing norm.")
-                    idu   = param.SolutionList.index('u')
-                    idrho = param.SolutionList.index('rho')
-                    idT   = param.SolutionList.index('T')
-                    self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
-                    self.forcing_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
-                    self.forcing_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
-            except:  #if no norm is set, TKE norm is used. 
+            if param.IOResolvent.ForcingNorm == 'Chu':
+                printDebug(True, "-- Using Chu's disturbance energy (rho-T) for forcing norm.")
+                idu   = param.SolutionList.index('u')
+                idrho = param.SolutionList.index('rho')
+                idT   = param.SolutionList.index('T')
+                self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
+                self.forcing_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
+                self.forcing_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
+            elif param.IOResolvent.ForcingNorm == 'TKE':
                 printDebug(True, "-- Using TKE energy for forcing norm.")
                 self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
                 self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
+            #TODO: raise Error!!!
                 
         # In boundary forcing, forcing is allowed only on the specific boundaries
         elif param.IOResolvent.ForcingMode=='Boundary':
             raise Exception("Boundary forcing not implemented for Resolvent analysis in Tensor notation")
 
           
-        try:
-           if param.IOResolvent.ResponseNorm == 'Chu':
-               printDebug(True, "-- Using Chu's disturbance energy (rho-T) for response norm.")
-               idu =  param.SolutionList.index('u')
-               idrho = param.SolutionList.index('rho')
-               idT = param.SolutionList.index('T')
-               self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
-               self.response_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
-               self.response_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
-         
-        except: # standard is param.IOResolvent.ResponseNorm == 'TKE':
+        if param.IOResolvent.ResponseNorm == 'Chu':
+            printDebug(True, "-- Using Chu's disturbance energy (rho-T) for response norm.")
+            idu =  param.SolutionList.index('u')
+            idrho = param.SolutionList.index('rho')
+            idT = param.SolutionList.index('T')
+            self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
+            self.response_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
+            self.response_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
+        elif param.IOResolvent.ResponseNorm == 'TKE':
             printDebug(True, "-- Using TKE energy for response norm.")
             self.response_vf += (barrho*iDot(fluc.u,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+        #TODO: raise Error!!
+         
 
         ## Prompt variational formulations in debug mode
         #printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
@@ -832,17 +827,20 @@ class EquationCollectionClass():
     def getRestrictorMatResponse(self):
         # provides a quadratic matrix, with the size of the solution space (VMixed)
         # has the response restrictor values, given with the mean field, on the diagonal
-        # TODO: at the moment only working if every field is P2,  extend this to non P2 fields! 
         from petsc4py import PETSc
         
         
         # First we check if forcingDom is zero everywhere = no spatial limiter
         if max(self.__mean.getVertexValues().responseDomain, key=abs) == 0:
-            responseRestrictor_scalar = Function(self.__FEMSpaces.P2)
-            responseRestrictor_scalar.x.array[:] = 1. # Setting 1 to everywhere
+            responseRestrictor_scalarP2 = Function(self.__FEMSpaces.P2)
+            responseRestrictor_scalarP1 = Function(self.__FEMSpaces.P1)
+            responseRestrictor_scalarP2.x.array[:] = 1. # Setting 1 to everywhere
+            responseRestrictor_scalarP1.x.array[:] = 1. # Setting 1 to everywhere
             printDebug(True, '-- No spatial restriction of response.')
         else:
-            responseRestrictor_scalar = self.__mean.responseDomain    # using actual values
+            responseRestrictor_scalarP2 = self.__mean.responseDomain    # using actual values
+            responseRestrictor_scalarP1 = Function(self.__FEMSpaces.P1)
+            responseRestrictor_scalarP1.interpolate(responseRestrictor_scalarP2)
             printDebug(True, '-- Spatial restriction of response.')
 
         # crude way to go over all scalar spaces and get their indices (some of them are in the vector space for the velocity) 
@@ -861,16 +859,20 @@ class EquationCollectionClass():
                 except:
                     notFinished = False
 
+
         # create quadratic petsc matrix and fill it with the restrictor values
-        # TODO: make this work if some fields in VMixed are not P2!! 
         range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
         m         = len(np.arange(*range_all))
         P_petsc   = PETSc.Mat().createAIJ([m,m])
         P_petsc.setUp()
         for index in indices:
+            if len(index) == len(responseRestrictor_scalarP1.x.array[:]):
+                array = responseRestrictor_scalarP1.x.array[:]
+            elif len(index) == len(responseRestrictor_scalarP2.x.array[:]):
+                array = responseRestrictor_scalarP2.x.array[:]
             j = 0
             for i in index:
-                P_petsc.setValue(i,i,responseRestrictor_scalar.x.array[j])
+                P_petsc.setValue(i,i,array[j])
                 j+=1
         P_petsc.assemble()
 
@@ -880,20 +882,23 @@ class EquationCollectionClass():
     def getRestrictorMatForcing(self):
         # provides a quadratic matrix, with the size of the solution space (VMixed)
         # has the inverse of the forcing restrictor values, given with the mean field, on the diagonal
-        # TODO: at the moment only working if every field is P2,  extend this to non P2 fields! 
         from petsc4py import PETSc
         
         # First we check if forcingDom is zero everywhere = no spatial limiter
         if max(self.__mean.getVertexValues().forcingDomain, key=abs) == 0:
-            forcingRestrictor_scalar = Function(self.__FEMSpaces.P2)
-            forcingRestrictor_scalar.x.array[:] = 1. # Setting 1 to everywhere
+            forcingRestrictor_scalarP1 = Function(self.__FEMSpaces.P1)
+            forcingRestrictor_scalarP2 = Function(self.__FEMSpaces.P2)
+            forcingRestrictor_scalarP1.x.array[:] = 1. # Setting 1 to everywhere
+            forcingRestrictor_scalarP2.x.array[:] = 1. # Setting 1 to everywhere
             printDebug(True, '-- No spatial restriction of forcing.')
         else:
-            forcingRestrictor_scalar = self.__mean.forcingDomain    # using actual values
             # invert values, if non-zero
-            array = forcingRestrictor_scalar.x.array
+            array = self.__mean.forcingDomain.x.array
             np.where(array[:] != 0., 1./ array[:], 0.)
-            forcingRestrictor_scalar.x.array[:] = array[:]
+            self.__mean.forcingDomain.x.array[:] = array[:]
+            forcingRestrictor_scalarP2 = self.__mean.forcingDomain    # using actual values
+            forcingRestrictor_scalarP1 = Function(self.__FEMSpaces.P1)
+            forcingRestrictor_scalarP1.interpolate(forcingRestrictor_scalarP2)
             printDebug(True, '-- Spatial restriction of forcing.')
 
 
@@ -914,15 +919,18 @@ class EquationCollectionClass():
                     notFinished = False
 
         # create quadratic petsc matrix and fill it with the restrictor values
-        # TODO: make this work if some fields in VMixed are not P2!! 
         range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
         m         = len(np.arange(*range_all))
         P_petsc   = PETSc.Mat().createAIJ([m,m])
         P_petsc.setUp()
         for index in indices:
+            if len(index) == len(forcingRestrictor_scalarP1.x.array[:]):
+                array = forcingRestrictor_scalarP1.x.array[:]
+            elif len(index) == len(forcingRestrictor_scalarP2.x.array[:]):
+                array = forcingRestrictor_scalarP2.x.array[:]
             j = 0
             for i in index:
-                P_petsc.setValue(i,i,forcingRestrictor_scalar.x.array[j])
+                P_petsc.setValue(i,i,array[j])
                 j+=1
         P_petsc.assemble()
 
