@@ -341,13 +341,15 @@ class EquationCollectionClass():
                     #    index[i*scalarSize:(i+1)*scalarSize] = indexList[i][:]
 
                     # u, rho, p
-                    self.resolventResponseIndices = self.__FEMSpaces.VMixed.collapse()[1]
+                    self.resolventResponseIndices = self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1] # whole size of VMixed
+                    print ("###### CHU CHU CHU")
                 elif param.IOResolvent.ResponseNorm == 'TKE':
                     # u
                     self.resolventResponseIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
                 if param.IOResolvent.ForcingNorm == 'Chu':
                     # u, rho, p
-                    self.resolventForcingIndices = self.__FEMSpaces.VMixed.collapse()[1]
+                    self.resolventForcingIndices = self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1] # whole size of VMixed
+                    print ("###### CHU CHU CHU")
                 elif param.IOResolvent.ForcingNorm == 'TKE':
                     # u
                     self.resolventForcingIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
@@ -831,51 +833,100 @@ class EquationCollectionClass():
 
 
     def getRestrictorMatResponse(self):
+        # provides a quadratic matrix, with the size of the solution space (VMixed)
+        # has the response restrictor values, given with the mean field, on the diagonal
+        # TODO: at the moment only working if every field is P2,  extend this to non P2 fields! 
         from petsc4py import PETSc
         
         
         # First we check if forcingDom is zero everywhere = no spatial limiter
         if max(self.__mean.getVertexValues().responseDomain, key=abs) == 0:
-            forcDomVal = 1                      # Setting 1 to everywhere
+            responseRestrictor_scalar = Function(self.__FEMSpaces.P2)
+            responseRestrictor_scalar.x.array[:] = 1. # Setting 1 to everywhere
             printDebug(True, '-- No spatial restriction of response.')
         else:
-            forcDomVal = self.__mean.responseDomain    # using actual values
+            responseRestrictor_scalar = self.__mean.responseDomain    # using actual values
             printDebug(True, '-- Spatial restriction of response.')
 
+        # crude way to go over all scalar spaces and get their indices (some of them are in the vector space for the velocity) 
+        notFinished = True
+        i = 0; j = 0
+        indices = []
+        while notFinished:
+            try:
+                indices.append(self.__FEMSpaces.VMixed.sub(i).sub(j).collapse()[1])
+                j +=1
+            except:
+                j = 0
+                i += 1 
+                try:
+                    indices.append(self.__FEMSpaces.VMixed.sub(i).collapse()[1]) 
+                except:
+                    notFinished = False
 
-        range_all        = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
-
-        m = len(np.arange(*range_all))
-
-        P_petsc = PETSc.Mat().createAIJ([m,m])
+        # create quadratic petsc matrix and fill it with the restrictor values
+        # TODO: make this work if some fields in VMixed are not P2!! 
+        range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+        m         = len(np.arange(*range_all))
+        P_petsc   = PETSc.Mat().createAIJ([m,m])
         P_petsc.setUp()
-        for i in range(m):
-            P_petsc.setValue(i,i,1.)
+        for index in indices:
+            j = 0
+            for i in index:
+                P_petsc.setValue(i,i,responseRestrictor_scalar.x.array[j])
+                j+=1
         P_petsc.assemble()
 
         return P_petsc
 
 
-
     def getRestrictorMatForcing(self):
+        # provides a quadratic matrix, with the size of the solution space (VMixed)
+        # has the inverse of the forcing restrictor values, given with the mean field, on the diagonal
+        # TODO: at the moment only working if every field is P2,  extend this to non P2 fields! 
         from petsc4py import PETSc
         
         # First we check if forcingDom is zero everywhere = no spatial limiter
         if max(self.__mean.getVertexValues().forcingDomain, key=abs) == 0:
-            forcDomVal = 1                      # Setting 1 to everywhere
+            forcingRestrictor_scalar = Function(self.__FEMSpaces.P2)
+            forcingRestrictor_scalar.x.array[:] = 1. # Setting 1 to everywhere
             printDebug(True, '-- No spatial restriction of forcing.')
         else:
-            forcDomVal = self.__mean.forcingDomain    # using actual values
+            forcingRestrictor_scalar = self.__mean.forcingDomain    # using actual values
+            # invert values, if non-zero
+            array = forcingRestrictor_scalar.x.array
+            np.where(array[:] != 0., 1./ array[:], 0.)
+            forcingRestrictor_scalar.x.array[:] = array[:]
             printDebug(True, '-- Spatial restriction of forcing.')
 
-        range_all        = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
 
-        m = len(np.arange(*range_all))
+        # crude way to go over all scalar spaces and get their indices (some of them are in the vector space for the velocity) 
+        notFinished = True
+        i = 0; j = 0
+        indices = []
+        while notFinished:
+            try:
+                indices.append(self.__FEMSpaces.VMixed.sub(i).sub(j).collapse()[1])
+                j +=1
+            except:
+                j = 0
+                i += 1 
+                try:
+                    indices.append(self.__FEMSpaces.VMixed.sub(i).collapse()[1]) 
+                except:
+                    notFinished = False
 
-        P_petsc = PETSc.Mat().createAIJ([m,m])
+        # create quadratic petsc matrix and fill it with the restrictor values
+        # TODO: make this work if some fields in VMixed are not P2!! 
+        range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+        m         = len(np.arange(*range_all))
+        P_petsc   = PETSc.Mat().createAIJ([m,m])
         P_petsc.setUp()
-        for i in range(m):
-            P_petsc.setValue(i,i,1.)
+        for index in indices:
+            j = 0
+            for i in index:
+                P_petsc.setValue(i,i,forcingRestrictor_scalar.x.array[j])
+                j+=1
         P_petsc.assemble()
 
         return P_petsc
