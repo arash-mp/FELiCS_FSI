@@ -864,13 +864,11 @@ class EquationCollectionClass():
         range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
         m         = len(np.arange(*range_all))
         array     = np.empty(m,dtype=complex)
-        count = 0
         for index in indices:
             if len(index) == len(responseRestrictor_scalarP1.x.array[:]):
-                array[count:count+len(index)] = responseRestrictor_scalarP1.x.array[:]
+                array[index] = responseRestrictor_scalarP1.x.array[:]
             elif len(index) == len(responseRestrictor_scalarP2.x.array[:]):
-                array[count:count+len(index)] = responseRestrictor_scalarP2.x.array[:]
-            count += len(index)
+                array[index] = responseRestrictor_scalarP2.x.array[:]
 
         vec_diag = PETSc.Vec().createSeq(m)
         vec_diag.setValues(np.arange(m,dtype=np.int32),array[:])
@@ -928,13 +926,11 @@ class EquationCollectionClass():
         range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
         m         = len(np.arange(*range_all))
         array     = np.empty(m,dtype=complex)
-        count = 0
         for index in indices:
             if len(index) == len(forcingRestrictor_scalarP1.x.array[:]):
-                array[count:count+len(index)] = forcingRestrictor_scalarP1.x.array[:]
+                array[index] = forcingRestrictor_scalarP1.x.array[:]
             elif len(index) == len(forcingRestrictor_scalarP2.x.array[:]):
-                array[count:count+len(index)] = forcingRestrictor_scalarP2.x.array[:]
-            count += len(index)
+                array[index] = forcingRestrictor_scalarP2.x.array[:]
 
         vec_diag = PETSc.Vec().createSeq(m)
         vec_diag.setValues(np.arange(m,dtype=np.int32),array[:])
