@@ -1,7 +1,6 @@
 from FELiCS.GUI.SettingsClass   import Settings
 from FELiCS.Misc.tensorUtils    import CoordinateSystem
-from FELiCS.Misc.functions      import printWarning
-from FELiCS.Misc.functions      import printDeprecatedWarning
+from FELiCS.Misc.functions      import printWarning, printDeprecatedWarning, printError
 from os.path                    import isfile
 from os                         import path
 from mpi4py                     import MPI
@@ -208,31 +207,37 @@ class BCsSettingsClass(Settings):
     def importBCsDict(self,VariableList):
         ''' Import a boundary condition file with checking the consistency of BCs and mesh.'''
         BCIDList=self.__BCIDs__
+
         #First define local BCsDict
         BCsDict={}
-        filepath=self.BCsFilePath
-        if not filepath == '' and isfile(filepath):
-            self.BCsFilePath = filepath
+        if isfile(self.BCsFilePath):
             for Variable in VariableList:
                 BCsDict[Variable]=[]
                 for BCID in BCIDList:
                     BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
+
             # Read BCFile
             BCFile=open(self.BCsFilePath)
             importDict=eval(BCFile.readline())
+
             # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
             for Variable in VariableList:
                 if Variable in list(importDict.keys()):
                     BCsDict[Variable]=[]
-                    for BC in importDict[Variable]:
+                    for count,ID in enumerate(BCIDList):
+                        BC = importDict[Variable][count]
                         if BC['ID'] in BCIDList:
                             BCsDict[Variable].append(BC)
                         else:
                             printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
                 else:
                     printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
+                    
             # Finally, copy local BCsDict to the object
             self.__BCsDict__=BCsDict
+        else:
+            printError('boundary condition file not found!')
+
 
 
 
