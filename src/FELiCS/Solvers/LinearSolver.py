@@ -162,7 +162,7 @@ class LinearSolver:
                 printDebug(True,f"SLEPc error relative: {eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)}")
                 #printDebug(True,f"SLEPc error absolute: {eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE)}")
             except:
-                printWarning("Could not access eigenpair nb ", nev+1, "!")
+                printWarning("Could not access eigenpair nb " + str(nev+1) +"!")
         
         eps.destroy()
         R.destroy()
@@ -349,7 +349,7 @@ class ResolventOperator(object):
 
         from petsc4py import PETSc                 
 
-        self._size = FEMWeightMatrix_responseNorm.getSize()                 
+        self._size = FEMWeightMatrix_forcingNorm.getSize()                 
 
         self._P_forcing  = RestrictorMatrix_forcing                 
         self._P_response = RestrictorMatrix_response                 
@@ -409,8 +409,8 @@ class ResolventOperator(object):
         self._ksp2.solveTranspose       (self._Z2, self._Z1)  #Z1 = (OP^H)^-1 * Z2                 
 
         self._W_FEM.multTranspose       (self._Z1, self._Z2)  #Z2 = W_FEM^T * Z1                 
-        self._P_forcing.multTranspose   (self._Z2, self._Y1)  #Y1  = P_f^T * Z2                 
-        self._ksp3.solve                (self._Y1, Y)         #Y  = (W_f^T)^-1 * Y1                 
+        self._P_forcing.multTranspose   (self._Z2, self._X1)  #X1  = P_f^T * Z2                 
+        self._ksp3.solve                (self._X1, Y)         #Y  = (W_f^T)^-1 * X1                 
 
         return Y         
 

@@ -344,12 +344,18 @@ class EquationCollectionClass():
             elif param.IOResolvent.ResponseNorm == 'TKE':
                 # u
                 self.resolventResponseIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+            else:
+                print("ERROR")
+                exit()
             if param.IOResolvent.ForcingNorm == 'Chu':
                 # u, rho, p
                 self.resolventForcingIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
             elif param.IOResolvent.ForcingNorm == 'TKE':
                 # u
                 self.resolventForcingIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+            else:
+                print("ERROR")
+                exit()
 
             # TODO: raise Error if the norm is set with a wrong value!!!
 
@@ -716,7 +722,8 @@ class EquationCollectionClass():
                 self.forcing_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
             elif param.IOResolvent.ForcingNorm == 'TKE':
                 printDebug(True, "-- Using TKE energy for forcing norm.")
-                self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+                idu   = param.SolutionList.index('u')
+                self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
                 self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
             #TODO: raise Error!!!
                 
@@ -735,7 +742,8 @@ class EquationCollectionClass():
             self.response_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
         elif param.IOResolvent.ResponseNorm == 'TKE':
             printDebug(True, "-- Using TKE energy for response norm.")
-            self.response_vf += (barrho*iDot(fluc.u,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
+            idu =  param.SolutionList.index('u')
+            self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
         #TODO: raise Error!!
          
 
