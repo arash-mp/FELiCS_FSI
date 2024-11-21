@@ -3,15 +3,15 @@
 ## Resolvent Analysis for a Linear System 
 The starting point is the equation for a linear system: 
 ```math
-(A + j \omega B) \hat{q} = J\hat{q} = \hat{f},
+$(A + j \omega B) \hat{q} = J\hat{q} = \hat{f}$,
 ``` 
 where $A$ is the linear operator. Applying a discretization scheme and considering a finite element method (FEM) weighting:  
 ```math
-\hat{q} = R W_{\text{FEM}} \hat{f},\quad \text{with}\quad \mathbf{R=J^{-1}}. 
+$\hat{q} = R W_{\text{FEM}} \hat{f},\quad \text{with}\quad \mathbf{R=J^{-1}}$. 
 ```
 We make the framework more flexible by introducing limiter operators (similar to @towneSpectralProperOrthogonal2018), defining the projections:
 ```math 
-$\hat{y} = P_r \hat{q}, \quad \hat{f} = P_f \hat{\eta},
+$\hat{y} = P_r \hat{q}, \quad \hat{f} = P_f \hat{\eta}$,
 ```
 where $\hat{y}$ and $\hat{\eta}$ are the response and input of the reduced system, respectively. 
 The $P_r$ and $P_f$ allow to select the spatial regions and variables involved in the response and inputs, respectively.
