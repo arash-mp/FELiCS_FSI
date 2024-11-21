@@ -357,9 +357,9 @@ class ResolventOperator(object):
         self._W_response = FEMWeightMatrix_responseNorm                 
         self._W_forcing  = FEMWeightMatrix_forcingNorm             
 
-        self._Z1, self._Z2  = ResolventOperator.getVecs()                 
-        self._Y1, self._Y2  = self._W_response.getVecs()                 
-        self._X1, self._X2  = self._W_forcing.getVecs()                 
+        self._O1, self._O2  = ResolventOperator.getVecs()                 
+        self._R1, self._R2  = self._W_response.getVecs()                 
+        self._F1, self._F2  = self._W_forcing.getVecs()                 
 
         # create KSP1: This is a solver for the System Operator*x=y.                 
         self._ksp1 = PETSc.KSP().create()                 
@@ -394,23 +394,23 @@ class ResolventOperator(object):
         return self._size         
 
     def getVecs(self):                 
-        return self._Y1, self._Y2         
+        return self._F1, self._F2         
 
     def mult(self, mat, X, Y):                 
         # returns Y=mat*X                 
         # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcing                 
-        self._P_forcing.mult            (X,        self._Z1)  #Z1 = P_f*X                 
-        self._W_FEM.mult                (self._Z1, self._Z2)  #Z2 = W_FEM*Z1                 
-        self._ksp1.solve                (self._Z2, self._Z1)  #Z1 = OP^-1 * Z2                    #
+        self._P_forcing.mult            (X,        self._O1)  #O1 = P_f * X                 
+        self._W_FEM.mult                (self._O1, self._O2)  #O2 = W_FEM * O1                 
+        self._ksp1.solve                (self._O2, self._O1)  #O1 = OP^-1 * O2                    #
 
-        self._P_response.mult           (self._Z1, self._Y2)  #Y2 = P_r*Z1                 
-        self._W_response.mult           (self._Y2, self._Y1)  #Y1 = W_r*Y2                 
-        self._P_response.multTranspose  (self._Y1, self._Z2)  #Z2 = P_r^T*Y1                 
-        self._ksp2.solveTranspose       (self._Z2, self._Z1)  #Z1 = (OP^H)^-1 * Z2                 
+        self._P_response.mult           (self._O1, self._R1)  #R1 = P_r * O1                 
+        self._W_response.mult           (self._R1, self._R2)  #R2 = W_r * R1                 
+        self._P_response.multTranspose  (self._R2, self._O1)  #O1 = P_r^T * R2                
+        self._ksp2.solveTranspose       (self._O1, self._O2)  #O2 = (OP^H)^-1 * O1                 
 
-        self._W_FEM.multTranspose       (self._Z1, self._Z2)  #Z2 = W_FEM^T * Z1                 
-        self._P_forcing.multTranspose   (self._Z2, self._X1)  #X1  = P_f^T * Z2                 
-        self._ksp3.solve                (self._X1, Y)         #Y  = (W_f^T)^-1 * X1                 
+        self._W_FEM.multTranspose       (self._O2, self._O1)  #O1 = W_FEM^T * O2                 
+        self._P_forcing.multTranspose   (self._O1, self._F1)  #F1  = P_f^T * O1                 
+        self._ksp3.solve                (self._F1, Y)         #Y  = (W_f^T)^-1 * F1                 
 
         return Y         
 

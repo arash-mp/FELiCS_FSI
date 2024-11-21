@@ -69,7 +69,6 @@ def runResolvent(param, useGUI):
     W_forcing  = P_shrink_f.transposeMatMult(W_f_big.matMult(P_shrink_f))
     W_response = P_shrink_r.transposeMatMult(W_r_big.matMult(P_shrink_r))
 
-
     # get parameters for resolvent analysis
     omegas   = param.IOResolvent.Omegas
     nSol     = param.Numerics.nSolut
@@ -116,21 +115,21 @@ def runResolvent(param, useGUI):
         for k in range(nSol):
             
             # get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)             
-            X1, X2 = P_forcing.getVecs()             
+            X1, X2 = W_forcing.getVecs()             
             X1.setValues(range(0,len(eigenvectors_c[:,k])),eigenvectors_c[:,k])             
             Y1, Y2 = W_FEM.getVecs()             
 
             # forcings = Pu*eigenVectors             
-            P_forcing.mult(X1,X2)             
-            forcings[:,k,i] = X2.getValues(range(0,X2.getSize()))             
+            P_forcing.mult(X1,Y1)             
+            forcings[:,k,i] = Y1.getValues(range(0,Y1.getSize()))             
 
             # Y1 = -1j * B_femWeight * forcings             
-            W_FEM.mult(X2,Y1)             
-            Y1.scale(-1j)             
+            W_FEM.mult(Y1,Y2)             
+            Y2.scale(-1j)             
 
             # solve (A-omega*B)*responses = Y1             
-            resolventOperator.getKSP().solve(Y1,X2)             
-            responses[:, k, i] = X2.getValues(range(0, X2.getSize()))
+            resolventOperator.getKSP().solve(Y2,Y1)             
+            responses[:, k, i] = Y1.getValues(range(0, Y1.getSize()))
 
 
     # end tracking time
