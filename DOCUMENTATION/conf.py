@@ -52,3 +52,4 @@ napoleon_attr_annotations = True
 
 #Myst Parser settings
 myst_enable_extensions = ["dollarmath", "amsmath"]
+myst_dmath_double_inline = True
