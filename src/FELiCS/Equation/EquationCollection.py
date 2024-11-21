@@ -1,23 +1,3 @@
-#/* Copyright (C) 2019 FLOW group TU Berlin - All Rights Reserved
-# * You may NOT use, distribute or modify this code without explicit
-# * opermission of the copyright owner, the FLOW group at TU Berlin
-# * However, permissions to use and modify the code are generally
-# * granted when asked for.
-# * To ask for permission please contact t.kaiser@tu-berlin.de
-# */
-'''
-# **********************************************************************
-# * This file contains the Weak formulation class, which builds all
-# * necessary weak formulations for the later use
-# *
-# * This file created by Thomas L. Kaiser. Significant contributions
-# * were made by
-# * Mario Casel, transcribing the Low Mach Equations from FreeFEM
-# * Chuhan Wang, including adding the enthalpy equation
-# *
-# ********************
-'''
-
 from dolfinx import __version__
 
 
@@ -73,15 +53,78 @@ from   FELiCS.Misc.tensorUtils import (
 from .WeakForm import WeakForm
 
 class EquationCollectionClass():
-    '''This class build the variational formulations for all relevant matrices
-    Currently these are:
-    -A (imag and real)
-    -B (imag and real)
-    -B_forcing (Resolvent forcing norm)
-    -B_response (Resolvent response norm)
-    The convention is such that the B matrix (time derivative) is always positive and real
-    '''
+    """
+    Constructs variational formulations for various matrices and manages equations and boundary conditions.
+
+    This class builds variational formulations for matrices such as:
+    - A (imaginary and real parts)
+    - B (imaginary and real parts)
+    - B_forcing (Resolvent forcing norm)
+    - B_response (Resolvent response norm)
+
+    The convention ensures that the B matrix (time derivative) is positive and real.
+
+    Parameters
+    ----------
+    param : object
+        Parameters for the simulation, including boundary conditions and equations.
+    FEMSpaces : object
+        Finite Element Method spaces for the simulation.
+    mean : object
+        Mean flow fields used in variational formulations.
+    mesh : object
+        Mesh defining the domain.
+
+    Attributes
+    ----------
+    m : float
+        Cross-streamwise wave number.
+    x : ufl.SpatialCoordinate
+        Spatial coordinates of the mesh.
+    ds : ufl.Measure
+        Measure for integrating along boundaries.
+    all_ds : ufl.Measure
+        Measure for integrating over all boundaries.
+    n_BC : ufl.FacetNormal
+        Normal vector on boundaries.
+    n : Tensor
+        Boundary normal vector in the chosen coordinate system.
+    BCs : list
+        List of Dirichlet boundary conditions.
+    trialFunctionsFEM : ufl.TrialFunctions
+        Trial functions for the variational formulation.
+    testFunctionsFEM : ufl.TestFunctions
+        Test functions for the variational formulation.
+    X : list of Tensor
+        Test functions with additional structure.
+    R : ufl.Coefficient
+        Radial coordinate for cylindrical coordinates.
+    A_vf : WeakForm
+        Variational form for matrix A.
+    B_vf : WeakForm
+        Variational form for matrix B.
+    equationList : list
+        List of equations included in the model.
+    resolventResponseIndices : numpy.ndarray
+        Indices for resolvent response in FEM spaces.
+    resolventForcingIndices : numpy.ndarray
+        Indices for resolvent forcing in FEM spaces.
+    """
     def __init__(self,param,FEMSpaces,mean,mesh):
+        """
+        Initialize the EquationCollectionClass with parameters, FEM spaces, mean fields, and mesh.
+
+        Parameters
+        ----------
+        param : object
+            Parameters for the simulation, including boundary conditions and equations.
+        FEMSpaces : object
+            Finite Element Method spaces for the simulation.
+        mean : object
+            Mean flow fields used in variational formulations.
+        mesh : object
+            Mesh defining the domain.
+        """
         #from fenics import Function
         from itertools import compress
         from FELiCS.Fields.fluctuationClass import fluctuationClass
@@ -263,62 +306,6 @@ class EquationCollectionClass():
             #    addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self.__param)
             else:
                 raise Exception('Species transport equation type ' + self.__param.Case.SetOfEquations['Species']['Equation'] + ' unknown' )
-
-        ## Add reactions
-        ## Reaction eqs not derived in tensor framework yet
-        #if self.__param.Case.Reaction:
-        #    if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
-        #        from FELiCS.Equation.Reactions.GlobalReaction import GlobalReaction
-        #        ReactionModelName="WestbrookDryer_Max" #to be put in param
-        #        Reaction=GlobalReaction(self.__param.Case.Mixture.ReactionMechanism)
-        #        reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
-        #        reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.SolutionList)
-        #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
-        #        from FELiCS.Equation.Reactions.TwoStepReaction import TwoStepReaction
-        #        ReactionModelName="BFER" #to be put in param
-        #        Reaction=TwoStepReaction(ReactionModelName)
-        #        Reaction.computeMeanField(MF,self.__FEMSpaces.P2)
-        #        Reaction.testM()
-        #        reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
-        #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='2S-SM2':
-        #        from FELiCS.Equation.Reactions.c2sm2 import C2SM2
-        #        ReactionModelName="2S-SM2" #to be put in param
-        #        YCH4_lim=0.043*1e-4
-        #        #c2=C2SM2(YCH4_lim,2)
-        #        c2=self.mean.reaction
-        #        self.TR=fluctuationC.T
-        #        self.rhoR=fluctuationC.rho
-        #        self.YCH4R=fluctuationC.Y('CH4')
-        #        self.YO2R=fluctuationC.Y('O2')
-        #        self.YCOR=fluctuationC.Y('CO')
-        #        self.YCO2R=fluctuationC.Y('CO2')
-        #        self.v_eneR=X[self.__param.Case.getTransportedQuantityList().index('rho')]
-        #        self.v_YCH4R=X[self.__param.Case.getTransportedQuantityList().index('CH4')]
-        #        self.v_YO2R=X[self.__param.Case.getTransportedQuantityList().index('O2')]
-        #        self.v_YH2OR=X[self.__param.Case.getTransportedQuantityList().index('H2O')]
-        #        self.v_YCOR=X[self.__param.Case.getTransportedQuantityList().index('CO')]
-        #        self.v_YCO2R=X[self.__param.Case.getTransportedQuantityList().index('CO2')]
-        #        self.dQMean=self.mean.dQ
-        #        self.order=2
-        #        self.dx=dx
-
-        #        #c2.computeSensitivities(MeanFlow.T,
-        #        #                        MeanFlow.rho,
-        #        #                        MeanFlow.Y('CH4'),
-        #        #                        MeanFlow.Y('CO'),
-        #        #                        MeanFlow.Y('O2'),
-        #        #                        MeanFlow.Y('CO2'))
-
-        #        self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
-        #        reaction=self.mean.reaction
-        #        self.v_NO  = X[self.__param.Case.getTransportedQuantityList().index('NO')]
-        #        self.v_NO2 = X[self.__param.Case.getTransportedQuantityList().index('NO2')]
-        #        self.T = self.mean.T
-        #        self.phi = self.mean.phi
-        #        self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
 
         if self.__param.Case.AnalysisMode in ['Resolvent']:
             self.computeResolventNorms     (X,self.__param,mean,fluctuationC)
