@@ -1,23 +1,3 @@
-#/* Copyright (C) 2019 FLOW group TU Berlin - All Rights Reserved
-# * You may NOT use, distribute or modify this code without explicit
-# * opermission of the copyright owner, the FLOW group at TU Berlin
-# * However, permissions to use and modify the code are generally
-# * granted when asked for.
-# * To ask for permission please contact t.kaiser@tu-berlin.de
-# */
-'''
-# **********************************************************************
-# * This file contains the Weak formulation class, which builds all
-# * necessary weak formulations for the later use
-# *
-# * This file created by Thomas L. Kaiser. Significant contributions
-# * were made by
-# * Mario Casel, transcribing the Low Mach Equations from FreeFEM
-# * Chuhan Wang, including adding the enthalpy equation
-# *
-# ********************
-'''
-
 from dolfinx import __version__
 
 
@@ -73,16 +53,96 @@ from   FELiCS.Misc.tensorUtils import (
 from .WeakForm import WeakForm
 
 class EquationCollectionClass():
-    '''This class build the variational formulations for all relevant matrices
-    Currently these are:
-    -A (imag and real)
-    -B (imag and real)
-    -B_forcing (Resolvent forcing norm)
-    -B_response (Resolvent response norm)
-    The convention is such that the B matrix (time derivative) is always positive and real
-    '''
+    """
+    Constructs variational formulations for various matrices and manages equations and boundary conditions.
+
+    This class builds variational formulations for matrices such as:
+    - A (imaginary and real parts)
+    - B (imaginary and real parts)
+    - B_forcing (Resolvent forcing norm)
+    - B_response (Resolvent response norm)
+
+    The convention ensures that the B matrix (time derivative) is positive and real.
+
+    Parameters
+    ----------
+    param : object
+        Parameters for the simulation, including boundary conditions and equations.
+    FEMSpaces : object
+        Finite Element Method spaces for the simulation.
+    mean : object
+        Mean flow fields used in variational formulations.
+    mesh : object
+        Mesh defining the domain.
+
+    Attributes
+    ----------
+    m : float
+        Cross-streamwise wave number.
+    x : ufl.SpatialCoordinate
+        Spatial coordinates of the mesh.
+    ds : ufl.Measure
+        Measure for integrating along boundaries.
+    all_ds : ufl.Measure
+        Measure for integrating over all boundaries.
+    n_BC : ufl.FacetNormal
+        Normal vector on boundaries.
+    n : Tensor
+        Boundary normal vector in the chosen coordinate system.
+    BCs : list
+        List of Dirichlet boundary conditions.
+    trialFunctionsFEM : ufl.TrialFunctions
+        Trial functions for the variational formulation.
+    testFunctionsFEM : ufl.TestFunctions
+        Test functions for the variational formulation.
+    X : list of Tensor
+        Test functions with additional structure.
+    R : ufl.Coefficient
+        Radial coordinate for cylindrical coordinates.
+    A_vf : WeakForm
+        Variational form for matrix A.
+    B_vf : WeakForm
+        Variational form for matrix B.
+    equationList : list
+        List of equations included in the model.
+    resolventResponseIndices : numpy.ndarray
+        Indices for resolvent response in FEM spaces.
+    resolventForcingIndices : numpy.ndarray
+        Indices for resolvent forcing in FEM spaces.
+    """
     def __init__(self,param,FEMSpaces,mean,mesh):
-        #from fenics import Function
+        """
+        Initialize the EquationCollectionClass with parameters, FEM spaces, mean fields, and mesh.
+    param : object  
+        Parameter object containing simulation configuration
+    FEMSpaces : object
+        Finite element method spaces
+    mean : object
+        Mean flow properties
+    mesh : object
+        Computational mesh
+    """
+
+    def __init__(self, param, FEMSpaces, mean, mesh):
+        """
+        Initialize the EquationCollectionClass with simulation parameters and spaces.
+
+        This method sets up the computational domain, coordinate systems, 
+        boundary conditions, and prepares the equation list based on the 
+        specified set of equations.
+
+        Parameters
+        ----------
+        param : object
+            Parameters for the simulation, including boundary conditions and equations.
+        FEMSpaces : object
+            Finite Element Method spaces for the simulation.
+        mean : object
+            Mean flow fields used in variational formulations.
+        mesh : object
+            Mesh defining the domain.
+        """
+        #from fenics import Functions
         from itertools import compress
         from FELiCS.Fields.fluctuationClass import fluctuationClass
         from FELiCS.Misc.tensorUtils import (
@@ -92,11 +152,10 @@ class EquationCollectionClass():
         printDebug(True,'--------------------------------')
         printDebug(True,'-- Initializing the equations...')
 
-        # add the parameters of the constructor as attributs of the class to use them in DiscretizeFlow-method:
+        # Store input parameters as private attributes
         self.__param = param
         self.__FEMSpaces = FEMSpaces
         self.__mean = mean
-
         self.__mesh = mesh
 
         # Get crossstreamwise wave number
@@ -105,20 +164,11 @@ class EquationCollectionClass():
         # Get spatial coordinates
         self.x = SpatialCoordinate(mesh)
         self._coordinateSystem = mesh.coordinateSystem
-        ## Define tensor coordinate system, we always assume the third dimension to be homogenous
-        #if param.Case.CoordinateSystem =='Cartesian':
-        #    self._coordinateSystem = CoordinateSystem(self.x, param.Case.CoordinateSystem.lower(), mesh_dims = (1, 1, 0))
-        #elif param.Case.CoordinateSystem =='Cylindrical':
-        #    self._coordinateSystem = CoordinateSystem(self.x, "cylindricalfelics", mesh_dims = (1, 1, 0))
-        #else:
-        #    printError('Coord. syst not yet implemented in tensor framework.')
-       # self.coordinateSystem = self.coord_sys
- 
 
         ## BOUNDARIES
         # Get class for integrating along boundaries
         self.boundaries = mesh.facet_tags
-        self.ds         = Measure("ds", subdomain_data=self.boundaries)
+        self.ds = Measure("ds", subdomain_data=self.boundaries)
 
         # Get all boundaries (So far hard coded)
         first_BC_flag=True
@@ -135,8 +185,6 @@ class EquationCollectionClass():
 
         # initialize Dirichlet boundary conditions
         self.BCs = self.__getListOfDirichletBCs()
-
-
 
         ## TEST AND TRIAL FUNCTIONS
         # Define test and trial functions
@@ -166,15 +214,12 @@ class EquationCollectionClass():
                 ))
         self.X = X
             
-
         # Get radial coordinate
         if self.__param.Case.CoordinateSystem in ['Cylindrical']:
             self.R = self.x[1]
-            #self.ThirdVelCompIndex = self.__param.SolutionList.index('ut')
         else:
             from petsc4py import PETSc
             self.R=Constant(self.__FEMSpaces.P2.mesh, PETSc.ScalarType(1.0))
-
 
         ## Initialize variational formulations
         self.A_vf = WeakForm()
@@ -191,9 +236,6 @@ class EquationCollectionClass():
             momentum = MomentumEquation(self,fluctuationC,X[0],param)
             self.equationList.append(momentum)
 
-            #momentum.addLinearExpression(self.A_vf,mean)
-            #momentum.addWeightMatrixExpression(self.B_vf,mean)
-            
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from FELiCS.Equation.Equations.MassEquation import MassEquation
             varEq = self.__param.Case.SetOfEquations['Mass']['Variable']
@@ -203,9 +245,6 @@ class EquationCollectionClass():
             mass = MassEquation(self,fluctuationC,X[idVar],self.__param)
             self.equationList.append(mass)
 
-            #mass.addLinearExpression(self.A_vf,mean)
-            #mass.addWeightMatrixExpression(self.B_vf,mean)
-
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
             varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
@@ -214,10 +253,7 @@ class EquationCollectionClass():
 
             enthalpy = EnthalpyEquation(self,fluctuationC,X[idVar],self.__param)
             self.equationList.append(enthalpy)
-
-            #enthalpy.addLinearExpression(self.A_vf,mean)
-            #enthalpy.addWeightMatrixExpression(self.B_vf,mean)
-        
+        ### CODE BLOCK 1
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
             # printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
             from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
@@ -264,62 +300,6 @@ class EquationCollectionClass():
             else:
                 raise Exception('Species transport equation type ' + self.__param.Case.SetOfEquations['Species']['Equation'] + ' unknown' )
 
-        ## Add reactions
-        ## Reaction eqs not derived in tensor framework yet
-        #if self.__param.Case.Reaction:
-        #    if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
-        #        from FELiCS.Equation.Reactions.GlobalReaction import GlobalReaction
-        #        ReactionModelName="WestbrookDryer_Max" #to be put in param
-        #        Reaction=GlobalReaction(self.__param.Case.Mixture.ReactionMechanism)
-        #        reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
-        #        reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.SolutionList)
-        #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
-        #        from FELiCS.Equation.Reactions.TwoStepReaction import TwoStepReaction
-        #        ReactionModelName="BFER" #to be put in param
-        #        Reaction=TwoStepReaction(ReactionModelName)
-        #        Reaction.computeMeanField(MF,self.__FEMSpaces.P2)
-        #        Reaction.testM()
-        #        reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
-        #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='2S-SM2':
-        #        from FELiCS.Equation.Reactions.c2sm2 import C2SM2
-        #        ReactionModelName="2S-SM2" #to be put in param
-        #        YCH4_lim=0.043*1e-4
-        #        #c2=C2SM2(YCH4_lim,2)
-        #        c2=self.mean.reaction
-        #        self.TR=fluctuationC.T
-        #        self.rhoR=fluctuationC.rho
-        #        self.YCH4R=fluctuationC.Y('CH4')
-        #        self.YO2R=fluctuationC.Y('O2')
-        #        self.YCOR=fluctuationC.Y('CO')
-        #        self.YCO2R=fluctuationC.Y('CO2')
-        #        self.v_eneR=X[self.__param.Case.getTransportedQuantityList().index('rho')]
-        #        self.v_YCH4R=X[self.__param.Case.getTransportedQuantityList().index('CH4')]
-        #        self.v_YO2R=X[self.__param.Case.getTransportedQuantityList().index('O2')]
-        #        self.v_YH2OR=X[self.__param.Case.getTransportedQuantityList().index('H2O')]
-        #        self.v_YCOR=X[self.__param.Case.getTransportedQuantityList().index('CO')]
-        #        self.v_YCO2R=X[self.__param.Case.getTransportedQuantityList().index('CO2')]
-        #        self.dQMean=self.mean.dQ
-        #        self.order=2
-        #        self.dx=dx
-
-        #        #c2.computeSensitivities(MeanFlow.T,
-        #        #                        MeanFlow.rho,
-        #        #                        MeanFlow.Y('CH4'),
-        #        #                        MeanFlow.Y('CO'),
-        #        #                        MeanFlow.Y('O2'),
-        #        #                        MeanFlow.Y('CO2'))
-
-        #        self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
-        #        reaction=self.mean.reaction
-        #        self.v_NO  = X[self.__param.Case.getTransportedQuantityList().index('NO')]
-        #        self.v_NO2 = X[self.__param.Case.getTransportedQuantityList().index('NO2')]
-        #        self.T = self.mean.T
-        #        self.phi = self.mean.phi
-        #        self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
-
         if self.__param.Case.AnalysisMode in ['Resolvent']:
             self.computeResolventNorms     (X,self.__param,mean,fluctuationC)
             self.computeResolventFEMWeights(X,self.__param,mean,fluctuationC)
@@ -359,50 +339,84 @@ class EquationCollectionClass():
 
             # TODO: raise Error if the norm is set with a wrong value!!!
 
-#################################################################################
-
     def getLinearOperator(self, meanFlow):
+            """
+            Construct the linear operator matrix for the equation system.
 
-        # create ufl object with the linear equation system 
-        A_ufl = WeakForm()
-        for equation in self.equationList:
-            equation.addLinearExpression(A_ufl, meanFlow)
+            This method assembles the linear part of the weak formulation 
+            by iterating through all equations in the equation list and 
+            adding their linear expressions.
 
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        try:
-            A_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
+            Parameters
+            ----------
+            meanFlow : object
+                Mean flow properties used in constructing the linear operator
 
-        # assemble petsc matrix
-        A = assemble_matrix(form(A_ufl.lhs), bcs=self.BCs)
-        A.assemble()
+            Returns
+            -------
+            petsc4py.PETSc.Mat
+                Assembled linear operator matrix with boundary conditions applied
+            
+            Notes
+            -----
+            Includes a workaround for mesh object compatibility with different 
+            versions of DOLFINx.
+            """
+            # create ufl object with the linear equation system 
+            A_ufl = WeakForm()
+            for equation in self.equationList:
+                equation.addLinearExpression(A_ufl, meanFlow)
 
-        return A
+            # Mesh compatibility workaround
+            try:
+                A_ufl.setCorrectMeshObject(self.__mesh)
+            except:
+                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+
+            # assemble petsc matrix
+            A = assemble_matrix(form(A_ufl.lhs), bcs=self.BCs)
+            A.assemble()
+
+            return A
 
 
     def getWeightMatrix(self, meanFlow):
+        """
+        Construct the weight matrix representing the time derivative term.
 
+        This method assembles the weight matrix by iterating through all 
+        equations in the equation list and adding their weight matrix 
+        expressions.
+
+        Parameters
+        ----------
+        meanFlow : object
+            Mean flow properties used in constructing the weight matrix
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            Assembled weight matrix, with or without boundary conditions 
+            depending on the analysis mode
+        
+        Notes
+        -----
+        - For Resolvent analysis, boundary conditions are applied
+        - For other analysis modes, no boundary conditions are applied to 
+          avoid computational issues during eigenvalue problem solving
+        - Includes a workaround for mesh object compatibility with different 
+        versions of DOLFINx
+        """
         # create ufl object with the weight matrix expression ("time derivative")
-        B_ufl   = WeakForm()
+        B_ufl = WeakForm()
         for equation in self.equationList:
             equation.addWeightMatrixExpression(B_ufl, meanFlow)
 
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
+        # Mesh compatibility workaround
         try:
             B_ufl.setCorrectMeshObject(self.__mesh)
         except:
             printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
 
         # assemble petsc matrix
         if self.__param.Case.AnalysisMode in ['Resolvent']:
@@ -415,10 +429,28 @@ class EquationCollectionClass():
 
 
     def getFEMWeightMatrix(self):
+        """
+        Construct the full Finite Element Method (FEM) weight matrix.
 
+        This method creates a weight matrix by performing inner products 
+        of test and trial functions across all function spaces in the 
+        mixed function space.
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            Assembled FEM weight matrix without boundary conditions
+        
+        Notes
+        -----
+        - Handles both scalar and vector function spaces
+        - Uses conjugate of test functions for matrix construction
+        - Includes a workaround for mesh object compatibility with different 
+        versions of DOLFINx
+        """
         # create ufl object with the full FEM weight matrix expression
-        W_ufl     = WeakForm()
-        test_FEM  = self.testFunctionsFEM
+        W_ufl = WeakForm()
+        test_FEM = self.testFunctionsFEM
         trial_FEM = self.trialFunctionsFEM
 
         # go through all (scalar) function spaces in the mixed function space 
@@ -434,16 +466,11 @@ class EquationCollectionClass():
                 W_ufl.add(conj(test)*trial_FEM[i]*dx)
             i+=1
 
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
+        # Mesh compatibility workaround
         try:
             W_ufl.setCorrectMeshObject(self.__mesh)
         except:
             printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
 
         # assemble petsc matrix
         W = assemble_matrix(form(W_ufl.lhs), [])#self.BCs) #without BCs
@@ -453,49 +480,72 @@ class EquationCollectionClass():
 
   
     # TODO Sophie: This is a very quick implementation. Tensor framework needed!
-    def getFEMDiffusionMatrix(self,diffusionFactor,sponge=None):
+    def getFEMDiffusionMatrix(self, diffusionFactor, sponge=None):
+        """
+        Construct the Finite Element Method (FEM) diffusion matrix.
 
-        # create ufl object with the full FEM weight matrix expression
-        D_ufl     = WeakForm()
-        test_FEM  = self.testFunctionsFEM
+        This method creates a diffusion matrix by computing the weak form 
+        of the diffusion operator across all function spaces in the mixed 
+        function space.
+
+        Parameters
+        ----------
+        diffusionFactor : float
+            Coefficient multiplying the diffusion terms
+        sponge : float or None, optional
+            Additional damping term to be applied to the matrix (default is None)
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            Assembled FEM diffusion matrix with boundary conditions applied
+        
+        Notes
+        -----
+        - Handles both scalar and vector function spaces
+        - Computes second-order derivatives in x and y directions
+        - Includes a workaround for mesh object compatibility with different 
+        versions of DOLFINx
+        - Currently a quick implementation; a more comprehensive tensor 
+        framework is needed for future improvements
+
+        Warnings
+        --------
+        TODO: This implementation is considered a temporary solution and 
+        requires a more robust tensor framework in future iterations.
+        """
+        # Rest of the existing implementation remains unchanged
+        D_ufl = WeakForm()
+        test_FEM = self.testFunctionsFEM
         trial_FEM = self.trialFunctionsFEM
 
-        # go through all (scalar) function spaces in the mixed function space 
-        i=0
+        i = 0
         for test in test_FEM:
-            #try:    # try if the function space is a "VectorFunctionSpace"
             try:
-                j=0
+                j = 0
                 for subTest in test:
                     D_ufl.add(conj(subTest)*trial_FEM[i][j]*dx)
                     D_ufl.add(diffusionFactor*(Dx(conj(subTest),0)*Dx(trial_FEM[i][j],0)+Dx(conj(subTest),1)*Dx(trial_FEM[i][j],1))*dx)
-                    if sponge != None:
+                    if sponge is not None:
                         D_ufl.add(sponge*conj(subTest)*trial_FEM[i][j]*dx)
-                    j+=1
+                    j += 1
             except: # function space is scalar
                 D_ufl.add(conj(test)*trial_FEM[i]*dx)
                 D_ufl.add(diffusionFactor*(Dx(conj(test),0)*Dx(trial_FEM[i],0)+Dx(conj(test),1)*Dx(trial_FEM[i],1))*dx)
-                if sponge != None:
+                if sponge is not None:
                     D_ufl.add(sponge*conj(test)*trial_FEM[i]*dx)
-            i+=1
+            i += 1
 
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
+        # Mesh compatibility workaround
         try:
             D_ufl.setCorrectMeshObject(self.__mesh)
         except:
             printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
 
-        # assemble petsc matrix
-        D = assemble_matrix(form(D_ufl.lhs), self.BCs) 
+        # Assemble petsc matrix
+        D = assemble_matrix(form(D_ufl.lhs), self.BCs)
         D.assemble()
-
         return D
-
 
 
     def getFullRHS(self,func):
@@ -560,7 +610,6 @@ class EquationCollectionClass():
 
         return N
 
-
     def getBilinearOperator(self, meanFlow):
 
         # create ufl object with the linear equation system 
@@ -587,7 +636,6 @@ class EquationCollectionClass():
         BL.assemble()
 
         return BL
-
 
     def getForcingForInputOutput(self,meanFlow):
         from dolfinx.fem.petsc import set_bc
@@ -692,7 +740,6 @@ class EquationCollectionClass():
         W_FEM.assemble()
 
         return W_FEM
-
 
 
 ########################### Resolvent Norm  ############################
