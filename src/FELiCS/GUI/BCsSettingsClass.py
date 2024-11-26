@@ -10,6 +10,7 @@ from dolfinx.mesh               import Mesh
 import numpy as np
 import gmsh
 import h5py
+import json
 
 class FELiCSMesh(Mesh):
     '''
@@ -218,14 +219,14 @@ class BCsSettingsClass(Settings):
 
             # Read BCFile
             BCFile=open(self.BCsFilePath)
-            importDict=eval(BCFile.readline())
+            data = json.load(BCFile)
 
             # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
             for Variable in VariableList:
-                if Variable in list(importDict.keys()):
+                if Variable in list(data.keys()):
                     BCsDict[Variable]=[]
                     for count,ID in enumerate(BCIDList):
-                        BC = importDict[Variable][count]
+                        BC = data[Variable][count]
                         if BC['ID'] in BCIDList:
                             BCsDict[Variable].append(BC)
                         else:
@@ -235,6 +236,7 @@ class BCsSettingsClass(Settings):
                     
             # Finally, copy local BCsDict to the object
             self.__BCsDict__=BCsDict
+            BCFile.close()
         else:
             printError('boundary condition file not found!')
 
