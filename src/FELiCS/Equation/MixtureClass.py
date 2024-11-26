@@ -1,44 +1,36 @@
 from FELiCS.Misc.functions import printWarning,printOK
+import json
+
 class MixtureClass():
-    '''The mixtre class defines a mixture
+    '''The mixture class defines a mixture
     '''
     def __init__(self,mixFilePath,speciesFilePath):
-        '''Initializing the mixture function based on a mixture (*.mix) file.
-        \t Input: mixFilePath: Providing the file path of the mixture'''
+        """
+        Initializing a mixture object based on a mixture.json file.
+
+        Parameters
+        ----------
+        mixFilePath : string
+            relative path to Mixture.json file
+        speciesFilePath : string
+            relative path to Species.json file
+        """
         from os import path
-        #Set default values
+        # set default values
         self.__Species__={}
         self.__Reaction_mechanism__ = {'type':'None'}
         self.__Pr__ = 1.0
         self.__Viscosity__ = {'type':'Constant','Constants':{'nu':1.0}}
-        if mixFilePath == '':
-            print('No mixture file chosen!'  )
-        elif not path.isfile(mixFilePath):
-            printOK('The mixture file path ('+mixFilePath+') does not point to a mixture file!')
-        else:
+        if path.isfile(mixFilePath):
             mixFile = open(mixFilePath, 'r')
-            keywords=['Species','Reaction_mechanism','Pr','Viscosity']
-            lineNumber=0
-            while True:
-                lineNumber+=1
-                line = mixFile.readline()
-                if not line:
-                    break
-                try: 
-                    keyword=line.split('=')[0].strip()
-                    if keyword in keywords:
-                        pos=len(keyword)
-                        tempstring='self.__'+line[:pos]+'__'+line[pos:]
-                        exec(tempstring)    
-                    else:
-                        printWarning('Cannot read line '+ str(lineNumber) + ' of Mixture File. The line is ignore    d...')
-                except:
-                    printWarning('Cannot read line '+ str(lineNumber) + ' of Mixture File. The line is ignored...')
-        #if self.getSpeciesList('transported'):
-        #    self.readSpeciesDict(speciesFilePath)
+            data = json.load(mixFile)
+            for setting,value in data.items():
+                setattr(self,'__'+setting+'__',value)
+            mixFile.close()
+        else:
+            printOK('The mixture file path ('+mixFilePath+') does not point to a mixture file!')
+        
    
-
-
     def getReactionMechanism(self):
         ''' Function returning the reaction mechanism '''
         return self.__Reaction_mechanism__

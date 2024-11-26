@@ -205,11 +205,19 @@ class BCsSettingsClass(Settings):
 
 
 
-    def importBCsDict(self,VariableList):
-        ''' Import a boundary condition file with checking the consistency of BCs and mesh.'''
-        BCIDList=self.__BCIDs__
+    def importBCsDict(self, VariableList):
+        """Import a boundary condition file.
+        Hereby checking the consistency of BCs and mesh.
 
-        #First define local BCsDict
+        Parameters
+        ----------
+        VariableList : list
+            list of variables to add boundary conditions
+        """
+        ''' Import a boundary condition file with checking the consistency of BCs and mesh.'''
+        
+        BCIDList=self.__BCIDs__
+        # First define local BCsDict
         BCsDict={}
         if isfile(self.BCsFilePath):
             for Variable in VariableList:
