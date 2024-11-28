@@ -12,8 +12,11 @@ FELiCS2.0
 The goal of the FELiCS project is to (further) develop a code (FELiCS) that applies linear analysis to multi-physics flow problems.
 The software should provide a simple access to the related methods (Stability analysis, Resolvent analysis, Input-Output analysis) and allow a user to apply the code without significant knowledge about its details and implementation to flows in complex geometries.
 
+
+`Guides for developers can be found in the Wiki <https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/home>`_
+
 ---------------
-Contents
+Content
 ---------------
 .. toctree::
    :maxdepth: 1
@@ -53,6 +56,11 @@ How to write docstrings
 - see PostProcessing.py for example
 - https://numpydoc.readthedocs.io/en/latest/format.html
 - VSCode extension: autoDocstring - Python Docstring Generator is helpful!
+=======
+   Explanations/index
+   Governing Equations/index
+   Tutorials/index
+   How-To-Guides/index
 
 Indices and tables
 -------------
