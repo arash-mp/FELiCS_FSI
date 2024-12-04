@@ -13,32 +13,33 @@ class Settings(ABC):
     def getAllSettingsDict(self):
         pass
 
-    def importSettings(self,settingFilePath):
+    def importSettings(self,configFilePath):
         """
-        Imports settings from .json file into SubSettingsClass
+        Imports parameters from .json file
 
         Parameters
         ----------
-        settingFilePath : txt
-            path to .json file containing settings
+        configFilePath : txt
+            path to .json file containing parameters
         """
-        file = open(settingFilePath)
+        file = open(configFilePath)
         data = json.load(file)
-        for setting,value in data.items():
-            if setting == 'EigenValueGuess':    # EigenValueGuess specific handling to import complex numbers
-                if isinstance(value, list):
-                    if not value:
-                        value = []
-                    elif isinstance(value[0],str):
-                        value = list(map(complex,value))
+        for category,parameters in data.items():
+            for parameter,value in parameters.items():
+                if parameter == 'EigenValueGuess':    # EigenValueGuess specific handling to import complex numbers
+                    if isinstance(value, list):
+                        if not value:
+                            value = []
+                        elif isinstance(value[0],str):
+                            value = list(map(complex,value))
+                        else:
+                            value = value
                     else:
-                        value = value
-                else:
-                    if isinstance(value,str):
-                        value = [complex(value)]
-                    else:
-                        value = [value]
-            setattr(self,setting,value)
+                        if isinstance(value,str):
+                            value = [complex(value)]
+                        else:
+                            value = [value]
+                setattr(self,parameter,value)
         file.close()
         self.Mixture = MixtureClass(
             self.MixtureFilePath,
