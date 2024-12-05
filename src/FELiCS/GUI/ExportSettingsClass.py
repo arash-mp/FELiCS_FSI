@@ -43,7 +43,7 @@ class ExportSettingsClass(Settings):
 
     def complete(self,variableList):
         ''' Checking if all necessary case attributes are present '''
-        from FELiCS.functions import printOK
+        from FELiCS.Misc.functions import printOK
         from os.path import isdir
         #Check inputs for completeness and correctness ...'
         EverythingPresent=True

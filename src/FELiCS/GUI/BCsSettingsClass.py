@@ -19,9 +19,9 @@ from FELiCS.GUI.SettingsClass import Settings
 import h5py
 import numpy as np
 import pdb
-from FELiCS.tensorUtils import CoordinateSystem
+from FELiCS.Misc.tensorUtils import CoordinateSystem
 from ufl import SpatialCoordinate
-from FELiCS.functions import printDeprecatedWarning
+from FELiCS.Misc.functions import printDeprecatedWarning
 
 class FELiCSMesh(Mesh):
     '''
@@ -216,7 +216,7 @@ class BCsSettingsClass(Settings):
 
     def initBCsDict(self,VariableList):
         ''' Initialize BCsDict '''
-        from FELiCS.functions import printWarning
+        from FELiCS.Misc.functions import printWarning
         BCIDList=self.__BCIDs__
         #First define local BCsDict
         BCsDict={}
@@ -228,7 +228,7 @@ class BCsSettingsClass(Settings):
 
     def importBCsDict(self,VariableList):
         ''' Import a boundary condition file with checking the consistency of BCs and mesh. To read the BCs without checking use importSettings()'''
-        from FELiCS.functions import printWarning
+        from FELiCS.Misc.functions import printWarning
         BCIDList=self.__BCIDs__
         #First define local BCsDict
         BCsDict={}
@@ -306,7 +306,7 @@ class BCsSettingsClass(Settings):
 
     def complete(self,BCVariableList):
         ''' Checking if all necessary case attributes are present. A Variable List, as well as the index list of boundaries needs to be provided, to check if all necessary boundaries are set. '''
-        from FELiCS.functions import printOK
+        from FELiCS.Misc.functions import printOK
         BCIDList= self.__BCIDs__
         if isfile(self.BCsFilePath):
             EverythingPresent=True
