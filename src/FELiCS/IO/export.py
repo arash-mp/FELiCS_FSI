@@ -34,7 +34,7 @@ from re import (
     compile,
     )
 
-from FELiCS.GUI.FELiCSMesh import (
+from FELiCS.SpaceDisc.FELiCSMesh import (
     FELiCSMesh,
     )
 

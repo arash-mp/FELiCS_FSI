@@ -34,7 +34,7 @@ from os import (listdir,
 
 from FELiCS.Misc.functions import (printDebug,
                                    printError)
-from FELiCS.GUI.FELiCSMesh import FELiCSMesh
+from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 
 from FELiCS.IO.Mapping import Mapping
 import pdb
