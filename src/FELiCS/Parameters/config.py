@@ -6,7 +6,7 @@ import pdb
 import json
 from FELiCS.Equation.MixtureClass import MixtureClass
 from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
-from FELiCS.GUI.FELiCSMesh import FELiCSMesh
+from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 from FELiCS.Misc.functions import getLastGitCommit
 
 class dotdict(dict):
