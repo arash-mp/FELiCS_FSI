@@ -72,7 +72,8 @@ class reactionClass:
 
 class reactionMechanismClass:
     def __init__(
-            self,reactionMechanism, 
+            self,
+            reactionMechanism, 
             fluc = None, 
             mean = None,
             ):

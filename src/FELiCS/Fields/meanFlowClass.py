@@ -41,7 +41,7 @@ class meanFlowClass(
         self._coordinateSystem = mesh.coordinateSystem
         fieldProperties.__init__(self)
         self._meanflowFilename = None
-        self.__Mixture = param.Case.Mixture
+        self.__mixture = param.Case.mixture
         self._zeroField = Function(self._FEMSpaces.P2)
         self._zeroFieldTensor = Tensor(
                                        Function(self._FEMSpaces.P2),
@@ -58,10 +58,10 @@ class meanFlowClass(
         #self.initLamDiff()
         #if param.Case.Reaction:
         #    print('1')
-            #print(param.Case.Mixture.getReactionMechanism()['type'])
-            #if param.Case.Mixture.getReactionMechanism()['type'] == '2S-SM2':
+            #print(param.Case.mixture.getReactionMechanism()['type'])
+            #if param.Case.mixture.getReactionMechanism()['type'] == '2S-SM2':
             #    print('2')
-            #    param.Case.Mixture.getReactionMechanism()['type']
+            #    param.Case.mixture.getReactionMechanism()['type']
             #    self.calculateSpeciesEnthalpy()
             #    from FELiCS.Equation.Reactions.c2sm2 import C2SM2
             #    YCH4_lim = 0.043 * 1e-4
@@ -78,7 +78,7 @@ class meanFlowClass(
             #                                                self.Y('CO'),
             #                                                self.Y('O2'),
             #                                                self.Y('CO2'))
-            #if param.Case.Mixture.ReactionMechanism['type'] == 'NOx':
+            #if param.Case.mixture.ReactionMechanism['type'] == 'NOx':
             #    print('3')
             #    from FELiCS.Equation.Reactions.NOx import NOx
             #    self.__reaction = NOx(2)
@@ -132,8 +132,8 @@ class meanFlowClass(
             self._fieldDict['nulam'] = Function(self._FEMSpaces.P2)
             self._fieldDict['nulam'].x.array[:] = self._param.Case.MolVisc
 
-        for specie in self._param.Case.Mixture.getSpeciesList('transported'):
-            Sc = self._param.Case.Mixture.species[specie]['Sc']
+        for specie in self._param.Case.mixture.getSpeciesList('transported'):
+            Sc = self._param.Case.mixture.species[specie]['Sc']
             nuTot = Function(self._ScalarFunctionSpace)
 
             if 'nulam' in list(self._fieldDict.keys()):
@@ -312,7 +312,7 @@ class meanFlowClass(
         # Copy all remaining fields to the self.__RawFlowDict
         for name in nameListMean:
             if name[0] == 'u':
-                for Component in self._param.Case.getVelocityComponents():
+                for Component in self._param.getVelocityComponents():
                     nameComponent = name[:1] + Component + name[1:]
                     if nameComponent in list(h5file['MeanFlow'].keys()):
                         self.__RawFlowDict[nameComponent] \
@@ -382,7 +382,7 @@ class meanFlowClass(
         for name in nameListMean:
             if name[0] == 'u':
                 count = 0
-                for Component in self._param.Case.getVelocityComponents():
+                for Component in self._param.getVelocityComponents():
                     nameComponent = name[:1] + Component + name[1:]
                     if 'u' in list(field.keys()):
                         self.__RawFlowDict[nameComponent] \
@@ -495,7 +495,7 @@ class meanFlowClass(
                 self._fieldDict[name] = Function(self.__VectorFunctionSpace)
                 # All inplane velocity components are defined as vectors.
                 # Therefore, for these, iterate through the components
-                for component in self._param.Case.getVelocityComponents():
+                for component in self._param.getVelocityComponents():
                     # Get the name in plus component
                     nameComponent = name[:1] + component + name[1:]
                     if nameComponent in list(self.__RawFlowDict.keys()):
@@ -539,7 +539,7 @@ class meanFlowClass(
                                                'ut_forcing_i']:
                 # All inplane velocity components are defined as vectors.
                 # Therefore, for these, iterate through the components
-                for idx, component in enumerate(self._param.Case.getVelocityComponents()):
+                for idx, component in enumerate(self._param.getVelocityComponents()):
                     nameComponent = name[:1] + component + name[1:]
                     # if not nameComponent in self.__notInFileList:
                     if nameComponent in list(self.__RawFlowDict.keys()):
@@ -939,7 +939,7 @@ class meanFlowClass(
         return meanFlowVertexValues(self._meanfieldDict, self._oneFieldArray,self._FEMSpaces.exportMesh)
 
     def _getMeanFieldsToBeRead(self):
-        listOfFieldsToBeRead = self._param.Case.getMeanFlowFieldNames()
+        listOfFieldsToBeRead = self._param.getMeanFlowFieldNames()
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadReaction())

@@ -121,7 +121,7 @@ class EquationCollectionClass():
 
         # Get all boundaries (So far hard coded)
         first_BC_flag=True
-        for Boundary in self.__param.BCs.getBCsDict()[list(self.__param.BCs.getBCsDict().keys())[0]]:
+        for Boundary in self.__param.__BCsDict__[list(self.__param.__BCsDict__.keys())[0]]:
             if first_BC_flag:
                 self.all_ds = self.ds(Boundary['ID'])
                 first_BC_flag = False
@@ -241,7 +241,7 @@ class EquationCollectionClass():
             sponge.addWeightMatrixExpression(self.B_vf,mean)
 
         # Add species transport equation for all transported species
-        transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
+        transportedSpecies=self.__param.Case.mixture.getSpeciesList('transported')
         for specie in transportedSpecies:
             i_eqn=self.__param.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
@@ -265,14 +265,14 @@ class EquationCollectionClass():
         ## Add reactions
         ## Reaction eqs not derived in tensor framework yet
         #if self.__param.Case.Reaction:
-        #    if self.__param.Case.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
+        #    if self.__param.Case.mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
         #        from FELiCS.Equation.Reactions.GlobalReaction import GlobalReaction
         #        ReactionModelName="WestbrookDryer_Max" #to be put in param
-        #        Reaction=GlobalReaction(self.__param.Case.Mixture.ReactionMechanism)
+        #        Reaction=GlobalReaction(self.__param.Case.mixture.ReactionMechanism)
         #        reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
         #        reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.SolutionList)
         #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='TwoStep':
+        #    elif self.__param.Case.mixture.ReactionMechanism['type']=='TwoStep':
         #        from FELiCS.Equation.Reactions.TwoStepReaction import TwoStepReaction
         #        ReactionModelName="BFER" #to be put in param
         #        Reaction=TwoStepReaction(ReactionModelName)
@@ -280,7 +280,7 @@ class EquationCollectionClass():
         #        Reaction.testM()
         #        reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
         #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='2S-SM2':
+        #    elif self.__param.Case.mixture.ReactionMechanism['type']=='2S-SM2':
         #        from FELiCS.Equation.Reactions.c2sm2 import C2SM2
         #        ReactionModelName="2S-SM2" #to be put in param
         #        YCH4_lim=0.043*1e-4
@@ -292,12 +292,12 @@ class EquationCollectionClass():
         #        self.YO2R=fluctuationC.Y('O2')
         #        self.YCOR=fluctuationC.Y('CO')
         #        self.YCO2R=fluctuationC.Y('CO2')
-        #        self.v_eneR=X[self.__param.Case.getTransportedQuantityList().index('rho')]
-        #        self.v_YCH4R=X[self.__param.Case.getTransportedQuantityList().index('CH4')]
-        #        self.v_YO2R=X[self.__param.Case.getTransportedQuantityList().index('O2')]
-        #        self.v_YH2OR=X[self.__param.Case.getTransportedQuantityList().index('H2O')]
-        #        self.v_YCOR=X[self.__param.Case.getTransportedQuantityList().index('CO')]
-        #        self.v_YCO2R=X[self.__param.Case.getTransportedQuantityList().index('CO2')]
+        #        self.v_eneR=X[self.__param.getTransportedQuantityList().index('rho')]
+        #        self.v_YCH4R=X[self.__param.getTransportedQuantityList().index('CH4')]
+        #        self.v_YO2R=X[self.__param.getTransportedQuantityList().index('O2')]
+        #        self.v_YH2OR=X[self.__param.getTransportedQuantityList().index('H2O')]
+        #        self.v_YCOR=X[self.__param.getTransportedQuantityList().index('CO')]
+        #        self.v_YCO2R=X[self.__param.getTransportedQuantityList().index('CO2')]
         #        self.dQMean=self.mean.dQ
         #        self.order=2
         #        self.dx=dx
@@ -310,10 +310,10 @@ class EquationCollectionClass():
         #        #                        MeanFlow.Y('CO2'))
 
         #        self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
-        #    elif self.__param.Case.Mixture.ReactionMechanism['type']=='NOx':
+        #    elif self.__param.Case.mixture.ReactionMechanism['type']=='NOx':
         #        reaction=self.mean.reaction
-        #        self.v_NO  = X[self.__param.Case.getTransportedQuantityList().index('NO')]
-        #        self.v_NO2 = X[self.__param.Case.getTransportedQuantityList().index('NO2')]
+        #        self.v_NO  = X[self.__param.getTransportedQuantityList().index('NO')]
+        #        self.v_NO2 = X[self.__param.getTransportedQuantityList().index('NO2')]
         #        self.T = self.mean.T
         #        self.phi = self.mean.phi
         #        self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
@@ -695,10 +695,10 @@ class EquationCollectionClass():
 
         printDebug(True, '--------------------------------')
         printDebug(True, '-- Setting boundary conditions...')
-        self.__boundaries = self.__param.BCs.getBoundaries()
-        self.__bcDict = self.__param.BCs.getBCsDict()
-        VelocityComponents=self.__param.Case.getVelocityComponents()
-        SolutionList=self.__param.Case.getTransportedQuantityList()
+        self.__boundaries = self.__param.__boundaries__
+        self.__bcDict = self.__param.__BCsDict__
+        VelocityComponents=self.__param.getVelocityComponents()
+        SolutionList=self.__param.getTransportedQuantityList()
         for k,m in zip(list(self.__bcDict.keys()),range(0,len(self.__bcDict.keys()))):
             # Get index of equation/variable i_eqn and if needed the index of the velocity component
             if k[0]=='u' and k[1] in VelocityComponents:
@@ -713,7 +713,7 @@ class EquationCollectionClass():
                 if self.__bcDict[k][mm]['type']=='Dirichlet':
 
 
-                    printDebug(self.__param.debug,"-- Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
+                    print("-- Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
                     if k in ['u'+ component for component in VelocityComponents]:
 
                         #if __version__.find('0.4.1') >= 0:
@@ -723,7 +723,7 @@ class EquationCollectionClass():
                             #BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component), 1, self.boundaries.find(self.__bcDict[k][mm]['ID'])), self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component)) )
 
                     else:
-                        if len(self.__param.Case.getTransportedQuantityList()) == 1:
+                        if len(self.__param.getTransportedQuantityList()) == 1:
 
                             #if __version__.find('0.4.1') >= 0:
                             BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.FunctionSpaceList[i_eqn], 1, self.boundaries.indices[self.boundaries.values==self.__bcDict[k][mm]['ID']]), self.__FEMSpaces.FunctionSpaceList[i_eqn]) )

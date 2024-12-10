@@ -34,7 +34,7 @@ from re import (
     compile,
     )
 
-from FELiCS.GUI.BCsSettingsClass import (
+from FELiCS.GUI.FELiCSMesh import (
     FELiCSMesh,
     )
 
@@ -343,7 +343,7 @@ class export:
         for i, groupName in enumerate(list(exportDict.keys())):
             #if exportDict[groupName].shape[0] == self._param.Case.nDim:
             if groupName in ['u', 'rhou', 'u_forcing_r', 'u_forcing_i']:
-                for i, component in enumerate(self._param.Case.getVelocityComponents()):
+                for i, component in enumerate(self._param.getVelocityComponents()):
                     if 'u_' in groupName:
                         uComponent = 'u' + component
                         newGroupName = groupName.replace('u_', f'{uComponent}_')
