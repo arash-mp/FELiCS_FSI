@@ -34,6 +34,8 @@ $\nu_\varepsilon =
 \nu+ \frac{\nu_t}{\sigma_\varepsilon}
 $, the constants in the equations are listed as follow:
 
+!!! IMPORTANT TO REMEMBER: When write the weak form, remember to keep consisttency with FELiCS codes. Especially the convecting terms.
+
 
 ## Resolvent Analysis for a Linear System 
 The starting point is the equation for a linear system: 
