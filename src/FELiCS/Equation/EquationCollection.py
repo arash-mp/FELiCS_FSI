@@ -41,7 +41,6 @@ from dolfinx.cpp.la.petsc import (
 from petsc4py.PETSc import ScalarType
 import pdb
 
-import FELiCS.Solvers.LinearSystem as LinearSystem
 from   FELiCS.Misc.functions import *
 from   FELiCS.Misc.tensorUtils import (
     Tensor,
