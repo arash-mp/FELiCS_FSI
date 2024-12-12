@@ -302,7 +302,7 @@ class LinearSolver:
     def createEquationSystemSolver(
         A):
 
-        """__solveEquationSystem  
+        """
         Creates a KSP petsc solver to solve a linear equation system. This is useful if several linear equation systems with the same matrix are solved, 
         since it stores the preconditioner and the calculation time is significantly reduced.
         To solve the equation system use the method "solveEquationSystemWithPredefinedSolver".
@@ -334,7 +334,7 @@ class LinearSolver:
         b,
         destroy=False):
 
-        """__solveEquationSystem  
+        """
         Solves a linear equation system Ax=b, using the PETSc libraries.
         
         Parameters
