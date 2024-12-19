@@ -24,7 +24,7 @@ Content
 
    installation_guide
    Explanations/index
-   Governing Equations/index
+   GoverningEquations/index
    Tutorials/index
    How-To-Guides/index
 
