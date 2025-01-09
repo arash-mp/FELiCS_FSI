@@ -20,7 +20,7 @@ def runResolvent(param, useGUI):
 
     ## Initialization
     # mesh
-    mesh=param.BCs.getMesh()
+    mesh = param.getMesh()
     # FEMSpaces
     FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
                 param,

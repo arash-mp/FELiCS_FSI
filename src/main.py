@@ -30,7 +30,7 @@ from runResolvent   import  runResolvent
 from runInputOutput import  runInputOutput
 
 from FELiCS.GUI.GUI import FELiCS_GUI
-from FELiCS.Parameters.parameters import parameters
+from FELiCS.Parameters.config import config
 
 # check if '-file' argument was added to run from file only. else start the GUI
 
@@ -48,9 +48,8 @@ if __name__ == '__main__':
         window=FELiCS_GUI()
     else: # Run program in terminal mode from settings file
         SettingsFileName = sys.argv[2]
-        param=parameters()
+        param=config()
         param.importFromFile(SettingsFileName)
-        param.getOldParameters()
 
         mode = param.Case.AnalysisMode
         if mode == "Modal":

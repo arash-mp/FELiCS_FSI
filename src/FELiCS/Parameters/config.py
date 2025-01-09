@@ -1,5 +1,4 @@
 from os import system, path
-from os.path import isfile
 from abc import ABC, abstractmethod
 from h5py import File
 import pdb
@@ -7,17 +6,28 @@ import json
 from FELiCS.Equation.MixtureClass import MixtureClass
 from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
-from FELiCS.Misc.functions import getLastGitCommit
+from FELiCS.Misc.functions import(
+    getLastGitCommit,
+    printWarning
+    )
 
 class dotdict(dict):
-    """dot.notation access to dictionary attributes"""
+    """
+    Adds possibility to use dot notation to access entries of dictionary dict
+    also works for nested dictionaries
+
+    Parameters
+    ----------
+    dict : dictionary
+        the dictionary which is going to become a dot-dictionary
+    """
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
 class config(ABC):
     def __init__(self):
-        self.__BCIDs__=[]
+        self.__BCIDs__=[]   # move to BC
         SettingsDict = self.getAllSettingsDict()
         for category in SettingsDict:
             dict = dotdict()
@@ -54,15 +64,19 @@ class config(ABC):
                         else:
                             value = [value]
                 subcategory[parameter] = value
+                if parameter == 'BCsFilePath':
+                    if not path.isfile(value):
+                        printWarning("no BC file chosen!")
+                if parameter == 'MeshFilePath':
+                    if not path.isfile(value):
+                        printWarning("no mesh file chosen!")
             subcategory = dotdict(subcategory)
         file.close()
 
-        self.Case.mixture = MixtureClass(
+        self.Mixture = MixtureClass(
             self.Case["MixtureFilePath"],
             self.Case["SpeciesFilePath"],
             )
-        
-        #_________________________
         self.readDomainData(
             self.Case["MeshFilePath"],
             self.Case["nDim"],
@@ -70,16 +84,15 @@ class config(ABC):
             self.Case["CoordinateSystem"],
             self.Case["m"]
             )
-        # "old" parameters:
-        self.nVelocityComponents=len(self.getInternalVelocityComponents())
-        self.SolutionList=self.getTransportedQuantityList()
-        self.VelocityComponents = self.getInternalVelocityComponents()
-        self.SpeciesList=self.Case.mixture.getSpeciesList('transported')
-        self.debug=True # used for printDebug
-        self.NumericalScheme = 'Continuous Galerkin' # used in MomentumEquation
-        # self.reactionMechanism = reactionMechanismClass(self.Case.mixture.getReactionMechanism()['type']) 
-        #____________________
-        
+        self.debug = True # specify here if printDebug messages should be shown
+        # calculated parameters:
+        self.BoundaryCondition.nVelocityComponents  = len(self.getInternalVelocityComponents())
+        self.Case.SolutionList                      = self.getTransportedQuantityList()
+        self.BoundaryCondition.VelocityComponents   = self.getInternalVelocityComponents()
+        self.Numerics.NumericalScheme               = 'Continuous Galerkin'
+        # self.Mixture.SpeciesList                  = self.Mixture.getSpeciesList('transported') # not used, move to mixture
+        # self.reactionMechanism                    = reactionMechanismClass(self.Mixture.getReactionMechanism()['type']) 
+
 
     def importFromH5File(self, h5FileName):
         hf = File(h5FileName, 'r')
@@ -102,11 +115,11 @@ class config(ABC):
                     elif 'str' in str(datatype):
                         exec(f'self.{settingsParameter} = "{value}"')
         hf.close()
-        self.Case.mixture = MixtureClass(
+        self.Mixture = MixtureClass(
             self.Case.mixtureFilePath,
             self.SpeciesFilePath,
             )
-        # self.reactionMechanism = reactionMechanismClass(self.Case.mixture.getReactionMechanism()['type']) 
+
 
     def export(self, filestring):
         ## __________currently not working__________
@@ -183,7 +196,9 @@ class config(ABC):
         '''Function returning all boundary condition settings with default values'''
         SettingsDict={
             'BoundaryCondition':{
-                "BCsFilePath":{'datatype':str,'default':''}
+                'BCsFilePath':{'datatype':str,'default':''},
+                'nVelocityComponents':{'datatype':int, 'default':2},
+                'VelocityComponents':{'datatype':list,'default':[]}
             },
             'Case':{
                 'AnalysisMode':{'datatype':str,'default':'Modal'},
@@ -206,6 +221,7 @@ class config(ABC):
                         'EquationOfState': {'Equation':'None','Variable':'None'}
                     }
                 },
+                'SolutionList':{'datatype':list,'default':[]},
                 'SpeciesFilePath':{'datatype':str,'default':''},
                 'TransVelFluc':{'datatype':bool,'default':False},
                 'TurbulenceModel':{'datatype':str,'default':'None'}
@@ -233,16 +249,17 @@ class config(ABC):
                 'nCPU':{'datatype':int,'default':1},
                 'nSolut':{'datatype':int,'default':3},
                 'PolynomialOrder':{'datatype':dict,'default':{'u':'2'},'options':[1,2]},
-                'Schemes':{'datatype':dict,'default':{'u':'CG'},'options':['CG']},
+                'NumericalScheme': {'datatype':str,'default':'Continuous Galerkin'}
             }
-        # 'h5':{'datatype':bool,'default':True},
-        # 'dim':{'datatype':int,'default':0},
-        # 'MolViscPerturbModel':{'datatype':str,'default':'None'},
-        # 'Video':{'datatype':bool,'default':False},
-        # 'MeanFlowFilePath':{'datatype':str,'default':''},
-        # 'AveragingDirection':{'datatype':str,'default':'None'},
-        # 'AveragingAxis':{'datatype':str,'default':'x'},
-        # 'LinearAlgebraSolver':{'datatype':str,'default':'SLEPc'},
+        # 'SpeciesList':{'datatype:list,default:[]}
+        # 'h5':{'datatype':bool,'default':True}
+        # 'dim':{'datatype':int,'default':0}
+        # 'MolViscPerturbModel':{'datatype':str,'default':'None'}
+        # 'Video':{'datatype':bool,'default':False}
+        # 'MeanFlowFilePath':{'datatype':str,'default':''}
+        # 'AveragingDirection':{'datatype':str,'default':'None'}
+        # 'AveragingAxis':{'datatype':str,'default':'x'}
+        # 'LinearAlgebraSolver':{'datatype':str,'default':'SLEPc'}
         # 'Preconditioner':{'datatype':str,'default':'None'}
         # 'Velfluc':{'datatype:bool','default':True}
         }
@@ -267,7 +284,7 @@ class config(ABC):
         #First define local BCsDict
         BCsDict={}
         filepath=self.BoundaryCondition.BCsFilePath
-        if not filepath == '' and isfile(filepath):
+        if not filepath == '' and path.isfile(filepath):
             self.BoundaryCondition.BCsFilePath = filepath
             for Variable in VariableList:
                 BCsDict[Variable]=[]
@@ -320,6 +337,10 @@ class config(ABC):
         self.readBCInfo(Meshfile, self.__mesh__)
         self.initBCsDict(ExtendedTransportedQuantityList)
         self.importBCsDict(ExtendedTransportedQuantityList)
+
+    def getMesh(self):
+        ''' Function is returning the mesh '''
+        return self.__mesh__
 
     def readMesh(self,MeshFile,dim,coordinateSystem,m):
         '''
@@ -376,7 +397,7 @@ class config(ABC):
             SolutionList.append(self.Case["SetOfEquations"]['Energy']['Variable'])
         if 'Species' in list(self.Case["SetOfEquations"].keys()):
             if self.Case["SetOfEquations"]['Species']['Variable'] == 'Y':
-                for species in list(self.Case.mixture.getSpeciesList('transported')):
+                for species in list(self.Mixture.getSpeciesList('transported')):
                     SolutionList.append(species)
         return SolutionList
 
@@ -407,7 +428,7 @@ class config(ABC):
             if self.Case.MolViscModel == 'File' or self.Case.molViscPerturbModel == 'Sutherland mean':
                 MeanList.append('alpha')
         # Add species which are transported
-        for specie in self.Case.mixture.getSpeciesList('transported'):
+        for specie in self.Mixture.getSpeciesList('transported'):
             MeanList.append(specie)
             if self.Case.MolViscModel == 'File' or self.Case.molViscPerturbModel == 'Sutherland mean':
                 MeanList.append('D_'+specie)
@@ -432,7 +453,7 @@ class config(ABC):
         # if not present it will be zero
         MeanList.append('spg')
         # Add species, which are not transported
-        for specie in self.Case.mixture.getSpeciesList('constraint'):
+        for specie in self.Mixture.getSpeciesList('constraint'):
             MeanList.append(specie)
         if self.Case.TurbulenceModel in ['File']:
             MeanList.append('nuturb')

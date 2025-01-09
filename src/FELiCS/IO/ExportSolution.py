@@ -136,9 +136,9 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulationm, mesh):
                 else:
                     nPlotColumns=1
                 plot_index=0
-                for name in param.SolutionList:
+                for name in param.Case.SolutionList:
                     if name == 'u':
-                        for component in param.VelocityComponents:
+                        for component in param.BoundaryCondition.VelocityComponents:
                             if param.Case.AnalysisMode in ['Resolvent']:
                                 ax = fig2.add_subplot(nSolutionFields,nPlotColumns,plot_index*nPlotColumns+1)
                                 cs=plot(forcing_real.split()[0].split()[plot_index])
@@ -152,17 +152,17 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulationm, mesh):
                     else:
                         if param.Case.AnalysisMode in ['Resolvent']:
                             ax = fig2.add_subplot(nSolutionFields,nPlotColumns,plot_index*nPlotColumns+1)
-                            cs=plot(forcing_real.split()[plot_index-param.nVelocityComponents+1])
+                            cs=plot(forcing_real.split()[plot_index-param.BoundaryCondition.nVelocityComponents+1])
                             cbar = fig2.colorbar(cs)
                             plt.title('Forcing in '+ name+component)
                         ax = fig2.add_subplot(nSolutionFields,nPlotColumns,plot_index*nPlotColumns+nPlotColumns)
-                        if len(param.SolutionList) == 1:
+                        if len(param.Case.SolutionList) == 1:
                             #pdb.set_trace()
                             #ax.text(2, 6, r'Cant plot Preview for Single Solution. PLease check the written h5. Outputs', fontsize=15)
                             #responseIfOnlyOneField.vector()[:] = response_real.compute_vertex_values()
                             cs = plot(responseIfOnlyOneField)
                         else:
-                            cs=plot(response_real.split()[plot_index-param.nVelocityComponents+1])
+                            cs=plot(response_real.split()[plot_index-param.BoundaryCondition.nVelocityComponents+1])
                             cbar = fig2.colorbar(cs)
                         plt.title('Forcing in '+ name)
                         plot_index+=1
@@ -239,9 +239,9 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulationm, mesh):
             #fig2 = plt.figure()
             #plt.set_cmap('coolwarm')
             #plot_index=0
-            #for name in param.SolutionList:
+            #for name in param.Case.SolutionList:
             #   if name =='u':
-            #       for component in param.VelocityComponents:
+            #       for component in param.BoundaryCondition.VelocityComponents:
             #           ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+1)
             #           cs=plot(ModeDirect.split()[0].split()[plot_index])
             #           cbar = fig2.colorbar(cs)
@@ -254,11 +254,11 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulationm, mesh):
             #   else:
             #       ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+1)
 
-            #       cs=plot(ModeDirect.split()[plot_index-param.nVelocityComponents+1])
+            #       cs=plot(ModeDirect.split()[plot_index-param.BoundaryCondition.nVelocityComponents+1])
             #       cbar = fig2.colorbar(cs)
             #       plt.title('Direct Mode in '+ name+component)
             #       ax = fig2.add_subplot(nSolutionFields,2,plot_index*2+2)
-            #       cs=plot(ModeAdjoint.split()[plot_index-param.nVelocityComponents+1])
+            #       cs=plot(ModeAdjoint.split()[plot_index-param.BoundaryCondition.nVelocityComponents+1])
             #       cbar = fig2.colorbar(cs)
             #       plt.title('Adjoint Mode in '+ name+component)
             #       plot_index += 1
@@ -295,9 +295,9 @@ def ExportGUI(param, fluctSolutList, MeanFlow,FEMSpace, WeakFormulationm, mesh):
     #index=0
     # Get the Names of the Solution Fields (ux, uy etc...)
     #SolutionStrings=getSolutionInfo(param)
-    SolutionStrings = param.SolutionList
+    SolutionStrings = param.Case.SolutionList
     # Number of Solutions to write
-    nSolutionFields = len(SolutionStrings)+param.nVelocityComponents-1
+    nSolutionFields = len(SolutionStrings)+param.BoundaryCondition.nVelocityComponents-1
     # Get the mesh data...
     xy = mesh.coordinates()
     mesh_cells=mesh.cells()

@@ -174,12 +174,12 @@ class reactionHandler:
         list
             List of additional fields to be read for the reaction.
         """
-        if self._param.Case.mixture.reactionMechanism['type'] == 'KaiserCnF2023': 
+        if self._param.Mixture.reactionMechanism['type'] == 'KaiserCnF2023': 
             outList = ['RR_prefactor']
-        elif self._param.Case.mixture.reactionMechanism['type'] == 'None':
+        elif self._param.Mixture.reactionMechanism['type'] == 'None':
             outList = []
         else:
-            raise Exception('Reaction mechanism ' + self._param.Case.mixture.reactionMechanism['type'] + ' unknown!')
+            raise Exception('Reaction mechanism ' + self._param.Mixture.reactionMechanism['type'] + ' unknown!')
         return outList
     
     def _initializeReactions(self, mean='None'):
@@ -197,7 +197,7 @@ class reactionHandler:
         """
         if mean == 'None':
             mean = self._mean
-        reactionMechanism = self._param.Case.mixture.reactionMechanism
+        reactionMechanism = self._param.Mixture.reactionMechanism
         self._reactionMechanismType = reactionMechanism['type']
         self._reactions = []
         for i_reaction, reaction in enumerate(reactionMechanism['reactions']):

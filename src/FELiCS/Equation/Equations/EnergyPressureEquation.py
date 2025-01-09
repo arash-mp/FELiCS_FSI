@@ -65,7 +65,7 @@ class EnergyPressureEquation(EquationTemplate):
             The parameters object.
         """
         # Disclaimer
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
+        if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             printError('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class

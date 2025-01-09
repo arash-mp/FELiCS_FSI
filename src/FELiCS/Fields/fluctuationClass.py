@@ -173,8 +173,8 @@ class fluctuationClass(
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: '\
                      + str(notInitializedFields))
 
-        # print(self._param.Case.mixture.getReactionMechanism()['type'])
-        if not self._param.Case.mixture.getReactionMechanism()['type'] == 'None':
+        # print(self._param.Mixture.getReactionMechanism()['type'])
+        if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
             reactionHandler.__init__(
                 self,
                 )
@@ -365,7 +365,7 @@ class fluctuationSolutions(
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields)
 
-        if not self._param.Case.mixture.getReactionMechanism()['type'] == 'None':
+        if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
             reactionHandler.__init__(
                 self,
                 )

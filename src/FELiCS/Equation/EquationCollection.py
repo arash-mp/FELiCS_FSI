@@ -150,8 +150,8 @@ class EquationCollectionClass():
         self.fluctuationC = fluctuationC
 
         fluc={}
-        for sol in self.__param.SolutionList:
-            fluc[sol]=self.hat[self.__param.SolutionList.index(sol)]
+        for sol in self.__param.Case.SolutionList:
+            fluc[sol]=self.hat[self.__param.Case.SolutionList.index(sol)]
         
         XTemp = TestFunctions(self.__FEMSpaces.VMixed)
         
@@ -168,7 +168,7 @@ class EquationCollectionClass():
         # Get radial coordinate
         if self.__param.Case.CoordinateSystem in ['Cylindrical']:
             self.R = self.x[1]
-            #self.ThirdVelCompIndex = self.__param.SolutionList.index('ut')
+            #self.ThirdVelCompIndex = self.__param.Case.SolutionList.index('ut')
         else:
             from petsc4py import PETSc
             self.R=Constant(self.__FEMSpaces.P2.mesh, PETSc.ScalarType(1.0))
@@ -177,7 +177,7 @@ class EquationCollectionClass():
         ## Initialize variational formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
-        printDebug(True, '-- Primary fluctuations: %s.' % param.SolutionList)
+        printDebug(True, '-- Primary fluctuations: %s.' % param.Case.SolutionList)
  
         ## create equation list from parameters
         self.equationList = []
@@ -195,7 +195,7 @@ class EquationCollectionClass():
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from FELiCS.Equation.Equations.MassEquation import MassEquation
             varEq = self.__param.Case.SetOfEquations['Mass']['Variable']
-            idVar = param.SolutionList.index(varEq)
+            idVar = param.Case.SolutionList.index(varEq)
             printDebug(True, '-- Adding mass-balance equation for %s-fluc -> X[%d].' % (varEq,idVar))
 
             mass = MassEquation(self,fluctuationC,X[idVar],self.__param)
@@ -207,7 +207,7 @@ class EquationCollectionClass():
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
             varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
-            idVar = param.SolutionList.index(varEq)
+            idVar = param.Case.SolutionList.index(varEq)
             printDebug(True, '-- Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
 
             enthalpy = EnthalpyEquation(self,fluctuationC,X[idVar],self.__param)
@@ -220,7 +220,7 @@ class EquationCollectionClass():
             # printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
             from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
             varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
-            idVar = param.SolutionList.index(varEq)
+            idVar = param.Case.SolutionList.index(varEq)
             printDebug(True, '-- Adding pressure-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
 
             energyP = EnergyPressureEquation(self,fluctuationC,X[idVar],self.__param)
@@ -241,9 +241,9 @@ class EquationCollectionClass():
             sponge.addWeightMatrixExpression(self.B_vf,mean)
 
         # Add species transport equation for all transported species
-        transportedSpecies=self.__param.Case.mixture.getSpeciesList('transported')
+        transportedSpecies=self.__param.Mixture.getSpeciesList('transported')
         for specie in transportedSpecies:
-            i_eqn=self.__param.SolutionList.index(specie)
+            i_eqn=self.__param.Case.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
                 from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
                 print('-- Adding equation for species '+specie + ' in non-conservative form')
@@ -265,22 +265,22 @@ class EquationCollectionClass():
         ## Add reactions
         ## Reaction eqs not derived in tensor framework yet
         #if self.__param.Case.Reaction:
-        #    if self.__param.Case.mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
+        #    if self.__param.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
         #        from FELiCS.Equation.Reactions.GlobalReaction import GlobalReaction
         #        ReactionModelName="WestbrookDryer_Max" #to be put in param
-        #        Reaction=GlobalReaction(self.__param.Case.mixture.ReactionMechanism)
+        #        Reaction=GlobalReaction(self.__param.Mixture.ReactionMechanism)
         #        reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
-        #        reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.SolutionList)
+        #        reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.Case.SolutionList)
         #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Case.mixture.ReactionMechanism['type']=='TwoStep':
+        #    elif self.__param.Mixture.ReactionMechanism['type']=='TwoStep':
         #        from FELiCS.Equation.Reactions.TwoStepReaction import TwoStepReaction
         #        ReactionModelName="BFER" #to be put in param
         #        Reaction=TwoStepReaction(ReactionModelName)
         #        Reaction.computeMeanField(MF,self.__FEMSpaces.P2)
         #        Reaction.testM()
-        #        reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.SolutionList,self.__FEMSpaces.P2)
+        #        reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.Case.SolutionList,self.__FEMSpaces.P2)
         #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Case.mixture.ReactionMechanism['type']=='2S-SM2':
+        #    elif self.__param.Mixture.ReactionMechanism['type']=='2S-SM2':
         #        from FELiCS.Equation.Reactions.c2sm2 import C2SM2
         #        ReactionModelName="2S-SM2" #to be put in param
         #        YCH4_lim=0.043*1e-4
@@ -310,7 +310,7 @@ class EquationCollectionClass():
         #        #                        MeanFlow.Y('CO2'))
 
         #        self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
-        #    elif self.__param.Case.mixture.ReactionMechanism['type']=='NOx':
+        #    elif self.__param.Mixture.ReactionMechanism['type']=='NOx':
         #        reaction=self.mean.reaction
         #        self.v_NO  = X[self.__param.getTransportedQuantityList().index('NO')]
         #        self.v_NO2 = X[self.__param.getTransportedQuantityList().index('NO2')]
@@ -429,8 +429,8 @@ class EquationCollectionClass():
             
             # printDebug(True, "-- Using Chu's disturbance energy for forcing norm!")
             # idu = 0
-            # idrho = param.SolutionList.index('rho')
-            # idp = param.SolutionList.index('p')
+            # idrho = param.Case.SolutionList.index('rho')
+            # idp = param.Case.SolutionList.index('p')
             # self.forcing_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
             # self.forcing_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
             #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
@@ -440,9 +440,9 @@ class EquationCollectionClass():
             
             # Below are arbitrary weights used for debugging resolvent considering other norms
             # than the TKE one:
-            # idrhoF = param.SolutionList.index('rho')
+            # idrhoF = param.Case.SolutionList.index('rho')
             # self.forcing_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
-            # idpF = param.SolutionList.index('p')
+            # idpF = param.Case.SolutionList.index('p')
             # self.forcing_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
             
             #velocityForcingList = [0,0,0]
@@ -451,17 +451,17 @@ class EquationCollectionClass():
             #    # than the number of velocity components, the coefficient must be applied
             #    # to the corresponding (second level) subspace of u, which correspionds to the right
             #    # velocity component. If not, it is applied directly to the first level subspace,
-            #    # and the index is corrected by param.nVelocityComponents+1
+            #    # and the index is corrected by param.BoundaryCondition.nVelocityComponents+1
             #    
-            #    if i<param.Case.getNVelocityComponents():
+            #    if i<param.BoundaryCondition.nVelocityComponents:
             #        velocityForcingList[i] = self.hat[0][i]
             #        #input(velocityForcingList)
             #        #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
             #        #self.forcing_vf += conj(self.X[0][i])*self.hat[0][i]*self.R*dx
             #        
             #    else:
-            #        self.forcing_vf += conj(self.X[i-param.nVelocityComponents+1])*\
-            #            barrho*self.hat[i-param.nVelocityComponents+1]*self.R*dx
+            #        self.forcing_vf += conj(self.X[i-param.BoundaryCondition.nVelocityComponents+1])*\
+            #            barrho*self.hat[i-param.BoundaryCondition.nVelocityComponents+1]*self.R*dx
             #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
             #u_f = Tensor(self.hat[0], self.coord_sys)
             #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
@@ -484,13 +484,13 @@ class EquationCollectionClass():
 #                    # than the number of velocity components, the coefficient must be applied
 #                    # to the corresponding (second level) subspace of u, which correspionds to the right
 #                    # velocity component. If not, it is applied directly to the first level subspace,
-#                    # and the index is corrected by param.nVelocityComponents+1
-#                    if i<param.Case.getNVelocityComponents():
+#                    # and the index is corrected by param.BoundaryCondition.nVelocityComponents+1
+#                    if i<param.BoundaryCondition.nVelocityComponents:
 #                        self.forcing_vf += self.X[0][i]*barrho*\
 #                            self.hat[0][i]*self.R*Ds(int(k))
 #                    else:
-#                        self.forcing_vf += self.X[i-param.nVelocityComponents+1]*\
-#                            barrho*self.hat[i-param.nVelocityComponents+1]\
+#                        self.forcing_vf += self.X[i-param.BoundaryCondition.nVelocityComponents+1]*\
+#                            barrho*self.hat[i-param.BoundaryCondition.nVelocityComponents+1]\
 #                            *self.R*Ds(int(k))
 
         # Loop through response coefficients (The coefficients that are chosen by the user,
@@ -501,13 +501,13 @@ class EquationCollectionClass():
         #    # than the number of velocity components, the coefficient must be applied
         #    # to the corresponding (second level) subspace of u, which correspionds to the right
         #    # velocity component. If not, it is applied directly to the first level subspace,
-        #    # and the index is corrected by param.nVelocityComponents+1
-        #    if i<param.Case.getNVelocityComponents():
+        #    # and the index is corrected by param.BoundaryCondition.nVelocityComponents+1
+        #    if i<param.BoundaryCondition.nVelocityComponents:
         #        velocityResponseList[i] = self.hat[0][i]
         #   #     self.response_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
         #    else:
-        #        self.response_vf += conj(self.X[i-param.nVelocityComponents+1])*barrho*\
-        #            self.hat[i-param.nVelocityComponents+1]*self.R*dx
+        #        self.response_vf += conj(self.X[i-param.BoundaryCondition.nVelocityComponents+1])*barrho*\
+        #            self.hat[i-param.BoundaryCondition.nVelocityComponents+1]*self.R*dx
         #velocityComponents = Tensor(as_vector(velocityResponseList),self.coord_sys)
         #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
         #self.response_vf += temporalVF
@@ -515,8 +515,8 @@ class EquationCollectionClass():
         
         # printDebug(True, "-- Using Chu's disturbance energy for response norm!")
         # idu = 0
-        # idrho = param.SolutionList.index('rho')
-        # idp = param.SolutionList.index('p')
+        # idrho = param.Case.SolutionList.index('rho')
+        # idp = param.Case.SolutionList.index('p')
         # self.response_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
         # self.response_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
         #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
@@ -526,9 +526,9 @@ class EquationCollectionClass():
         
         # Below are arbitrary weights used for debugging resolvent considering other norms
         # than the TKE one:
-        # idrhoF = param.SolutionList.index('rho')
+        # idrhoF = param.Case.SolutionList.index('rho')
         # self.response_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
-        # idpF = param.SolutionList.index('p')
+        # idpF = param.Case.SolutionList.index('p')
         # self.response_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
 
         # Prompt variational formulations in debug mode
@@ -554,7 +554,7 @@ class EquationCollectionClass():
                 
                 #  Get the corresponding variable and its index in X
                 varName = param.Case.SetOfEquations[eqID]['Variable']
-                varIndex = param.SolutionList.index(varName)
+                varIndex = param.Case.SolutionList.index(varName)
                 
                 # Dynamically get the corresponding fluctuation field
                 fluc_var = getattr(fluc, '%s' % varName)
@@ -757,7 +757,7 @@ class EquationCollectionClass():
         from petsc4py import PETSc
 
         self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
-        self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
+        self.__nVelocityComponents = self.__param.BoundaryCondition.nVelocityComponents
         printDebug(True, '-- Building Pu matrix...')
 
         # Get the matrix that restricts the forcing in space
@@ -821,7 +821,7 @@ class EquationCollectionClass():
         from petsc4py import PETSc
 
         self.__response_coeff = self.__param.IOResolvent.ResponseCoeff
-        self.__nVelocityComponents = self.__param.Case.getNVelocityComponents()
+        self.__nVelocityComponents = self.__param.BoundaryCondition.nVelocityComponents
         printDebug(True, '-- Building Cr matrix...')
 
         # Get the matrix that restricts the forcing in space

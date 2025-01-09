@@ -32,7 +32,7 @@ class SpongeTerm(EquationTemplate):
             The parameters object.
         """
         # Disclaimers
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
+        if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             printError('Discontinuous Galerkin not implemented in tensorial framework.')        
 
         # initialize variables in template class
@@ -76,7 +76,7 @@ class SpongeTerm(EquationTemplate):
                 
                 #  Get the corresponding variable
                 varID = param.Case.SetOfEquations[eqID]['Variable']
-                varNum = param.SolutionList.index(varID)
+                varNum = param.Case.SolutionList.index(varID)
                 printDebug(True, "-- -> Sponge term for %s-fluc -> X[%d]." % (varID,varNum))
                 
                 # Dynamically get the corresponding fluctuation field
@@ -93,13 +93,13 @@ class SpongeTerm(EquationTemplate):
         # weakForm.add(( -1j*mean.spg*iDot(fluc.u,iConj(X[0])) ).ufl_tens*J_hat*dx)
         
         # # Looping over all other linearized equation    
-        # id_p = param.SolutionList.index('p')
+        # id_p = param.Case.SolutionList.index('p')
         # weakForm.add(( -1j*mean.spg*fluc.p*iConj(X[id_p]) ).ufl_tens*J_hat*dx)
         # # ------------------------ Compressible
         # # --> Assuming rho is the extra state variable!
         # if not param.Case.SetOfEquations['Energy']['Equation'] == 'None':
         #     printDebug(True, '-- -> Adding sponge damping for density fluctuations.')
-        #     id_rho = param.SolutionList.index('rho')
+        #     id_rho = param.Case.SolutionList.index('rho')
         #     weakForm.add(( -1j*mean.spg*fluc.rho*iConj(X[id_rho]) ).ufl_tens*J_hat*dx)
 
     def addNonlinearExpression(self):
