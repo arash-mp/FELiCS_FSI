@@ -186,6 +186,7 @@ class meanFlowClass(
             self.getVertexValues()._fieldDict,
             group,
         )
+        filehandler.close()
 
     def exportBaseFlowAsHDF5(self, meanflowFilename = 'meanflow.h5'):
 
