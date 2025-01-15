@@ -29,6 +29,8 @@ class config(ABC):
     def __init__(self):
         self.__BCIDs__=[]   # move to BC
         SettingsDict = self.getAllSettingsDict()
+
+        # Add all default fields & subfields to self
         for category in SettingsDict:
             dict = dotdict()
             for parameter in SettingsDict[category]:
@@ -45,8 +47,24 @@ class config(ABC):
         configFilePath : txt
             path to .json file containing parameters
         """
+
+        # TODO: check if we have a .json or .h5
+        # LOAD data accordingly
         file = open(configFilePath)
         data = json.load(file)
+
+        # TODO: put the rest of this in a validate_config method
+        #   1: Check if we have a modal or resolvent/input-output type of analysis
+        #   2: Load either "eigenvalueguess" or "omega" depending on the above
+        #   3: Call a method that checks if files and dir needed do exist
+        #       def check_exist_files_dirs(list_files, list_dirs):
+        #   4: Loop over the default config (self) and check if fields are in data
+        #       if missing, depending on field:
+        #           i. set the default and print warning
+        #           ii. error-print + shut down
+        #   5: call a method to set calculated settings (previously from case)
+
+        # Loop over the default dictionnary and overwrite with values from data
         for category,parameters in data.items():
             subcategory = eval("self."+category)
             for parameter,value in parameters.items():
@@ -64,12 +82,20 @@ class config(ABC):
                         else:
                             value = [value]
                 subcategory[parameter] = value
+
+                # TODO: the following in a dedicated method
                 if parameter == 'BCsFilePath':
                     if not path.isfile(value):
-                        printWarning("no BC file chosen!")
+                        printWarning("BC file not found!")
                 if parameter == 'MeshFilePath':
                     if not path.isfile(value):
-                        printWarning("no mesh file chosen!")
+                        printWarning("mesh file not found!")
+                if parameter == 'MeanFlowFilePath':
+                    if not path.isfile(value):
+                        printWarning("meanFlow file not found!")
+                if parameter == 'ExportFolder':
+                    if not path.isdir(value):
+                        printWarning("export folder not found!")
             subcategory = dotdict(subcategory)
         file.close()
 
@@ -77,6 +103,7 @@ class config(ABC):
             self.Case["MixtureFilePath"],
             self.Case["SpeciesFilePath"],
             )
+        
         self.readDomainData(
             self.Case["MeshFilePath"],
             self.Case["nDim"],
@@ -84,17 +111,24 @@ class config(ABC):
             self.Case["CoordinateSystem"],
             self.Case["m"]
             )
+        
         self.debug = True # specify here if printDebug messages should be shown
-        # calculated parameters:
+        
+        # calculated parameters: TODO: put in a method
         self.BoundaryCondition.nVelocityComponents  = len(self.getInternalVelocityComponents())
         self.Case.SolutionList                      = self.getTransportedQuantityList()
         self.BoundaryCondition.VelocityComponents   = self.getInternalVelocityComponents()
-        self.Numerics.NumericalScheme               = 'Continuous Galerkin'
         # self.Mixture.SpeciesList                  = self.Mixture.getSpeciesList('transported') # not used, move to mixture
         # self.reactionMechanism                    = reactionMechanismClass(self.Mixture.getReactionMechanism()['type']) 
 
+        # TODO: set in defaults
+        self.Numerics.NumericalScheme               = 'Continuous Galerkin' 
+        
 
     def importFromH5File(self, h5FileName):
+        # TODO: load the parameters into a "data" dictionnary
+        # similar to what we get from loading a .json
+
         hf = File(h5FileName, 'r')
         if 'param' not in hf.keys():
             return None
@@ -115,6 +149,8 @@ class config(ABC):
                     elif 'str' in str(datatype):
                         exec(f'self.{settingsParameter} = "{value}"')
         hf.close()
+
+        # This will not be needed anymore
         self.Mixture = MixtureClass(
             self.Case.mixtureFilePath,
             self.SpeciesFilePath,
@@ -196,18 +232,18 @@ class config(ABC):
         '''Function returning all boundary condition settings with default values'''
         SettingsDict={
             'BoundaryCondition':{
-                'BCsFilePath':{'datatype':str,'default':''},
-                'nVelocityComponents':{'datatype':int, 'default':2},
-                'VelocityComponents':{'datatype':list,'default':[]}
+                'BCsFilePath':          {'datatype':str,    'default':''},
+                'nVelocityComponents':  {'datatype':int,    'default':2},
+                'VelocityComponents':   {'datatype':list,   'default':[]}
             },
             'Case':{
-                'AnalysisMode':{'datatype':str,'default':'Modal'},
-                'CalculateAdjoint':{'datatype':bool,'default':True},
-                'CoordinateSystem':{'datatype':str,'default':'Cartesian'},
-                'm':{'datatype':int,'default':0},
+                'AnalysisMode':         {'datatype':str,    'default':'Modal'},
+                'CalculateAdjoint':     {'datatype':bool,   'default':True},
+                'CoordinateSystem':     {'datatype':str,    'default':'Cartesian'},
+                'm':                    {'datatype':int,    'default':0},
+                'MeshFilePath':         {'datatype':str,    'default':''},
+                'MixtureFilePath':      {'datatype':str,    'default':''},
                 'MolVisc':{'datatype':int,'default':0.0},
-                'MeshFilePath':{'datatype':str,'default':''},
-                'MixtureFilePath':{'datatype':str,'default':''},
                 'MolViscModel':{'datatype':str,'default':'Constant'},
                 'nDim':{'datatype':int,'default':2},
                 'Reaction':{'datatype':bool,'default':False},
@@ -418,7 +454,7 @@ class config(ABC):
 
     def getMeanFlowFieldNames(self):
         from FELiCS.Misc.functions import printDebug
-        ''' This function provides the mean fields which mus be read in.'''
+        ''' This function provides the mean fields which must be read in.'''
         MeanList=[]
         # Add velocity components
         MeanList.append('u')
