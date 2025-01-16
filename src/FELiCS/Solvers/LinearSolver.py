@@ -36,7 +36,59 @@ from FELiCS.Misc.functions import (
 
 
 class LinearSolver:
+    """Linear algebra utilities using PETSc and SLEPc.
 
+    This class provides methods for solving generalized eigenvalue problems (GEVP),
+    singular value decompositions (SVD), and linear systems efficiently using
+    PETSc and SLEPc.
+
+    Parameters
+    ----------
+    None
+
+    Attributes
+    ----------
+    None
+
+    PROBLEM: If the methods are listed in the Class Docstring, they are listed on the right in the html in the clickabel overview. But as the methods are also defined with more elaborate docstrings below, they will appear twice. This a problem.
+
+    Methods
+    -------
+    solveGeneralEigenproblem(A, B, sigma=0.0, nev=5)
+        Solves a generalized eigenvalue problem.
+    solveSVDOfResolvent(A, sigma=0.0, nev=5)
+        Computes the SVD of a resolvent operator.
+    solveEquationSystem(A, b)
+        Solves a linear system Ax = b.
+    solveTransposeEquationSystem(A, b)
+        Solves the transpose system A^T x = b.
+    createEquationSystemSolver(A)
+        Creates a reusable solver for a matrix.
+
+    Examples
+    --------
+    Solving a linear system:
+
+    >>> from petsc4py import PETSc
+    >>> A = PETSc.Mat().create()
+    >>> b = PETSc.Vec().create()
+    >>> x = LinearSolver.solveEquationSystem(A, b)
+
+    Solving a generalized eigenvalue problem:
+
+    >>> eigVals, eigVecs, error = LinearSolver.solveGeneralEigenproblem(
+    ...     A, B, sigma=0.0, nev=5)
+
+    Notes
+    -----
+    - Built for large-scale scientific problems using PETSc and SLEPc
+    - Requires `petsc4py` and `slepc4py` packages
+
+    See Also
+    --------
+    petsc4py.PETSc : Base PETSc functionality
+    slepc4py.SLEPc : Eigenvalue problem solvers
+    """
 
     @staticmethod
     def solveGeneralEigenproblem(
@@ -391,19 +443,6 @@ class ResolventOperator(object):
     _W_forcing : PETSc.Mat
         Weight matrix for forcing norm.
 
-    Methods
-    -------
-    getSize()
-        Return the size of the operator.
-    getVecs()
-        Get vectors for the operator.
-    mult(mat, X, Y)
-        Compute the matrix-vector product Y = mat * X.
-    getKSP()
-        Get the KSP solver for the operator.
-    destroySelf()
-        Clean up resources to avoid memory leaks.
-         
     """         
 
     def __init__(self,                      
@@ -457,13 +496,41 @@ class ResolventOperator(object):
         self._ksp3.getPC().setFactorSolverType('mumps')                 
         self._ksp3.setUp()         
 
-    def getSize(self):                 
+    def getSize(self):
+        """
+        Return the size of the operator.
+
+        Returns
+        -------
+        tuple
+            The size of the operator (rows, columns).
+        """                 
         return self._size         
 
-    def getVecs(self):                 
+    def getVecs(self):
+        """
+        Get vectors for the operator.
+
+        Returns
+        -------
+        tuple
+            A tuple of PETSc.Vec objects used internally by the operator.
+        """                 
         return self._F1, self._F2         
 
-    def mult(self, mat, X, Y):                 
+    def mult(self, mat, X, Y):
+        """
+        Compute the matrix-vector product Y = mat * X.
+
+        Parameters
+        ----------
+        mat : PETSc.Mat
+            The matrix represented by the operator.
+        X : PETSc.Vec
+            Input vector.
+        Y : PETSc.Vec
+            Output vector.
+        """                 
         # returns Y=mat*X                 
         # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcing                 
         self._P_forcing.mult            (X,        self._O1)  #O1 = P_f * X                 
@@ -481,11 +548,23 @@ class ResolventOperator(object):
 
         return Y         
 
-    def getKSP(self):                 
+    def getKSP(self):   
+        """
+        Get the KSP solver for the operator.
+
+        Returns
+        -------
+        PETSc.KSP
+            KSP solver instance used by the operator.
+        """              
         return self._ksp1         
 
     def destroySelf(self):                 
-        """Clean-up the disc space to avoid memory leaks. Should be called if several resolvent SVDs are done one after the other."""                 
+        """
+        Clean up resources to avoid memory leaks.
+
+        This method should be called if multiple resolvent SVDs are performed consecutively.
+        """
         self._ksp1.getPC().destroy()                 
         self._ksp2.getPC().destroy()                 
         self._ksp3.getPC().destroy()                 

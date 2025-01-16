@@ -11,7 +11,20 @@ import numpy as np
 from FELiCS.Misc.functions import getLastGitCommit
 
 class parameters():
+    """
+    Class that holds and manages the parameters for a simulation case. This includes 
+    various settings related to the case, flow input, boundary conditions, IO resolvent,
+    numerical methods, and export options. The class provides methods to export and 
+    import settings from files, check parameter completeness, and manage older parameter formats.
+    """
     def __init__(self):
+        """
+        Initialize the parameters object by loading the necessary settings classes 
+        for case, flow input, boundary conditions, IO resolvent, numerics, and export.
+
+        This constructor imports several classes from the GUI module and initializes 
+        them as attributes of the parameters class.
+        """
         from FELiCS.GUI.CaseSettingsClass import CaseSettingsClass
         self.Case=CaseSettingsClass()
         from FELiCS.GUI.FlowInputSettingsClass import FlowInputSettingsClass
@@ -26,9 +39,16 @@ class parameters():
         self.Export = ExportSettingsClass()
         pass
     def export(self, filestring):
-        '''function exporting the parameters to a file
-        \t Input:
-        \t -filestring: path of parameter file'''
+        """
+        Export the parameters to a specified file.
+
+        Parameters
+        ----------
+        filestring : str
+            The path of the file to export the parameters to. If the file has a 
+            '.h5' extension, the parameters will be stored in an HDF5 format. 
+            Otherwise, the parameters will be written as a plain text file.
+        """
         from inspect import isclass
 
         # Writing the parameters to a file
@@ -95,10 +115,16 @@ class parameters():
 
         file.close()
     def importFromFile(self,filestring):
-        ''' Loading parameters from file
-        \t Input:
-        \t -filestring: path of parameter file
-        '''
+        """
+        Import parameters from a specified file.
+
+        Parameters
+        ----------
+        filestring : str
+            The path of the parameter file to import. If the file has a '.h5' 
+            extension, the parameters will be loaded from an HDF5 file. Otherwise, 
+            the parameters will be imported from a plain text file.
+        """
         if '.h5' in filestring:
             self.Case.importFromH5File(filestring)
             self.FlowInput.importFromH5File(filestring)
@@ -129,7 +155,18 @@ class parameters():
             self.Export.importSettings(filestring)
             self.getOldParameters()
     def complete(self):
-        '''Check all parameters for completeness and consistency'''
+        """
+        Check all parameters for completeness and consistency.
+
+        This method checks if all the required parameters are set correctly 
+        and ensures that the settings are consistent. It also checks the 
+        completeness of specific sub-groups based on the analysis mode.
+
+        Returns
+        -------
+        bool
+            True if all parameters are complete and consistent, False otherwise.
+        """
         #Check all sub parameter groups for completeness.
         CompleteBool=False
         if self.Case.complete():
@@ -142,8 +179,18 @@ class parameters():
         return CompleteBool
 
     def getOldParameters(self):
-        '''This function provides the parameters in the \'old\' fashion for compatibility with the rest of the code. This is redundant information and as a consequence the with the adaptations in the rest of the code the \'old\' parameters as set here in the function will disappear. In the end this function will be obsolete and must be deleted. '''
-        # AdditionalVelocityComponents
+        """
+        Provide the parameters in the 'old' format for compatibility with the rest 
+        of the code. This function is deprecated and will eventually be removed.
+
+        The function retrieves the old parameters that were set in an older fashion 
+        for backward compatibility. In the future, this function will be obsolete.
+
+        Notes
+        -----
+        This method is considered redundant and should be removed once the rest 
+        of the code is adapted to the new parameter handling system.
+        """        # AdditionalVelocityComponents
         from copy import copy
         from FELiCS.Misc.functions import printDebug, printError
         #from fenics import DirichletBC,MeshFunction
