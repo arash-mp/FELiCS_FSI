@@ -84,6 +84,46 @@ $\delta P_k = \frac{1}{2}\delta \nu_t[\nabla\mathbf{u} + {\nabla\mathbf{u}}^T]:[
 
 $\delta \nu_\varepsilon = \frac{\delta \nu_t}{\sigma_\varepsilon}$.
 
+## Variational form & Weak form Galerkin
+
+To solve equation sets in FELiCS, it is necessary to write them in the following variational form
+$$
+\int (\mathcal{F} \cdot X) dx = 0
+$$
+
+Where $\mathcal{F}$ is the governing equation, $X$ is the Test function, their inner products are intergrated over the domain.
+
+When calculating the intergration expression (variational form), it is sometimes important to perform intergration by part on some terms. This can decrease the order of spacial differences on specific parameters or increase the rubostness of the solver. By doing so, the new expressions are usually called weak form Galerkin. This kind of equations are coded and implemented in FELiCS. The weak forms of linear and non-linear expressions for each equations are shown in the following.
+
+### Weak form of continuity equation
+The weak form of NON-linear continuity equation is
+$$
+\int ((\mathbf{u} \cdot \nabla)X) dx - \int_\Omega (\mathbf{u} \cdot \mathbf{n}) ds = 0
+$$
+where $\mathbf{n}$ is the unit vector which is normal to the boundary facets, $\int_\Omega (\cdot) ds$ is intergration on boundaries.
+
+The weak form for Linear continuity equation is
+$$
+\int((\delta \mathbf{u} \cdot \nabla)X) dx - \int_\Omega (\delta \mathbf{u} \cdot \mathbf{n}) ds = 0
+$$
+
+### Weak form of momentum equation
+The weak form of NON-linear momentum equation is
+$$
+\int(
+    \mathbf{u} \cdot \nabla \cdot (\mathbf{X} \otimes \mathbf{u}) 
+    + p \nabla \cdot (\mathbf{X})
+    - \nu_{Eff}[\nabla\mathbf{u} + (\nabla\mathbf{u})^T] : \nabla\mathbf{X}
+    + \frac{2}{3} k \nabla \cdot \mathbf{X}
+) dx
+\\
+- \int_\Omega(
+    \mathbf{u} \cdot (\mathbf{u} \otimes \mathbf{X}) \cdot \mathbf{n}
+    + p \mathbf{X} \cdot \mathbf{n}
+    - \nu_{Eff}[\nabla\mathbf{u} + (\nabla\mathbf{u})^T] : (\mathbf{X} \otimes\mathbf{n})
+    + \frac{2}{3} k (\mathbf {X} \cdot \mathbf{n})
+) ds
+$$
 
 !!! IMPORTANT TO REMEMBER: When write the weak form, remember to keep consisttency with FELiCS codes. Especially the convecting terms.
 
