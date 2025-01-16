@@ -40,6 +40,7 @@ conda env create -f ~/felics2.0/yml/felics2.0_env.yml -y
 >```
 
 ### Manual Package Installation
+---------- **OUT OF DATE! SHOULD BE UPDATED TO NEWER PACKAGES** ------------
 If the installation via _.yml_ files does not work, you can try installing the packages manually or [older yml files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/yml/old_versions?ref_type=heads). Since package compatibility can be tricky, it is recommended to stick to the following packages and versions which seem to be stable at the moment [August 2023].
 ```bash
 conda create --name felics2.0 python=3.8
