@@ -84,6 +84,18 @@ fi
 >}
 >```
 
+## Installation of FELiCS as a package using pip
+To use FELiCS as a package it can be installed in the conda environment using pip and then easily be imported. The flag `-e` indicates installation in editable mode. Like this the folder of the repo is connected to the environment and all changes are reflected instantaneously in the environment. Then run the following commands:
+```
+cd /path/to/felics
+conda activate <felics-environemnt>
+pip install -e .
+```
+The installation can be checked by typing `conda list felics` or `python -c "import FELiCS"`. The package name is case sensitive, even though in the conde env it is listed in lowercase letters.
+
+### Uninstall
+Because FELiCS is installed in editable mode the standard unistallation procedure does not work. To uninstall the folder `$FELiCS_PATH/src/FELiCS.egg-info` must be removed. In the folder of the conda environment (`$CONDA_PATH/envs/<felics-environment>`` search for felics and delete all files containing that name. Like this the package is fully removed from the environemnt.
+
 After changing your _~/.bashrc_ you need to restart the terminal or ssh connection to make the changes take effect. 
 
 
