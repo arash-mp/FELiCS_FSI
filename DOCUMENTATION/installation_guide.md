@@ -39,21 +39,6 @@ conda env create -f ~/felics2.0/yml/felics2.0_env.yml -y
 >conda env create --prefix <path_to_more_space> -f ~/felics2.0/yml/felics2.0_env.yml -y
 >```
 
-### Manual Package Installation
----------- **OUT OF DATE! SHOULD BE UPDATED TO NEWER PACKAGES** ------------
-If the installation via _.yml_ files does not work, you can try installing the packages manually or [older yml files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/yml/old_versions?ref_type=heads). Since package compatibility can be tricky, it is recommended to stick to the following packages and versions which seem to be stable at the moment [August 2023].
-```bash
-conda create --name felics2.0 python=3.8
-conda activate felics2.0
-python3 -m pip cache purge
-conda install numpy=1.23.3
-pip install scipy==1.9.1 gmsh==4.10.5
-conda install matplotlib=3.3.2=0 colorama=0.4.5 h5py=3.7.0
-conda install -c conda-forge fenics-basix=0.5.0 fenics-dijitso=2019.1.0 fenics-dolfinx=0.5.1 fenics-fiat=2019.1.0
-conda install -c conda-forge pyvista
-```
-
-
 ## FELiCS alias
 Now, go to the top level of the cloned git repository and run this command block in your terminal to add a FELiCS alias to your _~/.bashrc_:
 ```bash
@@ -61,7 +46,6 @@ export FELICS_DIRECTORY=`pwd`
 
 if [ -f "$FELICS_DIRECTORY/main.py" ]; then
 	echo -e "FELiCS_PATH=\"${FELICS_DIRECTORY}\" 
-	export PYTHONPATH=\$PYTHONPATH:\$FELiCS_PATH
 	FELiCS() {
 	    export OMP_NUM_THREADS=2;
 	    python \$FELiCS_PATH/main.py \"\$@\";
@@ -76,7 +60,6 @@ fi
 >**Optional:** instead of running the above bash command block, you can also add the FELiCS alias manually by inserting the following paragraph into your _~/.bashrc_
 >```
 >FELiCS_PATH="<path_to_felics_repository>" 
->export PYTHONPATH=$PYTHONPATH:$FELiCS_PATH
 >FELiCS() {
 >    export OMP_NUM_THREADS=2;
 >    python $FELiCS_PATH/main.py "$@" ;
@@ -84,14 +67,19 @@ fi
 >}
 >```
 
-## Installation of FELiCS as a package using pip
+## Installation of FELiCS as a package
 To use FELiCS as a package it can be installed in the conda environment using pip and then easily be imported. The flag `-e` indicates installation in editable mode. Like this the folder of the repo is connected to the environment and all changes are reflected instantaneously in the environment. Then run the following commands:
 ```
 cd /path/to/felics
 conda activate <felics-environemnt>
 pip install -e .
 ```
-The installation can be checked by typing `conda list felics` or `python -c "import FELiCS"`. The package name is case sensitive, even though in the conde env it is listed in lowercase letters.
+
+If installation using pip is not preferred, FELiCS can also be added to the `$PYTHONPATH` in the `.bashrc`. To do this add the line
+```
+export PYTHONPATH=$PYTHONPATH:$FELiCS_PATH
+```
+to the `.bashrc`.
 
 ### Uninstall
 Because FELiCS is installed in editable mode the standard unistallation procedure does not work. To uninstall the folder `$FELiCS_PATH/src/FELiCS.egg-info` must be removed. In the folder of the conda environment (`$CONDA_PATH/envs/<felics-environment>`` search for felics and delete all files containing that name. Like this the package is fully removed from the environemnt.
@@ -115,10 +103,30 @@ FELiCS
 ```
 >**Remark:** when working on c14 via ssh make sure to enable visual output with the `-X` option of ssh.
 
+To verify the installation of FELiCS as a package run 
+```bash
+python -c "import FELiCS"
+```
+>**Remark:** Please note, that the package name is case sensitive, even though in the conda environment it is listed in lowercase letters. 
+
 In case of an error, please refer to the chapter [common problems](#CommonIssues) for possible solutions.
 
 The environment can be deactivated using 
 ```bash
 conda deactivate felics
+```
+
+### Manual Package Installation
+---------- **OUT OF DATE! SHOULD BE UPDATED TO NEWER PACKAGES** ------------
+If the installation via _.yml_ files does not work, you can try installing the packages manually or [older yml files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/yml/old_versions?ref_type=heads). Since package compatibility can be tricky, it is recommended to stick to the following packages and versions which seem to be stable at the moment [August 2023].
+```bash
+conda create --name felics2.0 python=3.8
+conda activate felics2.0
+python3 -m pip cache purge
+conda install numpy=1.23.3
+pip install scipy==1.9.1 gmsh==4.10.5
+conda install matplotlib=3.3.2=0 colorama=0.4.5 h5py=3.7.0
+conda install -c conda-forge fenics-basix=0.5.0 fenics-dijitso=2019.1.0 fenics-dolfinx=0.5.1 fenics-fiat=2019.1.0
+conda install -c conda-forge pyvista
 ```
 
