@@ -697,7 +697,7 @@ class EquationCollectionClass():
         printDebug(True, '-- Setting boundary conditions...')
         self.__boundaries = self.__param.__boundaries__
         self.__bcDict = self.__param.__BCsDict__
-        VelocityComponents=self.__param.getVelocityComponents()
+        VelocityComponents=self.__param.BoundaryCondition.VelocityComponents
         SolutionList=self.__param.getTransportedQuantityList()
         for k,m in zip(list(self.__bcDict.keys()),range(0,len(self.__bcDict.keys()))):
             # Get index of equation/variable i_eqn and if needed the index of the velocity component

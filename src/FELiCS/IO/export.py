@@ -343,7 +343,7 @@ class export:
         for i, groupName in enumerate(list(exportDict.keys())):
             #if exportDict[groupName].shape[0] == self._param.Case.nDim:
             if groupName in ['u', 'rhou', 'u_forcing_r', 'u_forcing_i']:
-                for i, component in enumerate(self._param.getVelocityComponents()):
+                for i, component in enumerate(self._param.BoundaryCondition.VelocityComponents):
                     if 'u_' in groupName:
                         uComponent = 'u' + component
                         newGroupName = groupName.replace('u_', f'{uComponent}_')

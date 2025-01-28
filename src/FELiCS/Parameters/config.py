@@ -115,9 +115,9 @@ class config(ABC):
         self.debug = True # specify here if printDebug messages should be shown
         
         # calculated parameters: TODO: put in a method
-        self.BoundaryCondition.nVelocityComponents  = len(self.getInternalVelocityComponents())
+        self.BoundaryCondition.nVelocityComponents  = len(self.getVelocityComponents())
         self.Case.SolutionList                      = self.getTransportedQuantityList()
-        self.BoundaryCondition.VelocityComponents   = self.getInternalVelocityComponents()
+        self.BoundaryCondition.VelocityComponents   = self.getVelocityComponents()
         # self.Mixture.SpeciesList                  = self.Mixture.getSpeciesList('transported') # not used, move to mixture
         # self.reactionMechanism                    = reactionMechanismClass(self.Mixture.getReactionMechanism()['type']) 
 

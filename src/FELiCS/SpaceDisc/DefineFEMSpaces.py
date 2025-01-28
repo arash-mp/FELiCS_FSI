@@ -58,7 +58,7 @@ class FEMSpacesClass():
         elif param.Case.nDim==3:
             element_shape = tetrahedron
         elementTypeStr='CG'
-        self._nVelocityComponents = len(param.getVelocityComponents())
+        self._nVelocityComponents = param.BoundaryCondition.nVelocityComponents
 
         # refine the mesh to get the exportMesh:
         exportMesh_dolfinx = refine(mesh.dolfinxMesh)

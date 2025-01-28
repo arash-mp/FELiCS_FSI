@@ -28,12 +28,12 @@ def runInputOutput(param, useGUI):
     ## INITIALIZATION
     #-----------------------------------------------------------------------
     # mesh
-    mesh=param.BCs.getMesh()
+    mesh = param.getMesh()
     # FEMSpaces
     FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
-                param,
-                mesh,
-                )
+        param,
+        mesh,
+    )
     # read in mean flow
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
     meanFlow.importDataFromFile()
@@ -44,11 +44,11 @@ def runInputOutput(param, useGUI):
     meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
     # equation
     equation = EquationCollectionClass(
-                                      param,
-                                      FEMSpaces,
-                                      meanFlow,
-                                      mesh
-                                      )
+        param,
+        FEMSpaces,
+        meanFlow,
+        mesh
+    )
 
 
 

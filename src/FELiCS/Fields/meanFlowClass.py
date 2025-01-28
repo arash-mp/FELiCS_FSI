@@ -206,7 +206,7 @@ class meanFlowClass(
             coordArray[:, i + 1] = exportMeshH5[
                                        f'coordinates/{coordNameList[i + 1]}'][:]
 
-        velocityComponents = self._param.BoundaryCondition.VelocityComponents
+        velocityComponents = self._param.getInternalVelocityComponents()
         for index, comp in enumerate(velocityComponents):
             velocityComponents[index] = f'u{comp}'
 
@@ -312,7 +312,7 @@ class meanFlowClass(
         # Copy all remaining fields to the self.__RawFlowDict
         for name in nameListMean:
             if name[0] == 'u':
-                for Component in self._param.getVelocityComponents():
+                for Component in self._param.BoundaryCondition.VelocityComponents:
                     nameComponent = name[:1] + Component + name[1:]
                     if nameComponent in list(h5file['MeanFlow'].keys()):
                         self.__RawFlowDict[nameComponent] \
@@ -382,7 +382,7 @@ class meanFlowClass(
         for name in nameListMean:
             if name[0] == 'u':
                 count = 0
-                for Component in self._param.getVelocityComponents():
+                for Component in self._param.BoundaryCondition.VelocityComponents:
                     nameComponent = name[:1] + Component + name[1:]
                     if 'u' in list(field.keys()):
                         self.__RawFlowDict[nameComponent] \
@@ -495,7 +495,7 @@ class meanFlowClass(
                 self._fieldDict[name] = Function(self.__VectorFunctionSpace)
                 # All inplane velocity components are defined as vectors.
                 # Therefore, for these, iterate through the components
-                for component in self._param.getVelocityComponents():
+                for component in self._param.BoundaryCondition.VelocityComponents:
                     # Get the name in plus component
                     nameComponent = name[:1] + component + name[1:]
                     if nameComponent in list(self.__RawFlowDict.keys()):
@@ -539,7 +539,7 @@ class meanFlowClass(
                                                'ut_forcing_i']:
                 # All inplane velocity components are defined as vectors.
                 # Therefore, for these, iterate through the components
-                for idx, component in enumerate(self._param.getVelocityComponents()):
+                for idx, component in enumerate(self._param.BoundaryCondition.VelocityComponents):
                     nameComponent = name[:1] + component + name[1:]
                     # if not nameComponent in self.__notInFileList:
                     if nameComponent in list(self.__RawFlowDict.keys()):
