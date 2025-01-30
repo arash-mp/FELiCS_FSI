@@ -111,7 +111,7 @@ $$
 The weak form of NON-linear momentum equation is
 $$
 \int(
-    \mathbf{u} \cdot \nabla \cdot (\mathbf{X} \otimes \mathbf{u}) 
+    \mathbf{u} \cdot (\nabla \cdot (\mathbf{X} \otimes \mathbf{u}) )
     + p \nabla \cdot (\mathbf{X})
     - \nu_{Eff}[\nabla\mathbf{u} + (\nabla\mathbf{u})^T] : \nabla\mathbf{X}
     + \frac{2}{3} k \nabla \cdot \mathbf{X}
@@ -123,6 +123,44 @@ $$
     - \nu_{Eff}[\nabla\mathbf{u} + (\nabla\mathbf{u})^T] : (\mathbf{X} \otimes\mathbf{n})
     + \frac{2}{3} k (\mathbf {X} \cdot \mathbf{n})
 ) ds
+$$
+
+The weak form for Linear momentum equation is 
+$$
+\int(
+    \delta \mathbf{u} \cdot (\nabla \cdot (\mathbf{X} \otimes \mathbf{u}))
+    + \mathbf{u} \cdot (\nabla \cdot (\mathbf{X} \otimes \delta \mathbf{u}))
+    + \delta p (\nabla \cdot \mathbf{X})
+    - \nu_{Eff} (\nabla \delta \mathbf{u} + (\nabla \delta \mathbf{u})^T) : \mathbf{X}
+    - \delta \nu_{Eff} (\nabla \mathbf{u} + (\nabla \mathbf{u})^T) : \mathbf{X}
+    + \frac{2}{3} \delta k (\nabla \cdot \mathbf{X})
+)dx
+\\
+-\int_\Omega(
+    ((\delta \mathbf{u} \otimes \mathbf{X}) \cdot \mathbf{u}) \cdot \mathbf{n}
+    + ((\mathbf{u} \otimes \mathbf{X}) \cdot \delta \mathbf{u}) \cdot \mathbf{n}
+    + \delta p \mathbf{X} \cdot \mathbf{n}
+    - \nu_{Eff} (\nabla \delta \mathbf{u} + (\nabla \delta \mathbf{u})^T ) : (\mathbf{X} \otimes \mathbf{n})
+    - \delta \nu_{Eff} (\nabla \mathbf{u} + (\nabla \mathbf{u})^T ) : (\mathbf{X} \otimes \mathbf{n})
+    + \frac{2}{3} \delta k \mathbf{X} \cdot \mathbf{n}
+)ds
+$$
+
+### Weakform of k equation
+
+The weak form of NON-linear k equation is
+$$
+\int(
+    (\nabla \cdot (\mathbf{u} X)) k
+    - \nu_k (\nabla k \cdot \nabla X)
+    + P_k X
+    - \varepsilon X
+)dx
+\\
+\int_\Omega(
+    (\mathbf{u} \cdot \mathbf{n}) X k
+    - \nu_k (X (\nabla k \cdot \mathbf{n}))
+)ds
 $$
 
 !!! IMPORTANT TO REMEMBER: When write the weak form, remember to keep consisttency with FELiCS codes. Especially the convecting terms.
