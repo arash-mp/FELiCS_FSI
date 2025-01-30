@@ -52,8 +52,8 @@ class LinearSolver:
 
     PROBLEM: If the methods are listed in the Class Docstring, they are listed on the right in the html in the clickabel overview. But as the methods are also defined with more elaborate docstrings below, they will appear twice. This a problem.
 
-    Methods
-    -------
+    Methods overview (see below for more information)
+    -------------------------------------------------
     solveGeneralEigenproblem(A, B, sigma=0.0, nev=5)
         Solves a generalized eigenvalue problem.
     solveSVDOfResolvent(A, sigma=0.0, nev=5)
@@ -424,12 +424,9 @@ class ResolventOperator(object):
     singular value decomposition of the system.         It contains a method called "mult", which is called by the eigenvalue solver, 
     and returns a matrix vector product of the represented matrix.         
 
-    Private attributes:         
-    Protected attributes:         
-    Public attributes:
 
-    Attributes
-    ----------
+    Private attributes
+    ------------------
     _size : tuple
         Size of the operator.
     _P_forcing : PETSc.Mat
