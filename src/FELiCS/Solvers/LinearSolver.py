@@ -424,9 +424,17 @@ class ResolventOperator(object):
     singular value decomposition of the system.         It contains a method called "mult", which is called by the eigenvalue solver, 
     and returns a matrix vector product of the represented matrix.         
 
-    
+    Parameters
+    ----------
+    ResolventOperator : PETSc.Mat
+        Matrix representing the linear system.
+    FEMWeightMatrix_fullSystem : PETSc.Mat
+    FEMWeightMatrix_forcingNorm: PETSc.Mat
+    FEMWeightMatrix_responseNorm: PETSc.Mat
+    RestrictorMatrix_forcing: PETSc.Mat        
+    RestrictorMatrix_response: PETSc.Mat
 
-    : meta private :
+    Private attributes
     ------------------
     _size : tuple
         Size of the operator.
@@ -452,21 +460,13 @@ class ResolventOperator(object):
             RestrictorMatrix_response):    
 
         """
-        Parameters
-        ----------
-        ResolventOperator : PETSc.Mat
-            Matrix representing the linear system.
-        FEMWeightMatrix_fullSystem : PETSc.Mat
-        FEMWeightMatrix_forcingNorm: PETSc.Mat
-        FEMWeightMatrix_responseNorm: PETSc.Mat
-        RestrictorMatrix_forcing: PETSc.Mat        
-        RestrictorMatrix_response: PETSc.Mat
+        
 
         """                 
 
         from petsc4py import PETSc                 
 
-        self._size = FEMWeightMatrix_forcingNorm.getSize()                 
+        self._size = FEMWeightMatrix_forcingNorm.getSize()    #: :meta private:            
 
         self._P_forcing  = RestrictorMatrix_forcing                 
         self._P_response = RestrictorMatrix_response                 
