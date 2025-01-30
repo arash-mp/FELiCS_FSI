@@ -31,12 +31,57 @@ class config(ABC):
         SettingsDict = self.getAllSettingsDict()
 
         # Add all default fields & subfields to self
-        for category in SettingsDict:
-            dict = dotdict()
-            for parameter in SettingsDict[category]:
-                dict[parameter]=SettingsDict[category][parameter]["default"]
-            setattr(self,category,dict)
+        # for category in SettingsDict:
+        #     dict = dotdict()
+        #     for parameter in SettingsDict[category]:
+        #         dict[parameter] = SettingsDict[category][parameter]["default"]
+        #     setattr(self,category,dict)
 
+    def parse_complex_list(self,data):
+        """
+        Convert a list of mixed strings and floats into complex numbers.
+        
+        Parameters:
+        ----------
+        data : list
+            A list containing strings or floats representing complex numbers.
+        
+        Returns:
+        -------
+        result : list
+            A list of complex numbers.
+        """
+        result = []
+        for item in data:
+            if isinstance(item, str):
+                try:
+                    result.append(complex(item))  # Convert string to complex
+                except ValueError:
+                    raise ValueError(f"Invalid complex number string: {item}")
+            elif isinstance(item, (int, float)):
+                result.append(item)  # Convert float/int to complex
+            else:
+                raise TypeError(f"Unsupported type {type(item)} in list. Must be str or float.")
+        return result
+    
+    def calculate_parameters(self):
+        self.BoundaryCondition.nVelocityComponents  = len(self.getVelocityComponents())
+        self.Case.SolutionList                      = self.getTransportedQuantityList()
+        self.BoundaryCondition.VelocityComponents   = self.getVelocityComponents()
+
+    def check_for_exception(self,parameter,value):
+        if parameter == 'BCsFilePath':
+            if not path.isfile(value):
+                raise Exception("BC file not found!")
+        if parameter == 'MeshFilePath':
+            if not path.isfile(value):
+                raise Exception("mesh file not found!")
+        # if parameter == 'MeanFlowFilePath':
+        #     if not path.isfile(value):
+        #         raise Exception("meanFlow file not found!")
+        if parameter == 'ExportFolder':
+            if not path.isdir(value):
+                raise Exception("export folder not found!")
 
     def importFromFile(self,configFilePath):
         """
@@ -47,83 +92,41 @@ class config(ABC):
         configFilePath : txt
             path to .json file containing parameters
         """
+        input_file =  open(configFilePath)
+        input_data =  json.load(input_file)
+        SettingsDict = self.getAllSettingsDict()
 
-        # TODO: check if we have a .json or .h5
-        # LOAD data accordingly
-        file = open(configFilePath)
-        data = json.load(file)
-
-        # TODO: put the rest of this in a validate_config method
-        #   1: Check if we have a modal or resolvent/input-output type of analysis
-        #   2: Load either "eigenvalueguess" or "omega" depending on the above
-        #   3: Call a method that checks if files and dir needed do exist
-        #       def check_exist_files_dirs(list_files, list_dirs):
-        #   4: Loop over the default config (self) and check if fields are in data
-        #       if missing, depending on field:
-        #           i. set the default and print warning
-        #           ii. error-print + shut down
-        #   5: call a method to set calculated settings (previously from case)
-
-        # Loop over the default dictionnary and overwrite with values from data
-        for category,parameters in data.items():
-            subcategory = eval("self."+category)
-            for parameter,value in parameters.items():
-                if parameter == 'EigenValueGuess':    # EigenValueGuess specific handling to import complex numbers
-                    if isinstance(value, list):
-                        if not value:
-                            value = []
-                        elif isinstance(value[0],str):
-                            value = list(map(complex,value))
-                        else:
-                            value = value
+        for category in SettingsDict:
+            dict = dotdict()
+            for parameter in SettingsDict[category]:
+                input_value = input_data[category][parameter]
+                self.check_for_exception(parameter,input_value)
+                if parameter in input_data[category]:
+                    if parameter in ["EigenValueGuess","Omegas"]:
+                        dict[parameter] = self.parse_complex_list(input_value)
                     else:
-                        if isinstance(value,str):
-                            value = [complex(value)]
-                        else:
-                            value = [value]
-                subcategory[parameter] = value
-
-                # TODO: the following in a dedicated method
-                if parameter == 'BCsFilePath':
-                    if not path.isfile(value):
-                        printWarning("BC file not found!")
-                if parameter == 'MeshFilePath':
-                    if not path.isfile(value):
-                        printWarning("mesh file not found!")
-                if parameter == 'MeanFlowFilePath':
-                    if not path.isfile(value):
-                        printWarning("meanFlow file not found!")
-                if parameter == 'ExportFolder':
-                    if not path.isdir(value):
-                        printWarning("export folder not found!")
-            subcategory = dotdict(subcategory)
-        file.close()
+                        dict[parameter] = input_value
+                else:
+                    dict[parameter] = SettingsDict[category][parameter]["default"]
+                    printWarning('no input found for parameter "'+parameter+'", setting default value: '+dict[parameter])
+            setattr(self,category,dict)
+        input_file.close()
 
         self.Mixture = MixtureClass(
             self.Case["MixtureFilePath"],
-            self.Case["SpeciesFilePath"],
-            )
-        
+            self.Case["SpeciesFilePath"]
+        )
         self.readDomainData(
             self.Case["MeshFilePath"],
             self.Case["nDim"],
             self.getExtendedTransportedQuantityList(),
             self.Case["CoordinateSystem"],
             self.Case["m"]
-            )
-        
-        self.debug = True # specify here if printDebug messages should be shown
-        
-        # calculated parameters: TODO: put in a method
-        self.BoundaryCondition.nVelocityComponents  = len(self.getVelocityComponents())
-        self.Case.SolutionList                      = self.getTransportedQuantityList()
-        self.BoundaryCondition.VelocityComponents   = self.getVelocityComponents()
-        # self.Mixture.SpeciesList                  = self.Mixture.getSpeciesList('transported') # not used, move to mixture
-        # self.reactionMechanism                    = reactionMechanismClass(self.Mixture.getReactionMechanism()['type']) 
+        )
 
-        # TODO: set in defaults
-        self.Numerics.NumericalScheme               = 'Continuous Galerkin' 
-        
+        self.debug = True # specify here if printDebug messages should be shown
+        self.calculate_parameters()
+        print()
 
     def importFromH5File(self, h5FileName):
         # TODO: load the parameters into a "data" dictionnary
@@ -226,15 +229,18 @@ class config(ABC):
                                 file.writelines(parameter+'='+str(eval('self.'+group+'.'+parameter))+'\n')
         file.close()
 
-
-    # @abstractmethod
     def getAllSettingsDict(self):
-        '''Function returning all boundary condition settings with default values'''
+        """
+        return SettingsDict of config object.
+
+        Returns
+        -------
+        SettingsDict : Dictionary 
+            Dictionary of input parameters structured in subcategories
+        """
         SettingsDict={
             'BoundaryCondition':{
-                'BCsFilePath':          {'datatype':str,    'default':''},
-                'nVelocityComponents':  {'datatype':int,    'default':2},
-                'VelocityComponents':   {'datatype':list,   'default':[]}
+                'BCsFilePath':          {'datatype':str,    'default':''}
             },
             'Case':{
                 'AnalysisMode':         {'datatype':str,    'default':'Modal'},
@@ -243,61 +249,45 @@ class config(ABC):
                 'm':                    {'datatype':int,    'default':0},
                 'MeshFilePath':         {'datatype':str,    'default':''},
                 'MixtureFilePath':      {'datatype':str,    'default':''},
-                'MolVisc':{'datatype':int,'default':0.0},
-                'MolViscModel':{'datatype':str,'default':'Constant'},
-                'nDim':{'datatype':int,'default':2},
-                'Reaction':{'datatype':bool,'default':False},
-                'SetOfEquations':{
-                    'datatype':dict,
+                'MolVisc':              {'datatype':int,    'default':0.0},
+                'MolViscModel':         {'datatype':str,    'default':'Constant'},
+                'nDim':                 {'datatype':int,    'default':2},
+                'Reaction':             {'datatype':bool,   'default':False},
+                'SetOfEquations':       {'datatype':dict,
                     'default':{
-                        'Momentum': {'Equation':'NSPrimitive','Variable':'u'},
-                        'Mass':     {'Equation':'Continuity','Variable':'p'},
-                        'Energy':   {'Equation':'None','Variable':'None'},
-                        'Species':  {'Equation':'None','Variable':'None'},
-                        'EquationOfState': {'Equation':'None','Variable':'None'}
+                        'Momentum':         {'Equation':'NSPrimitive',  'Variable':'u'},
+                        'Mass':             {'Equation':'Continuity',   'Variable':'p'},
+                        'Energy':           {'Equation':'None',         'Variable':'None'},
+                        'Species':          {'Equation':'None',         'Variable':'None'},
+                        'EquationOfState':  {'Equation':'None',         'Variable':'None'}
                     }
                 },
-                'SolutionList':{'datatype':list,'default':[]},
-                'SpeciesFilePath':{'datatype':str,'default':''},
-                'TransVelFluc':{'datatype':bool,'default':False},
-                'TurbulenceModel':{'datatype':str,'default':'None'}
+                'SpeciesFilePath':      {'datatype':str,    'default':''},
+                'TransVelFluc':         {'datatype':bool,   'default':False},
+                'TurbulenceModel':      {'datatype':str,    'default':'None'}
             },
             'Export':{
-                'ExportFolder':{'datatype':str,'default':''},
-                'hdf':{'datatype':bool,'default':False},
-                'mat':{'datatype':bool,'default':False},
-                'vtk':{'datatype':bool,'default':True}
+                'ExportFolder':         {'datatype':str,    'default':''},
+                'Video':                {'datatype':bool,   'default':False},
             },
             'FlowInput':{
-                'AveragingAxis':{'datatype':str,'default':'x'},
-                'AveragingDirection':{'datatype':str,'default':'None'},
-                'MeanFlowFilePath':{'datatype':str,'default':''},
+                'AveragingDirection':   {'datatype':str,    'default':'None'},
+                'MeanFlowFilePath':     {'datatype':str,    'default':''},
             },
             'IOResolvent':{
-                'ForcingBoundaryIndices':{'datatype':list,'default':[]},
-                'ForcingCoeff':{'datatype':list,'default':[]},
-                'ForcingMode':{'datatype':str,'default':'Body'},
-                'Omegas':{'datatype':list,'default':[]},
-                'ResponseCoeff':{'datatype':list,'default':[]}
+                'ForcingBoundaryIndices':   {'datatype':list,   'default':[]},
+                'ForcingCoeff':             {'datatype':list,   'default':[]},
+                'ForcingMode':              {'datatype':str,    'default':'Body'},
+                'Omegas':                   {'datatype':list,   'default':[]},
+                'ResponseCoeff':            {'datatype':list,   'default':[]}
             },
             'Numerics':{
-                'EigenValueGuess':{'datatype':list,'default':[1.0]},
-                'nCPU':{'datatype':int,'default':1},
-                'nSolut':{'datatype':int,'default':3},
-                'PolynomialOrder':{'datatype':dict,'default':{'u':'2'},'options':[1,2]},
-                'NumericalScheme': {'datatype':str,'default':'Continuous Galerkin'}
+                'EigenValueGuess':      {'datatype':list,   'default':[1.0]},
+                'nCPU':                 {'datatype':list,   'default':1},
+                'nSolut':               {'datatype':int,    'default':3},
+                'NumericalScheme':      {'datatype':str,    'default':'Continuous Galerkin'},
+                'PolynomialOrder':      {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]}
             }
-        # 'SpeciesList':{'datatype:list,default:[]}
-        # 'h5':{'datatype':bool,'default':True}
-        # 'dim':{'datatype':int,'default':0}
-        # 'MolViscPerturbModel':{'datatype':str,'default':'None'}
-        # 'Video':{'datatype':bool,'default':False}
-        # 'MeanFlowFilePath':{'datatype':str,'default':''}
-        # 'AveragingDirection':{'datatype':str,'default':'None'}
-        # 'AveragingAxis':{'datatype':str,'default':'x'}
-        # 'LinearAlgebraSolver':{'datatype':str,'default':'SLEPc'}
-        # 'Preconditioner':{'datatype':str,'default':'None'}
-        # 'Velfluc':{'datatype:bool','default':True}
         }
         return SettingsDict
 
