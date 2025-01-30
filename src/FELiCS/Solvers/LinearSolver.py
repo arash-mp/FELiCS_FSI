@@ -429,26 +429,15 @@ class ResolventOperator(object):
     ResolventOperator : PETSc.Mat
         Matrix representing the linear system.
     FEMWeightMatrix_fullSystem : PETSc.Mat
+        Weight matrix for full FEM system.
     FEMWeightMatrix_forcingNorm: PETSc.Mat
+        Weight matrix for forcing norm. Has default size of full system (surplus DOFs will be ignored).
     FEMWeightMatrix_responseNorm: PETSc.Mat
-    RestrictorMatrix_forcing: PETSc.Mat        
+        Weight matrix for response norm. Has default size of full system (surplus DOFs will be ignored).
+    RestrictorMatrix_forcing: PETSc.Mat    
+        Restrictor matrix for forcing. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
     RestrictorMatrix_response: PETSc.Mat
-
-    Private attributes
-    ------------------
-    _size : tuple
-        Size of the operator.
-    _P_forcing : PETSc.Mat
-        Forcing restriction matrix.
-    _P_response : PETSc.Mat
-        Response restriction matrix.
-    _W_FEM : PETSc.Mat
-        Weight matrix for FEM system.
-    _W_response : PETSc.Mat
-        Weight matrix for response norm.
-    _W_forcing : PETSc.Mat
-        Weight matrix for forcing norm.
-
+        Restrictor matrix for response. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
     """         
 
     def __init__(self,                      
