@@ -52,8 +52,8 @@ class LinearSolver:
 
     PROBLEM: If the methods are listed in the Class Docstring, they are listed on the right in the html in the clickabel overview. But as the methods are also defined with more elaborate docstrings below, they will appear twice. This a problem.
 
-    Methods overview (see below for more information)
-    -------------------------------------------------
+    Methods
+    -------
     solveGeneralEigenproblem(A, B, sigma=0.0, nev=5)
         Solves a generalized eigenvalue problem.
     solveSVDOfResolvent(A, sigma=0.0, nev=5)
@@ -424,8 +424,9 @@ class ResolventOperator(object):
     singular value decomposition of the system.         It contains a method called "mult", which is called by the eigenvalue solver, 
     and returns a matrix vector product of the represented matrix.         
 
+    
 
-    Private attributes
+    : meta private :
     ------------------
     _size : tuple
         Size of the operator.
@@ -448,7 +449,20 @@ class ResolventOperator(object):
             FEMWeightMatrix_forcingNorm,                      
             FEMWeightMatrix_responseNorm,  
             RestrictorMatrix_forcing,                      
-            RestrictorMatrix_response):                 
+            RestrictorMatrix_response):    
+
+        """
+        Parameters
+        ----------
+        ResolventOperator : PETSc.Mat
+            Matrix representing the linear system.
+        FEMWeightMatrix_fullSystem : PETSc.Mat
+        FEMWeightMatrix_forcingNorm: PETSc.Mat
+        FEMWeightMatrix_responseNorm: PETSc.Mat
+        RestrictorMatrix_forcing: PETSc.Mat        
+        RestrictorMatrix_response: PETSc.Mat
+
+        """                 
 
         from petsc4py import PETSc                 
 
