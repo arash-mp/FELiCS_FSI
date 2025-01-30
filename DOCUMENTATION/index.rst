@@ -3,8 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
    
-.. .. automodule:: Equations.Momentum.addMomentumEq
-..     :members:
+.. .. automodule::  :members:   :no-undoc-members:
+
+
 =====================================
 FELiCS2.0
 =====================================
