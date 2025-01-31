@@ -36,7 +36,59 @@ from FELiCS.Misc.functions import (
 
 
 class LinearSolver:
+    """Linear algebra utilities using PETSc and SLEPc.
 
+    This class provides methods for solving generalized eigenvalue problems (GEVP),
+    singular value decompositions (SVD), and linear systems efficiently using
+    PETSc and SLEPc.
+
+    Parameters
+    ----------
+    None
+
+    Attributes
+    ----------
+    None
+
+    PROBLEM: If the methods are listed in the Class Docstring, they are listed on the right in the html in the clickabel overview. But as the methods are also defined with more elaborate docstrings below, they will appear twice. This a problem.
+
+    Methods
+    -------
+    solveGeneralEigenproblem(A, B, sigma=0.0, nev=5)
+        Solves a generalized eigenvalue problem.
+    solveSVDOfResolvent(A, sigma=0.0, nev=5)
+        Computes the SVD of a resolvent operator.
+    solveEquationSystem(A, b)
+        Solves a linear system Ax = b.
+    solveTransposeEquationSystem(A, b)
+        Solves the transpose system A^T x = b.
+    createEquationSystemSolver(A)
+        Creates a reusable solver for a matrix.
+
+    Examples
+    --------
+    Solving a linear system:
+
+    >>> from petsc4py import PETSc
+    >>> A = PETSc.Mat().create()
+    >>> b = PETSc.Vec().create()
+    >>> x = LinearSolver.solveEquationSystem(A, b)
+
+    Solving a generalized eigenvalue problem:
+
+    >>> eigVals, eigVecs, error = LinearSolver.solveGeneralEigenproblem(
+    ...     A, B, sigma=0.0, nev=5)
+
+    Notes
+    -----
+    - Built for large-scale scientific problems using PETSc and SLEPc
+    - Requires `petsc4py` and `slepc4py` packages
+
+    See Also
+    --------
+    petsc4py.PETSc : Base PETSc functionality
+    slepc4py.SLEPc : Eigenvalue problem solvers
+    """
 
     @staticmethod
     def solveGeneralEigenproblem(
@@ -49,25 +101,36 @@ class LinearSolver:
                 adjoint=False, 
                 isForEigenProblem=True, 
                 ):
-
         """
-        Solves the generalized eigenvalue problem (GEVP) 
-        using the SLEPc and PETSc libraries.
+        Solve the generalized eigenvalue problem (GEVP) using the SLEPc and PETSc libraries.
 
-        Function arguments:
-        - A, B      Matrices defining the GEVP (A-wB)q = 0
-        - sigma     Eigenvalue guess
-        - nev       Number of eigenvalues to compute
-        - tol           (optional) precision of GEVP
-        - max_it    (optional) maximum number of iterations 
-        - adjoint   (bool, optional) if set to "True", compute the adjoint GEVP alongside the direct one
-        - isForEigenProblem, isIncompressible       (optional) flags that can be set to determine the kind of matrices  
+        Parameters
+        ----------
+        A : PETSc.Mat
+            Matrix defining the eigenvalue problem.
+        B : PETSc.Mat
+            Second matrix in the generalized eigenvalue problem.
+        sigma : float
+            Initial guess for the eigenvalue.
+        nev : int
+            Number of eigenvalues to compute.
+        tol : float, optional
+            Tolerance for convergence, by default 1.e-12.
+        max_it : int, optional
+            Maximum number of iterations, by default 200.
+        adjoint : bool, optional
+            Compute adjoint eigenvalues and eigenvectors if True, by default False.
+        isForEigenProblem : bool, optional
+            Flag indicating whether this is for an eigenproblem, by default True.
 
-        Function returns:
-        - eigVals           numpy array; computed eigenvalues
-        - eigVecs           numpy array, 2D; computed eigenvectors
-        - eigVecs_adjoint   numpy array, 2D, only returned if "adjoint=True"; computed left-hand-side eigenvectors
-        - error             numpy array; for each eigenproblem solution, relative residuum of the eigenproblem
+        Returns
+        -------
+        eigVals : numpy.ndarray
+            Computed eigenvalues.
+        eigVecs : numpy.ndarray
+            Computed eigenvectors.
+        error : numpy.ndarray
+            Relative residuals for the eigenvalue problem.
         """
 
         from slepc4py import SLEPc
@@ -131,6 +194,27 @@ class LinearSolver:
                 nev,
                 tol    = 1.e-16,
                 max_it = 200):
+        """
+        Solve the SVD of a resolvent operator.
+
+        Parameters
+        ----------
+        resolventOperator : PETSc.Mat
+            Resolvent operator for which the SVD is computed.
+        nev : int
+            Number of singular values to compute.
+        tol : float, optional
+            Tolerance for convergence, by default 1.e-16.
+        max_it : int, optional
+            Maximum number of iterations, by default 200.
+
+        Returns
+        -------
+        eigVals : numpy.ndarray
+            Singular values of the operator.
+        eigVecs : numpy.ndarray
+            Singular vectors corresponding to the singular values.
+        """
 
         from slepc4py import SLEPc
         from petsc4py import PETSc
@@ -162,32 +246,36 @@ class LinearSolver:
                 printDebug(True,f"SLEPc error relative: {eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)}")
                 #printDebug(True,f"SLEPc error absolute: {eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE)}")
             except:
-                printWarning("Could not access eigenpair nb ", nev+1, "!")
+                printWarning("Could not access eigenpair nb " + str(nev+1) +"!")
         
         eps.destroy()
         R.destroy()
         return eigVals, eigVecs
 
 
+
     @staticmethod
     def solveEquationSystem(
         A,
-        b):
+        b,
+        destroy=False):
 
-        """__solveEquationSystem  
-        Solves a linear equation system Ax=b, using the PETSc libraries.
-        
+        """
+        Solve a linear system of equations Ax = b using the PETSc libraries.
+
         Parameters
         ----------
-        A : PETSc matrix
-            matrix of the linear syste
-        b : PETSc vector
-            rhs of the linear system
-        
+        A : PETSc.Mat
+            Matrix representing the linear system.
+        b : PETSc.Vec
+            Right-hand side of the equation.
+        destroy : bool, optional
+            Whether to destroy the matrix and vector after solving, by default False.
+
         Returns
         -------
-        x:  numpy array
-            solution of the linear equation system
+        x : numpy.ndarray
+            Solution vector.
         """
         from petsc4py import PETSc
         solution,dummy = A.createVecs()
@@ -202,113 +290,286 @@ class LinearSolver:
         
         x = solution.getArray()
         
+        solver.getPC().destroy()
         solver.destroy()
-        A.destroy()
-        b.destroy()
         dummy.destroy()
+        solution.destroy()
+
+        if destroy:
+            A.destroy()
+            b.destroy()
         
         return x 
 
 
-
-
-class ResolventOperator(object):
+    @staticmethod
+    def solveTransposeEquationSystem(
+        A,
+        b,
+        destroy=False):
 
         """
-        This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed, to conduct the singular value decomposition of the system. 
-        It contains a method called "mult", which is called by the eigenvalue solver, and returns a matrix vector product of the represented matrix. 
+        Solve the transpose of a linear system A^T x = b using PETsC libraries.
 
-        Private attributes:
-        Protected attributes:
-        Public attributes:
+        Parameters
+        ----------
+        A : PETSc.Mat
+            Matrix representing the linear system.
+        b : PETSc.Vec
+            Right-hand side of the equation.
+        destroy : bool, optional
+            Whether to destroy the matrix and vector after solving, by default False.
+
+        Returns
+        -------
+        x : numpy.ndarray
+            Solution vector.
         """
+        from petsc4py import PETSc
+        solution,dummy = A.createVecs()
+        
+        solver = PETSc.KSP().create()
+        solver.setOperators(A)
+        solver.setType(PETSc.KSP.Type.PREONLY)
+        solver.getPC().setType(PETSc.PC.Type.LU)
+        solver.getPC().setFactorSolverType('mumps')
+        
+        solver.solveTranspose(b, solution)
+        
+        x = solution.getArray()
+        
+        solver.getPC().destroy()
+        solver.destroy()
+        dummy.destroy()
+        solution.destroy()
 
-        def __init__(self,
-                OP,
-                Qf,
-                Pu,
-                Cr,
-                B_forcing,
-                B_response):
-
-
-                from petsc4py import PETSc
-
-                self._size = Qf.getSize()
-
-                self._Z1, self._Z2  = OP.getVecs()
-                self._Y1, self._Y2  = Qf.getVecs()
-
-                self._Pu = Pu
-                self._Cr = Cr
-                self._Bf = B_forcing
-                self._Br = B_response
-
-                # create KSP1: This is a solver for the System OP*x=y.
-                self._ksp1 = PETSc.KSP().create()
-                self._ksp1.setOperators(OP)
-                self._ksp1.setType(PETSc.KSP.Type.PREONLY)
-                self._ksp1.getPC().setType(PETSc.PC.Type.LU)
-                self._ksp1.getPC().setFactorSolverType('mumps')
-                self._ksp1.setUp()
-                # create KSP2: This is a solver for the System conj(OP)*x=y. It will later be used to solve the transposed system, thus effectively solving OP^H *x=y, which is the Hermitian transpose of the system.
-                # TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). Thus we have to do an additional LU decomposistion.... Change as soon as this is included in the petsc4py! 
-                OP_H = OP.copy()   #create a new matrix, s.t. the original one will not be overwritten 
-                OP_H.conjugate()
-                OP_H.assemble()
-                self._ksp2 = PETSc.KSP().create()
-                self._ksp2.setOperators(OP_H)
-                self._ksp2.setType(PETSc.KSP.Type.PREONLY)
-                self._ksp2.getPC().setType(PETSc.PC.Type.LU)
-                self._ksp2.getPC().setFactorSolverType('mumps')
-                self._ksp2.setUp()
-                # create KSP3: This is a solver for the System Qf*x=y (will later be used to solve the transposed system).
-                #Qf.conjugate() #=> is this needed?
-                self._ksp3 = PETSc.KSP().create()
-                self._ksp3.setOperators(Qf)
-                self._ksp3.setType(PETSc.KSP.Type.PREONLY)
-                self._ksp3.getPC().setType(PETSc.PC.Type.LU)
-                self._ksp3.getPC().setFactorSolverType('mumps')
-                self._ksp3.setUp()
-
-        def getSize(self):
-                return self._size
-
-        def getVecs(self):
-                return self._Y1, self._Y2
-
-        def mult(self, mat, X, Y):
-                # returns Y=mat*X 
-                # mat = (Qf^T)^-1 * Pu^T * Bf^T * (OP^H)^-1 * Cr^T * Br * Cr * OP^-1 * Bf * Pu
-
-                self._Pu.mult            (X,        self._Z1)  #Z1 = Pu*X
-                self._Bf.mult            (self._Z1, self._Z2)  #Z2 = Bf*Z1
-                self._ksp1.solve         (self._Z2, self._Z1)  #Z1 = OP^-1 * Z2
-    
-                self._Cr.mult            (self._Z1, self._Z2)  #Z2 = Cr*Z1
-                self._Br.mult            (self._Z2, self._Z1)  #Z1 = Br*Z2
-                self._Cr.multTranspose   (self._Z1, self._Z2)  #Z2 = Cr^T * Z1
-                self._ksp2.solveTranspose(self._Z2, self._Z1)  #Z1 = (OP^H)^-1 * Z2
-
-                self._Bf.multTranspose   (self._Z1, self._Z2)  #Z2 = Bf^T * Z1
-                self._Pu.multTranspose   (self._Z2, self._Y1)  #Y1 = Pu^T * Z2
-                self._ksp3.solveTranspose(self._Y1, Y)         #Y  = (Qf^T)^-1 * Y1
-
-                return Y
-
-        def getKSP(self):
-                return self._ksp1
-
-        def destroySelf(self):
-                """Clean-up the disc space to avoid memory leaks. Should be called if several resolvent SVDs are done one after the other.""" 
-                self._ksp1.getPC().destroy()
-                self._ksp2.getPC().destroy()
-                self._ksp3.getPC().destroy()
-                self._ksp1.destroy()
-                self._ksp2.destroy()
-                self._ksp3.destroy()
+        if destroy:
+            A.destroy()
+            b.destroy()
+        
+        return x 
 
 
+    @staticmethod
+    def createEquationSystemSolver(
+        A):
 
+        """
+        Creates a KSP petsc solver to solve a linear equation system. This is useful if several linear equation systems with the same matrix are solved, 
+        since it stores the preconditioner and the calculation time is significantly reduced.
+        To solve the equation system use the method "solveEquationSystemWithPredefinedSolver".
+        
+        Parameters
+        ----------
+        A : PETSc matrix
+            matrix of the linear system
+        
+        Returns
+        -------
+        solver : PETSc.KSP
+            Preconfigured solver for the given matrix.
+        """
+        from petsc4py import PETSc
+        
+        solver = PETSc.KSP().create()
+        solver.setOperators(A)
+        solver.setType(PETSc.KSP.Type.PREONLY)
+        solver.getPC().setType(PETSc.PC.Type.LU)
+        solver.getPC().setFactorSolverType('mumps')
+        
+        return solver 
+
+
+    @staticmethod
+    def solveEquationSystemWithPredefinedSolver(
+        solver,
+        b,
+        destroy=False):
+
+        """
+        Solves a linear equation system Ax=b, using the PETSc libraries.
+        
+        Parameters
+        ----------
+        solver : PETSc KSP solver
+                 created with the method "createEquationSystemSolver"
+        b : PETSc.Vec
+            Right-hand side of the equation.
+        destroy : bool, optional
+            Whether to destroy the vector after solving, by default False.
+        
+        Returns
+        -------
+        x:  numpy array
+            Solution vector of the linear equation system.
+        """
+        from petsc4py import PETSc
+        solution = b.copy()
+        
+        solver.solve(b, solution)
+        
+        x = solution.getArray()
+
+        solution.destroy()
+
+        if destroy:
+            b.destroy()
+        
+        return x 
+
+
+class ResolventOperator(object):         
+    """         
+    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed, to conduct the 
+    singular value decomposition of the system.         It contains a method called "mult", which is called by the eigenvalue solver, 
+    and returns a matrix vector product of the represented matrix.         
+
+    Parameters
+    ----------
+    ResolventOperator : PETSc.Mat
+        Matrix representing the linear system.
+    FEMWeightMatrix_fullSystem : PETSc.Mat
+        Weight matrix for full FEM system.
+    FEMWeightMatrix_forcingNorm: PETSc.Mat
+        Weight matrix for forcing norm. Has default size of full system (surplus DOFs will be ignored).
+    FEMWeightMatrix_responseNorm: PETSc.Mat
+        Weight matrix for response norm. Has default size of full system (surplus DOFs will be ignored).
+    RestrictorMatrix_forcing: PETSc.Mat    
+        Restrictor matrix for forcing. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
+    RestrictorMatrix_response: PETSc.Mat
+        Restrictor matrix for response. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
+    """         
+
+    def __init__(self,                      
+            ResolventOperator, #A-i*omega*B                      
+            FEMWeightMatrix_fullSystem,                      
+            FEMWeightMatrix_forcingNorm,                      
+            FEMWeightMatrix_responseNorm,  
+            RestrictorMatrix_forcing,                      
+            RestrictorMatrix_response):    
+
+        """
+        
+
+        """                 
+
+        from petsc4py import PETSc                 
+
+        self._size = FEMWeightMatrix_forcingNorm.getSize()    #: :meta private:            
+
+        self._P_forcing  = RestrictorMatrix_forcing                 
+        self._P_response = RestrictorMatrix_response                 
+        self._W_FEM      = FEMWeightMatrix_fullSystem                 
+        self._W_response = FEMWeightMatrix_responseNorm                 
+        self._W_forcing  = FEMWeightMatrix_forcingNorm             
+
+        self._O1, self._O2  = ResolventOperator.getVecs()                 
+        self._R1, self._R2  = self._W_response.getVecs()                 
+        self._F1, self._F2  = self._W_forcing.getVecs()                 
+
+        # create KSP1: This is a solver for the System Operator*x=y.                 
+        self._ksp1 = PETSc.KSP().create()                 
+        self._ksp1.setOperators(ResolventOperator)                 
+        self._ksp1.setType(PETSc.KSP.Type.PREONLY)                 
+        self._ksp1.getPC().setType(PETSc.PC.Type.LU)                 
+        self._ksp1.getPC().setFactorSolverType('mumps')                 
+        self._ksp1.setUp()                 
+        # create KSP2: This is a solver for the System conj(OP)*x=y. It will later be used to solve the transposed system, thus 
+        #effectively solving OP^H *x=y, which is the Hermitian transpose of the system.                 
+        # TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). 
+        # Thus we have to do an additional LU decomposistion.... Change as soon as this is included in the petsc4py!                 
+        OP_H = ResolventOperator.copy()   #create a new matrix, s.t. the original one will not be overwritten                 
+        OP_H.conjugate()                 
+        OP_H.assemble()                 
+        self._ksp2 = PETSc.KSP().create()                 
+        self._ksp2.setOperators(OP_H)                 
+        self._ksp2.setType(PETSc.KSP.Type.PREONLY)                 
+        self._ksp2.getPC().setType(PETSc.PC.Type.LU)                 
+        self._ksp2.getPC().setFactorSolverType('mumps')                 
+        self._ksp2.setUp()                 
+        ## create KSP3: This is a solver for the System Q_f*x=y (will later be used to solve the transposed system).                 
+        ##Qf.conjugate() #=> is this needed?                 
+        self._ksp3 = PETSc.KSP().create()                 
+        self._ksp3.setOperators(FEMWeightMatrix_forcingNorm)                 
+        self._ksp3.setType(PETSc.KSP.Type.PREONLY)                 
+        self._ksp3.getPC().setType(PETSc.PC.Type.LU)                 
+        self._ksp3.getPC().setFactorSolverType('mumps')                 
+        self._ksp3.setUp()         
+
+    def getSize(self):
+        """
+        Return the size of the operator.
+
+        Returns
+        -------
+        tuple
+            The size of the operator (rows, columns).
+        """                 
+        return self._size         
+
+    def getVecs(self):
+        """
+        Get vectors for the operator.
+
+        Returns
+        -------
+        tuple
+            A tuple of PETSc.Vec objects used internally by the operator.
+        """                 
+        return self._F1, self._F2         
+
+    def mult(self, mat, X, Y):
+        """
+        Compute the matrix-vector product Y = mat * X.
+
+        Parameters
+        ----------
+        mat : PETSc.Mat
+            The matrix represented by the operator.
+        X : PETSc.Vec
+            Input vector.
+        Y : PETSc.Vec
+            Output vector.
+        """                 
+        # returns Y=mat*X                 
+        # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcing                 
+        self._P_forcing.mult            (X,        self._O1)  #O1 = P_f * X                 
+        self._W_FEM.mult                (self._O1, self._O2)  #O2 = W_FEM * O1                 
+        self._ksp1.solve                (self._O2, self._O1)  #O1 = OP^-1 * O2                    #
+
+        self._P_response.mult           (self._O1, self._R1)  #R1 = P_r * O1                 
+        self._W_response.mult           (self._R1, self._R2)  #R2 = W_r * R1                 
+        self._P_response.multTranspose  (self._R2, self._O1)  #O1 = P_r^T * R2                
+        self._ksp2.solveTranspose       (self._O1, self._O2)  #O2 = (OP^H)^-1 * O1                 
+
+        self._W_FEM.multTranspose       (self._O2, self._O1)  #O1 = W_FEM^T * O2                 
+        self._P_forcing.multTranspose   (self._O1, self._F1)  #F1  = P_f^T * O1                 
+        self._ksp3.solve                (self._F1, Y)         #Y  = (W_f^T)^-1 * F1                 
+
+        return Y         
+
+    def getKSP(self):   
+        """
+        Get the KSP solver for the operator.
+
+        Returns
+        -------
+        PETSc.KSP
+            KSP solver instance used by the operator.
+        """              
+        return self._ksp1         
+
+    def destroySelf(self):                 
+        """
+        Clean up resources to avoid memory leaks.
+
+        This method should be called if multiple resolvent SVDs are performed consecutively.
+        """
+        self._ksp1.getPC().destroy()                 
+        self._ksp2.getPC().destroy()                 
+        self._ksp3.getPC().destroy()                 
+        self._ksp1.destroy()                 
+        self._ksp2.destroy()                 
+        self._ksp3.destroy() 
 
 

@@ -53,6 +53,7 @@ class meanFlowClass(
             self._oneFieldArray,
             self._coordinateSystem, 
             )
+        self._customMeanFlowQuantities=[]
         
         #self.addDerivativeFieldsToMean()
         #self.initLamDiff()
@@ -95,7 +96,20 @@ class meanFlowClass(
         self.__VectorFunctionSpace = self._FEMSpaces.FunctionSpaceVectorVelocity
         self.__CoordinateSystemInputData = 'Unknown'
         # Check which type the input file is and read
-        if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'h5':
+        if self._param.FlowInput.MeanFlowFilePath == '':
+            # no mean flow file, set everything to zero
+            fieldDict = {}
+            nameListMean = self._getMeanFieldsToBeRead()    
+            for name in nameListMean:
+                if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
+                    fieldDict[name] = Function(
+                        self._FEMSpaces.FunctionSpaceVectorVelocity)
+                else:
+                    fieldDict[name] = Function(self._FEMSpaces.P2)
+
+            self._fieldDict = fieldDict
+
+        elif self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'h5':
             # In a hdf5 file the data is already interpolated on the mesh
             # from FELiCS.Import import importHDF5File
             self.importHDF5File2()
@@ -172,6 +186,7 @@ class meanFlowClass(
             self.getVertexValues()._fieldDict,
             group,
         )
+        filehandler.close()
 
     def exportBaseFlowAsHDF5(self, meanflowFilename = 'meanflow.h5'):
 
@@ -407,6 +422,7 @@ class meanFlowClass(
         for key in list(self.__RawFlowDict.keys()):
             if len(np.shape(self.__RawFlowDict[key])) > 1:
                 self.__RawFlowDict[key] = np.squeeze(self.__RawFlowDict[key])
+
 
     def InterpolateOnFELiCSMesh(self):
 
@@ -943,13 +959,19 @@ class meanFlowClass(
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEoS())
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadReaction())
-        
+       
+        listOfFieldsToBeRead.extend(self._customMeanFlowQuantities[:])
+
         # Delete duplicates
         listOfFieldsToBeRead = list(dict.fromkeys(listOfFieldsToBeRead))
         
         printDebug(True,"-- Mean flow fields to be read are: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
     
+
+    def addCustomMeanFlowQuantity(self,key):
+        self._customMeanFlowQuantities.append(key)
+
 
 class meanFlowVertexValues(fieldProperties):
     """

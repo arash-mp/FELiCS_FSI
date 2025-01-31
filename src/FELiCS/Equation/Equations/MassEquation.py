@@ -109,13 +109,24 @@ class MassEquation(EquationTemplate):
                 # Then add the forcing at the boundary
                 weakForm.add((-1 * iDot(self.n, mean.u_forcing * mean.rho) * iConj(self.X)).ufl_tens * self.J_hat * self.ds(boundary_index))
 
-    def addNonlinearExpression(self):
+
+    def addNonlinearExpression(self, weakForm, mean):
         """
         Add the nonlinear expression to the weak form.
 
         Notes
         -----
-        This function is currently empty and does not add any nonlinear terms
-        to the weak form.
+        This function builds the weak form of the nonlinear
+        mass conservation equation, in tensorial framework.
         """
-        pass
+
+        # ------------------------ Advection terms
+        # The advection term is integrated by parts
+        # Volume term from IbP
+        weakForm.add((  1j * iDot(iGrad(iConj(self.X)),mean.rho*mean.u)).ufl_tens * self.J_hat * dx)
+        # Boundary term from IbP
+        weakForm.add(( -1j * iDot(self.n,mean.rho*mean.u * iConj(self.X)) ).ufl_tens * self.J_hat * self.all_ds)
+    
+
+
+

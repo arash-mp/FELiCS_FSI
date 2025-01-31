@@ -600,10 +600,14 @@ class export:
             #time = solution['fluctuation/time'].attrs.get('frequency')
             #writer = open(solutFileName[:-3]+'_'+'.xmf', 'w')
             time = time.replace('+-','+')
-            if str(np.real(complex(time))) in solutFileName:
+            time = time.replace('[','')
+            time = time.replace(']','')
+            #Sophie: I put this here, in case the string is not a complex number. TODO: handle differently?
+            time_str = str(np.real(complex(time)))
+            if time_str in solutFileName:
                 filename = solutFileName[:-3] + '.xmf'
             else:
-                filename = solutFileName[:-3]+'_'+str(np.real(complex(time)))+'.xmf'
+                filename = solutFileName[:-3]+'_'+time_str+'.xmf'
 
             writer = open(filename, 'w')
 
@@ -612,7 +616,6 @@ class export:
 
             # write Mean Flow Information to Xdmf-File:
             self._XMFwriteMeanflow(writer, meanflowFileHandler)
-
 
             listOfPaths = []
             listOfKeyloc = []
