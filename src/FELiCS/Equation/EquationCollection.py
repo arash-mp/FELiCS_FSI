@@ -216,10 +216,6 @@ class EquationCollectionClass():
         # Get radial coordinate
         if self.__param.Case.CoordinateSystem in ['Cylindrical']:
             self.R = self.x[1]
-<<<<<<< HEAD
-            #self.ThirdVelCompIndex = self.__param.Case.SolutionList.index('ut')
-=======
->>>>>>> origin/development
         else:
             from petsc4py import PETSc
             self.R=Constant(self.__FEMSpaces.P2.mesh, PETSc.ScalarType(1.0))
@@ -303,75 +299,16 @@ class EquationCollectionClass():
             else:
                 raise Exception('Species transport equation type ' + self.__param.Case.SetOfEquations['Species']['Equation'] + ' unknown' )
 
-<<<<<<< HEAD
-        ## Add reactions
-        ## Reaction eqs not derived in tensor framework yet
-        #if self.__param.Case.Reaction:
-        #    if self.__param.Mixture.ReactionMechanism['type']=='WestbrookDryer_Max':
-        #        from FELiCS.Equation.Reactions.GlobalReaction import GlobalReaction
-        #        ReactionModelName="WestbrookDryer_Max" #to be put in param
-        #        Reaction=GlobalReaction(self.__param.Mixture.ReactionMechanism)
-        #        reactionRateMean=Reaction.computeMeanField(self.mean,self.__FEMSpaces.P2)
-        #        reactionForm=Reaction.addReaction(self.mean, X, fluctuationC, self.__param.Case.SolutionList)
-        #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Mixture.ReactionMechanism['type']=='TwoStep':
-        #        from FELiCS.Equation.Reactions.TwoStepReaction import TwoStepReaction
-        #        ReactionModelName="BFER" #to be put in param
-        #        Reaction=TwoStepReaction(ReactionModelName)
-        #        Reaction.computeMeanField(MF,self.__FEMSpaces.P2)
-        #        Reaction.testM()
-        #        reactionForm=Reaction.addReaction(MF, X, fluc, self.__param.Case.SolutionList,self.__FEMSpaces.P2)
-        #        self.A_vf.add(1j * reactionForm)
-        #    elif self.__param.Mixture.ReactionMechanism['type']=='2S-SM2':
-        #        from FELiCS.Equation.Reactions.c2sm2 import C2SM2
-        #        ReactionModelName="2S-SM2" #to be put in param
-        #        YCH4_lim=0.043*1e-4
-        #        #c2=C2SM2(YCH4_lim,2)
-        #        c2=self.mean.reaction
-        #        self.TR=fluctuationC.T
-        #        self.rhoR=fluctuationC.rho
-        #        self.YCH4R=fluctuationC.Y('CH4')
-        #        self.YO2R=fluctuationC.Y('O2')
-        #        self.YCOR=fluctuationC.Y('CO')
-        #        self.YCO2R=fluctuationC.Y('CO2')
-        #        self.v_eneR=X[self.__param.getTransportedQuantityList().index('rho')]
-        #        self.v_YCH4R=X[self.__param.getTransportedQuantityList().index('CH4')]
-        #        self.v_YO2R=X[self.__param.getTransportedQuantityList().index('O2')]
-        #        self.v_YH2OR=X[self.__param.getTransportedQuantityList().index('H2O')]
-        #        self.v_YCOR=X[self.__param.getTransportedQuantityList().index('CO')]
-        #        self.v_YCO2R=X[self.__param.getTransportedQuantityList().index('CO2')]
-        #        self.dQMean=self.mean.dQ
-        #        self.order=2
-        #        self.dx=dx
-
-        #        #c2.computeSensitivities(MeanFlow.T,
-        #        #                        MeanFlow.rho,
-        #        #                        MeanFlow.Y('CH4'),
-        #        #                        MeanFlow.Y('CO'),
-        #        #                        MeanFlow.Y('O2'),
-        #        #                        MeanFlow.Y('CO2'))
-
-        #        self.A_vf.add(1j * -c2.add_source_to_weak_form(self))
-        #    elif self.__param.Mixture.ReactionMechanism['type']=='NOx':
-        #        reaction=self.mean.reaction
-        #        self.v_NO  = X[self.__param.getTransportedQuantityList().index('NO')]
-        #        self.v_NO2 = X[self.__param.getTransportedQuantityList().index('NO2')]
-        #        self.T = self.mean.T
-        #        self.phi = self.mean.phi
-        #        self.A_vf.add(1j * -reaction.add_source_to_weak_form(self))
-
-=======
->>>>>>> origin/development
         if self.__param.Case.AnalysisMode in ['Resolvent']:
             self.computeResolventNorms     (X,self.__param,mean,fluctuationC)
             self.computeResolventFEMWeights(X,self.__param,mean,fluctuationC)
 
             # get indices for forcing and response, depending on used norm, to use when creating the shrinker matrices
-            index_u =  param.SolutionList.index('u')
+            index_u =  param.Case.SolutionList.index('u')
             if param.IOResolvent.ResponseNorm == 'Chu':
                 # TODO: (next step) initialize the indices with the name of the variables! Here: all are used, hard-coded, as a quick fix for Simon
-                #index_rho = param.SolutionList.index('rho')
-                #index_T   = param.SolutionList.index('T')
+                #index_rho = param.Case.SolutionList.index('rho')
+                #index_T   = param.Case.SolutionList.index('T')
                 ## add up index lists 
                 #size = 0
                 #for i in indexList:
@@ -821,125 +758,17 @@ class EquationCollectionClass():
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
-<<<<<<< HEAD
-            u_f = fluc.u
-            self.forcing_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
-            
-            # printDebug(True, "-- Using Chu's disturbance energy for forcing norm!")
-            # idu = 0
-            # idrho = param.Case.SolutionList.index('rho')
-            # idp = param.Case.SolutionList.index('p')
-            # self.forcing_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
-            # self.forcing_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
-            #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
-            # self.forcing_vf += (fluc.p*iConj(X[idp])/(mean.p*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-            # self.forcing_vf += (-1*fluc.p*iConj(X[idrho])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-            # self.forcing_vf += (-1*fluc.rho*iConj(X[idp])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-            
-            # Below are arbitrary weights used for debugging resolvent considering other norms
-            # than the TKE one:
-            # idrhoF = param.Case.SolutionList.index('rho')
-            # self.forcing_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
-            # idpF = param.Case.SolutionList.index('p')
-            # self.forcing_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
-            
-            #velocityForcingList = [0,0,0]
-            #for i in param.IOResolvent.ForcingCoeff:
-            #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
-            #    # than the number of velocity components, the coefficient must be applied
-            #    # to the corresponding (second level) subspace of u, which correspionds to the right
-            #    # velocity component. If not, it is applied directly to the first level subspace,
-            #    # and the index is corrected by param.BoundaryCondition.nVelocityComponents+1
-            #    
-            #    if i<param.BoundaryCondition.nVelocityComponents:
-            #        velocityForcingList[i] = self.hat[0][i]
-            #        #input(velocityForcingList)
-            #        #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
-            #        #self.forcing_vf += conj(self.X[0][i])*self.hat[0][i]*self.R*dx
-            #        
-            #    else:
-            #        self.forcing_vf += conj(self.X[i-param.BoundaryCondition.nVelocityComponents+1])*\
-            #            barrho*self.hat[i-param.BoundaryCondition.nVelocityComponents+1]*self.R*dx
-            #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
-            #u_f = Tensor(self.hat[0], self.coord_sys)
-            #self.forcing_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
-            ##self.A_vf.add(( 1j*iDot(iGrad(iConj(X), self.m),fluc_rhou) ).ufl_tens*coord.J_hat*dx)
-            #velocityComponents = Tensor(as_vector(velocityForcingList),self.coord_sys)
-            #self.forcing_vf += barrho *iDot iConj(X)*self.hat[0][i]*self.R*dx
-            #self.forcing_vf += temporalVF
-        # In boundary forcing, forcing is allowed only on the specific boundaries
-        elif param.IOResolvent.ForcingMode=='Boundary':
-            raise Exception("Boundary forcing not implemented for Resolvent analysis in Tensor notation")
-            # Create integrator for the respective boundaries
-#            Ds = ds(subdomain_data=self.boundaries)
-#
-#            # Loop through forcing coefficients (The coefficients that are chosen by the user,
-#            # corresponding to the respective equations)
-#            for i in param.IOResolvent.ForcingCoeff:
-#                # Loop through the forcing boundaries specified by the user
-#                for k in param.IOResolvent.ForcingBoundaryIndices:
-#                    # In case the coefficient correspionds to a velocity, i.e. i is smaller
-#                    # than the number of velocity components, the coefficient must be applied
-#                    # to the corresponding (second level) subspace of u, which correspionds to the right
-#                    # velocity component. If not, it is applied directly to the first level subspace,
-#                    # and the index is corrected by param.BoundaryCondition.nVelocityComponents+1
-#                    if i<param.BoundaryCondition.nVelocityComponents:
-#                        self.forcing_vf += self.X[0][i]*barrho*\
-#                            self.hat[0][i]*self.R*Ds(int(k))
-#                    else:
-#                        self.forcing_vf += self.X[i-param.BoundaryCondition.nVelocityComponents+1]*\
-#                            barrho*self.hat[i-param.BoundaryCondition.nVelocityComponents+1]\
-#                            *self.R*Ds(int(k))
-
-        # Loop through response coefficients (The coefficients that are chosen by the user,
-        # corresponding to the respective solutions to be maximized)
-        #velocityResponseList = [0,0,0]
-        #for i in param.IOResolvent.ResponseCoeff:
-        #    # In case the coefficient correspionds to a velocity, i.e. i is smaller
-        #    # than the number of velocity components, the coefficient must be applied
-        #    # to the corresponding (second level) subspace of u, which correspionds to the right
-        #    # velocity component. If not, it is applied directly to the first level subspace,
-        #    # and the index is corrected by param.BoundaryCondition.nVelocityComponents+1
-        #    if i<param.BoundaryCondition.nVelocityComponents:
-        #        velocityResponseList[i] = self.hat[0][i]
-        #   #     self.response_vf += conj(self.X[0][i])*barrho*self.hat[0][i]*self.R*dx
-        #    else:
-        #        self.response_vf += conj(self.X[i-param.BoundaryCondition.nVelocityComponents+1])*barrho*\
-        #            self.hat[i-param.BoundaryCondition.nVelocityComponents+1]*self.R*dx
-        #velocityComponents = Tensor(as_vector(velocityResponseList),self.coord_sys)
-        #temporalVF = (barrho*iDot(velocityComponents,iConj(X[0]))).ufl_tens*self.coord_sys.J_hat*dx
-        #self.response_vf += temporalVF
-        self.response_vf += (barrho*iDot(u_f,iConj(X[0]))).ufl_tens*self._coordinateSystem.J_hat*dx
-        
-        # printDebug(True, "-- Using Chu's disturbance energy for response norm!")
-        # idu = 0
-        # idrho = param.Case.SolutionList.index('rho')
-        # idp = param.Case.SolutionList.index('p')
-        # self.response_vf += (mean.rho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
-        # self.response_vf += (mean.p/(mean.rho*mean.rho)*mean.gamma/(mean.gamma-1)*\
-        #     fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx
-        # self.response_vf += (fluc.p*iConj(X[idp])/(mean.p*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-        # self.response_vf += (-1*fluc.p*iConj(X[idrho])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-        # self.response_vf += (-1*fluc.rho*iConj(X[idp])/(mean.rho*(mean.gamma-1))).ufl_tens*self._coordinateSystem.J_hat*dx
-        
-        # Below are arbitrary weights used for debugging resolvent considering other norms
-        # than the TKE one:
-        # idrhoF = param.Case.SolutionList.index('rho')
-        # self.response_vf += (fluc.rho*iConj(X[idrhoF])).ufl_tens*self._coordinateSystem.J_hat*dx
-        # idpF = param.Case.SolutionList.index('p')
-        # self.response_vf += (fluc.p*iConj(X[idpF])).ufl_tens*self._coordinateSystem.J_hat*dx
-=======
             if param.IOResolvent.ForcingNorm == 'Chu':
                 printDebug(True, "-- Using Chu's disturbance energy (rho-T) for forcing norm.")
-                idu   = param.SolutionList.index('u')
-                idrho = param.SolutionList.index('rho')
-                idT   = param.SolutionList.index('T')
+                idu   = param.Case.SolutionList.index('u')
+                idrho = param.Case.SolutionList.index('rho')
+                idT   = param.Case.SolutionList.index('T')
                 self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
                 self.forcing_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
                 self.forcing_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
             elif param.IOResolvent.ForcingNorm == 'TKE':
                 printDebug(True, "-- Using TKE energy for forcing norm.")
-                idu   = param.SolutionList.index('u')
+                idu   = param.Case.SolutionList.index('u')
                 self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
                 self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
             #TODO: raise Error!!!
@@ -951,20 +780,18 @@ class EquationCollectionClass():
           
         if param.IOResolvent.ResponseNorm == 'Chu':
             printDebug(True, "-- Using Chu's disturbance energy (rho-T) for response norm.")
-            idu =  param.SolutionList.index('u')
-            idrho = param.SolutionList.index('rho')
-            idT = param.SolutionList.index('T')
+            idu =  param.Case.SolutionList.index('u')
+            idrho = param.Case.SolutionList.index('rho')
+            idT = param.Case.SolutionList.index('T')
             self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
             self.response_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
             self.response_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
         elif param.IOResolvent.ResponseNorm == 'TKE':
             printDebug(True, "-- Using TKE energy for response norm.")
-            idu =  param.SolutionList.index('u')
+            idu =  param.Case.SolutionList.index('u')
             self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
         #TODO: raise Error!!
          
->>>>>>> origin/development
-
         ## Prompt variational formulations in debug mode
         #printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
         #printDebug(param.debug,'-- Resolvent response norm is '+ str(self.response_vf))
@@ -1009,8 +836,8 @@ class EquationCollectionClass():
         printDebug(True, '-- Setting boundary conditions...')
         self.__boundaries = self.__param.__boundaries__
         self.__bcDict = self.__param.__BCsDict__
-        VelocityComponents=self.__param.BoundaryCondition.VelocityComponents
-        SolutionList=self.__param.getTransportedQuantityList()
+        VelocityComponents = self.__param.BoundaryCondition.VelocityComponents
+        SolutionList = self.__param.Case.SolutionList
         for k,m in zip(list(self.__bcDict.keys()),range(0,len(self.__bcDict.keys()))):
             # Get index of equation/variable i_eqn and if needed the index of the velocity component
             if k[0]=='u' and k[1] in VelocityComponents:

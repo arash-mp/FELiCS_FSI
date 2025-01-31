@@ -54,10 +54,12 @@ class FEMSpacesClass():
         printDebug(True,'-- Defining FEMSpaces...')
 
         if param.Case.nDim==2:
-            element_shape = triangle
+            self.element_shape = triangle
         elif param.Case.nDim==3:
-            element_shape = tetrahedron
-        elementTypeStr='CG'
+            self.element_shape = tetrahedron
+        else:
+            raise Exception("nDim is neither 2 or 3!") 
+        self.elementTypeStr = 'CG'
         self._nVelocityComponents = param.BoundaryCondition.nVelocityComponents
 
         # refine the mesh to get the exportMesh:
