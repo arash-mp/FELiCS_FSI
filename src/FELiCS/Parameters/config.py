@@ -1,4 +1,4 @@
-from os import system, path
+import os
 from abc import ABC, abstractmethod
 from h5py import File
 import pdb
@@ -28,8 +28,8 @@ class dotdict(dict):
 class config(ABC):
     def __init__(self):
         self.__BCIDs__=[]   # move to BC
-        SettingsDict = self.getAllSettingsDict()
-
+        
+        # SettingsDict = self.getAllSettingsDict()
         # Add all default fields & subfields to self
         # for category in SettingsDict:
         #     dict = dotdict()
@@ -69,19 +69,11 @@ class config(ABC):
         self.Case.SolutionList                      = self.getTransportedQuantityList()
         self.BoundaryCondition.VelocityComponents   = self.getVelocityComponents()
 
-    def check_for_exception(self,parameter,value):
-        if parameter == 'BCsFilePath':
-            if not path.isfile(value):
-                raise Exception("BC file not found!")
-        if parameter == 'MeshFilePath':
-            if not path.isfile(value):
-                raise Exception("mesh file not found!")
-        # if parameter == 'MeanFlowFilePath':
-        #     if not path.isfile(value):
-        #         raise Exception("meanFlow file not found!")
-        if parameter == 'ExportFolder':
-            if not path.isdir(value):
-                raise Exception("export folder not found!")
+    def check_for_mandatory_files(self,config_dict,mandatory_files):
+        for field in mandatory_files:
+            filename = config_dict[field.split("_")[0]][field.split("_")[1]]
+            if not os.path.isfile(filename):
+                raise Exception(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
 
     def importFromFile(self,configFilePath):
         """
@@ -96,12 +88,12 @@ class config(ABC):
         input_data =  json.load(input_file)
         SettingsDict = self.getAllSettingsDict()
 
+        # Sets defaults and overwrite them by file values
         for category in SettingsDict:
             dict = dotdict()
             for parameter in SettingsDict[category]:
-                input_value = input_data[category][parameter]
-                self.check_for_exception(parameter,input_value)
                 if parameter in input_data[category]:
+                    input_value = input_data[category][parameter]
                     if parameter in ["EigenValueGuess","Omegas"]:
                         dict[parameter] = self.parse_complex_list(input_value)
                     else:
@@ -111,6 +103,17 @@ class config(ABC):
                     printWarning('no input found for parameter "'+parameter+'", setting default value: '+dict[parameter])
             setattr(self,category,dict)
         input_file.close()
+
+        # Check if mendatory files are there [category_name]
+        mandatory_files = ['BoundaryCondition_BCsFilePath','Case_MeshFilePath']
+        tmp, extension = os.path.splitext(input_data['FlowInput']['MeanFlowFilePath'])
+        if extension == ".fel":
+            mandatory_files.append('FlowInput_MeanFlowFilePath')
+        self.check_for_mandatory_files(input_data,mandatory_files)
+
+        # Check if export folder exists
+        if not os.path.isdir(input_data['Export']['ExportFolder']):
+            raise Exception(f"Export folder {input_data['Export']['ExportFolder']} not found.")
 
         self.Mixture = MixtureClass(
             self.Case["MixtureFilePath"],
@@ -278,6 +281,8 @@ class config(ABC):
                 'ForcingBoundaryIndices':   {'datatype':list,   'default':[]},
                 'ForcingCoeff':             {'datatype':list,   'default':[]},
                 'ForcingMode':              {'datatype':str,    'default':'Body'},
+                'ForcingNorm':              {'datatype':str,    'default':'TKE'},
+                'ResponseNorm':             {'datatype':str,    'default':'TKE'},
                 'Omegas':                   {'datatype':list,   'default':[]},
                 'ResponseCoeff':            {'datatype':list,   'default':[]}
             },
@@ -310,7 +315,7 @@ class config(ABC):
         #First define local BCsDict
         BCsDict={}
         filepath=self.BoundaryCondition.BCsFilePath
-        if not filepath == '' and path.isfile(filepath):
+        if not filepath == '' and os.path.isfile(filepath):
             self.BoundaryCondition.BCsFilePath = filepath
             for Variable in VariableList:
                 BCsDict[Variable]=[]
@@ -375,7 +380,7 @@ class config(ABC):
 
         Function returns:
         '''
-        if not MeshFile == '' and path.isfile(MeshFile):
+        if not MeshFile == '' and os.path.isfile(MeshFile):
             self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,dim,m)
             self.dim = self.__mesh__.gdim
         
