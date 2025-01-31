@@ -352,10 +352,6 @@ class config(ABC):
         self.__BCIDs__ = unique(felicsMesh.facet_tags.values)
         self.__boundaries__ = felicsMesh.facet_tags
 
-    def complete(self,BCVariableList):
-        # add completeness check later!
-        return EverythingPresent
-
     def readDomainData(self,Meshfile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
         ''' Input: Mesfile
         Read all the domain data from the meshfile '''
