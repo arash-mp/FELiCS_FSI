@@ -12,8 +12,7 @@ FELiCS -file settings.json
 
 The other two files are found via the corresponding entries of the `settings.json` file.
 
-WARNING: 
-only parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
+:warning: only parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
 
 # Specific formatting for FELiCS settings and json
 
@@ -78,7 +77,7 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "nCPU":             (int)   numbers of CPUs for parallel run (DEPRECATED)
     "nSolut":           (int)   number of solutions to compute (in "Modal" and "Resolvent" analysis)
     "NumericalScheme":  (str)   type of numerical scheme (only "Continuous Galerkin" currently implemented),
-    "PolynomialOrder": (dict)  sets the polynomial order for each transported variables (list must match "SetOfEquations"). e.g.: {"u": 2,"T": 1,"rho": 1}
+    "PolynomialOrder":  (dict)  sets the polynomial order for each transported variables (list must match "SetOfEquations"). e.g.: {"u": 2,"T": 1,"rho": 1}
 }}
 ```
 
