@@ -6,3 +6,4 @@ Welcome to How-To-Guides!
 :maxdepth: 1
 
 best_practices.md
+FELiCS_settings.md
