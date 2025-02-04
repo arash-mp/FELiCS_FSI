@@ -3,7 +3,7 @@
 Welcome to How-To-Guides!
 
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 0
 
 best_practices.md
 FELiCS_settings.md
