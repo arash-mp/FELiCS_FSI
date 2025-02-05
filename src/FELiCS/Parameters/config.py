@@ -28,14 +28,6 @@ class dotdict(dict):
 class config(ABC):
     def __init__(self):
         self.__BCIDs__=[]   # move to BC
-        
-        # SettingsDict = self.getAllSettingsDict()
-        # Add all default fields & subfields to self
-        # for category in SettingsDict:
-        #     dict = dotdict()
-        #     for parameter in SettingsDict[category]:
-        #         dict[parameter] = SettingsDict[category][parameter]["default"]
-        #     setattr(self,category,dict)
 
     def parse_complex_list(self,data):
         """
@@ -77,7 +69,9 @@ class config(ABC):
 
     def importFromFile(self,configFilePath):
         """
-        Imports parameters from .json file
+        Imports parameters from .json file.
+        If parameter is not found in .json file the default is used.
+        Calls check_for_mandatory_files() and calculate parameters().
 
         Parameters
         ----------
