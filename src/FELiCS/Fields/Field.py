@@ -174,6 +174,62 @@ class Field:
         self.setBoundaryConditions(bcs)
 
 
+    def smoothUflTensorExpression(self, ufl_expression, smoothFactor, bcs=[], restartSolver=False):
+        # evaluates an ufl expression by 
+        from FELiCS.Solvers.LinearSolver import LinearSolver
+        from FELiCS.Equation.WeakForm import WeakForm
+        import ufl 
+        import dolfinx
+
+        from   FELiCS.Misc.tensorUtils import (
+            Tensor,
+            iDot,
+            iConj,
+        )
+        ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
+        if not hasattr(self.space, 'FEMSmoothSolver') and not restartSolver:
+            test_FEM   = ufl.TestFunctions(self.space)
+            trial_FEM  = ufl.TrialFunctions(self.space)
+            matrix_ufl = WeakForm()
+            coordinateSystem = self.mesh.coordinateSystem
+            J_hat = coordinateSystem.J_hat
+            i=0
+            for test in test_FEM:
+                iTest = Tensor(test, coordinateSystem, containsTestFunction=True)
+                iFluc = Tensor(trial_FEM[i], coordinateSystem, containsFluctuation=True)
+                if iTest.order  == 1:
+                    matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iConj(iTest)))).ufl_tens*J_hat*dx)
+                elif iTest.order == 0:
+                    matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add((smoothFactor* iDot(iGrad(iFluc),iGrad(iConj(iTest)) )).ufl_tens*J_hat*dx)
+                else:
+                    ##LOGGING TODO (Sophie): throw error 
+                    print("ERROR, in 'Field.smoothTensorUflExpression'")
+                i+=1
+            try:
+                matrix_ufl.setCorrectMeshObject(self.mesh)
+            except:
+                pass
+            matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
+            matrix.assemble()
+            self.space.FEMSmoothSolver = LinearSolver.createEquationSystemSolver(matrix)
+
+        ## assemble rhs and solve equation system
+        expr_ufl = WeakForm(ufl_expression)
+        try:
+            expr_ufl.setCorrectMeshObject(self.mesh)
+        except:
+            pass
+        petscVec = petsc.assemble_vector(dolfinx.fem.form(-expr_ufl.rhs))
+        petscVec.assemble()
+        petsc.set_bc(petscVec, bcs)
+        self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
+        self.setBoundaryConditions(bcs)
+
+
+
+
 
     ### dunder methods for overloading arithmetic operators ###
     def __add__(self, other):
@@ -184,5 +240,6 @@ class Field:
             result.setCoefficientArray(self.getCoefficientArray() + other.getCoefficientArray())
             return result 
         return NotImplemented
+
 
 
