@@ -57,7 +57,7 @@ def writeCSVGains(param,gains):
                 line.append(gains[j,i])
             writer.writerow(line)
 
-def writeCSVSpectrum(param,spectrumDirect,spectrumAdjoint=0):
+def writeCSVSpectrum(param,spectrumDirect,spectrumAdjoint=[0]):
     ''' This file writes the gains to a CSV file in the solution directory provided by the user'''
     import csv
     printDebug(True, "-- Spectrum saved in: %s/spectrum.csv" % param.Export.ExportFolder)
