@@ -12,7 +12,7 @@ FELiCS -file settings.json
 
 The other two files are found via the corresponding entries of the `settings.json` file.
 
-**WARNING:** only parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
+>**Warning:** only the parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
 
 ## Specific formatting for FELiCS settings and json
 
@@ -24,7 +24,7 @@ The other two files are found via the corresponding entries of the `settings.jso
 
 ## Structure of the `settings.json` file
 
-**NOTE:** The name of the file is not important. 
+>**Note:** The name of the file is not important. 
 
 Below is the structure of the `settings.json` file, it is divided into 6 main sections:
 
@@ -42,7 +42,7 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "MixtureFilePath":  (str)   path to the "mixture.json" file.
     "MolVisc":          (float) laminar viscosity (dynamic viscosity in compressible!) value when "MolViscModel" is set to "Constant"
     "MolViscModel":     (str)   type of laminar viscosity model used for laminar viscosity,
-    "nDim":2,           (int)   number of dimensions resolved in the mesh.
+    "nDim":             (int)   number of dimensions resolved in the mesh.
     "Reaction":         (bool)  if using chemistry reactions (DEPRECATED?)
     "SetOfEquations":{  (dict)  with fields: [equations, variants, transported variables], all defined as str. e.g.:  
         "Momentum":{
@@ -117,7 +117,7 @@ An example of `boundaries.json` is
 
 ## Structure of the `mixture.json` file
 
-**WARNING:** No idea how this is organized. Please, Thomas or someone who knows about this completes the documentation here.
+>**Warning:** No idea how this is organized. Please, Thomas or someone who knows about this completes the documentation here.
 
 In most cases that do not involve chemistry modelling to describe the fluid, the `mixture.json` is not used and a dummy file is passed instead. The structure of the dummy file is:
 
