@@ -132,7 +132,9 @@ class MomentumEquation(EquationTemplate):
         # NOTE: The boundary term from the integration by part is ignored. This should impose a 
         # BC equivalent to stress-free BC
         
-        weakForm.add(( -1j*iInner(fluc.tau,iGrad(iConj(X)) )).ufl_tens*J_hat*dx)
+        weakForm.add(( -1j*iInner(fluc.tau,iGrad(iConj(X))  )).ufl_tens*J_hat*dx)
+
+        #weakForm.add(( 1j*iDot(iDot(fluc.tau,self.n ),iConj(X))).ufl_tens*J_hat*self.all_ds)
 
         ## ---- Visc. 3: viscous BC terms for input-output analysis
         if self.param.Case.AnalysisMode in ['Input-Output']:
