@@ -17,35 +17,24 @@
 # *
 # ********************
 '''
-from dolfinx.fem import (
-                            FunctionSpace,
-                            VectorFunctionSpace,
-                            )
+from dolfinx.fem import (   FunctionSpace,
+                            VectorFunctionSpace)
 
-from dolfinx.mesh import (
-                            refine,
-                        )
+from dolfinx.mesh import (refine)
 
-from ufl import (
-                    FiniteElement,
-                    MixedElement,
-                    triangle,
-                    VectorElement,
-                    tetrahedron,
-                    )
-from os import (
-    listdir,
-    remove,
-    mkdir,
-    )
+from ufl import (FiniteElement,
+                 MixedElement,
+                 triangle,
+                 VectorElement,
+                 tetrahedron)
 
-from FELiCS.Misc.functions import (
-                        printDebug,
-                        printError,
-                    )
-from FELiCS.GUI.BCsSettingsClass import (
-    FELiCSMesh,
-    )
+from os import (listdir,
+                remove,
+                mkdir)
+
+from FELiCS.Misc.functions import (printDebug,
+                                   printError)
+from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 
 from FELiCS.IO.Mapping import Mapping
 import pdb
@@ -64,12 +53,14 @@ class FEMSpacesClass():
         printDebug(True,'--------------------------------')
         printDebug(True,'-- Defining FEMSpaces...')
 
-        if param.BCs.dim==2:
-            self.element_shape=triangle
-        elif param.BCs.dim==3:
+        if param.Case.nDim==2:
+            self.element_shape = triangle
+        elif param.Case.nDim==3:
             self.element_shape = tetrahedron
-        self.elementTypeStr='CG'
-        self._nVelocityComponents = len(param.Case.getVelocityComponents())
+        else:
+            raise Exception("nDim is neither 2 or 3!") 
+        self.elementTypeStr = 'CG'
+        self._nVelocityComponents = param.BoundaryCondition.nVelocityComponents
 
         # refine the mesh to get the exportMesh:
         exportMesh_dolfinx = refine(mesh.dolfinxMesh)
@@ -81,7 +72,7 @@ class FEMSpacesClass():
 
         self.exportMesh = exportMesh
         
-        if 'u' in param.Case.getTransportedQuantityList():
+        if 'u' in param.getTransportedQuantityList():
             velocityOrder = param.Numerics.PolynomialOrder['u']
         else:
             velocityOrder = 2
@@ -104,7 +95,7 @@ class FEMSpacesClass():
         # Then a scalar for all the remaining quantities
         self.FunctionSpaceList=[]
         self.FunctionSpaceListExport=[]
-        for name in param.SolutionList:
+        for name in param.getTransportedQuantityList():
             printDebug(param.debug,"-- Adding finite element space of order "+
               f"{param.Numerics.PolynomialOrder[name]} for "+
               f"{name}")

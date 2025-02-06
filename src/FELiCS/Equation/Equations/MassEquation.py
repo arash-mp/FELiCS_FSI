@@ -49,7 +49,7 @@ class MassEquation(EquationTemplate):
             The parameters object.
         """
         # Disclaimers
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
+        if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             printError('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class
@@ -73,7 +73,7 @@ class MassEquation(EquationTemplate):
         """
         # ------------------------ Time derivative term used
         # Only if density fluctuations are considered
-        if 'rho' in self.param.Case.getTransportedQuantityList():
+        if 'rho' in self.param.getTransportedQuantityList():
             weakForm.add((self.fluc.rho * iConj(self.X)).ufl_tens * self.J_hat * dx)
 
     def addLinearExpression(self, weakForm, mean):

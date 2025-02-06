@@ -119,7 +119,7 @@ class fluctuationClass(
                                        )
         self._fieldDict = {}
         self._mean = mean
-        self._transportedQuantities = param.Case.getTransportedQuantityList()
+        self._transportedQuantities = param.getTransportedQuantityList()
 
         # _fluc is constructed. 
         self._fluc = TrialFunctions(FEMSpaces.VMixed)
@@ -173,8 +173,8 @@ class fluctuationClass(
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: '\
                      + str(notInitializedFields))
 
-        # print(self._param.Case.Mixture.getReactionMechanism()['type'])
-        if not self._param.Case.Mixture.getReactionMechanism()['type'] == 'None':
+        # print(self._param.Mixture.getReactionMechanism()['type'])
+        if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
             reactionHandler.__init__(
                 self,
                 )
@@ -285,7 +285,7 @@ class fluctuationSolutions(
         self._FEMSpaces = FEMSpaces
         self._mean = mean
         # self._fieldDict = mean.fieldDict
-        self._transportedQuantities = param.Case.getTransportedQuantityList()
+        self._transportedQuantities = param.getTransportedQuantityList()
         self._param = param
         export.__init__(
             self,
@@ -366,7 +366,7 @@ class fluctuationSolutions(
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
                 raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields)
 
-        if not self._param.Case.Mixture.getReactionMechanism()['type'] == 'None':
+        if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
             reactionHandler.__init__(
                 self,
                 )

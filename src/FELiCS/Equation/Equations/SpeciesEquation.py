@@ -48,7 +48,7 @@ class SpeciesEquation(EquationTemplate):
         - param (Parameter): The parameter object.
         """
         # Disclaimer
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
+        if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             printError('Discontinuous Galerkin not implemented in tensorial framework.')
     
         # initialize variables in template class
@@ -138,7 +138,7 @@ class SpeciesEquation(EquationTemplate):
             
     
         # ----------------------------------------- BC terms
-        for Boundary in param.BCs.getBCsDict()[species]:
+        for Boundary in param.__BCsDict__[species]:
             # If forcing is applied at the boundary, and Input-Output mode is on...
             if (param.Case.AnalysisMode in ['Input-Output']) and (Boundary['ID'] in param.IOResolvent.ForcingBoundaryIndices) :
                 # First subtract the part added in a few lines above...

@@ -26,7 +26,7 @@ def runModal(param, useGUI):
     ## INITIALIZATION
     #-----------------------------------------------------------------------
     # mesh
-    mesh=param.BCs.getMesh()
+    mesh=param.__mesh__
     # FEMSpaces
     FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
                 param,

@@ -171,7 +171,7 @@ class EquationCollectionClass():
 
         # Get all boundaries (So far hard coded)
         first_BC_flag=True
-        for Boundary in self.__param.BCs.getBCsDict()[list(self.__param.BCs.getBCsDict().keys())[0]]:
+        for Boundary in self.__param.__BCsDict__[list(self.__param.__BCsDict__.keys())[0]]:
             if first_BC_flag:
                 self.all_ds  = self.ds(Boundary['ID'])
                 first_BC_flag = False
@@ -198,8 +198,8 @@ class EquationCollectionClass():
         self.fluctuationC = fluctuationC
 
         fluc={}
-        for sol in self.__param.SolutionList:
-            fluc[sol]=self.hat[self.__param.SolutionList.index(sol)]
+        for sol in self.__param.Case.SolutionList:
+            fluc[sol]=self.hat[self.__param.Case.SolutionList.index(sol)]
         
         XTemp = TestFunctions(self.__FEMSpaces.VMixed)
         self.testFunctionsFEM = XTemp
@@ -223,7 +223,7 @@ class EquationCollectionClass():
         ## Initialize variational formulations
         self.A_vf = WeakForm()
         self.B_vf = WeakForm()
-        printDebug(True, '-- Primary fluctuations: %s.' % param.SolutionList)
+        printDebug(True, '-- Primary fluctuations: %s.' % param.Case.SolutionList)
  
         ## create equation list from parameters
         self.equationList = []
@@ -238,7 +238,7 @@ class EquationCollectionClass():
         if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
             from FELiCS.Equation.Equations.MassEquation import MassEquation
             varEq = self.__param.Case.SetOfEquations['Mass']['Variable']
-            idVar = param.SolutionList.index(varEq)
+            idVar = param.Case.SolutionList.index(varEq)
             printDebug(True, '-- Adding mass-balance equation for %s-fluc -> X[%d].' % (varEq,idVar))
 
             mass = MassEquation(self,fluctuationC,X[idVar],self.__param)
@@ -247,7 +247,7 @@ class EquationCollectionClass():
         if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
             from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
             varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
-            idVar = param.SolutionList.index(varEq)
+            idVar = param.Case.SolutionList.index(varEq)
             printDebug(True, '-- Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
 
             enthalpy = EnthalpyEquation(self,fluctuationC,X[idVar],self.__param)
@@ -257,7 +257,7 @@ class EquationCollectionClass():
             # printError('Energy equation in primitive form is not ready to use!!! Ask Simon Demange for updates.')
             from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
             varEq = self.__param.Case.SetOfEquations['Energy']['Variable']
-            idVar = param.SolutionList.index(varEq)
+            idVar = param.Case.SolutionList.index(varEq)
             printDebug(True, '-- Adding pressure-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
 
             energyP = EnergyPressureEquation(self,fluctuationC,X[idVar],self.__param)
@@ -278,9 +278,9 @@ class EquationCollectionClass():
             #sponge.addWeightMatrixExpression(self.B_vf,mean)
 
         # Add species transport equation for all transported species
-        transportedSpecies=self.__param.Case.Mixture.getSpeciesList('transported')
+        transportedSpecies=self.__param.Mixture.getSpeciesList('transported')
         for specie in transportedSpecies:
-            i_eqn=self.__param.SolutionList.index(specie)
+            i_eqn=self.__param.Case.SolutionList.index(specie)
             if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
                 from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
                 print('-- Adding equation for species '+specie + ' in non-conservative form')
@@ -304,11 +304,11 @@ class EquationCollectionClass():
             self.computeResolventFEMWeights(X,self.__param,mean,fluctuationC)
 
             # get indices for forcing and response, depending on used norm, to use when creating the shrinker matrices
-            index_u =  param.SolutionList.index('u')
+            index_u =  param.Case.SolutionList.index('u')
             if param.IOResolvent.ResponseNorm == 'Chu':
                 # TODO: (next step) initialize the indices with the name of the variables! Here: all are used, hard-coded, as a quick fix for Simon
-                #index_rho = param.SolutionList.index('rho')
-                #index_T   = param.SolutionList.index('T')
+                #index_rho = param.Case.SolutionList.index('rho')
+                #index_T   = param.Case.SolutionList.index('T')
                 ## add up index lists 
                 #size = 0
                 #for i in indexList:
@@ -760,15 +760,15 @@ class EquationCollectionClass():
             printWarning("  -- Currently only the L2 norm is implemented for both forcing and response in a resolvent analysis. Here, ALL velocity components are taken into account, no matter the choices in the settings file.")
             if param.IOResolvent.ForcingNorm == 'Chu':
                 printDebug(True, "-- Using Chu's disturbance energy (rho-T) for forcing norm.")
-                idu   = param.SolutionList.index('u')
-                idrho = param.SolutionList.index('rho')
-                idT   = param.SolutionList.index('T')
+                idu   = param.Case.SolutionList.index('u')
+                idrho = param.Case.SolutionList.index('rho')
+                idT   = param.Case.SolutionList.index('T')
                 self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
                 self.forcing_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
                 self.forcing_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
             elif param.IOResolvent.ForcingNorm == 'TKE':
                 printDebug(True, "-- Using TKE energy for forcing norm.")
-                idu   = param.SolutionList.index('u')
+                idu   = param.Case.SolutionList.index('u')
                 self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
                 self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
             #TODO: raise Error!!!
@@ -780,19 +780,18 @@ class EquationCollectionClass():
           
         if param.IOResolvent.ResponseNorm == 'Chu':
             printDebug(True, "-- Using Chu's disturbance energy (rho-T) for response norm.")
-            idu =  param.SolutionList.index('u')
-            idrho = param.SolutionList.index('rho')
-            idT = param.SolutionList.index('T')
+            idu =  param.Case.SolutionList.index('u')
+            idrho = param.Case.SolutionList.index('rho')
+            idT = param.Case.SolutionList.index('T')
             self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
             self.response_vf += (mean.R_spe*mean.T/mean.rho * fluc.rho*iConj(X[idrho])).ufl_tens*self._coordinateSystem.J_hat*dx     # density term
             self.response_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T*iConj(X[idT])).ufl_tens*self._coordinateSystem.J_hat*dx       # Temperature term
         elif param.IOResolvent.ResponseNorm == 'TKE':
             printDebug(True, "-- Using TKE energy for response norm.")
-            idu =  param.SolutionList.index('u')
+            idu =  param.Case.SolutionList.index('u')
             self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
         #TODO: raise Error!!
          
-
         ## Prompt variational formulations in debug mode
         #printDebug(param.debug,'-- Resolvent forcing norm is '+ str(self.forcing_vf))
         #printDebug(param.debug,'-- Resolvent response norm is '+ str(self.response_vf))
@@ -816,7 +815,7 @@ class EquationCollectionClass():
                 
                 #  Get the corresponding variable and its index in X
                 varName = param.Case.SetOfEquations[eqID]['Variable']
-                varIndex = param.SolutionList.index(varName)
+                varIndex = param.Case.SolutionList.index(varName)
                 
                 # Dynamically get the corresponding fluctuation field
                 fluc_var = getattr(fluc, '%s' % varName)
@@ -835,10 +834,10 @@ class EquationCollectionClass():
 
         printDebug(True, '--------------------------------')
         printDebug(True, '-- Setting boundary conditions...')
-        self.__boundaries = self.__param.BCs.getBoundaries()
-        self.__bcDict = self.__param.BCs.getBCsDict()
-        VelocityComponents=self.__param.Case.getVelocityComponents()
-        SolutionList=self.__param.SolutionList#Case.getTransportedQuantityList()
+        self.__boundaries = self.__param.__boundaries__
+        self.__bcDict = self.__param.__BCsDict__
+        VelocityComponents = self.__param.BoundaryCondition.VelocityComponents
+        SolutionList = self.__param.Case.SolutionList
         for k,m in zip(list(self.__bcDict.keys()),range(0,len(self.__bcDict.keys()))):
             # Get index of equation/variable i_eqn and if needed the index of the velocity component
             if k[0]=='u' and k[1] in VelocityComponents:
@@ -863,7 +862,7 @@ class EquationCollectionClass():
                             #BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component), 1, self.boundaries.find(self.__bcDict[k][mm]['ID'])), self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component)) )
 
                     else:
-                        if len(self.__param.Case.getTransportedQuantityList()) == 1:
+                        if len(self.__param.getTransportedQuantityList()) == 1:
 
                             #if __version__.find('0.4.1') >= 0:
                             BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.FunctionSpaceList[i_eqn], 1, self.boundaries.indices[self.boundaries.values==self.__bcDict[k][mm]['ID']]), self.__FEMSpaces.FunctionSpaceList[i_eqn]) )
@@ -882,7 +881,6 @@ class EquationCollectionClass():
         # provides a quadratic matrix, with the size of the solution space (VMixed)
         # has the response restrictor values, given with the mean field, on the diagonal
         from petsc4py import PETSc
-        
         
         # First we check if forcingDom is zero everywhere = no spatial limiter
         if max(self.__mean.getVertexValues().responseDomain, key=abs) == 0:
