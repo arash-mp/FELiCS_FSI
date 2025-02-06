@@ -17,9 +17,10 @@ The other two files are found via the corresponding entries of the `settings.jso
 ## Specific formatting for FELiCS settings and json
 
 * **booleans** are defined in lowercase (`true`, `false`)
+* json accepts exponential notation for all float-type inputs
 * **`EigenValueGuess`** and **`Omegas`** can be either
   * list of strings for complex values: `["1.0-1j", "1.0+1j"]`
-  * list of floats for real values: `[1, 2]`
+  * list of floats for real values: `[1, 2, 1.2e-1]`
   * combinations of the two above: `["1.0-1j", 1, "1.0+1j", 2]`
 
 ## Structure of the `settings.json` file
