@@ -80,14 +80,11 @@ class config(ABC):
                 'ForcingMode':              {'datatype':str,    'default':'Body'},
                 'ForcingNorm':              {'datatype':str,    'default':'TKE'},
                 'ResponseNorm':             {'datatype':str,    'default':'TKE'},
-                'Omegas':                   {'datatype':list,   'default':[]},
-                'ResponseCoeff':            {'datatype':list,   'default':[]}
+                'Omegas':                   {'datatype':list,   'default':[]}
             },
             'Numerics':{
                 'EigenValueGuess':      {'datatype':list,   'default':[1.0]},
-                'nCPU':                 {'datatype':list,   'default':1},
                 'nSolut':               {'datatype':int,    'default':3},
-                'NumericalScheme':      {'datatype':str,    'default':'Continuous Galerkin'},
                 'PolynomialOrder':      {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]}
             }
         }
@@ -162,7 +159,7 @@ class config(ABC):
             setattr(self,category,dict)
         input_file.close()
 
-        # Check if mendatory files are there [category_name]
+        # Check if mandatory files are there [category_name]
         mandatory_files = ['BoundaryCondition_BCsFilePath','Case_MeshFilePath']
         tmp, extension = os.path.splitext(input_data['FlowInput']['MeanFlowFilePath'])
         if extension == ".fel":
@@ -186,7 +183,8 @@ class config(ABC):
         )
 
         self.debug = True # specify here if printDebug messages should be shown
-        self.nCPU = 1 # hardcoded for now, move to defaults later
+        self.Numerics.nCPU = 1 # hardcoded for now, move to defaults later
+        self.Numerics.NumericalScheme = "Continuous Galerkin" # hardcoded for now, move to defaults later
         self.calculate_parameters()
         print()
 
