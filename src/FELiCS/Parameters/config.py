@@ -29,6 +29,70 @@ class config(ABC):
     def __init__(self):
         self.__BCIDs__=[]   # move to BC
 
+    def getAllSettingsDict(self):
+        """
+        return SettingsDict of config object.
+
+        Returns
+        -------
+        SettingsDict : Dictionary 
+            Dictionary of input parameters structured in subcategories
+        """
+        SettingsDict={
+            'BoundaryCondition':{
+                'BCsFilePath':          {'datatype':str,    'default':''}
+            },
+            'Case':{
+                'AnalysisMode':         {'datatype':str,    'default':'Modal'},
+                'CalculateAdjoint':     {'datatype':bool,   'default':True},
+                'CoordinateSystem':     {'datatype':str,    'default':'Cartesian'},
+                'm':                    {'datatype':int,    'default':0},
+                'MeshFilePath':         {'datatype':str,    'default':''},
+                'MixtureFilePath':      {'datatype':str,    'default':''},
+                'MolVisc':              {'datatype':int,    'default':0.0},
+                'MolViscModel':         {'datatype':str,    'default':'Constant'},
+                'nDim':                 {'datatype':int,    'default':2},
+                'Reaction':             {'datatype':bool,   'default':False},
+                'SetOfEquations':       {'datatype':dict,
+                    'default':{
+                        'Momentum':         {'Equation':'NSPrimitive',  'Variable':'u'},
+                        'Mass':             {'Equation':'Continuity',   'Variable':'p'},
+                        'Energy':           {'Equation':'None',         'Variable':'None'},
+                        'Species':          {'Equation':'None',         'Variable':'None'},
+                        'EquationOfState':  {'Equation':'None',         'Variable':'None'}
+                    }
+                },
+                'SpeciesFilePath':      {'datatype':str,    'default':''},
+                'TransVelFluc':         {'datatype':bool,   'default':False},
+                'TurbulenceModel':      {'datatype':str,    'default':'None'}
+            },
+            'Export':{
+                'ExportFolder':         {'datatype':str,    'default':''},
+                'Video':                {'datatype':bool,   'default':False},
+            },
+            'FlowInput':{
+                'AveragingDirection':   {'datatype':str,    'default':'None'},
+                'MeanFlowFilePath':     {'datatype':str,    'default':''},
+            },
+            'IOResolvent':{
+                'ForcingBoundaryIndices':   {'datatype':list,   'default':[]},
+                'ForcingCoeff':             {'datatype':list,   'default':[]},
+                'ForcingMode':              {'datatype':str,    'default':'Body'},
+                'ForcingNorm':              {'datatype':str,    'default':'TKE'},
+                'ResponseNorm':             {'datatype':str,    'default':'TKE'},
+                'Omegas':                   {'datatype':list,   'default':[]},
+                'ResponseCoeff':            {'datatype':list,   'default':[]}
+            },
+            'Numerics':{
+                'EigenValueGuess':      {'datatype':list,   'default':[1.0]},
+                'nCPU':                 {'datatype':list,   'default':1},
+                'nSolut':               {'datatype':int,    'default':3},
+                'NumericalScheme':      {'datatype':str,    'default':'Continuous Galerkin'},
+                'PolynomialOrder':      {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]}
+            }
+        }
+        return SettingsDict
+
     def parse_complex_list(self,data):
         """
         Convert a list of mixed strings and floats into complex numbers.
@@ -122,6 +186,7 @@ class config(ABC):
         )
 
         self.debug = True # specify here if printDebug messages should be shown
+        self.nCPU = 1 # hardcoded for now, move to defaults later
         self.calculate_parameters()
         print()
 
@@ -225,70 +290,6 @@ class config(ABC):
                             else:
                                 file.writelines(parameter+'='+str(eval('self.'+group+'.'+parameter))+'\n')
         file.close()
-
-    def getAllSettingsDict(self):
-        """
-        return SettingsDict of config object.
-
-        Returns
-        -------
-        SettingsDict : Dictionary 
-            Dictionary of input parameters structured in subcategories
-        """
-        SettingsDict={
-            'BoundaryCondition':{
-                'BCsFilePath':          {'datatype':str,    'default':''}
-            },
-            'Case':{
-                'AnalysisMode':         {'datatype':str,    'default':'Modal'},
-                'CalculateAdjoint':     {'datatype':bool,   'default':True},
-                'CoordinateSystem':     {'datatype':str,    'default':'Cartesian'},
-                'm':                    {'datatype':int,    'default':0},
-                'MeshFilePath':         {'datatype':str,    'default':''},
-                'MixtureFilePath':      {'datatype':str,    'default':''},
-                'MolVisc':              {'datatype':int,    'default':0.0},
-                'MolViscModel':         {'datatype':str,    'default':'Constant'},
-                'nDim':                 {'datatype':int,    'default':2},
-                'Reaction':             {'datatype':bool,   'default':False},
-                'SetOfEquations':       {'datatype':dict,
-                    'default':{
-                        'Momentum':         {'Equation':'NSPrimitive',  'Variable':'u'},
-                        'Mass':             {'Equation':'Continuity',   'Variable':'p'},
-                        'Energy':           {'Equation':'None',         'Variable':'None'},
-                        'Species':          {'Equation':'None',         'Variable':'None'},
-                        'EquationOfState':  {'Equation':'None',         'Variable':'None'}
-                    }
-                },
-                'SpeciesFilePath':      {'datatype':str,    'default':''},
-                'TransVelFluc':         {'datatype':bool,   'default':False},
-                'TurbulenceModel':      {'datatype':str,    'default':'None'}
-            },
-            'Export':{
-                'ExportFolder':         {'datatype':str,    'default':''},
-                'Video':                {'datatype':bool,   'default':False},
-            },
-            'FlowInput':{
-                'AveragingDirection':   {'datatype':str,    'default':'None'},
-                'MeanFlowFilePath':     {'datatype':str,    'default':''},
-            },
-            'IOResolvent':{
-                'ForcingBoundaryIndices':   {'datatype':list,   'default':[]},
-                'ForcingCoeff':             {'datatype':list,   'default':[]},
-                'ForcingMode':              {'datatype':str,    'default':'Body'},
-                'ForcingNorm':              {'datatype':str,    'default':'TKE'},
-                'ResponseNorm':             {'datatype':str,    'default':'TKE'},
-                'Omegas':                   {'datatype':list,   'default':[]},
-                'ResponseCoeff':            {'datatype':list,   'default':[]}
-            },
-            'Numerics':{
-                'EigenValueGuess':      {'datatype':list,   'default':[1.0]},
-                'nCPU':                 {'datatype':list,   'default':1},
-                'nSolut':               {'datatype':int,    'default':3},
-                'NumericalScheme':      {'datatype':str,    'default':'Continuous Galerkin'},
-                'PolynomialOrder':      {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]}
-            }
-        }
-        return SettingsDict
 
     def initBCsDict(self,VariableList):
         ''' Initialize BCsDict '''

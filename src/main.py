@@ -29,7 +29,7 @@ from runModal       import  runModal
 from runResolvent   import  runResolvent  
 from runInputOutput import  runInputOutput
 
-from FELiCS.GUI.GUI import FELiCS_GUI
+
 from FELiCS.Parameters.config import config
 
 # check if '-file' argument was added to run from file only. else start the GUI
