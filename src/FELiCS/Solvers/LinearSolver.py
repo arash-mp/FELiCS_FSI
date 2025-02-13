@@ -420,20 +420,24 @@ class LinearSolver:
 
 class ResolventOperator(object):         
     """         
-    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed, to conduct the 
-    singular value decomposition of the system.         It contains a method called "mult", which is called by the eigenvalue solver, 
-    and returns a matrix vector product of the represented matrix.         
+    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed.
+
+    It is used to conduct the singular value decomposition of the system for resolvent analysis. It contains a method called "mult", which is called by the eigenvalue solver, 
+    and returns a matrix vector product of the represented matrix. 
+    The resolvent operator requires additional full-size quadratic matrices to calculate the forcing and response norms, as well as (possibly rectangular) restrictor matrices that limit the spatial domain and variable dimensions.     
+
+    More information can be found [here](../GoverningEquations/resolvent.md).   
 
     Parameters
     ----------
     ResolventOperator : PETSc.Mat
         Matrix representing the linear system.
     FEMWeightMatrix_fullSystem : PETSc.Mat
-        Weight matrix for full FEM system.
+        Weight matrix for the full FEM system.
     FEMWeightMatrix_forcingNorm: PETSc.Mat
-        Weight matrix for forcing norm. Has default size of full system (surplus DOFs will be ignored).
+        Weight matrix for the forcing norm. Has default size of full system (surplus DOFs will be ignored).
     FEMWeightMatrix_responseNorm: PETSc.Mat
-        Weight matrix for response norm. Has default size of full system (surplus DOFs will be ignored).
+        Weight matrix for the response norm. Has default size of full system (surplus DOFs will be ignored).
     RestrictorMatrix_forcing: PETSc.Mat    
         Restrictor matrix for forcing. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
     RestrictorMatrix_response: PETSc.Mat
@@ -555,7 +559,7 @@ class ResolventOperator(object):
         Returns
         -------
         PETSc.KSP
-            KSP solver instance used by the operator.
+            KSP solver instance that solves the resolvent equation (without its conjuage transpose). Can be used to get the response to a given forcing.
         """              
         return self._ksp1         
 
