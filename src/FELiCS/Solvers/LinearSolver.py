@@ -81,13 +81,8 @@ class LinearSolver:
 
     Notes
     -----
-    - Built for large-scale scientific problems using PETSc and SLEPc
-    - Requires `petsc4py` and `slepc4py` packages
+    - consists of only static methods that don't need an instance ("object") of this class. Call the methods via "LinearSolver.method()".
 
-    See Also
-    --------
-    petsc4py.PETSc : Base PETSc functionality
-    slepc4py.SLEPc : Eigenvalue problem solvers
     """
 
     @staticmethod
@@ -199,8 +194,8 @@ class LinearSolver:
 
         Parameters
         ----------
-        resolventOperator : PETSc.Mat
-            Resolvent operator for which the SVD is computed.
+        resolventOperator : ResolventOperator
+            Resolvent operator object (see class description below) for which the SVD is computed.
         nev : int
             Number of singular values to compute.
         tol : float, optional
@@ -309,7 +304,7 @@ class LinearSolver:
         destroy=False):
 
         """
-        Solve the transpose of a linear system A^T x = b using PETsC libraries.
+        Solve the transpose of a linear system A^T x = b using PETSc libraries.
 
         Parameters
         ----------
@@ -387,16 +382,16 @@ class LinearSolver:
         destroy=False):
 
         """
-        Solves a linear equation system Ax=b, using the PETSc libraries.
+        Solves a linear equation system Ax=b, using the PETSc libraries and a predefined solver.
         
         Parameters
         ----------
         solver : PETSc KSP solver
-                 created with the method "createEquationSystemSolver"
+                 can be created with the method "createEquationSystemSolver"
         b : PETSc.Vec
             Right-hand side of the equation.
         destroy : bool, optional
-            Whether to destroy the vector after solving, by default False.
+            Whether to destroy the vector after solving, by default False. Can be useful by repetitive computations to avoid memory leaks.
         
         Returns
         -------
@@ -420,13 +415,13 @@ class LinearSolver:
 
 class ResolventOperator(object):         
     """         
-    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed.
+    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its conjugate transposed.
 
     It is used to conduct the singular value decomposition of the system for resolvent analysis. It contains a method called "mult", which is called by the eigenvalue solver, 
     and returns a matrix vector product of the represented matrix. 
     The resolvent operator requires additional full-size quadratic matrices to calculate the forcing and response norms, as well as (possibly rectangular) restrictor matrices that limit the spatial domain and variable dimensions.     
 
-    More information can be found [here](../GoverningEquations/resolvent.md).   
+    More information can be found in our documentation on the governint equations ("Implementation of resolvent operators").   
 
     Parameters
     ----------
