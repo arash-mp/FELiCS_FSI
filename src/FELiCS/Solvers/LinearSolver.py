@@ -50,7 +50,6 @@ class LinearSolver:
     ----------
     None
 
-    PROBLEM: If the methods are listed in the Class Docstring, they are listed on the right in the html in the clickabel overview. But as the methods are also defined with more elaborate docstrings below, they will appear twice. This a problem.
 
     Methods
     -------
@@ -64,6 +63,11 @@ class LinearSolver:
         Solves the transpose system A^T x = b.
     createEquationSystemSolver(A)
         Creates a reusable solver for a matrix.
+
+    Notes
+    -----
+    Consists of only static methods that don't need an instance ("object") of this class. Call the methods via "LinearSolver.method()".
+
 
     Examples
     --------
@@ -79,9 +83,7 @@ class LinearSolver:
     >>> eigVals, eigVecs, error = LinearSolver.solveGeneralEigenproblem(
     ...     A, B, sigma=0.0, nev=5)
 
-    Notes
-    -----
-    - consists of only static methods that don't need an instance ("object") of this class. Call the methods via "LinearSolver.method()".
+    
 
     """
 
@@ -195,7 +197,7 @@ class LinearSolver:
         Parameters
         ----------
         resolventOperator : ResolventOperator
-            Resolvent operator object (see class description below) for which the SVD is computed.
+            Resolvent operator object for which the SVD is computed.
         nev : int
             Number of singular values to compute.
         tol : float, optional
