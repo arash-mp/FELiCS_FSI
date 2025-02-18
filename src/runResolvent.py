@@ -3,12 +3,10 @@ import numpy as np
 import copy
 import time
 
-def runResolvent(param, useGUI):
+def runResolvent(param):
     '''This function runs the calculations preset in param
     Input:
         param: Parameter objects (see parameters.py), defining the case
-        useGUI: Boolean, True if program is run using GUI, False if run from
-        terminal directly
     '''
     import FELiCS.IO.Import as Import
     from   FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
@@ -176,8 +174,5 @@ def runResolvent(param, useGUI):
 
 
 
-    if useGUI:
-        ExportGUI(param, fluctSolutList, meanFlow,FEMSpaces, equation,mesh)
-    else:
-        ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
 

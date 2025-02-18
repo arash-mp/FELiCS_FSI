@@ -8,54 +8,44 @@
 # * 
 # * To ask for permission please contact t.kaiser@tu-berlin.de.
 # */
+import 	sys
+import 	argparse
+from 	runModal       				import  runModal      
+from 	runResolvent   				import  runResolvent  
+from 	runInputOutput 				import  runInputOutput
+from 	FELiCS.Parameters.config	import config
 
-
+desc_text = """
+------------------ FELICS -----------------
+Finite Element Linearized Combustion Solver
+**add short FELICS description here**
 """
-This file is called to start the program
 
-This file was created by Thomas L. Kaiser. Significant contributions 
+epilog = """
+Example usage:
+    python main.py -h		shows help message 
+    python main.py -f path	start with config file at path (mandatory)
+    python main.py -f path -d	for debug mode
+    """
 
-Parameters
-----------
-
-
-""" 
-
-import tkinter
-
-import sys
-
-from runModal       import  runModal      
-from runResolvent   import  runResolvent  
-from runInputOutput import  runInputOutput
-
-
-from FELiCS.Parameters.config import config
-
-# check if '-file' argument was added to run from file only. else start the GUI
-
-# Replace spurious double quotation marks which occur in MobaXterm when executing shell scripts
-for i_argument,argument in enumerate(sys.argv):
-        sys.argv[i_argument] = argument.replace(chr(8221), '')
-
-if len(sys.argv) == 1:
-    useGUI= True
-elif sys.argv[1] == '-file': useGUI=False
-else: useGUI=True
+parser = argparse.ArgumentParser(description=desc_text, epilog=epilog, formatter_class=argparse.RawTextHelpFormatter)
+# Define the `-f` flag followed by a required argument for the config file
+parser.add_argument('-f',"--file", type=str, required=True, metavar="path",help='Specify the path to the config file')
+parser.add_argument('-d', '--debug', action='store_true', help='activate debug mode for extended output')
+args = parser.parse_args()
 
 if __name__ == '__main__':
-    if useGUI: # Run program in GUI mode
-        window=FELiCS_GUI()
-    else: # Run program in terminal mode from settings file
-        SettingsFileName = sys.argv[2]
-        param=config()
-        param.importFromFile(SettingsFileName)
 
-        mode = param.Case.AnalysisMode
-        if mode == "Modal":
-                runModal(param,useGUI=False)
-        elif mode == "Resolvent":
-                runResolvent(param,useGUI=False)
-        elif mode == "Input-Output":
-                runInputOutput(param,useGUI=False)
+	# Run program in terminal mode from settings file
+	SettingsFileName = args.file
+	param=config()
+	param.importFromFile(SettingsFileName)
+
+	mode = param.Case.AnalysisMode
+	if mode == "Modal":
+		runModal(param)
+	elif mode == "Resolvent":
+		runResolvent(param)
+	elif mode == "Input-Output":
+		runInputOutput(param)
 
