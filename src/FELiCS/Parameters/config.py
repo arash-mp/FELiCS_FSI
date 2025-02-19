@@ -309,29 +309,50 @@ class config(ABC):
         #First define local BCsDict
         BCsDict={}
         filepath=self.BoundaryCondition.BCsFilePath
-        if not filepath == '' and os.path.isfile(filepath):
-            self.BoundaryCondition.BCsFilePath = filepath
-            for Variable in VariableList:
-                BCsDict[Variable]=[]
-                for BCID in BCIDList:
-                    BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-            # Read BCFile
-            BCFile=open(self.BoundaryCondition.BCsFilePath)
-            importDict=json.load(BCFile)
-            # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
-            for Variable in VariableList:
-                if Variable in list(importDict.keys()):
-                    BCsDict[Variable]=[]
-                    for BC in importDict[Variable]:
-                        if BC['ID'] in BCIDList:
-                            BCsDict[Variable].append(BC)
-                        else:
-                            printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
+        # Read BCFile
+        BCFile=open(filepath)
+        importDict=json.load(BCFile)
 
-                else:
-                    printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
-            # Finally, copy local BCsDict to the object
-            self.__BCsDict__=BCsDict
+        # if not filepath == '' and os.path.isfile(filepath):
+        #     self.BoundaryCondition.BCsFilePath = filepath
+        #     for Variable in VariableList:
+        #         BCsDict[Variable]=[]
+        #         for BCID in BCIDList:
+        #             BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
+        #     # Read BCFile
+        #     BCFile=open(self.BoundaryCondition.BCsFilePath)
+        #     importDict=json.load(BCFile)
+        #     # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
+        #     for Variable in VariableList:
+        #         if Variable in list(importDict.keys()):
+        #             BCsDict[Variable]=[]
+        #             for BC in importDict[Variable]:
+        #                 if BC['ID'] in BCIDList:
+        #                     BCsDict[Variable].append(BC)
+        #                 else:
+        #                     printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
+
+        #         else:
+        #             printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
+        #     # Finally, copy local BCsDict to the object
+        #     self.__BCsDict__=BCsDict
+
+
+        # invert sorting of boundary condition from ID-first to variable-first
+        result = {}
+        for ID, variable_list in importDict.items():
+            for dict in variable_list:
+                variable = dict["variable"]
+                dict.pop("variable", None)
+                dict["ID"] = int(ID)
+                if variable not in result:
+                    result[variable] = []
+                result[variable].append(dict)
+
+        # Finally, copy local BCsDict to the object
+        self.__BCsDict__= result
+
+
 
 
     def setBC(self,field,BoundaryID,BCType,BCvalue):
