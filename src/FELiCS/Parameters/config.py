@@ -182,9 +182,10 @@ class config(ABC):
             self.Case["m"]
         )
 
+        # hardcoded legacy parameter
         self.debug = True # specify here if printDebug messages should be shown
-        self.Numerics.nCPU = 1 # hardcoded for now, move to defaults later
-        self.Numerics.NumericalScheme = "Continuous Galerkin" # hardcoded for now, move to defaults later
+        self.Numerics.nCPU = 1
+        self.Numerics.NumericalScheme = "Continuous Galerkin"
         self.calculate_parameters()
         print()
 
