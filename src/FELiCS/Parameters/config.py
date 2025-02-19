@@ -168,7 +168,7 @@ class config(ABC):
 
         # Check if export folder exists
         if not os.path.isdir(input_data['Export']['ExportFolder']):
-            raise Exception(f"Export folder {input_data['Export']['ExportFolder']} not found.")
+            os.makedirs(input_data['Export']['ExportFolder'])
 
         self.Mixture = MixtureClass(
             self.Case["MixtureFilePath"],
@@ -190,8 +190,6 @@ class config(ABC):
         print()
 
     def importFromH5File(self, h5FileName):
-        # TODO: load the parameters into a "data" dictionnary
-        # similar to what we get from loading a .json
 
         hf = File(h5FileName, 'r')
         if 'param' not in hf.keys():
