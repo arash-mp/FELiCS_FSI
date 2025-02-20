@@ -1,6 +1,6 @@
 from FELiCS.GUI.SettingsClass import Settings
-from FELiCS.MixtureClass import MixtureClass
-from FELiCS.reactionMechanism import reactionMechanismClass
+from FELiCS.Equation.MixtureClass import MixtureClass
+from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
 class CaseSettingsClass(Settings):
     def __init__(self):
         '''Initializing the Case settings '''
@@ -16,6 +16,7 @@ class CaseSettingsClass(Settings):
                 tempStr='self.'+key+'='+str(CaseSettingsDict[key]['default'])
             exec(tempStr)
         self.reactionMechanism = reactionMechanismClass('None') 
+        self.customSolutions=[]
 
 
     def getAllSettingsDict(self):
@@ -36,7 +37,9 @@ class CaseSettingsClass(Settings):
                 'Mass': {'Equation':'Continuity','Variable':'p'},
                 'Energy'    : {'Equation':'None','Variable':'None'},
                 'Species': {'Equation':'None','Variable':'None'},
-                'EquationOfState': {'Equation':'None'    ,'Variable':'None'}
+                'EquationOfState': {'Equation':'None'    ,'Variable':'None'},
+                'Custom1': {'Equation':'None'    ,'Variable':'None'},
+                'Custom2': {'Equation':'None'    ,'Variable':'None'}
                 }
                 },
             'Reaction':{'datatype':bool,'default':False},
@@ -47,10 +50,13 @@ class CaseSettingsClass(Settings):
         return CaseSettingsDict
 
             #'SetOfEquations':{'datatype':dict,'default':{'Navier-Stokes':'Primitive Variables','Energy':'None','Species': 'None', 'equationOfState': 'None'}}
-    def importSettings(self,settingFilePath):
+    def importSettings(self,settingFilePath,CaseSettingsDict=None):
         ''' Loading Case parameters from file '''
-        from FELiCS.reactionMechanism import reactionMechanismClass
-        CaseSettingsDict=self.getAllSettingsDict()
+        from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
+       
+        if CaseSettingsDict == None:
+            CaseSettingsDict=self.getAllSettingsDict()
+            
         if not settingFilePath =='':
             file = open(settingFilePath)
 
@@ -72,7 +78,7 @@ class CaseSettingsClass(Settings):
         """
         This function adapts the inherited function of same name from the SettingsClass
         """
-        from FELiCS.reactionMechanism import reactionMechanismClass
+        from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
         super().importFromH5File(h5FileName);
         #The Mixture is not loaded but constructed from the inputs
         self.Mixture = MixtureClass(
@@ -124,7 +130,21 @@ class CaseSettingsClass(Settings):
             if self.SetOfEquations['Species']['Variable'] == 'Y':
                 for species in list(self.Mixture.getSpeciesList('transported')):
                     SolutionList.append(species)
+
+        # Add custom variables if they are given in the parameter file. 
+        # TODO Sophie: think of something better, also: variable number of additional equations
+        try:
+            if not self.SetOfEquations['Custom1']['Variable'] == 'None':
+                SolutionList.append(self.SetOfEquations['Custom1']['Variable'])
+        except:
+            pass
+        try:
+            if not self.SetOfEquations['Custom2']['Variable'] == 'None':
+                SolutionList.append(self.SetOfEquations['Custom2']['Variable'])
+        except:
+            pass
         return SolutionList
+
 
     def getExtendedTransportedQuantityList(self):
         ''' Like getTransportedQuantitiyList but with all velocity components '''
@@ -142,12 +162,15 @@ class CaseSettingsClass(Settings):
         return SolutionList
 
     def getMeanFlowFieldNames(self):
-        from FELiCS.functions import printDebug
+        from FELiCS.Misc.functions import printDebug
         ''' This function provides the mean fields which mus be read in.'''
 
         MeanList=[]
         # Add velocity components
         MeanList.append('u')
+
+        # Add pressure
+        MeanList.append('p')
 
         # If necessary, add density and enthalpy diffusion
         if 'rho' in self.getTransportedQuantityList():
@@ -211,7 +234,7 @@ class CaseSettingsClass(Settings):
     def complete(self):
         ''' Checking if all necessary case attributes are present '''
         from os.path import isfile
-        from FELiCS.functions import printOK
+        from FELiCS.Misc.functions import printOK
         #Only the mesh is absolutely necessary...'
         EverythingPresent=True
         if not isfile(self.MeshFilePath):

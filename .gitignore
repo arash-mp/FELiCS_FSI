@@ -10,3 +10,4 @@ DOCUMENTATION/build
 DOCUMENTATION/autoapi
 public
 *env
+*.egg-info

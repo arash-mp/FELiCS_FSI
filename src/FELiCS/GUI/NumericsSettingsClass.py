@@ -54,7 +54,7 @@ class NumericsSettingsClass(Settings):
     def complete(self,variableList):
         ''' Checking if all necessary case attributes are present '''
         #Check inputs for completeness and correctness ...'
-        from FELiCS.functions import printWarning
+        from FELiCS.Misc.functions import printWarning
         EverythingPresent=True
         CaseSettingsDict=self.getAllSettingsDict()
         # Check if schemes are chosen correctly for every variable

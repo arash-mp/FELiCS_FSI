@@ -7,8 +7,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'FELiCS2.0'
-copyright = '2023, Thomas Ludwig Kaiser'
-author = 'Thomas Ludwig Kaiser'
+copyright = '2025, Flow Group'
+author = 'Flow Group'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -24,8 +24,7 @@ extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'auto
 autoapi_dirs = ['../src/']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-# autoapi_options = ['show-inheritance', 'show-inheritance-diagram']
-
+autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'special-members', 'imported-members']  # 'private-members', 'undoc-members'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -38,7 +37,7 @@ html_static_path = ['_static']
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 napoleon_include_init_with_doc = True
-napoleon_include_private_with_doc = True
+napoleon_include_private_with_doc = False
 napoleon_include_special_with_doc = True
 napoleon_use_admonition_for_examples = True
 napoleon_use_admonition_for_notes = True
