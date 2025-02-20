@@ -34,14 +34,29 @@ from .EquationTemplate import EquationTemplate
 
 
 class EnthalpyEquation(EquationTemplate):
-    """Class representing the enthalpy conservation equation."""
+    """Class representing the enthalpy conservation equation.
+
+    This class formulates the enthalpy conservation equation using a 
+    tensorial framework. It extends the `EquationTemplate` and implements 
+    methods for adding weight matrices, linear expressions, and nonlinear 
+    expressions to the weak form.
+
+    Methods
+    --------------
+    addWeightMatrixExpression(weakForm, mean):
+        Adds the weight matrix expression to the weak form.
+    addNonlinearExpression():
+        Adds the nonlinear expression to the weak form.
+    addLinearExpression(weakForm, mean):
+        Constructs the weak form of the linearized enthalpy conservation equation.
+    """
 
     def __init__(self, eqColl, fluc, X, param):
         """
         Initialize the EnthalpyEquation object.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         eqColl : EquationCollection
             The equation collection object.
         fluc : Fluctuations
@@ -50,6 +65,11 @@ class EnthalpyEquation(EquationTemplate):
             The function representing the mesh coordinates.
         param : Parameters
             The parameters object.
+        
+        Notes
+        -----
+        - If the numerical scheme is 'Discontinuous Galerkin', an error is raised
+          because it is not implemented in the tensorial framework.
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
@@ -63,12 +83,16 @@ class EnthalpyEquation(EquationTemplate):
         """
         Add the weight matrix expression to the weak form.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         weakForm : Form
-            The weak form object.
+            The weak form object where the equation terms are added.
         mean : MeanFields
-            The mean fields object.
+            The mean fields object containing averaged field variables.
+
+        Notes
+        -----
+        - This method contributes the time derivative terms of the weak form.
         """
         #  Time derivative terms
         weakForm.add((mean.rho * self.fluc.h * iConj(self.X)).ufl_tens * self.J_hat * dx)
@@ -78,24 +102,31 @@ class EnthalpyEquation(EquationTemplate):
     def addNonlinearExpression(self):
         """
         Add the nonlinear expression to the weak form.
+
+        Notes
+        -----
+        - This function is currently a placeholder and does not modify the weak form.
         """
         pass
 
     def addLinearExpression(self, weakForm, mean):
         """
-        Add the linear expression to the weak form.
+        Construct the weak form of the linearized enthalpy conservation equation.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         weakForm : Form
-            The weak form object.
+            The weak form object to which the linearized terms are added.
         mean : MeanFields
-            The mean fields object.
+            The mean fields object containing averaged field variables.
+
+        Notes
+        -----
+        - This function constructs the weak form of the enthalpy conservation equation 
+          in a tensorial framework.
+        - It incorporates advection and diffusion terms using volume and boundary integrals.
+        - Debugging messages are printed when enabled in the parameters.
         """
-        '''
-        This function builds the weak form of the linearized
-        enthalpy conservation equation, in tensorial framework.
-        '''
         printDebug(self.param.debug, "Adding transport equation for enthalpy in all mesh internal directions")
 
         J_hat = self.J_hat
