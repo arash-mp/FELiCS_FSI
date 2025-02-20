@@ -104,15 +104,14 @@ An example of `boundaries.json` is
 
 ```json
 {
-"ux":
-    [{"ID": 300, "type": "Dirichlet", "value": 0.0},
-    {"ID": 301, "type": "Dirichlet", "value": 0.0}],
-"uy":
-    [{"ID": 300, "type": "Dirichlet", "value": 0.0},
-    {"ID": 301, "type": "Dirichlet", "value": 0.0}],
-"p":
-    [{"ID": 300, "type": "Neumann", "value": 0.0},
-    {"ID": 301, "type": "Dirichlet", "value": 0.0}]
+"300":
+    [{"variable": "ux", "type": "Dirichlet", "value": 0.0},
+    {"variable": "uy", "type": "Dirichlet", "value": 0.0},
+    {"variable": "p", "type": "Neumann", "value": 0.0}],
+"301":
+    [{"variable": "ux", "type": "Neumann", "value": 0.0},
+    {"variable": "uy", "type": "Neumann", "value": 0.0},
+    {"variable": "p", "type": "Dirichlet", "value": 0.0}]
 }
 ```
 
