@@ -31,31 +31,38 @@ from runInputOutput import  runInputOutput
 
 
 from FELiCS.Parameters.config import config
+from FELiCS.Misc.functions import printError
 
-# check if '-file' argument was added to run from file only. else start the GUI
 
 # Replace spurious double quotation marks which occur in MobaXterm when executing shell scripts
 for i_argument,argument in enumerate(sys.argv):
         sys.argv[i_argument] = argument.replace(chr(8221), '')
 
-if len(sys.argv) == 1:
-    useGUI= True
-elif sys.argv[1] == '-file': useGUI=False
-else: useGUI=True
+# check if '-file' argument was added to run from file. 
+if len(sys.argv)<2 or (sys.argv[1] == "-file" and len(sys.argv)<3): 
+    printError("Please provide a settings file in json format to start FELiCS. The correct syntax for the command line arguments is '-file <file_name>.json'.")
+
+# GUI hopefully included again in the future
+#if len(sys.argv) == 1:
+#    useGUI= True
+#else: useGUI=True
 
 if __name__ == '__main__':
-    if useGUI: # Run program in GUI mode
-        window=FELiCS_GUI()
-    else: # Run program in terminal mode from settings file
+    #if useGUI: # Run program in GUI mode
+    #    window=FELiCS_GUI()
+    # Run program in terminal mode from settings file: only possible version for now
+    if sys.argv[1] != "-file": 
+        SettingsFileName = sys.argv[1]
+    else:
         SettingsFileName = sys.argv[2]
-        param=config()
-        param.importFromFile(SettingsFileName)
+    param=config()
+    param.importFromFile(SettingsFileName)
 
-        mode = param.Case.AnalysisMode
-        if mode == "Modal":
-                runModal(param,useGUI=False)
-        elif mode == "Resolvent":
-                runResolvent(param,useGUI=False)
-        elif mode == "Input-Output":
-                runInputOutput(param,useGUI=False)
+    mode = param.Case.AnalysisMode
+    if mode == "Modal":
+            runModal(param,useGUI=False)
+    elif mode == "Resolvent":
+            runResolvent(param,useGUI=False)
+    elif mode == "Input-Output":
+            runInputOutput(param,useGUI=False)
 
