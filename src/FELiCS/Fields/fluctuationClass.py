@@ -170,8 +170,8 @@ class fluctuationClass(
             n_try += 1
             if n_try > 100:
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
-                raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: '\
-                     + str(notInitializedFields))
+                printError('Attempt to calculate secondary variables not successful. Missing quantities: '\
+                     + str(notInitializedFields) + ". Maybe the mixture file is still in the old format (ending with a '.mix' instead of '.json')?")
 
         # print(self._param.Mixture.getReactionMechanism()['type'])
         if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
@@ -364,7 +364,7 @@ class fluctuationSolutions(
             n_try += 1
             if n_try > 100:
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
-                raise Exception('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields)
+                printError('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields +". Maybe the mixture file is still in the old format (ending with a '.mix' instead of '.json')?")
 
         if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
             reactionHandler.__init__(

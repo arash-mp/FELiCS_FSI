@@ -8,7 +8,9 @@ from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 from FELiCS.Misc.functions import(
     getLastGitCommit,
-    printWarning
+    printOK,
+    printWarning,
+    printError
     )
 
 class dotdict(dict):
@@ -139,6 +141,12 @@ class config(ABC):
         configFilePath : txt
             path to .json file containing parameters
         """
+        if not configFilePath.endswith(".json"):
+            printOK(" If you are using an old file with the ending '.set', \
+run the script 'set_to_json.py', wich you can find in the folder 'PREPROC_POSTPROC'. \
+The script does need the path to the directory containing the old settings file and will create \
+recursively json-files that contain the same parameters as the old '.set' and '.bc' files.")
+            printError("The given settings file is not a json file.")
         input_file =  open(configFilePath)
         input_data =  json.load(input_file)
         SettingsDict = self.getAllSettingsDict()
@@ -155,7 +163,7 @@ class config(ABC):
                         dict[parameter] = input_value
                 else:
                     dict[parameter] = SettingsDict[category][parameter]["default"]
-                    printWarning('no input found for parameter "'+parameter+'", setting default value: '+dict[parameter])
+                    printWarning('no input found for parameter "'+parameter+'", setting default value: '+ str(dict[parameter]))
             setattr(self,category,dict)
         input_file.close()
 

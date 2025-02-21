@@ -22,11 +22,14 @@ class MixtureClass():
         self.__Pr__ = 1.0
         self.__Viscosity__ = {'type':'Constant','Constants':{'nu':1.0}}
         if path.isfile(mixFilePath):
-            mixFile = open(mixFilePath, 'r')
-            data = json.load(mixFile)
-            for setting,value in data.items():
-                setattr(self,'__'+setting+'__',value)
-            mixFile.close()
+            if mixFilePath.endswith(".json"):
+                mixFile = open(mixFilePath, 'r')
+                data = json.load(mixFile)
+                for setting,value in data.items():
+                    setattr(self,'__'+setting+'__',value)
+                mixFile.close()
+            else:
+                printWarning('The given mixture file ('+mixFilePath+') does not have the correct format and will not be read (should be a "json" file). This could lead to an unexplained error later, if the calculation is depending on data given in the mixture file. Please convert the mixture file (examples can be found in the felics-test repository).')
         else:
             printOK('The mixture file path ('+mixFilePath+') does not point to a mixture file!')
         
