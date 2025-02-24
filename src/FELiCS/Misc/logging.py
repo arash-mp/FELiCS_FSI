@@ -48,14 +48,13 @@ class Logger:
         fh_errors.setLevel(logging.WARNING)
 
         # Setup formatter
-        if self.debug_mode:
-            formatter = logging.Formatter(
-                '%(levelname)-8s: %(filename)-16s - %(funcName)s - line %(lineno)3d --- %(message)s'
-            )
-        else:
-            formatter = logging.Formatter(
-                '%(levelname)-8s: %(filename)-16s - %(funcName)s --- %(message)s'
-            )    
+        logging.addLevelName(logging.ERROR,     'Error')
+        logging.addLevelName(logging.WARNING,   'Warning')
+        logging.addLevelName(logging.INFO,      'Info')
+        logging.addLevelName(logging.DEBUG,     'Debug')
+        formatter = logging.Formatter(
+            '%(levelname)-8s: %(filename)-16s | %(funcName)-24s (line %(lineno)-4s) : %(message)s'
+        )
 
         # Apply formatter
         for handler in [ch, fh, fh_errors]:

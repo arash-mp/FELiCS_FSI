@@ -153,9 +153,9 @@ class config(ABC):
 
         if not configFilePath.endswith(".json"):
             logger.info(" If you are using an old file with the ending '.set', \
-run the script 'set_to_json.py', wich you can find in the folder 'PREPROC_POSTPROC'. \
-The script does need the path to the directory containing the old settings file and will create \
-recursively json-files that contain the same parameters as the old '.set' and '.bc' files.")
+            run the script 'set_to_json.py', wich you can find in the folder 'PREPROC_POSTPROC'. \
+            The script does need the path to the directory containing the old settings file and will create \
+            recursively json-files that contain the same parameters as the old '.set' and '.bc' files.")
             logger.error("The given settings file is not a json file.")
 
         logger.info(f"Loading configuration from {configFilePath}")
@@ -163,7 +163,7 @@ recursively json-files that contain the same parameters as the old '.set' and '.
         input_data      = json.load(input_file)
         
         # Get an instance of the defaults settings
-        default_config    = self.default_config
+        default_config  = self.default_config
 
         # Loop over fields and overwrite defaults by file values
         for category in default_config:
@@ -204,6 +204,7 @@ recursively json-files that contain the same parameters as the old '.set' and '.
             self.Case["SpeciesFilePath"]
         )
         
+        # Get domain data and set BCs
         self.readDomainData(
             self.Case["MeshFilePath"],
             self.Case["nDim"],
@@ -329,31 +330,30 @@ recursively json-files that contain the same parameters as the old '.set' and '.
         ''' Initialize BCsDict '''
         BCIDList = self.__BCIDs__
         
-        # First define local BCsDict
+        # First define local BCsDict and set Neumann by default
         BCsDict = {}
         for Variable in VariableList:
-            BCsDict[Variable]=[]
+            BCsDict[Variable] = []
             for BCID in BCIDList:
                 BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-        self.__BCsDict__=BCsDict
+        self.__BCsDict__ = BCsDict
 
-    def importBCsDict(self,VariableList):
+    def importBCsDict(self, VariableList):
         ''' Import a boundary condition file with checking 
         the consistency of BCs and mesh. 
         To read the BCs without checking use importSettings()
         '''
-        BCIDList = self.__BCIDs__
-        
-        # First define local BCsDict
-        BCsDict={}
-        filepath=self.BoundaryCondition.BCsFilePath
 
         # Read BCFile
-        BCFile=open(filepath)
-        importDict=json.load(BCFile)
+        filepath    = self.BoundaryCondition.BCsFilePath
+        BCFile      = open(filepath)
+        importDict  = json.load(BCFile)
+        logger.debug(f"Reading boundary conditions from '{filepath}'")
 
         # NOTE: Below is the previous import, before ID and varibles were switched
-        # in the config .json file.
+        # in the config .json file. Kept for reference.
+        # BCIDList = self.__BCIDs__
+        # BCsDict={}
         # if not filepath == '' and os.path.isfile(filepath):
         #     self.BoundaryCondition.BCsFilePath = filepath
         #     for Variable in VariableList:
@@ -379,41 +379,49 @@ recursively json-files that contain the same parameters as the old '.set' and '.
         #     self.__BCsDict__=BCsDict
 
 
-        # invert sorting of boundary condition from ID-first to variable-first
+        # Invert sorting of boundary condition from ID-first to variable-first
         result = {}
         for ID, variable_list in importDict.items():
             for dict in variable_list:
-                variable = dict["variable"]
+                variable    = dict["variable"]
                 dict.pop("variable", None)
-                dict["ID"] = int(ID)
+                dict["ID"]  = int(ID)
                 if variable not in result:
                     result[variable] = []
                 result[variable].append(dict)
 
         # Finally, copy local BCsDict to the object
-        self.__BCsDict__= result
+        self.__BCsDict__ = result
 
-    def setBC(self,field,BoundaryID,BCType,BCvalue):
+    def setBC(self, field, BoundaryID, BCType, BCvalue):
         ''' Setting the Boundary condition of a single variable '''
         for BC in self.__BCsDict__[field]:
-            if BC['ID']== BoundaryID:
+            if BC['ID'] == BoundaryID:
                 self.__BCsDict__[field][BoundaryID]['type'] = BCType
                 self.__BCsDict__[field][BoundaryID]['value'] = BCvalue
     
     def readBCInfo(self,MeshFilePath, felicsMesh):
         ''' Input: - MeshFilePath
         This function reads both the IDs of the boundary conditions from the mesh and stores them
-        in a private list of the class and also the boundary nodes and stores them in __boundaries__'''
+        in a private list of the class and also the boundary nodes and stores them in __boundaries__
+        '''
         from numpy import unique
+        
+        # NOTE: (Simon) move to FELiCSMesh or BC class?
+        
         # get a list of all kinds of BC indices
-        self.__BCIDs__ = unique(felicsMesh.facet_tags.values)
+        self.__BCIDs__      = unique(felicsMesh.facet_tags.values)
         self.__boundaries__ = felicsMesh.facet_tags
 
     def readDomainData(self,Meshfile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
-        logger.debug(f"Reading domain data from {Meshfile}")
+        logger.debug(f"Reading domain data from '{Meshfile}'")
         ''' Input: Mesfile
         Read all the domain data from the meshfile '''
-        self.readMesh(Meshfile,gDim,coordinateSystem,m)
+        
+        # Read mesh and store it in self.__mesh__
+        self.readMesh(Meshfile, gDim, coordinateSystem, m)
+        
+        # Setup the boundary conditions
         self.readBCInfo(Meshfile, self.__mesh__)
         self.initBCsDict(ExtendedTransportedQuantityList)
         self.importBCsDict(ExtendedTransportedQuantityList)
@@ -433,35 +441,38 @@ recursively json-files that contain the same parameters as the old '.set' and '.
 
         Function returns:
         '''
+        
+        # NOTE: (Simon) I don't think this method is needed
+        
         if not MeshFile == '' and os.path.isfile(MeshFile):
             self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,dim,m)
             self.dim = self.__mesh__.gdim
         
     def getInternalVelocityComponents(self):
         ''' Provides a list of velocity components, which are directed within the dimensions of the mesh '''
-        if self.Case["CoordinateSystem"]=='Cartesian':
+        if self.Case["CoordinateSystem"] == 'Cartesian':
             VelCompList = ['x','y']
-            if self.Case.nDim>2:
+            if self.Case.nDim > 2:
                 VelCompList.append('z')
-        elif self.Case["CoordinateSystem"]=='Cylindrical':
+        elif self.Case["CoordinateSystem"] == 'Cylindrical':
             VelCompList = ['x','r']
         return VelCompList
 
     def getExternalVelocityComponents(self):
         ''' Provides a list of velocity components, which are directed outside the dimensions of the mesh '''
-        if self.Case["CoordinateSystem"]=='Cartesian':
-            if self.Case.m!=0 and self.Case.nDim==2:
+        if self.Case["CoordinateSystem"] == 'Cartesian':
+            if self.Case.m != 0 and self.Case.nDim == 2:
                 VelCompList = ['z']
             else:
                 VelCompList = []
-        elif self.Case["CoordinateSystem"]=='Cylindrical':
+        elif self.Case["CoordinateSystem"] == 'Cylindrical':
             VelCompList = ['t']
 
         return VelCompList
 
     def getVelocityComponents(self):
         ''' Provides a list of all velocity components, both mesh internal and external '''
-        templist=self.getInternalVelocityComponents()
+        templist = self.getInternalVelocityComponents()
         templist.extend(self.getExternalVelocityComponents())
 
         return templist
