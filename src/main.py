@@ -8,19 +8,19 @@
 # * 
 # * To ask for permission please contact t.kaiser@tu-berlin.de.
 # */
-import 	sys
 import 	argparse
 from 	runModal       				import  runModal      
 from 	runResolvent   				import  runResolvent  
 from 	runInputOutput 				import  runInputOutput
-from 	FELiCS.Parameters.config	import config
+from 	FELiCS.Parameters.config	import 	config
+from 	FELiCS.Misc.logging			import  Logger
 
+# Define the description and epilog for the help message
 desc_text = """
 ------------------ FELICS -----------------
 Finite Element Linearized Combustion Solver
 **add short FELICS description here**
 """
-
 epilog = """
 Example usage:
     python main.py -h		shows help message 
@@ -28,24 +28,26 @@ Example usage:
     python main.py -f path -d	for debug mode
     """
 
+# Initialize the argument parser
 parser = argparse.ArgumentParser(description=desc_text, epilog=epilog, formatter_class=argparse.RawTextHelpFormatter)
 # Define the `-f` flag followed by a required argument for the config file
 parser.add_argument('-f',"--file", type=str, required=True, metavar="path",help='Specify the path to the config file')
 parser.add_argument('-d', '--debug', action='store_true', help='activate debug mode for extended output')
 args = parser.parse_args()
 
+# Initialize the logger
+logger = Logger(args.debug, "felics")
+
 if __name__ == '__main__':
 
-	# Run program in terminal mode from settings file
-	SettingsFileName = args.file
-	param=config()
-	param.importFromFile(SettingsFileName)
+    # Get the parameters
+    param = config()
+    param.importFromFile(args.file)
 
-	mode = param.Case.AnalysisMode
-	if mode == "Modal":
-		runModal(param)
-	elif mode == "Resolvent":
-		runResolvent(param)
-	elif mode == "Input-Output":
-		runInputOutput(param)
-
+    mode = param.Case.AnalysisMode
+    if mode == "Modal":
+        runModal(param)
+    elif mode == "Resolvent":	
+        runResolvent(param)
+    elif mode == "Input-Output":
+        runInputOutput(param)
