@@ -43,7 +43,6 @@ if __name__ == '__main__':
     # Get the parameters
     param = config()
     param.importFromFile(args.file)
-
     mode = param.Case.AnalysisMode
     if mode == "Modal":
         runModal(param)

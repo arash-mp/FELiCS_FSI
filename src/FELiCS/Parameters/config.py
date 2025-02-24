@@ -11,6 +11,8 @@ from    FELiCS.Misc.functions           import getLastGitCommit
 # Get the logger
 logger = Logger.get_logger("felics")
 
+#from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
+
 class dotdict(dict):
     """
     Adds possibility to use dot notation to access entries of dictionary dict
@@ -148,6 +150,14 @@ class config(ABC):
         configFilePath : str
             path to .json file containing parameters
         """
+
+        if not configFilePath.endswith(".json"):
+            logger.info(" If you are using an old file with the ending '.set', \
+run the script 'set_to_json.py', wich you can find in the folder 'PREPROC_POSTPROC'. \
+The script does need the path to the directory containing the old settings file and will create \
+recursively json-files that contain the same parameters as the old '.set' and '.bc' files.")
+            logger.error("The given settings file is not a json file.")
+
         logger.info(f"Loading configuration from {configFilePath}")
         input_file      = open(configFilePath)
         input_data      = json.load(input_file)
@@ -181,8 +191,7 @@ class config(ABC):
 
         # Check if export folder exists
         if not os.path.isdir(input_data['Export']['ExportFolder']):
-            logger.error(f"Export folder '{input_data['Export']['ExportFolder']}' not found.")
-            raise Exception(f"Export folder '{input_data['Export']['ExportFolder']}' not found.")
+            os.makedirs(input_data['Export']['ExportFolder'])
         
         # Move the log file to the export folder
         current_dir = os.path.dirname(configFilePath)
@@ -334,34 +343,55 @@ class config(ABC):
         To read the BCs without checking use importSettings()
         '''
         BCIDList = self.__BCIDs__
+        
         # First define local BCsDict
         BCsDict={}
         filepath=self.BoundaryCondition.BCsFilePath
-        if not filepath == '' and os.path.isfile(filepath):
-            self.BoundaryCondition.BCsFilePath = filepath
-            for Variable in VariableList:
-                BCsDict[Variable]=[]
-                for BCID in BCIDList:
-                    BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-                    
-            # Read BCFile
-            BCFile=open(self.BoundaryCondition.BCsFilePath)
-            importDict=json.load(BCFile)
-            # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
-            for Variable in VariableList:
-                if Variable in list(importDict.keys()):
-                    BCsDict[Variable]=[]
-                    for BC in importDict[Variable]:
-                        if BC['ID'] in BCIDList:
-                            BCsDict[Variable].append(BC)
-                        else:
-                            logger.warning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
-                else:
-                    logger.warning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
-            
-            # Finally, copy local BCsDict to the object
-            self.__BCsDict__ = BCsDict
 
+        # Read BCFile
+        BCFile=open(filepath)
+        importDict=json.load(BCFile)
+
+        # NOTE: Below is the previous import, before ID and varibles were switched
+        # in the config .json file.
+        # if not filepath == '' and os.path.isfile(filepath):
+        #     self.BoundaryCondition.BCsFilePath = filepath
+        #     for Variable in VariableList:
+        #         BCsDict[Variable]=[]
+        #         for BCID in BCIDList:
+        #             BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
+        #     # Read BCFile
+        #     BCFile=open(self.BoundaryCondition.BCsFilePath)
+        #     importDict=json.load(BCFile)
+        #     # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
+        #     for Variable in VariableList:
+        #         if Variable in list(importDict.keys()):
+        #             BCsDict[Variable]=[]
+        #             for BC in importDict[Variable]:
+        #                 if BC['ID'] in BCIDList:
+        #                     BCsDict[Variable].append(BC)
+        #                 else:
+        #                     printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
+
+        #         else:
+        #             printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
+        #     # Finally, copy local BCsDict to the object
+        #     self.__BCsDict__=BCsDict
+
+
+        # invert sorting of boundary condition from ID-first to variable-first
+        result = {}
+        for ID, variable_list in importDict.items():
+            for dict in variable_list:
+                variable = dict["variable"]
+                dict.pop("variable", None)
+                dict["ID"] = int(ID)
+                if variable not in result:
+                    result[variable] = []
+                result[variable].append(dict)
+
+        # Finally, copy local BCsDict to the object
+        self.__BCsDict__= result
 
     def setBC(self,field,BoundaryID,BCType,BCvalue):
         ''' Setting the Boundary condition of a single variable '''
