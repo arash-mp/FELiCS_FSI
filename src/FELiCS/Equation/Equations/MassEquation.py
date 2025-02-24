@@ -1,16 +1,15 @@
 from ufl import dx
-
 from FELiCS.Misc.tensorUtils import (
-    Tensor,
-    as_vector,
     iGrad,
     iDot,
     iConj
 )
 
-from FELiCS.Misc.functions import printDebug, printError
+from .EquationTemplate      import EquationTemplate
+from FELiCS.Misc.logging    import Logger
 
-from .EquationTemplate import EquationTemplate
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class MassEquation(EquationTemplate):
     """
@@ -50,7 +49,8 @@ class MassEquation(EquationTemplate):
         """
         # Disclaimers
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)

@@ -1,15 +1,18 @@
 # Third party libraries
-from h5py import File
-from dolfinx.fem import Function
+from h5py           import File
+from dolfinx.fem    import Function
 
 # Local libraries and methods
-from FELiCS.Misc.functions import printWarning, printDebug
-from FELiCS.IO.export import export
-from FELiCS.Fields.fieldProperties import fieldProperties
-from FELiCS.Equation.dependentVariables.energyHandler import energyHandler
-from FELiCS.Equation.dependentVariables.equationOfStateHandler import equationOfStateHandler
-from FELiCS.Equation.dependentVariables.reactionHandler import reactionHandler
-from FELiCS.Misc.tensorUtils import Tensor
+from FELiCS.IO.export                                           import export
+from FELiCS.Fields.fieldProperties                              import fieldProperties
+from FELiCS.Equation.dependentVariables.energyHandler           import energyHandler
+from FELiCS.Equation.dependentVariables.equationOfStateHandler  import equationOfStateHandler
+from FELiCS.Equation.dependentVariables.reactionHandler         import reactionHandler
+from FELiCS.Misc.tensorUtils                                    import Tensor
+from FELiCS.Misc.logging                                        import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class meanFlowClass(
     fieldProperties,
@@ -26,34 +29,36 @@ class meanFlowClass(
     Child classes:
 
     """
-    def __init__(
-            self,
-            param,
-            FEMSpaces,
-            mesh,
-    ):
-
-        self._isMean = True
-        self._isFluctuation = False
-        self._param = param
-        self._FEMSpaces = FEMSpaces
-        self._mesh = mesh
-        self._coordinateSystem = mesh.coordinateSystem
+    def __init__(self, param, FEMSpaces, mesh):
+        
+        # Initialization
+        self._isMean            = True
+        self._isFluctuation     = False
+        self._param             = param
+        self._FEMSpaces         = FEMSpaces
+        self._mesh              = mesh
+        self._coordinateSystem  = mesh.coordinateSystem
+        
         fieldProperties.__init__(self)
-        self._meanflowFilename = None
-        self.__mixture = param.Mixture
-        self._zeroField = Function(self._FEMSpaces.P2)
-        self._zeroFieldTensor = Tensor(
-                                       Function(self._FEMSpaces.P2),
-                                       self._coordinateSystem,
-                                       )
-        self._oneFieldArray = Function(self._FEMSpaces.P2)
+        
+        self._meanflowFilename  = None
+        self.__mixture          = param.Mixture
+        
+        # Define some useful tensors
+        self._zeroField         = Function(self._FEMSpaces.P2)
+        self._zeroFieldTensor   = Tensor(
+            Function(self._FEMSpaces.P2),
+            self._coordinateSystem,
+            )
+        self._oneFieldArray     = Function(self._FEMSpaces.P2)
         self._oneFieldArray.x.array[:] = 1.0
-        self._oneField = Tensor(
+        self._oneField          = Tensor(
             self._oneFieldArray,
             self._coordinateSystem, 
             )
-        self._customMeanFlowQuantities=[]
+        
+        # Allocate
+        self._customMeanFlowQuantities = []
         
         #self.addDerivativeFieldsToMean()
         #self.initLamDiff()
@@ -85,33 +90,34 @@ class meanFlowClass(
             #    self.__reaction = NOx(2)
 
     def importDataFromFile(self):
-        printDebug(True,'--------------------------------')
-        printDebug(True,'-- Reading InputFlow...')
+        logger.info(f"Reading input flow from: '{self._param.FlowInput.MeanFlowFilePath}'")
 
-        self._fieldDict = {}
-        self.__notInFileList = []
-        self.__RawFlowDict = {}
-        self.__nDimRawData = 0
-        self._ScalarFunctionSpace = self._FEMSpaces.P2
-        self.__VectorFunctionSpace = self._FEMSpaces.FunctionSpaceVectorVelocity
-        self.__CoordinateSystemInputData = 'Unknown'
+        self._fieldDict                     = {}
+        self.__notInFileList                = []
+        self.__RawFlowDict                  = {}
+        self.__nDimRawData                  = 0
+        self._ScalarFunctionSpace           = self._FEMSpaces.P2
+        self.__VectorFunctionSpace          = self._FEMSpaces.FunctionSpaceVectorVelocity
+        self.__CoordinateSystemInputData    = 'Unknown'
+        
         # Check which type the input file is and read
         if self._param.FlowInput.MeanFlowFilePath == '':
             # no mean flow file, set everything to zero
-            fieldDict = {}
-            nameListMean = self._getMeanFieldsToBeRead()    
+            logger.warning("No mean flow file, setting everything to zero.")
+            fieldDict       = {}
+            nameListMean    = self._getMeanFieldsToBeRead()    
             for name in nameListMean:
                 if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
                     fieldDict[name] = Function(
                         self._FEMSpaces.FunctionSpaceVectorVelocity)
                 else:
                     fieldDict[name] = Function(self._FEMSpaces.P2)
-
             self._fieldDict = fieldDict
 
         elif self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'h5':
             # In a hdf5 file the data is already interpolated on the mesh
             # from FELiCS.Import import importHDF5File
+            logger.debug("Mean flow file ends in '.h5' -> import fields without interpolation from 'meanflow.h5'.")
             self.importHDF5File2()
         else:
             if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'fel':
@@ -120,12 +126,16 @@ class meanFlowClass(
                 self.importXDMFFile()
             if self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'mat':
                 self.importMatFile()
+                
             # If necessary perform coordinate transformation (so far only from
             # cartesian to cylindrical)
             self.CoordinateTransformation()
             self.InterpolateOnFELiCSMesh()
             del self.__RawFlowDict
             self.raiseNotInFileListWarning()
+            
+        # Define the viscosity and alfa fields
+        # NOTE: This should move to a handler
         self.initLamDiff()
 
 #    def addDerivativeFieldsToMean(self):
@@ -141,14 +151,13 @@ class meanFlowClass(
     def initLamDiff(self):
         from dolfinx.fem import Function
 
-        
         if self._param.Case.MolViscModel == 'Constant':
-            self._fieldDict['nulam'] = Function(self._FEMSpaces.P2)
+            self._fieldDict['nulam']            = Function(self._FEMSpaces.P2)
             self._fieldDict['nulam'].x.array[:] = self._param.Case.MolVisc
 
         for specie in self._param.Mixture.getSpeciesList('transported'):
-            Sc = self._param.Mixture.species[specie]['Sc']
-            nuTot = Function(self._ScalarFunctionSpace)
+            Sc      = self._param.Mixture.species[specie]['Sc']
+            nuTot   = Function(self._ScalarFunctionSpace)
 
             if 'nulam' in list(self._fieldDict.keys()):
                 nuTot.x.array[:] += self._fieldDict['nulam'].x.array[:]
@@ -156,29 +165,27 @@ class meanFlowClass(
                 nuTot.x.array[:] += self._fieldDict['nuturb'].x.array[:]
             if 'nuSGS' in list(self._fieldDict.keys()):
                 nuTot.x.array[:] += self._fieldDict['nuSGS'].x.array[:]
-            self._fieldDict['D_' + specie] \
-                = Function(self._FEMSpaces.P2)
-            self._fieldDict['D_' + specie].vector[:] \
-                = nuTot.x.array[:] / Sc
+                
+            self._fieldDict['D_' + specie]              = Function(self._FEMSpaces.P2)
+            self._fieldDict['D_' + specie].vector[:]    = nuTot.x.array[:] / Sc
 
     def importMatFile(self):
         import scipy.io as spio
-        from FELiCS.Misc.functions import printDebug
-        filePath = self._param.FlowInput.MeanFlowFilePath
-        mat = spio.loadmat(filePath[:-4])
-        printDebug(self._param.debug, 'The fields in the Matlab file are '
-                   + str(mat.keys()))
+        filePath    = self._param.FlowInput.MeanFlowFilePath
+        mat         = spio.loadmat(filePath[:-4])
+        logger.debug('The fields in the Matlab file are ', str(mat.keys()))
         for key in list(mat.keys()):
             self.__RawFlowDict[key] = mat[key]
-            self.__RawFlowDict = mat
+            self.__RawFlowDict      = mat
 
     def mapToExportMeshAndExport(self, FEMSpaces, filename):
-        self._meanflowFilename = filename
-        filehandler = File(f'{self._param.Export.ExportFolder}/{filename}', 'w')
-        group = filehandler.create_group('meanflow')
+        logger.info("Mapping mean flow to export mesh and exporting.")
+        self._meanflowFilename  = filename
+        filehandler             = File(f'{self._param.Export.ExportFolder}/{filename}', 'w')
+        group                   = filehandler.create_group('meanflow')
         export.__init__(self, self._param, self._FEMSpaces)
         #self._meanfieldDict, dictImag = self._mapCalcToExport(self._fieldDict)
-        self._meanfieldDict = self._mapCalcToExport(self._fieldDict)
+        self._meanfieldDict     = self._mapCalcToExport(self._fieldDict)
         #exportDict = self._calculateVertexValuesFromDict(self._meanfieldDict,
         #                                                 dictImag)
         #self._writeDictToH5(exportDict, group)
@@ -189,6 +196,8 @@ class meanFlowClass(
         filehandler.close()
 
     def exportBaseFlowAsHDF5(self, meanflowFilename = 'meanflow.h5'):
+        
+        # TODO: (Simon) cleanup the function, maybe delete it
 
         #from fenics import HDF5File
         #mesh = self.fieldDict[list(self.fieldDict.keys())[0]].\
@@ -207,9 +216,9 @@ class meanFlowClass(
         from dolfinx.fem import Function
         import h5py
         import numpy as np
-        meanflowH5 = h5py.File(f"meanflow.h5", 'r')
-        exportMeshH5 = h5py.File(f"{self._param.Case.AnalysisMode}_mesh.h5", 'r')
-        coordNameList = ['x', 'y', 'z']
+        meanflowH5      = h5py.File("meanflow.h5", 'r')
+        exportMeshH5    = h5py.File(f"{self._param.Case.AnalysisMode}_mesh.h5", 'r')
+        coordNameList   = ['x', 'y', 'z']
 
         coordArray = np.zeros(
             (exportMeshH5['coordinates/x'][:].shape[0], self._param.Case.nDim))
@@ -275,8 +284,8 @@ class meanFlowClass(
     def importFelicsFile(self):
         import h5py
         import numpy as np
-        Case = self._param.Case
-        FlowInput = self._param.FlowInput
+        # Case = self._param.Case
+        # FlowInput = self._param.FlowInput
         # RawFlowDict is the dictionary directly loaded from the input file
         self.__RawFlowDict = {}
         # List of fields, which are not in the import file
@@ -309,8 +318,8 @@ class meanFlowClass(
 
             self.__nDimRawData += 1
             if self.__CoordinateSystemInputData == 'Cartesian':
-                printWarning('Ambiguous input data: both cylindrical \
-                             coordinates and cartesian coordinates \
+                logger.warning('Ambiguous input data: both cylindrical \
+                             and cartesian coordinates \
                              present. Check input data!')
             else:
                 self.__CoordinateSystemInputData = 'Cylindrical'
@@ -318,8 +327,8 @@ class meanFlowClass(
             self.__RawFlowDict['r'] = np.array(h5file['MeanFlow']['r'])
             self.__nDimRawData += 1
             if self.__CoordinateSystemInputData == 'Cartesian':
-                printWarning('Ambiguous input data: both cylindrical \
-                             coordinates and cartesian coordinates \
+                logger.warning('Ambiguous input data: both cylindrical \
+                             cartesian coordinates \
                              present. Check input data!')
             else:
                 self.__CoordinateSystemInputData = 'Cylindrical'
@@ -353,8 +362,8 @@ class meanFlowClass(
         '''
         import h5py
         import numpy as np
-        Case = self._param.Case
-        FlowInput = self._param.FlowInput
+        # Case = self._param.Case
+        # FlowInput = self._param.FlowInput
         # RawFlowDict is the dictionary directly loaded from the input file
         self.__RawFlowDict = {}
         # List of fields, which are not in the import file
@@ -391,8 +400,6 @@ class meanFlowClass(
         if np.shape(Coordinate)[1]>=3:
             self.__RawFlowDict['z'] = Coordinate[:,1]
 
-        
-        
         # Copy all remaining fields to the self.__RawFlowDict
         for name in nameListMean:
             if name[0] == 'u':
@@ -423,15 +430,16 @@ class meanFlowClass(
             if len(np.shape(self.__RawFlowDict[key])) > 1:
                 self.__RawFlowDict[key] = np.squeeze(self.__RawFlowDict[key])
 
-
     def InterpolateOnFELiCSMesh(self):
 
-        import numpy as np
-        from dolfinx.fem import Function
-        from scipy import interpolate
-        from FELiCS.IO.Import import ExpandForAverage, ContractAfterAverage
+        import  numpy               as np
+        from    dolfinx.fem         import Function
+        from    scipy               import interpolate
+        from    FELiCS.IO.Import    import ExpandForAverage, ContractAfterAverage
 
-        printDebug(True, '-- Interpolating on FELiCS mesh...')
+        # TODO: Cleanup the function
+        
+        logger.info('Interpolating mean flow on FELiCS mesh.')
         nameListMean = self._getMeanFieldsToBeRead()
         # Get mesh data
         mesh = self._ScalarFunctionSpace.mesh
@@ -533,13 +541,16 @@ class meanFlowClass(
         temp_vecP2nearest = interpolate.griddata(points, valsP2,dof_InterpolationFELiCSMeshP2[:, 0:self._param.Case.nDim], method='nearest')
         # Perform interpolation nearest (more precise)
         try:
-            temp_vecP2 = interpolate.griddata(points, valsP2,
-                                              dof_InterpolationFELiCSMeshP2[:, 0:self._param.Case.nDim],
-                                              method='linear')
+            temp_vecP2 = interpolate.griddata(
+                points, 
+                valsP2,
+                dof_InterpolationFELiCSMeshP2[:, 0:self._param.Case.nDim],
+                method='linear'
+                )
             temp_vecP2[np.isnan(temp_vecP2)] \
                 = temp_vecP2nearest[np.isnan(temp_vecP2)]
         except:
-            printWarning("Linear interpolation failed... Continuing with \
+            logger.warning("Linear interpolation failed. Continuing with \
                          nearest interpolation. This may cause strong \
                          inaccuracies!")
             temp_vecP2 = np.array(temp_vecP2nearest)
@@ -596,11 +607,8 @@ class meanFlowClass(
                         m += 1
 
     def raiseNotInFileListWarning(self):
-        from FELiCS.Misc.functions import printWarning
         for name in self.__notInFileList:
-            printWarning("  -- Field " + name
-                         + " not found in the import file! Assuming Field is \
-                           zero...")
+            logger.warning(f"Field '{name}' not in import file. Assuming Field is zero.")
 
     def CoordinateTransformation(self):
         import numpy as np
@@ -642,7 +650,7 @@ class meanFlowClass(
             B[0] = 1
 
             if np.all(A - B == 0):
-                print("Origin vector and target vector are identical. Skipping \
+                logger.warning("Origin vector and target vector are identical. Skipping \
                       rotation...")
                 [self.__RawFlowDict['x'],
                  self.__RawFlowDict['y'],
@@ -651,7 +659,7 @@ class meanFlowClass(
                        self.__RawFlowDict['y'],
                        self.__RawFlowDict['z']]
             else:
-                print("Rotating the coordinate system to align with the Felics \
+                logger.warning("Rotating the coordinate system to align with the Felics \
                       mesh...")
                 v = np.cross(A, B)
                 s = np.linalg.norm(v)
@@ -663,8 +671,8 @@ class meanFlowClass(
                 v_matrix[0, 1] = -v[2]
                 v_matrix[0, 2] = v[1]
                 v_matrix[1, 2] = -v[0]
-                print("Rotating base flow mesh to felics mesh...")
-                print("Rotation from (" + str(A[0]) + "," + str(A[1]) + ","
+                logger.debug("Rotating base flow mesh to felics mesh...")
+                logger.debug("Rotation from (" + str(A[0]) + "," + str(A[1]) + ","
                       + str(A[2]) + ") to (" + str(B[0]) + "," + str(B[1]) + ","
                       + str(B[2]) + ")")
                 R = np.identity(3) + v_matrix + np.dot(v_matrix, v_matrix) \
@@ -677,8 +685,7 @@ class meanFlowClass(
                     = list(np.dot(R, np.array([self.__RawFlowDict['x'],
                                                self.__RawFlowDict['y'],
                                                self.__RawFlowDict['z']])))
-            print("Performing Coordinate Transform from cartesian to \
-                  cylindrical coordinates...")
+            logger.info("Performing coordinate transform from cartesian to cylindrical.")
             # Rotate velocities (ux,uy,uz) to the new coordinate system via
             # rotation matrix R, so they become
             if np.all(A - B == 0):
@@ -910,13 +917,13 @@ class meanFlowClass(
             solve,
             File
         )
-        field = self._fieldDict[field_name]
-        V = field.function_space()
-        u = TrialFunction(V)
-        v = TestFunction(V)
-        f = Constant(0)
+        field   = self._fieldDict[field_name]
+        V       = field.function_space()
+        u       = TrialFunction(V)
+        v       = TestFunction(V)
+        f       = Constant(0)
 
-        u_n = Function(V)
+        u_n     = Function(V)
         u_n.vector()[:] = field.vector()[:]
         F = u * v * dx + dt * alpha * dot(grad(u), grad(v)) * dx \
             - (u_n + dt * f) * v * dx
@@ -965,13 +972,11 @@ class meanFlowClass(
         # Delete duplicates
         listOfFieldsToBeRead = list(dict.fromkeys(listOfFieldsToBeRead))
         
-        printDebug(True,"-- Mean flow fields to be read are: "+str(listOfFieldsToBeRead))
+        logger.debug("Mean flow fields to read: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
-    
 
     def addCustomMeanFlowQuantity(self,key):
         self._customMeanFlowQuantities.append(key)
-
 
 class meanFlowVertexValues(fieldProperties):
     """

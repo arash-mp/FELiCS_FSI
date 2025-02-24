@@ -26,16 +26,19 @@ Example usage:
     python main.py -h		shows help message 
     python main.py -f path	start with config file at path (mandatory)
     python main.py -f path -d	for debug mode
+    python main.py -f path -t	for test mode
     """
 
 # Initialize the argument parser
 parser = argparse.ArgumentParser(description=desc_text, epilog=epilog, formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('-f',"--file", type=str, required=True, metavar="path",help='Specify the path to the config file')
 parser.add_argument('-d', '--debug', action='store_true', help='activate debug mode for extended output')
+parser.add_argument('-t', '--test', action='store_true', help='activate test mode with no output')
 args = parser.parse_args()
 
 # Initialize the logger
-logger = Logger(args.debug, "felics")
+logger = Logger(args.debug, args.test, "felics")
+logger = Logger.get_logger("felics")
 
 if __name__ == '__main__':
 
@@ -52,3 +55,4 @@ if __name__ == '__main__':
             runInputOutput(param)
         case _:
             logger.error("Analysis type not recognized in FELiCS main.")
+    logger.info("Finished FELiCS run.")

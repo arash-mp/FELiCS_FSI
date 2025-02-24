@@ -1,7 +1,7 @@
 # Third party libraries
 from dolfinx.fem import (
     Constant,
-    Function,
+    Function
 )
 # Local Libraries and methods
 from FELiCS.Misc.tensorUtils import (
@@ -13,10 +13,10 @@ from FELiCS.Misc.tensorUtils import (
                     Tensor,
                     )
 
-from FELiCS.Misc.functions import (
-                printWarning, 
-                printDebug,
-                )
+from FELiCS.Misc.logging import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class fieldProperties:
     """
@@ -114,7 +114,7 @@ class fieldProperties:
                         FEMSpace = self._FEMSpaces.FunctionSpaceVectorVelocity
                     else:
                         FEMSpace = self._FEMSpaces.P2
-                    OutputDict[key] = project(self._fieldDict[key], FEMSpace)
+                    OutputDict[key] = project(self._fieldDict[key], FEMSpace) # NOTE: (Simon) not sure what this whould be
                 else:
                     OutputDict[key] = self._fieldDict[key]
             return OutputDict
@@ -245,21 +245,18 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                printDebug(True, '-- Zero p mean value.')
                 return self._zeroField
             
         elif self.isMeanFlowVertexValuesClass():
             if 'p' in list(self._fieldDict.keys()):
                 return self._fieldDict['p']
             else:
-                printDebug(True, '-- Unit p vertex value.')
                 return self._oneField
 
         else:
             if 'p' in list(self._fieldDict.keys()):
                 return self._fieldDict['p']
             else:
-                printDebug(True, '-- Zero p fluc value.')
                 return self._zeroField
             
     @property
@@ -311,21 +308,18 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                printDebug(True, '-- Unit rho mean value.')
                 return self._oneField
             
         elif self.isMeanFlowVertexValuesClass():
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
-                printDebug(True, '-- Unit rho vertex value')
                 return self._oneField
 
         else:
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
-                printDebug(True, '-- Zero rho fluc value')
                 return self._zeroField
 
     @property
@@ -347,21 +341,18 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                printDebug(True, '-- Unit T mean value')
                 return self._oneField
             
         elif self.isMeanFlowVertexValuesClass():
             if 'T' in list(self._fieldDict.keys()):
                 return self._fieldDict['T']
             else:
-                printDebug(True, '-- Unit T vertex value')
                 return self._oneField
 
         else:
             if 'T' in list(self._fieldDict.keys()):
                 return self._fieldDict['T']
             else:
-                printDebug(True, '-- Zero T fluc value')
                 return self._zeroField
 
     @property

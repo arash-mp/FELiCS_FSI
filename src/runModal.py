@@ -1,43 +1,47 @@
-import pdb
-import numpy as np
-import copy
-import time
+import  time
+from 	FELiCS.Misc.logging import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
 
 def runModal(param):
     '''This function runs the calculations preset in param
     Input:
         param: Parameter objects (see parameters.py), defining the case
     '''
-    import FELiCS.IO.Import as Import
-    from   FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
+    # import  FELiCS.IO.Import as Import
+    from    FELiCS.IO.ExportSolution            import ExportFromFile #, ExportGUI
+    import  FELiCS.SpaceDisc.DefineFEMSpaces    as DefineFEMSpaces
+    from    FELiCS.Fields.meanFlowClass         import meanFlowClass
+    from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
+    from    FELiCS.Misc.functions               import printDebug
+    from    FELiCS.Solvers.LinearSolver         import LinearSolver 
+    from    FELiCS.Fields.ModeCollection        import ModeCollection
+    # from    FELiCS.Fields.fluctuationClass import fluctuationSolutions
 
-    import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
-    from   FELiCS.Fields.meanFlowClass import meanFlowClass
-    from   FELiCS.Fields.fluctuationClass import fluctuationSolutions
-    from   FELiCS.Equation.EquationCollection import EquationCollectionClass
-    from   FELiCS.Misc.functions import printDebug
-
-    from   FELiCS.Solvers.LinearSolver import LinearSolver 
-    from   FELiCS.Fields.ModeCollection import ModeCollection
-
+    logger.info("Running Modal analysis")
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
     # mesh
-    mesh=param.__mesh__
+    mesh = param.getMesh()
+    
     # FEMSpaces
     FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
                 param,
                 mesh,
                 )
+    
     # read in mean flow
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
     meanFlow.importDataFromFile()
+    
     # export mean flow in "h5" file
     if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
         meanFlow.exportBaseFlowAsHDF5()
     meanflowFilename = 'meanflow.h5'
     meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+    
     # equation
     equation = EquationCollectionClass(
                                       param,
@@ -45,8 +49,6 @@ def runModal(param):
                                       meanFlow,
                                       mesh
                                       )
-
-
 
     #-----------------------------------------------------------------------
     ## MAIN PART
@@ -66,6 +68,8 @@ def runModal(param):
     # solve eigenproblem for each guess
     solution = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
+        
+        logger.info("Solving direct GEVP for guess: omega = " + str(guess))
         tmp     = LinearSolver.solveGeneralEigenproblem(A,
                                                         B,
                                                         guess,
@@ -74,7 +78,9 @@ def runModal(param):
 
         solution.appendSolutionOfEigenProblem(tmp, guess)
 
-        if adjoint==True:
+        if adjoint:
+            
+            logger.info("Solving adjoint GEVP for guess: omega = " + str(guess))
             tmp = LinearSolver.solveGeneralEigenproblem(A,
                                                         B,
                                                         guess,
@@ -85,18 +91,12 @@ def runModal(param):
 
     # end tracking time
     end = time.time() - start
-    printDebug(True, '-- Solving the general eigenproblem took %4g s' % end)
+    logger.info('Solving the general eigenproblem took %4g s' % end)
     residuum_max = solution.getMaximumError()
-    printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
-
-
-
-
-
+    logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
 
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION
     #-----------------------------------------------------------------------
     fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
     ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
-

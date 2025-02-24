@@ -1,36 +1,17 @@
 from ufl import (
-    dx,
-    conj,
-    Identity,
-    i,
-    j,
-    k,
-    Dx,
-    as_tensor,
-    inner,
-    grad,
-    dot,
-    outer,
-    transpose,
-    Constant,
+    dx
 )
 from FELiCS.Misc.tensorUtils import (
-    Tensor,
-    as_vector,
-    iInner,
     iDot,
     iDiv,
     iGrad,
-    iConj,
-    iOuter,
-    iT,
-    iIdentity,
+    iConj
 )
+from    .EquationTemplate   import EquationTemplate
+from    FELiCS.Misc.logging import Logger
 
-
-from FELiCS.Misc.functions import printWarning, printError, printDebug
-
-from .EquationTemplate import EquationTemplate
+# Get the logger
+logger = Logger.get_logger("felics")
 
 
 class EnthalpyEquation(EquationTemplate):
@@ -73,7 +54,8 @@ class EnthalpyEquation(EquationTemplate):
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
     
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)
@@ -127,11 +109,10 @@ class EnthalpyEquation(EquationTemplate):
         - It incorporates advection and diffusion terms using volume and boundary integrals.
         - Debugging messages are printed when enabled in the parameters.
         """
-        printDebug(self.param.debug, "Adding transport equation for enthalpy in all mesh internal directions")
 
-        J_hat = self.J_hat
-        X = self.X
-        fluc = self.fluc
+        J_hat   = self.J_hat
+        X       = self.X
+        fluc    = self.fluc
         
             
         # ------------------------  Advection terms

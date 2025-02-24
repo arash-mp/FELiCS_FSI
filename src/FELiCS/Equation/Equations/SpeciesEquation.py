@@ -1,36 +1,17 @@
 from ufl import (
-    dx,
-    conj,
-    Identity,
-    i,
-    j,
-    k,
-    Dx,
-    as_tensor,
-    inner,
-    grad,
-    dot,
-    outer,
-    transpose,
-    Constant,
+    dx
 )
 from FELiCS.Misc.tensorUtils import (
-    Tensor,
-    as_vector,
-    iInner,
     iDot,
     iDiv,
     iGrad,
     iConj,
-    iOuter,
-    iT,
-    iIdentity,
 )
+from .EquationTemplate      import EquationTemplate
+from FELiCS.Misc.logging    import Logger
 
-
-from FELiCS.Misc.functions import printWarning, printError, printDebug
-
-from .EquationTemplate import EquationTemplate
+# Get the logger
+logger = Logger.get_logger("felics")
 
 
 class SpeciesEquation(EquationTemplate):
@@ -49,7 +30,8 @@ class SpeciesEquation(EquationTemplate):
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
     
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)
@@ -94,10 +76,8 @@ class SpeciesEquation(EquationTemplate):
         X       = self.X
         fluc    = self.fluc
 
-            
         if not param.Case.m == 0:
-                printWarning('--> Species eq: m > 0 for tensor not validated yet. Treat results with care.')
-        
+            logger.warning('Species eq. with m > 0 not validated yet for tensor. Treat results with care.')
         
         # ----------------------------------------- Advection term
         # This term is integrated by parts
@@ -105,6 +85,7 @@ class SpeciesEquation(EquationTemplate):
         # The volume term seems to introduce a small error (~1e-12) in cartesian nates wrt. previous implementation
         ibp = True
         if ibp:
+            logger.debug("Using integration by parts for advection term.")
             weakForm.add(( 1j*fluc.Y(species)*iDiv(mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
             weakForm.add(( 1j*mean.Y(species)*iDiv(mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
             weakForm.add(( 1j*mean.Y(species)*iDiv(fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
@@ -113,6 +94,7 @@ class SpeciesEquation(EquationTemplate):
             weakForm.add(( -1j*iDot(self.n,mean.Y(species)*mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
             weakForm.add(( -1j*iDot(self.n,mean.Y(species)*fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
         else:
+            logger.debug("NOT using integration by parts for advection term.")
             weakForm.add(( -1j*iDot(iGrad(fluc.Y(species)),mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
             weakForm.add(( -1j*iDot(iGrad(mean.Y(species)),mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
             weakForm.add(( -1j*iDot(iGrad(mean.Y(species)),fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
@@ -154,11 +136,11 @@ class SpeciesEquation(EquationTemplate):
                     weakForm.add(( 1j*iDot(self.n, fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
                     # If BC value is 0, then the weak formulation throws an error, therefore check if it is zero...
                     # ... if the value is zero, a treatment is not necessary anyway
-                    if not Boundary['value'] in [0.0]:
-                        printWarning('--> Species eq: Dirichlet BC with non-zero value not validated in tensor framework! Treat results with care.')
+                    if Boundary['value'] not in [0.0]:
+                        logger.warning('--> Species eq: Dirichlet BC with non-zero value not validated in tensor framework! Treat results with care.')
                         weakForm.add(( -1*iDot(self.n,Boundary['value']*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
                         
                 if Boundary['type'] in ['Neumann']:
-                    if not Boundary['value'] in [0.0]:
-                        printError('So far only homogeneous Neumann conditions are implemented... Please either change to another BC or - even better -  implement it yourself and upload your well documented implementation to gitlab...')
+                    if Boundary['value'] not in [0.0]:
+                        logger.warning('So far only homogeneous Neumann conditions are implemented... Please either change to another BC or - even better -  implement it yourself and upload your well documented implementation to gitlab...')
     

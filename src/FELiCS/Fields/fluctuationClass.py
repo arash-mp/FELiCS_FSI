@@ -14,29 +14,24 @@ from h5py import (
 )
 from dolfinx.fem import (
     Function,
-    FunctionSpace,
-    Constant,
 )
 from ufl import (
     TrialFunctions,
 )
 
 # Local libraries and methods
-from FELiCS.Fields.fieldProperties import fieldProperties
-from FELiCS.Equation.dependentVariables.energyHandler import energyHandler
-from FELiCS.Equation.dependentVariables.equationOfStateHandler import equationOfStateHandler
-from FELiCS.Equation.dependentVariables.heatReleaseHandler import heatReleaseHandler
-from FELiCS.Equation.dependentVariables.momentumHandler import momentumHandler
-from FELiCS.Equation.dependentVariables.reactionHandler import reactionHandler
-from FELiCS.Misc.functions import (
-    printError,
-    printWarning,
-)
-from FELiCS.IO.export import export
+from    FELiCS.Fields.fieldProperties                               import fieldProperties
+from    FELiCS.Equation.dependentVariables.energyHandler            import energyHandler
+from    FELiCS.Equation.dependentVariables.equationOfStateHandler   import equationOfStateHandler
+from    FELiCS.Equation.dependentVariables.heatReleaseHandler       import heatReleaseHandler
+from    FELiCS.Equation.dependentVariables.momentumHandler          import momentumHandler
+from    FELiCS.Equation.dependentVariables.reactionHandler          import reactionHandler
+from    FELiCS.IO.export                                            import export
+from    FELiCS.Misc.tensorUtils                                     import Tensor
+from 	FELiCS.Misc.logging                                         import Logger
 
-from FELiCS.Misc.tensorUtils import (
-    Tensor,
-)
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class fluctuationClass(
     fieldProperties,
@@ -134,19 +129,19 @@ class fluctuationClass(
         # Get all the variables, which need to be present
         neededVariables = []
 
-        if not param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
+        if param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
             momentumHandler.__init__(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearMomentum()
 
-        if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
+        if param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
             equationOfStateHandler.__init__(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearEoS()
 
-        if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+        if param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
             energyHandler.__init__(
                                   self,
                                   )
@@ -159,18 +154,18 @@ class fluctuationClass(
         # While not all needed fluctuations are calculated, try calculating them
         n_try = 1
         while not set(neededVariables).issubset((self._fieldDict.keys())):
-            if not param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
+            if param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
                 self._relateConservativeToPrimitiveVariablesMomentum()
                 self._initializeMolecularMomentumDiffusionFluctuation()
-            if not param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
+            if param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
                 self._initializeEoSFluctuations()
-            if not param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+            if param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
                 self._relateConservativeToPrimitiveVariablesEnergy()
                 self._initializeMolecularHeatDiffusionFluctuation()
             n_try += 1
             if n_try > 100:
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
-                printError('Attempt to calculate secondary variables not successful. Missing quantities: '\
+                logger.error('Attempt to calculate secondary variables not successful. Missing quantities: '\
                      + str(notInitializedFields) + ". Maybe the mixture file is still in the old format (ending with a '.mix' instead of '.json')?")
 
         # print(self._param.Mixture.getReactionMechanism()['type'])
@@ -311,25 +306,25 @@ class fluctuationSolutions(
 
         # Get all the variables, which need to be present
         neededVariables = []
-        if not self._param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
+        if self._param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
             momentumHandler.__init__(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearMomentum()
 
-        if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
+        if self._param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
             equationOfStateHandler.__init__(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearEoS()
 
-        if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+        if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
             energyHandler.__init__(
                 self,
                 )
             neededVariables += self._getNeededFieldsForLinearEnergy()
     
-        if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+        if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
             energyHandler.__init__(
                 self,
                 )
@@ -343,18 +338,18 @@ class fluctuationSolutions(
         n_try = 0
         while not set(neededVariables).issubset((self._fieldDict.keys())):
             meanVertexValues = self._mean.getVertexValues()
-            if not self._param.Case.SetOfEquations['Momentum']['Equation'] in ['None']:
+            if self._param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
                 self._relateConservativeToPrimitiveVariablesMomentum(
                                                     meanVertexValues,
                                                     )
                 self._initializeMolecularMomentumDiffusionFluctuation(meanVertexValues)
 
-            if not self._param.Case.SetOfEquations['EquationOfState']['Equation'] in ['None']:
+            if self._param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
                 self._initializeEoSFluctuations(
                                             meanVertexValues,
                                                 )
 
-            if not self._param.Case.SetOfEquations['Energy']['Equation'] in ['None']:
+            if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
                 self._relateConservativeToPrimitiveVariablesEnergy(
                                             meanVertexValues,
                                                 )
@@ -364,7 +359,7 @@ class fluctuationSolutions(
             n_try += 1
             if n_try > 100:
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
-                printError('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields +". Maybe the mixture file is still in the old format (ending with a '.mix' instead of '.json')?")
+                logger.error('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields +". Maybe the mixture file is still in the old format (ending with a '.mix' instead of '.json')?")
 
         if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
             reactionHandler.__init__(
@@ -422,7 +417,7 @@ class fluctuationSolutions(
 
         """
         filenameWithoutExtension = filename.split('.h5')[0]
-        filenameWithoutFolder = filename
+        # filenameWithoutFolder = filename
         filename = f'{self._param.Export.ExportFolder}/' + filename
 
         # appendFlag = False
@@ -473,7 +468,7 @@ class fluctuationSolutions(
                 fileNameWithNumb = filenameWithoutExtension + '_' + f'{i}' \
                                    + '.h5'
 
-            nextFileindex = i
+            # nextFileindex = i
             hf = File(f'{self._param.Export.ExportFolder}/'
                       + filenameWithoutExtension + '_' + f'{i}' + '.h5', 'w')
 

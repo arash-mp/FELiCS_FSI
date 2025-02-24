@@ -1,5 +1,8 @@
-from FELiCS.Misc.functions import printWarning,printOK
-import json
+import  json
+from 	FELiCS.Misc.logging import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class MixtureClass():
     '''The mixture class defines a mixture
@@ -29,11 +32,10 @@ class MixtureClass():
                     setattr(self,'__'+setting+'__',value)
                 mixFile.close()
             else:
-                printWarning('The given mixture file ('+mixFilePath+') does not have the correct format and will not be read (should be a "json" file). This could lead to an unexplained error later, if the calculation is depending on data given in the mixture file. Please convert the mixture file (examples can be found in the felics-test repository).')
+                logger.warning('Mixture file ('+mixFilePath+') does not have the correct format and will not be read (should be a "json" file). This could lead to an unexplained error later, if the calculation is depending on data given in the mixture file. Please convert the mixture file (examples can be found in the felics-test repository).')
         else:
-            printOK('The mixture file path ('+mixFilePath+') does not point to a mixture file!')
+            logger.info('No mixture file '+mixFilePath+', using defaults.')
         
-   
     def getReactionMechanism(self):
         ''' Function returning the reaction mechanism '''
         return self.__Reaction_mechanism__

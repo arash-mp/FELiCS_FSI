@@ -1,15 +1,14 @@
-from ufl import dx
-from FELiCS.Misc.functions import printDebug, printError
-from .EquationTemplate import EquationTemplate
-
-from FELiCS.Misc.tensorUtils import (
+from    ufl                     import dx
+from    .EquationTemplate       import EquationTemplate
+from    FELiCS.Misc.logging     import Logger
+from    FELiCS.Misc.tensorUtils import (
     Tensor,
-    as_vector,
-    iGrad,
     iDot,
     iConj
 )
 
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class SpongeTerm(EquationTemplate):
     """
@@ -33,7 +32,8 @@ class SpongeTerm(EquationTemplate):
         """
         # Disclaimers
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')        
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')        
 
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)
@@ -77,7 +77,7 @@ class SpongeTerm(EquationTemplate):
                 #  Get the corresponding variable
                 varID = param.Case.SetOfEquations[eqID]['Variable']
                 varNum = param.Case.SolutionList.index(varID)
-                printDebug(True, "-- -> Sponge term for %s-fluc -> X[%d]." % (varID,varNum))
+                logger.debug("Adding sponge term for %s-fluc: X[%d]." % (varID,varNum))
                 
                 # Dynamically get the corresponding fluctuation field
                 fluc_var = getattr(fluc, '%s' % varID)
@@ -108,7 +108,6 @@ class SpongeTerm(EquationTemplate):
         """
  
         J_hat = self.J_hat
-        fluc  = self.fluc
         X     = self.X
         param = self.param
         
@@ -120,7 +119,7 @@ class SpongeTerm(EquationTemplate):
                 #  Get the corresponding variable
                 varID = param.Case.SetOfEquations[eqID]['Variable']
                 varNum = param.SolutionList.index(varID)
-                printDebug(True, "-- -> Sponge term for %s-fluc -> X[%d]." % (varID,varNum))
+                logger.debug("Adding sponge term for %s-fluc: X[%d]." % (varID,varNum))
                 
                 # Dynamically get the corresponding fluctuation field
                 mean_var = getattr(mean, '%s' % varID)

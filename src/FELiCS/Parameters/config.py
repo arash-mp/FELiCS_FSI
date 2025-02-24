@@ -5,8 +5,8 @@ from    abc                             import ABC
 from    h5py                            import File
 from    FELiCS.Equation.MixtureClass    import MixtureClass
 from    FELiCS.SpaceDisc.FELiCSMesh     import FELiCSMesh
-from 	FELiCS.Misc.logging			    import Logger
 from    FELiCS.Misc.functions           import getLastGitCommit
+from 	FELiCS.Misc.logging			    import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -31,7 +31,7 @@ class config(ABC):
     def __init__(self):
         logger.debug("Initializing config class with defaults.")
         
-        ## Get an instance of the defaults settings
+        # Get an instance of the defaults settings
         self.default_config = self.getAllSettingsDict()
         
         # NOTE: deprecated?
