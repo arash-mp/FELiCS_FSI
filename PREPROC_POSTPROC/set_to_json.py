@@ -46,8 +46,8 @@ for path, dirc, files in os.walk(dirname):
             list_set.append(path+"/"+name)
         elif name.endswith(ext_bc):
             list_bc.append(path+"/"+name)
-        elif name.endswith(ext_mix):
-            list_mix.append(path+"/"+name)
+        #elif name.endswith(ext_mix):
+        #    list_mix.append(path+"/"+name)
 
 
 #def adapt_set_to_json(set_files, set_files_directory, json_files_directory):
