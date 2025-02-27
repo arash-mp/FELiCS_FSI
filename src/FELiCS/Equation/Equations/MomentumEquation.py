@@ -33,17 +33,34 @@ from .EquationTemplate import EquationTemplate
 
 
 class MomentumEquation(EquationTemplate):
-    """Class representing the momentum conservation equation."""
+    """Class representing the momentum conservation equation.
+
+    This class formulates the momentum conservation equation in a tensorial framework.
+    It includes convective, pressure gradient, and diffusion terms while supporting 
+    both weak and strong formulations. The class integrates with the overall equation 
+    collection and handles interactions with mean fields and fluctuations.
+
+    """
 
     def __init__(self, eqColl, fluc, X, param):
         """
         Initialize the MomentumEquation object.
 
-        Parameters:
-        - eqColl: EquationCollection object
-        - fluc: Fluctuations object
-        - X: Spatial coordinates
-        - param: Parameters object
+        Parameters
+        ----------
+        eqColl : EquationCollection
+            The equation collection object.
+        fluc : Fluctuations
+            The fluctuations object.
+        X : Function
+            The function representing the mesh coordinates.
+        param : Parameters
+            The parameters object.
+
+        Notes
+        -----
+        - If the numerical scheme is 'Discontinuous Galerkin', an error will be raised 
+          since it is not implemented in the tensorial framework.
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
@@ -57,21 +74,38 @@ class MomentumEquation(EquationTemplate):
         """
         Add the weight matrix expression to the weak form.
 
-        Parameters:
-        - weakForm: WeakForm object
-        - mean: Mean object
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object.
+        mean : MeanFields
+            The mean fields object.
+
+        Notes
+        -----
+        - This method incorporates time derivative terms into the weak form.
         """
         # Time derivative term
         weakForm.add((iDot(mean.rho*self.fluc.u, iConj(self.X))).ufl_tens*self.J_hat*dx)
 
     def addLinearExpression(self,weakForm,mean):
         """
-        This function builds the weak form of the linearized
-        momentum conservation equation, in tensorial framework.
-        The current version is based on the addMomentumEq.py function
-        that was previously defined using the index notation of ufl.
-        For now all terms from the momentum equation have been grouped 
-        into a single file instead of being in separate files.
+        Construct the weak form of the linearized momentum conservation equation.
+
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object.
+        mean : MeanFields
+            The mean fields object.
+
+        Notes
+        -----
+        - This function builds the weak form of the momentum conservation equation 
+          in a tensorial framework.
+        - Convective, pressure gradient, and diffusion terms are considered.
+        - Integration by parts is optionally applied depending on the coordinate system.
+        - Certain terms may require adjustments in future implementations.
         """
       
         fluc  = self.fluc
