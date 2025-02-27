@@ -42,16 +42,6 @@ class EnergyPressureEquation(EquationTemplate):
     is based on total energy conservation and is expressed in terms of 
     pressure, using the Perfect Gas Law and continuity equations.
 
-    Methods
-    --------------
-    addWeightMatrixExpression(weakForm, mean)
-        Adds the weight matrix expression to the weak form.
-    addNonlinearExpression()
-        Placeholder for nonlinear expressions (currently not implemented).
-    addLinearExpression(weakForm, mean)
-        Adds the linear expression to the weak form for solving the 
-        energy conservation equation.
-
     Parameters
     ----------
     eqColl : EquationCollection
