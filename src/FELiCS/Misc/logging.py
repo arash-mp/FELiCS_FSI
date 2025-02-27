@@ -3,6 +3,33 @@ import logging
 import shutil
 from datetime import datetime
 
+
+
+class CustomFormatter(logging.Formatter):
+    # This class is created to get colored output for the warnings and errors
+
+    grey = "\x1b[38;20m"
+    yellow = "\x1b[33;20m"
+    red = "\x1b[31;20m"
+    bold_red = "\x1b[31;1m"
+    reset = "\x1b[0m"
+    format = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+
+
+    FORMATS = {
+        logging.DEBUG: grey + format + reset,
+        logging.INFO: grey + format + reset,
+        logging.WARNING: yellow + format + reset,
+        logging.ERROR: red + format + reset,
+        logging.CRITICAL: bold_red + format + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+
 class Logger:
     _instance = None
     
@@ -43,12 +70,16 @@ class Logger:
         logging.addLevelName(logging.WARNING, 'Warning')
         logging.addLevelName(logging.INFO, 'Info')
         logging.addLevelName(logging.DEBUG, 'Debug')
-        formatter = logging.Formatter(
+        formatter_log = logging.Formatter(
             '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
         )
+        # use custom formatter to get colored output for the command line
+        formatter_cmd = CustomFormatter() 
         
+        ch.setFormatter(formatter_cmd)
+        fh.setFormatter(formatter_log)
+        fh_errors.setFormatter(formatter_log)
         for handler in [ch, fh, fh_errors]:
-            handler.setFormatter(formatter)
             self._logger.addHandler(handler)
 
         self._logger.debug("Logger initialized successfully")
