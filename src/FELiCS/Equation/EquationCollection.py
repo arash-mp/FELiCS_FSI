@@ -322,7 +322,7 @@ class EquationCollectionClass():
             try:
                 A_ufl.setCorrectMeshObject(self.__mesh)
             except:
-                logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
 
             # assemble petsc matrix
             A = assemble_matrix(form(A_ufl.lhs), bcs=self.BCs)
@@ -367,7 +367,7 @@ class EquationCollectionClass():
         try:
             B_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
 
         # assemble petsc matrix
         if self.__param.Case.AnalysisMode in ['Resolvent']:
@@ -421,7 +421,7 @@ class EquationCollectionClass():
         try:
             W_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
 
         # assemble petsc matrix
         W = assemble_matrix(form(W_ufl.lhs), [])#self.BCs) #without BCs
@@ -491,7 +491,7 @@ class EquationCollectionClass():
         try:
             D_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
 
         # Assemble petsc matrix
         D = assemble_matrix(form(D_ufl.lhs), self.BCs)
@@ -527,7 +527,7 @@ class EquationCollectionClass():
         try:
             rhs_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
 
         # assemble petsc matrix
@@ -550,7 +550,7 @@ class EquationCollectionClass():
         try:
             N_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
 
         N = assemble_vector(form(N_ufl.rhs))
@@ -577,7 +577,7 @@ class EquationCollectionClass():
         try:
             BL_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
 
         # assemble petsc matrix
@@ -601,7 +601,7 @@ class EquationCollectionClass():
         try:
             A_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
 
         # assemble forcing vector
@@ -637,7 +637,7 @@ class EquationCollectionClass():
         try:
             W_r_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
 
         # assemble petsc matrix
@@ -659,7 +659,7 @@ class EquationCollectionClass():
         try:
             W_f_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
 
         # assemble petsc matrix
@@ -681,7 +681,7 @@ class EquationCollectionClass():
         try:
             W_FEM_ufl.setCorrectMeshObject(self.__mesh)
         except:
-            logger.warning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
         #####################################################################################################
 
         # assemble petsc matrix

@@ -24,7 +24,7 @@ class FELiCSMesh(Mesh):
             gmsh.option.setNumber("General.Verbosity", 0) # Disable all logging
             
             if __version__.find('0.4') >= 0:
-                printDeprecatedWarning("Dolfinx version <0.5.0 is used.")
+                logger.info("DEPRECATED: Dolfinx version <0.5.0 is used.")
                 from FELiCSGUI.gmsh_helpers import read_from_msh, extract_gmsh_geometry #, gmsh_model_to_mesh
                 mesh, cell_tags, hi, facet_tags = read_from_msh(filename, cell_data=True, facet_data=True, gdim=gdim)
                 self.coordinatesGMSH = extract_gmsh_geometry(gmsh.model)
@@ -48,7 +48,7 @@ class FELiCSMesh(Mesh):
                 super().__init__(mesh, mesh.ufl_domain())
                 newMesh = Mesh(mesh, mesh.ufl_domain())
             except: #use old language 
-                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
                 super().__init__(MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
             #   #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
             
@@ -56,7 +56,7 @@ class FELiCSMesh(Mesh):
                 self.dolfinxMesh  = mesh
                 self._ccp_object  = mesh._cpp_object
             except:
-                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
                 self.dolfinxMesh  = self
                 self._cpp_object  = mesh
                 
@@ -70,7 +70,7 @@ class FELiCSMesh(Mesh):
             try:    #try new version of dolfinx 
                 super().__init__(inputMesh, inputMesh.ufl_domain())
             except: #use old language 
-                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
                 super().__init__(MPI.COMM_WORLD, inputMesh.topology, inputMesh.geometry, inputMesh.ufl_domain())
             self.gdim = inputMesh.topology.dim
             try: 
@@ -78,7 +78,7 @@ class FELiCSMesh(Mesh):
                 self._ccp_object  = inputMesh._cpp_object
             except:
                 self.dolfinxMesh = self 
-                printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
                 self._cpp_object  = inputMesh
         x = SpatialCoordinate(self)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
@@ -138,7 +138,7 @@ class FELiCSMesh(Mesh):
             self.meshCells = connectivityCells.array.reshape(
                 [self.topology.original_cell_index.shape[0], self.topology.cell_types[0].value])
         except: #use old language. TODO: handle DEPRECATED stuff uniformly
-            printDeprecatedWarning("Mesh module from dolfinx version <0.7.0 is used.")
+            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
             self.meshCells = connectivityCells.array.reshape(
                 [self.topology.original_cell_index.shape[0], self.topology.cell_type.value])
 
