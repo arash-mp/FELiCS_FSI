@@ -46,7 +46,7 @@ class Logger:
         now = datetime.now().strftime("%d.%m.%Y-%H.%M.%S")
         
         logfilename = f"logs{os.sep}{self.logger_name}_{now}.log"
-        logfilename_errors = f"logs{os.sep}{self.logger_name}_{now}.ERRORS.log"
+        #logfilename_errors = f"logs{os.sep}{self.logger_name}_{now}.ERRORS.log"
 
         self._logger = logging.getLogger(self.logger_name)
         self._logger.handlers.clear()
@@ -59,12 +59,12 @@ class Logger:
 
         ch = logging.StreamHandler()
         fh = logging.FileHandler(logfilename, encoding='utf-8')
-        fh_errors = logging.FileHandler(logfilename_errors, encoding='utf-8')
+        #fh_errors = logging.FileHandler(logfilename_errors, encoding='utf-8')
 
         ch.setLevel(logging.ERROR if self.test_mode else 
                    logging.DEBUG if self.debug_mode else logging.INFO)
         fh.setLevel(logging.DEBUG if (self.debug_mode or self.test_mode) else logging.INFO)
-        fh_errors.setLevel(logging.WARNING)
+        #fh_errors.setLevel(logging.WARNING)
 
         logging.addLevelName(logging.ERROR, 'Error')
         logging.addLevelName(logging.WARNING, 'Warning')
@@ -78,8 +78,8 @@ class Logger:
         
         ch.setFormatter(formatter_cmd)
         fh.setFormatter(formatter_log)
-        fh_errors.setFormatter(formatter_log)
-        for handler in [ch, fh, fh_errors]:
+        #fh_errors.setFormatter(formatter_log)
+        for handler in [ch, fh]: #, fh_errors]:
             self._logger.addHandler(handler)
 
         self._logger.debug("Logger initialized successfully")
