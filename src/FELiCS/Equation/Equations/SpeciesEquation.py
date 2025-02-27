@@ -98,7 +98,7 @@ class SpeciesEquation(EquationTemplate):
         weakForm.add((self.fluc.Y(self.species) * iConj(self.X) * mean.rho).ufl_tens * self.J_hat * dx)
 
     def addNonlinearExpression(self):
-         """
+        """
         Add the nonlinear expression to the weak form.
 
         Notes
