@@ -109,7 +109,6 @@ $$
 
 ### Weak form of momentum equation
 The weak form of NON-linear momentum equation is
-
 $$
 \int(
     \mathbf{u} \cdot (\nabla \cdot (\mathbf{X} \otimes \mathbf{u}) )
