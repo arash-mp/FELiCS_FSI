@@ -46,13 +46,12 @@ if __name__ == '__main__':
     param = config()
     param.importFromFile(args.file)
     mode = param.Case.AnalysisMode
-    match mode:
-        case "Modal":
-            runModal(param)
-        case "Resolvent":
-            runResolvent(param)
-        case "Input-Output":
-            runInputOutput(param)
-        case _:
-            logger.error("Analysis type not recognized in FELiCS main.")
+    if mode == "Modal":
+        runModal(param)
+    elif mode == "Resolvent":
+        runResolvent(param)
+    elif mode == "Input-Output":
+        runInputOutput(param)
+    else:
+        logger.error("Analysis type not recognized in FELiCS main.")
     logger.info("Finished FELiCS run.")
