@@ -26,6 +26,7 @@ Content
    :glob:
 
    installation_guide
+   Running_FEliCS/index
    Explanations/index
    GoverningEquations/index
    Tutorials/index
