@@ -31,7 +31,7 @@ Example usage:
 
 # Initialize the argument parser
 parser = argparse.ArgumentParser(description=desc_text, epilog=epilog, formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument('-f',"--file", type=str, required=True, metavar="path",help='Specify the path to the config file')
+parser.add_argument('-f',"--file", "-file", type=str, required=True, metavar="path",help='Specify the path to the config file')
 parser.add_argument('-d', '--debug', action='store_true', help='activate debug mode for extended output')
 parser.add_argument('-t', '--test', action='store_true', help='activate test mode with no output')
 args = parser.parse_args()
