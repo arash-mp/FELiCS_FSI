@@ -22,14 +22,6 @@ class EnthalpyEquation(EquationTemplate):
     methods for adding weight matrices, linear expressions, and nonlinear 
     expressions to the weak form.
 
-    Methods
-    --------------
-    addWeightMatrixExpression(weakForm, mean):
-        Adds the weight matrix expression to the weak form.
-    addNonlinearExpression():
-        Adds the nonlinear expression to the weak form.
-    addLinearExpression(weakForm, mean):
-        Constructs the weak form of the linearized enthalpy conservation equation.
     """
 
     def __init__(self, eqColl, fluc, X, param):

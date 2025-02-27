@@ -38,28 +38,6 @@ class LinearSolver:
     singular value decompositions (SVD), and linear systems efficiently using
     PETSc and SLEPc.
 
-    Parameters
-    ----------
-    None
-
-    Attributes
-    ----------
-    None
-
-
-    Methods
-    -------
-    solveGeneralEigenproblem(A, B, sigma=0.0, nev=5)
-        Solves a generalized eigenvalue problem.
-    solveSVDOfResolvent(A, sigma=0.0, nev=5)
-        Computes the SVD of a resolvent operator.
-    solveEquationSystem(A, b)
-        Solves a linear system Ax = b.
-    solveTransposeEquationSystem(A, b)
-        Solves the transpose system A^T x = b.
-    createEquationSystemSolver(A)
-        Creates a reusable solver for a matrix.
-
     Notes
     -----
     Consists of only static methods that don't need an instance ("object") of this class. Call the methods via "LinearSolver.method()".

@@ -512,6 +512,8 @@ class config(ABC):
         MeanList=[]
         # Add velocity components
         MeanList.append('u')
+        # Add pressure component
+        MeanList.append('p')
         # If necessary, add density and enthalpy diffusion
         if 'rho' in self.getTransportedQuantityList():
             MeanList.append('rho')

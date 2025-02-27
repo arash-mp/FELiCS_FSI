@@ -15,18 +15,40 @@ logger = Logger.get_logger("felics")
 
 
 class SpeciesEquation(EquationTemplate):
-    """Class representing the species transport equation."""
+    """Class representing the species transport equation.
 
+    This class formulates the species transport equation in a tensorial framework.
+    It accounts for advection, diffusion, and potential reaction terms while ensuring 
+    compatibility with various boundary conditions. The equation is integrated 
+    into the larger system of equations used for modeling species transport in 
+    computational fluid dynamics.
+
+    The implementation supports input-output analysis and applies integration by 
+    parts for specific terms to facilitate numerical stability and boundary 
+    conditions handling.
+    """
     def __init__(self, eqColl, fluc, X, species, param):
         """
         Initialize the SpeciesEquation class.
 
-        Parameters:
-        - eqColl (EquationCollection): The equation collection.
-        - fluc (Fluctuations): The fluctuation object.
-        - X (Function): The solution function.
-        - species (str): The species name.
-        - param (Parameter): The parameter object.
+        Parameters
+        ----------
+        eqColl : EquationCollection
+            The equation collection object.
+        fluc : Fluctuations
+            The fluctuation object.
+        X : Function
+            The function representing the mesh coordinates.
+        species : str
+            The species name.
+        param : Parameters
+            The parameters object.
+
+        Notes
+        -----
+        - If the numerical scheme is 'Discontinuous Galerkin', an error will be raised 
+          since it is not implemented in the tensorial framework.
+        - The species name is stored internally for further processing.
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
@@ -43,9 +65,16 @@ class SpeciesEquation(EquationTemplate):
         """
         Add the weight matrix expression to the weak form.
 
-        Parameters:
-        - weakForm (Form): The weak form.
-        - mean (MeanFlow): The mean flow object.
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object.
+        mean : MeanFlow
+            The mean flow object.
+
+        Notes
+        -----
+        - This method incorporates time derivative terms into the weak form.
         """
         # Time derivative term
         weakForm.add((self.fluc.Y(self.species) * iConj(self.X) * mean.rho).ufl_tens * self.J_hat * dx)
@@ -53,22 +82,33 @@ class SpeciesEquation(EquationTemplate):
     def addNonlinearExpression(self):
         """
         Add the nonlinear expression to the weak form.
+
+        Notes
+        -----
+        - This method currently serves as a placeholder and is not implemented.
         """
         pass
 
     def addLinearExpression(self, weakForm, mean):
         """
-        Add the linear expression to the weak form.
+        Construct the weak form of the linearized species transport equation.
 
-        Parameters:
-        - weakForm (Form): The weak form.
-        - mean (MeanFlow): The mean flow object.
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object.
+        mean : MeanFlow
+            The mean flow object.
+
+        Notes
+        -----
+        - The equation is formulated in a convective form using a tensorial framework.
+        - Integration by parts is applied to the advection term.
+        - The diffusion term is integrated by parts but omits boundary contributions, 
+          imposing a Neumann condition.
+        - A warning is issued if the case parameter `m` is greater than zero, as 
+          validation for such cases is not complete.
         """
-        '''
-        This function builds the weak form of the linearized
-        species transport equation in convective form, in the
-        tensorial framework.
-        '''
        
         param   = self.param
         J_hat   = self.J_hat
