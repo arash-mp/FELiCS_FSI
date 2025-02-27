@@ -42,7 +42,7 @@ $C_\mu = 0.09$, $\sigma_k = 1.0$, $\sigma_\varepsilon = 1.3$, $C_{1\varepsilon }
 ## Linear form of steady incompressible RANS equations
 To calculate base flow with Newton-Raphson method, or do linear analysis, it is necessary to get the linear form of the governing equations.
 Therefore we derived the linear form of steady incompressible RANS equations and summerize them here.
-The notation of $\delta \cdot$ ($\delta \mathbf{u}, \delta p, \delta k, \delta \varepsilon$, ...) presents the small perturbations of each variable.
+The notation of $\delta \cdot$ (such as $\delta \mathbf{u}, \delta p, \delta k, \delta \varepsilon$, ...) presents the small perturbations of each variable.
 $$
     \nabla \delta \mathbf{u} = 0
 $$
@@ -93,14 +93,14 @@ $$
 
 Where $\mathcal{F}$ is the governing equation, $X$ is the Test function, their inner products are intergrated over the domain.
 
-When calculating the intergration expression (variational form), it is sometimes important to perform intergration by part on some terms. This can decrease the order of spacial differences on specific parameters or increase the rubostness of the solver. By doing so, the new expressions are usually called weak form Galerkin. This kind of equations are coded and implemented in FELiCS. The weak forms of linear and non-linear expressions for each equations are shown in the following.
+When calculating the integration expression (variational form), it is sometimes important to perform integration by part on some terms. This can decrease the order of spacial differences on specific parameters or increase the rubostness of the solver. By doing so, the new expressions are usually called weak form Galerkin. This kind of equations are coded and implemented in FELiCS. The weak forms of linear and non-linear expressions for each equations are shown in the following.
 
 ### Weak form of continuity equation
 The weak form of NON-linear continuity equation is
 $$
 \int ((\mathbf{u} \cdot \nabla)X) dx - \int_\Omega (\mathbf{u} \cdot \mathbf{n}) ds = 0
 $$
-where $\mathbf{n}$ is the unit vector which is normal to the boundary facets, $\int_\Omega (\cdot) ds$ is intergration on boundaries.
+where $\mathbf{n}$ is the unit vector which is normal to the boundary facets, $\int_\Omega (\cdot) ds$ is integration on boundaries.
 
 The weak form for Linear continuity equation is
 $$
@@ -146,7 +146,7 @@ $$
 )ds
 $$
 
-### Weakform of k equation
+### Weak form of k equation
 
 The weak form of NON-linear k equation is
 $$
@@ -157,11 +157,47 @@ $$
     - \varepsilon X
 )dx
 \\
-\int_\Omega(
+-\int_\Omega(
     (\mathbf{u} \cdot \mathbf{n}) X k
     - \nu_k (X (\nabla k \cdot \mathbf{n}))
 )ds
 $$
 
-!!! IMPORTANT TO REMEMBER: When write the weak form, remember to keep consisttency with FELiCS codes. Especially the convecting terms.
+The weak form of Linear k equation is
+$$
+\int(
+    (\nabla \cdot (\delta \mathbf{u}X))k
+    +(\nabla \cdot (\mathbf{u} X)) \delta k
+    -\nu_k (\nabla \delta k \cdot \nabla X)
+    + \delta P_k X
+    -\delta \varepsilon X
+)dx
+\\
+-\int(
+    ((\delta  \mathbf{u} X) \cdot \mathbf{n}) k 
+    + ((\mathbf{u} X) \cdot \mathbf{n}) \delta k
+    - \nu_k ((\nabla \delta k) \cdot \mathbf{n}) X
+)ds
+$$
+
+### Weak form of $\varepsilon$ equation
+
+The weak form of non-linear $\varepsilon$ equation is
+
+$$
+\int(
+    \varepsilon \nabla \cdot (\mathbf{u} X)
+    - \nu_\varepsilon (\nabla \varepsilon \cdot \nabla X)
+    + C_1 \frac{\varepsilon}{k} P_k X
+    - C_2 \frac{\varepsilon ^2}{k} X
+)dx
+\\
+-\int(
+    (\mathbf{u} \cdot \mathbf{n}) X \varepsilon
+    -\nu_\varepsilon (\nabla \varepsilon \cdot \mathbf{n}) X
+)ds
+$$
+
+
+!!! IMPORTANT TO REMEMBER: When write the weak form, remember to keep consistency with FELiCS codes. Especially the convecting terms.
 
