@@ -906,7 +906,7 @@ class EquationCollectionClass():
         else:
             # invert values, if non-zero
             array                                   = self.__mean.forcingDomain.x.array
-            # np.where(array[:]!= 0., 1./ array[:], 0.) # NOTE: (Simon) is this used at all?
+            #array[:] =  np.where(array[:]!= 0., 1./ array[:], 0.) # NOTE: (Simon) is this used at all? #TODO: (Sophie) Check expression in documentation
             self.__mean.forcingDomain.x.array[:]    = array[:]
             forcingRestrictor_scalarP2              = self.__mean.forcingDomain    # using actual values
             forcingRestrictor_scalarP1              = Function(self.__FEMSpaces.P1)
