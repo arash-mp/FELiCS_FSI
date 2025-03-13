@@ -2,9 +2,29 @@ from dolfinx.fem import Function, petsc
 
 
 class Field:
+    """
+    Class representing a finite element field.
 
+    This class provides methods for handling finite element fields, including 
+    coefficient manipulation, boundary conditions application, and expression 
+    evaluation. It supports complex-valued fields and operates within a 
+    tensorial framework.
+
+    The class interacts with `dolfinx.fem.Function` for finite element operations 
+    and includes utilities for working with `PETSc` vectors and UFL expressions.
+    """
 
     def __init__(self, FEMSpace, mesh):
+        """ 
+        Initialize the Field object.
+
+        Parameters
+        ----------
+        FEMSpace : dolfinx.fem.FunctionSpace
+            The finite element function space.
+        mesh : dolfinx.mesh.Mesh
+            The computational mesh associated with the function space.
+        """
         self.space = FEMSpace
         self.mesh  = mesh
 
@@ -13,6 +33,20 @@ class Field:
 
 
     def getListOfSingleFields(self):
+        """
+        Get a list of single-component fields.
+
+        Returns
+        -------
+        list
+            A list containing individual scalar fields if the function space has 
+            multiple subspaces. Otherwise, returns a list containing only this field.
+
+        Notes
+        -----
+        - If the space has multiple subspaces, each subspace is extracted as an 
+          individual field.
+        """
         listOfFields = []
 
         numberOfSubSpaces = self.space.num_sub_spaces
@@ -32,6 +66,19 @@ class Field:
 
 
     def setListOfSingleFields(self, listOfFields):
+        """
+        Set the field coefficients from a list of single-component fields.
+
+        Parameters
+        ----------
+        listOfFields : list
+            A list of `Field` objects representing individual subspaces.
+
+        Notes
+        -----
+        - If the space has multiple subspaces, their coefficients are mapped back.
+        - Throws an error if the input list does not match the expected size.
+        """
         numberOfSubSpaces = self.space.num_sub_spaces
 
         if numberOfSubSpaces == 0:
@@ -55,33 +102,87 @@ class Field:
 
 
     def getCoefficientArray(self):
+        """
+        Get the coefficient array of the field.
+
+        Returns
+        -------
+        numpy.ndarray
+            A complex-valued array representing the field coefficients.
+        """
         import numpy as np
         array = np.empty(len(self.function.x.array[:]),dtype=complex)
         array[:] = self.function.x.array[:]
         return array
 
-    def setCoefficientArray(self, array): 
+    def setCoefficientArray(self, array):
+        """
+        Set the coefficient array of the field.
+
+        Parameters
+        ----------
+        array : numpy.ndarray
+            A complex-valued array of coefficients.
+        """
         self.function.x.array[:] = array[:]
 
     def setConstantValue(self, value): 
+        """
+        Set all coefficients to a constant value.
+
+        Parameters
+        ----------
+        value : complex or float
+            The constant value to assign to all coefficients.
+        """
         self.function.x.array[:] = value
 
     def getPetscVector(self):
+        """
+        Convert the field to a PETSc vector.
+
+        Returns
+        -------
+        petsc4py.PETSc.Vec
+            A PETSc vector created from the coefficient array.
+        """
         from petsc4py import PETSc
         return PETSc.Vec().createWithArray(self.getCoefficientArray())
 
     def conjugate(self):
+        """
+        Compute the complex conjugate of the field.
+        """
         import numpy as np
         self.setCoefficientArray(np.conj(self.getCoefficientArray()))
 
     def setBoundaryConditions(self, bcs):
+        """
+        Apply boundary conditions to the field.
+
+        Parameters
+        ----------
+        bcs : list
+            A list of Dirichlet boundary conditions to be applied.
+        """
         petscArray = self.getPetscVector()
         petsc.set_bc(petscArray,bcs)
         self.setCoefficientArray(petscArray.getArray())
 
 
     def evaluateUflExpression(self, ufl_expression, bcs=[], restartSolver=False):
-        # evaluates an ufl expression by 
+        """
+        Evaluate a UFL expression and update the field accordingly.
+
+        Parameters
+        ----------
+        ufl_expression : ufl.Form
+            The UFL expression to evaluate.
+        bcs : list, optional
+            A list of boundary conditions to apply.
+        restartSolver : bool, optional
+            Whether to restart the solver instead of reusing an existing one.
+        """
         from FELiCS.Solvers.LinearSolver import LinearSolver
         from FELiCS.Equation.WeakForm import WeakForm
         import ufl 
@@ -123,6 +224,24 @@ class Field:
 
 
     def evaluateUflTensorExpression(self, ufl_expression, bcs=[], restartSolver=False):
+        """
+        Evaluate a tensor-based UFL expression and update the field accordingly.
+
+        Parameters
+        ----------
+        ufl_expression : ufl.Form
+            The UFL expression to be evaluated.
+        bcs : list, optional
+            A list of boundary conditions to be applied.
+        restartSolver : bool, optional
+            Whether to restart the solver instead of reusing an existing one.
+
+        Notes
+        -----
+        - This method assembles and solves a tensor-based weak form.
+        - Uses a predefined solver if available to improve performance.
+        - The weak form includes integration over the computational domain.
+        """
         # evaluates an ufl expression by 
         from FELiCS.Solvers.LinearSolver import LinearSolver
         from FELiCS.Equation.WeakForm import WeakForm
@@ -175,6 +294,26 @@ class Field:
 
 
     def smoothUflTensorExpression(self, ufl_expression, smoothFactor, bcs=[], restartSolver=False):
+        """
+        Smooth a tensor-based UFL expression using a diffusion-like approach.
+
+        Parameters
+        ----------
+        ufl_expression : ufl.Form
+            The UFL expression to be smoothed.
+        smoothFactor : float
+            A smoothing factor controlling the influence of the gradient term.
+        bcs : list, optional
+            A list of boundary conditions to apply.
+        restartSolver : bool, optional
+            Whether to restart the solver instead of reusing an existing one.
+
+        Notes
+        -----
+        - This method applies a smoothing operation by adding a gradient-based 
+          regularization term to the weak form.
+        - It is particularly useful for regularizing noisy numerical solutions.
+        """
         # evaluates an ufl expression by 
         from FELiCS.Solvers.LinearSolver import LinearSolver
         from FELiCS.Equation.WeakForm import WeakForm
@@ -233,6 +372,24 @@ class Field:
 
     ### dunder methods for overloading arithmetic operators ###
     def __add__(self, other):
+        """
+        Overload the `+` operator for adding two Field objects.
+
+        Parameters
+        ----------
+        other : Field
+            Another Field object.
+
+        Returns
+        -------
+        Field
+            A new Field object with the summed coefficient arrays.
+
+        Raises
+        ------
+        NotImplementedError
+            If `other` is not a Field object.
+        """
         ## overrides '+'
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         if isinstance(other, Field):
