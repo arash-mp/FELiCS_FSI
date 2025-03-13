@@ -117,7 +117,7 @@ $$
     + \frac{2}{3} k \nabla \cdot \mathbf{X}
 ) dx
 \\
-- \int_\Omega(
+-\int_\Omega(
     \mathbf{u} \cdot (\mathbf{u} \otimes \mathbf{X}) \cdot \mathbf{n}
     + p \mathbf{X} \cdot \mathbf{n}
     - \nu_{Eff}[\nabla\mathbf{u} + (\nabla\mathbf{u})^T] : (\mathbf{X} \otimes\mathbf{n})
