@@ -13,14 +13,21 @@ logger = Logger.get_logger("felics")
 class SpongeTerm(EquationTemplate):
     """
     Class representing the sponge term in the equation.
+
+    The sponge term is used to apply damping to fluctuations in the governing 
+    equations. It helps control artificial reflections and stabilize numerical 
+    simulations by gradually reducing disturbances in specified regions.
+
+    This implementation supports both linear and nonlinear damping terms and 
+    dynamically selects the appropriate variables based on the equation set.
     """
 
     def __init__(self, eqColl, fluc, X, param):
         """
         Initialize the SpongeTerm object.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         eqColl : EquationCollection
             The equation collection object.
         fluc : Fluctuations
@@ -29,6 +36,12 @@ class SpongeTerm(EquationTemplate):
             The list of solution variables.
         param : Parameters
             The parameters object.
+
+        Notes
+        -----
+        - If the numerical scheme is 'Discontinuous Galerkin', an exception is raised 
+          since it is not implemented in the tensorial framework.
+        - The sponge term is initialized for all specified equations in the parameter set.
         """
         # Disclaimers
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
@@ -43,12 +56,16 @@ class SpongeTerm(EquationTemplate):
         """
         Add the weight matrix expression to the weak form.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         weakForm : ufl.Form
             The weak form object.
         mean : MeanField
             The mean field object.
+
+        Notes
+        -----
+        - No sponge term is applied in this function.
         """
         # nothing to add
         pass
@@ -57,12 +74,18 @@ class SpongeTerm(EquationTemplate):
         """
         Add the linear expression to the weak form.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         weakForm : ufl.Form
             The weak form object.
         mean : MeanField
             The mean field object.
+
+        Notes
+        -----
+        - Applies a damping term to the linearized fluctuations.
+        - Dynamically identifies the fluctuation variable associated with each equation.
+        - The sponge term for velocity (`u`) is treated separately with a dot product.
         """
         J_hat = self.J_hat
         fluc  = self.fluc
@@ -105,6 +128,19 @@ class SpongeTerm(EquationTemplate):
     def addNonlinearExpression(self, weakForm, mean):
         """
         Add the nonlinear expression to the weak form.
+
+        Parameters
+        ----------
+        weakForm : ufl.Form
+            The weak form object.
+        mean : MeanField
+            The mean field object.
+
+        Notes
+        -----
+        - Applies a nonlinear damping term to mean flow variables.
+        - The sponge term is applied to velocity, pressure, and other relevant fields.
+        - The target values for damping are retrieved dynamically.
         """
  
         J_hat = self.J_hat
