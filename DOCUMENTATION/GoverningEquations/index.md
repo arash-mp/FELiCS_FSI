@@ -1,30 +1,30 @@
 # Governing Equations
 
-here you can write text
+[Some introductory text]
 
-## Type 1
+##### 1. Standard scripts: possible analysis modes
 
-here you can write text
+[Some introductory text]
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 resolvent.md
 ```
 
-## Type 2
+##### 2. Implemented equations 
 
-here is still an error because for some reason, below the toctree is not rendered
+[Some introductory text]
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 Incompressible_RANS_k-e.md
 ```
 
-## Type 3
+##### 3. Miscellaneous
 
-here you can write text
+[Some introductory text]
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 tensor_formalism.md
 ```
