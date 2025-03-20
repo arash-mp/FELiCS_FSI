@@ -1,11 +1,25 @@
 # Governing Equations
 
+1. standard scripts: analysis modes
+
 ```{toctree}
 :maxdepth: 1
 
-tensor_analysis.md
-
 resolvent.md
 
+
+2. Implemented equations
+
+
+```{toctree}
+:maxdepth: 1
 Incompressible_RANS_k-e.md
+
+
+3. Miscellaneous
+
+
+```{toctree}
+:maxdepth: 1
+tensor_formalism.md
 
