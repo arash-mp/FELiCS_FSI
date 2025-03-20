@@ -1,14 +1,13 @@
 # Governing Equations
 
-1. standard scripts: analysis modes
+## 1. Standard scripts: possible analysis modes
 
 ```{toctree}
 :maxdepth: 1
-
 resolvent.md
 
 
-2. Implemented equations
+## 2. Implemented equations
 
 
 ```{toctree}
@@ -16,7 +15,7 @@ resolvent.md
 Incompressible_RANS_k-e.md
 
 
-3. Miscellaneous
+## 3. Miscellaneous
 
 
 ```{toctree}
