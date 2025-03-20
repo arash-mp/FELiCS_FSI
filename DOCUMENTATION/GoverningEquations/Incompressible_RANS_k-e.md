@@ -1,6 +1,6 @@
 # Implementation of steady incompressible RANS equations (with k-$\varepsilon$ turbulent model)
 
-## Xiuyang has done a draft, and is reviewing. Welcome for any comments.
+**Xiuyang has done a draft, and is reviewing. Welcome for any comments.**
 
 ## Nonlinear form of steady incompressible RANS equations
 The starting point are the four equations (Continuity, Momentum, k and epsilon equations) for incompressible flow:
