@@ -1,25 +1,29 @@
 # Governing Equations
 
-### 1. Standard scripts: possible analysis modes
+here you can write text
+
+## Type 1
+
+here you can write text
 
 ```{toctree}
-:maxdepth: 1
-resolvent.md ```
+:maxdepth: 2
+resolvent.md
+```
 
+## Type 2
 
+here is still an error because for some reason, below the toctree is not rendered
+```{toctree}
+:maxdepth: 2
+Incompressible_RANS_k.md
+```
 
-### 2. Implemented equations
+## Type 3
 
+here you can write text
 
 ```{toctree}
-:maxdepth: 1
-Incompressible_RANS_k-e.md ```
-
-
-### 3. Miscellaneous
-
-
-```{toctree}
-:maxdepth: 1
-tensor_formalism.md ```
-
+:maxdepth: 2
+tensor_formalism.md
+```
