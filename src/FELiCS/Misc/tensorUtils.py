@@ -20,8 +20,8 @@ from dolfinx.fem import (
 ### CLASSES
 class CoordinateSystem():
     """
-    Class representing a coordinate system.
-
+    Initialize a coordinate system with geometric quantities.
+    
     Supports various systems such as Cartesian, polar, cylindrical, and spherical.
     Initializes geometric quantities like the metric tensors and Christoffel symbols
     required for tensor analysis.
@@ -29,6 +29,49 @@ class CoordinateSystem():
     The `CoordinateSystem` class supports several coordinate systems,
     initializing key geometric quantities such as the metric tensors
     and Christoffel symbols.
+
+
+    Parameters
+    ----------
+    SpatialCoordinateObj : ufl.SpatialCoordinate
+        Coordinate vector from the mesh.
+    name : str
+        Name of the coordinate system ("cartesian", "polar", etc.).
+    m : int, optional
+        Wave number for mean-flow homogeneous directions.
+    **kwargs : dict
+        Optional keyword arguments, e.g. 'mesh_dims' to reduce dimensionality.
+
+
+    Raises
+    ------
+    ValueError
+        When object is initialized: if the coordinate system name is not recognized.
+
+
+    Attributes
+    -------
+
+    dim : int
+        Spatial dimension of the coordinate system.
+    mesh_dims : list of int
+        List indicating which coordinate directions are part of the mesh.
+    x : ufl.Vector
+        Coordinate vector in the system.
+    ch : ufl.Tensor
+        Christoffel symbols.
+    cov_metric : ufl.Matrix
+        Covariant metric tensor.
+    con_metric : ufl.Matrix
+        Contravariant metric tensor.
+    g : ufl.Expr
+        Determinant of the covariant metric tensor.
+    J_hat : ufl.Expr
+        Square root of the metric determinant.
+
+
+    Notes
+    -----
 
     Below are the supported systems and their conventions:
 
@@ -156,24 +199,6 @@ class CoordinateSystem():
 
         [0,      0, 1/(r² sin²θ)]]
 
-    Attributes
-    ----------
-    dim : int
-        Spatial dimension of the coordinate system.
-    mesh_dims : list of int
-        List indicating which coordinate directions are part of the mesh.
-    x : ufl.Vector
-        Coordinate vector in the system.
-    ch : ufl.Tensor
-        Christoffel symbols.
-    cov_metric : ufl.Matrix
-        Covariant metric tensor.
-    con_metric : ufl.Matrix
-        Contravariant metric tensor.
-    g : ufl.Expr
-        Determinant of the covariant metric tensor.
-    J_hat : ufl.Expr
-        Square root of the metric determinant.
 
     Example
     -------
@@ -212,29 +237,7 @@ class CoordinateSystem():
                 **kwargs,
                 ):
         """
-        Initialize a coordinate system with geometric quantities.
-
-        Parameters
-        ----------
-        SpatialCoordinateObj : ufl.SpatialCoordinate
-            Coordinate vector from the mesh.
-        name : str
-            Name of the coordinate system ("cartesian", "polar", etc.).
-        m : int, optional
-            Wave number for mean-flow homogeneous directions.
-        **kwargs : dict
-            Optional keyword arguments, e.g. 'mesh_dims' to reduce dimensionality.
-
-        Notes
-        -----
-        - Supports dimensionality reduction using `mesh_dims`.
-        - Fills unused dimensions with 1.0 to avoid divide-by-zero errors.
-        - Metric tensors and Christoffel symbols are initialized accordingly.
-
-        Raises
-        ------
-        ValueError
-            If the coordinate system name is not recognized.
+    
         """
 
         x = SpatialCoordinateObj

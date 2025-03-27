@@ -25,7 +25,7 @@ autoapi_dirs = ['../src/']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'special-members', 'imported-members']  # 'private-members', 'undoc-members'
-
+# autoapi_python_class_content = 'both' # renders __init__ docstring and class docstring together
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
