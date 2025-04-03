@@ -20,27 +20,31 @@ from dolfinx.fem import (
 ### CLASSES
 class CoordinateSystem():
     """
-    Initialize a coordinate system with geometric quantities.
-    
-    Supports various systems such as Cartesian, polar, cylindrical, and spherical.
-    Initializes geometric quantities like the metric tensors and Christoffel symbols
-    required for tensor analysis.
-
     The `CoordinateSystem` class supports several coordinate systems,
     initializing key geometric quantities such as the metric tensors
     and Christoffel symbols.
 
+    Supports various systems such as Cartesian, polar, cylindrical, and spherical.
+    Initializes geometric quantities like the metric tensors and Christoffel symbols
+    required for tensor analysis.
 
     Parameters
     ----------
     SpatialCoordinateObj : ufl.SpatialCoordinate
-        Coordinate vector from the mesh.
+        Coordinate vector of the mesh.
     name : str
         Name of the coordinate system ("cartesian", "polar", etc.).
     m : int, optional
         Wave number for mean-flow homogeneous directions.
     **kwargs : dict
         Optional keyword arguments, e.g. 'mesh_dims' to reduce dimensionality.
+        mesh_dims : list
+            This must be specified if a symmetry direction is solved for that
+            is not meshed. Then mesh_dims is a list of booleans containing
+            True if the direction of the chosen coordinate system is meshed
+            and False if it is not meshed.
+            
+        
 
 
     Raises
@@ -53,7 +57,8 @@ class CoordinateSystem():
     -------
 
     dim : int
-        Spatial dimension of the coordinate system.
+        Spatial dimension of the coordinate system. Not necessarily geometric
+        dimension of the mesh.
     mesh_dims : list of int
         List indicating which coordinate directions are part of the mesh.
     x : ufl.Vector
@@ -76,8 +81,11 @@ class CoordinateSystem():
     Below are the supported systems and their conventions:
 
     **Polar Coordinates** (2D):
-    Similar in convention to cylindrical coordinates.
-    Used for planar problems with radial symmetry.
+    Defined by:
+
+    (x, y) = (r cos(ϕ), r sin(ϕ))
+
+    ordering: (r, ϕ)
 
     Christoffel Symbols:
 
@@ -134,7 +142,8 @@ class CoordinateSystem():
 
     **Cylindrical (FELiCS Convention)** (3D):
     Same coordinate mapping as cylindrical, but uses a different ordering:
-        ordering: (z, r, ϕ)
+    
+    ordering: (z, r, ϕ)
 
     Tangent Basis:
 
@@ -171,9 +180,9 @@ class CoordinateSystem():
     **Spherical Coordinates** (3D):
     Defined by:
 
-        (x, y, z) = (r sinθ cosϕ, r sinθ sinϕ, r cosθ)
+    (x, y, z) = (r sinθ cosϕ, r sinθ sinϕ, r cosθ)
 
-        ordering: (r, θ, ϕ)
+    ordering: (r, θ, ϕ)
 
     Christoffel Symbols:
 
@@ -391,10 +400,12 @@ class CoordinateSystem():
 
 class Tensor():
     """
-    Tensor object compatible with coordinate-aware tensor algebra.
+    Tensor object that extends the UFL tensors by bases vectors, such
+    that they are valid / definable in coordinate systems other than
+    the cartesian one.
 
     Supports scalar, vector, and matrix-valued tensors in both physical
-    and tangent bases. Handles symbolic operations in the UFL context.
+    and tangent bases.
 
     Attributes
     ----------
@@ -404,10 +415,13 @@ class Tensor():
         Coordinate system in which this tensor is defined.
     order : int
         Order of the tensor (0: scalar, 1: vector, 2: matrix).
-    basis : list or bool
-        Basis flags; auto-transformed to tangent basis if not provided.
+    basis : list of booleans
+        A list of booleans in which False represents a covariante basis
+        vector and True a contravariant basis vector.
     sym : list
-        Symmetry information for gradient computations.
+        A list of order self.order + 1, containing booleans. When computing
+        the gradient of the tensor this information is used to determine
+        if the partial derivative in this direction exists.
     containsTestFunction : bool
         Whether this tensor includes a test function.
     containsFluctuation : bool
@@ -429,7 +443,7 @@ class Tensor():
         **kwargs,
         ):
         """
-        Initialize a tensor object for symbolic manipulation.
+        Initialize a tensor object.
 
         Parameters
         ----------
@@ -444,7 +458,7 @@ class Tensor():
         m : int, optional
             Optional wave number.
         **kwargs : dict
-            Optional arguments: 'basis' (to override default), 'sym' (symmetry map).
+            Optional arguments: 'basis' (covariant or contravariant), 'sym' (custom symmetry. not yet implemented).
 
         Notes
         -----
@@ -455,14 +469,18 @@ class Tensor():
         Raises
         ------
         ValueError
-            If the tensor order is > 2 and no transformation rule is provided.
+            If the tensor order is >= 2 and no transformation rule is provided.
         """
 
         self.CoordSys = CoordSys
         self.x = CoordSys.x
         self.dim = CoordSys.dim
         self.order = len(ufl_tens.ufl_shape) # scalar --> order = 0
-        self.containsTestFunction = containsTestFunction
+        
+        # TODO Kai: this is easily checked with UFL and shouldn't be a user argument
+        # to make FELiCS tensor_utils variant less prone to user error.
+        self.containsTestFunction = containsTestFunction 
+
         self.containsFluctuation = containsFluctuation
         
         # if no basis is specified, ufl_tens is assumed to be a vector given
@@ -556,7 +574,7 @@ class Tensor():
 
         Example
         -------
-        >>> A + B  # where A and B are Tensor objects
+        >>> A + B  # where A is a UFL or Tensor object and B is a Tensor object.
         """
         if type(other) == Tensor:
             if not (self.containsFluctuation == other.containsFluctuation):
@@ -661,7 +679,7 @@ class Tensor():
 
         Example
         -------
-        >>> A - B  # where A and B are Tensor objects
+        >>> A - B # where A is a UFL or Tensor object and B is a Tensor object.
         """
         if type(other) == Tensor:
             if not (self.containsTestFunction == other.containsTestFunction):
@@ -709,7 +727,7 @@ class Tensor():
         Example
         -------
         >>> A * 2.0
-        >>> A * B  # A or B must be scalar
+        >>> A * B # where A is a UFL or Tensor object and B is a Tensor object.
         """
         if type(other) == Tensor:
             if self.containsTestFunction and other.containsTestFunction:
@@ -816,10 +834,10 @@ def iDot(
          tensorB: Tensor,
          ):
     """
-    Performs an intrinsic dot product between two tensors using the appropriate metric.
+    Performs a single contraction between two tensors using the appropriate metric.
 
     The function supports dot products between tensors of order 1 or 2 and uses 
-    the intrinsic metric determined by the coordinate system and the tensor bases.
+    the metric determined by the coordinate system and the tensor bases.
 
     Parameters
     ----------
@@ -831,7 +849,7 @@ def iDot(
     Returns
     -------
     Tensor
-        Result of the intrinsic dot product, with updated basis and metadata.
+        Result of the dot product, with updated basis and metadata.
 
     Raises
     ------
@@ -869,6 +887,9 @@ def iDot(
             containsFluctuation = tensorA.containsFluctuation or tensorB.containsFluctuation, 
             )
 
+
+# Kai TODO: Is this validated? Which of the two tensors is transposed? What is the benefit over iDot(iT(TensorA), TensorB)?
+# It is not part of my version of tensor_utils, just FYI for the others.
 def iDotT(tensorA: Tensor, tensorB: Tensor):
     """
     Performs an intrinsic dot product between the transpose of a second-order tensor and a first-order tensor.
@@ -925,7 +946,7 @@ def iDotT(tensorA: Tensor, tensorB: Tensor):
 
 def iInner(tensorA: Tensor, tensorB: Tensor):
     """
-    Computes the intrinsic inner product between two second-order tensors.
+    Computes the inner product between two second-order tensors.
 
     Parameters
     ----------
@@ -937,7 +958,7 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
     Returns
     -------
     Tensor
-        Scalar-valued tensor representing the inner product.
+        Scalar-valued (zero order) tensor representing the inner product.
 
     Raises
     ------
@@ -971,7 +992,7 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
 def getMetric(basisA: Union[list, bool, int], basisB: Union[list, bool, int], \
               CoordSys: CoordinateSystem):
     """
-    Determines the appropriate metric tensor based on basis vector types.
+    Determines the appropriate metric based on basis vectors.
 
     Parameters
     ----------
@@ -1001,15 +1022,13 @@ def getMetric(basisA: Union[list, bool, int], basisB: Union[list, bool, int], \
     return metric
 
 
-def iGrad(
-    T: Tensor, 
-    ):
+def iGrad(T: Tensor):
     """
-    Computes the intrinsic gradient of a tensor.
+    Computes the gradient of a tensor.
 
-    Handles basis conversion to tangent basis and applies Christoffel symbols
-    for covariant derivatives. Adjusts signs for spectral derivatives in presence
-    of test functions or fluctuations.
+    Converts bases to tangent basis and then applies the gradient including terms
+    arising from the Christoffel symbols. Adjusts signs for spectral derivatives
+    in presence of test functions or fluctuations.
 
     Parameters
     ----------
@@ -1019,7 +1038,7 @@ def iGrad(
     Returns
     -------
     Tensor
-        Gradient of the input tensor, with one additional covariant basis.
+        Gradient of the input tensor, with one additional contravariant basis.
 
     Raises
     ------
@@ -1118,14 +1137,13 @@ def iGrad(
                   )
     
 
-def iDiv(
-         tensor: Tensor,
-         ):
+def iDiv(tensor: Tensor):
     """
-    Computes the intrinsic divergence of a tensor.
+    Computes the divergence of a tensor.
 
-    Utilizes the gradient and contracts the appropriate index.
+    Computes the gradient and sums of the last two indices of a tensor.
     Spectral treatment is applied if the tensor includes test functions.
+    # TODO Kai: "spectral treatment is applied" is ambiguous to me.
 
     Parameters
     ----------
@@ -1135,7 +1153,7 @@ def iDiv(
     Returns
     -------
     Tensor
-        The divergence result as a tensor of reduced order.
+        The divergence result as a tensor of order reduced by one reduced.
 
     Raises
     ------
@@ -1239,7 +1257,7 @@ def iTr(tensor: Tensor):
     
 def iDev(tensor: Tensor):
     """
-    Computes the deviatoric (trace-free) part of a second-order tensor.
+    Computes the deviatoric (spherical-free) part of a second-order tensor.
 
     Parameters
     ----------
@@ -1261,9 +1279,9 @@ def convertBasis(
                  goal_basis: list,
                  ):
     """
-    Converts a tensor to a desired basis by contracting with the appropriate metric tensors.
+    Converts a tensor to a desired basis by contracting with the appropriate metric.
     
-    A**i_j g_i dyade g**j dot dot g**k dyade g**l = A**k,l = covariant components
+    A^i_j g_i dyade g^j : g^k dyade g^l = A^k,l = covariant components
 
     Parameters
     ----------
@@ -1278,7 +1296,7 @@ def convertBasis(
         The tensor expressed in the new basis.
     """
     # You have to contract the tensor with the dual basis to the goal_basis:
-    # A^i_j g_i dyade g^j dot dot g^k dyade g^l = A^k,l = covariant components
+    # A^i_j g_i dyade g^j : g^k dyade g^l = A^k,l = covariant components
     if tensor.order == 1:
         metric = getMetric(tensor.basis[0], not(goal_basis[0]), tensor.CoordSys)
         
@@ -1345,7 +1363,7 @@ def iConj(tensor: Tensor):
             containsFluctuation = tensor.containsFluctuation,
             )
 
-
+# TODO Kai: is this now validated? Otherwise it should raise a warning.
 def iOuter(tensorA: Tensor, tensorB: Tensor):
     """
     Computes the outer product of two tensors.
