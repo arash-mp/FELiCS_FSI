@@ -302,14 +302,18 @@ class fieldProperties:
     @property
     def rho(self):
         if self.isMeanFlowClass():
-            if 'rho' in list(self._fieldDict.keys()):
+            # Comment from Sophie: I added rho to the quantities to read in as default, s.t. a variable density
+            # without rho as fluctuation variable is possible ("cold flow"). If rho is not given as a mean field,
+            # it will be automatically initialized as a function with all coefficients equal to zero. In that
+            # case, a field with all coefficients equal to one is returned.
+            # TODO: redo when restructuring the initialization process.
+            if 'rho' in list(self._fieldDict.keys()) and sum(self._fieldDict['rho'].x.array[:] ) != 0.:
                 return Tensor(
                             self._fieldDict['rho'],
                             self._coordinateSystem,
                             )
             else:
                 return self._oneField
-            
         elif self.isMeanFlowVertexValuesClass():
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
