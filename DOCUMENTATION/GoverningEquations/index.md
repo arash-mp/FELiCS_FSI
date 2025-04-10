@@ -8,6 +8,7 @@
 
 ```{toctree}
 :maxdepth: 1
+modal_analysis.md
 resolvent.md
 ```
 
