@@ -4,7 +4,7 @@
 In the beginning of every set up of a FELiCS case, a case folder should be created. In this folder the setting file(s) as well as the output directory or directories for the results will be located. Depending on the case it might also include the input files.
 Here is an example of a FELiCS case directory content:
 
-<pre> ``` myFELiCScase/ └── Base flow/ ├── base_flow.fel └── mesh/ ├── mesh.msh └── Outputs/  ├── settings.json ├── boundary.json``` </pre>
+<pre> ``` myFELiCScase/ ├── settings.json ├── boundary.json └── Base flow/ ├── base_flow.fel └── mesh/ ├── mesh.msh └── Outputs/``` </pre>
 
 ## Mesh
 Your case folder must containa mesh in the **.msh** format. 
