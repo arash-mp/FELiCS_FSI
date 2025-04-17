@@ -17,7 +17,7 @@ After cloning the repository and installing conda, make sure you take the follow
 In the yml directory, we provide different _.yml_ files that contain all required packages. The latest version that worked on mutliple systems is 
 - [felics2.0_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/main/INSTALLATION/yml/felics2.0_env.yml)
 
-Older versions of yml files can be found in the folder [yml/old_versions](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/INSTALLATION/yml/old_versions?ref_type=heads)
+The older versions of yml files can be found in [yml/old_versions](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/INSTALLATION/yml/old_versions?ref_type=heads)
 
 >**Optional:** in case you want to give the environment a different name, you can change the first line of the _.yml_ file accordingly
 >```
