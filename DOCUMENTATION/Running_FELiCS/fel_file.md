@@ -3,7 +3,8 @@ In progress
 
 Explains how to write the .fel file containing the mase fglow information.
 
-''' python
+``` python
+{
 import  h5py
 import  numpy as np
 
@@ -31,4 +32,5 @@ hf.create_dataset('/MeanFlow/spg', data=spg)
 hf.create_dataset('/MeanFlow/responseDomain', data=Wresponse.restrictor)
     hf.create_dataset('/MeanFlow/forcingDomain', data=Wforcing.restrictor)
 hf.close()
-'''
+}
+```
