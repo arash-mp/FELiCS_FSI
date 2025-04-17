@@ -1,11 +1,12 @@
 # Implementation of resolvent operators
 
 ## Resolvent Analysis for a Linear System 
+
 The starting point is the equation for a linear system: 
 $$
 (A + j \omega B) \hat{q} = J\hat{q} = \hat{f},
 $$
-where $A$ is the linear operator. Applying a discretization scheme and considering a finite element method (FEM) weighting:  
+where $A$ is the linear operator and $J$ is the Jacobian of the system. Applying a discretization scheme and considering a finite element method (FEM) weighting:  
 $$
 \hat{q} = R W_{\text{FEM}} \hat{f},\quad \text{with}\quad \mathbf{R=J^{-1}}.
 $$
