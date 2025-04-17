@@ -8,9 +8,9 @@ Here is an example of a FELiCS case directory content:
 myFELiCScase/
 ├── settings.json
 ├── boundary.json
-└── Base flow/
+└── Base_flow/
     ├── base_flow.fel
-└── mesh/
+└── Mesh/
     ├── mesh.msh
 └── Outputs/ </pre>
 
@@ -32,4 +32,4 @@ All the input parameters are loaded from the following **.json** files:
 - `boundaries.json`: contains the boundary conditions.
 
 ## Output directory
-It is The FELiCS result files will be outputed
+Prepare an ouptuts folder where the FELiCS result files will be outputed.

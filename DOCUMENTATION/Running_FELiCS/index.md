@@ -7,4 +7,6 @@ Welcome to Running-FELiCS!
 
 files_structure.md
 
+fel_file.md
+
 FELiCS_settings.md
