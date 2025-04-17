@@ -7,7 +7,8 @@
 [Some introductory text]
 
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 2
+modal_analysis.md
 resolvent.md
 ```
 
