@@ -365,8 +365,9 @@ class fieldProperties:
             mean_nu = self.nuTot
             mean_u = self.u
             tau_out = mean_nu * iGrad(mean_u)
+            tau_out += iT(tau_out)
+            # Sophie: this if-clause if not really necessary, in the incompressible case the term is just zero
             if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-                tau_out += iT(tau_out)
                 tau_out += -2.0/3.0 * mean_nu * \
                             iDiv(mean_u) * iIdentity(iGrad(mean_u))
                 
@@ -376,8 +377,9 @@ class fieldProperties:
             fluc_nu = self.nulam
             tau_out = mean_nu * iGrad(self.u) + \
                         fluc_nu * iGrad(mean_u)
+            tau_out += iT(tau_out)
+            # Sophie: this if-clause if not really necessary, in the incompressible case the term is just zero
             if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-                tau_out += iT(tau_out)
                 tau_out += -2.0/3.0 * mean_nu * iDiv(self.u) * iIdentity(iGrad(self.u))
                 tau_out += -2.0/3.0 * fluc_nu * iDiv(mean_u) * iIdentity(iGrad(self.u))
         return tau_out
