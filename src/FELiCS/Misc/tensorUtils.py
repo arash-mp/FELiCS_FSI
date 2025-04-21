@@ -693,8 +693,11 @@ class Tensor():
             if self.basis == other.basis:
                 subtracted = self.ufl_tens - other.ufl_tens
             else:
-                new_self = convertBasis(self, other.basis)
-                subtracted = new_self.ufl_tens - other.ufl_tens
+                #new_self = convertBasis(self, other.basis)
+                #subtracted = new_self.ufl_tens - other.ufl_tens
+                ### changed by Sophie to make the iT (transpose) functionality work properly
+                new_other = convertBasis(other, self.basis)
+                subtracted = self.ufl_tens - new_other.ufl_tens
         if type(other) in [float,complex,int,Constant]:
             subtracted = self.ufl_tens - other
         else:
