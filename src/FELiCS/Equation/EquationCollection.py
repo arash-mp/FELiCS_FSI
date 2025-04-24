@@ -424,7 +424,7 @@ class EquationCollectionClass():
             logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
 
         # assemble petsc matrix
-        W = assemble_matrix(form(W_ufl.lhs), [])#self.BCs) #without BCs
+        W = assemble_matrix(form(W_ufl.lhs), []) #self.BCs) # no BCs, else it will cause faulty eigenvalues to appear in the modal analysis
         W.assemble()
 
         return W
@@ -564,11 +564,8 @@ class EquationCollectionClass():
         # create ufl object with the linear equation system 
         BL_ufl = WeakForm()
         for equation in self.equationList:
-            try:
-                equation.addBilinearExpression(BL_ufl, meanFlow)
-            except:
-                pass
-
+            equation.addBilinearExpression(BL_ufl, meanFlow)
+            
         #####################################################################################################
         # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
         # when using a newer version of dolfinx (version >= 0.6.*).

@@ -211,7 +211,8 @@ class Field:
             self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
-        expr_ufl = WeakForm(ufl_expression)
+        expr_ufl = WeakForm()
+        expr_ufl.add(ufl_expression)
         try:
             expr_ufl.setCorrectMeshObject(self.mesh)
         except:
@@ -281,7 +282,8 @@ class Field:
             self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
-        expr_ufl = WeakForm(ufl_expression)
+        expr_ufl = WeakForm()
+        expr_ufl.add(ufl_expression)
         try:
             expr_ufl.setCorrectMeshObject(self.mesh)
         except:
