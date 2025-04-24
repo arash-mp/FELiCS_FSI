@@ -51,7 +51,7 @@ Details of the contents and format of the mean flow file can be found here âš ï¸
 
 ## Detailed contents
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 
 FELiCS_commands.md
 FELiCS_settings.md
