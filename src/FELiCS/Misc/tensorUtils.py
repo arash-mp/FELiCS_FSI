@@ -1016,8 +1016,8 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
     """
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         raise ValueError("iInner product at least second order in test functions.")
-    #if tensorA.containsFluctuation and tensorB.containsFluctuation:
-        #raise ValueError("iInner product at least second order in fluctuations.")
+    if tensorA.containsFluctuation and tensorB.containsFluctuation:
+        raise ValueError("iInner product at least second order in fluctuations.")
     if tensorA.order != tensorB.order or tensorA.order != 2:
         raise ValueError("The order of both tensors must be two.")
     
@@ -1246,7 +1246,7 @@ def iT(tensor: Tensor):
     Returns
     -------
     Tensor
-        Transposed tensor without permuted bases.
+        Transposed tensor with permuted bases.
 
     Raises
     ------
