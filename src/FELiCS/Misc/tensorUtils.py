@@ -738,7 +738,7 @@ class Tensor():
         if type(other) == Tensor:
             if self.containsTestFunction and other.containsTestFunction:
                 ValueError("Tensor product at least second order in test functions.")
-            if self.containsTestFunction and other.containsTestFunction:
+            if self.containsFluctuation and other.containsFluctuation:
                 ValueError("Tensor product at least second order in fluctuation.")
             if other.order == 0:
                 return Tensor(
@@ -769,7 +769,50 @@ class Tensor():
                         )
         else:
             ValueError("Tensor multiplication only defined for Tensors, Constant, float, complex, and integer")
-    
+
+    def __pow__(self, exponent): # Tensor object to the left
+        """
+        Returns this tensor to the power of the exponent.
+
+        Parameters
+        ----------
+        exponent : scalar
+            The exponent. 
+
+        Returns
+        -------
+        Tensor
+            The tensor, has to be of order 0.
+
+        Raises
+        ------
+        ValueError
+            If the tensor is not order 0 or if the exponent is not a scalar number.
+
+        Example
+        -------
+        >>> A ** 2
+        """
+        import numpy as np
+        if self.containsTestFunction and exponent != 1:
+            ValueError("Tensor does not stay of first order in fluctuations, as it should.")
+        if self.containsFluctuation and exponent != 1:
+            ValueError("Tensor does not stay of first order in test functions, as it should.")
+        if self.order ==0 and np.isscalar(exponent):
+             return Tensor(
+                       self.ufl_tens ** exponent,
+                       self.CoordSys, 
+                       basis = self.basis, 
+                       containsTestFunction = self.containsTestFunction, 
+                       containsFluctuation = self.containsFluctuation, 
+                       )
+        else:
+            raise ValueError("Taking exponents is only defined if the exponent is a scalar number "\
+                                 "and the tensor has order 0.")
+ 
+
+
+
     def __rmul__(self, other): # Tensor object to the right
         """
         Multiply scalar or tensor from the left.
@@ -973,8 +1016,8 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
     """
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         raise ValueError("iInner product at least second order in test functions.")
-    if tensorA.containsFluctuation and tensorB.containsFluctuation:
-        raise ValueError("iInner product at least second order in fluctuations.")
+    #if tensorA.containsFluctuation and tensorB.containsFluctuation:
+        #raise ValueError("iInner product at least second order in fluctuations.")
     if tensorA.order != tensorB.order or tensorA.order != 2:
         raise ValueError("The order of both tensors must be two.")
     
@@ -1203,7 +1246,7 @@ def iT(tensor: Tensor):
     Returns
     -------
     Tensor
-        Transposed tensor with permuted bases.
+        Transposed tensor without permuted bases.
 
     Raises
     ------
