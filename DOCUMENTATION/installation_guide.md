@@ -15,7 +15,7 @@ After cloning the repository and installing conda, make sure you take the follow
 ## Package Installation
 ### Conda Environment
 In the yml directory, we provide different _.yml_ files that contain all required packages. The latest version that worked on mutliple systems is 
-- [felics2.0_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/main/INSTALLATION/yml/felics2.0_env.yml)
+- [felics2.0_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/INSTALLATION/felics2.0_env.yml)
 
 The older versions of yml files can be found in [yml/old_versions](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/INSTALLATION/yml/old_versions?ref_type=heads)
 
@@ -66,6 +66,7 @@ fi
 >    unset OMP_NUM_THREADS
 >}
 >```
+>Do not forget to source it with _source ~/.bashrc_
 
 ## Installation of FELiCS as a package
 To use FELiCS as a regular python package, it can be installed in the conda environment using pip and then easily be imported. To install FELiCS as a python package, run the following commands:
