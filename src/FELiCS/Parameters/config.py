@@ -486,10 +486,12 @@ class config(ABC):
             SolutionList.append(self.Case["SetOfEquations"]['Mass']['Variable'])
         if not self.Case["SetOfEquations"]['Energy']['Variable'] == 'None':
             SolutionList.append(self.Case["SetOfEquations"]['Energy']['Variable'])
-        if not self.Case["SetOfEquations"]['Custom1']['Variable'] == 'None':
-            SolutionList.append(self.Case["SetOfEquations"]['Custom1']['Variable'])
-        if not self.Case["SetOfEquations"]['Custom2']['Variable'] == 'None':
-            SolutionList.append(self.Case["SetOfEquations"]['Custom2']['Variable'])
+        if "Custom1" in self.Case["SetOfEquations"]:
+            if not self.Case["SetOfEquations"]['Custom1']['Variable'] == 'None':
+                SolutionList.append(self.Case["SetOfEquations"]['Custom1']['Variable'])
+        if "Custom2" in self.Case["SetOfEquations"]:
+            if not self.Case["SetOfEquations"]['Custom2']['Variable'] == 'None':
+                SolutionList.append(self.Case["SetOfEquations"]['Custom2']['Variable'])
         if 'Species' in list(self.Case["SetOfEquations"].keys()):
             if self.Case["SetOfEquations"]['Species']['Variable'] == 'Y':
                 for species in list(self.Mixture.getSpeciesList('transported')):
