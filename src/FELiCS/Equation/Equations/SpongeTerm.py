@@ -164,11 +164,9 @@ class SpongeTerm(EquationTemplate):
                 if varID == 'u': # For u we need the dot product with X
                     target_u = Tensor(mean._fieldDict['u_target'], self.coordinateSystem)
                     weakForm.add(( -1j*mean.spg*iDot(mean_var-target_u,iConj(X[varNum])) ).ufl_tens*J_hat*dx)
-                elif varID == 'p':
-                    target_p = Tensor(mean._fieldDict['p_target'], self.coordinateSystem)
-                    weakForm.add(( -1j*mean.spg*(mean_var-target_p)*iConj(X[varNum]) ).ufl_tens*J_hat*dx)
-                else:
-                    weakForm.add(( -1j*mean.spg*mean_var*iConj(X[varNum]) ).ufl_tens*J_hat*dx)
-            
-
-
+                else: 
+                    # for every other name there has to exist a field in the mean flow dictionary with the name and the suffix '_target'
+                    # TODO: what to do if the field does not exist? Logging: throw error
+                    target_name = varID+"_target"
+                    target_tens = Tensor(mean._fieldDict[target_name], self.coordinateSystem)
+                    weakForm.add(( -1j*mean.spg*(mean_var-target_tens)*iConj(X[varNum]) ).ufl_tens*J_hat*dx)

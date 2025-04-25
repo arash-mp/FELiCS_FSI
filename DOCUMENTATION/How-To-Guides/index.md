@@ -3,5 +3,5 @@
 Welcome to How-To-Guides!
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 
