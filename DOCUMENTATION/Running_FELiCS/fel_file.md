@@ -32,5 +32,4 @@ hf.create_dataset('/MeanFlow/spg', data=spg)
 hf.create_dataset('/MeanFlow/responseDomain', data=Wresponse.restrictor)
     hf.create_dataset('/MeanFlow/forcingDomain', data=Wforcing.restrictor)
 hf.close()
-}
 ```
