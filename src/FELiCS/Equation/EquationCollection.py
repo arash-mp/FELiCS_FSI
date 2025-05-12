@@ -835,7 +835,7 @@ class EquationCollectionClass():
         # has the response restrictor values, given with the mean field, on the diagonal
         from petsc4py import PETSc
         
-        # First we check if forcingDom is zero everywhere = no spatial limiter
+        # First we check if response Domain is zero everywhere = no spatial limiter
         if max(self.__mean.getVertexValues().responseDomain, key=abs) == 0:
             responseRestrictor_scalarP2             = Function(self.__FEMSpaces.P2)
             responseRestrictor_scalarP1             = Function(self.__FEMSpaces.P1)
@@ -893,7 +893,7 @@ class EquationCollectionClass():
         # has the inverse of the forcing restrictor values, given with the mean field, on the diagonal
         from petsc4py import PETSc
         
-        # First we check if forcingDom is zero everywhere = no spatial limiter
+        # First we check if forcingDomain is zero everywhere = no spatial limiter
         if max(self.__mean.getVertexValues().forcingDomain, key=abs) == 0:
             forcingRestrictor_scalarP1              = Function(self.__FEMSpaces.P1)
             forcingRestrictor_scalarP2              = Function(self.__FEMSpaces.P2)
