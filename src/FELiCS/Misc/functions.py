@@ -5,7 +5,6 @@
 # * granted when asked for.
 # * To ask for permission please contact t.kaiser@tu-berlin.de.
 # */
-'''
 # **********************************************************************
 # * This file provides various small dunctions which are needed
 # * throughout the program
@@ -15,7 +14,7 @@
 # *
 # *
 # ********************
-'''
+
 from dolfinx.fem import Function
 import numpy as np
 import time
@@ -25,6 +24,14 @@ from functools import partial
 from scipy.interpolate import griddata
 
 def getLastGitCommit():
+    """
+    Returns the latest git commit hash of the repository.
+
+    Returns
+    -------
+    str
+        The most recent commit hash as a string.
+    """
     import subprocess,sys,os
     FELiCSPathname = os.path.dirname(sys.argv[0])
 
@@ -34,6 +41,19 @@ def getLastGitCommit():
 
 
 def getSpeciesListSolution(param):
+    """
+    Returns the list of species to be solved for, based on the chemistry model.
+
+    Parameters
+    ----------
+    param : object
+        Object containing the chemistry model and optional additional species.
+
+    Returns
+    -------
+    list of str
+        List of species names included in the solution.
+    """
     #import parameters as param
     SpeciesList=[]
     if param.ChemistryModel=='OneStep':
@@ -49,7 +69,21 @@ def getSpeciesListSolution(param):
     for specie in param.additionalSpecies:
         SpeciesList.append(specie)
     return SpeciesList
+
 def getSpeciesListMean(param):
+    """
+    Returns the list of species required in the mean fields based on the chemistry model.
+
+    Parameters
+    ----------
+    param : object
+        Object containing the chemistry model and optional additional species.
+
+    Returns
+    -------
+    list of str
+        List of species names included in the mean fields.
+    """
     #import parameters as param
     SpeciesList=[]
     if param.ChemistryModel=='OneStep':
@@ -69,7 +103,21 @@ def getSpeciesListMean(param):
     for specie in param.additionalSpecies:
         SpeciesList.append(specie)
     return SpeciesList
+
 def getReactionList(param):
+    """
+    Returns the list of chemical reactions defined for the selected chemistry model.
+
+    Parameters
+    ----------
+    param : object
+        Contains the name of the chemistry model.
+
+    Returns
+    -------
+    list of dict
+        Each dictionary contains details about one chemical reaction.
+    """
     #import parameters as param
     List=[]
     if param.ChemistryModel=='OneStep':
@@ -147,6 +195,19 @@ def getReactionList(param):
     return List
 
 def getReverseReactionList(param):
+    """
+    Returns a list of reverse reactions for the specified chemistry model.
+
+    Parameters
+    ----------
+    param : object
+        Object containing chemistry model information.
+
+    Returns
+    -------
+    list of dict
+        List of reverse chemical reactions.
+    """
     List=[]
     if param.ChemistryModel=='OneStep':
         pass
@@ -168,6 +229,14 @@ def getReverseReactionList(param):
     return List
 
 def getMolecularMass():
+    """
+    Returns a dictionary of molecular masses for key chemical species.
+
+    Returns
+    -------
+    dict
+        Mapping of species names to their molecular masses.
+    """
     MolecularMass={}
     MolecularMass['O2']=0.0319988e0
     MolecularMass['CH4']=0.0160423e0
@@ -179,28 +248,59 @@ def getMolecularMass():
     return MolecularMass
 
 def printError(string):
+    """DEPRECATED
+    """
     from colorama import Fore,Style
     print(Fore.RED+'ERROR!!! '+string+' Aborting Program...'+Style.RESET_ALL)
     exit()
 def printDebug(debug,string):
+    """DEPRECATED
+    """
     if debug:
         print('DEBUGGING: ' + string)
 def printOK(string):
+    """DEPRECATED
+    """
     from colorama import Fore,Style
     print(Fore.GREEN+string+Style.RESET_ALL)
 def printWarning(string):
+    """DEPRECATED
+    """
     from colorama import Fore,Style
     print(Fore.YELLOW+'WARNING! '+string+Style.RESET_ALL)
 def printDeprecatedWarning(string):
+    """DEPRECATED
+    """
     from colorama import Fore,Style
     print(Fore.BLUE+'DEPRECATED WARNING: '+string+Style.RESET_ALL)
 def getReactionName(Reaction):
+    """
+    Returns the name of a reaction by concatenating its educt species.
+
+    Parameters
+    ----------
+    Reaction : dict
+        Dictionary containing a key 'educts' with a list of species names.
+
+    Returns
+    -------
+    str
+        Concatenated name of the reaction.
+    """
     ReactionName=''
     for specie in Reaction['educts']:
         ReactionName=ReactionName+specie
     return ReactionName
 
 def getJANAFTable():
+    """
+    Returns thermodynamic data from the JANAF table for key species.
+
+    Returns
+    -------
+    dict
+        Dictionary of JANAF polynomial coefficients for multiple species.
+    """
     #Ref temperature T=0 K
     #cp=R*(a1+a2*T+a3*T**2+a4*T**3+a5*T**4)
     #h=R*(a1*T+a2*T**2/2+a3*T**3/3+a4*T**4/4+a5*T**5/5+a6)
@@ -221,20 +321,44 @@ def getJANAFTable():
     return tempDict
 
 def index_2d(myList, v):
-    '''
-    This function gives the indices in a 2D list
-    '''
+    """
+    Finds the 2D index of a value in a nested list.
+
+    Parameters
+    ----------
+    myList : list of list
+        The 2D list to search in.
+    v : object
+        The value to search for.
+
+    Returns
+    -------
+    tuple of int
+        Indices of the value in the list.
+    """
     for i, x in enumerate(myList):
         if v in x:
             return (i, x.index(v))
 
 def rotateTheta(coordinates,Theta):
-    '''This function takes coordinates (3 dimensionality is required) and
-    calculates new 3 dimensional coordinates by rotating the origin coorindates with respect to
-    the angle theta.
-    The first component of the three coordinates passed to the function is not altered.
-    The second and third component are computed.
-    '''
+    """
+    Rotates 3D coordinates in the YZ-plane by a given angle Theta.
+    
+    This function takes coordinates (3 dimensionality is required) and calculates new 3 dimensional coordinates by rotating the origin coorindates with respect to the angle theta.
+    The first component of the three coordinates passed to the function is not altered. The second and third component are computed.
+
+    Parameters
+    ----------
+    coordinates : np.ndarray
+        Array of shape (n, 3) representing 3D points.
+    Theta : float
+        Angle by which to rotate the YZ components.
+
+    Returns
+    -------
+    np.ndarray
+        Rotated 3D coordinates.
+    """
     # bring coordinates in right shape
     size=np.shape(coordinates)[0]
     b=np.zeros((size,3))
@@ -251,9 +375,26 @@ def rotateTheta(coordinates,Theta):
     return coordinates_out
 
 def ExtrudeFelicsGridToVTK(coords2D, Tri2D, angularSteps):
-    ''' This function expands a planar, 2 dimensional grid into azimuthal direction.
-    It requires the coordinates of the cells' vertices and the amount of planes in azimuthal
-    direction (angularSteps) and the 2d grid triangulation.
+    """
+    Converts a 2D grid into a 3D cylindrical grid by azimuthal extrusion.
+
+    This function expands a planar, 2 dimensional grid into azimuthal direction. It requires the coordinates of the cells' vertices and the amount of planes in azimuthal direction (angularSteps) and the 2d grid triangulation. 
+    
+    Parameters
+    ----------
+    coords2D : np.ndarray
+        Coordinates of the 2D grid vertices.
+    Tri2D : np.ndarray
+        2D triangulation information (triangles).
+    angularSteps : int
+        Number of angular divisions in the azimuthal direction.
+
+    Returns
+    -------
+    tuple
+        Triangulation and coordinates for the resulting 3D grid.
+    """
+    ''' 
     '''
     # calculate coordinates of first new plane
     coordsRotated=rotateTheta(coords2D,2*3.141/angularSteps)
@@ -320,11 +461,20 @@ def ExtrudeFelicsGridToVTK(coords2D, Tri2D, angularSteps):
 
 
 def ParallelVideo(filename, i):
-    '''
-    This function is used to paralelly export the video scene in vtk format.
-    It is called within the ExportSolutions.py and starts 50 processes (for 50 snapShots)
-    or as many as possible. One process serves for saving one scene
-    '''
+    """
+    Generates a 3D visualization from 2D fields expanded azimuthally.
+
+    This function is used in parallel processes to export multiple frames
+    of a video visualization in VTK format. It is called within the ExportSolutions.py and starts 50 processes (for 50 snapshots)
+    or as many as possible. One process serves for saving one scene.
+
+    Parameters
+    ----------
+    filename : str
+        Base name for loading input data and saving output files.
+    i : int
+        Index of the current snapshot for which the VTK file is created.
+    """
     import pyvtk
     # previously saved dictionary. Being loaded in each process to avoid conflicts or waiting times when sharing memory
     # parallelization over scenes existing, meanes paralellization paramater is "i" in angle[i]
@@ -375,17 +525,23 @@ def ParallelVideo(filename, i):
 
 
 def smoothFieldWithKernel(field,FEMSpaces, iterations):
-    '''
-    Function which smoothesn an arbitrary quantity on a FE-field of arbitrary P-order
-    e.g.
-    field = MeanFlowDict['ux']
-    iterations = 10
-    FEMSpaces = param.FEMspaces (actually not required)
+    """
+    Smooths a scalar field on a finite element mesh using k-nearest neighbors.
 
-    for each point in field this function seaches 20 closest neighboring points
-    and sums all up with uniform weights to the one point considered
-    this is done as often as indicated by iterations
-    '''
+    Parameters
+    ----------
+    field : dolfinx.fem.Function
+        The finite element field to smooth.
+    FEMSpaces : dict
+        Dictionary of FEM spaces (currently unused).
+    iterations : int
+        Number of smoothing iterations.
+
+    Returns
+    -------
+    dolfinx.fem.Function
+        The smoothed finite element field.
+    """
 
     #from fenics import Function
     from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
@@ -403,6 +559,21 @@ def smoothFieldWithKernel(field,FEMSpaces, iterations):
 
 
 def SutherlandLaw(param,MeanFlowDict):
+    """
+    Computes the molecular viscosity using Sutherland's law.
+
+    Parameters
+    ----------
+    param : object
+        Object containing viscosity and case parameters.
+    MeanFlowDict : dict
+        Dictionary of mean flow fields.
+
+    Returns
+    -------
+    np.ndarray
+        Array of kinematic viscosity values.
+    """
     M=28.949
     p=101300
     R=8314.4598/M
@@ -420,6 +591,21 @@ def SutherlandLaw(param,MeanFlowDict):
 
 
 def executeParallelInterpolation( solutDir, nCubes):
+    """
+    Interpolates solution data onto finite element degrees of freedom for one cube in parallel.
+
+    Parameters
+    ----------
+    solutDir : str
+        Directory containing source data and saving destination pickle.
+    nCubes : int
+        Index of the current cube to interpolate.
+
+    Returns
+    -------
+    str
+        Path to the pickle file containing the interpolated values.
+    """
     print (multiprocessing.current_process())
     cubeTime = time.time()
 
@@ -467,92 +653,127 @@ def executeParallelInterpolation( solutDir, nCubes):
 
 
 def parallelInterpolation(cubeBounds, dof_expanded, points, vals, tolerance, solutDir):
-        import time
-        import os
+    """
+    Parallel interpolation of volumetric data onto an expanded finite element grid.
 
-        dofDict = {} # is passed to the pool-processes later: dof coordinates of azimuthally expanded Felics grid
-        SourceDict = {} # is passed to the pool-process later: origin data of origin sub cubes
-        for cubeCnt in range(0,cubeBounds.shape[0]): # loop over all sub cubes built previously
-            # find indices of expanded Felics grid within sub cubes of origin domain
-            # in x,y,z each, then, intersection of them are the coordinates indices of inside the subcubes
-            Xidx = np.argwhere((dof_expanded[:,0]>=cubeBounds[cubeCnt,0]) & (dof_expanded[:,0]<=cubeBounds[cubeCnt,1])).flatten()
-            Yidx = np.argwhere((dof_expanded[:,1]>=cubeBounds[cubeCnt,2]) & (dof_expanded[:,1]<=cubeBounds[cubeCnt,3])).flatten()
-            Zidx = np.argwhere((dof_expanded[:,2]>=cubeBounds[cubeCnt,4]) & (dof_expanded[:,2]<=cubeBounds[cubeCnt,5])).flatten()
-            IDX = np.intersect1d(np.intersect1d(Xidx, Yidx),Zidx)
-            # dof Dict- incorporates the indices for each subcube of the expanded Felics grid
-            dofDict['dofIDXofCube'+str(cubeCnt)] = IDX
-            # ....and their coordinates
-            dofDict['dofCoordsOfCube'+str(cubeCnt)] = dof_expanded[IDX,:]
+    Parameters
+    ----------
+    cubeBounds : np.ndarray
+        Boundaries of the cubes used for parallel interpolation.
+    dof_expanded : np.ndarray
+        Coordinates of the degrees of freedom in the expanded grid.
+    points : np.ndarray
+        Coordinates of the original data points.
+    vals : np.ndarray
+        Values associated with the original data points.
+    tolerance : float
+        Tolerance to expand source cubes to ensure coverage.
+    solutDir : str
+        Directory path for storing temporary pickles.
 
-            # get the bounds of the currently considered origin subcube and apply tolerance band such that
-            # the origin subcubes become slightly larger than destination subcubes to avoid missed coordinates
-            sourceCube = [cubeBounds[cubeCnt,0]-tolerance, cubeBounds[cubeCnt,1]+tolerance,\
-                          cubeBounds[cubeCnt,2]-tolerance, cubeBounds[cubeCnt,3]+tolerance,\
-                          cubeBounds[cubeCnt,4]-tolerance, cubeBounds[cubeCnt,5]+tolerance ]
+    Returns
+    -------
+    np.ndarray
+        Interpolated values on the expanded grid.
+    """
+    import time
+    import os
 
-            # find all coordinates of the origin data within the subcube boundaries inclusive the tolerance
-            Xidx = np.argwhere((points[:,0]>=sourceCube[0]) & (points[:,0]<=sourceCube[1])).flatten()
-            Yidx = np.argwhere((points[:,1]>=sourceCube[2]) & (points[:,1]<=sourceCube[3])).flatten()
-            Zidx = np.argwhere((points[:,2]>=sourceCube[4]) & (points[:,2]<=sourceCube[5])).flatten()
-            IDX = np.intersect1d(np.intersect1d(Xidx, Yidx),Zidx)
-            # save coordiantes and values of the origin sub cubes in source dict for each cube (cubeCNT)
-            SourceDict['pointsForCube'+str(cubeCnt)] = points[IDX,:]
-            SourceDict['valsForCube'+str(cubeCnt)] = vals[IDX,:]
+    dofDict = {} # is passed to the pool-processes later: dof coordinates of azimuthally expanded Felics grid
+    SourceDict = {} # is passed to the pool-process later: origin data of origin sub cubes
+    for cubeCnt in range(0,cubeBounds.shape[0]): # loop over all sub cubes built previously
+        # find indices of expanded Felics grid within sub cubes of origin domain
+        # in x,y,z each, then, intersection of them are the coordinates indices of inside the subcubes
+        Xidx = np.argwhere((dof_expanded[:,0]>=cubeBounds[cubeCnt,0]) & (dof_expanded[:,0]<=cubeBounds[cubeCnt,1])).flatten()
+        Yidx = np.argwhere((dof_expanded[:,1]>=cubeBounds[cubeCnt,2]) & (dof_expanded[:,1]<=cubeBounds[cubeCnt,3])).flatten()
+        Zidx = np.argwhere((dof_expanded[:,2]>=cubeBounds[cubeCnt,4]) & (dof_expanded[:,2]<=cubeBounds[cubeCnt,5])).flatten()
+        IDX = np.intersect1d(np.intersect1d(Xidx, Yidx),Zidx)
+        # dof Dict- incorporates the indices for each subcube of the expanded Felics grid
+        dofDict['dofIDXofCube'+str(cubeCnt)] = IDX
+        # ....and their coordinates
+        dofDict['dofCoordsOfCube'+str(cubeCnt)] = dof_expanded[IDX,:]
 
-        # method to pass data to subprocesses. after a certain data size the multiprocessing library fails to pass them as args
-        # time measure shows that this is very cheap
-        # dicts are save in the same directory as Felics output
-        pickleDumpTime = time.time()
-        file = open(solutDir+'/SourceDict','wb')
-        pickle.dump(SourceDict,file)
-        file.close()
-        print('time for pickleDump:' +str(time.time()-pickleDumpTime))
+        # get the bounds of the currently considered origin subcube and apply tolerance band such that
+        # the origin subcubes become slightly larger than destination subcubes to avoid missed coordinates
+        sourceCube = [cubeBounds[cubeCnt,0]-tolerance, cubeBounds[cubeCnt,1]+tolerance,\
+                        cubeBounds[cubeCnt,2]-tolerance, cubeBounds[cubeCnt,3]+tolerance,\
+                        cubeBounds[cubeCnt,4]-tolerance, cubeBounds[cubeCnt,5]+tolerance ]
 
-        pickleDumpTime = time.time()
-        file = open(solutDir+'/DofDict','wb')
-        pickle.dump(dofDict,file)
-        file.close()
-        print('time for pickleDump:' +str(time.time()-pickleDumpTime))
+        # find all coordinates of the origin data within the subcube boundaries inclusive the tolerance
+        Xidx = np.argwhere((points[:,0]>=sourceCube[0]) & (points[:,0]<=sourceCube[1])).flatten()
+        Yidx = np.argwhere((points[:,1]>=sourceCube[2]) & (points[:,1]<=sourceCube[3])).flatten()
+        Zidx = np.argwhere((points[:,2]>=sourceCube[4]) & (points[:,2]<=sourceCube[5])).flatten()
+        IDX = np.intersect1d(np.intersect1d(Xidx, Yidx),Zidx)
+        # save coordiantes and values of the origin sub cubes in source dict for each cube (cubeCNT)
+        SourceDict['pointsForCube'+str(cubeCnt)] = points[IDX,:]
+        SourceDict['valsForCube'+str(cubeCnt)] = vals[IDX,:]
 
-        print('Starting parallel interpolation....')
-        # a pool of 12 processes HARD CODED CURRENTLY
-        pool=multiprocessing.Pool(12)
-        # execute the executeParallelInterpolation-function on each proces
-        func= partial(executeParallelInterpolation, solutDir)
-        # the variation for each proces is a simple coutner from 0 to length(subCubes)
-        # the function executeParallelInterpolation loads the above pickled data
-        # .... interpolates each subcubes
-        # .... and pickles the data of each sub-cube again
-        # .... the file name of the interpolated and pickled destination dat is returned to pickleNames
-        pickleNames=pool.map(func, range(0,cubeBounds.shape[0]))
+    # method to pass data to subprocesses. after a certain data size the multiprocessing library fails to pass them as args
+    # time measure shows that this is very cheap
+    # dicts are save in the same directory as Felics output
+    pickleDumpTime = time.time()
+    file = open(solutDir+'/SourceDict','wb')
+    pickle.dump(SourceDict,file)
+    file.close()
+    print('time for pickleDump:' +str(time.time()-pickleDumpTime))
 
-        print('Done with parallel processes')
+    pickleDumpTime = time.time()
+    file = open(solutDir+'/DofDict','wb')
+    pickle.dump(dofDict,file)
+    file.close()
+    print('time for pickleDump:' +str(time.time()-pickleDumpTime))
+
+    print('Starting parallel interpolation....')
+    # a pool of 12 processes HARD CODED CURRENTLY
+    pool=multiprocessing.Pool(12)
+    # execute the executeParallelInterpolation-function on each proces
+    func= partial(executeParallelInterpolation, solutDir)
+    # the variation for each proces is a simple coutner from 0 to length(subCubes)
+    # the function executeParallelInterpolation loads the above pickled data
+    # .... interpolates each subcubes
+    # .... and pickles the data of each sub-cube again
+    # .... the file name of the interpolated and pickled destination dat is returned to pickleNames
+    pickleNames=pool.map(func, range(0,cubeBounds.shape[0]))
+
+    print('Done with parallel processes')
 
 
-        # the destination subcubes, i.e. the pickled destination data from executeParallelInterpolation , are assembled to global cube
-        print('starting to assemble subcubes')
-        assembleTime = time.time()
-        # the shape of the destination data is given by the amount of dof-coordinates of expanded Felcis grid
-        # .... and the amount of quanties (e.g. in P2 interpoaltion on inerpolates U,V,W simultanously)
-        newVals = np.zeros((dof_expanded.shape[0],vals.shape[1]))
-        for cubeCnt in range(0,cubeBounds.shape[0]):
-            pickeLoadTime = time.time()
-            # open pickle file
-            file = open(pickleNames[cubeCnt],'rb')
-            # get data instisde opened pickle file
-            data = pickle.load(file)
-            print('time to pickle load: '+str(time.time()-pickeLoadTime))
-            # here is the reason why we save the indices of the Felics subcube coordinates relative to the global dof-list
-            # we need to point to the correct place in order to assemble the subcubes
-            # dofDict['dofIDXofCube'+str(cubeCnt)] ahs the indices of each subcube in the global dof-list
-            newVals[dofDict['dofIDXofCube'+str(cubeCnt)], :] = data['valsForCube'+str(cubeCnt)]
-            # remove the file which was save by the pool-process previously
-            os.remove(pickleNames[cubeCnt])
-        print('returning interpolated vals...assembling took: '+str(assembleTime))
-        return newVals
+    # the destination subcubes, i.e. the pickled destination data from executeParallelInterpolation , are assembled to global cube
+    print('starting to assemble subcubes')
+    assembleTime = time.time()
+    # the shape of the destination data is given by the amount of dof-coordinates of expanded Felcis grid
+    # .... and the amount of quanties (e.g. in P2 interpoaltion on inerpolates U,V,W simultanously)
+    newVals = np.zeros((dof_expanded.shape[0],vals.shape[1]))
+    for cubeCnt in range(0,cubeBounds.shape[0]):
+        pickeLoadTime = time.time()
+        # open pickle file
+        file = open(pickleNames[cubeCnt],'rb')
+        # get data instisde opened pickle file
+        data = pickle.load(file)
+        print('time to pickle load: '+str(time.time()-pickeLoadTime))
+        # here is the reason why we save the indices of the Felics subcube coordinates relative to the global dof-list
+        # we need to point to the correct place in order to assemble the subcubes
+        # dofDict['dofIDXofCube'+str(cubeCnt)] ahs the indices of each subcube in the global dof-list
+        newVals[dofDict['dofIDXofCube'+str(cubeCnt)], :] = data['valsForCube'+str(cubeCnt)]
+        # remove the file which was save by the pool-process previously
+        os.remove(pickleNames[cubeCnt])
+    print('returning interpolated vals...assembling took: '+str(assembleTime))
+    return newVals
 
 def loadCSV(path):
+    """
+    Loads a CSV file into a dictionary with numpy arrays for each column.
 
+    Parameters
+    ----------
+    path : str
+        Path to the CSV file.
+
+    Returns
+    -------
+    dict
+        Dictionary containing column headers as keys and their values as arrays.
+    """
     import numpy as np
     import csv
     with open(path, newline='') as f:

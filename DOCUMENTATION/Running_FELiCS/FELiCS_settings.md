@@ -66,7 +66,6 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
 "IOResolvent":{
     "ForcingBoundaryIndices": (list of int) indices of boundaries where forcing is applied ("InputOutput" analysis),
     "ForcingCoeff":     (list of int)   variables onto which forcing is applied ("InputOutput" analysis),
-    "ResponseCoeff":    (list of int)   variables onto which response is measured? ("InputOutput" analysis, DEPRECATED??),  
     "ForcingMode":      (str)   type of forcing "Body" or "Boundary" ("InputOutput" analysis)
     "ForcingNorm":      (str)   norm type for the forcing term ("Resolvent" analysis)
     "ResponseNorm":     (str)   norm type for the response term ("Resolvent" analysis)
@@ -74,9 +73,7 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
 },
 "Numerics":{
     "EigenValueGuess":  (list)  eigenvalue guesses for "Modal" analysis (see formatting in previous section),
-    "nCPU":             (int)   numbers of CPUs for parallel run (DEPRECATED)
     "nSolut":           (int)   number of solutions to compute (in "Modal" and "Resolvent" analysis)
-    "NumericalScheme":  (str)   type of numerical scheme (only "Continuous Galerkin" currently implemented),
     "PolynomialOrder":  (dict)  sets the polynomial order for each transported variables (list must match "SetOfEquations"). e.g.: {"u": 2,"T": 1,"rho": 1}
 }}
 ```
@@ -104,15 +101,14 @@ An example of `boundaries.json` is
 
 ```json
 {
-"ux":
-    [{"ID": 300, "type": "Dirichlet", "value": 0.0},
-    {"ID": 301, "type": "Dirichlet", "value": 0.0}],
-"uy":
-    [{"ID": 300, "type": "Dirichlet", "value": 0.0},
-    {"ID": 301, "type": "Dirichlet", "value": 0.0}],
-"p":
-    [{"ID": 300, "type": "Neumann", "value": 0.0},
-    {"ID": 301, "type": "Dirichlet", "value": 0.0}]
+"300":
+    [{"variable": "ux", "type": "Dirichlet", "value": 0.0},
+    {"variable": "uy", "type": "Dirichlet", "value": 0.0},
+    {"variable": "p", "type": "Neumann", "value": 0.0}],
+"301":
+    [{"variable": "ux", "type": "Neumann", "value": 0.0},
+    {"variable": "uy", "type": "Neumann", "value": 0.0},
+    {"variable": "p", "type": "Dirichlet", "value": 0.0}]
 }
 ```
 

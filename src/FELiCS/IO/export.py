@@ -1,47 +1,11 @@
-import numpy as np
+import  os
+import  h5py
+import  numpy               as np
+from    dolfinx.fem         import Function
+from    FELiCS.Misc.logging import Logger
 
-from ufl import (
-    TrialFunctions,
-    triangle,
-    FiniteElement,
-    MixedElement,
-    VectorElement,
-)
-
-
-from dolfinx.fem import (
-    Constant,
-    FunctionSpace,
-    Function,
-    VectorFunctionSpace,
-    )
-from h5py import (
-    File,
-    string_dtype,
-    )
-
-from os import (
-    listdir,
-    remove,
-    mkdir,
-    chdir,
-    )
-from os.path import (
-    relpath,
-    exists,
-    )
-from re import (
-    compile,
-    )
-
-from FELiCS.SpaceDisc.FELiCSMesh import (
-    FELiCSMesh,
-    )
-
-from FELiCS.SpaceDisc.DefineFEMSpaces import (
-    FEMSpacesClass,
-    )
-import pdb
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class export:
     """
@@ -77,16 +41,14 @@ class export:
         Function returns:
 
         """
-        self._FEMSpaces = FEMSpaces
-        self._param = param
-        self._exportMesh   = FEMSpaces.exportMesh
+        self._FEMSpaces     = FEMSpaces
+        self._param         = param
+        self._exportMesh    = FEMSpaces.exportMesh
 
         self._exportZeroScalarField = Function(self._FEMSpaces.P1Export)
         self._exportZeroVectorField = Function(
                 self._FEMSpaces.FunctionSpaceVectorVelocityExport
-                                                )
-
-
+                )
 
     def _mapCalcToExport(self, exportObject):
         """
@@ -105,12 +67,7 @@ class export:
         - exportDictReal: Dict of Fenics Functions, containing the real part
         - exportDictImag: Dict of Fenics Functions, containing the imaginary part
         """
-        # exportDictReal = {}
-        # exportDictImag = {}
-        from dolfinx import plot
-        import pyvista
-        from FELiCS.Misc.functions import printWarning
-        from scipy import interpolate
+        from    scipy   import interpolate    
   
         valueDict = {}
         dofsExport = self._exportMesh.coordinates()
@@ -130,7 +87,7 @@ class export:
                 if numSubSpaces > 1:
 
                     valueDict[fieldNameFieldToExport] = Function(self._FEMSpaces.FunctionSpaceVectorVelocityExport)
-                    dofsCoordsCalc = exportObject[fieldNameFieldToExport].function_space.tabulate_dof_coordinates()
+                    # dofsCoordsCalc = exportObject[fieldNameFieldToExport].function_space.tabulate_dof_coordinates()
                     #indexVector = self.mappingFunc(dofsCoordsCalc[:, 0:2], dofsExport[:, 0:2])
                     tempSolutionArray = np.zeros((self._param.Case.nDim,dofsExport.shape[0] ), dtype=complex)
                     for subSpaceNum in range(numSubSpaces):
@@ -167,8 +124,8 @@ class export:
                                                                         float
                                                                             )
 
-            linearFunctionReal = Function(self._FEMSpaces.VMixedExport)
-            linearFunctionImag = Function(self._FEMSpaces.VMixedExport)
+            # linearFunctionReal = Function(self._FEMSpaces.VMixedExport)
+            # linearFunctionImag = Function(self._FEMSpaces.VMixedExport)
 
 
             dofsExport = self._exportMesh.coordinates()
@@ -183,7 +140,7 @@ class export:
                         # calculate the complex solution of the vectorfield
                         ValueArray = ( flucRealCalc.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.sub(indexOfFieldInList).collapse().x.array )
                         tempSolutionArray = np.zeros((numSubSpaces, self._exportMesh.coordinates().shape[0] ), dtype=complex)
-                        vectorSpaceDofCoords = flucRealCalc.function_space.sub(indexOfFieldInList).collapse()[0].tabulate_dof_coordinates()
+                        # vectorSpaceDofCoords = flucRealCalc.function_space.sub(indexOfFieldInList).collapse()[0].tabulate_dof_coordinates()
 
                         #indexVector = self.mappingFunc(vectorSpaceDofCoords[:, 0:2], dofsExport[:, 0:2])
 
@@ -206,14 +163,14 @@ class export:
                             ##TODO: Sophie: I changed the command, since for the newer dolfinx versions (>0.5.0) the FelicsMesh cannot be given to the FunctionSpace anymore.
                             ## This command should be wrapped in the future.
                             #dofsSolP1 = self._FEMSpaces.P1.mesh.coordinates()
-                            meshP1 = self._FEMSpaces.P1.mesh
-                            gdim   = meshP1.topology.dim
-                            dofsSolP1 = meshP1.geometry.x[:, 0:gdim]
-                            printWarning(f'{field}-fluctuations obtained on P1-elts needs to be interpolated onto P2-elts mesh!')
-                            tempSolutionArray = interpolate.griddata(dofsSolP1,ValueArray,dofsExport,method='linear')
+                            meshP1              = self._FEMSpaces.P1.mesh
+                            gdim                = meshP1.topology.dim
+                            dofsSolP1           = meshP1.geometry.x[:, 0:gdim]
+                            tempSolutionArray   = interpolate.griddata(dofsSolP1,ValueArray,dofsExport,method='linear')
+                            logger.debug(f'{field}-fluctuations P1-function interpolated on export mesh.')
        
                         else:
-                            subSpaceDofCoordinates = flucRealCalc.sub(indexOfFieldInList).collapse().function_space.tabulate_dof_coordinates()
+                            # subSpaceDofCoordinates = flucRealCalc.sub(indexOfFieldInList).collapse().function_space.tabulate_dof_coordinates()
                             #indexVector = self.mappingFunc(subSpaceDofCoordinates[:, 0:2], dofsExport[:, 0:2])
                             tempSolutionArray = ValueArray[P2CalcToP1ExportIndecies]
                     valueDict[field] = tempSolutionArray
@@ -582,11 +539,11 @@ class export:
             outputFolder='.'
             #outputFile=fieldsFile.filename
 
-        meshh5 = File(meshFile, 'r')
+        meshh5 = h5py.File(meshFile, 'r')
 
         self._meshfilename = meshFile
 
-        meanflowFileHandler = File(f'{self._param.Export.ExportFolder}/{meanflowFilename}', 'r')
+        meanflowFileHandler = h5py.File(f'{self._param.Export.ExportFolder}/{meanflowFilename}', 'r')
 
         #for i,solution in enumerate(fieldsFile):
         solutFileName = fieldsFile.filename
@@ -639,12 +596,12 @@ class export:
                 videoOutputFolderName = 'videoOutput'
                 outputFolder, outputFile = solutFileName.rsplit('/', 1)
                 basefilename = f'{outputFolder}/{videoOutputFolderName}/{outputFile[:-3]}_video'
-                chdir(self._param.Export.ExportFolder)
+                os.chdir(self._param.Export.ExportFolder)
                 # create videooutput-Folder, if it not exist.
-                if videoOutputFolderName not in listdir():
-                    mkdir(videoOutputFolderName)
+                if videoOutputFolderName not in os.listdir():
+                    os.mkdir(videoOutputFolderName)
 
-                chdir("..")
+                os.chdir("..")
                 # angular step size in radiants:
                 phiStep = -(360/nSnaps)*np.pi/180
 

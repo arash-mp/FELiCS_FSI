@@ -1,11 +1,8 @@
+import  numpy as np
+from 	FELiCS.Misc.logging         import Logger
 
-import numpy as np
-import pdb
-
-from FELiCS.Misc.functions import (
-                        printDebug,
-                        printError,
-                    )
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class Mapping:
     """
@@ -16,17 +13,16 @@ class Mapping:
     """
     def __init__(self, FEMSpaces):
 
-        self.P2CalcDofCoordinates = FEMSpaces.P2.tabulate_dof_coordinates()
-        self.P1ExportDofCoordinates = FEMSpaces.P1Export.tabulate_dof_coordinates()
-        #pdb.set_trace()
-        self.VectorP2CalcDofCoordinates = FEMSpaces.FunctionSpaceVectorVelocity.tabulate_dof_coordinates()
-        self.VectorP1ExportCalcDofCoordinates = FEMSpaces.FunctionSpaceVectorVelocityExport.tabulate_dof_coordinates()
+        self.P2CalcDofCoordinates               = FEMSpaces.P2.tabulate_dof_coordinates()
+        self.P1ExportDofCoordinates             = FEMSpaces.P1Export.tabulate_dof_coordinates()
+        
+        self.VectorP2CalcDofCoordinates         = FEMSpaces.FunctionSpaceVectorVelocity.tabulate_dof_coordinates()
+        self.VectorP1ExportCalcDofCoordinates   = FEMSpaces.FunctionSpaceVectorVelocityExport.tabulate_dof_coordinates()
 
-        self.VMixedVectorDofCoords = FEMSpaces.VMixed.sub(0).collapse()[0].tabulate_dof_coordinates()
-        printDebug(True, '-- Calculating mapping Vector from P2 Calculation Space to P1 Export Space...')
-        self.P2CalcToP1ExportIndecies = self._mappingFunc(self.P2CalcDofCoordinates, self.P1ExportDofCoordinates)
-        printDebug(True, '-- Calculating mapping Vector from VMixed Vector-P2-Sub Space to P1 Export Space...')
-        self.VectorCalcToP1ExportIndecies = self._mappingFunc(self.VMixedVectorDofCoords, self.P1ExportDofCoordinates)
+        logger.debug('Calculating mapping from P2 Calculation Space to P1 Export Space.')
+        self.VMixedVectorDofCoords              = FEMSpaces.VMixed.sub(0).collapse()[0].tabulate_dof_coordinates()
+        self.P2CalcToP1ExportIndecies           = self._mappingFunc(self.P2CalcDofCoordinates, self.P1ExportDofCoordinates)
+        self.VectorCalcToP1ExportIndecies       = self._mappingFunc(self.VMixedVectorDofCoords, self.P1ExportDofCoordinates)
 
         # print('Calculating mapping Vector from Vector-Calc-P2 Space to Vector-P1-Export Space...')
         # self.VectorCalcToP1VectorExportIndecies = self._mappingFunc(self.VMixedVectorDofCoords, self.VectorP1ExportCalcDofCoordinates)
@@ -49,20 +45,20 @@ class Mapping:
         """
 
         # copy coordinates to avoid changing the original arrays
-        exportMesh = np.copy(exportMeshDOFCoordinates)
-        calcMesh = np.copy(calcMeshDOFCoordinates)
+        exportMesh          = np.copy(exportMeshDOFCoordinates)
+        calcMesh            = np.copy(calcMeshDOFCoordinates)
 
         # append indices as last column
-        exportMesh = np.append(exportMesh,np.arange(len(exportMesh)).reshape(len(exportMesh),1),axis=1).round(11)
-        calcMesh = np.append(calcMesh,np.arange(len(calcMesh)).reshape(len(calcMesh),1),axis=1).round(11)
+        exportMesh          = np.append(exportMesh,np.arange(len(exportMesh)).reshape(len(exportMesh),1),axis=1).round(11)
+        calcMesh            = np.append(calcMesh,np.arange(len(calcMesh)).reshape(len(calcMesh),1),axis=1).round(11)
 
         # sort by x,y,z
-        exportMeshSorted = exportMesh[np.lexsort((exportMesh[:,2],exportMesh[:,1],exportMesh[:,0]))].astype(int)
-        calcMeshSorted = calcMesh[np.lexsort((calcMesh[:, 2], calcMesh[:, 1], calcMesh[:, 0]))].astype(int)
+        exportMeshSorted    = exportMesh[np.lexsort((exportMesh[:,2],exportMesh[:,1],exportMesh[:,0]))].astype(int)
+        calcMeshSorted      = calcMesh[np.lexsort((calcMesh[:, 2], calcMesh[:, 1], calcMesh[:, 0]))].astype(int)
 
         # find indices of sorted exportMesh in calcMesh
-        index_array = np.vstack((calcMeshSorted[:, -1], exportMeshSorted[:, -1])).T
-        mapping = index_array[index_array[:, 0].argsort()][:, 1]
+        index_array         = np.vstack((calcMeshSorted[:, -1], exportMeshSorted[:, -1])).T
+        mapping             = index_array[index_array[:, 0].argsort()][:, 1]
 
         return mapping
 

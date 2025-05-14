@@ -1,72 +1,68 @@
 from ufl import (
-    dx,
-    conj,
-    Identity,
-    i,
-    j,
-    k,
-    Dx,
-    as_tensor,
-    inner,
-    grad,
-    dot,
-    outer,
-    transpose,
-    Constant,
+    dx
 )
 from FELiCS.Misc.tensorUtils import (
-    Tensor,
-    as_vector,
-    iInner,
     iDot,
     iDiv,
     iGrad,
     iConj,
-    iOuter,
-    iT,
-    iIdentity,
 )
+from .EquationTemplate      import EquationTemplate
+from FELiCS.Misc.logging    import Logger
 
-
-from FELiCS.Misc.functions import printWarning, printError, printDebug
-
-from .EquationTemplate import EquationTemplate
-
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class EnergyPressureEquation(EquationTemplate):
     """
     Class representing the energy-pressure equation in FELiCS.
 
-    Parameters:
-    -----------
+    This class constructs and manages the weak formulation of the energy 
+    conservation equation in a compressible fluid system. The formulation 
+    is based on total energy conservation and is expressed in terms of 
+    pressure, using the Perfect Gas Law and continuity equations.
+
+    Parameters
+    ----------
     eqColl : EquationCollection
-        The equation collection object.
+        The equation collection object that stores various equations.
     fluc : Fluctuations
-        The fluctuations object.
+        The fluctuations object representing perturbations in the system.
     X : Function
-        The solution function.
+        The solution function representing the unknowns of the equation.
     param : Parameters
-        The parameters object.
+        The parameters object containing simulation and physical parameters.
+
+    Raises
+    ------
+    RuntimeError
+        If an unsupported numerical scheme like Discontinuous Galerkin is used.
     """
 
     def __init__(self, eqColl, fluc, X, param):
         """
         Initialize the EnergyPressureEquation object.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         eqColl : EquationCollection
-            The equation collection object.
+            The equation collection object that stores various equations.
         fluc : Fluctuations
-            The fluctuations object.
+            The fluctuations object representing perturbations in the system.
         X : Function
-            The solution function.
+            The solution function representing the unknowns of the equation.
         param : Parameters
-            The parameters object.
+            The parameters object containing simulation and physical parameters.
+
+        Raises
+        ------
+        RuntimeError
+            If an unsupported numerical scheme like Discontinuous Galerkin is used.
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)
@@ -76,12 +72,15 @@ class EnergyPressureEquation(EquationTemplate):
         """
         Add the weight matrix expression to the weak form.
 
-        Parameters:
-        -----------
+        This function contributes the time derivative terms 
+        to the weak formulation.
+
+        Parameters
+        ----------
         weakForm : Form
-            The weak form object.
+            The weak form object to which the expression is added.
         mean : Function
-            The mean function.
+            The mean function representing the average state.
         """
         # Time derivative terms
         # Volume term: -omega*p_f*conj(X)
@@ -90,6 +89,8 @@ class EnergyPressureEquation(EquationTemplate):
     def addNonlinearExpression(self):
         """
         Add the nonlinear expression to the weak form.
+
+        This method is currently not implemented.
         """
         pass
 
@@ -97,23 +98,23 @@ class EnergyPressureEquation(EquationTemplate):
         """
         Add the linear expression to the weak form.
 
-        This function builds the weak form of the linearized
-        energy conservation equation, in tensorial framework.
-        The formulation is based on the total energy conservation
-        for a compressible fluid, expressed in terms of pressure by
-        substituting the Perfect gas law and continuity eq.
-        The equation is implemented in PRIMITIVE variables.
+        This function builds the weak form of the linearized energy 
+        conservation equation in the tensorial framework. The formulation 
+        is based on total energy conservation for a compressible fluid, 
+        expressed in terms of pressure by substituting the Perfect Gas Law 
+        and the continuity equation. The equation is implemented in 
+        primitive variables.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         weakForm : Form
-            The weak form object.
+            The weak form object to which the expression is added.
         mean : Function
-            The mean function.
+            The mean function representing the average state.
         """
-        J_hat = self.J_hat
-        X = self.X
-        fluc = self.fluc
+        J_hat   = self.J_hat
+        X       = self.X
+        fluc    = self.fluc
 
         # ------------------------  Advection terms
         # NOTE: "." denotes the dot product below

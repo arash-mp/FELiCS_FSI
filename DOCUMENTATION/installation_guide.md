@@ -15,9 +15,9 @@ After cloning the repository and installing conda, make sure you take the follow
 ## Package Installation
 ### Conda Environment
 In the yml directory, we provide different _.yml_ files that contain all required packages. The latest version that worked on mutliple systems is 
-- [felics2.0_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/main/yml/felics2.0_env.yml)
+- [felics2.0_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/main/INSTALLATION/yml/felics2.0_env.yml)
 
-Older versions of yml files can be found in the folder [yml/old_versions](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/yml/old_versions?ref_type=heads)
+Older versions of yml files can be found in the folder [yml/old_versions](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/INSTALLATION/yml/old_versions?ref_type=heads)
 
 >**Optional:** in case you want to give the environment a different name, you can change the first line of the _.yml_ file accordingly
 >```
@@ -68,11 +68,31 @@ fi
 >```
 
 ## Installation of FELiCS as a package
-To use FELiCS as a package it can be installed in the conda environment using pip and then easily be imported. The flag `-e` indicates installation in editable mode. Like this the folder of the repo is connected to the environment and all changes are reflected instantaneously in the environment. Then run the following commands:
+To use FELiCS as a regular python package, it can be installed in the conda environment using pip and then easily be imported. To install FELiCS as a python package, run the following commands:
 ```
 cd /path/to/felics
 conda activate <felics-environemnt>
 pip install -e .
+```
+
+>**Note:** The flag `-e` indicates an installation in editable mode. This allows the FELiCS repository to be connected to the conda environment and all changes are reflected instantaneously in the environment.
+
+To test the installation, start python in the FELiCS conda environment
+```bash
+conda activate <felics-environemnt>
+python
+```
+and try to import FELiCS. If successful, the FELiCS logo is displayed:
+```python
+import FELiCS
+(         (               (
+)\ )      ) )       (    )\ )
+(()/(  (  (()/( (    )\   (()/(
+/(_)) )\  /(_)))\  (((_)  /(_))
+(_)_)((_) (_)) ((_) )\___ (_))
+| __|| __|| |   (_)((/ __|/ __|
+| _| | _| | |__ | | | (__ \__ \
+|_|  |___||____||_|  \___||___/
 ```
 
 If installation using pip is not preferred, FELiCS can also be added to the `$PYTHONPATH` in the `.bashrc`. To do this add the line

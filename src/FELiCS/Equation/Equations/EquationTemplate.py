@@ -65,3 +65,6 @@ class EquationTemplate(ABC):
         Abstract method to add the nonlinear expression.
         """
         pass
+
+    def addBilinearExpression(self, *args):
+        pass

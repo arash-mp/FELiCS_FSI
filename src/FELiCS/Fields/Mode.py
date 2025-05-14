@@ -1,7 +1,9 @@
 
-from FELiCS.Misc.functions import printError
+from 	FELiCS.Misc.logging import Logger
+from    .Field              import Field
 
-from .Field import Field
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class Mode(Field):
 
@@ -35,7 +37,7 @@ class Mode(Field):
         try:
             return self._gain
         except: 
-            printError('For this mode object no gain was defined. Returning "-9999."...')
+            logger.error('For this mode object no gain was defined. Returning "-9999."...')
             return -9999.
 
 
@@ -43,7 +45,7 @@ class Mode(Field):
         try:
             return self._frequency
         except: 
-            printError('For this mode object no frequency was defined. Returning "-9999."...')
+            logger.error('For this mode object no frequency was defined. Returning "-9999."...')
             return -9999.
 
 
@@ -51,7 +53,7 @@ class Mode(Field):
         try:
             return self._eigenValue
         except: 
-            printError('For this mode object no eigen value was defined. Returning "-9999."...')
+            logger.error('For this mode object no eigen value was defined. Returning "-9999."...')
             return -9999.
 
 
@@ -59,7 +61,7 @@ class Mode(Field):
         try:
             return self._waveNumber
         except: 
-            printError('For this mode object no waveNumber was defined. Returning "-9999."...')
+            logger.error('For this mode object no waveNumber was defined. Returning "-9999."...')
             return -9999.
 
 
@@ -67,14 +69,14 @@ class Mode(Field):
         try:
             return self._guess
         except: 
-            printError('For this mode object no guess was defined. Returning "-9999."...')
+            logger.error('For this mode object no guess was defined. Returning "-9999."...')
             return -9999.
 
     def getError(self):
         try:
             return self._error
         except: 
-            printError('For this mode object no error was defined. Returning "-9999."...')
+            logger.error('For this mode object no error was defined. Returning "-9999."...')
             return -9999.
 
 

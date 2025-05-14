@@ -1,15 +1,17 @@
-import os
-from abc import ABC, abstractmethod
-from h5py import File
-import pdb
-import json
-from FELiCS.Equation.MixtureClass import MixtureClass
-from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
-from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
-from FELiCS.Misc.functions import(
-    getLastGitCommit,
-    printWarning
-    )
+import  os
+import  pdb
+import  json
+from    abc                             import ABC
+from    h5py                            import File
+from    FELiCS.Equation.MixtureClass    import MixtureClass
+from    FELiCS.SpaceDisc.FELiCSMesh     import FELiCSMesh
+from    FELiCS.Misc.functions           import getLastGitCommit
+from 	FELiCS.Misc.logging			    import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
+
+#from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
 
 class dotdict(dict):
     """
@@ -27,7 +29,13 @@ class dotdict(dict):
 
 class config(ABC):
     def __init__(self):
-        self.__BCIDs__=[]   # move to BC
+        logger.debug("Initializing config class with defaults.")
+        
+        # Get an instance of the defaults settings
+        self.default_config = self.getAllSettingsDict()
+        
+        # NOTE: deprecated?
+        self.__BCIDs__      = []   # move to BC
 
     def getAllSettingsDict(self):
         """
@@ -40,20 +48,20 @@ class config(ABC):
         """
         SettingsDict={
             'BoundaryCondition':{
-                'BCsFilePath':          {'datatype':str,    'default':''}
+                'BCsFilePath':              {'datatype':str,    'default':''}
             },
             'Case':{
-                'AnalysisMode':         {'datatype':str,    'default':'Modal'},
-                'CalculateAdjoint':     {'datatype':bool,   'default':True},
-                'CoordinateSystem':     {'datatype':str,    'default':'Cartesian'},
-                'm':                    {'datatype':int,    'default':0},
-                'MeshFilePath':         {'datatype':str,    'default':''},
-                'MixtureFilePath':      {'datatype':str,    'default':''},
-                'MolVisc':              {'datatype':int,    'default':0.0},
-                'MolViscModel':         {'datatype':str,    'default':'Constant'},
-                'nDim':                 {'datatype':int,    'default':2},
-                'Reaction':             {'datatype':bool,   'default':False},
-                'SetOfEquations':       {'datatype':dict,
+                'AnalysisMode':             {'datatype':str,    'default':'Modal'},
+                'CalculateAdjoint':         {'datatype':bool,   'default':True},
+                'CoordinateSystem':         {'datatype':str,    'default':'Cartesian'},
+                'm':                        {'datatype':int,    'default':0},
+                'MeshFilePath':             {'datatype':str,    'default':''},
+                'MixtureFilePath':          {'datatype':str,    'default':''},
+                'MolVisc':                  {'datatype':int,    'default':0.0},
+                'MolViscModel':             {'datatype':str,    'default':'Constant'},
+                'nDim':                     {'datatype':int,    'default':2},
+                'Reaction':                 {'datatype':bool,   'default':False},
+                'SetOfEquations':           {'datatype':dict,
                     'default':{
                         'Momentum':         {'Equation':'NSPrimitive',  'Variable':'u'},
                         'Mass':             {'Equation':'Continuity',   'Variable':'p'},
@@ -62,17 +70,17 @@ class config(ABC):
                         'EquationOfState':  {'Equation':'None',         'Variable':'None'}
                     }
                 },
-                'SpeciesFilePath':      {'datatype':str,    'default':''},
-                'TransVelFluc':         {'datatype':bool,   'default':False},
-                'TurbulenceModel':      {'datatype':str,    'default':'None'}
+                'SpeciesFilePath':          {'datatype':str,    'default':''},
+                'TransVelFluc':             {'datatype':bool,   'default':False},
+                'TurbulenceModel':          {'datatype':str,    'default':'None'}
             },
             'Export':{
-                'ExportFolder':         {'datatype':str,    'default':''},
-                'Video':                {'datatype':bool,   'default':False},
+                'ExportFolder':             {'datatype':str,    'default':''},
+                'Video':                    {'datatype':bool,   'default':False},
             },
             'FlowInput':{
-                'AveragingDirection':   {'datatype':str,    'default':'None'},
-                'MeanFlowFilePath':     {'datatype':str,    'default':''},
+                'AveragingDirection':       {'datatype':str,    'default':'None'},
+                'MeanFlowFilePath':         {'datatype':str,    'default':''},
             },
             'IOResolvent':{
                 'ForcingBoundaryIndices':   {'datatype':list,   'default':[]},
@@ -83,9 +91,9 @@ class config(ABC):
                 'Omegas':                   {'datatype':list,   'default':[]}
             },
             'Numerics':{
-                'EigenValueGuess':      {'datatype':list,   'default':[1.0]},
-                'nSolut':               {'datatype':int,    'default':3},
-                'PolynomialOrder':      {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]}
+                'EigenValueGuess':          {'datatype':list,   'default':[1.0]},
+                'nSolut':                   {'datatype':int,    'default':3},
+                'PolynomialOrder':          {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]}
             }
         }
         return SettingsDict
@@ -110,10 +118,12 @@ class config(ABC):
                 try:
                     result.append(complex(item))  # Convert string to complex
                 except ValueError:
+                    logger.error(f"Invalid complex number string: {item}")
                     raise ValueError(f"Invalid complex number string: {item}")
             elif isinstance(item, (int, float)):
                 result.append(item)  # Convert float/int to complex
             else:
+                logger.error(f"Unsupported type {type(item)} in list. Must be str or float.")
                 raise TypeError(f"Unsupported type {type(item)} in list. Must be str or float.")
         return result
     
@@ -126,9 +136,10 @@ class config(ABC):
         for field in mandatory_files:
             filename = config_dict[field.split("_")[0]][field.split("_")[1]]
             if not os.path.isfile(filename):
+                logger.error(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
                 raise Exception(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
 
-    def importFromFile(self,configFilePath):
+    def importFromFile(self, configFilePath):
         """
         Imports parameters from .json file.
         If parameter is not found in .json file the default is used.
@@ -136,44 +147,64 @@ class config(ABC):
 
         Parameters
         ----------
-        configFilePath : txt
+        configFilePath : str
             path to .json file containing parameters
         """
-        input_file =  open(configFilePath)
-        input_data =  json.load(input_file)
-        SettingsDict = self.getAllSettingsDict()
 
-        # Sets defaults and overwrite them by file values
-        for category in SettingsDict:
+        if not configFilePath.endswith(".json"):
+            logger.info(" If you are using an old file with the ending '.set', \
+            run the script 'set_to_json.py', wich you can find in the folder 'PREPROC_POSTPROC'. \
+            The script does need the path to the directory containing the old settings file and will create \
+            recursively json-files that contain the same parameters as the old '.set' and '.bc' files.")
+            logger.error("The given settings file is not a json file.")
+
+        logger.info(f"Loading configuration from {configFilePath}")
+        input_file      = open(configFilePath)
+        input_data      = json.load(input_file)
+        
+        # Get an instance of the defaults settings
+        default_config  = self.default_config
+
+        # Loop over fields and overwrite defaults by file values
+        for category in default_config:
             dict = dotdict()
-            for parameter in SettingsDict[category]:
+            for parameter in default_config[category]:
                 if parameter in input_data[category]:
-                    input_value = input_data[category][parameter]
+                    input_value         = input_data[category][parameter]
                     if parameter in ["EigenValueGuess","Omegas"]:
                         dict[parameter] = self.parse_complex_list(input_value)
                     else:
                         dict[parameter] = input_value
                 else:
-                    dict[parameter] = SettingsDict[category][parameter]["default"]
-                    printWarning('no input found for parameter "'+parameter+'", setting default value: '+dict[parameter])
+                    dict[parameter]     = default_config[category][parameter]["default"]
+                    logger.warning(f'Field "{parameter}" missing from file, setting default: {dict[parameter]}')
             setattr(self,category,dict)
         input_file.close()
 
         # Check if mandatory files are there [category_name]
-        mandatory_files = ['BoundaryCondition_BCsFilePath','Case_MeshFilePath']
-        tmp, extension = os.path.splitext(input_data['FlowInput']['MeanFlowFilePath'])
+        logger.debug("Checking mandatory files")
+        mandatory_files     = ['BoundaryCondition_BCsFilePath','Case_MeshFilePath']
+        tmp, extension      = os.path.splitext(input_data['FlowInput']['MeanFlowFilePath'])
         if extension == ".fel":
             mandatory_files.append('FlowInput_MeanFlowFilePath')
         self.check_for_mandatory_files(input_data,mandatory_files)
 
         # Check if export folder exists
         if not os.path.isdir(input_data['Export']['ExportFolder']):
-            raise Exception(f"Export folder {input_data['Export']['ExportFolder']} not found.")
+            os.makedirs(input_data['Export']['ExportFolder'])
+        
+        # Move the log file to the export folder
+        current_dir = os.path.dirname(configFilePath)
+        log_dir     = os.path.join(*[current_dir,input_data['Export']['ExportFolder'], "log"])
+        Logger.change_log_location(log_dir)
 
+        logger.debug("Creating Mixture class")
         self.Mixture = MixtureClass(
             self.Case["MixtureFilePath"],
             self.Case["SpeciesFilePath"]
         )
+        
+        # Get domain data and set BCs
         self.readDomainData(
             self.Case["MeshFilePath"],
             self.Case["nDim"],
@@ -182,13 +213,19 @@ class config(ABC):
             self.Case["m"]
         )
 
-        self.debug = True # specify here if printDebug messages should be shown
-        self.Numerics.nCPU = 1 # hardcoded for now, move to defaults later
-        self.Numerics.NumericalScheme = "Continuous Galerkin" # hardcoded for now, move to defaults later
+        # Hardcoded parameters
+        self.debug                      = True # specify here if printDebug messages should be shown
+        self.Numerics.nCPU              = 1 # hardcoded for now, move to defaults later
+        self.Numerics.NumericalScheme   = "Continuous Galerkin" # hardcoded for now, move to defaults later
+        
+        # Calculate parameters
         self.calculate_parameters()
-        print()
+        logger.info("Configuration loaded successfully")
 
     def importFromH5File(self, h5FileName):
+        # NOTE: This function is not used in the current version of FELiCS
+        # NOTE: It used to be called when reading 'meanflow.h5' instead of a .fel
+        # NOTE: In that case it was overwritting the parameters.
         # TODO: load the parameters into a "data" dictionnary
         # similar to what we get from loading a .json
 
@@ -199,9 +236,9 @@ class config(ABC):
         if self._settingsKind in hf['param'].keys():
             for settingsParameter in list(settingsDict.keys()):
                 if settingsParameter in hf[f'param/{self._settingsKind}'].attrs.keys():
-                    groupName = f'param/{self._settingsKind}'
-                    datatype = settingsDict[settingsParameter]['datatype']
-                    value = hf[groupName].attrs[settingsParameter]
+                    groupName   = f'param/{self._settingsKind}'
+                    datatype    = settingsDict[settingsParameter]['datatype']
+                    value       = hf[groupName].attrs[settingsParameter]
                     #pdb.set_trace()
                     if 'int' in str(datatype):
                         try:
@@ -213,7 +250,7 @@ class config(ABC):
                         exec(f'self.{settingsParameter} = "{value}"')
         hf.close()
 
-        # This will not be needed anymore
+        # NOTE: This will not be needed anymore
         self.Mixture = MixtureClass(
             self.Case.mixtureFilePath,
             self.SpeciesFilePath,
@@ -291,69 +328,100 @@ class config(ABC):
 
     def initBCsDict(self,VariableList):
         ''' Initialize BCsDict '''
-        from FELiCS.Misc.functions import printWarning
-        BCIDList=self.__BCIDs__
-        #First define local BCsDict
-        BCsDict={}
+        BCIDList = self.__BCIDs__
+        
+        # First define local BCsDict and set Neumann by default
+        BCsDict = {}
         for Variable in VariableList:
-            BCsDict[Variable]=[]
+            BCsDict[Variable] = []
             for BCID in BCIDList:
                 BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-        self.__BCsDict__=BCsDict
+        self.__BCsDict__ = BCsDict
 
-    def importBCsDict(self,VariableList):
-        ''' Import a boundary condition file with checking the consistency of BCs and mesh. To read the BCs without checking use importSettings()'''
-        from FELiCS.Misc.functions import printWarning
-        BCIDList=self.__BCIDs__
-        #First define local BCsDict
-        BCsDict={}
-        filepath=self.BoundaryCondition.BCsFilePath
-        if not filepath == '' and os.path.isfile(filepath):
-            self.BoundaryCondition.BCsFilePath = filepath
-            for Variable in VariableList:
-                BCsDict[Variable]=[]
-                for BCID in BCIDList:
-                    BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-            # Read BCFile
-            BCFile=open(self.BoundaryCondition.BCsFilePath)
-            importDict=json.load(BCFile)
-            # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
-            for Variable in VariableList:
-                if Variable in list(importDict.keys()):
-                    BCsDict[Variable]=[]
-                    for BC in importDict[Variable]:
-                        if BC['ID'] in BCIDList:
-                            BCsDict[Variable].append(BC)
-                        else:
-                            printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
+    def importBCsDict(self, VariableList):
+        ''' Import a boundary condition file with checking 
+        the consistency of BCs and mesh. 
+        To read the BCs without checking use importSettings()
+        '''
 
-                else:
-                    printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
-            # Finally, copy local BCsDict to the object
-            self.__BCsDict__=BCsDict
+        # Read BCFile
+        filepath    = self.BoundaryCondition.BCsFilePath
+        BCFile      = open(filepath)
+        importDict  = json.load(BCFile)
+        logger.debug(f"Reading boundary conditions from '{filepath}'")
+
+        # NOTE: Below is the previous import, before ID and varibles were switched
+        # in the config .json file. Kept for reference.
+        # BCIDList = self.__BCIDs__
+        # BCsDict={}
+        # if not filepath == '' and os.path.isfile(filepath):
+        #     self.BoundaryCondition.BCsFilePath = filepath
+        #     for Variable in VariableList:
+        #         BCsDict[Variable]=[]
+        #         for BCID in BCIDList:
+        #             BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
+        #     # Read BCFile
+        #     BCFile=open(self.BoundaryCondition.BCsFilePath)
+        #     importDict=json.load(BCFile)
+        #     # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
+        #     for Variable in VariableList:
+        #         if Variable in list(importDict.keys()):
+        #             BCsDict[Variable]=[]
+        #             for BC in importDict[Variable]:
+        #                 if BC['ID'] in BCIDList:
+        #                     BCsDict[Variable].append(BC)
+        #                 else:
+        #                     printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
+
+        #         else:
+        #             printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
+        #     # Finally, copy local BCsDict to the object
+        #     self.__BCsDict__=BCsDict
 
 
-    def setBC(self,field,BoundaryID,BCType,BCvalue):
+        # Invert sorting of boundary condition from ID-first to variable-first
+        result = {}
+        for ID, variable_list in importDict.items():
+            for dict in variable_list:
+                variable    = dict["variable"]
+                dict.pop("variable", None)
+                dict["ID"]  = int(ID)
+                if variable not in result:
+                    result[variable] = []
+                result[variable].append(dict)
+
+        # Finally, copy local BCsDict to the object
+        self.__BCsDict__ = result
+
+    def setBC(self, field, BoundaryID, BCType, BCvalue):
         ''' Setting the Boundary condition of a single variable '''
         for BC in self.__BCsDict__[field]:
-            if BC['ID']== BoundaryID:
-                self.__BCsDict__[field][BoundaryID]['type']=BCType
-                self.__BCsDict__[field][BoundaryID]['value']=BCvalue
-
+            if BC['ID'] == BoundaryID:
+                self.__BCsDict__[field][BoundaryID]['type'] = BCType
+                self.__BCsDict__[field][BoundaryID]['value'] = BCvalue
     
     def readBCInfo(self,MeshFilePath, felicsMesh):
         ''' Input: - MeshFilePath
         This function reads both the IDs of the boundary conditions from the mesh and stores them
-        in a private list of the class and also the boundary nodes and stores them in __boundaries__'''
+        in a private list of the class and also the boundary nodes and stores them in __boundaries__
+        '''
         from numpy import unique
+        
+        # NOTE: (Simon) move to FELiCSMesh or BC class?
+        
         # get a list of all kinds of BC indices
-        self.__BCIDs__ = unique(felicsMesh.facet_tags.values)
+        self.__BCIDs__      = unique(felicsMesh.facet_tags.values)
         self.__boundaries__ = felicsMesh.facet_tags
 
     def readDomainData(self,Meshfile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
+        logger.debug(f"Reading domain data from '{Meshfile}'")
         ''' Input: Mesfile
         Read all the domain data from the meshfile '''
-        self.readMesh(Meshfile,gDim,coordinateSystem,m)
+        
+        # Read mesh and store it in self.__mesh__
+        self.readMesh(Meshfile, gDim, coordinateSystem, m)
+        
+        # Setup the boundary conditions
         self.readBCInfo(Meshfile, self.__mesh__)
         self.initBCsDict(ExtendedTransportedQuantityList)
         self.importBCsDict(ExtendedTransportedQuantityList)
@@ -373,35 +441,38 @@ class config(ABC):
 
         Function returns:
         '''
+        
+        # NOTE: (Simon) I don't think this method is needed
+        
         if not MeshFile == '' and os.path.isfile(MeshFile):
             self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,dim,m)
             self.dim = self.__mesh__.gdim
         
     def getInternalVelocityComponents(self):
         ''' Provides a list of velocity components, which are directed within the dimensions of the mesh '''
-        if self.Case["CoordinateSystem"]=='Cartesian':
+        if self.Case["CoordinateSystem"] == 'Cartesian':
             VelCompList = ['x','y']
-            if self.Case.nDim>2:
+            if self.Case.nDim > 2:
                 VelCompList.append('z')
-        elif self.Case["CoordinateSystem"]=='Cylindrical':
+        elif self.Case["CoordinateSystem"] == 'Cylindrical':
             VelCompList = ['x','r']
         return VelCompList
 
     def getExternalVelocityComponents(self):
         ''' Provides a list of velocity components, which are directed outside the dimensions of the mesh '''
-        if self.Case["CoordinateSystem"]=='Cartesian':
-            if self.Case.m!=0 and self.Case.nDim==2:
+        if self.Case["CoordinateSystem"] == 'Cartesian':
+            if self.Case.m != 0 and self.Case.nDim == 2:
                 VelCompList = ['z']
             else:
                 VelCompList = []
-        elif self.Case["CoordinateSystem"]=='Cylindrical':
+        elif self.Case["CoordinateSystem"] == 'Cylindrical':
             VelCompList = ['t']
 
         return VelCompList
 
     def getVelocityComponents(self):
         ''' Provides a list of all velocity components, both mesh internal and external '''
-        templist=self.getInternalVelocityComponents()
+        templist = self.getInternalVelocityComponents()
         templist.extend(self.getExternalVelocityComponents())
 
         return templist
@@ -415,6 +486,12 @@ class config(ABC):
             SolutionList.append(self.Case["SetOfEquations"]['Mass']['Variable'])
         if not self.Case["SetOfEquations"]['Energy']['Variable'] == 'None':
             SolutionList.append(self.Case["SetOfEquations"]['Energy']['Variable'])
+        if "Custom1" in self.Case["SetOfEquations"]:
+            if not self.Case["SetOfEquations"]['Custom1']['Variable'] == 'None':
+                SolutionList.append(self.Case["SetOfEquations"]['Custom1']['Variable'])
+        if "Custom2" in self.Case["SetOfEquations"]:
+            if not self.Case["SetOfEquations"]['Custom2']['Variable'] == 'None':
+                SolutionList.append(self.Case["SetOfEquations"]['Custom2']['Variable'])
         if 'Species' in list(self.Case["SetOfEquations"].keys()):
             if self.Case["SetOfEquations"]['Species']['Variable'] == 'Y':
                 for species in list(self.Mixture.getSpeciesList('transported')):
@@ -437,11 +514,14 @@ class config(ABC):
         return SolutionList
 
     def getMeanFlowFieldNames(self):
-        from FELiCS.Misc.functions import printDebug
         ''' This function provides the mean fields which must be read in.'''
         MeanList=[]
         # Add velocity components
         MeanList.append('u')
+        # Add pressure component
+        MeanList.append('p')
+        # Add density component (for cold flow)
+        MeanList.append('rho')
         # If necessary, add density and enthalpy diffusion
         if 'rho' in self.getTransportedQuantityList():
             MeanList.append('rho')

@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 14 17:59:50 2022
 
-@author: kai hildebrandt
-Modifications: 
-- Thomas L. Kaiser
-- Simon Demange
-"""
+# Created on Wed Dec 14 17:59:50 2022
+# @author: kai hildebrandt
+# Modifications: 
+# - Thomas L. Kaiser
+# - Simon Demange
 
 from typing import Union
 from ufl import indices
@@ -21,6 +19,225 @@ from dolfinx.fem import (
 
 ### CLASSES
 class CoordinateSystem():
+    """
+    The `CoordinateSystem` class supports several coordinate systems,
+    initializing key geometric quantities such as the metric tensors
+    and Christoffel symbols.
+
+    Supports various systems such as Cartesian, polar, cylindrical, and spherical.
+    Initializes geometric quantities like the metric tensors and Christoffel symbols
+    required for tensor analysis.
+
+    Parameters
+    ----------
+    SpatialCoordinateObj : ufl.SpatialCoordinate
+        Coordinate vector of the mesh.
+    name : str
+        Name of the coordinate system ("cartesian", "polar", etc.).
+    m : int, optional
+        Wave number for mean-flow homogeneous directions.
+    **kwargs : dict
+        Optional keyword arguments, e.g. 'mesh_dims' to reduce dimensionality.
+        mesh_dims : list
+            This must be specified if a symmetry direction is solved for that
+            is not meshed. Then mesh_dims is a list of booleans containing
+            True if the direction of the chosen coordinate system is meshed
+            and False if it is not meshed.
+            
+        
+
+
+    Raises
+    ------
+    ValueError
+        When object is initialized: if the coordinate system name is not recognized.
+
+
+    Attributes
+    -------
+
+    dim : int
+        Spatial dimension of the coordinate system. Not necessarily geometric
+        dimension of the mesh.
+    mesh_dims : list of int
+        List indicating which coordinate directions are part of the mesh.
+    x : ufl.Vector
+        Coordinate vector in the system.
+    ch : ufl.Tensor
+        Christoffel symbols.
+    cov_metric : ufl.Matrix
+        Covariant metric tensor.
+    con_metric : ufl.Matrix
+        Contravariant metric tensor.
+    g : ufl.Expr
+        Determinant of the covariant metric tensor.
+    J_hat : ufl.Expr
+        Square root of the metric determinant.
+
+
+    Notes
+    -----
+
+    Below are the supported systems and their conventions:
+
+    **Polar Coordinates** (2D):
+    Defined by:
+
+    (x, y) = (r cos(ϕ), r sin(ϕ))
+
+    ordering: (r, ϕ)
+
+    Christoffel Symbols:
+
+        ch1 = [[0, 0], [0, -r]]
+
+        ch2 = [[0, 1/r], [1/r, 0]]
+
+    Covariant Metric:
+
+        [[1,     0],
+
+        [0,   r²]]
+
+    Contravariant Metric:
+
+        [[1,     0],
+
+        [0, 1/r²]]
+
+    **Cylindrical Coordinates** (3D):
+    Defined by:
+
+    (x, y, z) = (r cos(ϕ), r sin(ϕ), z)
+
+    ordering: (r, ϕ, z)
+
+    Tangent Basis:
+
+        g1 = cosϕ eₓ + sinϕ e_y
+
+        g2 = r(-sinϕ eₓ + cosϕ e_y)
+
+        g3 = e_z
+
+    Christoffel Symbols:
+
+        ch1 = [[0, 0, 0], [0, -r, 0], [0, 0, 0]]
+
+        ch2 = [[0, 1/r, 0], [1/r, 0, 0], [0, 0, 0]]
+
+        ch3 = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+
+    Covariant Metric:
+
+        [[1,     0, 0],
+        [0,   r², 0],
+        [0,     0, 1]]
+
+    Contravariant Metric:
+
+        [[1,     0,   0],
+        [0, 1/r²,   0],
+        [0,     0, 1]]
+
+    **Cylindrical (FELiCS Convention)** (3D):
+    Same coordinate mapping as cylindrical, but uses a different ordering:
+    
+    ordering: (z, r, ϕ)
+
+    Tangent Basis:
+
+        g1 = e_z
+
+        g2 = cosϕ eₓ + sinϕ e_y
+
+        g3 = r(-sinϕ eₓ + cosϕ e_y)
+
+    Christoffel Symbols:
+
+        ch1 = 0
+
+        ch2 = [[0, 0, 0], [0, 0, 0], [0, 0, -r]]
+
+        ch3 = [[0, 0, 0], [0, 0, 1/r], [0, 1/r, 0]]
+
+    Covariant Metric:
+
+        [[1, 0,     0],
+
+        [0, 1,     0],
+
+        [0, 0,   r²]]
+
+    Contravariant Metric:
+
+        [[1, 0,     0],
+
+        [0, 1,     0],
+
+        [0, 0, 1/r²]]
+
+    **Spherical Coordinates** (3D):
+    Defined by:
+
+    (x, y, z) = (r sinθ cosϕ, r sinθ sinϕ, r cosθ)
+
+    ordering: (r, θ, ϕ)
+
+    Christoffel Symbols:
+
+        ch1 = [[0, 0, 0], [0, -r, 0], [0, 0, -r sin²θ]]
+
+        ch2 = [[0, 1/r, 0], [1/r, 0, 0], [0, 0, -sinθ cosθ]]
+
+        ch3 = [[0, 0, 1/r], [0, 0, 1/tanθ], [1/r, 1/tanθ, 0]]
+
+    Covariant Metric:
+
+        [[1,     0,           0],
+
+        [0,   r²,           0],
+
+        [0,     0, r² sin²θ]]
+
+    Contravariant Metric:
+
+        [[1,      0,              0],
+
+        [0,   1/r²,              0],
+
+        [0,      0, 1/(r² sin²θ)]]
+
+
+    Example
+    -------
+
+    **Metric Determinant and Jacobian Weight**
+    For any coordinate system, the metric determinant and Jacobian weight
+    are defined as:
+
+    >>> g = det(cov_metric)
+    >>> J_hat = sqrt(g)
+
+    These are used to properly scale integrals in variational forms.
+
+    **Accessing Christoffel Symbols in UFL**
+    UFL supports index notation for tensors:
+    
+    >>> ch[2,:,0]  # First column of the third Christoffel tensor
+
+    **Example for index operations on Matrices in UFL.**
+
+    >>> ch1 = [[1, 2, 3],[4,5,6], [7,8,9]]
+    >>> ch2 = [[10, 11, 12],[13,14,15], [16,17,18]]
+    >>> ch3 = [[19, 20, 21],[22,23,24], [25,26,27]]
+    >>> ch = as_matrix([ch1, ch2, ch3])
+    >>> print(ch3)
+    >>> print(ch[2,:,0]) # first column of the last christoffel symbol
+
+    """
+
+
     def __init__(
                 self, 
                 SpatialCoordinateObj, 
@@ -28,6 +245,10 @@ class CoordinateSystem():
                 m = 0, 
                 **kwargs,
                 ):
+        """
+    
+        """
+
         x = SpatialCoordinateObj
         
         # mesh_dims is a variable to handle that the ufl vector x[i] might re-
@@ -164,21 +385,54 @@ class CoordinateSystem():
         self.g = det(self.cov_metric)
         self.J_hat = sqrt(self.g)
             
-        """
-        # Example for index operations on Matrices in UFL.
-        ch1 = [[1, 2, 3],[4,5,6], [7,8,9]]
-        ch2 = [[10, 11, 12],[13,14,15], [16,17,18]]
-        ch3 = [[19, 20, 21],[22,23,24], [25,26,27]]
-        ch = as_matrix([ch1, ch2, ch3])
-        print(ch3)
-        print(ch[2,:,0]) # first column of the last christoffel symbol
-        """
 
     @property
     def m(self):
+        """
+        Returns the wave number `m`, used in homogeneous directions.
+
+        Returns
+        -------
+        int
+            The wave number.
+        """
         return self._m
 
-class Tensor():#TestFunction):    
+class Tensor():
+    """
+    Tensor object that extends the UFL tensors by bases vectors, such
+    that they are valid / definable in coordinate systems other than
+    the cartesian one.
+
+    Supports scalar, vector, and matrix-valued tensors in both physical
+    and tangent bases.
+
+    Attributes
+    ----------
+    ufl_tens : ufl.Expr
+        The underlying UFL tensor expression.
+    CoordSys : CoordinateSystem
+        Coordinate system in which this tensor is defined.
+    order : int
+        Order of the tensor (0: scalar, 1: vector, 2: matrix).
+    basis : list of booleans
+        A list of booleans in which False represents a covariante basis
+        vector and True a contravariant basis vector.
+    sym : list
+        A list of order self.order + 1, containing booleans. When computing
+        the gradient of the tensor this information is used to determine
+        if the partial derivative in this direction exists.
+    containsTestFunction : bool
+        Whether this tensor includes a test function.
+    containsFluctuation : bool
+        Whether this tensor includes a fluctuation field.
+
+    Example
+    -------
+    >>> T = Tensor(u, CoordSys)
+    >>> grad_T = iGrad(T)
+    """ 
+
     def __init__(
         self, 
         ufl_tens, 
@@ -188,11 +442,45 @@ class Tensor():#TestFunction):
         m = 0,
         **kwargs,
         ):
+        """
+        Initialize a tensor object.
+
+        Parameters
+        ----------
+        ufl_tens : ufl.Expr
+            The UFL expression representing the tensor.
+        CoordSys : CoordinateSystem
+            The coordinate system in which the tensor is defined.
+        containsTestFunction : bool, optional
+            Whether the tensor includes a test function.
+        containsFluctuation : bool, optional
+            Whether the tensor includes a fluctuation.
+        m : int, optional
+            Optional wave number.
+        **kwargs : dict
+            Optional arguments: 'basis' (covariant or contravariant), 'sym' (custom symmetry. not yet implemented).
+
+        Notes
+        -----
+        - Automatically converts physical basis to tangent basis for vectors.
+        - Derives symbolic symmetry information if not explicitly provided.
+        - Only tensors of order 0, 1, and 2 are currently supported.
+
+        Raises
+        ------
+        ValueError
+            If the tensor order is >= 2 and no transformation rule is provided.
+        """
+
         self.CoordSys = CoordSys
         self.x = CoordSys.x
         self.dim = CoordSys.dim
         self.order = len(ufl_tens.ufl_shape) # scalar --> order = 0
-        self.containsTestFunction = containsTestFunction
+        
+        # TODO Kai: this is easily checked with UFL and shouldn't be a user argument
+        # to make FELiCS tensor_utils variant less prone to user error.
+        self.containsTestFunction = containsTestFunction 
+
         self.containsFluctuation = containsFluctuation
         
         # if no basis is specified, ufl_tens is assumed to be a vector given
@@ -266,7 +554,28 @@ class Tensor():#TestFunction):
             
     # addition
     def __add__(self, other):
-            
+        """
+        Add two tensors or a tensor and a scalar.
+
+        Parameters
+        ----------
+        other : Tensor or scalar
+            The tensor or scalar to add.
+
+        Returns
+        -------
+        Tensor
+            Sum of self and other.
+
+        Raises
+        ------
+        ValueError
+            If operand types are not compatible.
+
+        Example
+        -------
+        >>> A + B  # where A is a UFL or Tensor object and B is a Tensor object.
+        """
         if type(other) == Tensor:
             if not (self.containsFluctuation == other.containsFluctuation):
                 ValueError("In a tensor sum, both tensors must be of same order in linear fluctuations.")
@@ -275,8 +584,11 @@ class Tensor():#TestFunction):
             if self.basis == other.basis:
                 added = self.ufl_tens + other.ufl_tens
             else:
-                new_self = convertBasis(self, other.basis)
-                added = new_self.ufl_tens + other.ufl_tens
+                #new_self = convertBasis(self, other.basis)
+                #added = new_self.ufl_tens + other.ufl_tens
+                ### changed by Sophie to make the iT (transpose) functionality work properly
+                new_other = convertBasis(other, self.basis)
+                added     = self.ufl_tens + new_other.ufl_tens
         if type(other) in [float,complex,int,Constant]:
             added = self.ufl_tens + other
         else:
@@ -291,6 +603,28 @@ class Tensor():#TestFunction):
 
     # division, 
     def __truediv__(self, other): # Tensor object to the left
+        """
+        Divide this tensor by another tensor or scalar.
+
+        Parameters
+        ----------
+        other : Tensor or scalar
+            The denominator.
+
+        Returns
+        -------
+        Tensor
+            Result of the division.
+
+        Raises
+        ------
+        ValueError
+            If division is not defined for the operand types.
+
+        Example
+        -------
+        >>> A / 2.0
+        """
         if type(other) == Tensor:
             if other.containsTestFunction:
                 ValueError("Division by test function not possible.")
@@ -328,6 +662,28 @@ class Tensor():#TestFunction):
     
     # subtraction: A - B is the same as A.__sub__(B)
     def __sub__(self, other):
+        """
+        Subtract one tensor from another or from a scalar.
+
+        Parameters
+        ----------
+        other : Tensor or scalar
+            The tensor or scalar to subtract.
+
+        Returns
+        -------
+        Tensor
+            Result of subtraction.
+
+        Raises
+        ------
+        ValueError
+            If operand types are not compatible.
+
+        Example
+        -------
+        >>> A - B # where A is a UFL or Tensor object and B is a Tensor object.
+        """
         if type(other) == Tensor:
             if not (self.containsTestFunction == other.containsTestFunction):
                 ValueError("In a tensor difference, both tensors must be of same order in test functions.")
@@ -337,8 +693,11 @@ class Tensor():#TestFunction):
             if self.basis == other.basis:
                 subtracted = self.ufl_tens - other.ufl_tens
             else:
-                new_self = convertBasis(self, other.basis)
-                subtracted = new_self.ufl_tens - other.ufl_tens
+                #new_self = convertBasis(self, other.basis)
+                #subtracted = new_self.ufl_tens - other.ufl_tens
+                ### changed by Sophie to make the iT (transpose) functionality work properly
+                new_other = convertBasis(other, self.basis)
+                subtracted = self.ufl_tens - new_other.ufl_tens
         if type(other) in [float,complex,int,Constant]:
             subtracted = self.ufl_tens - other
         else:
@@ -353,10 +712,33 @@ class Tensor():#TestFunction):
                     )
     # muliplication, both ways, because matrix mul not commutative
     def __mul__(self, other): # Tensor object to the left
+        """
+        Multiply this tensor with another tensor or scalar.
+
+        Parameters
+        ----------
+        other : Tensor or scalar
+            The operand on the right-hand side.
+
+        Returns
+        -------
+        Tensor
+            The product tensor.
+
+        Raises
+        ------
+        ValueError
+            If multiplication is undefined for operand types.
+
+        Example
+        -------
+        >>> A * 2.0
+        >>> A * B # where A is a UFL or Tensor object and B is a Tensor object.
+        """
         if type(other) == Tensor:
             if self.containsTestFunction and other.containsTestFunction:
                 ValueError("Tensor product at least second order in test functions.")
-            if self.containsTestFunction and other.containsTestFunction:
+            if self.containsFluctuation and other.containsFluctuation:
                 ValueError("Tensor product at least second order in fluctuation.")
             if other.order == 0:
                 return Tensor(
@@ -387,8 +769,73 @@ class Tensor():#TestFunction):
                         )
         else:
             ValueError("Tensor multiplication only defined for Tensors, Constant, float, complex, and integer")
-    
+
+    def __pow__(self, exponent): # Tensor object to the left
+        """
+        Returns this tensor to the power of the exponent.
+
+        Parameters
+        ----------
+        exponent : scalar
+            The exponent. 
+
+        Returns
+        -------
+        Tensor
+            The tensor, has to be of order 0.
+
+        Raises
+        ------
+        ValueError
+            If the tensor is not order 0 or if the exponent is not a scalar number.
+
+        Example
+        -------
+        >>> A ** 2
+        """
+        import numpy as np
+        if self.containsTestFunction and exponent != 1:
+            ValueError("Tensor does not stay of first order in fluctuations, as it should.")
+        if self.containsFluctuation and exponent != 1:
+            ValueError("Tensor does not stay of first order in test functions, as it should.")
+        if self.order ==0 and np.isscalar(exponent):
+             return Tensor(
+                       self.ufl_tens ** exponent,
+                       self.CoordSys, 
+                       basis = self.basis, 
+                       containsTestFunction = self.containsTestFunction, 
+                       containsFluctuation = self.containsFluctuation, 
+                       )
+        else:
+            raise ValueError("Taking exponents is only defined if the exponent is a scalar number "\
+                                 "and the tensor has order 0.")
+ 
+
+
+
     def __rmul__(self, other): # Tensor object to the right
+        """
+        Multiply scalar or tensor from the left.
+
+        Parameters
+        ----------
+        other : Tensor or scalar
+            The operand on the left-hand side.
+
+        Returns
+        -------
+        Tensor
+            The product tensor.
+
+        Raises
+        ------
+        ValueError
+            If multiplication is undefined for operand types.
+
+        Example
+        -------
+        >>> 3.0 * A
+        """
         if type(other) == Tensor:
             if self.containsTestFunction and other.containsTestFunction:
                 ValueError("Tensor product at least second order in test functions.")
@@ -435,6 +882,29 @@ def iDot(
          tensorA: Tensor, 
          tensorB: Tensor,
          ):
+    """
+    Performs a single contraction between two tensors using the appropriate metric.
+
+    The function supports dot products between tensors of order 1 or 2 and uses 
+    the metric determined by the coordinate system and the tensor bases.
+
+    Parameters
+    ----------
+    tensorA : Tensor
+        First tensor operand.
+    tensorB : Tensor
+        Second tensor operand.
+
+    Returns
+    -------
+    Tensor
+        Result of the dot product, with updated basis and metadata.
+
+    Raises
+    ------
+    ValueError
+        If both tensors contain test functions or fluctuations.
+    """
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         ValueError("iDot product at least second order in test functions.")
     if tensorA.containsFluctuation and tensorB.containsFluctuation:
@@ -466,15 +936,31 @@ def iDot(
             containsFluctuation = tensorA.containsFluctuation or tensorB.containsFluctuation, 
             )
 
+
+# Kai TODO: Is this validated? Which of the two tensors is transposed? What is the benefit over iDot(iT(TensorA), TensorB)?
+# It is not part of my version of tensor_utils, just FYI for the others.
 def iDotT(tensorA: Tensor, tensorB: Tensor):
     """
-    
-    Args:
-        - A: not transposed tensor of order 2
-        - B_ tensor of order 1
-    
-    Return:
-        - Dot product of A^T * b
+    Performs an intrinsic dot product between the transpose of a second-order tensor and a first-order tensor.
+
+    Parameters
+    ----------
+    tensorA : Tensor
+        A second-order tensor (not explicitly transposed).
+    tensorB : Tensor
+        A first-order tensor.
+
+    Returns
+    -------
+    Tensor
+        Resulting tensor from the intrinsic dot product.
+
+    Raises
+    ------
+    ValueError
+        If both tensors contain test functions or fluctuations.
+    Exception
+        If the combination of tensor orders is not implemented.
     """
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         ValueError("iDotT product at least second order in test functions.")
@@ -508,6 +994,26 @@ def iDotT(tensorA: Tensor, tensorB: Tensor):
 
 
 def iInner(tensorA: Tensor, tensorB: Tensor):
+    """
+    Computes the inner product between two second-order tensors.
+
+    Parameters
+    ----------
+    tensorA : Tensor
+        First tensor operand of order 2.
+    tensorB : Tensor
+        Second tensor operand of order 2.
+
+    Returns
+    -------
+    Tensor
+        Scalar-valued (zero order) tensor representing the inner product.
+
+    Raises
+    ------
+    ValueError
+        If the tensors are not of order 2 or contain invalid combinations of test functions or fluctuations.
+    """
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         raise ValueError("iInner product at least second order in test functions.")
     if tensorA.containsFluctuation and tensorB.containsFluctuation:
@@ -534,6 +1040,23 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
 
 def getMetric(basisA: Union[list, bool, int], basisB: Union[list, bool, int], \
               CoordSys: CoordinateSystem):
+    """
+    Determines the appropriate metric based on basis vectors.
+
+    Parameters
+    ----------
+    basisA : list, bool, or int
+        Basis type of the first tensor.
+    basisB : list, bool, or int
+        Basis type of the second tensor.
+    CoordSys : CoordinateSystem
+        Coordinate system providing the metric tensors.
+
+    Returns
+    -------
+    ufl.Expression
+        Appropriate metric tensor for contracting the basis vectors.
+    """
     if type(basisA) == list:
         basisA = basisA[0]
     if type(basisB) == list:
@@ -548,9 +1071,29 @@ def getMetric(basisA: Union[list, bool, int], basisB: Union[list, bool, int], \
     return metric
 
 
-def iGrad(
-    T: Tensor, 
-    ):
+def iGrad(T: Tensor):
+    """
+    Computes the gradient of a tensor.
+
+    Converts bases to tangent basis and then applies the gradient including terms
+    arising from the Christoffel symbols. Adjusts signs for spectral derivatives
+    in presence of test functions or fluctuations.
+
+    Parameters
+    ----------
+    T : Tensor
+        The tensor to differentiate.
+
+    Returns
+    -------
+    Tensor
+        Gradient of the input tensor, with one additional contravariant basis.
+
+    Raises
+    ------
+    ValueError
+        If the tensor is of order > 2 (not implemented).
+    """
     # implementing all kind of derivatives is tideous. --> convert every tensor
     # to tangent basis and only implement grads in tangent basis.
     if sum(T.basis) != 0:
@@ -643,9 +1186,29 @@ def iGrad(
                   )
     
 
-def iDiv(
-         tensor: Tensor,
-         ):
+def iDiv(tensor: Tensor):
+    """
+    Computes the divergence of a tensor.
+
+    Computes the gradient and sums of the last two indices of a tensor.
+    Spectral treatment is applied if the tensor includes test functions.
+    # TODO Kai: "spectral treatment is applied" is ambiguous to me.
+
+    Parameters
+    ----------
+    tensor : Tensor
+        Tensor of order 1 or 2.
+
+    Returns
+    -------
+    Tensor
+        The divergence result as a tensor of order reduced by one reduced.
+
+    Raises
+    ------
+    ValueError
+        If called on a scalar tensor (order 0).
+    """
     # If the expression contains a test function, the wave numbers in mean flow homogeneous directions must be multiplied by minus one for the following reason: if a gradient operator contains a test function, integration by parts has been applied. With the wave numbers, however an analytical expression for the gradient is found instead of a numerical one. The easily readable application of the tensorial framework, however will apply integration by parts 'falsely' also to the terms where derivations in mean flow homogeneous directions are applied analytically. The inversion of the sign in front of the wave number cancels this effect.
 
     if tensor.order == 0:
@@ -672,6 +1235,24 @@ def iDiv(
 
 
 def iT(tensor: Tensor):
+    """
+    Returns the transpose of a second-order tensor.
+
+    Parameters
+    ----------
+    tensor : Tensor
+        A tensor of order 2.
+
+    Returns
+    -------
+    Tensor
+        Transposed tensor with permuted bases.
+
+    Raises
+    ------
+    ValueError
+        If tensor order is not 2.
+    """
     if tensor.order != 2:
         raise ValueError("Transpose only unambiously defined for tensors of " \
                          "order 2.")
@@ -691,7 +1272,24 @@ def iT(tensor: Tensor):
 
 
 def iTr(tensor: Tensor):
-    ''' Function returning trace '''
+    """
+    Computes the trace of a second-order tensor.
+
+    Parameters
+    ----------
+    tensor : Tensor
+        Tensor of order 2.
+
+    Returns
+    -------
+    Tensor
+        Scalar-valued tensor (trace result).
+
+    Raises
+    ------
+    ValueError
+        If the input tensor is not of order 2.
+    """
     # tr(tensor.ufl_tens) is invariant. This function is only for when you
     # need a Tensor object urned
     if tensor.order != 2:
@@ -707,6 +1305,19 @@ def iTr(tensor: Tensor):
     
     
 def iDev(tensor: Tensor):
+    """
+    Computes the deviatoric (spherical-free) part of a second-order tensor.
+
+    Parameters
+    ----------
+    tensor : Tensor
+        A second-order tensor.
+
+    Returns
+    -------
+    Tensor
+        The deviatoric component of the input tensor.
+    """
     spherical = Tensor(1/3 * tr(tensor.ufl_tens) * Identity(tensor.dim), \
                        tensor.CoordSys, basis = tensor.basis)
     return tensor - spherical
@@ -716,8 +1327,25 @@ def convertBasis(
                  tensor: Tensor, 
                  goal_basis: list,
                  ):
+    """
+    Converts a tensor to a desired basis by contracting with the appropriate metric.
+    
+    A^i_j g_i dyade g^j : g^k dyade g^l = A^k,l = covariant components
+
+    Parameters
+    ----------
+    tensor : Tensor
+        Tensor to convert.
+    goal_basis : list
+        Desired basis for the tensor components.
+
+    Returns
+    -------
+    Tensor
+        The tensor expressed in the new basis.
+    """
     # You have to contract the tensor with the dual basis to the goal_basis:
-    # A^i_j g_i dyade g^j dot dot g^k dyade g^l = A^k,l = covariant components
+    # A^i_j g_i dyade g^j : g^k dyade g^l = A^k,l = covariant components
     if tensor.order == 1:
         metric = getMetric(tensor.basis[0], not(goal_basis[0]), tensor.CoordSys)
         
@@ -741,6 +1369,19 @@ def convertBasis(
 
 
 def iIdentity(tensor: Tensor):
+    """
+    Returns the identity tensor corresponding to the tensor's dimension and coordinate system.
+
+    Parameters
+    ----------
+    tensor : Tensor
+        Input tensor, used to infer dimensionality and coordinate system.
+
+    Returns
+    -------
+    Tensor
+        Identity tensor with the same coordinate system and basis.
+    """
     return Tensor(
                   Identity(tensor.dim), 
                   tensor.CoordSys,
@@ -750,6 +1391,19 @@ def iIdentity(tensor: Tensor):
                   )
 
 def iConj(tensor: Tensor):
+    """
+    Computes the complex conjugate of a tensor.
+
+    Parameters
+    ----------
+    tensor : Tensor
+        Tensor to conjugate.
+
+    Returns
+    -------
+    Tensor
+        Conjugated tensor with identical metadata.
+    """
     return Tensor(
             conj(tensor.ufl_tens),
             tensor.CoordSys,
@@ -758,8 +1412,30 @@ def iConj(tensor: Tensor):
             containsFluctuation = tensor.containsFluctuation,
             )
 
-
+# TODO Kai: is this now validated? Otherwise it should raise a warning.
 def iOuter(tensorA: Tensor, tensorB: Tensor):
+    """
+    Computes the outer product of two tensors.
+
+    Parameters
+    ----------
+    tensorA : Tensor
+        Left operand tensor.
+    tensorB : Tensor
+        Right operand tensor.
+
+    Returns
+    -------
+    Tensor
+        Outer product tensor with combined bases.
+
+    Raises
+    ------
+    ValueError
+        If both tensors contain test functions or fluctuations.
+    Exception
+        If scalar multiplication is attempted using this function.
+    """
     if tensorA.containsTestFunction and tensorB.containsTestFunction:
         raise ValueError("iOuter product at least second order in test functions.")
     if tensorA.containsFluctuation and tensorB.containsFluctuation:

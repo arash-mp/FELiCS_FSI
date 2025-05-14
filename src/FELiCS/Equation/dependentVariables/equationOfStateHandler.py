@@ -1,6 +1,7 @@
-# Third party libraries
-import numpy as np
-from FELiCS.Misc.functions import printError, printDebug
+from 	FELiCS.Misc.logging                 import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class equationOfStateHandler:
     """
@@ -75,9 +76,9 @@ class equationOfStateHandler:
             
             # Type of equation of state
             EoSType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
-            if not EoSType in ['Low-Mach', 'IdealGas']:
-                printError('Equation of State '+self._EoSType+\
-                        ' not defined.')
+            if EoSType not in ['Low-Mach', 'IdealGas']:
+                logger.error('Equation of State '+self._EoSType+' not defined.')
+                raise Exception('Equation of State '+self._EoSType+' not defined.')
                 
             # Get the mean flow class     
             if mean == 'None':
@@ -85,7 +86,7 @@ class equationOfStateHandler:
 
             # OPT.1 -- Calculate density from pressure and temperature
             if all(item in alreadyDefinedQuantities for item in ['p','T']):
-                printDebug(True, '-- Linearized EoS with input variables: [p, T] -> rho')
+                logger.debug('Linearized EoS with input variables: [p, T] -> rho')
                 if self._isSolution:
                     mean_T  = mean.fieldDict['T']
                     mean_rho = mean.fieldDict['rho']
@@ -105,10 +106,10 @@ class equationOfStateHandler:
             
             # OPT.2 -- Calculate pressure from density and temperature
             elif all(item in alreadyDefinedQuantities for item in ['rho','T']):
-                printDebug(True, '-- Linearized EoS with input variables: [rho, T] -> p')
+                logger.debug('Linearized EoS with input variables: [rho, T] -> p')
                 if EoSType == 'Low-Mach':
-                    printError('Equation of State '+self._EoSModel()+\
-                        ' not defined to obtain p-fluctuations.')
+                    logger.error('Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.')
+                    raise Exception('Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.')
                 elif EoSType == 'IdealGas':
                     if self._isSolution:
                         mean_T = mean.fieldDict['T']
@@ -124,7 +125,7 @@ class equationOfStateHandler:
             
             # OPT.3 -- Calculate temperature from density and pressure
             elif all(item in alreadyDefinedQuantities for item in ['rho','p']):
-                printDebug(True, '-- Linearized EoS with input variables: [rho, p] -> T')
+                logger.debug('Linearized EoS with input variables: [rho, p] -> T')
                 if self._isSolution:
                     mean_T = mean.fieldDict['T']
                     mean_rho = mean.fieldDict['rho']

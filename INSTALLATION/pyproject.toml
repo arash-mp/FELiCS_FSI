@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "FELiCS"
+version = "2.0"
+description = "Finite Element Linearized Combustion Solver"
+dependencies = []
+
+[tool.setuptools]
+packages = ["FELiCS","SCRIPTS"]
+package-dir = {"" = "../src", "SCRIPTS" = "../SCRIPTS"}

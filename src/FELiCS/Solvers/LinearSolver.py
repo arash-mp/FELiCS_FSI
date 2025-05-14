@@ -1,39 +1,35 @@
 #Standard libraries
-import time
-import os
-import sys
-import multiprocessing
+# import time
+# import os
+# import sys
+# import multiprocessing
 
 # Third party libraries
 import numpy as np
 
-from dolfinx.fem import (
-        Function,
-        dirichletbc,
-        form,
-)
+# from dolfinx.fem import (
+#         Function,
+#         dirichletbc,
+#         form,
+# )
 
-from dolfinx.fem.petsc import (
-    assemble_vector,
-)
+# from dolfinx.fem.petsc import (
+#     assemble_vector,
+# )
 
-from ufl import (
-    dx,
-    TestFunctions,
-    SpatialCoordinate,
-)
+# from ufl import (
+#     dx,
+#     TestFunctions,
+#     SpatialCoordinate,
+# )
 
-from functools import partial
+# from functools import partial
 
 #Local libraries and methods
-from FELiCS.Misc.functions import (
-    printError,
-    printWarning,
-    printDebug,
-    )
+from FELiCS.Misc.logging import Logger
 
-
-
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class LinearSolver:
     """Linear algebra utilities using PETSc and SLEPc.
@@ -42,28 +38,10 @@ class LinearSolver:
     singular value decompositions (SVD), and linear systems efficiently using
     PETSc and SLEPc.
 
-    Parameters
-    ----------
-    None
+    Notes
+    -----
+    Consists of only static methods that don't need an instance ("object") of this class. Call the methods via "LinearSolver.method()".
 
-    Attributes
-    ----------
-    None
-
-    PROBLEM: If the methods are listed in the Class Docstring, they are listed on the right in the html in the clickabel overview. But as the methods are also defined with more elaborate docstrings below, they will appear twice. This a problem.
-
-    Methods
-    -------
-    solveGeneralEigenproblem(A, B, sigma=0.0, nev=5)
-        Solves a generalized eigenvalue problem.
-    solveSVDOfResolvent(A, sigma=0.0, nev=5)
-        Computes the SVD of a resolvent operator.
-    solveEquationSystem(A, b)
-        Solves a linear system Ax = b.
-    solveTransposeEquationSystem(A, b)
-        Solves the transpose system A^T x = b.
-    createEquationSystemSolver(A)
-        Creates a reusable solver for a matrix.
 
     Examples
     --------
@@ -78,16 +56,6 @@ class LinearSolver:
 
     >>> eigVals, eigVecs, error = LinearSolver.solveGeneralEigenproblem(
     ...     A, B, sigma=0.0, nev=5)
-
-    Notes
-    -----
-    - Built for large-scale scientific problems using PETSc and SLEPc
-    - Requires `petsc4py` and `slepc4py` packages
-
-    See Also
-    --------
-    petsc4py.PETSc : Base PETSc functionality
-    slepc4py.SLEPc : Eigenvalue problem solvers
     """
 
     @staticmethod
@@ -179,7 +147,7 @@ class LinearSolver:
                 #printDebug(True,f"SLEPc error relative: {error[i]}")
             
             except:
-                printWarning("Could not access eigenpair nb ", nev+1, "!")
+                logger.warning("Could not access eigenpair nb ", nev+1, "!")
         
         eps.getST().getKSP().getPC().destroy()
         eps.getST().getKSP().destroy()
@@ -199,8 +167,8 @@ class LinearSolver:
 
         Parameters
         ----------
-        resolventOperator : PETSc.Mat
-            Resolvent operator for which the SVD is computed.
+        resolventOperator : ResolventOperator
+            Resolvent operator object for which the SVD is computed.
         nev : int
             Number of singular values to compute.
         tol : float, optional
@@ -243,16 +211,13 @@ class LinearSolver:
             try:
                 eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
                 eigVecs[:,i] = vec_real.getArray() + 1j * vec_imag.getArray()
-                printDebug(True,f"SLEPc error relative: {eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)}")
-                #printDebug(True,f"SLEPc error absolute: {eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE)}")
+                logger.debug(f"SLEPc error relative: {eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)}")
             except:
-                printWarning("Could not access eigenpair nb " + str(nev+1) +"!")
+                logger.warning("Could not access eigenpair nb " + str(nev+1) +"!")
         
         eps.destroy()
         R.destroy()
         return eigVals, eigVecs
-
-
 
     @staticmethod
     def solveEquationSystem(
@@ -309,7 +274,7 @@ class LinearSolver:
         destroy=False):
 
         """
-        Solve the transpose of a linear system A^T x = b using PETsC libraries.
+        Solve the transpose of a linear system A^T x = b using PETSc libraries.
 
         Parameters
         ----------
@@ -387,16 +352,16 @@ class LinearSolver:
         destroy=False):
 
         """
-        Solves a linear equation system Ax=b, using the PETSc libraries.
+        Solves a linear equation system Ax=b, using the PETSc libraries and a predefined solver.
         
         Parameters
         ----------
         solver : PETSc KSP solver
-                 created with the method "createEquationSystemSolver"
+                 can be created with the method "createEquationSystemSolver"
         b : PETSc.Vec
             Right-hand side of the equation.
         destroy : bool, optional
-            Whether to destroy the vector after solving, by default False.
+            Whether to destroy the vector after solving, by default False. Can be useful by repetitive computations to avoid memory leaks.
         
         Returns
         -------
@@ -420,20 +385,24 @@ class LinearSolver:
 
 class ResolventOperator(object):         
     """         
-    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its Hermitian transposed, to conduct the 
-    singular value decomposition of the system.         It contains a method called "mult", which is called by the eigenvalue solver, 
-    and returns a matrix vector product of the represented matrix.         
+    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its conjugate transposed.
+
+    It is used to conduct the singular value decomposition of the system for resolvent analysis. It contains a method called "mult", which is called by the eigenvalue solver, 
+    and returns a matrix vector product of the represented matrix. 
+    The resolvent operator requires additional full-size quadratic matrices to calculate the forcing and response norms, as well as (possibly rectangular) restrictor matrices that limit the spatial domain and variable dimensions.     
+
+    More information can be found in our documentation on the governint equations ("Implementation of resolvent operators").   
 
     Parameters
     ----------
     ResolventOperator : PETSc.Mat
         Matrix representing the linear system.
     FEMWeightMatrix_fullSystem : PETSc.Mat
-        Weight matrix for full FEM system.
+        Weight matrix for the full FEM system.
     FEMWeightMatrix_forcingNorm: PETSc.Mat
-        Weight matrix for forcing norm. Has default size of full system (surplus DOFs will be ignored).
+        Weight matrix for the forcing norm. Has default size of full system (surplus DOFs will be ignored).
     FEMWeightMatrix_responseNorm: PETSc.Mat
-        Weight matrix for response norm. Has default size of full system (surplus DOFs will be ignored).
+        Weight matrix for the response norm. Has default size of full system (surplus DOFs will be ignored).
     RestrictorMatrix_forcing: PETSc.Mat    
         Restrictor matrix for forcing. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
     RestrictorMatrix_response: PETSc.Mat
@@ -555,7 +524,7 @@ class ResolventOperator(object):
         Returns
         -------
         PETSc.KSP
-            KSP solver instance used by the operator.
+            KSP solver instance that solves the resolvent equation (without its conjuage transpose). Can be used to get the response to a given forcing.
         """              
         return self._ksp1         
 

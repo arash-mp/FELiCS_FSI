@@ -1,53 +1,55 @@
-import pdb
-import numpy as np
-import copy
-import time
+import  time
+import  numpy                   as np
+from 	FELiCS.Misc.logging     import Logger
 
-def runResolvent(param, useGUI):
+# Get the logger
+logger = Logger.get_logger("felics")
+
+def runResolvent(param):
     '''This function runs the calculations preset in param
     Input:
         param: Parameter objects (see parameters.py), defining the case
-        useGUI: Boolean, True if program is run using GUI, False if run from
-        terminal directly
     '''
-    import FELiCS.IO.Import as Import
-    from   FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
 
-    import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
-    from   FELiCS.Fields.meanFlowClass import meanFlowClass
-    from   FELiCS.Fields.fluctuationClass import fluctuationSolutions
-    from   FELiCS.Equation.EquationCollection import EquationCollectionClass
-    from   FELiCS.Misc.functions import printDebug
+    from    FELiCS.IO.ExportSolution            import ExportFromFile #, ExportGUI
+    import  FELiCS.SpaceDisc.DefineFEMSpaces    as DefineFEMSpaces
+    from    FELiCS.Fields.meanFlowClass         import meanFlowClass
+    from    FELiCS.Fields.fluctuationClass      import fluctuationSolutions
+    from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
+    from    FELiCS.Misc.functions               import printDebug
+    from    FELiCS.Solvers.LinearSolver         import LinearSolver, ResolventOperator
+    # import FELiCS.IO.Import as Import
 
-    from   FELiCS.Solvers.LinearSolver import LinearSolver, ResolventOperator 
-
-
+    logger.info("Running Resolvent analysis")
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
-    # mesh
+    # Get the mesh
     mesh = param.getMesh()
-    # FEMSpaces
+    
+    # Define the FEM spaces
     FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
-                param,
-                mesh,
-                )
-    # read in mean flow
+            param,
+            mesh,
+        )
+    
+    # Read in mean flow
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
     meanFlow.importDataFromFile()
-    # export mean flow in "h5" file
+    
+    # Export the mean flow to a "h5" file
     if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
         meanFlow.exportBaseFlowAsHDF5()
     meanflowFilename = 'meanflow.h5'
     meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
-    # equation
+    
+    # Define the equations
     equation = EquationCollectionClass(
-                                      param,
-                                      FEMSpaces,
-                                      meanFlow,
-                                      mesh
-                                      )
-
+            param,
+            FEMSpaces,
+            meanFlow,
+            mesh
+        )
 
     #-----------------------------------------------------------------------
     ## MAIN PART
@@ -75,18 +77,16 @@ def runResolvent(param, useGUI):
     nOmegas  = len(omegas)
     nDofs    = A.getSizes()[0][0]
 
-
     gains     = np.zeros((nSol, nOmegas),'complex')
     forcings  = np.zeros((nDofs, nSol, nOmegas),'complex')
     responses = np.zeros((nDofs, nSol, nOmegas),'complex') 
 
-
-    # track time
-    start= time.time()
+    # Start tracking time
+    start = time.time()
 
     for i, omega in enumerate(omegas):
 
-        printDebug(True, "-- Performing resolvent analysis for omega = " + str(omega))
+        logger.info("Solving resolvent SVD for omega = " + str(omega))
 
         # R = A-omega*B         
         R = A.copy()         
@@ -98,6 +98,7 @@ def runResolvent(param, useGUI):
                 W_response,                                         
                 P_forcing,                                         
                 P_response)
+        
         # Perform eigenvalue decomposition of the linear operator defined in the class "ResolventOperator"         
         # via the matrix vector multiplation "mult"
         gains[:,i],eigenvectors_c = LinearSolver.solveSVDOfResolvent(
@@ -106,6 +107,7 @@ def runResolvent(param, useGUI):
                 tol=1.e-16,
                 max_it=200,
                 )
+        
         # Write gains to results dictionary
         gains[:, i] = np.real(gains[:, i])
 
@@ -134,11 +136,7 @@ def runResolvent(param, useGUI):
 
     # end tracking time
     end = time.time() - start
-    printDebug(True, '-- Solving the SVD(s) for the resolvent took %4g s' % end)
-    #residuum_max = solution.getMaximumError()
-    #printDebug(True, '-- Maximum residuum of all solutions:  %12g' % (residuum_max))
-
-
+    logger.info('Solving the SVD(s) took %4g s' % end)
 
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION
@@ -176,8 +174,4 @@ def runResolvent(param, useGUI):
 
 
 
-    if useGUI:
-        ExportGUI(param, fluctSolutList, meanFlow,FEMSpaces, equation,mesh)
-    else:
-        ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
-
+    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)

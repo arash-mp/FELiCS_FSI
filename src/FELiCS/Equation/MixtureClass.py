@@ -1,5 +1,8 @@
-from FELiCS.Misc.functions import printWarning,printOK
-import json
+import  json
+from 	FELiCS.Misc.logging import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class MixtureClass():
     '''The mixture class defines a mixture
@@ -22,15 +25,17 @@ class MixtureClass():
         self.__Pr__ = 1.0
         self.__Viscosity__ = {'type':'Constant','Constants':{'nu':1.0}}
         if path.isfile(mixFilePath):
-            mixFile = open(mixFilePath, 'r')
-            data = json.load(mixFile)
-            for setting,value in data.items():
-                setattr(self,'__'+setting+'__',value)
-            mixFile.close()
+            if mixFilePath.endswith(".json"):
+                mixFile = open(mixFilePath, 'r')
+                data = json.load(mixFile)
+                for setting,value in data.items():
+                    setattr(self,'__'+setting+'__',value)
+                mixFile.close()
+            else:
+                logger.warning('Mixture file ('+mixFilePath+') does not have the correct format and will not be read (should be a "json" file). This could lead to an unexplained error later, if the calculation is depending on data given in the mixture file. Please convert the mixture file (examples can be found in the felics-test repository).')
         else:
-            printOK('The mixture file path ('+mixFilePath+') does not point to a mixture file!')
+            logger.info('No mixture file '+mixFilePath+', using defaults.')
         
-   
     def getReactionMechanism(self):
         ''' Function returning the reaction mechanism '''
         return self.__Reaction_mechanism__

@@ -8,54 +8,50 @@
 # * 
 # * To ask for permission please contact t.kaiser@tu-berlin.de.
 # */
+import 	argparse
+from 	runModal       				import  runModal      
+from 	runResolvent   				import  runResolvent  
+from 	runInputOutput 				import  runInputOutput
+from 	FELiCS.Parameters.config	import 	config
+from 	FELiCS.Misc.logging			import  Logger
 
-
+# Define the description and epilog for the help message
+desc_text = """
+------------------ FELICS -----------------
+Finite Element Linearized Combustion Solver
+**add short FELICS description here**
 """
-This file is called to start the program
+epilog = """
+Example usage:
+    python main.py -h		shows help message 
+    python main.py -f path	start with config file at path (mandatory)
+    python main.py -f path -d	for debug mode
+    python main.py -f path -t	for test mode
+    """
 
-This file was created by Thomas L. Kaiser. Significant contributions 
+# Initialize the argument parser
+parser = argparse.ArgumentParser(description=desc_text, epilog=epilog, formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('-f',"--file", "-file", type=str, required=True, metavar="path",help='Specify the path to the config file')
+parser.add_argument('-d', '--debug', action='store_true', help='activate debug mode for extended output')
+parser.add_argument('-t', '--test', action='store_true', help='activate test mode with no output')
+args = parser.parse_args()
 
-Parameters
-----------
-
-
-""" 
-
-import tkinter
-
-import sys
-
-from runModal       import  runModal      
-from runResolvent   import  runResolvent  
-from runInputOutput import  runInputOutput
-
-
-from FELiCS.Parameters.config import config
-
-# check if '-file' argument was added to run from file only. else start the GUI
-
-# Replace spurious double quotation marks which occur in MobaXterm when executing shell scripts
-for i_argument,argument in enumerate(sys.argv):
-        sys.argv[i_argument] = argument.replace(chr(8221), '')
-
-if len(sys.argv) == 1:
-    useGUI= True
-elif sys.argv[1] == '-file': useGUI=False
-else: useGUI=True
+# Initialize the logger
+logger = Logger(args.debug, args.test, "felics")
+logger = Logger.get_logger("felics")
 
 if __name__ == '__main__':
-    if useGUI: # Run program in GUI mode
-        window=FELiCS_GUI()
-    else: # Run program in terminal mode from settings file
-        SettingsFileName = sys.argv[2]
-        param=config()
-        param.importFromFile(SettingsFileName)
 
-        mode = param.Case.AnalysisMode
-        if mode == "Modal":
-                runModal(param,useGUI=False)
-        elif mode == "Resolvent":
-                runResolvent(param,useGUI=False)
-        elif mode == "Input-Output":
-                runInputOutput(param,useGUI=False)
-
+    # Get the parameters
+    param = config()
+    param.importFromFile(args.file)
+    mode = param.Case.AnalysisMode
+    if mode == "Modal":
+        runModal(param)
+    elif mode == "Resolvent":
+        runResolvent(param)
+    elif mode == "Input-Output":
+        runInputOutput(param)
+    else:
+        logger.error("Analysis type not recognized in FELiCS main.")
+    logger.info("Finished FELiCS run.")
