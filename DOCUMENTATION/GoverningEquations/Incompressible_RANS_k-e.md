@@ -5,7 +5,7 @@
 ## Nonlinear form of steady incompressible RANS equations
 The starting point are the four equations (Continuity, Momentum, k and epsilon equations) for incompressible flow:
 $$
-    \nabla \mathbf{u} = 0
+    \nabla \cdot \mathbf{u} = 0
 $$
 $$
     (\mathbf{u} \cdot \nabla) \mathbf{u}
@@ -27,7 +27,6 @@ $$
     \nabla \cdot (\nu_\varepsilon \nabla \varepsilon)
     + C_{1\varepsilon} \frac{\varepsilon}{k} P_k
     - C_{2\varepsilon} \frac{\varepsilon^2}{k}
-    - S_{\varepsilon}
 $$
 where 
 $$\nu_{Eff} = \nu +\nu_t$$
@@ -105,13 +104,13 @@ The weak forms of linear and non-linear expressions for each equations are shown
 ### Weak form of continuity equation
 The weak form of non-linear continuity equation is
 $$
-\int ((\mathbf{u} \cdot \nabla)X) dx - \int_\Omega (\mathbf{u} \cdot \mathbf{n}) ds = 0
+\int (\mathbf{u} \cdot \nabla X) dx - \int_\Omega (\mathbf{u} \cdot \mathbf{n}) X ds = 0
 $$
 where $\mathbf{n}$ is the unit vector which is normal to the boundary facets, $\int_\Omega (\cdot) ds$ is integration on boundaries.
 
 The weak form for Linear continuity equation is
 $$
-\int((\delta \mathbf{u} \cdot \nabla)X) dx - \int_\Omega (\delta \mathbf{u} \cdot \mathbf{n}) ds = 0
+\int(\delta \mathbf{u} \cdot \nabla X) dx - \int_\Omega (\delta \mathbf{u} \cdot \mathbf{n}) X ds = 0
 $$
 
 ### Weak form of momentum equation
@@ -138,8 +137,8 @@ $$
     \delta \mathbf{u} \cdot (\nabla \cdot (\mathbf{X} \otimes \mathbf{u}))
     + \mathbf{u} \cdot (\nabla \cdot (\mathbf{X} \otimes \delta \mathbf{u}))
     + \delta p (\nabla \cdot \mathbf{X})
-    - \nu_{Eff} (\nabla \delta \mathbf{u} + (\nabla \delta \mathbf{u})^T) : \mathbf{X}
-    - \delta \nu_{Eff} (\nabla \mathbf{u} + (\nabla \mathbf{u})^T) : \mathbf{X}
+    - \nu_{Eff} (\nabla \delta \mathbf{u} + (\nabla \delta \mathbf{u})^T) : \nabla \mathbf{X}
+    - \delta \nu_{Eff} (\nabla \mathbf{u} + (\nabla \mathbf{u})^T) : \nabla \mathbf{X}
     + \frac{2}{3} \delta k (\nabla \cdot \mathbf{X})
 )dx
 \\
@@ -176,6 +175,7 @@ $$
     (\nabla \cdot (\delta \mathbf{u}X))k
     +(\nabla \cdot (\mathbf{u} X)) \delta k
     -\nu_k (\nabla \delta k \cdot \nabla X)
+    -\delta \nu_k (\nabla k \cdot \nabla X)
     + \delta P_k X
     -\delta \varepsilon X
 )dx
@@ -184,6 +184,7 @@ $$
     ((\delta  \mathbf{u} X) \cdot \mathbf{n}) k 
     + ((\mathbf{u} X) \cdot \mathbf{n}) \delta k
     - \nu_k ((\nabla \delta k) \cdot \mathbf{n}) X
+    - \delta \nu_k ((\nabla k) \cdot \mathbf{n}) X
 )ds
 $$
 
@@ -210,7 +211,8 @@ $$
 \int(
     (\nabla \cdot (\delta \mathbf{u}X))\varepsilon
     +(\nabla \cdot (\mathbf{u} X)) \delta \varepsilon
-    -\nu_k (\nabla \delta \varepsilon \cdot \nabla X)
+    -\nu_\varepsilon (\nabla \delta \varepsilon \cdot \nabla X)
+    -\delta \nu_\varepsilon (\nabla \varepsilon \cdot \nabla X)
     + C_1 \delta \varepsilon \frac{1}{k} P_k X
     - C_1 \delta k \frac{\varepsilon}{k^2} P_k X
     + C_1 \frac{\varepsilon}{k} \delta P_k X
@@ -221,7 +223,8 @@ $$
 -\int_\Omega(
     ((\delta  \mathbf{u} X) \cdot \mathbf{n}) \varepsilon 
     + ((\mathbf{u} X) \cdot \mathbf{n}) \delta \varepsilon
-    - \nu_k ((\nabla \delta \varepsilon) \cdot \mathbf{n}) X
+    - \nu_\varepsilon ((\nabla \delta \varepsilon) \cdot \mathbf{n}) X
+    - \delta \nu_\varepsilon ((\nabla \varepsilon) \cdot \mathbf{n}) X
 )ds
 $$
 
