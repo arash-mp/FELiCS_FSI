@@ -12,19 +12,18 @@ class Field:
 
     The class interacts with `dolfinx.fem.Function` for finite element operations 
     and includes utilities for working with `PETSc` vectors and UFL expressions.
+
+    **Initialize the Field object**
+
+    Parameters
+    ----------
+    FEMSpace : dolfinx.fem.FunctionSpace
+        The finite element function space.
+    mesh : dolfinx.mesh.Mesh
+        The computational mesh associated with the function space.
     """
 
     def __init__(self, FEMSpace, mesh):
-        """ 
-        Initialize the Field object.
-
-        Parameters
-        ----------
-        FEMSpace : dolfinx.fem.FunctionSpace
-            The finite element function space.
-        mesh : dolfinx.mesh.Mesh
-            The computational mesh associated with the function space.
-        """
         self.space = FEMSpace
         self.mesh  = mesh
 
