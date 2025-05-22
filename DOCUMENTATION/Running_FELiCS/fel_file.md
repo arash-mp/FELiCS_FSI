@@ -15,7 +15,7 @@ case = {
     'SAVE_FILE':        'myFELiCScase/Base_flow/base_flow.fel', #saving directory
 }
 
-hf = h5py.File(save_dir, 'w')
+hf = h5py.File(case['SAVE_FILE'], 'w')
 hf.create_dataset('/MeanFlow/x', data=x)
 hf.create_dataset('/MeanFlow/r', data=y)
 hf.create_dataset('/MeanFlow/ux', data=ux)
