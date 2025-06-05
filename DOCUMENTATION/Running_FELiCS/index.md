@@ -67,4 +67,6 @@ files_structure.md
 fel_file.md
 
 FELiCS_settings.md
+
+FELiCS_commands.md
 ```
