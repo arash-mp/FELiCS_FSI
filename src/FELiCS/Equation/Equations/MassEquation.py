@@ -74,7 +74,7 @@ class MassEquation(EquationTemplate):
         # ------------------------ Time derivative term used
         # Only if density fluctuations are considered
         if 'rho' in self.param.getTransportedQuantityList():
-            weakForm.add((self.fluc.rho * iConj(self.X)).ufl_tens * self.J_hat * dx)
+            weakForm += (self.fluc.rho * iConj(self.X)).ufl_tens * self.J_hat * dx
 
     def addLinearExpression(self, weakForm, mean):
         """

@@ -1,3 +1,4 @@
+import  numpy as np
 from ufl import (
     Dx,
     TestFunctions,
@@ -32,16 +33,12 @@ from FELiCS.Misc.tensorUtils import (
     iConj,
     # iInner,
 )
-import  numpy                   as np
-from    petsc4py.PETSc          import ScalarType
-from    .WeakForm               import WeakForm
-from 	FELiCS.Misc.logging     import Logger
+from    petsc4py.PETSc               import ScalarType
+from    FELiCS.Equation.UflDecorator import UflDecorator
+from 	FELiCS.Misc.logging          import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
-
-# from   FELiCS.Misc.functions import *
-
 
 class EquationCollectionClass():
     """
@@ -90,10 +87,6 @@ class EquationCollectionClass():
         Test functions with additional structure.
     R : ufl.Coefficient
         Radial coordinate for cylindrical coordinates.
-    A_vf : WeakForm
-        Variational form for matrix A.
-    B_vf : WeakForm
-        Variational form for matrix B.
     equationList : list
         List of equations included in the model.
     resolventResponseIndices : numpy.ndarray
@@ -197,9 +190,6 @@ class EquationCollectionClass():
             from petsc4py import PETSc
             self.R = Constant(self.__FEMSpaces.P2.mesh, PETSc.ScalarType(1.0))
 
-        # Initialize variational formulations
-        self.A_vf = WeakForm()
-        self.B_vf = WeakForm()
         logger.debug('State vector: %s.' % param.Case.SolutionList)
  
         # Create equation list from parameters
@@ -313,12 +303,12 @@ class EquationCollectionClass():
         Assembled linear operator matrix with boundary conditions applied
         """
         # create ufl object with the linear equation system 
-        A_ufl = WeakForm()
+        A_ufl = UflDecorator()
         for equation in self.equationList:
             equation.addLinearExpression(A_ufl, meanFlow)
 
         # assemble petsc matrix
-        return self.assembleMatrixFromUfl(A_ufl.weakForm, bcs=self.BCs)
+        return A_ufl.getAssembledMatrix(self.__mesh, bcs=self.BCs)
 
 
     def getWeightMatrix(self, meanFlow):
@@ -347,17 +337,15 @@ class EquationCollectionClass():
           avoid computational issues during eigenvalue problem solving
         """
         # create ufl object with the weight matrix expression ("time derivative")
-        B_ufl = WeakForm()
+        B_ufl = UflDecorator()
         for equation in self.equationList:
             equation.addWeightMatrixExpression(B_ufl, meanFlow)
 
         # assemble petsc matrix
         if self.__param.Case.AnalysisMode in ['Resolvent']:
-            B = self.assembleMatrixFromUfl(B_ufl.weakForm, bcs=self.BCs)
+            return B_ufl.getAssembledMatrix(self.__mesh, bcs=self.BCs)
         else:
-            B = self.assembleMatrixFromUfl(B_ufl.weakForm, bcs=[]) # no boundaries applied, else there is a but when computing the eigenvalue problem
-
-        return B
+            return B_ufl.getAssembledMatrix(self.__mesh, bcs=[]) # no boundaries applied, else there is a bug when computing the eigenvalue problem
 
 
     def getFEMWeightMatrix(self):
@@ -381,8 +369,8 @@ class EquationCollectionClass():
         versions of DOLFINx
         """
         # create ufl object with the full FEM weight matrix expression
-        W_ufl = WeakForm()
-        test_FEM = self.testFunctionsFEM
+        W_ufl     = UflDecorator()
+        test_FEM  = self.testFunctionsFEM
         trial_FEM = self.trialFunctionsFEM
 
         # go through all (scalar) function spaces in the mixed function space 
@@ -399,7 +387,7 @@ class EquationCollectionClass():
             i+=1
 
         # assemble petsc matrix
-        return self.assembleMatrixFromUfl(W_ufl) 
+        return W_ufl.getAssembledMatrix(self.__mesh)
 
   
     # TODO Sophie: This is a very quick implementation. Tensor framework needed!
@@ -436,7 +424,7 @@ class EquationCollectionClass():
         requires a more robust tensor framework in future iterations.
         """
         # Rest of the existing implementation remains unchanged
-        D_ufl = WeakForm()
+        D_ufl = UflDecorator()
         test_FEM = self.testFunctionsFEM
         trial_FEM = self.trialFunctionsFEM
 
@@ -458,13 +446,13 @@ class EquationCollectionClass():
             i += 1
 
         # Assemble petsc matrix
-        return self.assembleMatrixFromUfl(D_ufl, self.BCs)
+        return D_ufl.getAssembledMatrix(self.__mesh, self.BCs)
 
 
     def getFullRHS(self,func):
 
         # create ufl object with the full FEM weight matrix expression
-        rhs_ufl   = WeakForm()
+        rhs_ufl   = UflDecorator()
         test_FEM  = self.testFunctionsFEM
         func_i    = func.split()
 
@@ -482,58 +470,53 @@ class EquationCollectionClass():
             i+=1
 
         # assemble petsc matrix
-        return self.assembleVectorFromUfl(rhs_ufl.weakForm)
-
+        return rhs_ufl.getAssembledVector(self.__mesh)
 
     def getNonlinearExpression(self, meanFlow, setBC=True):
-        N_ufl = WeakForm()
+        N_ufl = UflDecorator()
         for equation in self.equationList:
             equation.addNonlinearExpression(N_ufl, meanFlow)
         if setBC:
-            return self.assembleVectorFromUfl(-N_ufl.weakForm, self.BCs)
+            return N_ufl.getAssembledVector(self.__mesh, self.BCs)
         else:
-            return self.assembleVectorFromUfl(-N_ufl.weakForm)
-
+            return N_ufl.getAssembledVector(self.__mesh)
 
     def getBilinearOperator(self, meanFlow):
-
         # create ufl object with the linear equation system 
-        BL_ufl = WeakForm()
+        BL_ufl = UflDecorator()
         for equation in self.equationList:
             equation.addBilinearExpression(BL_ufl, meanFlow)
-            
         # assemble petsc matrix
-        return self.assembleMatrixFromUfl(BL_ufl.weakForm, bcs=self.BCs)
+        return BL_ufl.getAssembledMatrix(self.__mesh, bcs=self.BCs)
 
     def getForcingForInputOutput(self,meanFlow):
         # create ufl object with the linear equation system 
-        A_ufl = WeakForm()
+        f_ufl = UflDecorator()
         for equation in self.equationList:
-            equation.addLinearExpression(A_ufl, meanFlow)
-
+            equation.addLinearExpression(f_ufl, meanFlow)
         # assemble forcing vector
-        forcing = self.assembleVectorFromUfl(-A_ufl.weakForm, self.BCs)
-        forcing.scale(1j)
+        forcing = f_ufl.getAssembledVector(self.__mesh, self.BCs)
+        forcing.scale(-1j)
         return forcing
 
 
     def getResolventNorm_response(self, meanFlow):
         # assemble petsc matrix
-        return self.assembleMatrixFromUfl(self.response_vf)
+        return self.response_vf.getAssembledMatrix(self.__mesh)
 
 
     def getResolventNorm_forcing(self, meanFlow):
         # assemble petsc matrix
-        return self.assembleMatrixFromUfl(self.forcing_vf)
+        return self.forcing_vf.getAssembledMatrix(self.__mesh)
 
 
     def getResolventWeighting_FEM(self, meanFlow):
 
         # create ufl object with the linear equation system 
-        W_FEM_ufl = WeakForm()
+        W_FEM_ufl = UflDecorator()
 
         # assemble petsc matrix
-        return self.assembleMatrixFromUfl(self.fem_weighting)
+        return self.fem_weighting.getAssembledMatrix(self.__mesh)
 
 
 ########################### Resolvent Norm  ############################
@@ -541,8 +524,8 @@ class EquationCollectionClass():
         ''' This function yields the norms for the resolvent analysis.
         Note that both the forcing and response norm must be real!'''
         #Initialize forcing and response
-        self.forcing_vf     = 0
-        self.response_vf    = 0
+        self.forcing_vf     = UflDecorator()
+        self.response_vf    = UflDecorator()
 
         # If the density field is inhomogeneous, the mean density
         # field must be taken into account, if not it is set to 1
@@ -599,7 +582,7 @@ class EquationCollectionClass():
         '''
         
         # Initialize the matrix
-        self.fem_weighting = 0
+        self.fem_weighting = UflDecorator()
         J_hat = self._coordinateSystem.J_hat
         
         # Loop over all eqs, and multiply fluctuation
@@ -853,78 +836,5 @@ class EquationCollectionClass():
 
         return P_petsc
 
-
-    # TODO Sophie: Put these assemble commands somewhere else.
-    def assembleMatrixFromUfl(self, ufl_expression, bcs=[]):
-            """
-            Wrapper for the assemble_matrix command from dolfinx.fem.petsc.
-            Needs the ufl expression and not the "form".
-
-            Notes
-            -----
-            Includes a workaround for mesh object compatibility with different 
-            versions of DOLFINx and the internal FELiCS mesh class.
-            """
-
-            # Mesh compatibility workaround
-            # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-            # when using a newer version of dolfinx (version >= 0.6.*).
-            # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-            # but for now this works fine. 
-            try:
-                sd = ufl_expression.subdomain_data()
-                domain, = list(sd.keys())  # Assuming single domain
-                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
-            except:
-                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-            
-            matrix = assemble_matrix(form(lhs(ufl_expression)), bcs=bcs)
-            matrix.assemble()
-            return matrix
-
-    def assembleVectorFromUfl(self, ufl_expression, bcs=[]):
-            """
-            Wrapper for the assemble_vector command from dolfinx.fem.petsc.
-            Needs the ufl expression and not the "form".
-
-            Notes
-            -----
-            Includes a workaround for mesh object compatibility with different 
-            versions of DOLFINx and the internal FELiCS mesh class.
-            """
- 
-            # Mesh compatibility workaround
-            try:
-                sd = ufl_expression.subdomain_data()
-                domain, = list(sd.keys())  # Assuming single domain
-                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
-            except:
-                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-            
-            vector = assemble_vector(form(rhs(-ufl_expression)))
-            vector.assemble()
-            set_bc(vector, bcs)
-            return vector
-
-    def assembleScalarFromUfl(self, ufl_expression):
-            """
-            Wrapper for the assemble_scalar command from dolfinx.fem.
-            Needs the ufl expression and not the "form".
-
-            Notes
-            -----
-            Includes a workaround for mesh object compatibility with different 
-            versions of DOLFINx and the internal FELiCS mesh class.
-            """
-            # Mesh compatibility workaround
-            try:
-                sd = ufl_expression.subdomain_data()
-                domain, = list(sd.keys())  # Assuming single domain
-                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
-            except:
-                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-            
-            scalar = assemble_scalar(form(ufl_expression))
-            return scalar
 
 
