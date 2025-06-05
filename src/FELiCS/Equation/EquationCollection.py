@@ -7,7 +7,9 @@ from ufl import (
     FacetNormal,
     Measure,
     conj,
-    # as_tensor, rhs, lhs, i, j,
+    lhs,
+    rhs,
+    # as_tensor, i, j,
 )
 from dolfinx.fem import (
     Function,
@@ -15,10 +17,12 @@ from dolfinx.fem import (
     Constant,
     form,
     locate_dofs_topological,
+    assemble_scalar,
 )
 from dolfinx.fem.petsc import (
     assemble_matrix,
     assemble_vector,
+    set_bc
 
 )
 from FELiCS.Misc.tensorUtils import (
@@ -291,44 +295,30 @@ class EquationCollectionClass():
                 raise Exception(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
 
     def getLinearOperator(self, meanFlow):
-            """
-            Construct the linear operator matrix for the equation system.
+        """
+        Construct the linear operator matrix for the equation system.
 
-            This method assembles the linear part of the weak formulation 
-            by iterating through all equations in the equation list and 
-            adding their linear expressions.
+        This method assembles the linear part of the weak formulation 
+        by iterating through all equations in the equation list and 
+        adding their linear expressions.
 
-            Parameters
-            ----------
-            meanFlow : object
-                Mean flow properties used in constructing the linear operator
+        Parameters
+        ----------
+        meanFlow : object
+            Mean flow properties used in constructing the linear operator
 
-            Returns
-            -------
-            petsc4py.PETSc.Mat
-                Assembled linear operator matrix with boundary conditions applied
-            
-            Notes
-            -----
-            Includes a workaround for mesh object compatibility with different 
-            versions of DOLFINx.
-            """
-            # create ufl object with the linear equation system 
-            A_ufl = WeakForm()
-            for equation in self.equationList:
-                equation.addLinearExpression(A_ufl, meanFlow)
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+        Assembled linear operator matrix with boundary conditions applied
+        """
+        # create ufl object with the linear equation system 
+        A_ufl = WeakForm()
+        for equation in self.equationList:
+            equation.addLinearExpression(A_ufl, meanFlow)
 
-            # Mesh compatibility workaround
-            try:
-                A_ufl.setCorrectMeshObject(self.__mesh)
-            except:
-                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-
-            # assemble petsc matrix
-            A = assemble_matrix(form(A_ufl.lhs), bcs=self.BCs)
-            A.assemble()
-
-            return A
+        # assemble petsc matrix
+        return self.assembleMatrixFromUfl(A_ufl.weakForm, bcs=self.BCs)
 
 
     def getWeightMatrix(self, meanFlow):
@@ -355,26 +345,17 @@ class EquationCollectionClass():
         - For Resolvent analysis, boundary conditions are applied
         - For other analysis modes, no boundary conditions are applied to 
           avoid computational issues during eigenvalue problem solving
-        - Includes a workaround for mesh object compatibility with different 
-        versions of DOLFINx
         """
         # create ufl object with the weight matrix expression ("time derivative")
         B_ufl = WeakForm()
         for equation in self.equationList:
             equation.addWeightMatrixExpression(B_ufl, meanFlow)
 
-        # Mesh compatibility workaround
-        try:
-            B_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-
         # assemble petsc matrix
         if self.__param.Case.AnalysisMode in ['Resolvent']:
-            B = assemble_matrix(form(B_ufl.lhs), bcs=self.BCs)
+            B = self.assembleMatrixFromUfl(B_ufl.weakForm, bcs=self.BCs)
         else:
-            B = assemble_matrix(form(B_ufl.lhs), bcs=[]) # no boundaries applied, else there is a but when computing the eigenvalue problem
-        B.assemble()
+            B = self.assembleMatrixFromUfl(B_ufl.weakForm, bcs=[]) # no boundaries applied, else there is a but when computing the eigenvalue problem
 
         return B
 
@@ -417,17 +398,8 @@ class EquationCollectionClass():
                 W_ufl.add(conj(test)*trial_FEM[i]*dx)
             i+=1
 
-        # Mesh compatibility workaround
-        try:
-            W_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-
         # assemble petsc matrix
-        W = assemble_matrix(form(W_ufl.lhs), []) #self.BCs) # no BCs, else it will cause faulty eigenvalues to appear in the modal analysis
-        W.assemble()
-
-        return W
+        return self.assembleMatrixFromUfl(W_ufl) 
 
   
     # TODO Sophie: This is a very quick implementation. Tensor framework needed!
@@ -455,8 +427,6 @@ class EquationCollectionClass():
         -----
         - Handles both scalar and vector function spaces
         - Computes second-order derivatives in x and y directions
-        - Includes a workaround for mesh object compatibility with different 
-        versions of DOLFINx
         - Currently a quick implementation; a more comprehensive tensor 
         framework is needed for future improvements
 
@@ -487,16 +457,8 @@ class EquationCollectionClass():
                     D_ufl.add(sponge*conj(test)*trial_FEM[i]*dx)
             i += 1
 
-        # Mesh compatibility workaround
-        try:
-            D_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-
         # Assemble petsc matrix
-        D = assemble_matrix(form(D_ufl.lhs), self.BCs)
-        D.assemble()
-        return D
+        return self.assembleMatrixFromUfl(D_ufl, self.BCs)
 
 
     def getFullRHS(self,func):
@@ -519,45 +481,19 @@ class EquationCollectionClass():
                 rhs_ufl.add(conj(test)*func_i[i]*dx)
             i+=1
 
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        try:
-            rhs_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
-
         # assemble petsc matrix
-        rhs = assemble_vector(form(-rhs_ufl.rhs))
-        rhs.assemble()
+        return self.assembleVectorFromUfl(rhs_ufl.weakForm)
 
-        return rhs
 
     def getNonlinearExpression(self, meanFlow, setBC=True):
-        from dolfinx.fem.petsc import set_bc
         N_ufl = WeakForm()
         for equation in self.equationList:
             equation.addNonlinearExpression(N_ufl, meanFlow)
-
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        try:
-            N_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
-
-        N = assemble_vector(form(N_ufl.rhs))
         if setBC:
-            set_bc(N, self.BCs)
+            return self.assembleVectorFromUfl(-N_ufl.weakForm, self.BCs)
+        else:
+            return self.assembleVectorFromUfl(-N_ufl.weakForm)
 
-        return N
 
     def getBilinearOperator(self, meanFlow):
 
@@ -566,126 +502,38 @@ class EquationCollectionClass():
         for equation in self.equationList:
             equation.addBilinearExpression(BL_ufl, meanFlow)
             
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        try:
-            BL_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
-
         # assemble petsc matrix
-        BL = assemble_matrix(form(BL_ufl.lhs), bcs=self.BCs)
-        BL.assemble()
-
-        return BL
+        return self.assembleMatrixFromUfl(BL_ufl.weakForm, bcs=self.BCs)
 
     def getForcingForInputOutput(self,meanFlow):
-        from dolfinx.fem.petsc import set_bc
-
         # create ufl object with the linear equation system 
         A_ufl = WeakForm()
         for equation in self.equationList:
             equation.addLinearExpression(A_ufl, meanFlow)
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        try:
-            A_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
 
         # assemble forcing vector
-        forcing = assemble_vector(form(A_ufl.rhs))
-        forcing.assemble()
-        set_bc(forcing, self.BCs)
+        forcing = self.assembleVectorFromUfl(-A_ufl.weakForm, self.BCs)
         forcing.scale(1j)
-
         return forcing
 
 
-        B_forcing = assemble_matrix(form(self.forcing_vf))
-        B_forcing.assemble()
-        self.__matrix_dict_petsc['B_forcing'] = B_forcing 
-        del B_forcing
-
-        B_response = assemble_matrix(form(self.response_vf))
-        B_response.assemble()
-        self.__matrix_dict_petsc['B_response'] = B_response 
-        del B_response
- 
-
-
     def getResolventNorm_response(self, meanFlow):
-
-        # create ufl object with the linear equation system 
-        W_r_ufl = WeakForm()
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        try:
-            W_r_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
-
         # assemble petsc matrix
-        W_response = assemble_matrix(form(self.response_vf))
-        W_response.assemble()
-
-        return W_response
+        return self.assembleMatrixFromUfl(self.response_vf)
 
 
     def getResolventNorm_forcing(self, meanFlow):
-
-        # create ufl object with the linear equation system 
-        W_f_ufl = WeakForm()
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        try:
-            W_f_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
-
         # assemble petsc matrix
-        W_forcing = assemble_matrix(form(self.forcing_vf))
-        W_forcing.assemble()
-
-        return W_forcing
+        return self.assembleMatrixFromUfl(self.forcing_vf)
 
 
     def getResolventWeighting_FEM(self, meanFlow):
 
         # create ufl object with the linear equation system 
         W_FEM_ufl = WeakForm()
-        #####################################################################################################
-        # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
-        # when using a newer version of dolfinx (version >= 0.6.*).
-        # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
-        # but for now this works fine. 
-        try:
-            W_FEM_ufl.setCorrectMeshObject(self.__mesh)
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-        #####################################################################################################
 
         # assemble petsc matrix
-        W_FEM = assemble_matrix(form(self.fem_weighting))
-        W_FEM.assemble()
-
-        return W_FEM
+        return self.assembleMatrixFromUfl(self.fem_weighting)
 
 
 ########################### Resolvent Norm  ############################
@@ -1004,5 +852,79 @@ class EquationCollectionClass():
         P_petsc.assemble()
 
         return P_petsc
+
+
+    # TODO Sophie: Put these assemble commands somewhere else.
+    def assembleMatrixFromUfl(self, ufl_expression, bcs=[]):
+            """
+            Wrapper for the assemble_matrix command from dolfinx.fem.petsc.
+            Needs the ufl expression and not the "form".
+
+            Notes
+            -----
+            Includes a workaround for mesh object compatibility with different 
+            versions of DOLFINx and the internal FELiCS mesh class.
+            """
+
+            # Mesh compatibility workaround
+            # Sophie: This is a weird work-around, because somehow the wrong mesh object is given to the UFL-form 
+            # when using a newer version of dolfinx (version >= 0.6.*).
+            # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
+            # but for now this works fine. 
+            try:
+                sd = ufl_expression.subdomain_data()
+                domain, = list(sd.keys())  # Assuming single domain
+                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
+            except:
+                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
+            
+            matrix = assemble_matrix(form(lhs(ufl_expression)), bcs=bcs)
+            matrix.assemble()
+            return matrix
+
+    def assembleVectorFromUfl(self, ufl_expression, bcs=[]):
+            """
+            Wrapper for the assemble_vector command from dolfinx.fem.petsc.
+            Needs the ufl expression and not the "form".
+
+            Notes
+            -----
+            Includes a workaround for mesh object compatibility with different 
+            versions of DOLFINx and the internal FELiCS mesh class.
+            """
+ 
+            # Mesh compatibility workaround
+            try:
+                sd = ufl_expression.subdomain_data()
+                domain, = list(sd.keys())  # Assuming single domain
+                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
+            except:
+                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
+            
+            vector = assemble_vector(form(rhs(-ufl_expression)))
+            vector.assemble()
+            set_bc(vector, bcs)
+            return vector
+
+    def assembleScalarFromUfl(self, ufl_expression):
+            """
+            Wrapper for the assemble_scalar command from dolfinx.fem.
+            Needs the ufl expression and not the "form".
+
+            Notes
+            -----
+            Includes a workaround for mesh object compatibility with different 
+            versions of DOLFINx and the internal FELiCS mesh class.
+            """
+            # Mesh compatibility workaround
+            try:
+                sd = ufl_expression.subdomain_data()
+                domain, = list(sd.keys())  # Assuming single domain
+                domain._ufl_cargo = self.__mesh._cpp_object._cpp_object
+            except:
+                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
+            
+            scalar = assemble_scalar(form(ufl_expression))
+            return scalar
 
 
