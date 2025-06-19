@@ -183,14 +183,14 @@ class Field:
             Whether to restart the solver instead of reusing an existing one.
         """
         from FELiCS.Solvers.LinearSolver import LinearSolver
-        from FELiCS.Equation.WeakForm import WeakForm
+        from FELiCS.Equation.UflDecorator import UflDecorator
         import ufl 
         import dolfinx
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
         if not hasattr(self.space, 'FEMWeightSolver') and not restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
-            matrix_ufl = WeakForm()
+            matrix_ufl = UflDecorator()
             i=0
             for test in test_FEM:
                 try:
@@ -210,17 +210,9 @@ class Field:
             self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
-        expr_ufl = WeakForm()
-        expr_ufl.add(ufl_expression)
-        try:
-            expr_ufl.setCorrectMeshObject(self.mesh)
-        except:
-            pass
-        petscVec = petsc.assemble_vector(dolfinx.fem.form(-expr_ufl.rhs))
-        petscVec.assemble()
-        petsc.set_bc(petscVec, bcs)
+        expr_ufl = UflDecorator(ufl_expression)
+        petscVec = expr_ufl.getAssembledVector(self.mesh, bsc)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
-        self.setBoundaryConditions(bcs)
 
 
     def evaluateUflTensorExpression(self, ufl_expression, bcs=[], restartSolver=False):
@@ -244,7 +236,7 @@ class Field:
         """
         # evaluates an ufl expression by 
         from FELiCS.Solvers.LinearSolver import LinearSolver
-        from FELiCS.Equation.WeakForm import WeakForm
+        from FELiCS.Equation.UflDecorator import UflDecorator
         import ufl 
         import dolfinx
 
@@ -257,7 +249,7 @@ class Field:
         if not hasattr(self.space, 'FEMWeightSolver') and not restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
-            matrix_ufl = WeakForm()
+            matrix_ufl = UflDecorator()
             coordinateSystem = self.mesh.coordinateSystem
             J_hat = coordinateSystem.J_hat
             i=0
@@ -281,17 +273,9 @@ class Field:
             self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
-        expr_ufl = WeakForm()
-        expr_ufl.add(ufl_expression)
-        try:
-            expr_ufl.setCorrectMeshObject(self.mesh)
-        except:
-            pass
-        petscVec = petsc.assemble_vector(dolfinx.fem.form(-expr_ufl.rhs))
-        petscVec.assemble()
-        petsc.set_bc(petscVec, bcs)
+        expr_ufl = UflDecorator(ufl_expression)
+        petscVec = expr_ufl.getAssembledVector(self.mesh, bsc)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
-        self.setBoundaryConditions(bcs)
 
 
     def smoothUflTensorExpression(self, ufl_expression, smoothFactor, bcs=[], restartSolver=False):
@@ -317,7 +301,7 @@ class Field:
         """
         # evaluates an ufl expression by 
         from FELiCS.Solvers.LinearSolver import LinearSolver
-        from FELiCS.Equation.WeakForm import WeakForm
+        from FELiCS.Equation.UflDecorator import UflDecorator
         import ufl 
         import dolfinx
 
@@ -330,7 +314,7 @@ class Field:
         if not hasattr(self.space, 'FEMSmoothSolver') and not restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
-            matrix_ufl = WeakForm()
+            matrix_ufl = UflDecorator()
             coordinateSystem = self.mesh.coordinateSystem
             J_hat = coordinateSystem.J_hat
             i=0
@@ -356,18 +340,9 @@ class Field:
             self.space.FEMSmoothSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
-        expr_ufl = WeakForm(ufl_expression)
-        try:
-            expr_ufl.setCorrectMeshObject(self.mesh)
-        except:
-            pass
-        petscVec = petsc.assemble_vector(dolfinx.fem.form(-expr_ufl.rhs))
-        petscVec.assemble()
-        petsc.set_bc(petscVec, bcs)
-        self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
-        self.setBoundaryConditions(bcs)
-
-
+        expr_ufl = UflDecorator(ufl_expression)
+        petscVec = expr_ufl.getAssembledVector(self.mesh, bsc)
+        self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
 
 
 
