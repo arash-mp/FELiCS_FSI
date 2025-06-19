@@ -16,15 +16,16 @@ pages:
   before_script:
     - git --version
     - |
-      if [ ! -d "local-runner-env" ]; then
+      if [ ! -d "local-runner-env" ] || [ ! -f "local-runner-env/bin/activate" ]; then
         python3 -m venv local-runner-env
-        source local-runner-env/bin/activate
+      fi
+      source local-runner-env/bin/activate
+      export PIP_NO_CACHE_DIR=on
+      if ! python -c "import sphinx" 2>/dev/null; then
         pip install -U pip
         pip install -U sphinx myst-parser sphinx-book-theme sphinx-autoapi
-      else
-        echo "Using cached local-runner-env"
-        source local-runner-env/bin/activate
       fi
+
   script:
   - cd DOCUMENTATION
   - mkdir ../public
