@@ -1,4 +1,6 @@
-# Transport equations how they are implemented in FELiCS
+# Transport equations - WORK IN PROGRESS (Thomas) 
+
+(how they are implemented in FELiCS)
 
 ## Momentum equation
 
