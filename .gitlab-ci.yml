@@ -4,6 +4,11 @@ variables:
   GIT_STRATEGY: clone  
 # Functions that should be executed before the build script is run
 
+cache:
+  key: venv-cache
+  paths:
+    - local-runner-env/
+
 test:
   stage: test
   before_script:
