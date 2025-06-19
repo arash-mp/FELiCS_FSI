@@ -12,10 +12,13 @@ cache:
 test:
   stage: test
   before_script:
+    - source ~/.bashrc
+    - conda activate felics2024_dolfin9
     - python3 -m pip install pytest
   script:
     - cd TESTS
     - python3 -m pytest 
+    - conda deactivate 
   only:
     - development
     #- main
