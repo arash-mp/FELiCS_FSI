@@ -12,7 +12,12 @@ cache:
 test:
   stage: test
   before_script:
-    - python3 -m pip install pytest
+    - |
+      if ! python -c "import sphinx" 2>/dev/null; then
+        echo "installing sphinx and dependencies..."	
+        pip install -U pip
+        pip install -U pytest
+      fi
   script:
     - cd TESTS
     - python3 -m pytest 
