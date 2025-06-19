@@ -18,6 +18,7 @@ resolvent.md
 
 ```{toctree}
 :maxdepth: 1
+transport_equations.md
 Incompressible_RANS_k-e.md
 ```
 
