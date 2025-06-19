@@ -23,8 +23,9 @@ test:
       echo "Activating virtual environment..."	
       source local-runner-env-tests/bin/activate    
 
-      pip install -U pip
-      pip install -U pytest
+      conda install pytest
+      #pip install -U pip
+      #pip install -U pytest
   script:
     - cd TESTS
     - python3 -m pytest 
