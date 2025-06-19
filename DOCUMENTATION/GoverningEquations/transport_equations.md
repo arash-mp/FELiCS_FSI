@@ -30,9 +30,7 @@ $$
 ### Variable density
 
 $$
-\int \omega \widehat{\rho} \bf{X}^* dx =
-\int j \nabla \bf{X}^* \cdot \widehat{\rho \bf{u}} \, dx
-- \int j \widehat{\rho \bf{u}} \cdot \bf{X}^* \cdot \bf{n} \, ds,
+\int \omega \widehat{\rho} \bf{X}^* dx =\int j \nabla \bf{X}^* \cdot \widehat{\rho \bf{u}} \, dx- \int j \widehat{\rho \bf{u}} \cdot \bf{X}^* \cdot \bf{n} \, ds,
 $$
 where
 
