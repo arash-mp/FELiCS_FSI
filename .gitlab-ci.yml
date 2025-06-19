@@ -1,5 +1,5 @@
 # The Docker image that will be used to build your app
-image: python:3.10-slim-bullseye
+image: continuumio/miniconda3 #python:3.10-slim-bullseye
 variables:
   GIT_STRATEGY: clone  
 # Functions that should be executed before the build script is run
