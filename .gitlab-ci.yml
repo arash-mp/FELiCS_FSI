@@ -8,7 +8,7 @@ cache:
   key: venv-cache
   paths:
     - local-runner-env/
-    - lodal-runner-env_tests/
+    - local-runner-env_tests/
 
 test:
   stage: test
