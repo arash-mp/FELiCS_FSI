@@ -1,5 +1,5 @@
 # The Docker image that will be used to build your app
-image: continuumio/miniconda3 #python:3.10-slim-bullseye
+image: python:3.10-slim-bullseye
 variables:
   GIT_STRATEGY: clone  
 # Functions that should be executed before the build script is run
@@ -7,8 +7,8 @@ variables:
 cache:
   key: venv-cache
   paths:
-    - ../../home/gitlab-runner/cache/local-runner-env/
-    - ../../home/gitlab-runner/cache/local-runner-env_tests/
+    - .local-runner-env/
+    - .local-runner-env_tests/
 
 test:
   stage: test
