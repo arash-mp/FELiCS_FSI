@@ -7,8 +7,8 @@ variables:
 cache:
   key: venv-cache
   paths:
-    - local-runner-env/
-    - local-runner-env_tests/
+    - /home/gitlab-runner/cache/local-runner-env/
+    - /home/gitlab-runner/cache/local-runner-env_tests/
 
 test:
   stage: test
