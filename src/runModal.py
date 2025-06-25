@@ -10,7 +10,7 @@ def runModal(param):
         param: Parameter objects (see parameters.py), defining the case
     '''
     # import  FELiCS.IO.Import as Import
-    from    FELiCS.IO.ExportSolution            import ExportFromFile #, ExportGUI
+    from    FELiCS.IO.ExportSolution            import ExportFromFile 
     import  FELiCS.SpaceDisc.DefineFEMSpaces    as DefineFEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass

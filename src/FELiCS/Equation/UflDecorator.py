@@ -151,11 +151,8 @@ class UflDecorator():
         # when using a newer version of dolfinx (version >= 0.6.*).
         # I will try and understand why that is (probably has something to do with the class FelicsMesh?), 
         # but for now this works fine. 
-        try:
-            sd = self._expression.subdomain_data()
-            domain, = list(sd.keys())  # Assuming single domain
-            domain._ufl_cargo = mesh._cpp_object._cpp_object
-        except:
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
+        sd = self._expression.subdomain_data()
+        domain, = list(sd.keys())  # Assuming single domain
+        domain._ufl_cargo = mesh._cpp_object
  
 

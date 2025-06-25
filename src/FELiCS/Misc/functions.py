@@ -468,6 +468,8 @@ def ParallelVideo(filename, i):
     of a video visualization in VTK format. It is called within the ExportSolutions.py and starts 50 processes (for 50 snapshots)
     or as many as possible. One process serves for saving one scene.
 
+    CAUTION: This function is deprecated and should be updated or removed.
+
     Parameters
     ----------
     filename : str
