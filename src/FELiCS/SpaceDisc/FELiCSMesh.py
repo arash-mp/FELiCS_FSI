@@ -6,15 +6,17 @@ from    FELiCS.Misc.functions   import printDeprecatedWarning, printError
 from    mpi4py                  import MPI
 from    ufl                     import SpatialCoordinate
 from    dolfinx                 import __version__
-from    dolfinx.mesh            import Mesh
+from    dolfinx.mesh            import Mesh 
 from    FELiCS.Misc.logging     import Logger
 
+
+comm = MPI.COMM_WORLD
 # Get the logger
 logger = Logger.get_logger("felics")
 
-class FELiCSMesh(Mesh):
+class FELiCSMesh:
     '''
-    This class is an extension to the fenics mesh class
+    This class is a wrapper to the fenics mesh class
     '''
     def __init__(self, coordinateSystem, filename=None, gdim=0, m=0, inputMesh=None):
         if inputMesh is None:
@@ -23,43 +25,24 @@ class FELiCSMesh(Mesh):
             gmsh.option.setNumber("General.Terminal", 0)  # Disable console log
             gmsh.option.setNumber("General.Verbosity", 0) # Disable all logging
             
-            if __version__.find('0.4') >= 0:
-                logger.info("DEPRECATED: Dolfinx version <0.5.0 is used.")
-                from FELiCSGUI.gmsh_helpers import read_from_msh, extract_gmsh_geometry #, gmsh_model_to_mesh
-                mesh, cell_tags, hi, facet_tags = read_from_msh(filename, cell_data=True, facet_data=True, gdim=gdim)
-                self.coordinatesGMSH = extract_gmsh_geometry(gmsh.model)
-            else:
-                logger.info(f"Opening mesh file: {filename}")
-                gmsh.open(filename)
-                
-                # Get mesh statistics
-                nodes           = gmsh.model.mesh.getNodes()
-                elements        = gmsh.model.mesh.getElements()
-                num_nodes       = len(nodes[0])
-                num_elements    = sum(len(elements[1][i]) for i in range(len(elements[1])))
-                logger.info(f"Mesh contains {num_nodes} nodes and {num_elements} elements")
-
-                from dolfinx.io import gmshio
-                mesh_comm = MPI.COMM_WORLD
-                model_rank = 0
-                mesh, _, facet_tags = gmshio.model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=gdim)
-                
-            try:    #try new version of dolfinx 
-                super().__init__(mesh, mesh.ufl_domain())
-                newMesh = Mesh(mesh, mesh.ufl_domain())
-            except: #use old language 
-                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-                super().__init__(MPI.COMM_WORLD, mesh.topology, mesh.geometry, mesh.ufl_domain())
-            #   #Mesh.__init__(self, MPI.COMM_WORLD, mesh.topology, mesh.geometry)
+            logger.info(f"Opening mesh file: {filename}")
+            gmsh.open(filename)
             
-            try: 
-                self.dolfinxMesh  = mesh
-                self._ccp_object  = mesh._cpp_object
-            except:
-                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-                self.dolfinxMesh  = self
-                self._cpp_object  = mesh
+            # Get mesh statistics
+            nodes           = gmsh.model.mesh.getNodes()
+            elements        = gmsh.model.mesh.getElements()
+            num_nodes       = len(nodes[0])
+            num_elements    = sum(len(elements[1][i]) for i in range(len(elements[1])))
+            logger.info(f"Mesh contains {num_nodes} nodes and {num_elements} elements")
+
+            from dolfinx.io import gmshio
+            mesh_comm = MPI.COMM_WORLD
+            model_rank = 0
+            mesh, _, facet_tags = gmshio.model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=gdim)
                 
+            self.dolfinxMesh = Mesh(mesh, mesh.ufl_domain())._cpp_object
+            self._cpp_object = self.dolfinxMesh._cpp_object
+
             self.facet_tags = facet_tags
             self.gdim = gdim
             self._ufl_domain = mesh._ufl_domain
@@ -67,20 +50,11 @@ class FELiCSMesh(Mesh):
             # save the coordinates in gmsh order:
             gmsh.open(filename)
         else:
-            try:    #try new version of dolfinx 
-                super().__init__(inputMesh, inputMesh.ufl_domain())
-            except: #use old language 
-                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-                super().__init__(MPI.COMM_WORLD, inputMesh.topology, inputMesh.geometry, inputMesh.ufl_domain())
-            self.gdim = inputMesh.topology.dim
-            try: 
-                self.dolfinxMesh = inputMesh
-                self._ccp_object  = inputMesh._cpp_object
-            except:
-                self.dolfinxMesh = self 
-                logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-                self._cpp_object  = inputMesh
-        x = SpatialCoordinate(self)
+            #self.dolfinxMesh = Mesh(inputMesh, inputMesh.ufl_domain())
+            self.dolfinxMesh = inputMesh 
+            self.gdim        = inputMesh.topology.dim
+            self._cpp_object = self.dolfinxMesh._cpp_object
+        x = SpatialCoordinate(self.dolfinxMesh)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
         if coordinateSystem =='Cartesian':
             self.__coordinateSystem = CoordinateSystem(
@@ -133,14 +107,15 @@ class FELiCSMesh(Mesh):
         """
         this method calculates the meshCells array in the fenics representation
         """
-        connectivityCells = self.topology.connectivity(2, 0)
+        connectivityCells = self.dolfinxMesh.topology.connectivity(2, 0)
+        topology = self.dolfinxMesh.topology
         try:    #try new version of dolfinx 
             self.meshCells = connectivityCells.array.reshape(
-                [self.topology.original_cell_index.shape[0], self.topology.cell_types[0].value])
+                [topology.original_cell_index.shape[0], topology.cell_types[0].value])
         except: #use old language. TODO: handle DEPRECATED stuff uniformly
             logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
             self.meshCells = connectivityCells.array.reshape(
-                [self.topology.original_cell_index.shape[0], self.topology.cell_type.value])
+                [topology.original_cell_index.shape[0], topology.cell_type.value])
 
     def cells(self):
         """
@@ -153,7 +128,7 @@ class FELiCSMesh(Mesh):
         """
         This method acts as a getter-method for the vertex-coordinates.
         """
-        return self.geometry.x[:, 0:self.gdim]
+        return self.dolfinxMesh.geometry.x[:, 0:self.gdim]
 
     @property
     def coordinateSystem(self):
