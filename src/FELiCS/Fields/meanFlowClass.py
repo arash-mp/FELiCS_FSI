@@ -167,7 +167,7 @@ class meanFlowClass(
                 nuTot.x.array[:] += self._fieldDict['nuSGS'].x.array[:]
                 
             self._fieldDict['D_' + specie]              = Function(self._FEMSpaces.P2)
-            self._fieldDict['D_' + specie].vector[:]    = nuTot.x.array[:] / Sc
+            self._fieldDict['D_' + specie].x.array[:]   = nuTot.x.array[:] / Sc
 
     def importMatFile(self):
         import scipy.io as spio
@@ -267,7 +267,7 @@ class meanFlowClass(
 
             else:
                 if name in list(meanflowH5[f'meanflow'].keys()):
-                    fieldDict[name].vector[:] = \
+                    fieldDict[name].x.array[:] = \
                     meanflowH5[f'meanflow/{component}/magnitude'][:][
                         indexMappingArray]
                 else:
@@ -597,12 +597,12 @@ class meanFlowClass(
                     if name in list(self.__RawFlowDict.keys()):
                         if self._param.FlowInput.AveragingDirection \
                                 == 'Azimuthal':
-                            self._fieldDict[name].vector[:] \
+                            self._fieldDict[name].x.array[:] \
                                 = ContractAfterAverage(dof_coordinatesP2,
                                                        self._param,
                                                        temp_vecP2[:, m])
                         else:
-                            self._fieldDict[name].vector[:] \
+                            self._fieldDict[name].x.array[:] \
                                 = np.array(temp_vecP2[:, m])
                         m += 1
 
@@ -772,6 +772,7 @@ class meanFlowClass(
                         self.__RawFlowDict['rstyz']
 
     def plot(self, field='all'):
+        ### CAUTION: this is not working at the moment and not used anywhere; should it be removed?
         import matplotlib.pyplot as plt
         from fenics import plot
         import matplotlib as mpl
