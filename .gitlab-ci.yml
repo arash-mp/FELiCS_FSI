@@ -22,9 +22,20 @@ test:
       fi
       echo "Activating virtual environment..."	
       source local-runner-env-tests/bin/activate    
-    - conda init
-    - conda env create -f INSTALLATION/felics_v2.4_env.yml
-    - conda activate felics2025_dolfin9
+      echo "one up"
+    - ls -all ../
+      echo "two up"
+    - ls -all ../../
+      echo "three up"
+    - ls -all ../../../
+      echo "four up"
+    - ls -all ../../../../
+      echo "five up"
+    - ls -all ../../../../../
+      #export PATH="$PATH:/opt/anaconda3/bin"
+      #- conda init
+      #- conda env create -f INSTALLATION/felics_v2.4_env.yml
+      #- conda activate felics2025_dolfin9
       #conda install pytest
     - pip install -U pip
     - pip install -U pytest
