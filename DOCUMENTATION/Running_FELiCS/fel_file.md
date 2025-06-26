@@ -1,5 +1,5 @@
 # fel file in FELiCS
-FELiCS prcesses the mean flow information with a .fel file using the .h5 format. It contains the mesh (nodes coordinates) and mean flow field ($u_x, uy, uz$) as well as the forcing and response domains.
+FELiCS prcesses the mean flow information with a .fel file using the .h5 format. It contains the mesh, mean flow field as well as the forcing and response domains.
 It is also possible to add a sponge field and an eddy viscosity field. 
 
 Here is a python script example of how the fel file can be written: 
