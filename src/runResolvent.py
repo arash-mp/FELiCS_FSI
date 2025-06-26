@@ -11,7 +11,7 @@ def runResolvent(param):
         param: Parameter objects (see parameters.py), defining the case
     '''
 
-    from    FELiCS.IO.ExportSolution            import ExportFromFile #, ExportGUI
+    from    FELiCS.IO.ExportSolution            import ExportFromFile 
     import  FELiCS.SpaceDisc.DefineFEMSpaces    as DefineFEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Fields.fluctuationClass      import fluctuationSolutions

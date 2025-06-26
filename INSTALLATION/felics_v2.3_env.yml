@@ -1,4 +1,4 @@
-name: felics2024_dolfin7
+name: felics2025_dolfin7
 channels:
 - conda-forge
 - defaults
@@ -13,4 +13,4 @@ dependencies:
 - pyvista
 - pip
 - pip:
-- gmsh
+  - gmsh

@@ -117,10 +117,10 @@ class export:
             flucRealCalc = Function(self._FEMSpaces.VMixed)
             flucImagCalc = Function(self._FEMSpaces.VMixed)
 
-            flucRealCalc.vector[:] = np.real(exportObject[:]).astype(
+            flucRealCalc.x.array[:] = np.real(exportObject[:]).astype(
                                                                         float
                                                                             )
-            flucImagCalc.vector[:] = np.imag(exportObject[:]).astype(
+            flucImagCalc.x.array[:] = np.imag(exportObject[:]).astype(
                                                                         float
                                                                             )
 

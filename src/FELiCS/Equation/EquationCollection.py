@@ -128,7 +128,7 @@ class EquationCollectionClass():
         self.m                  = param.Case.m
                
         # Get spatial coordinates
-        self.x                  = SpatialCoordinate(mesh)
+        self.x                  = SpatialCoordinate(mesh.dolfinxMesh)
         self._coordinateSystem  = mesh.coordinateSystem
 
         # Boundaries

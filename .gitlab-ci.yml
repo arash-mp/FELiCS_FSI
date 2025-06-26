@@ -18,10 +18,11 @@ test:
     - |
       if [ ! -d "local-runner-env-tests" ] || [ ! -f "local-runner-env-tests/bin/activate" ]; then
         echo "\nCreating new virtual environment...\n"	
-        conda -m venv local-runner-env-tests
+        python3 -m venv local-runner-env-tests
       fi
       echo "Activating virtual environment..."	
       source local-runner-env-tests/bin/activate    
+      pwd 
 
       #conda install pytest
       pip install -U pip
