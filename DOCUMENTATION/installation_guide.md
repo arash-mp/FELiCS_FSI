@@ -118,7 +118,7 @@ conda activate felics2025_dolfin9
 >conda activate <other_name>
 >```
 
-If that succeeds, try running FELiCS with  ** --- OUT OF DATE. Maybe reference a tutorial here? --- **
+If that succeeds, try running FELiCS with  ------ **OUT OF DATE. Maybe reference a tutorial here?** --------
 ```bash
 FELiCS
 ```
