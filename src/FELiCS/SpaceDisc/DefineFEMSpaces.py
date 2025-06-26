@@ -1,23 +1,3 @@
-#/* Copyright (C) 2019 FLOW group TU Berlin - All Rights Reserved
-# * You may NOT use, distribute or modify this code without explicit
-# * opermission of the copyright owner, the FLOW group at TU Berlin
-# * However, permissions to use and modify the code are generally
-# * granted when asked for.
-# * To ask for permission please contact t.kaiser@tu-berlin.de
-# */
-'''
-# **********************************************************************
-# * This file provides a class to which all FiniteElement Spaces are
-# * inherent. This should be changed to a Dict and this File should be
-# * then deleted
-# * This file was created by Thomas L. Kaiser. Significant contributions
-# * were made by
-# * -
-# *
-# *
-# ********************
-'''
-
 from    dolfinx.fem                 import FunctionSpace, VectorFunctionSpace
 from    dolfinx.mesh                import refine
 from    ufl                         import FiniteElement, MixedElement, triangle, VectorElement, tetrahedron
@@ -29,16 +9,51 @@ from 	FELiCS.Misc.logging         import Logger
 logger = Logger.get_logger("felics")
 
 class FEMSpacesClass():
-    """Class containing the FE-spaces.
-    When declared the object obtains the attributes
-    \t -P1: Continuous Galerkin FEM-Space of first order test functions
-    \t -P2: Continuous Galerkin FEM-Space of second order test functions
-    \t -VMixed: More dimensional Continuous Galerkin FEM-Space containing all the unknowns
-    Necessary function arguments:
-    \t -parameter object
-    \t -mesh object
     """
-    def __init__(self,param,mesh, degree=2):
+    Class containing all Finite Element (FE) spaces used in the simulation.
+
+    This class organizes and initializes various FE spaces such as scalar, vector,
+    mixed, and export function spaces based on the mesh and problem configuration.
+
+    **Initialize the FEMSpaces object**
+
+    Parameters
+    ----------
+    param : ParameterClass
+        Configuration object containing simulation parameters including Case, 
+        BoundaryCondition, Numerics, and Export settings.
+    mesh : FELiCSMesh
+        Computational mesh object used to define the function spaces.
+        
+    Attributes
+    ----------
+    element_shape : ufl.Cell
+        Shape of the element (triangle or tetrahedron).
+    elementTypeStr : str
+        Type of finite element ('CG' for continuous Galerkin).
+    _nVelocityComponents : int
+        Number of velocity components defined by the case.
+    exportMesh : FELiCSMesh
+        Refined mesh used for exporting solution fields.
+    FunctionSpaceVectorVelocity : dolfinx.fem.FunctionSpace
+        Velocity vector space on the main mesh.
+    FunctionSpaceVectorVelocityExport : dolfinx.fem.FunctionSpace
+        Velocity vector space on the export mesh.
+    FunctionSpaceVectorVelocityP1 : dolfinx.fem.FunctionSpace
+        First-order vector space for velocity.
+    VMixed : dolfinx.fem.FunctionSpace
+        Mixed finite element space for all variables.
+    VMixedExport : dolfinx.fem.FunctionSpace
+        Export version of the mixed space.
+    P1, P2 : dolfinx.fem.FunctionSpace
+        First- and second-order scalar function spaces on the main mesh.
+    P1Export, P2Export : dolfinx.fem.FunctionSpace
+        First- and second-order scalar function spaces on the export mesh.
+    mappingObj : Mapping
+        Mapping object that links the function spaces to coordinate mappings.
+
+    """
+    def __init__(self, param, mesh, degree=2):
         logger.info('Defining FEM-spaces.')
 
         if param.Case.nDim==2:
@@ -143,14 +158,25 @@ class FEMSpacesClass():
 
         self.mappingObj = Mapping(self)
 
-    def addCustomScalarSpaceToMixedSpace(self,mesh,order):
-        FE = FiniteElement(
-                         self.elementTypeStr,
-                         self.element_shape,
-                         order,
-                         )
-        self.MixedList.append(FE)
+    def addCustomScalarSpaceToMixedSpace(self, mesh, order):
+        """
+        Add a scalar finite element of a specified polynomial order to the mixed function space.
 
+        This method appends a new scalar finite element to the internal list of
+        elements that make up the mixed function space and rebuilds both the primary
+        and export mixed spaces.
+
+        Notes
+        -----
+        This method is most likely deprecated, it is not used in the codebase.
+
+        Parameters
+        ----------
+        mesh : FELiCSMesh
+            The mesh on which the new mixed function space is defined.
+        order : int
+            Polynomial order of the scalar finite element to be added.
+        """
         # Create a element of the mixed function space
         MixedFE = MixedElement(self.MixedList)
         # Create a function space containing of mixed elements on the given mesh
@@ -162,18 +188,30 @@ class FEMSpacesClass():
 
     def _projectField2allFEMSpaces(self, field, nfluctvar, nDim):
         """
-        This function is used to project the field of a FEM space to all the
-        FEM spaces used for fluctuations.
-        For example, this is useful to project the forcing/response limiter
-        in resolvent analyses to all the fluctuations fields.
+        Project a given FEM field to all components of the mixed function space.
 
-        INPUTS:
-            field: should be a FEM function, to be projected
-            nfluctvar: total number of fluctuation variables
-            nDim: number of spatial dimension = number of velocity components
-   
-        (ToDo: We need a P1 version of the field for cases where some of the fluctuations are P1)
-        Update Sophie: Completed. Any polynomial order for any field can be used now (in this method)
+        This method is primarily used in fluctuation analyses, where a forcing
+        or limiter field must be projected to each component of the mixed space,
+        including both scalar and vector subspaces.
+
+        Parameters
+        ----------
+        field : dolfinx.fem.Function
+            The finite element function to be projected.
+        nfluctvar : int
+            Number of fluctuation variables in the system.
+        nDim : int
+            Number of spatial dimensions, usually equal to the number of velocity components.
+
+        Returns
+        -------
+        fieldVMixed : dolfinx.fem.Function
+            A function in the mixed space with the input field projected into all subspaces.
+
+        Notes
+        -----
+        Originally used for projecting forcing/response fields in resolvent analyses.
+        Supports fields of arbitrary polynomial order. This method is most likely deprecated, it is not used in the codebase.
         """
         
         # NOTE: (Simon) I think that this function is not required anymore

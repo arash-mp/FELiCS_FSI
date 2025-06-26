@@ -6,7 +6,36 @@ from datetime import datetime
 
 
 class CustomFormatter(logging.Formatter):
-    # This class is created to get colored output for the warnings and errors
+    """
+    Custom log formatter with colored output for different log levels.
+
+    This class provides colored formatting for log messages in the terminal,
+    making it easier to distinguish between log levels such as DEBUG, INFO,
+    WARNING, ERROR, and CRITICAL.
+
+    **Initialize the CustomFormatter object**
+
+    No parameters are required for initialization.
+
+    Attributes
+    ----------
+    grey : str
+        ANSI escape code for grey color.
+    yellow : str
+        ANSI escape code for yellow color.
+    red : str
+        ANSI escape code for red color.
+    bold_red : str
+        ANSI escape code for bold red color.
+    reset : str
+        ANSI escape code to reset color.
+    format : str
+        Log message format string.
+    FORMATS : dict
+        Mapping of log levels to their respective colored format strings.
+
+
+    """
 
     grey = "\x1b[38;20m"
     yellow = "\x1b[33;20m"
@@ -14,7 +43,6 @@ class CustomFormatter(logging.Formatter):
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
     format = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
-
 
     FORMATS = {
         logging.DEBUG: grey + format + reset,
@@ -25,15 +53,61 @@ class CustomFormatter(logging.Formatter):
     }
 
     def format(self, record):
+        """
+        Format the specified log record as text.
+
+        Applies color formatting based on the log level of the record.
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            The log record to be formatted.
+
+        Returns
+        -------
+        str
+            The formatted log message string.
+        """
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
 
 class Logger:
+    """
+    Logger class for flexible and colored logging to file and console.
+
+    This class provides a singleton logger with support for colored console output,
+    file logging, dynamic log file location changes, and debug/test modes.
+
+    **Initialize the Logger object**
+
+    Parameters
+    ----------
+    debug_mode : bool, optional
+        If True, enables debug logging (default is False).
+    test_mode : bool, optional
+        If True, enables test mode logging (default is False).
+    logger_name : str, optional
+        Name of the logger and log file prefix (default is "log").
+
+    Attributes
+    ----------
+    debug_mode : bool
+        Indicates if debug mode is enabled.
+    test_mode : bool
+        Indicates if test mode is enabled.
+    logger_name : str
+        Name of the logger.
+    _logger : logging.Logger
+        The underlying Python logger instance.
+
+    """
+
     _instance = None
     
     def __init__(self, debug_mode=False, test_mode=False, logger_name="log"):
+        # See class docstring for parameter documentation.
         self.debug_mode = debug_mode
         self.test_mode = test_mode
         self.logger_name = logger_name
@@ -43,6 +117,12 @@ class Logger:
         Logger._instance = self._logger
 
     def _setup_logger(self):
+        """
+        Set up the logger with appropriate handlers and formatters.
+
+        Configures the logger to output to both the console (with colored output)
+        and a log file. Creates the logs directory if it does not exist.
+        """
         now = datetime.now().strftime("%d.%m.%Y-%H.%M.%S")
         
         logfilename = f"logs{os.sep}{self.logger_name}_{now}.log"
@@ -86,12 +166,46 @@ class Logger:
 
     @property
     def logger(self):
+        """
+        Get the underlying logger instance.
+
+        Returns
+        -------
+        logging.Logger
+            The configured logger instance.
+
+        Raises
+        ------
+        RuntimeError
+            If the logger has not been properly initialized.
+        """
         if self._logger is None:
             raise RuntimeError("Logger has not been properly initialized")
         return self._logger
 
     @classmethod
     def get_logger(cls, name=None):
+        """
+        Retrieve the singleton logger instance.
+
+        If the logger has not been initialized, creates a new instance with the
+        specified name.
+
+        Parameters
+        ----------
+        name : str, optional
+            Name for the logger if it needs to be created.
+
+        Returns
+        -------
+        logging.Logger
+            The singleton logger instance.
+
+        Raises
+        ------
+        RuntimeError
+            If the logger is not initialized and no name is provided.
+        """
         if cls._instance is None:
             if name is None:
                 raise RuntimeError("Logger not initialized. Create a Logger instance first.")
@@ -100,6 +214,22 @@ class Logger:
     
     @classmethod
     def change_log_location(cls, new_log_path):
+        """
+        Move log files to a new directory and update file handlers.
+
+        Moves all current log files to the specified new directory and updates
+        the logger's file handlers to write to the new location.
+
+        Parameters
+        ----------
+        new_log_path : str
+            The new directory path for log files.
+
+        Raises
+        ------
+        RuntimeError
+            If the logger is not initialized.
+        """
         if cls._instance is None:
             raise RuntimeError("Logger not initialized. Create a Logger instance first.")
         
@@ -133,6 +263,16 @@ class Logger:
         instance.info(f"Log files moved to: {new_log_path}")
 
     def close_logger(self, logger):
+        """
+        Remove all handlers from the given logger.
+
+        Clears all handlers from the specified logger instance.
+
+        Parameters
+        ----------
+        logger : logging.Logger
+            The logger instance to close.
+        """
         if logger.hasHandlers():
             logger.handlers.clear()
 

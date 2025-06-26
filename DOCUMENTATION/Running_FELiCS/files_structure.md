@@ -15,8 +15,8 @@ myFELiCScase/
 └── Outputs/ </pre>
 
 ## Mesh
-Your case folder contains a mesh in the **.msh** format. 
-This can be generated for instance with GMSH. Make sure the .msh file is saved in *Version 2 ASCII* format.
+Your case folder must containa mesh in the **.msh** format. 
+This can be generated for instance with GMSH. Make sure the .msh file is saved in *Version 2 ASCII* format. FeliCS only processes triangular cells, make sur to not "Recombine" you mesh with GMSH. Physical entities must be defined in the `.msh `file in order to impose boundary conditions.
  An example for the mesh generation is provided in [Tutorial 1: Helical Sphere Wake Instability](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/DOCUMENTATION/_build/Tutorials/tutorial_1).
 
 ## Base flow
