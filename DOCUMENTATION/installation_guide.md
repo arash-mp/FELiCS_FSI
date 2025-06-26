@@ -21,7 +21,7 @@ The older versions of yml files can be found in the folder [yml_old](https://git
 
 >**Optional:** in case you want to give the environment a different name, you can change the first line of the _.yml_ file accordingly
 >```
->name: felics  ->  name: new_name
+>name: felics2025_dolfin9  ->  name: new_name
 >```
 
 To create the conda environment, enter the following command in the terminal:
@@ -111,14 +111,14 @@ After changing your _~/.bashrc_ you need to restart the terminal or ssh connecti
 ## Verify Installation
 After finishing the installation steps you should be able to activate the new environment in your freshly opened terminal using
 ```bash
-conda activate felics
+conda activate felics2025_dolfin9
 ```
 >**Remark:** if you chose another name for your environment, use the same name for activating the environment:
 >```bash
 >conda activate <other_name>
 >```
 
-If that succeeds, try running FELiCS with 
+If that succeeds, try running FELiCS with  ** --- OUT OF DATE. Maybe reference a tutorial here? --- **
 ```bash
 FELiCS
 ```
