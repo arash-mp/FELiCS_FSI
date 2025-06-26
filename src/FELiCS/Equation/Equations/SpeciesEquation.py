@@ -1,55 +1,59 @@
 from ufl import (
-    dx,
-    conj,
-    Identity,
-    i,
-    j,
-    k,
-    Dx,
-    as_tensor,
-    inner,
-    grad,
-    dot,
-    outer,
-    transpose,
-    Constant,
+    dx
 )
 from FELiCS.Misc.tensorUtils import (
-    Tensor,
-    as_vector,
-    iInner,
     iDot,
     iDiv,
     iGrad,
     iConj,
-    iOuter,
-    iT,
-    iIdentity,
 )
+from .EquationTemplate      import EquationTemplate
+from FELiCS.Misc.logging    import Logger
 
-
-from FELiCS.Misc.functions import printWarning, printError, printDebug
-
-from .EquationTemplate import EquationTemplate
+# Get the logger
+logger = Logger.get_logger("felics")
 
 
 class SpeciesEquation(EquationTemplate):
-    """Class representing the species transport equation."""
+    """Class representing the species transport equation.
 
+    This class formulates the species transport equation in a tensorial framework.
+    It accounts for advection, diffusion, and potential reaction terms while ensuring 
+    compatibility with various boundary conditions. The equation is integrated 
+    into the larger system of equations used for modeling species transport in 
+    computational fluid dynamics.
+
+    The implementation supports input-output analysis and applies integration by 
+    parts for specific terms to facilitate numerical stability and boundary 
+    conditions handling.
+    """
     def __init__(self, eqColl, fluc, X, species, param):
         """
         Initialize the SpeciesEquation class.
 
-        Parameters:
-        - eqColl (EquationCollection): The equation collection.
-        - fluc (Fluctuations): The fluctuation object.
-        - X (Function): The solution function.
-        - species (str): The species name.
-        - param (Parameter): The parameter object.
+        Parameters
+        ----------
+        eqColl : EquationCollection
+            The equation collection object.
+        fluc : Fluctuations
+            The fluctuation object.
+        X : Function
+            The function representing the mesh coordinates.
+        species : str
+            The species name.
+        param : Parameters
+            The parameters object.
+
+        Notes
+        -----
+        - If the numerical scheme is 'Discontinuous Galerkin', an error will be raised 
+          since it is not implemented in the tensorial framework.
+        - The species name is stored internally for further processing.
         """
         # Disclaimer
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')
+        if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
     
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)
@@ -61,9 +65,16 @@ class SpeciesEquation(EquationTemplate):
         """
         Add the weight matrix expression to the weak form.
 
-        Parameters:
-        - weakForm (Form): The weak form.
-        - mean (MeanFlow): The mean flow object.
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object.
+        mean : MeanFlow
+            The mean flow object.
+
+        Notes
+        -----
+        - This method incorporates time derivative terms into the weak form.
         """
         # Time derivative term
         weakForm.add((self.fluc.Y(self.species) * iConj(self.X) * mean.rho).ufl_tens * self.J_hat * dx)
@@ -71,22 +82,33 @@ class SpeciesEquation(EquationTemplate):
     def addNonlinearExpression(self):
         """
         Add the nonlinear expression to the weak form.
+
+        Notes
+        -----
+        - This method currently serves as a placeholder and is not implemented.
         """
         pass
 
     def addLinearExpression(self, weakForm, mean):
         """
-        Add the linear expression to the weak form.
+        Construct the weak form of the linearized species transport equation.
 
-        Parameters:
-        - weakForm (Form): The weak form.
-        - mean (MeanFlow): The mean flow object.
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object.
+        mean : MeanFlow
+            The mean flow object.
+
+        Notes
+        -----
+        - The equation is formulated in a convective form using a tensorial framework.
+        - Integration by parts is applied to the advection term.
+        - The diffusion term is integrated by parts but omits boundary contributions, 
+          imposing a Neumann condition.
+        - A warning is issued if the case parameter `m` is greater than zero, as 
+          validation for such cases is not complete.
         """
-        '''
-        This function builds the weak form of the linearized
-        species transport equation in convective form, in the
-        tensorial framework.
-        '''
        
         param   = self.param
         J_hat   = self.J_hat
@@ -94,10 +116,8 @@ class SpeciesEquation(EquationTemplate):
         X       = self.X
         fluc    = self.fluc
 
-            
         if not param.Case.m == 0:
-                printWarning('--> Species eq: m > 0 for tensor not validated yet. Treat results with care.')
-        
+            logger.warning('Species eq. with m > 0 not validated yet for tensor. Treat results with care.')
         
         # ----------------------------------------- Advection term
         # This term is integrated by parts
@@ -105,6 +125,7 @@ class SpeciesEquation(EquationTemplate):
         # The volume term seems to introduce a small error (~1e-12) in cartesian nates wrt. previous implementation
         ibp = True
         if ibp:
+            logger.debug("Using integration by parts for advection term.")
             weakForm.add(( 1j*fluc.Y(species)*iDiv(mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
             weakForm.add(( 1j*mean.Y(species)*iDiv(mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
             weakForm.add(( 1j*mean.Y(species)*iDiv(fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
@@ -113,6 +134,7 @@ class SpeciesEquation(EquationTemplate):
             weakForm.add(( -1j*iDot(self.n,mean.Y(species)*mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
             weakForm.add(( -1j*iDot(self.n,mean.Y(species)*fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
         else:
+            logger.debug("NOT using integration by parts for advection term.")
             weakForm.add(( -1j*iDot(iGrad(fluc.Y(species)),mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
             weakForm.add(( -1j*iDot(iGrad(mean.Y(species)),mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
             weakForm.add(( -1j*iDot(iGrad(mean.Y(species)),fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
@@ -138,7 +160,7 @@ class SpeciesEquation(EquationTemplate):
             
     
         # ----------------------------------------- BC terms
-        for Boundary in param.BCs.getBCsDict()[species]:
+        for Boundary in param.__BCsDict__[species]:
             # If forcing is applied at the boundary, and Input-Output mode is on...
             if (param.Case.AnalysisMode in ['Input-Output']) and (Boundary['ID'] in param.IOResolvent.ForcingBoundaryIndices) :
                 # First subtract the part added in a few lines above...
@@ -154,11 +176,11 @@ class SpeciesEquation(EquationTemplate):
                     weakForm.add(( 1j*iDot(self.n, fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
                     # If BC value is 0, then the weak formulation throws an error, therefore check if it is zero...
                     # ... if the value is zero, a treatment is not necessary anyway
-                    if not Boundary['value'] in [0.0]:
-                        printWarning('--> Species eq: Dirichlet BC with non-zero value not validated in tensor framework! Treat results with care.')
+                    if Boundary['value'] not in [0.0]:
+                        logger.warning('--> Species eq: Dirichlet BC with non-zero value not validated in tensor framework! Treat results with care.')
                         weakForm.add(( -1*iDot(self.n,Boundary['value']*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
                         
                 if Boundary['type'] in ['Neumann']:
-                    if not Boundary['value'] in [0.0]:
-                        printError('So far only homogeneous Neumann conditions are implemented... Please either change to another BC or - even better -  implement it yourself and upload your well documented implementation to gitlab...')
+                    if Boundary['value'] not in [0.0]:
+                        logger.warning('So far only homogeneous Neumann conditions are implemented... Please either change to another BC or - even better -  implement it yourself and upload your well documented implementation to gitlab...')
     

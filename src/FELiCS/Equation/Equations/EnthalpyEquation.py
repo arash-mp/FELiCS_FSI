@@ -1,36 +1,17 @@
 from ufl import (
-    dx,
-    conj,
-    Identity,
-    i,
-    j,
-    k,
-    Dx,
-    as_tensor,
-    inner,
-    grad,
-    dot,
-    outer,
-    transpose,
-    Constant,
+    dx
 )
 from FELiCS.Misc.tensorUtils import (
-    Tensor,
-    as_vector,
-    iInner,
     iDot,
     iDiv,
     iGrad,
-    iConj,
-    iOuter,
-    iT,
-    iIdentity,
+    iConj
 )
+from    .EquationTemplate   import EquationTemplate
+from    FELiCS.Misc.logging import Logger
 
-
-from FELiCS.Misc.functions import printWarning, printError, printDebug
-
-from .EquationTemplate import EquationTemplate
+# Get the logger
+logger = Logger.get_logger("felics")
 
 
 class EnthalpyEquation(EquationTemplate):
@@ -41,14 +22,6 @@ class EnthalpyEquation(EquationTemplate):
     methods for adding weight matrices, linear expressions, and nonlinear 
     expressions to the weak form.
 
-    Methods
-    --------------
-    addWeightMatrixExpression(weakForm, mean):
-        Adds the weight matrix expression to the weak form.
-    addNonlinearExpression():
-        Adds the nonlinear expression to the weak form.
-    addLinearExpression(weakForm, mean):
-        Constructs the weak form of the linearized enthalpy conservation equation.
     """
 
     def __init__(self, eqColl, fluc, X, param):
@@ -72,8 +45,9 @@ class EnthalpyEquation(EquationTemplate):
           because it is not implemented in the tensorial framework.
         """
         # Disclaimer
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')
+        if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
     
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)
@@ -127,11 +101,10 @@ class EnthalpyEquation(EquationTemplate):
         - It incorporates advection and diffusion terms using volume and boundary integrals.
         - Debugging messages are printed when enabled in the parameters.
         """
-        printDebug(self.param.debug, "Adding transport equation for enthalpy in all mesh internal directions")
 
-        J_hat = self.J_hat
-        X = self.X
-        fluc = self.fluc
+        J_hat   = self.J_hat
+        X       = self.X
+        fluc    = self.fluc
         
             
         # ------------------------  Advection terms

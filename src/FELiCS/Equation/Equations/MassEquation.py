@@ -1,16 +1,15 @@
 from ufl import dx
-
 from FELiCS.Misc.tensorUtils import (
-    Tensor,
-    as_vector,
     iGrad,
     iDot,
     iConj
 )
 
-from FELiCS.Misc.functions import printDebug, printError
+from .EquationTemplate      import EquationTemplate
+from FELiCS.Misc.logging    import Logger
 
-from .EquationTemplate import EquationTemplate
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class MassEquation(EquationTemplate):
     """
@@ -49,8 +48,9 @@ class MassEquation(EquationTemplate):
             The parameters object.
         """
         # Disclaimers
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')
+        if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)
@@ -73,8 +73,8 @@ class MassEquation(EquationTemplate):
         """
         # ------------------------ Time derivative term used
         # Only if density fluctuations are considered
-        if 'rho' in self.param.Case.getTransportedQuantityList():
-            weakForm.add((self.fluc.rho * iConj(self.X)).ufl_tens * self.J_hat * dx)
+        if 'rho' in self.param.getTransportedQuantityList():
+            weakForm += (self.fluc.rho * iConj(self.X)).ufl_tens * self.J_hat * dx
 
     def addLinearExpression(self, weakForm, mean):
         """

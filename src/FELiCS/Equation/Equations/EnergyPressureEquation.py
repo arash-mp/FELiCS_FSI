@@ -1,37 +1,17 @@
 from ufl import (
-    dx,
-    conj,
-    Identity,
-    i,
-    j,
-    k,
-    Dx,
-    as_tensor,
-    inner,
-    grad,
-    dot,
-    outer,
-    transpose,
-    Constant,
+    dx
 )
 from FELiCS.Misc.tensorUtils import (
-    Tensor,
-    as_vector,
-    iInner,
     iDot,
     iDiv,
     iGrad,
     iConj,
-    iOuter,
-    iT,
-    iIdentity,
 )
+from .EquationTemplate      import EquationTemplate
+from FELiCS.Misc.logging    import Logger
 
-
-from FELiCS.Misc.functions import printWarning, printError, printDebug
-
-from .EquationTemplate import EquationTemplate
-
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class EnergyPressureEquation(EquationTemplate):
     """
@@ -41,16 +21,6 @@ class EnergyPressureEquation(EquationTemplate):
     conservation equation in a compressible fluid system. The formulation 
     is based on total energy conservation and is expressed in terms of 
     pressure, using the Perfect Gas Law and continuity equations.
-
-    Methods
-    --------------
-    addWeightMatrixExpression(weakForm, mean)
-        Adds the weight matrix expression to the weak form.
-    addNonlinearExpression()
-        Placeholder for nonlinear expressions (currently not implemented).
-    addLinearExpression(weakForm, mean)
-        Adds the linear expression to the weak form for solving the 
-        energy conservation equation.
 
     Parameters
     ----------
@@ -90,8 +60,9 @@ class EnergyPressureEquation(EquationTemplate):
             If an unsupported numerical scheme like Discontinuous Galerkin is used.
         """
         # Disclaimer
-        if param.NumericalScheme in ['Discontinuous Galerkin']:
-            printError('Discontinuous Galerkin not implemented in tensorial framework.')
+        if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
+            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
+            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class
         super().__init__(eqColl, fluc, X, param)
@@ -141,9 +112,9 @@ class EnergyPressureEquation(EquationTemplate):
         mean : Function
             The mean function representing the average state.
         """
-        J_hat = self.J_hat
-        X = self.X
-        fluc = self.fluc
+        J_hat   = self.J_hat
+        X       = self.X
+        fluc    = self.fluc
 
         # ------------------------  Advection terms
         # NOTE: "." denotes the dot product below

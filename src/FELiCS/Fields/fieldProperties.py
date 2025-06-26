@@ -1,7 +1,7 @@
 # Third party libraries
 from dolfinx.fem import (
     Constant,
-    Function,
+    Function
 )
 # Local Libraries and methods
 from FELiCS.Misc.tensorUtils import (
@@ -13,10 +13,10 @@ from FELiCS.Misc.tensorUtils import (
                     Tensor,
                     )
 
-from FELiCS.Misc.functions import (
-                printWarning, 
-                printDebug,
-                )
+from FELiCS.Misc.logging import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class fieldProperties:
     """
@@ -114,7 +114,7 @@ class fieldProperties:
                         FEMSpace = self._FEMSpaces.FunctionSpaceVectorVelocity
                     else:
                         FEMSpace = self._FEMSpaces.P2
-                    OutputDict[key] = project(self._fieldDict[key], FEMSpace)
+                    OutputDict[key] = project(self._fieldDict[key], FEMSpace) # NOTE: (Simon) not sure what this whould be
                 else:
                     OutputDict[key] = self._fieldDict[key]
             return OutputDict
@@ -245,21 +245,18 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                printDebug(True, '-- Zero p mean value.')
                 return self._zeroField
             
         elif self.isMeanFlowVertexValuesClass():
             if 'p' in list(self._fieldDict.keys()):
                 return self._fieldDict['p']
             else:
-                printDebug(True, '-- Unit p vertex value.')
                 return self._oneField
 
         else:
             if 'p' in list(self._fieldDict.keys()):
                 return self._fieldDict['p']
             else:
-                printDebug(True, '-- Zero p fluc value.')
                 return self._zeroField
             
     @property
@@ -305,27 +302,28 @@ class fieldProperties:
     @property
     def rho(self):
         if self.isMeanFlowClass():
-            if 'rho' in list(self._fieldDict.keys()):
+            # Comment from Sophie: I added rho to the quantities to read in as default, s.t. a variable density
+            # without rho as fluctuation variable is possible ("cold flow"). If rho is not given as a mean field,
+            # it will be automatically initialized as a function with all coefficients equal to zero. In that
+            # case, a field with all coefficients equal to one is returned.
+            # TODO: redo when restructuring the initialization process.
+            if 'rho' in list(self._fieldDict.keys()) and sum(self._fieldDict['rho'].x.array[:] ) != 0.:
                 return Tensor(
                             self._fieldDict['rho'],
                             self._coordinateSystem,
                             )
             else:
-                printDebug(True, '-- Unit rho mean value.')
                 return self._oneField
-            
         elif self.isMeanFlowVertexValuesClass():
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
-                printDebug(True, '-- Unit rho vertex value')
                 return self._oneField
 
         else:
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
             else:
-                printDebug(True, '-- Zero rho fluc value')
                 return self._zeroField
 
     @property
@@ -347,21 +345,18 @@ class fieldProperties:
                             self._coordinateSystem,
                             )
             else:
-                printDebug(True, '-- Unit T mean value')
                 return self._oneField
             
         elif self.isMeanFlowVertexValuesClass():
             if 'T' in list(self._fieldDict.keys()):
                 return self._fieldDict['T']
             else:
-                printDebug(True, '-- Unit T vertex value')
                 return self._oneField
 
         else:
             if 'T' in list(self._fieldDict.keys()):
                 return self._fieldDict['T']
             else:
-                printDebug(True, '-- Zero T fluc value')
                 return self._zeroField
 
     @property
@@ -370,8 +365,9 @@ class fieldProperties:
             mean_nu = self.nuTot
             mean_u = self.u
             tau_out = mean_nu * iGrad(mean_u)
+            tau_out += iT(tau_out)
+            # Sophie: this if-clause if not really necessary, in the incompressible case the term is just zero
             if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-                tau_out += iT(tau_out)
                 tau_out += -2.0/3.0 * mean_nu * \
                             iDiv(mean_u) * iIdentity(iGrad(mean_u))
                 
@@ -381,8 +377,9 @@ class fieldProperties:
             fluc_nu = self.nulam
             tau_out = mean_nu * iGrad(self.u) + \
                         fluc_nu * iGrad(mean_u)
+            tau_out += iT(tau_out)
+            # Sophie: this if-clause if not really necessary, in the incompressible case the term is just zero
             if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-                tau_out += iT(tau_out)
                 tau_out += -2.0/3.0 * mean_nu * iDiv(self.u) * iIdentity(iGrad(self.u))
                 tau_out += -2.0/3.0 * fluc_nu * iDiv(mean_u) * iIdentity(iGrad(self.u))
         return tau_out

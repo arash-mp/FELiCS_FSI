@@ -1,39 +1,35 @@
 #Standard libraries
-import time
-import os
-import sys
-import multiprocessing
+# import time
+# import os
+# import sys
+# import multiprocessing
 
 # Third party libraries
 import numpy as np
 
-from dolfinx.fem import (
-        Function,
-        dirichletbc,
-        form,
-)
+# from dolfinx.fem import (
+#         Function,
+#         dirichletbc,
+#         form,
+# )
 
-from dolfinx.fem.petsc import (
-    assemble_vector,
-)
+# from dolfinx.fem.petsc import (
+#     assemble_vector,
+# )
 
-from ufl import (
-    dx,
-    TestFunctions,
-    SpatialCoordinate,
-)
+# from ufl import (
+#     dx,
+#     TestFunctions,
+#     SpatialCoordinate,
+# )
 
-from functools import partial
+# from functools import partial
 
 #Local libraries and methods
-from FELiCS.Misc.functions import (
-    printError,
-    printWarning,
-    printDebug,
-    )
+from FELiCS.Misc.logging import Logger
 
-
-
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class LinearSolver:
     """Linear algebra utilities using PETSc and SLEPc.
@@ -41,28 +37,6 @@ class LinearSolver:
     This class provides methods for solving generalized eigenvalue problems (GEVP),
     singular value decompositions (SVD), and linear systems efficiently using
     PETSc and SLEPc.
-
-    Parameters
-    ----------
-    None
-
-    Attributes
-    ----------
-    None
-
-
-    Methods
-    -------
-    solveGeneralEigenproblem(A, B, sigma=0.0, nev=5)
-        Solves a generalized eigenvalue problem.
-    solveSVDOfResolvent(A, sigma=0.0, nev=5)
-        Computes the SVD of a resolvent operator.
-    solveEquationSystem(A, b)
-        Solves a linear system Ax = b.
-    solveTransposeEquationSystem(A, b)
-        Solves the transpose system A^T x = b.
-    createEquationSystemSolver(A)
-        Creates a reusable solver for a matrix.
 
     Notes
     -----
@@ -82,9 +56,6 @@ class LinearSolver:
 
     >>> eigVals, eigVecs, error = LinearSolver.solveGeneralEigenproblem(
     ...     A, B, sigma=0.0, nev=5)
-
-    
-
     """
 
     @staticmethod
@@ -176,7 +147,7 @@ class LinearSolver:
                 #printDebug(True,f"SLEPc error relative: {error[i]}")
             
             except:
-                printWarning("Could not access eigenpair nb ", nev+1, "!")
+                logger.warning("Could not access eigenpair nb ", nev+1, "!")
         
         eps.getST().getKSP().getPC().destroy()
         eps.getST().getKSP().destroy()
@@ -240,16 +211,13 @@ class LinearSolver:
             try:
                 eigVals[i] = eps.getEigenpair(i,vec_real,vec_imag)
                 eigVecs[:,i] = vec_real.getArray() + 1j * vec_imag.getArray()
-                printDebug(True,f"SLEPc error relative: {eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)}")
-                #printDebug(True,f"SLEPc error absolute: {eps.computeError(i, SLEPc.EPS.ErrorType.ABSOLUTE)}")
+                logger.debug(f"SLEPc error relative: {eps.computeError(i, SLEPc.EPS.ErrorType.RELATIVE)}")
             except:
-                printWarning("Could not access eigenpair nb " + str(nev+1) +"!")
+                logger.warning("Could not access eigenpair nb " + str(nev+1) +"!")
         
         eps.destroy()
         R.destroy()
         return eigVals, eigVecs
-
-
 
     @staticmethod
     def solveEquationSystem(

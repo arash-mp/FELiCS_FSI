@@ -1,44 +1,41 @@
-from FELiCS.Misc.functions import printWarning,printOK
+import  json
+from 	FELiCS.Misc.logging import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
+
 class MixtureClass():
-    '''The mixtre class defines a mixture
+    '''The mixture class defines a mixture
     '''
     def __init__(self,mixFilePath,speciesFilePath):
-        '''Initializing the mixture function based on a mixture (*.mix) file.
-        \t Input: mixFilePath: Providing the file path of the mixture'''
+        """
+        Initializing a mixture object based on a mixture.json file.
+
+        Parameters
+        ----------
+        mixFilePath : string
+            relative path to Mixture.json file
+        speciesFilePath : string
+            relative path to Species.json file
+        """
         from os import path
-        #Set default values
+        # set default values
         self.__Species__={}
         self.__Reaction_mechanism__ = {'type':'None'}
         self.__Pr__ = 1.0
         self.__Viscosity__ = {'type':'Constant','Constants':{'nu':1.0}}
-        if mixFilePath == '':
-            print('No mixture file chosen!'  )
-        elif not path.isfile(mixFilePath):
-            printOK('The mixture file path ('+mixFilePath+') does not point to a mixture file!')
+        if path.isfile(mixFilePath):
+            if mixFilePath.endswith(".json"):
+                mixFile = open(mixFilePath, 'r')
+                data = json.load(mixFile)
+                for setting,value in data.items():
+                    setattr(self,'__'+setting+'__',value)
+                mixFile.close()
+            else:
+                logger.warning('Mixture file ('+mixFilePath+') does not have the correct format and will not be read (should be a "json" file). This could lead to an unexplained error later, if the calculation is depending on data given in the mixture file. Please convert the mixture file (examples can be found in the felics-test repository).')
         else:
-            mixFile = open(mixFilePath, 'r')
-            keywords=['Species','Reaction_mechanism','Pr','Viscosity']
-            lineNumber=0
-            while True:
-                lineNumber+=1
-                line = mixFile.readline()
-                if not line:
-                    break
-                try: 
-                    keyword=line.split('=')[0].strip()
-                    if keyword in keywords:
-                        pos=len(keyword)
-                        tempstring='self.__'+line[:pos]+'__'+line[pos:]
-                        exec(tempstring)    
-                    else:
-                        printWarning('Cannot read line '+ str(lineNumber) + ' of Mixture File. The line is ignore    d...')
-                except:
-                    printWarning('Cannot read line '+ str(lineNumber) + ' of Mixture File. The line is ignored...')
-        #if self.getSpeciesList('transported'):
-        #    self.readSpeciesDict(speciesFilePath)
-   
-
-
+            logger.info('No mixture file '+mixFilePath+', using defaults.')
+        
     def getReactionMechanism(self):
         ''' Function returning the reaction mechanism '''
         return self.__Reaction_mechanism__

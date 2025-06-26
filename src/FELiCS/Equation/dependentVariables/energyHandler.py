@@ -142,7 +142,7 @@ class energyHandler:
         """
 
         alreadyDeterminedFields = list(self._fieldDict.keys())
-        viscosityModel = self._param.Case.Mixture.Viscosity
+        viscosityModel = self._param.Mixture.Viscosity
         if viscosityModel == 'const':
             pass
         elif viscosityModel['type'] == 'Sutherland mean':
@@ -153,8 +153,8 @@ class energyHandler:
                     mean_alpha = mean.fieldDict['alpha']
                 else:
                     mean_alpha = mean.alpha
-                Mixture = self._param.Case.Mixture
-                Ts = Mixture.Viscosity['Constants']['Ts']
+                mixture = self._param.Mixture
+                Ts = mixture.Viscosity['Constants']['Ts']
                 foobar, fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
                 self._fieldDict['alpha'] = mean_alpha * fluc
 
