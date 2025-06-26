@@ -1,5 +1,5 @@
 # The Docker image that will be used to build your app
-image: python:3.10-slim-bullseye
+image: continuumio/miniconda3:latest #python:3.10-slim-bullseye
 variables:
   GIT_STRATEGY: clone  
 # Functions that should be executed before the build script is run
@@ -22,11 +22,12 @@ test:
       fi
       echo "Activating virtual environment..."	
       source local-runner-env-tests/bin/activate    
-      pwd 
-
+    - conda init
+    - conda env create -f INSTALLATION/felics_v2.4_env.yml
+    - conda activate felics2025_dolfin9
       #conda install pytest
-      pip install -U pip
-      pip install -U pytest
+    - pip install -U pip
+    - pip install -U pytest
   script:
     - cd TESTS
     - python3 -m pytest 
