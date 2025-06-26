@@ -5,6 +5,7 @@ In the upcoming version of FELiCS, the input parameters will only be loaded from
 - `boundaries.json`: contains specific information about the boundary conditions.
 - `mixture.json`: contains specific information about the physical properties of the fluid considered.
 
+
 The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
 ```bash
 FELiCS -file settings.json
