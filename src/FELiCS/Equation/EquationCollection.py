@@ -179,7 +179,7 @@ class EquationCollectionClass():
             X.append(Tensor(
                 i,
                 self._coordinateSystem,
-                containsTestFunction=True,
+                hasSpectralDimension=True,
                 ))
         self.X = X
             

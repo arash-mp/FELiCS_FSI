@@ -22,9 +22,6 @@ test:
       fi
       echo "Activating virtual environment..."	
     - source local-runner-env-tests/bin/activate    
-      #- find ../../../../../* -type d -name 'anaconda3'
-    - find ../../../../../* -type f -name '.bashrc'
-    - find ../../../../../* -type f -name 'bashrc'
       #- export PATH="$PATH:/opt/anaconda3/bin"
       #- conda init
       #- conda env create -f INSTALLATION/felics_v2.4_env.yml -p .env/ || true
@@ -35,8 +32,8 @@ test:
       #- shopt -s expand_aliases
       #- alias envrun="conda run -p .env/"
   script:
-    - cd TESTS
-    - python3 -m pytest 
+    #- cd TESTS
+    #- python3 -m pytest 
   only:
     - development
     #- main

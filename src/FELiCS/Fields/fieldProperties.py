@@ -442,7 +442,7 @@ class fieldProperties:
                 return Tensor(
                             self._zeroVelocityField,
                             self._coordinateSystem,
-                            containsFluctuation = True,
+                            hasSpectralDimension = True,
                             )
 
     @property

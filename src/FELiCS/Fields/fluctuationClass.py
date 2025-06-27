@@ -110,7 +110,7 @@ class fluctuationClass(
         self._zeroField = Tensor(
                                        Function(self._FEMSpaces.P2),
                                        self._coordinateSystem,
-                                       containsFluctuation = True,
+                                       hasSpectralDimension = True,
                                        )
         self._fieldDict = {}
         self._mean = mean
@@ -123,7 +123,7 @@ class fluctuationClass(
             self._fieldDict[field] = Tensor(
                                             self._fluc[indexOfFieldInList],
                                             self._coordinateSystem,
-                                            containsFluctuation = True,
+                                            hasSpectralDimension = True,
                                             )
 
         # Get all the variables, which need to be present
