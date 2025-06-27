@@ -31,6 +31,7 @@ test:
     - ls -all ../../../../
     - echo "five up"
     - ls -all ../../../../../
+    - cat ../../../../../bashrc
     - source local-runner-env-tests/bin/activate    
       #export PATH="$PATH:/opt/anaconda3/bin"
       #- conda init
