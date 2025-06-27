@@ -12,8 +12,6 @@ cache:
 
 test:
   stage: test
-  tags:
-    - docker
   before_script:
     - git --version
     - ls -all
@@ -24,6 +22,7 @@ test:
       fi
       echo "Activating virtual environment..."	
     - source local-runner-env-tests/bin/activate    
+    - find * -type d -name 'anaconda3'
       #- export PATH="$PATH:/opt/anaconda3/bin"
     - conda init
       #- conda env create -f INSTALLATION/felics_v2.4_env.yml
