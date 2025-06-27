@@ -11,22 +11,24 @@ cache:
     - local-runner-env_tests/
 
 test:
-  stage: test
+  stage: build
+  tags:
+    - docker
   before_script:
     - git --version
     - ls -all
-      #- |
-      #if [ ! -d "local-runner-env-tests" ] || [ ! -f "local-runner-env-tests/bin/activate" ]; then
-      #  echo "\nCreating new virtual environment...\n"	
-      #  python3 -m venv local-runner-env-tests
-      #fi
-      #echo "Activating virtual environment..."	
-      #- source local-runner-env-tests/bin/activate    
-      #export PATH="$PATH:/opt/anaconda3/bin"
-      #- conda init
+    - |
+      if [ ! -d "local-runner-env-tests" ] || [ ! -f "local-runner-env-tests/bin/activate" ]; then
+        echo "\nCreating new virtual environment...\n"	
+        python3 -m venv local-runner-env-tests
+      fi
+      echo "Activating virtual environment..."	
+    - source local-runner-env-tests/bin/activate    
+      #- export PATH="$PATH:/opt/anaconda3/bin"
+    - conda init
       #- conda env create -f INSTALLATION/felics_v2.4_env.yml
       #- conda activate felics2025_dolfin9
-    - conda install pytest
+      #- conda install pytest
     - pip install -U pip
     - pip install -U pytest
   script:
