@@ -11,7 +11,7 @@ cache:
     - local-runner-env_tests/
 
 test:
-  stage: build
+  ##stage: build
   tags:
     - docker
   before_script:
