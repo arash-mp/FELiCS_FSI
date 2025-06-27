@@ -32,7 +32,7 @@ test:
       #- shopt -s expand_aliases
       #- alias envrun="conda run -p .env/"
   script:
-    #- cd TESTS
+    - cd TESTS
     #- python3 -m pytest 
   only:
     - development
