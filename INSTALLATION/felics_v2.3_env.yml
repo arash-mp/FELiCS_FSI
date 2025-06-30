@@ -1,9 +1,9 @@
-name: felics2025_dolfin9
+name: felics2025_dolfin7
 channels:
 - conda-forge
 - defaults
 dependencies:
-- fenics-dolfinx=0.9.*
+- fenics-dolfinx=0.7.*
 - petsc[build=complex*]
 - numpy
 - scipy

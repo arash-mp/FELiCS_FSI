@@ -254,8 +254,8 @@ class Field:
             J_hat = coordinateSystem.J_hat
             i=0
             for test in test_FEM:
-                iTest = Tensor(test, coordinateSystem, containsTestFunction=True)
-                iFluc = Tensor(trial_FEM[i], coordinateSystem, containsFluctuation=True)
+                iTest = Tensor(test, coordinateSystem, hasSpectralDirection=True)
+                iFluc = Tensor(trial_FEM[i], coordinateSystem, hasSpectralDirection=True)
                 if iTest.order  == 1:
                     matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*ufl.dx)
                 elif iTest.order == 0:
@@ -319,8 +319,8 @@ class Field:
             J_hat = coordinateSystem.J_hat
             i=0
             for test in test_FEM:
-                iTest = Tensor(test, coordinateSystem, containsTestFunction=True)
-                iFluc = Tensor(trial_FEM[i], coordinateSystem, containsFluctuation=True)
+                iTest = Tensor(test, coordinateSystem, hasSpectralDirection=True)
+                iFluc = Tensor(trial_FEM[i], coordinateSystem, hasSpectralDirection=True)
                 if iTest.order  == 1:
                     matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*ufl.dx)
                     matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iConj(iTest)))).ufl_tens*J_hat*dx)
