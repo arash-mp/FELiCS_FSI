@@ -350,35 +350,6 @@ class config(ABC):
         importDict  = json.load(BCFile)
         logger.debug(f"Reading boundary conditions from '{filepath}'")
 
-        # NOTE: Below is the previous import, before ID and varibles were switched
-        # in the config .json file. Kept for reference.
-        # BCIDList = self.__BCIDs__
-        # BCsDict={}
-        # if not filepath == '' and os.path.isfile(filepath):
-        #     self.BoundaryCondition.BCsFilePath = filepath
-        #     for Variable in VariableList:
-        #         BCsDict[Variable]=[]
-        #         for BCID in BCIDList:
-        #             BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-        #     # Read BCFile
-        #     BCFile=open(self.BoundaryCondition.BCsFilePath)
-        #     importDict=json.load(BCFile)
-        #     # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
-        #     for Variable in VariableList:
-        #         if Variable in list(importDict.keys()):
-        #             BCsDict[Variable]=[]
-        #             for BC in importDict[Variable]:
-        #                 if BC['ID'] in BCIDList:
-        #                     BCsDict[Variable].append(BC)
-        #                 else:
-        #                     printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
-
-        #         else:
-        #             printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
-        #     # Finally, copy local BCsDict to the object
-        #     self.__BCsDict__=BCsDict
-
-
         # Invert sorting of boundary condition from ID-first to variable-first
         result = {}
         for ID, variable_list in importDict.items():
@@ -393,61 +364,38 @@ class config(ABC):
         # Finally, copy local BCsDict to the object
         self.__BCsDict__ = result
 
-    def setBC(self, field, BoundaryID, BCType, BCvalue):
-        ''' Setting the Boundary condition of a single variable '''
-        for BC in self.__BCsDict__[field]:
-            if BC['ID'] == BoundaryID:
-                self.__BCsDict__[field][BoundaryID]['type'] = BCType
-                self.__BCsDict__[field][BoundaryID]['value'] = BCvalue
-    
-    def readBCInfo(self,MeshFilePath, felicsMesh):
-        ''' Input: - MeshFilePath
-        This function reads both the IDs of the boundary conditions from the mesh and stores them
-        in a private list of the class and also the boundary nodes and stores them in __boundaries__
-        '''
-        from numpy import unique
-        
-        # NOTE: (Simon) move to FELiCSMesh or BC class?
-        
-        # get a list of all kinds of BC indices
-        self.__BCIDs__      = unique(felicsMesh.facet_tags.values)
-        self.__boundaries__ = felicsMesh.facet_tags
+    #TODO Sophie: This seems very useful, but is not in use at the moment. 
+    #             I commented it out because of the boundary conditions restructuring, 
+    #             maybe something like it can be added later 
+    #def setBC(self, field, BoundaryID, BCType, BCvalue):
+    #    ''' Setting the Boundary condition of a single variable '''
+    #    for BC in self.__BCsDict__[field]:
+    #        if BC['ID'] == BoundaryID:
+    #            self.__BCsDict__[field][BoundaryID]['type'] = BCType
+    #            self.__BCsDict__[field][BoundaryID]['value'] = BCvalue
 
-    def readDomainData(self,Meshfile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
-        logger.debug(f"Reading domain data from '{Meshfile}'")
-        ''' Input: Mesfile
-        Read all the domain data from the meshfile '''
+    def readDomainData(self,MeshFile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
+        logger.debug(f"Reading domain data from '{MeshFile}'")
+        ''' Input: MeshFile
+        Read all the domain data from the mesh file '''
         
         # Read mesh and store it in self.__mesh__
-        self.readMesh(Meshfile, gDim, coordinateSystem, m)
+        if not MeshFile == '' and os.path.isfile(MeshFile):
+            self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,gDim,m)
+            self.dim      = self.__mesh__.gdim
         
         # Setup the boundary conditions
-        self.readBCInfo(Meshfile, self.__mesh__)
+        # TODO Sophie: this will be done somewhere else
+        self.__BCIDs__, self.__boundaries__ = self.__mesh__.getBCInfo()
         self.initBCsDict(ExtendedTransportedQuantityList)
         self.importBCsDict(ExtendedTransportedQuantityList)
+
 
     def getMesh(self):
         ''' Function is returning the mesh '''
         return self.__mesh__
 
-    def readMesh(self,MeshFile,dim,coordinateSystem,m):
-        '''
-        Reading Meshfile and saving it as private object
 
-        Function Arguments:
-        - MeshFile: File of a gmsh-meshfile. File needs to be in .msh format
-        - gdim: Geometrical Dimension of the mesh. This argument is needed
-        by the gmsh helper-functions, which read in the mesh
-
-        Function returns:
-        '''
-        
-        # NOTE: (Simon) I don't think this method is needed
-        
-        if not MeshFile == '' and os.path.isfile(MeshFile):
-            self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,dim,m)
-            self.dim = self.__mesh__.gdim
-        
     def getInternalVelocityComponents(self):
         ''' Provides a list of velocity components, which are directed within the dimensions of the mesh '''
         if self.Case["CoordinateSystem"] == 'Cartesian':
