@@ -35,7 +35,9 @@ from FELiCS.Misc.tensorUtils import (
 )
 from    petsc4py.PETSc               import ScalarType
 from    FELiCS.Equation.UflDecorator import UflDecorator
+from    FELiCS.Equation.Boundary     import BoundaryHandler
 from 	FELiCS.Misc.logging          import Logger
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -150,6 +152,10 @@ class EquationCollectionClass():
             as_vector((self.n_BC[0], self.n_BC[1], 0.0)),
             self._coordinateSystem
         )
+
+        # initilize boundary handler
+        #boundaryHandler         = BoundaryHandler(mesh, param.BoundaryCondition.BCsFilePath)
+        boundaryHandler         = BoundaryHandler(mesh, "boundaries_new.json")
 
         # initialize Dirichlet boundary conditions
         self.BCs                = self.__getListOfDirichletBCs()
