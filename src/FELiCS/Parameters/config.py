@@ -364,15 +364,6 @@ class config(ABC):
         # Finally, copy local BCsDict to the object
         self.__BCsDict__ = result
 
-    #TODO Sophie: This seems very useful, but is not in use at the moment. 
-    #             I commented it out because of the boundary conditions restructuring, 
-    #             maybe something like it can be added later 
-    #def setBC(self, field, BoundaryID, BCType, BCvalue):
-    #    ''' Setting the Boundary condition of a single variable '''
-    #    for BC in self.__BCsDict__[field]:
-    #        if BC['ID'] == BoundaryID:
-    #            self.__BCsDict__[field][BoundaryID]['type'] = BCType
-    #            self.__BCsDict__[field][BoundaryID]['value'] = BCvalue
 
     def readDomainData(self,MeshFile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
         logger.debug(f"Reading domain data from '{MeshFile}'")
@@ -387,12 +378,6 @@ class config(ABC):
         self.Case.Equations            = self.getEquationList()
         self.Case.TransportedVariables = self.getTransportedVariablesList(self.Case.Equations)
         
-        # Setup the boundary conditions
-        # TODO Sophie: this will be done somewhere else
-        self.__BCIDs__, self.__boundaries__ = self.__mesh__.getBCInfo()
-        self.initBCsDict(ExtendedTransportedQuantityList)
-        self.importBCsDict(ExtendedTransportedQuantityList)
-
 
     def getMesh(self):
         ''' Function is returning the mesh '''

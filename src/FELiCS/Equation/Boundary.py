@@ -1,8 +1,8 @@
 import  json
 import  numpy as np
 from    enum                         import Enum
+from    petsc4py.PETSc               import ScalarType
 from 	FELiCS.Misc.logging          import Logger
-
 # Get the logger
 logger = Logger.get_logger("felics")
 
@@ -15,7 +15,7 @@ class BoundaryHandler():
 
         #1. get info from felics mesh and store variables
         self.facet_tags             = mesh.facet_tags
-        self.Ids                    = np.unique(self.facet_tags.values)
+        self.IDs                    = np.unique(self.facet_tags.values)
         self.variables              = variables
 
         #2. read bc file 
@@ -24,17 +24,19 @@ class BoundaryHandler():
         BCsInfo = json.load(file)
         
         #3. create boundary object for each boundary
+        # TODO Sophie: check if ID is in self.Ids and throw an error message if not (also naming all the ids that are there)
         self.boundaryList = []
         for ID in BCsInfo:
+            id_int = int(ID)
             info = BCsInfo[ID]
             if   info["name"]   == "custom":
-                bc = Custom(ID, BCsInfo[ID], self)
+                bc = Custom(id_int, BCsInfo[ID], self)
             elif info["name"]   == "zeroDirichlet":
-                bc = ZeroDirichlet(ID, BCsInfo[ID], self )
+                bc = ZeroDirichlet(id_int, BCsInfo[ID], self )
             elif info["name"]   == "wall":
-                bc = Wall(ID, BCsInfo[ID], self)
+                bc = Wall(id_int, BCsInfo[ID], self)
             elif info["name"]   == "symmetry":
-                bc = Symmetry(ID, BCsInfo[ID], self)
+                bc = Symmetry(id_int, BCsInfo[ID], self)
             elif info["name"]   != "none":
                 # TODO Sophie: write error message if the name is not recognized and stop FELiCS (give list of possible boundary condition names)
                 pass
@@ -45,25 +47,25 @@ class BoundaryHandler():
 
     def getListOfDirichletBCsForDolfinx(self,functionSpace):
         from dolfinx.fem      import dirichletbc, locate_dofs_topological
-        from petsc4py.PETSc   import ScalarType
         BCs = []
         #TODO: give a good description of what is done here:
         for boundary in self.boundaryList:
             for var in self.variables:
                 index = self.variables.index(var)
-                if len(var[1])==1:
+                if len(var[1])==0 and boundary.types[index][0] == BoundaryType.DIRICHLET:
                     value = boundary.values[index][0]
-                    BCs.append(dirichletbc(ScalarType(value), 
-                                     locate_dofs_topological(functionSpace.sub(index), 1, self.facet_tags.indices[self.facet_tags.values==boundary.ID]), 
-                                     functionSpace.sub(index)))
+                    space = functionSpace.sub(index)
+                    dofs  = locate_dofs_topological(space, 1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
+                    BCs.append(dirichletbc(value, dofs, space))
                     logger.debug("Adding Dirichlet BC for "+var[0]+ " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
                 else: 
                     for index2 in range(len(var[1])):
-                        value = boundary.values[index][index2]
-                        BCs.append(dirichletbc(ScalarType(value), 
-                                         locate_dofs_topological(functionSpace.sub(index).sub(index2), 1, self.facet_tags.indices[self.facet_tags.values==boundary.ID]), 
-                                         functionSpace.sub(index).sub(index2)))
-                        logger.debug("Adding Dirichlet BC for "+var[0]+var[1][index2] + " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
+                        if boundary.types[index][index2] == BoundaryType.DIRICHLET:
+                            value = boundary.values[index][index2]
+                            space = functionSpace.sub(index).sub(index2)
+                            dofs  = locate_dofs_topological(space, 1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
+                            BCs.append(dirichletbc(value, dofs, space))
+                            logger.debug("Adding Dirichlet BC for "+var[0]+var[1][index2] + " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
 
         return BCs
     
@@ -109,6 +111,7 @@ class BoundaryCondition():
             self.values.append(comp_values)
 
 
+
 class Custom(BoundaryCondition):
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         super().__init__(boundaryID, boundaryInfo, boundaryHandler)
@@ -118,15 +121,19 @@ class Custom(BoundaryCondition):
         # TODO Sophie: write warning if no specifics are there, and say that everything has been set to "None" (which basically means no boundary conditions) 
         specs = self.info["specifics"]
 
+
         for spec in specs:
-            var    = spec["variable"][0]
+            # 1. read specs: get variable name, type and value
             # TODO Sophie: catch "KeyError" if spec type does not exist and give out easy to understand error message
+            var    = spec["variable"][0]
             bcType = BoundaryType[spec["type"].upper()]
             value  = spec["value"]
             if len(spec["variable"])>1:
                 comp = spec["variable"][1]
             else:
                 comp = ""
+
+            # 2. get index of specific variable
             for v in self.bH.variables:
                 if v[0] == var:
                     index1 = self.bH.variables.index(v)
@@ -134,8 +141,11 @@ class Custom(BoundaryCondition):
                         index2 = v[1].index(comp)
                     else:
                         index2 = 0
+
+            # 3. set boundary condition
             self.types[index1][index2]  = bcType
             self.values[index1][index2] = value
+
 
 
 
@@ -148,7 +158,8 @@ class ZeroDirichlet(BoundaryCondition):
         for i in range(len(self.types)):
             for j in range(len(self.types[i])):
                 self.types[i][j]  = BoundaryType.DIRICHLET
-                self.values[i][j] = 0.
+                self.values[i][j] = ScalarType(0.+0.j) 
+
 
 
 class Wall(BoundaryCondition):
@@ -164,8 +175,9 @@ class Wall(BoundaryCondition):
                 for comp in var[1]:
                     index_comp = var[1].index(comp)
                     self.types[index_u][index_comp]  = BoundaryType.DIRICHLET
-                    self.values[index_u][index_comp] = 0. 
+                    self.values[index_u][index_comp] = ScalarType(0.+0.j) 
                 break
+
 
 
 class Symmetry(BoundaryCondition):
@@ -182,14 +194,17 @@ class Symmetry(BoundaryCondition):
         specs = self.info["specifics"]
 
         for spec in specs:
-            var    = spec["variable"][0]
+            # 1. read specs: get variable name, type and value
             # TODO Sophie: catch "KeyError" if spec type does not exist and give out easy to understand error message
+            var    = spec["variable"][0]
             bcType = BoundaryType[spec["type"].upper()]
             value  = spec["value"]
             if len(spec["variable"])>1:
                 comp = spec["variable"][1]
             else:
                 comp = ""
+
+            # 2. get index of specific variable
             for v in self.bH.variables:
                 if v[0] == var:
                     index1 = self.bH.variables.index(v)
@@ -197,9 +212,10 @@ class Symmetry(BoundaryCondition):
                         index2 = v[1].index(comp)
                     else:
                         index2 = 0
-            self.types[index1][index2]  = bcType
-            self.values[index1][index2] = value
 
+            # 3. set boundary condition
+            self.types[index1][index2]  = bcType
+            self.values[index1][index2] = ScalarType(np.real(value) + 1j*np.imag(value))
 
 
 
