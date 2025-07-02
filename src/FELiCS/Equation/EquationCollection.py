@@ -155,10 +155,14 @@ class EquationCollectionClass():
 
         # initilize boundary handler
         #boundaryHandler         = BoundaryHandler(mesh, param.BoundaryCondition.BCsFilePath)
-        boundaryHandler         = BoundaryHandler(mesh, "boundaries_new.json")
+        # TODO: is this flexible enough for scripting?
+        self.variables          = param.Case.TransportedVariables
+        boundaryHandler         = BoundaryHandler(self.variables, mesh, "boundaries_new.json")
 
         # initialize Dirichlet boundary conditions
         self.BCs                = self.__getListOfDirichletBCs()
+        print("###")
+        self.BCs                = boundaryHandler.getListOfDirichletBCsForDolfinx(FEMSpaces.VMixed)
 
         ## TEST AND TRIAL FUNCTIONS
         # Define test and trial functions

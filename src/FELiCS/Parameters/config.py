@@ -383,6 +383,9 @@ class config(ABC):
         if not MeshFile == '' and os.path.isfile(MeshFile):
             self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,gDim,m)
             self.dim      = self.__mesh__.gdim
+
+        self.Case.Equations            = self.getEquationList()
+        self.Case.TransportedVariables = self.getTransportedVariablesList(self.Case.Equations)
         
         # Setup the boundary conditions
         # TODO Sophie: this will be done somewhere else
@@ -445,6 +448,29 @@ class config(ABC):
                 for species in list(self.Mixture.getSpeciesList('transported')):
                     SolutionList.append(species)
         return SolutionList
+
+
+    def getEquationList(self):
+        ### TODO Sophie: make this the central equation list and clean up
+        EquationsList = []
+        for equation in self.Case["SetOfEquations"].items():
+            if not equation[1]["Equation"] == "None":
+                EquationsList.append(equation)
+        return EquationsList
+
+
+    def getTransportedVariablesList(self, EquationList):
+        ### TODO Sophie: make this the central list besides the equation list and clean up
+        VariablesList = []
+        for equation in EquationList:
+            variable = equation[1]["Variable"]
+            if variable in ["u", "rhou"]:
+                components = self.getVelocityComponents()
+            else:
+                components = []
+            VariablesList.append((variable, components))
+        return VariablesList 
+
 
     def getExtendedTransportedQuantityList(self):
         ''' Like getTransportedQuantitiyList but with all velocity components '''
