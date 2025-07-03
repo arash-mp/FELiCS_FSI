@@ -1,4 +1,4 @@
-# Implementation of resolvent operators
+# Implementation of resolvent operators - DONE (needs reviewing in the bigger context)
 
 ## Resolvent Analysis for a Linear System 
 
