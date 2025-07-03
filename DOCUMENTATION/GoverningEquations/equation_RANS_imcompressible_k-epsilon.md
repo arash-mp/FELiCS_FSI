@@ -1,4 +1,4 @@
-# Implementation of steady incompressible RANS equations (with k-$\varepsilon$ turbulent model)
+# Implementation of steady incompressible RANS equations (with k-$\varepsilon$ turbulent model) - DONE (for future versions of FELiCS)
 
 **Xiuyang has done a draft, and is reviewing. Welcome for any comments.**
 
