@@ -27,7 +27,7 @@ $$
 where $"\cdot^H"$ indicates the Hermitian transpose (transpose + complex conjugate).
 The energy norm for the output term is then defined as $\|\hat{y}\|^2=\hat{y}^HW_{r}\hat{y}$ and the energy of the input term as $\|\hat{\eta}\|^2=\hat{\eta}^HW_{f}\hat{\eta}$. 
 
-## Definition of the Gain 
+## Definition of the gain 
 The gain squared is defined as: 
 $$
 \sigma^2 = \frac{\|\hat{y}\|^2}{\| \hat{\eta}\|^2} = \frac{\hat{y}^H W_{r} \hat{y}}{\hat{\eta}^H W_{f} \hat{\eta}}.
