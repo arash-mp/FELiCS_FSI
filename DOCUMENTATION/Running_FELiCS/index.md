@@ -24,11 +24,20 @@ where
 * `output_dir` - Output directory, must correspond to the `Case{ExportFolder}` field in the `config.json` file.
 
 ## Mesh file
- 
+Your mesh file needs the format **.msh**. 
+This can be generated for instance with GMSH. Make sure the .msh file is saved in *Version 2 ASCII*. FeliCS only processes triangular cells, make sur to not "Recombine" you mesh with GMSH. Physical entities must be defined in the `.msh` file in order to impose boundary conditions.
+An example for the mesh generation is provided in [Tutorial 1: Helical Sphere Wake Instability](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/DOCUMENTATION/_build/Tutorials/tutorial_1).
+
 ## Mean flow file
-Details of the contents and format of the mean flow file can be found here ⚠️ (*to be completed*)
+The base flow can be obtained numerical simulations, experimental results or analytical models. A RANS mean field can also be computed using the finite element Newton solver `FlowSolver.py` integrateed in FELiCS.
+The relevant mean flow information (velocities, pressure, viscosity, forcing and response domains, ...) are encapsulated in a **.fel** file. 
+The construction of such a file is presented in [fel file in FELiCS](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/DOCUMENTATION/_build/Running_FELiCS/fel_file).
 
 ## Configuration files
+All the input parameters are loaded from the following **.json** files:
+- `settings.json`: contains the analysis settings.
+- `boundaries.json`: contains the boundary conditions.
+
 The contents of the configuration files are detailed [here](FELiCS_settings.md).
 
 ## Calling FELiCS
@@ -60,8 +69,6 @@ where
 ## Detailed content
 ```{toctree}
 :maxdepth: 1
-
-files_structure.md
 
 fel_file.md
 
