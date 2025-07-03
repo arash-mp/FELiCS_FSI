@@ -6,7 +6,7 @@ The starting point is the equation for a linear system:
 $$
 (A + j \omega B) \hat{q} = J\hat{q} = \hat{f},
 $$
-where $A$ is the linear operator and $J$ is the Jacobian of the system. Applying a discretization scheme and considering a finite element method (FEM) weighting:  
+where $A$ is the linear operator and $J$ is the Jacobian of the system. Applying a discretization scheme and considering a finite element method weighting:  
 $$
 \hat{q} = R W_{\text{FEM}} \hat{f},\quad \text{with}\quad \mathbf{R=J^{-1}}.
 $$
@@ -46,11 +46,12 @@ $$
 (W_{f})^{-1} \tilde{R}^H W_{r} \tilde{R} \hat{\eta}=\lambda\hat{\eta}$$
 or:
 $$(W_{f})^{-1} P_f^H W_{\text{FEM}}^H R^H P_r^H W_{r}P_r R W_{\text{FEM}}P_f \hat{\eta}=\lambda\hat{\eta}.$$
-## Final Expression
-Finally, we can also re-write the H-EPV in terms of the linear operator, which is the expression implemented in FELiCS:
+
+Finally, we can also re-write the H-EPV in terms of the linear operator:
 $$
 (W_{f})^{-1}~P_f^H~ W_{\text{FEM}}^H~(J^{-1})^H~P_r^H~W_{r}~P_r~J^{-1}~W_{\text{FEM}}~P_f~\hat{\eta}=\lambda~\hat{\eta}.
 $$
+This is the expression implemented in FELiCS
 The full forcing is obtained from $\hat{f}=P_f\hat{\eta}$ and the response is $\hat{q} = R \hat{f}$.
 Note: for real operators, such as $P_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
 ## Dimensions of the operators
