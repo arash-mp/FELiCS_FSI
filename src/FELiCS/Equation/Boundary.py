@@ -29,15 +29,18 @@ class BoundaryHandler():
         for ID in BCsInfo:
             id_int = int(ID)
             info = BCsInfo[ID]
-            if   info["name"]   == "custom":
+            name = info["name"].lower() # make the info in the bc file non-case sensitive
+            if   name  == "custom":
                 bc = Custom(id_int, BCsInfo[ID], self)
-            elif info["name"]   == "zeroDirichlet":
+            elif name  == "zerodirichlet":
                 bc = ZeroDirichlet(id_int, BCsInfo[ID], self )
-            elif info["name"]   == "wall":
+            elif name  == "wall":
                 bc = Wall(id_int, BCsInfo[ID], self)
-            elif info["name"]   == "symmetry":
+            elif name  == "symmetry":
                 bc = Symmetry(id_int, BCsInfo[ID], self)
-            elif info["name"]   != "none":
+            elif name  == "none":
+                bc = BoundaryCondition(id_int, BCsInfo[ID], self) # this is the default boundary condition, nothing is done for any variable
+            else:
                 # TODO Sophie: write error message if the name is not recognized and stop FELiCS (give list of possible boundary condition names)
                 pass
             self.boundaryList.append(bc)
@@ -88,6 +91,9 @@ class BoundaryType(Enum):
 
 
 class BoundaryCondition():
+    # This class serves two functions:
+    # 1. it is the parent class of all boundary conditions (all variables are initialized, all types are "none", all values are "0")
+    # 2. it is the boundary condition "None"
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         self.ID   = boundaryID
         self.info = boundaryInfo
@@ -144,7 +150,7 @@ class Custom(BoundaryCondition):
 
             # 3. set boundary condition
             self.types[index1][index2]  = bcType
-            self.values[index1][index2] = value
+            self.values[index1][index2] = ScalarType(np.real(value) + 1j*np.imag(value))
 
 
 

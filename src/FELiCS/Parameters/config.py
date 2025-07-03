@@ -437,9 +437,10 @@ class config(ABC):
 
     def getEquationList(self):
         ### TODO Sophie: make this the central equation list and clean up
+        # TODO Sophie: throw warning if Equation != None and Variable == None (before that: move equation of state out of those equations)
         EquationsList = []
         for equation in self.Case["SetOfEquations"].items():
-            if not equation[1]["Equation"] == "None":
+            if not equation[1]["Equation"] == "None" and not equation[1]["Variable"] == "None":
                 EquationsList.append(equation)
         return EquationsList
 

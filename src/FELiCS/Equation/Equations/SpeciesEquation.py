@@ -27,7 +27,7 @@ class SpeciesEquation(EquationTemplate):
     parts for specific terms to facilitate numerical stability and boundary 
     conditions handling.
     """
-    def __init__(self, eqColl, fluc, X, species, param):
+    def __init__(self, index, eqColl, fluc, X, species, param):
         """
         Initialize the SpeciesEquation class.
 
@@ -159,7 +159,33 @@ class SpeciesEquation(EquationTemplate):
             weakForm.add(( mean.forcing(species)*iConj(X) ).ufl_tens*J_hat*dx)
             
     
-        # ----------------------------------------- BC terms
+        ## ----------------------------------------- BC terms
+        #for boundary in self.boundaryHander.boundaryList:
+        #    # If forcing is applied at the boundary, and Input-Output mode is on...
+        #    ID = boundary.ID
+        #    if (param.Case.AnalysisMode in ['Input-Output']) and (ID in param.IOResolvent.ForcingBoundaryIndices) :
+        #        # First subtract the part added in a few lines above...
+        #        weakForm.add(( 1j*iDot(self.n,fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(ID))
+        #        # Then add the forcing of the respective species given in the mean flow dict at the respective bounary
+        #        weakForm.add(( -1j*iDot(self.n,mean.u*mean.forcing(species)*iConj(X)) ).ufl_tens*J_hat*self.ds(ID))
+        #        
+        #    else:
+        #        # Check if boundary condition is Dirichlet or Neumann
+        #        # If it is Dirichlet, the BC is applied in the weak formulation
+        #        if Boundary['type'] in ['Dirichlet']:
+        #            # First subtract the part added in a few lines above...
+        #            weakForm.add(( 1j*iDot(self.n, fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
+        #            # If BC value is 0, then the weak formulation throws an error, therefore check if it is zero...
+        #            # ... if the value is zero, a treatment is not necessary anyway
+        #            if Boundary['value'] not in [0.0]:
+        #                logger.warning('--> Species eq: Dirichlet BC with non-zero value not validated in tensor framework! Treat results with care.')
+        #                weakForm.add(( -1*iDot(self.n,Boundary['value']*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
+        #                
+        #        if Boundary['type'] in ['Neumann']:
+        #            if Boundary['value'] not in [0.0]:
+        #                logger.warning('So far only homogeneous Neumann conditions are implemented... Please either change to another BC or - even better -  implement it yourself and upload your well documented implementation to gitlab...')
+ 
+
         for Boundary in param.__BCsDict__[species]:
             # If forcing is applied at the boundary, and Input-Output mode is on...
             if (param.Case.AnalysisMode in ['Input-Output']) and (Boundary['ID'] in param.IOResolvent.ForcingBoundaryIndices) :

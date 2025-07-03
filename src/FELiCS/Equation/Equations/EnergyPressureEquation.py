@@ -39,7 +39,7 @@ class EnergyPressureEquation(EquationTemplate):
         If an unsupported numerical scheme like Discontinuous Galerkin is used.
     """
 
-    def __init__(self, eqColl, fluc, X, param):
+    def __init__(self, index, eqColl, fluc, X, param):
         """
         Initialize the EnergyPressureEquation object.
 
@@ -65,7 +65,7 @@ class EnergyPressureEquation(EquationTemplate):
             raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class
-        super().__init__(eqColl, fluc, X, param)
+        super().__init__(index, eqColl, fluc, X, param)
 
 
     def addWeightMatrixExpression(self, weakForm, mean):

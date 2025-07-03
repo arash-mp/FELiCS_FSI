@@ -22,7 +22,7 @@ class SpongeTerm(EquationTemplate):
     dynamically selects the appropriate variables based on the equation set.
     """
 
-    def __init__(self, eqColl, fluc, X, param):
+    def __init__(self, index, eqColl, fluc, X, param):
         """
         Initialize the SpongeTerm object.
 
@@ -49,7 +49,7 @@ class SpongeTerm(EquationTemplate):
             raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')        
 
         # initialize variables in template class
-        super().__init__(eqColl, fluc, X, param)
+        super().__init__(index, eqColl, fluc, X, param)
 
 
     def addWeightMatrixExpression(self, weakForm, mean):

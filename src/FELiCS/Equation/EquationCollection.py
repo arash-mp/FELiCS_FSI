@@ -131,12 +131,12 @@ class EquationCollectionClass():
         ## BOUNDARIES
         # Initialize boundary handler
         self.variables          = param.Case.TransportedVariables
-        boundaryHandler         = BoundaryHandler(self.variables, mesh, param.BoundaryCondition.BCsFilePath)
+        self.boundaryHandler    = BoundaryHandler(self.variables, mesh, param.BoundaryCondition.BCsFilePath)
         # Initialize ds: Get all boundaries (So far hard coded)
         self.ds                 = Measure("ds", subdomain_data=mesh.facet_tags)
-        self.all_ds             = self.ds(boundaryHandler.IDs[0])
-        for i in range(1,len(boundaryHandler.IDs)):
-            self.all_ds += self.ds(boundaryHandler.IDs[i])
+        self.all_ds             = self.ds(self.boundaryHandler.IDs[0])
+        for i in range(1,len(self.boundaryHandler.IDs)):
+            self.all_ds += self.ds(self.boundaryHandler.IDs[i])
         # Get boundary normals
         self.n_BC               = FacetNormal(self._FEMSpaces.P2.mesh)
         self.n                  = Tensor(
@@ -144,7 +144,7 @@ class EquationCollectionClass():
             self._coordinateSystem
         )
         # Get Dirichlet boundary conditions
-        self.BCs                = boundaryHandler.getListOfDirichletBCsForDolfinx(FEMSpaces.VMixed)
+        self.BCs                = self.boundaryHandler.getListOfDirichletBCsForDolfinx(FEMSpaces.VMixed)
 
 
         ## TEST AND TRIAL FUNCTIONS
@@ -186,65 +186,71 @@ class EquationCollectionClass():
         logger.debug('State vector: %s.' % param.Case.SolutionList)
  
         # Create equation list from parameters
-        # TODO: the following could be in a method  for readability
+        # TODO: the following could be in a method for readability
         logger.debug("Creating equation list.")
+        self.equations = param.Case.Equations
         self.equationList = []
 
-        if self._param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
-            from FELiCS.Equation.Equations.MomentumEquation import MomentumEquation
-            logger.debug('Adding momentum equation for u-fluc -> X[0].')     # Hardcoded u' for mom eq.
-            momentum    = MomentumEquation(self,fluctuationC,X[0],param)
-            self.equationList.append(momentum)
+        for equation in self.equations:
+            index = self.equations.index(equation) 
+            if   equation[0]  == "Momentum" and equation[1]["Equation"] == "NSPrimitive":  
+                from FELiCS.Equation.Equations.MomentumEquation import MomentumEquation
+                logger.debug('Adding momentum equation for u-fluc -> X[%d].' % index)     # Hardcoded u' for mom eq.
+                eqObject    = MomentumEquation(index,self,fluctuationC,X[index],param)
+                self.equationList.append(eqObject)
 
-        if self._param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
-            from FELiCS.Equation.Equations.MassEquation import MassEquation
-            varEq       = self._param.Case.SetOfEquations['Mass']['Variable']
-            idVar       = param.Case.SolutionList.index(varEq)
-            logger.debug('Adding mass equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            mass        = MassEquation(self,fluctuationC,X[idVar],self._param)
-            self.equationList.append(mass)
+            elif equation[0]  == "Mass" and equation[1]["Equation"] == "Continuity":  
+                from FELiCS.Equation.Equations.MassEquation import MassEquation
+                logger.debug('Adding mass equation for %s-fluc -> X[%d].' % (index, index))
+                eqObject    = MassEquation(index,self,fluctuationC,X[index],self._param)
+                self.equationList.append(eqObject)
 
-        if self._param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
-            varEq       = self._param.Case.SetOfEquations['Energy']['Variable']
-            idVar       = param.Case.SolutionList.index(varEq)
-            logger.debug('Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            enthalpy    = EnthalpyEquation(self,fluctuationC,X[idVar],self._param)
-            self.equationList.append(enthalpy)
+            elif equation[0]  == "Energy" and equation[1]["Equation"] == "Enthalpy":  
+                from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
+                logger.debug('Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (index, index))
+                eqObject    = EnthalpyEquation(index,self,fluctuationC,X[index],self._param)
+                self.equationList.append(eqObject)
 
-        if self._param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
-            from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
-            varEq       = self._param.Case.SetOfEquations['Energy']['Variable']
-            idVar       = param.Case.SolutionList.index(varEq)
-            logger.debug('Adding pressure-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            energyP     = EnergyPressureEquation(self,fluctuationC,X[idVar],self._param)
-            self.equationList.append(energyP)
+            elif equation[0]  == "Energy" and equation[1]["Equation"] == "primitive-p":  
+                from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
+                logger.debug('Adding pressure-energy equation for %s-fluc -> X[%d].' % (index, index))
+                eqObject     = EnergyPressureEquation(index,self,fluctuationC,X[index],self._param)
+                self.equationList.append(eqObject)
+
+            # TODO: Jens: put species equations back in FELiCS 
+            #elif equation[0]  == "Species":
+            #    transportedSpecies  = self._param.Mixture.getSpeciesList('transported')
+            #        for specie in transportedSpecies:
+            #            i_eqn           = self._param.Case.SolutionList.index(specie)
+            #            if equation[1] == 'Non-conservative':
+            #                from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
+            #                logger.debug(f"Adding equation for species '{specie}' in non-conservative form")
+            #                species     = SpeciesEquation(index,self,fluctuationC,X[i_eqn],specie,self._param)
+            #                self.equationList.append(species)
+            #                
+            #            #elif self._param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
+            #            #    # This eq has not been derived in tensor framework yet.
+            #            #    from FELiCS.Equation.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+            #            #    print('-- Adding equation for species '+specie +' in conservative form')
+            #            #    addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self._param)
+            #            else:
+            #                logger.error('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
+            #                raise Exception('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
+
+
+            elif equation[0] != "EquationOfState":
+                logger.error('Equation type ' + str(equation)  + ' unknown.' )
+                raise Exception('Equation type ' + str(equation)  + ' unknown.' )
+
             
-        # Add sponge region only if the field was given in the mean flow file
+        # Add sponge region to equation list only if the field was given in the mean flow file
         if 'spg' not in mean._meanFlowClass__notInFileList:
             from FELiCS.Equation.Equations.SpongeTerm import SpongeTerm
             logger.debug('Adding sponge damping.')
-            sponge      = SpongeTerm(self,fluctuationC,X,self._param)
-            self.equationList.append(sponge)
+            eqObject      = SpongeTerm(self.equations,self,fluctuationC,X,self._param) # give equationsList-Dictionary as "index"
+            self.equationList.append(eqObject)
 
-        # Add species transport equation for all transported species
-        transportedSpecies  = self._param.Mixture.getSpeciesList('transported')
-        for specie in transportedSpecies:
-            i_eqn           = self._param.Case.SolutionList.index(specie)
-            if self._param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
-                from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
-                logger.debug(f"Adding equation for species '{specie}' in non-conservative form")
-                species     = SpeciesEquation(self,fluctuationC,X[i_eqn],specie,self._param)
-                self.equationList.append(species)
-                
-            #elif self._param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
-            #    # This eq has not been derived in tensor framework yet.
-            #    from FELiCS.Equation.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
-            #    print('-- Adding equation for species '+specie +' in conservative form')
-            #    addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self._param)
-            else:
-                logger.error('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
-                raise Exception('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
+
 
         if self._param.Case.AnalysisMode in ['Resolvent']:
             logger.debug('Defining specific forms for resolvent analysis.')
