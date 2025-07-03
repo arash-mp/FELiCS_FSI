@@ -4,20 +4,8 @@ The input parameters are loaded from the three following **.json** files:
 - `boundaries.json`: contains specific information about the boundary conditions.
 - `mixture.json`: contains specific information about the physical properties of the fluid considered.
 
-The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
-```bash
-FELiCS -file settings.json
-```
-
-The other two files are found via the corresponding entries of the `settings.json` file.
-
->**Warning:** only the parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
-
 ## Structure of the `settings.json` file
-
->**Note:** The name of the file is not important. 
-
-Below is the structure of the `settings.json` file, it is divided into 6 main sections:
+The typical `settings.json` file is divided into 6 main sections:
 
 ``` json
 {
@@ -67,6 +55,11 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "PolynomialOrder":  (dict)  sets the polynomial order for each transported variables (list must match "SetOfEquations"). e.g.: {"u": 2,"T": 1,"rho": 1}
 }}
 ```
+>**Note:** The name of the file is not important. 
+The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
+```bash
+FELiCS -file settings.json
+```
 
 ## Structure of the `boundaries.json` file
 The structure of this file is expected to evolve soon. The current structure is:
@@ -84,7 +77,7 @@ where:
 * `"type": (str)` is the type of BC applied at the boundary for the variable considered. Currently only accepts `"Dirichlet"` or `"Neumann"`.
 * `"value": (float)` is the value imposed on the variable (or its gradient). **Always 0.0 ??**
 
-An example of `boundaries.json` is
+A typical `boundaries.json` file is:
 
 ```json
 {
@@ -100,7 +93,6 @@ An example of `boundaries.json` is
 ```
 
 ## Structure of the `mixture.json` file
-
 >**Warning:** No idea how this is organized. Please, Thomas or someone who knows about this completes the documentation here.
 
 In most cases that do not involve chemistry modelling to describe the fluid, the `mixture.json` is not used and a dummy file is passed instead. The structure of the dummy file is:
@@ -152,3 +144,5 @@ The following is an example of the `mixture.json` file for a case using chemistr
   * list of floats for real values: `[1, 2, 1.2e-1]`
   * a combination of both: `["1.0-1j", 1, "1.0+1j", 2]`
 * json accepts exponential notation for all float-type inputs
+
+>**Warning:** only the parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
