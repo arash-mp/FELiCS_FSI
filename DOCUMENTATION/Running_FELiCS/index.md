@@ -44,7 +44,7 @@ The contents of the configuration files are detailed [here](FELiCS_settings.md).
 To start a computation with FELiCS, use the commands detailed [here](FELiCS_commands.md)
 
 ## Outputs
-After running: the output directory will contain the following file types:
+After running an analysis the output directory will contain the following file types:
 
 ```bash
 .
