@@ -49,8 +49,10 @@ class BoundaryHandler():
                 pass
             self.boundaryList.append(bc)
 
+
     def getListOfBoundaries(self):
         return self.boundaryList
+
 
     def getListOfDirichletBCsForDolfinx(self,functionSpace):
         from dolfinx.fem      import dirichletbc, locate_dofs_topological
@@ -97,7 +99,7 @@ class BoundaryType(Enum):
 class BoundaryCondition():
     # This class serves two functions:
     # 1. it is the parent class of all boundary conditions (all variables are initialized, all types are "none", all values are "0")
-    # 2. it is the boundary condition "None"
+    # 2. it is the boundary condition "None" for all variables
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         self.ID   = boundaryID
         self.info = boundaryInfo
@@ -133,7 +135,7 @@ class Custom(BoundaryCondition):
 
         for spec in specs:
             # 1. read specs: get variable name, type and value
-            # TODO Sophie: catch "KeyError" if spec type does not exist and give out easy to understand error message
+            # TODO Sophie: catch "KeyError" if spec type or spec variable does not exist or if the value is not a number; give out easy to understand error message
             var    = spec["variable"]
             bcType = BoundaryType[spec["type"].upper()]
             value  = spec["value"]
@@ -144,7 +146,7 @@ class Custom(BoundaryCondition):
 
             # 2. get index of specific variable
             for v in self.bH.variables:
-                if  v[0] == var or v[0] == var[:-1]: #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked 
+                if  v[0] == var or v[0] == var[:-1]: #var can be e.g. ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked 
                     index1 = self.bH.variables.index(v)
                     if len(v[1])>1:
                         index2 = v[1].index(comp)
@@ -174,8 +176,9 @@ class Wall(BoundaryCondition):
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         super().__init__(boundaryID, boundaryInfo, boundaryHandler)
         self.name = "wall"
-        # This boundary condition, at the moment, sets only the velocity components to zero. 
-        # TODO: add "attribute":  e.g. "adiabatic", "isothermal"
+        # This boundary condition, at the moment, sets only the velocity components to zero, 
+        # all other variables have no boundary condition ("none").
+        # TODO Sophie: add "attribute":  e.g. "adiabatic", "isothermal"
       
         for var in self.bH.variables:
             if var[0] == "u" or var[0] == "rhou":
@@ -187,7 +190,6 @@ class Wall(BoundaryCondition):
                 break
 
 
-
 class Symmetry(BoundaryCondition):
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         super().__init__(boundaryID, boundaryInfo, boundaryHandler)
@@ -195,6 +197,8 @@ class Symmetry(BoundaryCondition):
         # This boundary condition takes what is given under "specifics". 
         # There can only be the types "dirichlet" or "neumann", and only the value 0.
         # Specifics have to be given for every variable.
+        # Difference to boundary condition "Custom": it is checked if all conditions 
+        # for a symmetry BC are met. In "Custom", there can appear more general BC combinations.
  
         # TODO Sophie: write error message if no "specifics" are there and stop FELiCS
         # TODO Sophie: also write error message if not all variables are specified
