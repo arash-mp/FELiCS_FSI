@@ -218,27 +218,26 @@ class EquationCollectionClass():
                 self.equationList.append(eqObject)
 
             # TODO: Jens: put species equations back in FELiCS 
-            #elif equation[0]  == "Species":
-            #    transportedSpecies  = self._param.Mixture.getSpeciesList('transported')
-            #        for specie in transportedSpecies:
-            #            i_eqn           = self._param.Case.SolutionList.index(specie)
-            #            if equation[1] == 'Non-conservative':
-            #                from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
-            #                logger.debug(f"Adding equation for species '{specie}' in non-conservative form")
-            #                species     = SpeciesEquation(index,self,fluctuationC,X[i_eqn],specie,self._param)
-            #                self.equationList.append(species)
-            #                
-            #            #elif self._param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
-            #            #    # This eq has not been derived in tensor framework yet.
-            #            #    from FELiCS.Equation.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
-            #            #    print('-- Adding equation for species '+specie +' in conservative form')
-            #            #    addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self._param)
-            #            else:
-            #                logger.error('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
-            #                raise Exception('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
+            # Notes from Sophie:
+            # - Now for every species, the equation "Species" has to given in the main json file with the appropriate variable name.
+            # - Info on the species can still be found in the "Mixture.json" file.  
+            elif equation[0]  == "Species" and equation[1]["Equation"] == "Non-conservative":
+                from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
+                species       = equation[1]["Variable"]
+                logger.debug(f"Adding non-conservative species equation for %s-fluc -> X[%d], species name: {species}." % (index, index))
+                eqObject      = SpeciesEquation(index,self,fluctuationC,X[index],species,self._param)
+                self.equationList.append(eqObject)
+                            
+                #        #elif self._param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
+                #        #    # This eq has not been derived in tensor framework yet.
+                #        #    from FELiCS.Equation.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+                #        #    print('-- Adding equation for species '+specie +' in conservative form')
+                #        #    addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self._param)
+                #        else:
+                #            logger.error('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
+                #            raise Exception('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
 
-
-            elif equation[0] != "EquationOfState":
+            elif equation[0] not in  ["EquationOfState", "ProgressVariableLinear"] :
                 logger.error('Equation type ' + str(equation)  + ' unknown.' )
                 raise Exception('Equation type ' + str(equation)  + ' unknown.' )
 

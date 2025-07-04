@@ -436,7 +436,7 @@ class config(ABC):
             if not self.Case["SetOfEquations"]['Custom2']['Variable'] == 'None':
                 SolutionList.append(self.Case["SetOfEquations"]['Custom2']['Variable'])
         if 'Species' in list(self.Case["SetOfEquations"].keys()):
-            if self.Case["SetOfEquations"]['Species']['Variable'] == 'Y':
+            if self.Case["SetOfEquations"]['Species']['Variable'] != 'None':
                 for species in list(self.Mixture.getSpeciesList('transported')):
                     SolutionList.append(species)
         return SolutionList
