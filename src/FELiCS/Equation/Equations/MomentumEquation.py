@@ -202,13 +202,6 @@ class MomentumEquation(EquationTemplate):
             raise Exception(' -> Pressure term without IbP not implemented in tensor framework.')
 
         # ------------------------ Diffusion term
-        # NOTE: In the current implementation of FELiCS, a mean.rhoean factor is missing
-        # in front of the viscosity. This error is kept for now for concistency,
-        # but it will need to be corrected. Thomas: The name of the variable is wrong, the equations are correct. The nu is actually a mu. This needs to be corrected
-        # NOTE: The diffusion term in the previous implementation of FELiCS neglects
-        # spatial gradients of the viscosity. Thomas: It does not!!! Should be correct
-        # NOTE: The boundary term from the integration by part is ignored. This should impose a 
-        # BC equivalent to stress-free BC
         weakForm.add(( -1j*iInner(mean.tau,iGrad(iConj(X)) )).ufl_tens*J_hat*dx)
 
 

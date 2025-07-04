@@ -104,7 +104,6 @@ class MassEquation(EquationTemplate):
             # Iterate through all boundaries, at which forcing is applied
             for boundary_index in self.param.IOResolvent.ForcingBoundaryIndices:
                 # First subtract the boundary term from advection
-                # Correction wrt to index notation: We need to remove the rho*u term, not just the u!
                 weakForm.add((1j * iDot(self.n, self.fluc.rhou * iConj(self.X))).ufl_tens * self.J_hat * self.ds(boundary_index))
                 # Then add the forcing at the boundary
                 weakForm.add((-1 * iDot(self.n, mean.u_forcing * mean.rho) * iConj(self.X)).ufl_tens * self.J_hat * self.ds(boundary_index))

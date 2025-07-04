@@ -19,10 +19,14 @@ class BoundaryHandler():
         self.variables              = variables
 
         #2. read bc file 
+        # TODO Sophie: 
+        # 1. throw error if file is not there
+        # 2. throw error if file is empty or not in the correct format
         logger.debug(f"Reading boundary conditions from '{BCsFilePath}'")
         file    = open(BCsFilePath) 
         BCsInfo = json.load(file)
         
+
         #3. create boundary object for each boundary
         # TODO Sophie: check if ID is in self.Ids and throw an error message if not (also naming all the ids that are there)
         self.boundaryList = []
@@ -127,11 +131,10 @@ class Custom(BoundaryCondition):
         # TODO Sophie: write warning if no specifics are there, and say that everything has been set to "None" (which basically means no boundary conditions) 
         specs = self.info["specifics"]
 
-
         for spec in specs:
             # 1. read specs: get variable name, type and value
             # TODO Sophie: catch "KeyError" if spec type does not exist and give out easy to understand error message
-            var    = spec["variable"][0]
+            var    = spec["variable"]
             bcType = BoundaryType[spec["type"].upper()]
             value  = spec["value"]
             if len(spec["variable"])>1:
@@ -141,7 +144,7 @@ class Custom(BoundaryCondition):
 
             # 2. get index of specific variable
             for v in self.bH.variables:
-                if v[0] == var:
+                if  v[0] == var or v[0] == var[:-1]: #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked 
                     index1 = self.bH.variables.index(v)
                     if len(v[1])>1:
                         index2 = v[1].index(comp)
@@ -151,7 +154,6 @@ class Custom(BoundaryCondition):
             # 3. set boundary condition
             self.types[index1][index2]  = bcType
             self.values[index1][index2] = ScalarType(np.real(value) + 1j*np.imag(value))
-
 
 
 
@@ -202,7 +204,7 @@ class Symmetry(BoundaryCondition):
         for spec in specs:
             # 1. read specs: get variable name, type and value
             # TODO Sophie: catch "KeyError" if spec type does not exist and give out easy to understand error message
-            var    = spec["variable"][0]
+            var    = spec["variable"]
             bcType = BoundaryType[spec["type"].upper()]
             value  = spec["value"]
             if len(spec["variable"])>1:
@@ -212,7 +214,7 @@ class Symmetry(BoundaryCondition):
 
             # 2. get index of specific variable
             for v in self.bH.variables:
-                if v[0] == var:
+                if  v[0] == var or v[0] == var[:-1]: #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked 
                     index1 = self.bH.variables.index(v)
                     if len(v[1])>1:
                         index2 = v[1].index(comp)

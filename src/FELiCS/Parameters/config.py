@@ -326,43 +326,44 @@ class config(ABC):
                                 file.writelines(parameter+'='+str(eval('self.'+group+'.'+parameter))+'\n')
         file.close()
 
-    def initBCsDict(self,VariableList):
-        ''' Initialize BCsDict '''
-        BCIDList = self.__BCIDs__
-        
-        # First define local BCsDict and set Neumann by default
-        BCsDict = {}
-        for Variable in VariableList:
-            BCsDict[Variable] = []
-            for BCID in BCIDList:
-                BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-        self.__BCsDict__ = BCsDict
+    # TODO Sophie: this will be removed after boundary restructuring
+    #def initBCsDict(self,VariableList):
+    #    ''' Initialize BCsDict '''
+    #    BCIDList = self.__BCIDs__
+    #    
+    #    # First define local BCsDict and set Neumann by default
+    #    BCsDict = {}
+    #    for Variable in VariableList:
+    #        BCsDict[Variable] = []
+    #        for BCID in BCIDList:
+    #            BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
+    #    self.__BCsDict__ = BCsDict
 
-    def importBCsDict(self, VariableList):
-        ''' Import a boundary condition file with checking 
-        the consistency of BCs and mesh. 
-        To read the BCs without checking use importSettings()
-        '''
+    #def importBCsDict(self, VariableList):
+    #    ''' Import a boundary condition file with checking 
+    #    the consistency of BCs and mesh. 
+    #    To read the BCs without checking use importSettings()
+    #    '''
 
-        # Read BCFile
-        filepath    = self.BoundaryCondition.BCsFilePath
-        BCFile      = open(filepath)
-        importDict  = json.load(BCFile)
-        logger.debug(f"Reading boundary conditions from '{filepath}'")
+    #    # Read BCFile
+    #    filepath    = self.BoundaryCondition.BCsFilePath
+    #    BCFile      = open(filepath)
+    #    importDict  = json.load(BCFile)
+    #    logger.debug(f"Reading boundary conditions from '{filepath}'")
 
-        # Invert sorting of boundary condition from ID-first to variable-first
-        result = {}
-        for ID, variable_list in importDict.items():
-            for dict in variable_list:
-                variable    = dict["variable"]
-                dict.pop("variable", None)
-                dict["ID"]  = int(ID)
-                if variable not in result:
-                    result[variable] = []
-                result[variable].append(dict)
+    #    # Invert sorting of boundary condition from ID-first to variable-first
+    #    result = {}
+    #    for ID, variable_list in importDict.items():
+    #        for dict in variable_list:
+    #            variable    = dict["variable"]
+    #            dict.pop("variable", None)
+    #            dict["ID"]  = int(ID)
+    #            if variable not in result:
+    #                result[variable] = []
+    #            result[variable].append(dict)
 
-        # Finally, copy local BCsDict to the object
-        self.__BCsDict__ = result
+    #    # Finally, copy local BCsDict to the object
+    #    self.__BCsDict__ = result
 
 
     def readDomainData(self,MeshFile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
@@ -378,6 +379,12 @@ class config(ABC):
         self.Case.Equations            = self.getEquationList()
         self.Case.TransportedVariables = self.getTransportedVariablesList(self.Case.Equations)
         
+        ## Setup the boundary conditions
+        ## TODO Sophie: this will be removed after boundary restructuring 
+        #self.__BCIDs__, self.__boundaries__ = self.__mesh__.getBCInfo()
+        #self.initBCsDict(ExtendedTransportedQuantityList)
+        #self.importBCsDict(ExtendedTransportedQuantityList)
+
 
     def getMesh(self):
         ''' Function is returning the mesh '''
