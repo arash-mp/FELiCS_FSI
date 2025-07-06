@@ -40,9 +40,6 @@ class fieldProperties:
 
     """
 
-    def __init__(self):
-        pass
-
     def isMeanFlowClass(self):
         from FELiCS.Fields.meanFlowClass import meanFlowClass
         return isinstance(self, meanFlowClass)

@@ -243,12 +243,11 @@ class EquationCollectionClass():
 
             
         # Add sponge region to equation list only if the field was given in the mean flow file
-        if 'spg' not in mean._meanFlowClass__notInFileList:
+        if 'spg' not in mean._notInFileList:
             from FELiCS.Equation.Equations.SpongeTerm import SpongeTerm
             logger.debug('Adding sponge damping.')
             eqObject      = SpongeTerm(self.equations,self,fluctuationC,X,self._param) # give equationsList-Dictionary as "index"
             self.equationList.append(eqObject)
-
 
 
         if self._param.Case.AnalysisMode in ['Resolvent']:
