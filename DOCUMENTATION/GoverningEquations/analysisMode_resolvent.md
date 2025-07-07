@@ -6,6 +6,7 @@ The starting point is the equation for a linear system:
 $$
 (A + j \omega B) \hat{q} = J\hat{q} = \hat{f},
 $$
+**Isn't it $(j \omega B - A) like in Town et al. 2018??$**
 where $A$ is the linear operator and $J$ is the Jacobian of the system. Applying a discretization scheme and considering a finite element method weighting:  
 $$
 \hat{q} = R W_{\text{FEM}} \hat{f},\quad \text{with}\quad \mathbf{R=J^{-1}}.
