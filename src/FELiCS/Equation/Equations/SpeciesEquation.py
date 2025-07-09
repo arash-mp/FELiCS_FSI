@@ -149,10 +149,12 @@ class SpeciesEquation(EquationTemplate):
         weakForm.add(( -1j*fluc.D(species)*(iDot(iGrad(mean.Y(species)),iGrad(iConj(X)))) ).ufl_tens*J_hat*dx)
         
         #--------------------------------Reaction
-        #reaction = mean.RR_prefactor * mean.rho * (fluc.Y(species) - 2 * fluc.Y(species) * mean.Y(species))\
-        #                 + mean.RR_prefactor * fluc.rho * (mean.Y(species) - mean.Y(species) * mean.Y(species))
+        reaction = mean.RR_prefactor * mean.rho * (fluc.Y(species) - 2 * fluc.Y(species) * mean.Y(species))\
+                        + mean.RR_prefactor * fluc.rho * (mean.Y(species) - mean.Y(species) * mean.Y(species))
+        # reaction = 860 * mean.rho * (fluc.Y(species) - 2 * fluc.Y(species) * mean.Y(species))\
+        #                 + 860 * fluc.rho * (mean.Y(species) - mean.Y(species) * mean.Y(species))
         ##weakForm.add((1j * fluc.omega(species)*iConj(X)).ufl_tens*J_hat*dx)
-        #weakForm.add((1j * reaction*iConj(X)).ufl_tens*J_hat*dx)
+        weakForm.add((1j * reaction*iConj(X)).ufl_tens*J_hat*dx)
 
 
         # ----------------------------------------- Input/Output forcing

@@ -128,15 +128,14 @@ class MomentumEquation(EquationTemplate):
 
 
         # ------------------------ Pressure gradient terms
-        int_by_parts = True  
+        int_by_parts = False
         if int_by_parts:
             # Integrate pressure gradient boundary terms (resulting from integration by parts)
             weakForm += (1j*fluc.p*iDiv(iConj(X))).ufl_tens*J_hat*dx
             weakForm += (-1j*iDot(fluc.p*iConj(X), self.n)).ufl_tens*J_hat*self.all_ds
         else:
             # No integration by parts of the pressure term
-            logger.error(' -> Pressure term without IbP not implemented in tensor framework.')
-            raise Exception('Pressure term without IbP not implemented in tensor framework.')
+            weakForm += -(1j*iDot(iGrad(fluc.p), iConj(X)) ).ufl_tens*J_hat*dx
 
         # ------------------------ Diffusion term
         # NOTE: In the current implementation of FELiCS, a mean.rhoean factor is missing
@@ -156,10 +155,9 @@ class MomentumEquation(EquationTemplate):
         ## ---- Visc. 3: viscous BC terms for input-output analysis
         if self.param.Case.AnalysisMode in ['Input-Output']:
             for boundary_index in self.param.IOResolvent.ForcingBoundaryIndices:
-                weakForm += ( 1j*mean.nuTot*iDot(iDot(iGrad(fluc.u),self.n),iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index)
+                weakForm += ( 1j*iDot(iDot(fluc.tau,self.n),iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index)
                 # Version with full viscous tensor (not assuming constant viscosity) --> Not working as expected for now
                 #self.A_vf.add((1j*mean.nuTot*iDot(iDot(iGrad(fluc.u, self.m)+iT(iGrad(fluc.u, self.m)),),iConj(X))).ufl_tens*J_hat*self.ds(boundary_index))
-
 
     def addNonlinearExpression(self, weakForm, mean):
         """

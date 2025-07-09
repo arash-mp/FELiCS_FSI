@@ -75,6 +75,8 @@ class reactionClass:
         
             self._RR = mean_RR_prefactor * mean_rho * (fluc.Y(specie) - 2 * fluc.Y(specie) * mean_Yspecie)\
                      + mean_RR_prefactor * fluc.rho * (mean_Yspecie - mean_Yspecie * mean_Yspecie)
+            # self._RR = 860 * mean_rho * (fluc.Y(specie) - 2 * fluc.Y(specie) * mean_Yspecie)\
+            #          + 860 * fluc.rho * (mean_Yspecie - mean_Yspecie * mean_Yspecie)
         else:
             raise Exception('Reaction mechanism ' + reaction['type'] + ' unknown!')
         self._determineReactionFormula()
