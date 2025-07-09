@@ -20,7 +20,7 @@ from FELiCS.Misc.logging                import Logger
 logger = Logger.get_logger("felics")
 ```
 
-3. In this tutorial the Modal Analysis has been done for base flow with $Re = 125$. Hence, the flow field is imported through the file <code style="color : Darkorange">base_flow_for_FELiCS_125.fel</code>, with its path also defined in the settings file <code style="color : Darkorange">Re125_Modal.json</code>. 
+3. In this tutorial the Modal Analysis has been done for base flow with $\mathrm{Re} = 125$. Hence, the flow field is imported through the file <code style="color : Darkorange">base_flow_for_FELiCS_125.fel</code>, with its path also defined in the settings file <code style="color : Darkorange">Re125_Modal.json</code>. 
 
 ```py
 flowFilename         = 'base_flow_for_FELiCS_125.fel'
