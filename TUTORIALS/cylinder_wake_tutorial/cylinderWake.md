@@ -4,7 +4,7 @@
 
 1. Importing all the necassary Python packages:
 
-```
+```py
 import os
 import time
 import numpy as np
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 2. Import FEniCSx packages
 
-```
+```py
 import  dolfinx
 from    mpi4py import MPI
 from    dolfinx.fem import Function, FunctionSpace
@@ -23,7 +23,7 @@ from    ufl import VectorElement, SpatialCoordinate, exp, FiniteElement
 
 3. Importing all the necassary FELiCS packages
 
-```
+```py
 from FELiCS.Parameters.config import config
 from FELiCS.SpaceDisc import DefineFEMSpaces
 from FELiCS.Fields.meanFlowClass import meanFlowClass
@@ -35,7 +35,7 @@ from FELiCS.Fields.Field import Field
 
 4. Importing all the associated Python scripts
 
-```
+```py
 import generate_cylinder_mesh
 ```
 
