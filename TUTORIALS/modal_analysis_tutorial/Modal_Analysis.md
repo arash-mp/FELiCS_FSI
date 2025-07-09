@@ -77,28 +77,28 @@ $$
 
 In the matrix form the GEVP can be formulated as
 
-$$
-    \omega \underbrace{\begin{bmatrix}
+```math
+    \omega \underbrace{\left[\begin{array}{cc}
         -i*\mathrm{Re} & 0 \\
         0     & 0
-    \end{bmatrix}}_{B}
+    \end{array}\right]}_{B}
 
-    \begin{bmatrix}
+    \left[\begin{array}{c}
         \hat{\bold{u}} \\
         \hat{p}
-    \end{bmatrix}
+    \end{array}\right]
     =
 
-    \underbrace{\begin{bmatrix}
+    \underbrace{\left[\begin{array}{cc}
         \mathrm{Re}*C+D & 0 \\
         0 & G
-    \end{bmatrix}}_{A}
+    \end{array}\right]}_{A}
 
-    \begin{bmatrix}
+    \left[\begin{array}{c}
         \hat{\bold{u}} \\
         \hat{p}
-    \end{bmatrix}
-$$
+    \end{array}\right]
+```
 
 ```py
 A = equation.getLinearOperator(meanFlow)
