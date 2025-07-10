@@ -137,6 +137,7 @@ class meanFlowClass(
         # Define the viscosity and alfa fields
         # NOTE: This should move to a handler
         self.initLamDiff()
+        self.initThermodynamicQuantities()
 
 #    def addDerivativeFieldsToMean(self):
 #        from ufl import sqrt
@@ -168,6 +169,12 @@ class meanFlowClass(
                 
             self._fieldDict['D_' + specie]              = Function(self._FEMSpaces.P2)
             self._fieldDict['D_' + specie].x.array[:]   = nuTot.x.array[:] / Sc
+
+    def initThermodynamicQuantities(self):
+        from dolfinx.fem import Function
+
+        self._fieldDict['Pr']            = Function(self._FEMSpaces.P2)
+        self._fieldDict['Pr'].x.array[:] = self._param.Case.PrandtlNumber
 
     def importMatFile(self):
         import scipy.io as spio

@@ -23,7 +23,7 @@ class momentumHandler:
             A list of field names required for linear momentum calculations.
         """
         outList = ['u', 'rhou', 'p']
-        if not self._param.Mixture.Viscosity['type'] == 'Constant': 
+        if not self._param.Case.MolViscPerturbModel['type'] == 'Constant': 
             outList.append('nulam')
         return outList
 
@@ -69,15 +69,15 @@ class momentumHandler:
             If the viscosity model type is not implemented.
         """
         alreadyDeterminedFields = list(self._fieldDict.keys())
-        viscosityModel = self._param.Mixture.Viscosity
+        viscosityModel = self._param.Case.MolViscPerturbModel
         if viscosityModel['type'] == 'Constant':
             pass
         elif viscosityModel['type'] == 'Sutherland mean':
             if 'rho' in alreadyDeterminedFields and not 'nulam' in alreadyDeterminedFields:
                 if mean == 'None':
                     mean = self._mean
-                mixture = self._param.Mixture
-                Ts = mixture.Viscosity['Constants']['Ts']
+                mixture = self._param.Case.MolViscPerturbModel
+                Ts = viscosityModel['Constants']['Ts']
                 nulam, fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
                 self._fieldDict['nulam'] = nulam 
         else:

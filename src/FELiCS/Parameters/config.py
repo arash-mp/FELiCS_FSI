@@ -54,12 +54,21 @@ class config(ABC):
                 'AnalysisMode':             {'datatype':str,    'default':'Modal'},
                 'CalculateAdjoint':         {'datatype':bool,   'default':True},
                 'CoordinateSystem':         {'datatype':str,    'default':'Cartesian'},
+                # 'HeatCapacityConstPressure':{'datatype':int,    'default':1005},
+                # 'HeatCapacityRatio':        {'datatype':int,    'default':1.4},
                 'm':                        {'datatype':int,    'default':0},
                 'MeshFilePath':             {'datatype':str,    'default':''},
                 'MixtureFilePath':          {'datatype':str,    'default':''},
                 'MolVisc':                  {'datatype':int,    'default':0.0},
                 'MolViscModel':             {'datatype':str,    'default':'Constant'},
+                'MolViscPerturbModel':      {'datatype':dict,
+                    'default':{
+                        'type':             'Constant',
+                        'Constants':        {'Viscosity':1.0}
+                    }
+                },
                 'nDim':                     {'datatype':int,    'default':2},
+                'PrandtlNumber':            {'datatype':int,    'default':0.72},
                 'Reaction':                 {'datatype':bool,   'default':False},
                 'SetOfEquations':           {'datatype':dict,
                     'default':{
@@ -447,12 +456,12 @@ class config(ABC):
         # If necessary, add density and enthalpy diffusion
         if 'rho' in self.getTransportedQuantityList():
             MeanList.append('rho')
-            if self.Case.MolViscModel == 'File' or self.Case.molViscPerturbModel == 'Sutherland mean':
+            if self.Case.MolViscModel == 'File' or self.Case.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('alpha')
         # Add species which are transported
         for specie in self.Mixture.getSpeciesList('transported'):
             MeanList.append(specie)
-            if self.Case.MolViscModel == 'File' or self.Case.molViscPerturbModel == 'Sutherland mean':
+            if self.Case.MolViscModel == 'File' or self.Case.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('D_'+specie)
         # If Input-Output analysis is used, the forcing must be read in (at least curently) for
         # every conservative variable ()...
@@ -479,7 +488,7 @@ class config(ABC):
             MeanList.append(specie)
         if self.Case.TurbulenceModel in ['File']:
             MeanList.append('nuturb')
-        if self.Case.MolViscModel in ['File'] or self.Case.molViscPerturbModel in ['Sutherland mean']:
+        if self.Case.MolViscModel in ['File'] or self.Case.MolViscPerturbModel in ['Sutherland mean']:
             MeanList.append('nulam')
         if self.Case.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.Case["CoordinateSystem"] == 'Cylindrical':
             MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
