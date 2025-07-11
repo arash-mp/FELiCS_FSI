@@ -56,6 +56,7 @@ class FELiCSMesh:
             self._cpp_object = self.dolfinxMesh._cpp_object
         x = SpatialCoordinate(self.dolfinxMesh)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
+        self.coordinateSystemName = coordinateSystem
         if coordinateSystem =='Cartesian':
             self.__coordinateSystem = CoordinateSystem(
                                     x, 

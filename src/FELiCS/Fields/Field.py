@@ -40,17 +40,6 @@ class Field:
         # initialize function
         self.function = Function(FEMSpace)
 
-        ## initialize list of tensor(s)
-        ## TODO Sophie: write more bug proof without try-except statement
-        #try:  # if the function is defined on a vector or a scalar function space, this should work
-        #    self.tensorList = [Tensor(self.function,self.mesh.coordinateSystem)]
-        #except: # if the function is defined on a mixed function space, this is how its done 
-        #    numberOfSubSpaces = self.space.num_sub_spaces
-        #    self.tensorList   = [None]*numberOfSubSpaces
-        #    fields            = self.getListOfSingleFields()
-        #    for i in range(numberOfSubSpaces):
-        #        self.tensorList[i] = Tensor(fields[i].function, self.mesh.coordinateSystem)
-
     def getName(self):
         if len(self.name) == 0:
             return ""
@@ -59,10 +48,26 @@ class Field:
         else:
             return self.name
 
+    def getComponentsNames(self):
+        ## This is  a workaround for now, to use for the retreat.
+        ## TODO Sophie: make this independent of the coordinate system, and also usable for mixed function spaces.
+        numberOfSubSpaces = self.space.num_sub_spaces
+        if numberOfSubSpaces == 0:
+            return []
+        elif self.mesh.coordinateSystemName == "Cartesian" and numberOfSubSpaces == 2:
+            return ["x","y"]
+        elif self.mesh.coordinateSystemName == "Cartesian" and numberOfSubSpaces == 3:
+            return ["x","y","z"]
+        elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 2:
+            return ["x","r"]
+        elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 3:
+            return ["x","r","t"]
+
+
     def getTensor(self):
         from FELiCS.Misc.tensorUtils import Tensor
+        # TODO Sophie: handle Tensors of mixed functions (later)
         return Tensor(self.function, self.mesh.coordinateSystem)
-
 
     def getListOfSingleFields(self):
         """

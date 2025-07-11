@@ -463,7 +463,7 @@ class meanFlowClass(
         for name in nameListMean:
             if name[0] == 'u' and name not in ['ut_forcing_r',
                                                'ut_forcing_i']:
-                self._fieldDict[name] = Field(self._VectorFunctionSpace, self._mesh, name=u)
+                self._fieldDict[name] = Field(self._VectorFunctionSpace, self._mesh, name="u")
                 # All inplane velocity components are defined as vectors.
                 # Therefore, for these, iterate through the components
                 for component in self._param.BoundaryCondition.VelocityComponents:
