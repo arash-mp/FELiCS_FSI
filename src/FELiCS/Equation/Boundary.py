@@ -18,8 +18,6 @@ class BoundaryHandler():
         self.IDs                    = np.unique(self.facet_tags.values)
         self.variables              = variables
 
-        print(print(1 not in self.IDs))
-
         #2. read bc file 
         # TODO Sophie: 
         # 1. throw error if file is not there
