@@ -338,7 +338,7 @@ class config(ABC):
             self.dim      = self.__mesh__.gdim
 
         self.Case.Equations            = self.getEquationList()
-        self.Case.TransportedVariables = self.getTransportedVariablesList(self.Case.Equations)
+        self.Case.StateVectorVariables = self.getStateVectorVariables(self.Case.Equations)
         
 
     def getMesh(self):
@@ -407,7 +407,7 @@ class config(ABC):
         return EquationsList
 
 
-    def getTransportedVariablesList(self, EquationList):
+    def getStateVectorVariables(self, EquationList):
         ### TODO Sophie: make this the central list besides the equation list and clean up
         VariablesList = []
         for equation in EquationList:

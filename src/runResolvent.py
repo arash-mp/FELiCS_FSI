@@ -32,17 +32,11 @@ def runResolvent(param):
             param,
             mesh,
         )
-    
-    # Read in mean flow
+        
+    # read in mean flow and export to h5-file
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
-    meanFlow.importDataFromFile()
-    
-    # Export the mean flow to a "h5" file
-    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-        meanFlow.exportBaseFlowAsHDF5()
-    meanflowFilename = 'meanflow.h5'
-    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
-    
+    meanFlow.importDataFromFileAndExportToH5()
+ 
     # Define the equations
     equation = EquationCollectionClass(
             param,
@@ -83,7 +77,8 @@ def runResolvent(param):
 
     # Start tracking time
     start = time.time()
-
+    
+    # TODO: use a Modecollection object here
     for i, omega in enumerate(omegas):
 
         logger.info("Solving resolvent SVD for omega = " + str(omega))
@@ -141,11 +136,10 @@ def runResolvent(param):
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION
     #-----------------------------------------------------------------------
-    #fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
-
     fluctSolutList = []     
     # construct a fluctuationSolutions Object for the Response, Forcing of     
     # every Frequency     
+    # TODO: should be replaced by a more elegant command, preferably in the Modecollection object
     for i, omega in enumerate(omegas):         
         for gainNumb in range(responses.shape[1]):             
             fluctSolutForcing = fluctuationSolutions(                                 
