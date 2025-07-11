@@ -62,33 +62,48 @@ FELiCS -file settings.json
 ```
 
 ## Structure of the `boundaries.json` file
-The structure of this file is expected to evolve soon. The current structure is:
+The structure of this file is:
 ```json
 {
-"var1" (str):
-    [{"ID": (int), "type": (str) "Dirichlet" or "Neumann", "value": (float)},
-"var2" (str):
-    [{"ID": (int), "type": (str) "Dirichlet" or "Neumann", "value": (float)},
-}
+"ID1":{            (int as a str)    ID of the boundary. For gmsh *.msh* meshes, this must correspond to the index of an existing *PhysicalNames* entry.
+    "name":        (str)             name of boundary type; one of: ("zeroDirichle", "wall", "custom", "symmetry","none")
+    "specifics":{  (dict)            only for boundary types "custom" and "symmetry"
+        "variable":(str)             the name of the variable considered; has to be one of the state vector varaibles, defined in the "SetOfEquations" part in the general config.json file
+        "type"    :(str)             type of boundary conditions, one of: ("Dirichlet", "Neumann", "None")
+        "value"   :(float)           value imposed on the variable (or its gradient)
+}}}
 ```
-where:
-* `"var" (str)` is the name of the variable considered. 
-* `"ID": (int)` is the index of the boundary considered. For gmsh *.msh* meshes, this must correspond to the index of an existing *PhysicalNames* entry.
-* `"type": (str)` is the type of BC applied at the boundary for the variable considered. Currently only accepts `"Dirichlet"` or `"Neumann"`.
-* `"value": (float)` is the value imposed on the variable (or its gradient). **Always 0.0 ??**
 
-A typical `boundaries.json` file is:
+Here is an expamle for a `boundaries.json` file:
 
 ```json
 {
-"300":
-    [{"variable": "ux", "type": "Dirichlet", "value": 0.0},
-    {"variable": "uy", "type": "Dirichlet", "value": 0.0},
-    {"variable": "p", "type": "Neumann", "value": 0.0}],
-"301":
-    [{"variable": "ux", "type": "Neumann", "value": 0.0},
-    {"variable": "uy", "type": "Neumann", "value": 0.0},
-    {"variable": "p", "type": "Dirichlet", "value": 0.0}]
+    "1": {
+        "name": "zeroDirichlet"
+    },
+    "2": {
+        "name": "symmetry",
+        "specifics": [
+            {
+                "variable": "ux",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "uy",
+                "type": "Neumann",
+                "value": 0.0
+            },
+            {
+                "variable": "p",
+                "type": "Dirichlet",
+                "value": 0.0
+            }
+        ]
+    },
+    "3": {
+        "name": "wall"
+    }
 }
 ```
 
