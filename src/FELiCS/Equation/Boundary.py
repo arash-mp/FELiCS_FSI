@@ -28,10 +28,12 @@ class BoundaryHandler():
         
 
         #3. create boundary object for each boundary
-        # TODO Sophie: check if ID is in self.Ids and throw an error message if not (also naming all the ids that are there)
         self.boundaryList = []
         for ID in BCsInfo:
             id_int = int(ID)
+            if id_int not in self.IDs: # check if the boundary ID exists in mesh file
+                logger.error(f"The given boundary ID '{ID}' in your boundary file does not exist. The boundary IDs given from your mesh file are: '{self.IDs}'. ")
+                raise ValueError("One of the given boundary IDs does not exist. Please read the FELiCS error message for details.")
             info = BCsInfo[ID]
             name = info["name"].lower() # make the info in the bc file non-case sensitive
             if   name  == "custom":
@@ -45,8 +47,8 @@ class BoundaryHandler():
             elif name  == "none":
                 bc = BoundaryCondition(id_int, BCsInfo[ID], self) # this is the default boundary condition, nothing is done for any variable
             else:
-                # TODO Sophie: write error message if the name is not recognized and stop FELiCS (give list of possible boundary condition names)
-                pass
+                logger.error(f"The boundary condition with name '{name}' does not exist. Please choose from the following list: [custom, zeroDirichlet, wall, symmetry, none]. The names are not case sensitive. ")
+                raise ValueError("One of the set boudary conditions does not exist. Please read the FELiCS error message for details.")
             self.boundaryList.append(bc)
 
 
