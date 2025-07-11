@@ -1,6 +1,5 @@
 # Third party libraries
 from h5py           import File
-from dolfinx.fem    import Function
 
 # Local libraries and methods
 from FELiCS.IO.export                                           import export
@@ -10,6 +9,8 @@ from FELiCS.Equation.dependentVariables.equationOfStateHandler  import equationO
 from FELiCS.Equation.dependentVariables.reactionHandler         import reactionHandler
 from FELiCS.Misc.tensorUtils                                    import Tensor
 from FELiCS.Misc.logging                                        import Logger
+
+from FELiCS.Fields.Field                                        import Field
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -40,61 +41,25 @@ class meanFlowClass(
         self._coordinateSystem  = mesh.coordinateSystem
         
         self._meanflowFilename  = None
-        self._mixture          = param.Mixture
+        self._mixture           = param.Mixture
         
         # Define some useful tensors
-        self._zeroField         = Function(self._FEMSpaces.P2)
-        self._zeroFieldTensor   = Tensor(
-            Function(self._FEMSpaces.P2),
-            self._coordinateSystem,
-            )
-        self._oneFieldArray     = Function(self._FEMSpaces.P2)
-        self._oneFieldArray.x.array[:] = 1.0
-        self._oneField          = Tensor(
-            self._oneFieldArray,
-            self._coordinateSystem, 
-            )
-        
+        self._zeroField         = Field(self._FEMSpaces.P2, self._mesh, name="zero")
+        self._oneField          = Field(self._FEMSpaces.P2, self._mesh, name="one")
+        self._oneField.setConstantValue(1.0)
+
         # Allocate
         self._customMeanFlowQuantities = []
         
-        #self.addDerivativeFieldsToMean()
-        #self.initLamDiff()
-        #if param.Case.Reaction:
-        #    print('1')
-            #print(param.Mixture.getReactionMechanism()['type'])
-            #if param.Mixture.getReactionMechanism()['type'] == '2S-SM2':
-            #    print('2')
-            #    param.Mixture.getReactionMechanism()['type']
-            #    self.calculateSpeciesEnthalpy()
-            #    from FELiCS.Equation.Reactions.c2sm2 import C2SM2
-            #    YCH4_lim = 0.043 * 1e-4
-            #    self._reaction = C2SM2(YCH4_lim, 2)
-            #    self._reaction.computeSensitivities(self.T,
-            #                                         self.rho,
-            #                                         self.Y('CH4'),
-            #                                         self.Y('CO'),
-            #                                         self.Y('O2'),
-            #                                         self.Y('CO2'))
-            #    self._fieldDict['Q'] = self._reaction.Q(self.T,
-            #                                                self.rho,
-            #                                                self.Y('CH4'),
-            #                                                self.Y('CO'),
-            #                                                self.Y('O2'),
-            #                                                self.Y('CO2'))
-            #if param.Mixture.ReactionMechanism['type'] == 'NOx':
-            #    print('3')
-            #    from FELiCS.Equation.Reactions.NOx import NOx
-            #    self._reaction = NOx(2)
 
     def importDataFromFileAndExportToH5(self):
         logger.info(f"Reading input flow from: '{self._param.FlowInput.MeanFlowFilePath}'")
 
-        self._fieldDict                     = {}
+        self._fieldDict                    = {}
         self._notInFileList                = []
         self._RawFlowDict                  = {}
         self._nDimRawData                  = 0
-        self._ScalarFunctionSpace           = self._FEMSpaces.P2
+        self._ScalarFunctionSpace          = self._FEMSpaces.P2
         self._VectorFunctionSpace          = self._FEMSpaces.FunctionSpaceVectorVelocity
         self._CoordinateSystemInputData    = 'Unknown'
         
@@ -106,10 +71,11 @@ class meanFlowClass(
             nameListMean    = self._getMeanFieldsToBeRead()    
             for name in nameListMean:
                 if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
-                    fieldDict[name] = Function(
-                        self._FEMSpaces.FunctionSpaceVectorVelocity)
+                    # TODO Sophie: add correct name to velocity field
+                    fieldDict[name] = Field(
+                        self._FEMSpaces.FunctionSpaceVectorVelocity, self._mesh, name = [])
                 else:
-                    fieldDict[name] = Function(self._FEMSpaces.P2)
+                    fieldDict[name] = Field(self._FEMSpaces.P2, self._mesh, name = name)
             self._fieldDict = fieldDict
 
         elif self._param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'h5':
@@ -144,22 +110,22 @@ class meanFlowClass(
         from dolfinx.fem import Function
 
         if self._param.Case.MolViscModel == 'Constant':
-            self._fieldDict['nulam']            = Function(self._FEMSpaces.P2)
-            self._fieldDict['nulam'].x.array[:] = self._param.Case.MolVisc
+            self._fieldDict['nulam']            = Field(self._FEMSpaces.P2, self._mesh, name = "nulam")
+            self._fieldDict['nulam'].setCoefficientArray(self._param.Case.MolVisc)
 
         for specie in self._param.Mixture.getSpeciesList('transported'):
             Sc      = self._param.Mixture.species[specie]['Sc']
-            nuTot   = Function(self._ScalarFunctionSpace)
+            nuTot   = Field(self._ScalarFunctionSpace, self._mesh, name = "nuTot")
 
             if 'nulam' in list(self._fieldDict.keys()):
-                nuTot.x.array[:] += self._fieldDict['nulam'].x.array[:]
+                nuTot += self._fieldDict['nulam']
             if 'nuturb' in list(self._fieldDict.keys()):
-                nuTot.x.array[:] += self._fieldDict['nuturb'].x.array[:]
+                nuTot += self._fieldDict['nuturb']
             if 'nuSGS' in list(self._fieldDict.keys()):
-                nuTot.x.array[:] += self._fieldDict['nuSGS'].x.array[:]
+                nuTot += self._fieldDict['nuSGS']
                 
-            self._fieldDict['D_' + specie]              = Function(self._FEMSpaces.P2)
-            self._fieldDict['D_' + specie].x.array[:]   = nuTot.x.array[:] / Sc
+            self._fieldDict['D_' + specie]  = Field(self._FEMSpaces.P2, self._mesh, name= 'D_'+specie)
+            self._fieldDict['D_' + specie]  = nuTot / Sc
 
     def importMatFile(self):
         import scipy.io as spio
@@ -227,28 +193,29 @@ class meanFlowClass(
         nameListMean = self._getMeanFieldsToBeRead()    
         for name in nameListMean:
             if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
-                fieldDict[name] = Function(
-                    self._FEMSpaces.FunctionSpaceVectorVelocity)
+                # TODO Sophie: give correct name
+                fieldDict[name] = Field(
+                    self._FEMSpaces.FunctionSpaceVectorVelocity, self._mesh, name = [])
             else:
-                fieldDict[name] = Function(self._FEMSpaces.P2)
+                fieldDict[name] = Field(self._FEMSpaces.P2, self._mesh, name=name)
 
             if name == 'u':
                 for index, component in enumerate(velocityComponents):
                     indicesOfSubField = \
-                    fieldDict[name].function_space.sub(index).collapse()[1]
-                    fieldDict[name].x.array[indicesOfSubField] = \
+                    fieldDict[name].space.sub(index).collapse()[1]
+                    fieldDict[name].function.x.array[indicesOfSubField] = \
                     meanflowH5[f'meanflow/{component}/magnitude'][:][
                         indexMappingArray]
 
             else:
                 if name in list(meanflowH5[f'meanflow'].keys()):
-                    fieldDict[name].x.array[:] = \
+                    fieldDict[name].function.x.array[:] = \
                     meanflowH5[f'meanflow/{component}/magnitude'][:][
                         indexMappingArray]
                 else:
                     self._notInFileList.append(name)
         if 'ut' in list(fieldDict.keys()):
-            fieldDict['ut'].x.array[:] = 0.0
+            fieldDict['ut'].setConstant(0.)
         self._fieldDict = fieldDict
         #for key in list(fieldDict.keys()):
         #    self._fieldDict[key] = Tensor(
@@ -491,7 +458,8 @@ class meanFlowClass(
         for name in nameListMean:
             if name[0] == 'u' and name not in ['ut_forcing_r',
                                                'ut_forcing_i']:
-                self._fieldDict[name] = Function(self._VectorFunctionSpace)
+                # TODO Sophie: give correct name 
+                self._fieldDict[name] = Field(self._VectorFunctionSpace, self._mesh, name=[])
                 # All inplane velocity components are defined as vectors.
                 # Therefore, for these, iterate through the components
                 for component in self._param.BoundaryCondition.VelocityComponents:
@@ -505,7 +473,7 @@ class meanFlowClass(
             # Do the same as above, for all scalars. Here no iteration through
             # components is necessary
             else:
-                self._fieldDict[name] = Function(self._ScalarFunctionSpace)
+                self._fieldDict[name] = Field(self._ScalarFunctionSpace, self._mesh, name)
                 if name in list(self._RawFlowDict.keys()):
                     valsP2[:, m] = np.array(self._RawFlowDict[name])
                     namesP2.append(name)
@@ -552,14 +520,14 @@ class meanFlowClass(
                                 == 'Azimuthal':
                             # For this case a azimuthal average is performed by
                             # using the function ContractFromAzimuthalAverage
-                            self._fieldDict[name].sub(idx).x.array[dofIDX] \
+                            self._fieldDict[name].function.sub(idx).x.array[dofIDX] \
                                 = ContractAfterAverage(dof_coordinatesP2,
                                                        self._param,
                                                        temp_vecP2[:, m])
                         else:
                             # In this case a simple copy of the interpolation
                             # results is sufficient
-                            self._fieldDict[name].sub(idx).x.array[dofIDX] \
+                            self._fieldDict[name].function.sub(idx).x.array[dofIDX] \
                                 = np.array(temp_vecP2[:, m])
                         # Increment m
                         m += 1
@@ -572,12 +540,12 @@ class meanFlowClass(
                     if name in list(self._RawFlowDict.keys()):
                         if self._param.FlowInput.AveragingDirection \
                                 == 'Azimuthal':
-                            self._fieldDict[name].x.array[:] \
+                            self._fieldDict[name].function.x.array[:] \
                                 = ContractAfterAverage(dof_coordinatesP2,
                                                        self._param,
                                                        temp_vecP2[:, m])
                         else:
-                            self._fieldDict[name].x.array[:] \
+                            self._fieldDict[name].function.x.array[:] \
                                 = np.array(temp_vecP2[:, m])
                         m += 1
 
@@ -783,7 +751,7 @@ class meanFlowClass(
                     index = 2
                 fieldToPlot = self._fieldDict[pfield[0] + pfield[2:]][index]
                 dofIDX = self._fieldDict[pfield[0] + pfield[2:]].\
-                    function_space().sub(index).dofmap().dofs()
+                    space.sub(index).dofmap().dofs()
                 cbarmin = np.min(self._fieldDict[pfield[0] + pfield[2:]].
                                  split()[index].vector()[dofIDX])
                 cbarmax = np.max(self._fieldDict[pfield[0] + pfield[2:]].
@@ -897,7 +865,7 @@ class meanFlowClass(
             File
         )
         field   = self._fieldDict[field_name]
-        V       = field.function_space()
+        V       = field.space()
         u       = TrialFunction(V)
         v       = TestFunction(V)
         f       = Constant(0)
@@ -938,7 +906,7 @@ class meanFlowClass(
         Function returns:
         instance of the class meanFlowVertexValues
         """
-        return meanFlowVertexValues(self._meanfieldDict, self._oneFieldArray,self._FEMSpaces.exportMesh)
+        return meanFlowVertexValues(self._meanfieldDict, self._FEMSpaces.exportMesh)
 
     def _getMeanFieldsToBeRead(self):
         listOfFieldsToBeRead = self._param.getMeanFlowFieldNames()
@@ -979,22 +947,20 @@ class meanFlowVertexValues(fieldProperties):
     def __init__(
             self, 
             fieldDict, 
-            oneField,
             mesh,
             ):
         self._fieldDict = {}
         import numpy as np
-        self._oneField = oneField.x.array[:]
         self._isMean = True
         for key in list(fieldDict.keys()):
             #tempMeanArray = fieldDict[key].compute_vertex_values()
             # The vector components (velocity u) need to be reshaped
-            if fieldDict[key].function_space.num_sub_spaces > 1:
-                tempSolutionArray = np.zeros((fieldDict[key].function_space.num_sub_spaces, mesh.coordinates().shape[0]),
+            if fieldDict[key].space.num_sub_spaces > 1:
+                tempSolutionArray = np.zeros((fieldDict[key].space.num_sub_spaces, mesh.coordinates().shape[0]),
                                              dtype=complex)
-                for subSpace in range(fieldDict[key].function_space.num_sub_spaces):
-                    indicesOfSubSpace = fieldDict[key].function_space.sub(subSpace).collapse()[1]
-                    tempSolutionArray[subSpace, :] = fieldDict[key].x.array[indicesOfSubSpace]
+                for subSpace in range(fieldDict[key].space.num_sub_spaces):
+                    indicesOfSubSpace = fieldDict[key].space.sub(subSpace).collapse()[1]
+                    tempSolutionArray[subSpace, :] = fieldDict[key].function.x.array[indicesOfSubSpace]
                 self._fieldDict[key] = tempSolutionArray
             else:
-                self._fieldDict[key] = fieldDict[key].x.array[:]
+                self._fieldDict[key] = fieldDict[key].getCoefficientArray()

@@ -616,7 +616,7 @@ class EquationCollectionClass():
             responseRestrictor_scalarP1.x.array[:]  = 1. # Setting 1 to everywhere
             logger.debug('No spatial restriction of Resolvent response.')
         else:
-            responseRestrictor_scalarP2             = self._mean.responseDomain    # using actual values
+            responseRestrictor_scalarP2             = self._mean.responseDomain.function    # using actual values
             responseRestrictor_scalarP1             = Function(self._FEMSpaces.P1)
             responseRestrictor_scalarP1.interpolate(responseRestrictor_scalarP2)
             logger.debug('Imposing spatial restriction of Resolvent response.')
@@ -675,10 +675,7 @@ class EquationCollectionClass():
             logger.debug('No spatial restriction of Resolvent forcing.')
         else:
             # invert values, if non-zero
-            array                                   = self._mean.forcingDomain.x.array
-            #array[:] =  np.where(array[:]!= 0., 1./ array[:], 0.) # NOTE: (Simon) is this used at all? #TODO: (Sophie) Check expression in documentation
-            self._mean.forcingDomain.x.array[:]    = array[:]
-            forcingRestrictor_scalarP2              = self._mean.forcingDomain    # using actual values
+            forcingRestrictor_scalarP2              = self._mean.forcingDomain.function    # using actual values
             forcingRestrictor_scalarP1              = Function(self._FEMSpaces.P1)
             forcingRestrictor_scalarP1.interpolate(forcingRestrictor_scalarP2)
             logger.debug('Imposing spatial restriction of Resolvent forcing.')

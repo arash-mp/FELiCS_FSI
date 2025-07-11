@@ -1,5 +1,4 @@
-from dolfinx.fem import Function, petsc
-
+from dolfinx.fem             import Function, petsc
 
 class Field:
     """
@@ -19,8 +18,8 @@ class Field:
     ----------
     FEMSpace : dolfinx.fem.FunctionSpace
         The finite element function space.
-    mesh:      dolfinx.mesh.Mesh
-        The computational mesh associated with the function space.
+    mesh:      FELiCS.SpaceDisc.FELiCSMesh
+        FEliCS mesh associated with the function space.
     name:      optional, list of tuples; e.g. [("name",[])] for a scalar space, or [("name",["x","y","z"]] for a vector space, a list of both types for a mixed space
     """
 
@@ -35,13 +34,34 @@ class Field:
             self.name  = name
         elif isinstance(name, str):
             self.name  = [(name,[])]
+        else:
+            self.name = name
 
         # initialize function
         self.function = Function(FEMSpace)
 
-        # initialize tensor(s)
-        # TODO Sophie: initialize list of tensors
-        self.tensorList = None
+        ## initialize list of tensor(s)
+        ## TODO Sophie: write more bug proof without try-except statement
+        #try:  # if the function is defined on a vector or a scalar function space, this should work
+        #    self.tensorList = [Tensor(self.function,self.mesh.coordinateSystem)]
+        #except: # if the function is defined on a mixed function space, this is how its done 
+        #    numberOfSubSpaces = self.space.num_sub_spaces
+        #    self.tensorList   = [None]*numberOfSubSpaces
+        #    fields            = self.getListOfSingleFields()
+        #    for i in range(numberOfSubSpaces):
+        #        self.tensorList[i] = Tensor(fields[i].function, self.mesh.coordinateSystem)
+
+    def getName(self):
+        if len(self.name) == 0:
+            return ""
+        elif len(self.name) == 1 and len(self.name[0][1])==0:
+            return self.name[0][0]
+        else:
+            return self.name
+
+    def getTensor(self):
+        from FELiCS.Misc.tensorUtils import Tensor
+        return Tensor(self.function, self.mesh.coordinateSystem)
 
 
     def getListOfSingleFields(self):
@@ -146,7 +166,11 @@ class Field:
         array : numpy.ndarray
             A complex-valued array of coefficients.
         """
-        self.function.x.array[:] = array[:]
+        import numpy as np
+        if np.isscalar(array):
+            self.function.x.array[:] = array
+        else:
+            self.function.x.array[:] = array[:]
 
     def setConstantValue(self, value): 
         """
@@ -391,11 +415,43 @@ class Field:
         """
         ## overrides '+'
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(other, Field):
             result = Field(self.space, self.mesh)
             result.setCoefficientArray(self.getCoefficientArray() + other.getCoefficientArray())
             return result 
         return NotImplemented
+
+    def __mul__(self, other):
+        import numpy as np
+        ## overrides '*'
+        ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray()*other.getCoefficientArray())
+            return result
+        elif np.isscalar(other):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray()*other)
+            return result
+        return NotImplemented
+
+    def __truediv__(self, other):
+        import numpy as np
+        ## overrides '*'
+        ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray()/other.getCoefficientArray())
+            return result
+        elif np.isscalar(other):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray()/other)
+            return result
+        return NotImplemented
+
 
 
 
