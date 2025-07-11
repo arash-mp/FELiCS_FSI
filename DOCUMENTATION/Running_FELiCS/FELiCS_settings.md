@@ -3,7 +3,7 @@
 In the upcoming version of FELiCS, the input parameters will only be loaded from the three following **.json** files:
 - `settings.json`: contains most of the information about the FELiCS run.
 - `boundaries.json`: contains specific information about the boundary conditions.
-- `mixture.json`: contains specific information about the physical properties of the fluid considered.
+- `mixture.json`(optional): contains specific information about the physical properties of the fluid considered.
 
 
 The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
@@ -37,14 +37,14 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "BCsFilePath":      (str)   path to the "boundaries.json" file,
 },
 "Case":{
-    "AnalysisMode":     (str)   type of analysis ("Modal", "Resolvent", "InputOutput"),
+    "AnalysisMode":     (str)   type of analysis, one of: ("Modal", "Resolvent", "InputOutput"),
     "CalculateAdjoint": (bool)  if we compute the adjoint spectrum in "Modal" analysis,
-    "CoordinateSystem": (str)   coordinate system ("Cylindrical", "Cartesian"),
-    "m":                (float) wavenumber of fluctuations in the Fourier dimension (for 2D analysis),
+    "CoordinateSystem": (str)   coordinate system, one of: ("Cylindrical", "Cartesian"),
+    "m":                (float) wavenumber of fluctuations in the third, spectral dimension (for a 2D grid),
     "MeshFilePath":     (str)   path to the mesh file.
     "MixtureFilePath":  (str)   path to the "mixture.json" file.
-    "MolVisc":          (float) laminar viscosity (dynamic viscosity in compressible!) value when "MolViscModel" is set to "Constant"
-    "MolViscModel":     (str)   type of laminar viscosity model used for mean laminar viscosity,
+    "MolVisc":          (float) kinematic viscosity (dynamic viscosity in compressible flows) value when "MolViscModel" is set to "Constant"
+    "MolViscModel":     (str)   type of laminar viscosity model used for the viscosity,
     "MolViscPerturbModel": (dict)   type of laminar viscosity model used for fluctuating laminar viscosity, specifying [type, empirical constants], e.g.:
         {
             "type":"Sutherland mean",
@@ -52,7 +52,7 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
         },
     "nDim":             (int)   number of dimensions resolved in the mesh.
     "PrandtlNumber":    (int)   spatially global Prandtl number, only relevant for cases where thermal diffusion or conduction is involved
-    "Reaction":         (bool)  if using chemistry reactions (DEPRECATED?)
+    "Reaction":         (bool)  if using chemistry reactions (DEPRECATED? => DEFINED IN THE MIXTURE FILE?)
     "SetOfEquations":{  (dict)  with fields: [equations, variants, transported variables], all defined as str. e.g.:  
         "Momentum":{
             "Equation":"NSPrimitive",
@@ -75,13 +75,13 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "ForcingBoundaryIndices": (list of int) indices of boundaries where forcing is applied ("InputOutput" analysis),
     "ForcingCoeff":     (list of int)   variables onto which forcing is applied ("InputOutput" analysis),
     "ForcingMode":      (str)   type of forcing "Body" or "Boundary" ("InputOutput" analysis)
-    "ForcingNorm":      (str)   norm type for the forcing term ("Resolvent" analysis)
-    "ResponseNorm":     (str)   norm type for the response term ("Resolvent" analysis)
+    "ForcingNorm":      (str)   norm type for the forcing term ("Resolvent" analysis), one of: ("TKE" - default, "Chu")
+    "ResponseNorm":     (str)   norm type for the response term ("Resolvent" analysis), one of ("TKE" - default, "Chu)
     "Omegas":           (list)  angular frequency (see formatting in previous section),
 },
 "Numerics":{
     "EigenValueGuess":  (list)  eigenvalue guesses for "Modal" analysis (see formatting in previous section),
-    "nSolut":           (int)   number of solutions to compute (in "Modal" and "Resolvent" analysis)
+    "nSolut":           (int)   number of solutions to compute (number of nearest eigenvalues in  "Modal" analysis, number of resolvent modes per frequency in "Resolvent" analysis)
     "PolynomialOrder":  (dict)  sets the polynomial order for each transported variables (list must match "SetOfEquations"). e.g.: {"u": 2,"T": 1,"rho": 1}
 }}
 ```
@@ -121,30 +121,19 @@ An example of `boundaries.json` is
 ```
 
 ## Structure of the `mixture.json` file
->**Warning:** No idea how this is organized. Please, Thomas or someone who knows about this completes the documentation here.
+>**TODO: ** review (Thomas?)
 
-In most cases that do not involve chemistry modelling or species transport, the `mixture.json` is not used and a dummy file is passed instead. The structure of the dummy file is:
+In most cases that do not involve chemistry modelling or species transport, the `mixture.json` is not needed. 
 
-```json
-{
-"species":{
-    "Air" :{
-        "calc":"constraint"
-    }
-},
-"reaction":{}
-}
-```
-
-The following is an example of the `mixture.json` file for a case using chemistry:
+Below is the structure of the `mixture.json` file for a case using chemistry:
 
 ```json
 {
-"Species": (dict) list of species that are considered, providing how they are calculated and additional species properties, e.g.:
+"Species":                        (dict) list of species that are considered, providing how they are calculated and additional species properties, e.g.:
     { 
-        "phi":{
+        "phi":{                   (dict) name of species
             "calc":"transported", (str) specify species that are returned, "all": all species, "transported": only species with separate transport equations, "constraint": only passive species without transport equations,
-            "Sc":0.9 (int) Schmidt number of the species
+            "Sc":0.9              (float) Schmidt number of the species
         }
     },
 "Reaction_mechanism": (dict) list with type of reaction model and all required settings, e.g.:
@@ -154,7 +143,7 @@ The following is an example of the `mixture.json` file for a case using chemistr
     "reactions":[{ (dict) list of reactions that provides all involved educts and products and their corresponding stoichiometric coefficients
         "educts": [],
         "stochiometricCoefficientsEducts": [],
-        "products": ["progress"],
+        "products": ["progress"],  
         "stochiometricCoefficientsProducts": [1.0]
     }]
 }}
