@@ -130,7 +130,7 @@ class EquationCollectionClass():
 
         ## BOUNDARIES
         # Initialize boundary handler
-        self.variables          = param.Case.TransportedVariables
+        self.variables          = param.Case.StateVectorVariables
         self.boundaryHandler    = BoundaryHandler(self.variables, mesh, param.BoundaryCondition.BCsFilePath)
         # Initialize ds: Get all boundaries (So far hard coded)
         self.ds                 = Measure("ds", subdomain_data=mesh.facet_tags)
