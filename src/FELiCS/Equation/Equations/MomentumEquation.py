@@ -128,7 +128,7 @@ class MomentumEquation(EquationTemplate):
 
 
         # ------------------------ Pressure gradient terms
-        int_by_parts = False
+        int_by_parts = True
         if int_by_parts:
             # Integrate pressure gradient boundary terms (resulting from integration by parts)
             weakForm += (1j*fluc.p*iDiv(iConj(X))).ufl_tens*J_hat*dx
