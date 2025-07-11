@@ -108,14 +108,9 @@ class FELiCSMesh:
         this method calculates the meshCells array in the fenics representation
         """
         connectivityCells = self.dolfinxMesh.topology.connectivity(2, 0)
-        topology = self.dolfinxMesh.topology
-        try:    #try new version of dolfinx 
-            self.meshCells = connectivityCells.array.reshape(
-                [topology.original_cell_index.shape[0], topology.cell_types[0].value])
-        except: #use old language. TODO: handle DEPRECATED stuff uniformly
-            logger.info("DEPRECATED: Mesh module from dolfinx version <0.7.0 is used.")
-            self.meshCells = connectivityCells.array.reshape(
-                [topology.original_cell_index.shape[0], topology.cell_type.value])
+        topology          = self.dolfinxMesh.topology
+        self.meshCells    = connectivityCells.array.reshape(
+                            [topology.original_cell_index.shape[0], topology.cell_type.value])
 
     def cells(self):
         """
@@ -129,6 +124,14 @@ class FELiCSMesh:
         This method acts as a getter-method for the vertex-coordinates.
         """
         return self.dolfinxMesh.geometry.x[:, 0:self.gdim]
+    
+    def getBCInfo(self):
+        """ 
+        This function provides both the IDs of the boundary conditions 
+        and also the boundary nodes.
+        """
+        from numpy import unique
+        return unique(self.facet_tags.values), self.facet_tags 
 
     @property
     def coordinateSystem(self):
