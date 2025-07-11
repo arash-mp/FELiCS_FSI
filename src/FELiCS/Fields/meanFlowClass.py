@@ -131,8 +131,8 @@ class meanFlowClass(
     def initThermodynamicQuantities(self):
         from dolfinx.fem import Function
 
-        self._fieldDict['Pr']            = Function(self._FEMSpaces.P2)
-        self._fieldDict['Pr'].x.array[:] = self._param.Case.PrandtlNumber
+        self._fieldDict['Pr']            = Field(self._FEMSpaces.P2, self._mesh, name="Pr")
+        self._fieldDict['Pr'].setConstantValue(self._param.Case.PrandtlNumber)
 
     def importMatFile(self):
         import scipy.io as spio
