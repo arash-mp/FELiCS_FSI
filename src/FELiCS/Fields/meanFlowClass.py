@@ -71,9 +71,8 @@ class meanFlowClass(
             nameListMean    = self._getMeanFieldsToBeRead()    
             for name in nameListMean:
                 if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
-                    # TODO Sophie: add correct name to velocity field
                     fieldDict[name] = Field(
-                        self._FEMSpaces.FunctionSpaceVectorVelocity, self._mesh, name = [])
+                        self._FEMSpaces.FunctionSpaceVectorVelocity, self._mesh, name = name)
                 else:
                     fieldDict[name] = Field(self._FEMSpaces.P2, self._mesh, name = name)
             self._fieldDict = fieldDict
@@ -200,9 +199,8 @@ class meanFlowClass(
         nameListMean = self._getMeanFieldsToBeRead()    
         for name in nameListMean:
             if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
-                # TODO Sophie: give correct name
                 fieldDict[name] = Field(
-                    self._FEMSpaces.FunctionSpaceVectorVelocity, self._mesh, name = [])
+                    self._FEMSpaces.FunctionSpaceVectorVelocity, self._mesh, name = name)
             else:
                 fieldDict[name] = Field(self._FEMSpaces.P2, self._mesh, name=name)
 
@@ -465,8 +463,7 @@ class meanFlowClass(
         for name in nameListMean:
             if name[0] == 'u' and name not in ['ut_forcing_r',
                                                'ut_forcing_i']:
-                # TODO Sophie: give correct name 
-                self._fieldDict[name] = Field(self._VectorFunctionSpace, self._mesh, name=[])
+                self._fieldDict[name] = Field(self._VectorFunctionSpace, self._mesh, name=u)
                 # All inplane velocity components are defined as vectors.
                 # Therefore, for these, iterate through the components
                 for component in self._param.BoundaryCondition.VelocityComponents:

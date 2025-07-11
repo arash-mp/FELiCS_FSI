@@ -46,11 +46,10 @@ class export:
         self._exportMesh    = FEMSpaces.exportMesh
 
         self._exportZeroScalarField = Field(self._FEMSpaces.P1Export, self._exportMesh, name="exportZeroScalar")
-        # TODO Sophie: put correct name
         self._exportZeroVectorField = Field(
                 self._FEMSpaces.FunctionSpaceVectorVelocityExport,
                 self._exportMesh, 
-                name=[]
+                name="exportZeroVector"
                 )
 
     def _mapCalcToExport(self, exportObject):
