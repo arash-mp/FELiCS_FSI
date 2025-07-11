@@ -1,34 +1,11 @@
-# Settings files in FELiCS
-
-In the upcoming version of FELiCS, the input parameters will only be loaded from the three following **.json** files:
+# Setting files
+The input parameters are loaded from the three following **.json** files:
 - `settings.json`: contains most of the information about the FELiCS run.
 - `boundaries.json`: contains specific information about the boundary conditions.
 - `mixture.json`(optional): contains specific information about the physical properties of the fluid considered.
 
-
-The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
-```bash
-FELiCS -file settings.json
-```
-
-The other two files are found via the corresponding entries of the `settings.json` file.
-
->**Warning:** only the parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
-
-## Specific formatting for FELiCS settings and json
-
-* **booleans** are defined in lowercase (`true`, `false`)
-* json accepts exponential notation for all float-type inputs
-* **`EigenValueGuess`** and **`Omegas`** can be either
-  * list of strings for complex values: `["1.0-1j", "1.0+1j"]`
-  * list of floats for real values: `[1, 2, 1.2e-1]`
-  * combinations of the two above: `["1.0-1j", 1, "1.0+1j", 2]`
-
 ## Structure of the `settings.json` file
-
->**Note:** The name of the file is not important. 
-
-Below is the structure of the `settings.json` file, it is divided into 6 main sections:
+The typical `settings.json` file is divided into 6 main sections:
 
 
 ``` json
@@ -85,40 +62,60 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "PolynomialOrder":  (dict)  sets the polynomial order for each transported variables (list must match "SetOfEquations"). e.g.: {"u": 2,"T": 1,"rho": 1}
 }}
 ```
+>**Note:** The name of the file is not important. 
+The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
+```bash
+FELiCS -file settings.json
+```
 
 ## Structure of the `boundaries.json` file
+The structure of this file is:
+```json
+{
+"ID1":{            (int as a str)    ID of the boundary. For gmsh *.msh* meshes, this must correspond to the index of an existing *PhysicalNames* entry.
+    "name":        (str)             name of boundary type; one of: ("zeroDirichlet", "wall", "custom", "symmetry","none")
+    "specifics":{  (dict)            only for boundary types "custom" and "symmetry"
+        "variable":(str)             the name of the variable considered; has to be one of the state vector varaibles, defined in the "SetOfEquations" part in the general config.json file
+        "type"    :(str)             type of boundary conditions, one of: ("Dirichlet", "Neumann", "None")
+        "value"   :(float)           value imposed on the variable (or its gradient)
+}}}
+```
 
-The structure of this file is expected to evolve soon. The current structure is:
+Here is an expamle for a `boundaries.json` file:
 
 ```json
 {
-"var1" (str):
-    [{"ID": (int), "type": (str) "Dirichlet" or "Neumann", "value": (float)},
-"var2" (str):
-    [{"ID": (int), "type": (str) "Dirichlet" or "Neumann", "value": (float)},
+    "1": {
+        "name": "zeroDirichlet"
+    },
+    "2": {
+        "name": "symmetry",
+        "specifics": [
+            {
+                "variable": "ux",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "uy",
+                "type": "Neumann",
+                "value": 0.0
+            },
+            {
+                "variable": "p",
+                "type": "Dirichlet",
+                "value": 0.0
+            }
+        ]
+    },
+    "3": {
+        "name": "wall"
+    }
 }
 ```
+>**Note:** The name of the file is not important. 
+The name of this json file should be set in the main settings file via the variable "BCsFilePath".
 
-where:
-* `"var" (str)` is the name of the variable considered. 
-* `"ID": (int)` is the index of the boundary considered. For gmsh *.msh* meshes, this must correspond to the index of an existing *PhysicalNames* entry.
-* `"type": (str)` is the type of BC applied at the boundary for the variable considered. Currently only accepts `"Dirichlet"` or `"Neumann"`.
-* `"value": (float)` is the value imposed on the variable (or its gradient). **Always 0.0 ??**
-
-An example of `boundaries.json` is
-
-```json
-{
-"300":
-    [{"variable": "ux", "type": "Dirichlet", "value": 0.0},
-    {"variable": "uy", "type": "Dirichlet", "value": 0.0},
-    {"variable": "p", "type": "Neumann", "value": 0.0}],
-"301":
-    [{"variable": "ux", "type": "Neumann", "value": 0.0},
-    {"variable": "uy", "type": "Neumann", "value": 0.0},
-    {"variable": "p", "type": "Dirichlet", "value": 0.0}]
-}
-```
 
 ## Structure of the `mixture.json` file
 >**TODO: ** review (Thomas?)
@@ -148,3 +145,13 @@ Below is the structure of the `mixture.json` file for a case using chemistry:
     }]
 }}
 ```
+
+## Specific formatting for FELiCS settings and json
+* **booleans** are defined in lowercase (`true`, `false`)
+* **`EigenValueGuess`** and **`Omegas`** can be either
+  * list of strings for complex values: `["1.0-1j", "1.0+1j"]`
+  * list of floats for real values: `[1, 2, 1.2e-1]`
+  * a combination of both: `["1.0-1j", 1, "1.0+1j", 2]`
+* json accepts exponential notation for all float-type inputs
+
+>**Warning:** only the parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
