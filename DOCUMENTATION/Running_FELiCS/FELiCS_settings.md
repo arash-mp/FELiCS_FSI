@@ -30,6 +30,7 @@ The other two files are found via the corresponding entries of the `settings.jso
 
 Below is the structure of the `settings.json` file, it is divided into 6 main sections:
 
+
 ``` json
 {
 "BoundaryCondition":{
@@ -43,8 +44,14 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "MeshFilePath":     (str)   path to the mesh file.
     "MixtureFilePath":  (str)   path to the "mixture.json" file.
     "MolVisc":          (float) laminar viscosity (dynamic viscosity in compressible!) value when "MolViscModel" is set to "Constant"
-    "MolViscModel":     (str)   type of laminar viscosity model used for laminar viscosity,
+    "MolViscModel":     (str)   type of laminar viscosity model used for mean laminar viscosity,
+    "MolViscPerturbModel": (dict)   type of laminar viscosity model used for fluctuating laminar viscosity, specifying [type, empirical constants], e.g.:
+        {
+            "type":"Sutherland mean",
+            "Constants": {"Ts":170.672}
+        },
     "nDim":             (int)   number of dimensions resolved in the mesh.
+    "PrandtlNumber":    (int)   spatially global Prandtl number, only relevant for cases where thermal diffusion or conduction is involved
     "Reaction":         (bool)  if using chemistry reactions (DEPRECATED?)
     "SetOfEquations":{  (dict)  with fields: [equations, variants, transported variables], all defined as str. e.g.:  
         "Momentum":{
@@ -114,10 +121,9 @@ An example of `boundaries.json` is
 ```
 
 ## Structure of the `mixture.json` file
-
 >**Warning:** No idea how this is organized. Please, Thomas or someone who knows about this completes the documentation here.
 
-In most cases that do not involve chemistry modelling to describe the fluid, the `mixture.json` is not used and a dummy file is passed instead. The structure of the dummy file is:
+In most cases that do not involve chemistry modelling or species transport, the `mixture.json` is not used and a dummy file is passed instead. The structure of the dummy file is:
 
 ```json
 {
@@ -134,23 +140,18 @@ The following is an example of the `mixture.json` file for a case using chemistr
 
 ```json
 {
-"Species":{
-    "progress":{
-        "calc":"transported",
-        "Sc":0.9
-    }
-},
-"Pr":0.9,
-"Viscosity":{
-    "type":"Constant",
-    "Constants":{
-        "Viscosity":1.0
-    }
-},
-"Reaction_mechanism":{
-    "type": "KaiserCnF2023",
-    "additional_fields":["prefactor"],
-    "reactions":[{
+"Species": (dict) list of species that are considered, providing how they are calculated and additional species properties, e.g.:
+    { 
+        "phi":{
+            "calc":"transported", (str) specify species that are returned, "all": all species, "transported": only species with separate transport equations, "constraint": only passive species without transport equations,
+            "Sc":0.9 (int) Schmidt number of the species
+        }
+    },
+"Reaction_mechanism": (dict) list with type of reaction model and all required settings, e.g.:
+{
+    "type": "KaiserCnF2023", (str) type of reaction model (currently only "KaiserCnF2023" is implemented)
+    "additional_fields":["prefactor"], (str) additional fields to be read in from the input *.fel file 
+    "reactions":[{ (dict) list of reactions that provides all involved educts and products and their corresponding stoichiometric coefficients
         "educts": [],
         "stochiometricCoefficientsEducts": [],
         "products": ["progress"],
