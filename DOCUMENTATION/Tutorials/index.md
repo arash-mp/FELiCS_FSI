@@ -5,5 +5,7 @@ Welcome to Tutorials!
 :maxdepth: 1
 
 Resolvent_Analysis.md
+tutorial_1.md
+
 
 

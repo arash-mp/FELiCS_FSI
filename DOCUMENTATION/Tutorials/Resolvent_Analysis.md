@@ -16,14 +16,16 @@ In this tutorial, we will perform incompressible resolvent analysis about the 2D
 ### Mesh generation
 
 We generate the 2D mesh on GMSH. 
-To do so, we write a **.geo** file readable by GMSH using the python script [geoMesh.py](../../TUTORIAL/resolvent_tutorial/geoMesh.py).
+To do so, we write a **.geo** file readable by GMSH using the python script [geoMesh.py](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/TUTORIALS/_build/resolvent_tutorial/geoMesh.py).
 
 Feel free to play with the `CellsFineness` factor to see the influence of finer meshes.
->**Warning:** For 2D computations, FELiCS handles only triangular elements only.
+
+**Warning:** For 2D computations, FELiCS handles only triangular elements only.
+
 Open the .geo file with GMSH. You should obtain this geometry:
-![Alt Text](../../TUTORIAL/resolvent_tutorial/GMSH.png)
+![Image1](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/TUTORIALS/_build/resolvent_tutorial/GMSH.png)
 CLick on "Mesh" and "2D". Export the mesh in File -> Export it in a **.msh** format. Make sur to use `Version 2 ASCII`.
-![Alt Text](../../TUTORIAL/resolvent_tutorial/GMSH2.png)
+![Alt Text](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/TUTORIALS/_build/resolvent_tutorial/GMSH2.png)
 Place this `FeliCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
