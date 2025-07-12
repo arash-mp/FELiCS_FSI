@@ -16,7 +16,7 @@ In this tutorial, we will perform incompressible resolvent analysis about the 2D
 ### Mesh generation
 
 We generate the 2D mesh on GMSH. 
-To do so, we write a **.geo** file readable by GMSH using the python script [geoMesh.py](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/TUTORIALS/_build/resolvent_tutorial/geoMesh.py).
+To do so, we write a **.geo** file readable by GMSH using the python script [geoMesh.py](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/geoMesh.py?ref_type=heads).
 
 Feel free to play with the `CellsFineness` factor to see the influence of finer meshes.
 
@@ -56,7 +56,7 @@ DEFINE THE BOUNDARIES WITH NEW METHOD?
 
 ## Resolvent parameters
 The setting file contains all the analysis information. It should be placed in our 
-An example of setting file is provided [here](./resolvent_setting.json). The explanation of each field is provided in [Setting files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/DOCUMENTATION/_build/Running_FELiCS/FELiCS_settings).
+An example of setting file is [resolvent_setting.json](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/resolvent.json?ref_type=heads). The explanation of each field is provided in [Setting files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/DOCUMENTATION/_build/Running_FELiCS/FELiCS_settings).
 
 The azimuthal number is chosen:
 ```json
@@ -101,7 +101,10 @@ Your case folder shouldlook like:
 ├ mixture.json
 └── output_dir
 ```
-
+Run the analysis with the command: 
+```bash
+FELiCS -file settings.json
+```
 ## Postprocessing
 
 ## References
