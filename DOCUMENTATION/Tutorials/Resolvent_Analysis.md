@@ -150,9 +150,9 @@ print(f'Gmsh .geo file "{geo_file_name}" has been successfully created in {file_
 Feel free to play with the `CellsFineness` factor to see the influence of finer meshes.
 >**Warning:** For 2D computations, FELiCS handles only triangular elements only.
 Open the .geo file with GMSH. You should obtain this geometry:
-![Alt Text](GMSH.png)
+![Alt Text](../TUTORIAL/resolvent_tutorial/GMSH.png)
 CLick on "Mesh" and "2D". Export the mesh in File -> Export it in a **.msh** format. Make sur to use `Version 2 ASCII`.
-![Alt Text](GMSH2.png)
+![Alt Text](../TUTORIAL/resolvent_tutorial/GMSH2.png)
 Place this `FeliCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
