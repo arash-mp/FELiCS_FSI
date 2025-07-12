@@ -23,9 +23,12 @@ Feel free to play with the `CellsFineness` factor to see the influence of finer 
 **Warning:** For 2D computations, FELiCS handles only triangular elements only.
 
 Open the .geo file with GMSH. You should obtain this geometry:
-![Image1](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/GMSH.png?ref_type=heads)
+![Image1](../../../TUTORIALS/resolvent_tutorial/GMSH.png)
 CLick on "Mesh" and "2D". Export the mesh in File -> Export it in a **.msh** format. Make sur to use `Version 2 ASCII`.
-![Alt Text](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/GMSH2.png?ref_type=heads)
+![Alt Text](../../TUTORIALS/resolvent_tutorial/GMSH2.png)
+![Alt Text](../TUTORIALS/resolvent_tutorial/GMSH.png)
+![Alt Text](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/GMSH.png?ref_type=heads)
+![Alt Text](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/GMSH.png)
 Place this `FeliCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
@@ -56,7 +59,7 @@ DEFINE THE BOUNDARIES WITH NEW METHOD?
 
 ## Resolvent parameters
 The setting file contains all the analysis information. It should be placed in our 
-An example of setting file is [resolvent_setting.json](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/resolvent.json?ref_type=heads). The explanation of each field is provided in [Setting files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/DOCUMENTATION/_build/Running_FELiCS/FELiCS_settings).
+An example of setting file is [resolvent_setting.json](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/resolvent.json?ref_type=heads). The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
 The azimuthal number is chosen:
 ```json
@@ -74,11 +77,11 @@ If we wish to include a turbulent viscolity fields, we should be set:
 ```json
     {"TurbulenceModel":"File"}
 ```
-The frequencies for which we compute the resolvent modes are provided in the array: 
+The frequencies for which we compute the resolvent modes are provided in the field: 
 ```json
     {"Omegas":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]}
 ```
-**NOTE:** complexe frequencies can also be handed with the string format: 
+Complexe frequencies can also be solved using the string format: 
 ```json
     {"Omegas":["1.0-1j", "1.0+1j"]}
 ```
@@ -91,7 +94,7 @@ We can vary the number of resolvent modes that we want to compute with the field
 {"CalculateAdjoint", "EigenValueGuess"}
 ```
 ## Running the analysis
-Your case folder shouldlook like:
+Your case folder should look like:
 ```bash
 .
 ├ FeliCS_mesh.msh
@@ -103,7 +106,7 @@ Your case folder shouldlook like:
 ```
 Run the analysis with the command: 
 ```bash
-FELiCS -file settings.json
+FELiCS -file resolvent_setting.json
 ```
 ## Postprocessing
 
