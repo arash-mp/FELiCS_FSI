@@ -11,7 +11,7 @@ fold_path = '/home/avillie/repository/LESbis'
 case = {
     'DATA_FILE': '/dynamics_bloodflow/utils/UMean.npy',  # Mean velocity data from LES data
     'MESH_FILE': '/dynamics_bloodflow/utils/Mesh.npy',   # Mesh coordinates
-    'SAVE_FILE': '/mean4FELiCS.fel',           # Output file for FELiCS
+    'SAVE_FILE': '/meanFlow.fel',           # Output file for FELiCS
 }
 
 # Physical parameters
@@ -39,9 +39,13 @@ nu_mol = (1 / physpar['Re']) * np.ones(len(x))
 # NOTE: an eddy viscosity field can be defined as nuturb
 
 # Create figure with the mean flow
-plt.figure(figsize=(20, 6))
-plt.scatter(x, y, c=ux)
-plt.scatter(x, y, c=ur)
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 6))
+sc1 = ax1.scatter(x, y, c=ux)
+ax1.set_title('Forcing Domain')
+plt.colorbar(sc1, ax=ax1)
+sc2 = ax2.scatter(x, y, c=ur)
+ax2.set_title('Response Domain')
+plt.colorbar(sc2, ax=ax2)
 
 # Upstream sponge parameters
 x0inlet = -2  # Start of inlet sponge region

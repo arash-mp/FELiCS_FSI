@@ -16,8 +16,7 @@ In this tutorial, we will perform incompressible resolvent analysis about the 2D
 ### Mesh generation
 
 We generate the 2D mesh on GMSH. 
-To do so, we write a **.geo** file readable by GMSH using the python script [geoMesh.py](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/geoMesh.py?ref_type=heads)
-[geoMesh.py](../../TUTORIALS/resolvent_tutorial/geoMesh.py).
+To do so, we write a **.geo** file readable by GMSH using the python script [geoMesh.py](../../TUTORIALS/resolvent_tutorial/geoMesh.py).
 
 Feel free to play with the `CellsFineness` factor to see the influence of finer meshes.
 
@@ -69,6 +68,7 @@ We set the moecular viscosity to be the inverse of the Reynolds number since we 
 ```json
 "MolVisc":0.000125,
 ```
+You can increase this field in order to add a uniform eddy viscosity field. 
 Care should be brought to consistency accross the normalization. 
 
 We want to solve the Momentum and Mass equations only and set the others to `"None"`
@@ -109,6 +109,22 @@ Run the analysis with the command:
 FELiCS -file resolvent_setting.json
 ```
 ## Postprocessing
+After the computation, check the `output_dir/`. You should have these files: 
+```bash
+.
+├ meanflow.h5
+├ gains.csv
+├ Resolvent_mesh.h5
+├ Resolvent_Omega3.1_Forcing_gain0.xmf
+├ Resolvent_Omega3.1_Forcing_gain0.h5
+├ Resolvent_Omega3.1_Response_gain0.xmf
+├ Resolvent_Omega3.1_Response_gain0.h5
+└── output_dir
+```
+After solving several frequencies, you can plot the gains against the Strouhal number using the python script [postProd_gains.py](../../TUTORIALS/resolvent_tutorial/postProd_gains.py). 
+
+To visualize the mode shape, open the file `Resolvent_Omega3.1_Response_gain0.xmf` with Paraview. 
+>**Warning:** The gains provided by FELiCS are $sigma^2$. The forcing modes have a unitary norm on the defined forcing domain, but the response modes have the norm $sigma$ on the defined response domain.
 
 ## References
 <a id="1">[1]</a> 
