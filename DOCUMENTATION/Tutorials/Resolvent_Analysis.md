@@ -23,9 +23,9 @@ Feel free to play with the `CellsFineness` factor to see the influence of finer 
 **Warning:** For 2D computations, FELiCS handles only triangular elements only.
 
 Open the .geo file with GMSH. You should obtain this geometry:
-![Image1](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/TUTORIALS/_build/resolvent_tutorial/GMSH.png)
+![Image1](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/GMSH.png?ref_type=heads)
 CLick on "Mesh" and "2D". Export the mesh in File -> Export it in a **.msh** format. Make sur to use `Version 2 ASCII`.
-![Alt Text](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/TUTORIALS/_build/resolvent_tutorial/GMSH2.png)
+![Alt Text](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/GMSH2.png?ref_type=heads)
 Place this `FeliCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
@@ -74,6 +74,14 @@ If we wish to include a turbulent viscolity fields, we should be set:
 ```json
     {"TurbulenceModel":"File"}
 ```
+The frequencies for which we compute the resolvent modes are provided in the array: 
+```json
+    {"Omegas":[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]}
+```
+**NOTE:** complexe frequencies can also be handed with the string format: 
+```json
+    {"Omegas":["1.0-1j", "1.0+1j"]}
+```
 We can vary the number of resolvent modes that we want to compute with the field:
 ```json
     {"nSolut": 3}
@@ -81,7 +89,6 @@ We can vary the number of resolvent modes that we want to compute with the field
 **NOTE:** The following fields are not relevent for the resolvent analysis:
 ```json
 {"CalculateAdjoint", "EigenValueGuess"}
-
 ```
 ## Running the analysis
 Your case folder shouldlook like:
