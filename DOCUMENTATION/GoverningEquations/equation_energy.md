@@ -37,35 +37,24 @@ Assumptions:
 
 ### Nonlinear equations
 $$
-\frac{\partial p}{\partial t}
-+ \mathbf{u} \cdot \nabla p
-+ \gamma p(\nabla \cdot \mathbf{u})
-- (\gamma - 1)\left[ \nabla (\kappa \nabla T) + \tau : \nabla \mathbf{u}\right] = 0
+\frac{\partial p}{\partial t} + \mathbf{u} \cdot \nabla p + \gamma p(\nabla \cdot \mathbf{u}) - (\gamma - 1)\left[ \nabla (\kappa \nabla T) + \tau : \nabla \mathbf{u}\right] = 0
 $$
+
 with the mean viscous shear stress tensor $\overline{\tau}$ being defined as
+
 $$
-\overline{\tau} = \overline{\mu} \left[\left(\nabla + \nabla ^T\right)\overline{\mathbf{u}}
-- \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}}) \mathbf{I}\right]
+\overline{\tau} = \overline{\mu} \left[\left(\nabla + \nabla ^T\right)\overline{\mathbf{u}} - \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}}) \mathbf{I}\right]
 $$
 
 ### Linear equations
 $$
-\frac{\partial p'}{\partial t}
-+ \overline{\mathbf{u}} \cdot \nabla p'
-+ \mathbf{u}' \cdot \nabla \overline{p}
-+ \gamma \left[ \overline{p}(\nabla \cdot \mathbf{u}') + p'(\nabla \cdot \overline{\mathbf{u}}) \right]
-- (\gamma - 1)\left[ \nabla (\overline{\kappa} \nabla T' + \kappa' \nabla \overline{T} + \overline{\tau} : \nabla \mathbf{u}' + \tau' : \nabla \overline{\mathbf{u}}) \right] = 0
+\frac{\partial p'}{\partial t} + \overline{\mathbf{u}} \cdot \nabla p' + \mathbf{u}' \cdot \nabla \overline{p} + \gamma \left[ \overline{p}(\nabla \cdot \mathbf{u}') + p'(\nabla \cdot \overline{\mathbf{u}}) \right] - (\gamma - 1)\left[ \nabla (\overline{\kappa} \nabla T' + \kappa' \nabla \overline{T} + \overline{\tau} : \nabla \mathbf{u}' + \tau' : \nabla \overline{\mathbf{u}}) \right] = 0
 $$
+
 with the fluctuating viscous shear stress tensor $\tau'$ being defined as
+
 $$
-\overline{\tau} = \overline{\mu} \left[\left(\nabla + \nabla ^T\right)\overline{\mathbf{u}}
-- \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}}) \mathbf{I}\right]
-$$
-$$
-\tau' = \mu' \left[\left(\nabla + \nabla ^T\right)\overline{\mathbf{u}}
-- \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}}) \mathbf{I}\right]
-+ \overline{\mu}\left[(\nabla + \nabla ^T) \mathbf{u}'
-- \frac{2}{3} (\nabla \cdot \mathbf{u}') \mathbf{I}\right]
+\tau' = \mu' \left[\left(\nabla + \nabla ^T\right)\overline{\mathbf{u}} - \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}}) \mathbf{I}\right] + \overline{\mu}\left[(\nabla + \nabla ^T) \mathbf{u}' - \frac{2}{3} (\nabla \cdot \mathbf{u}') \mathbf{I}\right]
 $$
 with $\mathbf{I}$ being the identity tensor.
 
