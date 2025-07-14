@@ -1,37 +1,21 @@
 #!/usr/bin/env python3
 """
-Mesh Generator for Flow Around Sphere Wake analysis
+Mesh Generator for Flow Around cylinder Wake analysis
 Author: [Simon Demange]
 Date: [15.05.2025]
 
 Description:
 
-This script generates a 2D mesh for the linear analysis of the flow around a sphere 
-(represented as a circle in 2D), with refined mesh regions around and behind the sphere 
+This script generates a 2D mesh for the linear analysis of the flow around a cylinder 
+(represented as a semi-circle in 2D), with refined mesh regions around and behind the cylinder 
 to capture wake effects. The mesh is designed for use with FELiCS.
 
 The geometry consists of:
 1. A large rectangular domain with specific dimensions
-2. A circle representing a sphere cross-section
+2. A circle representing a cylinder cross-section
 3. Two refinement regions with progressively finer mesh sizing:
-    - A larger wake region behind the sphere
-    - A finer region immediately surrounding and behind the sphere
-
-GMSH methods used:
-- gmsh.initialize(): Initializes the gmsh API
-- gmsh.model.geo.addPoint(x, y, z, meshSize, tag):                              Adds a point at coordinates (x,y,z) with specified mesh size
-- gmsh.model.geo.addLine(startPointTag, endPointTag, tag):                      Creates a line between two points
-- gmsh.model.geo.addCircleArc(startPointTag, centerPointTag, endPointTag, tag): Creates a circular arc
-- gmsh.model.geo.synchronize():                                                 Synchronizes the CAD model with the gmsh model
-- gmsh.model.addPhysicalGroup(dim, tags, tag, name):                            Creates named physical groups for boundary conditions
-- gmsh.model.geo.addCurveLoop(curveTags, tag):                                  Creates a closed loop from curves
-- gmsh.model.geo.addPlaneSurface(wireTags, tag):                                Creates a surface from closed-loop boundaries
-- gmsh.model.mesh.generate(dim):                                                Generates a mesh with specified dimension
-- gmsh.option.setNumber(name, value):                                           Sets gmsh options
-- gmsh.write(filename):                                                         Writes the mesh to a file
-- gmsh.finalize():                                                              Finalizes and cleans up the gmsh API
-
-Output: sphere_wake.msh - A 2D mesh file for FELiCS, in msh VERSION 2.0 ASCII format
+    - A larger wake region behind the cylinder
+    - A finer region immediately surrounding and behind the cylinder
 """
 
 # Package import
