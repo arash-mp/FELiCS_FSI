@@ -8,7 +8,6 @@
     "CoordinateSystem":"Cylindrical",
     "m":0.0,
     "MeshFilePath":"FeliCS_mesh.msh",
-    "MixtureFilePath":"mixture_dummy.json",
     "MolVisc":0.000125,
     "MolViscModel":"Constant",
     "nDim":2,
