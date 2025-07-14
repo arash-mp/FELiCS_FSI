@@ -36,35 +36,14 @@ class UflDecorator():
 
     Attributes
     ----------
-    expression : ufl.Form
-        The underlying UFL expression.
     lhs : ufl.Form
         The left-hand side form of the expression.
     rhs : ufl.Form
         The right-hand side form of the expression.
     form : ufl.Form
         The complete form from the expression.
-
-    Public Methods
-    --------------
-    add(input_ufl)
-        Add another UFL expression to the current one.
-    subtract(input_ufl)
-        Subtract another UFL expression from the current one.
-    analyseExpression()
-        Print a summary of the UFL expression and its arguments.
-    getAssembledMatrix(mesh, bcs=[])
-        Assemble the left-hand side of the expression into a matrix.
-    getAssembledVector(mesh, bcs=[])
-        Assemble the right-hand side into a vector, with sign flip and boundary conditions.
-    getAssembledScalar(mesh)
-        Assemble the expression into a scalar value.
-    lhsIsZero()
-        Check if the left-hand side of the expression is effectively zero.
-    rhsIsZero()
-        Check if the right-hand side of the expression is effectively zero.
-    isZero()
-        Check if the expression has been set or is empty.
+    _expression : ufl.Form
+        The underlying UFL expression.
 
     Notes
     -----
