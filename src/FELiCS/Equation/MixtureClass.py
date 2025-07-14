@@ -5,8 +5,46 @@ from 	FELiCS.Misc.logging import Logger
 logger = Logger.get_logger("felics")
 
 class MixtureClass():
-    '''The mixture class defines a mixture
-    '''
+    """
+    Defines a thermochemical mixture for reactive flow simulations.
+
+    This class manages properties of a mixture defined in an external JSON file,
+    including species, reaction mechanisms, transport properties, and viscosity.
+
+    **Initialize the MixtureClass object**
+
+    Parameters
+    ----------
+    mixFilePath : str
+        Relative path to the mixture JSON file (e.g., 'Mixture.json').
+    speciesFilePath : str
+        Relative path to the species JSON file (not used in the constructor but stored).
+
+    Attributes
+    ----------
+    __Species__ : dict
+        Dictionary of species involved in the mixture.
+    __Reaction_mechanism__ : dict
+        Dictionary describing the type of reaction mechanism used.
+    __Pr__ : float
+        Prandtl number of the mixture.
+    __Viscosity__ : dict
+        Dictionary containing the viscosity model and its parameters.
+
+    Notes
+    -----
+    - If the mixture file is missing, default values are used.
+    - A warning is issued if the mixture file is not a `.json` file.
+    - The species data should be read later using `readSpeciesDict`.
+
+    Raises
+    ------
+    Warning
+        If the mixture file format is incorrect.
+    Info
+        If the file is not found and defaults are used.
+    """
+
     def __init__(self,mixFilePath,speciesFilePath):
         """
         Initializing a mixture object based on a mixture.json file.
@@ -37,18 +75,35 @@ class MixtureClass():
             logger.info('No mixture file '+mixFilePath+', using defaults.')
         
     def getReactionMechanism(self):
-        ''' Function returning the reaction mechanism '''
+        """
+        Return the dictionary describing the reaction mechanism.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the type and details of the reaction mechanism.
+        """
+
         return self.__Reaction_mechanism__
+    
     def getSpeciesList(self,keyword='all'):
-        ''' Function giving a list of all species in the mixture.
-        Input:
-        \t keyword: either...
-        \t \t ... all: All species are returned
-        \t \t ... transported: Only the species for which a transport equation is solved are returned
-        \t \t ... constraint: Only passive species are returned
-        Output:
-        \t speciesList: List of all species in the mixture which agree with the keyword
-        '''
+        """
+        Return a list of species based on a specified category.
+
+        Parameters
+        ----------
+        keyword : {'all', 'transported', 'constraint'}, optional
+            Filter for returned species:
+            - 'all': return all species.
+            - 'transported': return only species for which a transport equation is solved.
+            - 'constraint': return only passive (non-transported) species.
+
+        Returns
+        -------
+        list of str
+            List of species names matching the specified keyword.
+        """
+
         if keyword=='all':
             speciesList = list(self.__Species__.keys())
         elif keyword in ['transported','constraint']:
@@ -58,7 +113,23 @@ class MixtureClass():
                 if species[sp]['calc']==keyword:
                     speciesList.append(sp)
         return speciesList
+    
     def readSpeciesDict(self,filename):
+        """
+        Read species data from a dictionary file and store relevant transport properties.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the file containing a dictionary of species and their properties.
+
+        Notes
+        -----
+        The file is expected to define a dictionary with entries for each species,
+        each containing keys: 'mol_weight', 'Sc', and 'Sc_t'. Only species classified as
+        'transported' will be processed.
+        """
+
         fileSpecies = open(filename,'r')
         SpeciesDict = eval(fileSpecies.read())
         self.__M={}
@@ -71,35 +142,99 @@ class MixtureClass():
         
     
     def Sc(self,specie):
+        """
+        Return the Schmidt number for a specific species.
+
+        Parameters
+        ----------
+        specie : str
+            Name of the species.
+
+        Returns
+        -------
+        float
+            Schmidt number of the species.
+
+        Raises
+        ------
+        KeyError
+            If the species is not defined in the species dictionary.
+        """
+
         return self.Species[specie]['Sc']
 
     def getSpeciesDict(self):
-        ''' Function returning the private Species Dict
-        Output:
-        \t speciesDict: Dictionary with all species'''
+        """
+        Return the dictionary of species in the mixture.
+
+        Returns
+        -------
+        dict
+            Dictionary with species names as keys and their properties as values.
+        """
+            
         return self.__Species__
 
     @property
     def reactionMechanism(self):
-        ''' Function returning the reaction mechanism '''
+        """
+        Get the reaction mechanism definition.
+
+        Returns
+        -------
+        dict
+            Dictionary describing the reaction mechanism.
+        """
+
         return self.__Reaction_mechanism__
 
     @property
     def Pr(self):
-        ''' Function returning the Prandtl number of the mixture '''
+        """
+        Get the Prandtl number of the mixture.
+
+        Returns
+        -------
+        float
+            Prandtl number value.
+        """
+        
         return self.__Pr__
 
     @property
     def Viscosity(self):
-        ''' Function returning the Prandtl number of the mixture '''
+        """
+        Get the viscosity model and its parameters.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the viscosity model (e.g., constant) and its parameters.
+        """
         return self.__Viscosity__
 
     @property
     def species(self):
-        ''' Function returning the Species number of the mixture '''
+        """
+        Get the species dictionary (alias to `Species`).
+
+        Returns
+        -------
+        dict
+            Dictionary of species in the mixture.
+        """
+
         return self.__Species__
 
     @property
     def Species(self):
-        ''' Function returning the Species number of the mixture '''
+        """
+        Get the species dictionary.
+
+        Returns
+        -------
+        dict
+            Dictionary of species in the mixture.
+        """
+
         return self.__Species__
