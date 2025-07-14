@@ -108,16 +108,16 @@ class FEMSpaces():
         
 
         ## create vector spaces
-        self._nVelocityComponents   = param.BoundaryCondition.nVelocityComponents # dimension of velocity vector
+        self._nVelocityComponents   = param.BoundaryCondition.nVelocityComponents # dim of velocity vector
         # Get the order of polynomials for velocity components
         if 'u' in param.getTransportedQuantityList():
             velocityOrder   = param.Numerics.PolynomialOrder['u']
         else:
             velocityOrder   = 2
         # Define FEM spaces for the velocity vector
-        self.FunctionSpaceVectorVelocity       = getFELiCSSpace(mesh, order = velocityOrder, dimension = self._nVelocityComponents)
-        self.FunctionSpaceVectorVelocityExport = getFELiCSSpace(exportMesh, order = 1, dimension = self._nVelocityComponents)
-        self.FunctionSpaceVectorVelocityP1     = getFELiCSSpace(mesh, order = 1, dimension = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocity       = getFELiCSSpace(mesh, order = velocityOrder, dim = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocityExport = getFELiCSSpace(exportMesh, order = 1, dim = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocityP1     = getFELiCSSpace(mesh, order = 1, dim = self._nVelocityComponents)
 
 
         ## create scalar spaces
@@ -206,7 +206,7 @@ class FEMSpaces():
         nfluctvar : int
             Number of fluctuation variables in the system.
         nDim : int
-            Number of spatial dimensions, usually equal to the number of velocity components.
+            Number of spatial dims, usually equal to the number of velocity components.
 
         Returns
         -------
