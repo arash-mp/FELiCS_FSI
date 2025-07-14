@@ -1,4 +1,4 @@
-# Explaining the tensor formalism - DONE 
+# Tensor framework
 
 ## Introduction
 This documentation introduces the tensor formalism used in the script collection `tensor_utils` which is a subcomponent inside FELiCS. For a separate version of `tensor_utils` that relies solely on FEniCS and UFL including a more complete introduction, see [here](https://git.tu-berlin.de/kai.hildebrandt1/tensor_utils).
