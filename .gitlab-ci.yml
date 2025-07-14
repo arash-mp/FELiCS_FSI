@@ -1,5 +1,5 @@
 # The Docker image that will be used to build your app
-image: python:3.10-slim-bullseye
+image: continuumio/anaconda3 #continuumio/miniconda3:latest #python:3.10-slim-bullseye
 variables:
   GIT_STRATEGY: clone  
 # Functions that should be executed before the build script is run
@@ -7,8 +7,8 @@ variables:
 cache:
   key: venv-cache
   paths:
-    - .local-runner-env/
-    - .local-runner-env_tests/
+    - local-runner-env/
+    - local-runner-env_tests/
 
 test:
   stage: test
@@ -18,17 +18,22 @@ test:
     - |
       if [ ! -d "local-runner-env-tests" ] || [ ! -f "local-runner-env-tests/bin/activate" ]; then
         echo "\nCreating new virtual environment...\n"	
-        conda -m venv local-runner-env-tests
+        python3 -m venv local-runner-env-tests
       fi
       echo "Activating virtual environment..."	
-      source local-runner-env-tests/bin/activate    
-
-      #conda install pytest
-      pip install -U pip
-      pip install -U pytest
+    - source local-runner-env-tests/bin/activate    
+      #- export PATH="$PATH:/opt/anaconda3/bin"
+      #- conda init
+      #- conda env create -f INSTALLATION/felics_v2.4_env.yml -p .env/ || true
+      #- conda activate felics2025_dolfin9
+      #- conda install pytest
+    - pip install -U pip
+    - pip install -U pytest
+      #- shopt -s expand_aliases
+      #- alias envrun="conda run -p .env/"
   script:
     - cd TESTS
-    - python3 -m pytest 
+    #- python3 -m pytest 
   only:
     - development
     #- main

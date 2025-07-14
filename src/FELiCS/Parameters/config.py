@@ -54,12 +54,21 @@ class config(ABC):
                 'AnalysisMode':             {'datatype':str,    'default':'Modal'},
                 'CalculateAdjoint':         {'datatype':bool,   'default':True},
                 'CoordinateSystem':         {'datatype':str,    'default':'Cartesian'},
+                # 'HeatCapacityConstPressure':{'datatype':int,    'default':1005},
+                # 'HeatCapacityRatio':        {'datatype':int,    'default':1.4},
                 'm':                        {'datatype':int,    'default':0},
                 'MeshFilePath':             {'datatype':str,    'default':''},
                 'MixtureFilePath':          {'datatype':str,    'default':''},
                 'MolVisc':                  {'datatype':int,    'default':0.0},
                 'MolViscModel':             {'datatype':str,    'default':'Constant'},
+                'MolViscPerturbModel':      {'datatype':dict,
+                    'default':{
+                        'type':             'Constant',
+                        'Constants':        {'Viscosity':1.0}
+                    }
+                },
                 'nDim':                     {'datatype':int,    'default':2},
+                'PrandtlNumber':            {'datatype':int,    'default':0.72},
                 'Reaction':                 {'datatype':bool,   'default':False},
                 'SetOfEquations':           {'datatype':dict,
                     'default':{
@@ -326,128 +335,26 @@ class config(ABC):
                                 file.writelines(parameter+'='+str(eval('self.'+group+'.'+parameter))+'\n')
         file.close()
 
-    def initBCsDict(self,VariableList):
-        ''' Initialize BCsDict '''
-        BCIDList = self.__BCIDs__
-        
-        # First define local BCsDict and set Neumann by default
-        BCsDict = {}
-        for Variable in VariableList:
-            BCsDict[Variable] = []
-            for BCID in BCIDList:
-                BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-        self.__BCsDict__ = BCsDict
 
-    def importBCsDict(self, VariableList):
-        ''' Import a boundary condition file with checking 
-        the consistency of BCs and mesh. 
-        To read the BCs without checking use importSettings()
-        '''
-
-        # Read BCFile
-        filepath    = self.BoundaryCondition.BCsFilePath
-        BCFile      = open(filepath)
-        importDict  = json.load(BCFile)
-        logger.debug(f"Reading boundary conditions from '{filepath}'")
-
-        # NOTE: Below is the previous import, before ID and varibles were switched
-        # in the config .json file. Kept for reference.
-        # BCIDList = self.__BCIDs__
-        # BCsDict={}
-        # if not filepath == '' and os.path.isfile(filepath):
-        #     self.BoundaryCondition.BCsFilePath = filepath
-        #     for Variable in VariableList:
-        #         BCsDict[Variable]=[]
-        #         for BCID in BCIDList:
-        #             BCsDict[Variable].append({'ID':BCID,'type':'Neumann','value':0.0})
-        #     # Read BCFile
-        #     BCFile=open(self.BoundaryCondition.BCsFilePath)
-        #     importDict=json.load(BCFile)
-        #     # Loop over all variables and IDs and if needed values present in BCFile, copy the contents to the local BCsDict
-        #     for Variable in VariableList:
-        #         if Variable in list(importDict.keys()):
-        #             BCsDict[Variable]=[]
-        #             for BC in importDict[Variable]:
-        #                 if BC['ID'] in BCIDList:
-        #                     BCsDict[Variable].append(BC)
-        #                 else:
-        #                     printWarning('Boundary condition of variable '+Variable+' for boundary with ID '+str(BC['ID'])+' not found in file. Choosing homogeneous Neumann instead.')
-
-        #         else:
-        #             printWarning('Boundary conditions for variable '+Variable+' not found in file. Choosing homogeneous Neumann instead.')
-        #     # Finally, copy local BCsDict to the object
-        #     self.__BCsDict__=BCsDict
-
-
-        # Invert sorting of boundary condition from ID-first to variable-first
-        result = {}
-        for ID, variable_list in importDict.items():
-            for dict in variable_list:
-                variable    = dict["variable"]
-                dict.pop("variable", None)
-                dict["ID"]  = int(ID)
-                if variable not in result:
-                    result[variable] = []
-                result[variable].append(dict)
-
-        # Finally, copy local BCsDict to the object
-        self.__BCsDict__ = result
-
-    def setBC(self, field, BoundaryID, BCType, BCvalue):
-        ''' Setting the Boundary condition of a single variable '''
-        for BC in self.__BCsDict__[field]:
-            if BC['ID'] == BoundaryID:
-                self.__BCsDict__[field][BoundaryID]['type'] = BCType
-                self.__BCsDict__[field][BoundaryID]['value'] = BCvalue
-    
-    def readBCInfo(self,MeshFilePath, felicsMesh):
-        ''' Input: - MeshFilePath
-        This function reads both the IDs of the boundary conditions from the mesh and stores them
-        in a private list of the class and also the boundary nodes and stores them in __boundaries__
-        '''
-        from numpy import unique
-        
-        # NOTE: (Simon) move to FELiCSMesh or BC class?
-        
-        # get a list of all kinds of BC indices
-        self.__BCIDs__      = unique(felicsMesh.facet_tags.values)
-        self.__boundaries__ = felicsMesh.facet_tags
-
-    def readDomainData(self,Meshfile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
-        logger.debug(f"Reading domain data from '{Meshfile}'")
-        ''' Input: Mesfile
-        Read all the domain data from the meshfile '''
+    def readDomainData(self,MeshFile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
+        logger.debug(f"Reading domain data from '{MeshFile}'")
+        ''' Input: MeshFile
+        Read all the domain data from the mesh file '''
         
         # Read mesh and store it in self.__mesh__
-        self.readMesh(Meshfile, gDim, coordinateSystem, m)
+        if not MeshFile == '' and os.path.isfile(MeshFile):
+            self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,gDim,m)
+            self.dim      = self.__mesh__.gdim
+
+        self.Case.Equations            = self.getEquationList()
+        self.Case.StateVectorVariables = self.getStateVectorVariables(self.Case.Equations)
         
-        # Setup the boundary conditions
-        self.readBCInfo(Meshfile, self.__mesh__)
-        self.initBCsDict(ExtendedTransportedQuantityList)
-        self.importBCsDict(ExtendedTransportedQuantityList)
 
     def getMesh(self):
         ''' Function is returning the mesh '''
         return self.__mesh__
 
-    def readMesh(self,MeshFile,dim,coordinateSystem,m):
-        '''
-        Reading Meshfile and saving it as private object
 
-        Function Arguments:
-        - MeshFile: File of a gmsh-meshfile. File needs to be in .msh format
-        - gdim: Geometrical Dimension of the mesh. This argument is needed
-        by the gmsh helper-functions, which read in the mesh
-
-        Function returns:
-        '''
-        
-        # NOTE: (Simon) I don't think this method is needed
-        
-        if not MeshFile == '' and os.path.isfile(MeshFile):
-            self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,dim,m)
-            self.dim = self.__mesh__.gdim
-        
     def getInternalVelocityComponents(self):
         ''' Provides a list of velocity components, which are directed within the dimensions of the mesh '''
         if self.Case["CoordinateSystem"] == 'Cartesian':
@@ -493,10 +400,34 @@ class config(ABC):
             if not self.Case["SetOfEquations"]['Custom2']['Variable'] == 'None':
                 SolutionList.append(self.Case["SetOfEquations"]['Custom2']['Variable'])
         if 'Species' in list(self.Case["SetOfEquations"].keys()):
-            if self.Case["SetOfEquations"]['Species']['Variable'] == 'Y':
+            if self.Case["SetOfEquations"]['Species']['Variable'] != 'None':
                 for species in list(self.Mixture.getSpeciesList('transported')):
                     SolutionList.append(species)
         return SolutionList
+
+
+    def getEquationList(self):
+        ### TODO Sophie: make this the central equation list and clean up
+        # TODO Sophie: throw warning if Equation != None and Variable == None (before that: move equation of state out of those equations)
+        EquationsList = []
+        for equation in self.Case["SetOfEquations"].items():
+            if not equation[1]["Equation"] == "None" and not equation[1]["Variable"] == "None":
+                EquationsList.append(equation)
+        return EquationsList
+
+
+    def getStateVectorVariables(self, EquationList):
+        ### TODO Sophie: make this the central list besides the equation list and clean up
+        VariablesList = []
+        for equation in EquationList:
+            variable = equation[1]["Variable"]
+            if variable in ["u", "rhou"]:
+                components = self.getVelocityComponents()
+            else:
+                components = []
+            VariablesList.append((variable, components))
+        return VariablesList 
+
 
     def getExtendedTransportedQuantityList(self):
         ''' Like getTransportedQuantitiyList but with all velocity components '''
@@ -525,12 +456,12 @@ class config(ABC):
         # If necessary, add density and enthalpy diffusion
         if 'rho' in self.getTransportedQuantityList():
             MeanList.append('rho')
-            if self.Case.MolViscModel == 'File' or self.Case.molViscPerturbModel == 'Sutherland mean':
+            if self.Case.MolViscModel == 'File' or self.Case.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('alpha')
         # Add species which are transported
         for specie in self.Mixture.getSpeciesList('transported'):
             MeanList.append(specie)
-            if self.Case.MolViscModel == 'File' or self.Case.molViscPerturbModel == 'Sutherland mean':
+            if self.Case.MolViscModel == 'File' or self.Case.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('D_'+specie)
         # If Input-Output analysis is used, the forcing must be read in (at least curently) for
         # every conservative variable ()...
@@ -557,7 +488,7 @@ class config(ABC):
             MeanList.append(specie)
         if self.Case.TurbulenceModel in ['File']:
             MeanList.append('nuturb')
-        if self.Case.MolViscModel in ['File'] or self.Case.molViscPerturbModel in ['Sutherland mean']:
+        if self.Case.MolViscModel in ['File'] or self.Case.MolViscPerturbModel in ['Sutherland mean']:
             MeanList.append('nulam')
         if self.Case.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.Case["CoordinateSystem"] == 'Cylindrical':
             MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])

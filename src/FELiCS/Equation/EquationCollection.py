@@ -35,7 +35,9 @@ from FELiCS.Misc.tensorUtils import (
 )
 from    petsc4py.PETSc               import ScalarType
 from    FELiCS.Equation.UflDecorator import UflDecorator
+from    FELiCS.Equation.Boundary     import BoundaryHandler
 from 	FELiCS.Misc.logging          import Logger
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -65,8 +67,6 @@ class EquationCollectionClass():
 
     Attributes
     ----------
-    m : float
-        Cross-streamwise wave number.
     x : ufl.SpatialCoordinate
         Spatial coordinates of the mesh.
     ds : ufl.Measure
@@ -119,40 +119,33 @@ class EquationCollectionClass():
         logger.info('Initializing the equation collection class.')
 
         # Store input parameters as private attributes
-        self.__param            = param
-        self.__FEMSpaces        = FEMSpaces
-        self.__mean             = mean
-        self.__mesh             = mesh
+        self._param            = param
+        self._FEMSpaces        = FEMSpaces
+        self._mean             = mean
+        self._mesh             = mesh
 
-        # Get wave number in spectral direction
-        self.m                  = param.Case.m
-               
         # Get spatial coordinates
-        self.x                  = SpatialCoordinate(mesh)
+        self.x                  = SpatialCoordinate(mesh.dolfinxMesh)
         self._coordinateSystem  = mesh.coordinateSystem
 
-        # Boundaries
-        self.boundaries         = mesh.facet_tags
-        self.ds                 = Measure("ds", subdomain_data=self.boundaries)
-
-        # Get all boundaries (So far hard coded)
-        first_BC_flag           = True
-        for Boundary in self.__param.__BCsDict__[list(self.__param.__BCsDict__.keys())[0]]:
-            if first_BC_flag:
-                self.all_ds     = self.ds(Boundary['ID'])
-                first_BC_flag   = False
-            else:
-                self.all_ds     += self.ds(Boundary['ID'])
- 
+        ## BOUNDARIES
+        # Initialize boundary handler
+        self.variables          = param.Case.StateVectorVariables
+        self.boundaryHandler    = BoundaryHandler(self.variables, mesh, param.BoundaryCondition.BCsFilePath)
+        # Initialize ds: Get all boundaries (So far hard coded)
+        self.ds                 = Measure("ds", subdomain_data=mesh.facet_tags)
+        self.all_ds             = self.ds(self.boundaryHandler.IDs[0])
+        for i in range(1,len(self.boundaryHandler.IDs)):
+            self.all_ds += self.ds(self.boundaryHandler.IDs[i])
         # Get boundary normals
-        self.n_BC               = FacetNormal(self.__FEMSpaces.P2.mesh)
+        self.n_BC               = FacetNormal(self._FEMSpaces.P2.mesh)
         self.n                  = Tensor(
             as_vector((self.n_BC[0], self.n_BC[1], 0.0)),
             self._coordinateSystem
         )
+        # Get Dirichlet boundary conditions
+        self.BCs                = self.boundaryHandler.getListOfDirichletBCsForDolfinx(FEMSpaces.VMixed)
 
-        # initialize Dirichlet boundary conditions
-        self.BCs                = self.__getListOfDirichletBCs()
 
         ## TEST AND TRIAL FUNCTIONS
         # Define test and trial functions
@@ -167,10 +160,10 @@ class EquationCollectionClass():
         self.fluctuationC       = fluctuationC
 
         fluc = {}
-        for sol in self.__param.Case.SolutionList:
-            fluc[sol]           = self.hat[self.__param.Case.SolutionList.index(sol)]
+        for sol in self._param.Case.SolutionList:
+            fluc[sol]           = self.hat[self._param.Case.SolutionList.index(sol)]
         
-        XTemp                   = TestFunctions(self.__FEMSpaces.VMixed)
+        XTemp                   = TestFunctions(self._FEMSpaces.VMixed)
         self.testFunctionsFEM   = XTemp
         
         # Test function
@@ -179,84 +172,88 @@ class EquationCollectionClass():
             X.append(Tensor(
                 i,
                 self._coordinateSystem,
-                containsTestFunction=True,
+                hasSpectralDimension=True,
                 ))
         self.X = X
             
         # Get radial coordinate
-        if self.__param.Case.CoordinateSystem in ['Cylindrical']:
+        if self._param.Case.CoordinateSystem in ['Cylindrical']:
             self.R = self.x[1]
         else:
             from petsc4py import PETSc
-            self.R = Constant(self.__FEMSpaces.P2.mesh, PETSc.ScalarType(1.0))
+            self.R = Constant(self._FEMSpaces.P2.mesh, PETSc.ScalarType(1.0))
 
         logger.debug('State vector: %s.' % param.Case.SolutionList)
  
         # Create equation list from parameters
-        # TODO: the following could be in a method  for readability
+        # TODO: the following could be in a method for readability
         logger.debug("Creating equation list.")
+        self.equations = param.Case.Equations
         self.equationList = []
 
-        if self.__param.Case.SetOfEquations['Momentum']['Equation'] == 'NSPrimitive':
-            from FELiCS.Equation.Equations.MomentumEquation import MomentumEquation
-            logger.debug('Adding momentum equation for u-fluc -> X[0].')     # Hardcoded u' for mom eq.
-            momentum    = MomentumEquation(self,fluctuationC,X[0],param)
-            self.equationList.append(momentum)
+        for equation in self.equations:
+            index = self.equations.index(equation) 
+            if   equation[0]  == "Momentum" and equation[1]["Equation"] == "NSPrimitive":  
+                from FELiCS.Equation.Equations.MomentumEquation import MomentumEquation
+                logger.debug('Adding momentum equation for u-fluc -> X[%d].' % index)     # Hardcoded u' for mom eq.
+                eqObject    = MomentumEquation(index,self,fluctuationC,X[index],param)
+                self.equationList.append(eqObject)
 
-        if self.__param.Case.SetOfEquations['Mass']['Equation'] == 'Continuity':
-            from FELiCS.Equation.Equations.MassEquation import MassEquation
-            varEq       = self.__param.Case.SetOfEquations['Mass']['Variable']
-            idVar       = param.Case.SolutionList.index(varEq)
-            logger.debug('Adding mass equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            mass        = MassEquation(self,fluctuationC,X[idVar],self.__param)
-            self.equationList.append(mass)
+            elif equation[0]  == "Mass" and equation[1]["Equation"] == "Continuity":  
+                from FELiCS.Equation.Equations.MassEquation import MassEquation
+                logger.debug('Adding mass equation for %s-fluc -> X[%d].' % (index, index))
+                eqObject    = MassEquation(index,self,fluctuationC,X[index],self._param)
+                self.equationList.append(eqObject)
 
-        if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'Enthalpy':
-            from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
-            varEq       = self.__param.Case.SetOfEquations['Energy']['Variable']
-            idVar       = param.Case.SolutionList.index(varEq)
-            logger.debug('Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            enthalpy    = EnthalpyEquation(self,fluctuationC,X[idVar],self.__param)
-            self.equationList.append(enthalpy)
+            elif equation[0]  == "Energy" and equation[1]["Equation"] == "Enthalpy":  
+                from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
+                logger.debug('Adding enthalpy-energy equation for %s-fluc -> X[%d].' % (index, index))
+                eqObject    = EnthalpyEquation(index,self,fluctuationC,X[index],self._param)
+                self.equationList.append(eqObject)
 
-        if self.__param.Case.SetOfEquations['Energy']['Equation'] == 'primitive-p':
-            from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
-            varEq       = self.__param.Case.SetOfEquations['Energy']['Variable']
-            idVar       = param.Case.SolutionList.index(varEq)
-            logger.debug('Adding pressure-energy equation for %s-fluc -> X[%d].' % (varEq,idVar))
-            energyP     = EnergyPressureEquation(self,fluctuationC,X[idVar],self.__param)
-            self.equationList.append(energyP)
+            elif equation[0]  == "Energy" and equation[1]["Equation"] == "primitive-p":  
+                from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
+                logger.debug('Adding pressure-energy equation for %s-fluc -> X[%d].' % (index, index))
+                eqObject     = EnergyPressureEquation(index,self,fluctuationC,X[index],self._param)
+                self.equationList.append(eqObject)
+
+            # TODO: Jens: put species equations back in FELiCS 
+            # Notes from Sophie:
+            # - Now for every species, the equation "Species" has to given in the main json file with the appropriate variable name.
+            # - Info on the species can still be found in the "Mixture.json" file.  
+            elif equation[0]  == "Species" and equation[1]["Equation"] == "Non-conservative":
+                from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
+                species       = equation[1]["Variable"]
+                logger.debug(f"Adding non-conservative species equation for %s-fluc -> X[%d], species name: {species}." % (index, index))
+                eqObject      = SpeciesEquation(index,self,fluctuationC,X[index],species,self._param)
+                self.equationList.append(eqObject)
+                            
+                #        #elif self._param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
+                #        #    # This eq has not been derived in tensor framework yet.
+                #        #    from FELiCS.Equation.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
+                #        #    print('-- Adding equation for species '+specie +' in conservative form')
+                #        #    addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self._param)
+                #        else:
+                #            logger.error('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
+                #            raise Exception('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
+
+            elif equation[0] not in  ["EquationOfState", "ProgressVariableLinear"] :
+                logger.error('Equation type ' + str(equation)  + ' unknown.' )
+                raise Exception('Equation type ' + str(equation)  + ' unknown.' )
+
             
-        # Add sponge region only if the field was given in the mean flow file
-        if 'spg' not in mean._meanFlowClass__notInFileList:
+        # Add sponge region to equation list only if the field was given in the mean flow file
+        if 'spg' not in mean._notInFileList:
             from FELiCS.Equation.Equations.SpongeTerm import SpongeTerm
             logger.debug('Adding sponge damping.')
-            sponge      = SpongeTerm(self,fluctuationC,X,self.__param)
-            self.equationList.append(sponge)
+            eqObject      = SpongeTerm(self.equations,self,fluctuationC,X,self._param) # give equationsList-Dictionary as "index"
+            self.equationList.append(eqObject)
 
-        # Add species transport equation for all transported species
-        transportedSpecies  = self.__param.Mixture.getSpeciesList('transported')
-        for specie in transportedSpecies:
-            i_eqn           = self.__param.Case.SolutionList.index(specie)
-            if self.__param.Case.SetOfEquations['Species']['Equation'] == 'Non-conservative':
-                from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
-                logger.debug(f"Adding equation for species '{specie}' in non-conservative form")
-                species     = SpeciesEquation(self,fluctuationC,X[i_eqn],specie,self.__param)
-                self.equationList.append(species)
-                
-            #elif self.__param.Case.SetOfEquations['Species']['Equation'] == 'Conservative':
-            #    # This eq has not been derived in tensor framework yet.
-            #    from FELiCS.Equation.speciesConservative.addSpeciesConservativeEq import addSpeciesConservativeEq
-            #    print('-- Adding equation for species '+specie +' in conservative form')
-            #    addSpeciesConservativeEq(self,fluctuationC,X[i_eqn],self.mean,specie,self.__param)
-            else:
-                logger.error('Species transport equation type ' + self.__param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
-                raise Exception('Species transport equation type ' + self.__param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
 
-        if self.__param.Case.AnalysisMode in ['Resolvent']:
+        if self._param.Case.AnalysisMode in ['Resolvent']:
             logger.debug('Defining specific forms for resolvent analysis.')
-            self.computeResolventNorms     (X,self.__param,mean,fluctuationC)
-            self.computeResolventFEMWeights(X,self.__param,mean,fluctuationC)
+            self.computeResolventNorms     (X,self._param,mean,fluctuationC)
+            self.computeResolventFEMWeights(X,self._param,mean,fluctuationC)
 
             # Get indices for forcing and response, depending on used norm, 
             # to use when creating the shrinker matrices
@@ -265,10 +262,10 @@ class EquationCollectionClass():
             # Get indices for response norm
             if param.IOResolvent.ResponseNorm == 'Chu':
                 # Variables used: all
-                self.resolventResponseIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
+                self.resolventResponseIndices = np.arange(self._FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
             elif param.IOResolvent.ResponseNorm == 'TKE':
                 # Variables used: u
-                self.resolventResponseIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+                self.resolventResponseIndices = self._FEMSpaces.VMixed.sub(index_u).collapse()[1]
             else:
                 logger.error(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
                 raise Exception(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
@@ -276,10 +273,10 @@ class EquationCollectionClass():
             # Same for the forcing norm
             if param.IOResolvent.ForcingNorm == 'Chu':
                 # Variables used: all
-                self.resolventForcingIndices = np.arange(self.__FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
+                self.resolventForcingIndices = np.arange(self._FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
             elif param.IOResolvent.ForcingNorm == 'TKE':
                 # u
-                self.resolventForcingIndices = self.__FEMSpaces.VMixed.sub(index_u).collapse()[1]
+                self.resolventForcingIndices = self._FEMSpaces.VMixed.sub(index_u).collapse()[1]
             else:
                 logger.error(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
                 raise Exception(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
@@ -308,7 +305,7 @@ class EquationCollectionClass():
             equation.addLinearExpression(A_ufl, meanFlow)
 
         # assemble petsc matrix
-        return A_ufl.getAssembledMatrix(self.__mesh, bcs=self.BCs)
+        return A_ufl.getAssembledMatrix(self._mesh, bcs=self.BCs)
 
 
     def getWeightMatrix(self, meanFlow):
@@ -342,10 +339,10 @@ class EquationCollectionClass():
             equation.addWeightMatrixExpression(B_ufl, meanFlow)
 
         # assemble petsc matrix
-        if self.__param.Case.AnalysisMode in ['Resolvent']:
-            return B_ufl.getAssembledMatrix(self.__mesh, bcs=self.BCs)
+        if self._param.Case.AnalysisMode in ['Resolvent']:
+            return B_ufl.getAssembledMatrix(self._mesh, bcs=self.BCs)
         else:
-            return B_ufl.getAssembledMatrix(self.__mesh, bcs=[]) # no boundaries applied, else there is a bug when computing the eigenvalue problem
+            return B_ufl.getAssembledMatrix(self._mesh, bcs=[]) # no boundaries applied, else there is a bug when computing the eigenvalue problem
 
 
     def getFEMWeightMatrix(self):
@@ -387,7 +384,7 @@ class EquationCollectionClass():
             i+=1
 
         # assemble petsc matrix
-        return W_ufl.getAssembledMatrix(self.__mesh)
+        return W_ufl.getAssembledMatrix(self._mesh)
 
   
     # TODO Sophie: This is a very quick implementation. Tensor framework needed!
@@ -446,7 +443,7 @@ class EquationCollectionClass():
             i += 1
 
         # Assemble petsc matrix
-        return D_ufl.getAssembledMatrix(self.__mesh, self.BCs)
+        return D_ufl.getAssembledMatrix(self._mesh, self.BCs)
 
 
     def getFullRHS(self,func):
@@ -470,16 +467,16 @@ class EquationCollectionClass():
             i+=1
 
         # assemble petsc matrix
-        return rhs_ufl.getAssembledVector(self.__mesh)
+        return rhs_ufl.getAssembledVector(self._mesh)
 
     def getNonlinearExpression(self, meanFlow, setBC=True):
         N_ufl = UflDecorator()
         for equation in self.equationList:
             equation.addNonlinearExpression(N_ufl, meanFlow)
         if setBC:
-            return N_ufl.getAssembledVector(self.__mesh, self.BCs)
+            return N_ufl.getAssembledVector(self._mesh, self.BCs)
         else:
-            return N_ufl.getAssembledVector(self.__mesh)
+            return N_ufl.getAssembledVector(self._mesh)
 
     def getBilinearOperator(self, meanFlow):
         # create ufl object with the linear equation system 
@@ -487,7 +484,7 @@ class EquationCollectionClass():
         for equation in self.equationList:
             equation.addBilinearExpression(BL_ufl, meanFlow)
         # assemble petsc matrix
-        return BL_ufl.getAssembledMatrix(self.__mesh, bcs=self.BCs)
+        return BL_ufl.getAssembledMatrix(self._mesh, bcs=self.BCs)
 
     def getForcingForInputOutput(self,meanFlow):
         # create ufl object with the linear equation system 
@@ -495,19 +492,19 @@ class EquationCollectionClass():
         for equation in self.equationList:
             equation.addLinearExpression(f_ufl, meanFlow)
         # assemble forcing vector
-        forcing = f_ufl.getAssembledVector(self.__mesh, self.BCs)
+        forcing = f_ufl.getAssembledVector(self._mesh, self.BCs)
         forcing.scale(-1j)
         return forcing
 
 
     def getResolventNorm_response(self, meanFlow):
         # assemble petsc matrix
-        return self.response_vf.getAssembledMatrix(self.__mesh)
+        return self.response_vf.getAssembledMatrix(self._mesh)
 
 
     def getResolventNorm_forcing(self, meanFlow):
         # assemble petsc matrix
-        return self.forcing_vf.getAssembledMatrix(self.__mesh)
+        return self.forcing_vf.getAssembledMatrix(self._mesh)
 
 
     def getResolventWeighting_FEM(self, meanFlow):
@@ -516,7 +513,7 @@ class EquationCollectionClass():
         W_FEM_ufl = UflDecorator()
 
         # assemble petsc matrix
-        return self.fem_weighting.getAssembledMatrix(self.__mesh)
+        return self.fem_weighting.getAssembledMatrix(self._mesh)
 
 
 ########################### Resolvent Norm  ############################
@@ -548,7 +545,7 @@ class EquationCollectionClass():
                 logger.debug("Using TKE energy for forcing norm.")
                 idu   = param.Case.SolutionList.index('u')
                 self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
-                self.__forcing_coeff = self.__param.IOResolvent.ForcingCoeff
+                self.__forcing_coeff = self._param.IOResolvent.ForcingCoeff
             else:
                 logger.error(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
                 raise Exception(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
@@ -605,61 +602,6 @@ class EquationCollectionClass():
                     self.fem_weighting += ( fluc_var*iConj(X[varIndex]) ).ufl_tens*J_hat*dx
         
 
-    def __getListOfDirichletBCs(self, listOfComponents=None):
-        BClist = []
-        # mesh=self.__FEMSpaces.P2.mesh
-
-        logger.debug('Handling the Dirichlet boundary conditions.')
-        self.__boundaries   = self.__param.__boundaries__
-        self.__bcDict       = self.__param.__BCsDict__
-        VelocityComponents  = self.__param.BoundaryCondition.VelocityComponents
-        SolutionList        = self.__param.Case.SolutionList
-        for k,m in zip(list(self.__bcDict.keys()),range(0,len(self.__bcDict.keys()))):
-            # Get index of equation/variable i_eqn and if needed the index of the velocity component
-            if k[0]=='u' and k[1] in VelocityComponents:
-                i_eqn       = 0
-                i_component = VelocityComponents.index(k[1])
-            elif k in SolutionList:
-                i_eqn       = SolutionList.index(k)
-            else:
-                continue
-
-            for mm in range(0,len(self.__bcDict[k])) :
-                if self.__bcDict[k][mm]['type']=='Dirichlet':
-
-                    logger.debug("Adding Dirichlet BC for "+str(k)+ " in equation "+str(i_eqn)+" with value "+str(self.__bcDict[k][mm]['value'])+" on boundary with index "+str(self.__bcDict[k][mm]['ID']))
-                    if k in ['u'+ component for component in VelocityComponents] :
-                        #if __version__.find('0.4.1') >= 0:
-                        BClist.append( 
-                                      dirichletbc(
-                                          ScalarType(self.__bcDict[k][mm]['value']), 
-                                          locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component), 1, self.boundaries.indices[self.boundaries.values==self.__bcDict[k][mm]['ID']]),
-                                          self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component)) 
-                                      )
-                        #else:
-                            #BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component), 1, self.boundaries.find(self.__bcDict[k][mm]['ID'])), self.__FEMSpaces.VMixed.sub(i_eqn).sub(i_component)) )
-                    else:
-                        if len(self.__param.getTransportedQuantityList()) == 1:
-                            #if __version__.find('0.4.1') >= 0:
-                            BClist.append( 
-                                          dirichletbc(
-                                              ScalarType(self.__bcDict[k][mm]['value']), 
-                                              locate_dofs_topological(self.__FEMSpaces.FunctionSpaceList[i_eqn], 1, self.boundaries.indices[self.boundaries.values==self.__bcDict[k][mm]['ID']]), 
-                                              self.__FEMSpaces.FunctionSpaceList[i_eqn]) 
-                                          )
-                            #else:
-                            #    BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.FunctionSpaceList[i_eqn], 1, self.boundaries.find(self.__bcDict[k][mm]['ID'])), self.__FEMSpaces.FunctionSpaceList[i_eqn]) )
-                        else:
-                            #if __version__.find('0.4.1') >= 0:
-                            BClist.append( 
-                                          dirichletbc(
-                                              ScalarType(self.__bcDict[k][mm]['value']),
-                                              locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn), 1, self.boundaries.indices[self.boundaries.values==self.__bcDict[k][mm]['ID']]), 
-                                              self.__FEMSpaces.VMixed.sub(i_eqn)) 
-                                          )
-                            #else:
-                            #    BClist.append( dirichletbc(ScalarType(self.__bcDict[k][mm]['value']), locate_dofs_topological(self.__FEMSpaces.VMixed.sub(i_eqn), 1, self.boundaries.find(self.__bcDict[k][mm]['ID'])), self.__FEMSpaces.VMixed.sub(i_eqn)) )
-        return BClist
 
     def getRestrictorMatResponse(self):
         # provides a quadratic matrix, with the size of the solution space (VMixed)
@@ -667,15 +609,15 @@ class EquationCollectionClass():
         from petsc4py import PETSc
         
         # First we check if response Domain is zero everywhere = no spatial limiter
-        if max(self.__mean.getVertexValues().responseDomain, key=abs) == 0:
-            responseRestrictor_scalarP2             = Function(self.__FEMSpaces.P2)
-            responseRestrictor_scalarP1             = Function(self.__FEMSpaces.P1)
+        if max(self._mean.getVertexValues().responseDomain, key=abs) == 0:
+            responseRestrictor_scalarP2             = Function(self._FEMSpaces.P2)
+            responseRestrictor_scalarP1             = Function(self._FEMSpaces.P1)
             responseRestrictor_scalarP2.x.array[:]  = 1. # Setting 1 to everywhere
             responseRestrictor_scalarP1.x.array[:]  = 1. # Setting 1 to everywhere
             logger.debug('No spatial restriction of Resolvent response.')
         else:
-            responseRestrictor_scalarP2             = self.__mean.responseDomain    # using actual values
-            responseRestrictor_scalarP1             = Function(self.__FEMSpaces.P1)
+            responseRestrictor_scalarP2             = self._mean.responseDomain.function    # using actual values
+            responseRestrictor_scalarP1             = Function(self._FEMSpaces.P1)
             responseRestrictor_scalarP1.interpolate(responseRestrictor_scalarP2)
             logger.debug('Imposing spatial restriction of Resolvent response.')
 
@@ -688,18 +630,18 @@ class EquationCollectionClass():
         
         while notFinished:
             try:
-                indices.append(self.__FEMSpaces.VMixed.sub(i).sub(j).collapse()[1])
+                indices.append(self._FEMSpaces.VMixed.sub(i).sub(j).collapse()[1])
                 j +=1
             except:
                 j = 0
                 i += 1 
                 try:
-                    indices.append(self.__FEMSpaces.VMixed.sub(i).collapse()[1]) 
+                    indices.append(self._FEMSpaces.VMixed.sub(i).collapse()[1]) 
                 except:
                     notFinished = False
 
         # create quadratic petsc matrix and fill it with the restrictor values
-        range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+        range_all = self._FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
         m         = len(np.arange(*range_all))
         array     = np.empty(m,dtype=complex)
         for index in indices:
@@ -725,19 +667,16 @@ class EquationCollectionClass():
         from petsc4py import PETSc
         
         # First we check if forcingDomain is zero everywhere = no spatial limiter
-        if max(self.__mean.getVertexValues().forcingDomain, key=abs) == 0:
-            forcingRestrictor_scalarP1              = Function(self.__FEMSpaces.P1)
-            forcingRestrictor_scalarP2              = Function(self.__FEMSpaces.P2)
+        if max(self._mean.getVertexValues().forcingDomain, key=abs) == 0:
+            forcingRestrictor_scalarP1              = Function(self._FEMSpaces.P1)
+            forcingRestrictor_scalarP2              = Function(self._FEMSpaces.P2)
             forcingRestrictor_scalarP1.x.array[:]   = 1. # Setting 1 to everywhere
             forcingRestrictor_scalarP2.x.array[:]   = 1. # Setting 1 to everywhere
             logger.debug('No spatial restriction of Resolvent forcing.')
         else:
             # invert values, if non-zero
-            array                                   = self.__mean.forcingDomain.x.array
-            #array[:] =  np.where(array[:]!= 0., 1./ array[:], 0.) # NOTE: (Simon) is this used at all? #TODO: (Sophie) Check expression in documentation
-            self.__mean.forcingDomain.x.array[:]    = array[:]
-            forcingRestrictor_scalarP2              = self.__mean.forcingDomain    # using actual values
-            forcingRestrictor_scalarP1              = Function(self.__FEMSpaces.P1)
+            forcingRestrictor_scalarP2              = self._mean.forcingDomain.function    # using actual values
+            forcingRestrictor_scalarP1              = Function(self._FEMSpaces.P1)
             forcingRestrictor_scalarP1.interpolate(forcingRestrictor_scalarP2)
             logger.debug('Imposing spatial restriction of Resolvent forcing.')
 
@@ -748,18 +687,18 @@ class EquationCollectionClass():
         indices     = []
         while notFinished:
             try:
-                indices.append(self.__FEMSpaces.VMixed.sub(i).sub(j).collapse()[1])
+                indices.append(self._FEMSpaces.VMixed.sub(i).sub(j).collapse()[1])
                 j +=1
             except:
                 j = 0
                 i += 1 
                 try:
-                    indices.append(self.__FEMSpaces.VMixed.sub(i).collapse()[1]) 
+                    indices.append(self._FEMSpaces.VMixed.sub(i).collapse()[1]) 
                 except:
                     notFinished = False
 
         # create quadratic petsc matrix and fill it with the restrictor values
-        range_all = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+        range_all = self._FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
         m         = len(np.arange(*range_all))
         array     = np.empty(m,dtype=complex)
         for index in indices:
@@ -795,7 +734,7 @@ class EquationCollectionClass():
         from petsc4py import PETSc
 
         indices_response    = self.resolventResponseIndices  # depending on the response norm
-        range_all           = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+        range_all           = self._FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
 
         n                   = len(indices_response)
         m                   = len(np.arange(*range_all))
@@ -821,7 +760,7 @@ class EquationCollectionClass():
         from petsc4py import PETSc
 
         indices_forcing     = self.resolventForcingIndices  # depending on the forcing norm
-        range_all           = self.__FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
+        range_all           = self._FEMSpaces.VMixed.dofmap.index_map.local_range # whole size of VMixed
 
         n                   = len(indices_forcing)
         m                   = len(np.arange(*range_all))

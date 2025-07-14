@@ -14,23 +14,23 @@ After cloning the repository and installing conda, make sure you take the follow
 
 ## Package Installation
 ### Conda Environment
-In the yml directory, we provide different _.yml_ files that contain all required packages. The latest version that worked on mutliple systems is 
-- [felics2.0_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/INSTALLATION/felics2.0_env.yml)
+In the INSTALLATION directory, we provide different _.yml_ files that contain all required packages. The latest version that worked on mutliple systems is 
+- [felics_v2.4_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/INSTALLATION/felics_v2.4_env.yml)
 
-The older versions of yml files can be found in [yml/old_versions](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/INSTALLATION/yml/old_versions?ref_type=heads)
+The older versions of yml files can be found in the folder [yml_old](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/INSTALLATION/yml_old) with the corresponding version in the filename. 
 
 >**Optional:** in case you want to give the environment a different name, you can change the first line of the _.yml_ file accordingly
 >```
->name: felics  ->  name: new_name
+>name: felics2025_dolfin9  ->  name: new_name
 >```
 
 To create the conda environment, enter the following command in the terminal:
 ```bash
 conda env create -f <path_to_your_yml_file> -y
 ```
-As an example, if the downloaded _.yml_ file "_felics2.0_env.yml_" is in the "_yml_" folder of the git repository (located in your home folder), the command would be 
+As an example, if the downloaded _.yml_ file "_felics_v2.4_env.yml_" is in the "_yml_" folder of the git repository (located in your home folder), the command would be 
 ```bash
-conda env create -f ~/felics2.0/yml/felics2.0_env.yml -y
+conda env create -f ~/felics2.0/yml/felics_v2.4_env.yml -y
 ```
 >**Optional:** if you want to review the packages being installed, omit the `-y`
 
@@ -111,14 +111,14 @@ After changing your _~/.bashrc_ you need to restart the terminal or ssh connecti
 ## Verify Installation
 After finishing the installation steps you should be able to activate the new environment in your freshly opened terminal using
 ```bash
-conda activate felics
+conda activate felics2025_dolfin9
 ```
 >**Remark:** if you chose another name for your environment, use the same name for activating the environment:
 >```bash
 >conda activate <other_name>
 >```
 
-If that succeeds, try running FELiCS with 
+If that succeeds, try running FELiCS with  ------ **OUT OF DATE. Maybe reference a tutorial here?** --------
 ```bash
 FELiCS
 ```

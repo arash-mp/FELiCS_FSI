@@ -21,6 +21,7 @@ from ufl import (
 
 # Local libraries and methods
 from    FELiCS.Fields.fieldProperties                               import fieldProperties
+from    FELiCS.Fields.Field                                         import Field
 from    FELiCS.Equation.dependentVariables.energyHandler            import energyHandler
 from    FELiCS.Equation.dependentVariables.equationOfStateHandler   import equationOfStateHandler
 from    FELiCS.Equation.dependentVariables.heatReleaseHandler       import heatReleaseHandler
@@ -105,13 +106,10 @@ class fluctuationClass(
         self._isMean = False
         self._isSolution = False
         self._zeroField = Function(FEMSpaces.P2)
+        # TODO Sophie: set correct name
         self._zeroVelocityField \
-            = Function(FEMSpaces.FunctionSpaceVectorVelocity)
-        self._zeroField = Tensor(
-                                       Function(self._FEMSpaces.P2),
-                                       self._coordinateSystem,
-                                       containsFluctuation = True,
-                                       )
+            = Field(FEMSpaces.FunctionSpaceVectorVelocity, self._param.getMesh(), name=[]).getTensor()
+        self._zeroField = Field(FEMSpaces.P2, self._param.getMesh(), name="zero").getTensor()
         self._fieldDict = {}
         self._mean = mean
         self._transportedQuantities = param.getTransportedQuantityList()
@@ -123,7 +121,7 @@ class fluctuationClass(
             self._fieldDict[field] = Tensor(
                                             self._fluc[indexOfFieldInList],
                                             self._coordinateSystem,
-                                            containsFluctuation = True,
+                                            hasSpectralDimension = True,
                                             )
 
         # Get all the variables, which need to be present

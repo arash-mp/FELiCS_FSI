@@ -142,8 +142,8 @@ class energyHandler:
         """
 
         alreadyDeterminedFields = list(self._fieldDict.keys())
-        viscosityModel = self._param.Mixture.Viscosity
-        if viscosityModel == 'const':
+        viscosityModel = self._param.Case.MolViscPerturbModel
+        if viscosityModel['type'] == 'Constant':
             pass
         elif viscosityModel['type'] == 'Sutherland mean':
             if 'rho' in alreadyDeterminedFields and not 'alpha' in alreadyDeterminedFields:
@@ -153,8 +153,7 @@ class energyHandler:
                     mean_alpha = mean.fieldDict['alpha']
                 else:
                     mean_alpha = mean.alpha
-                mixture = self._param.Mixture
-                Ts = mixture.Viscosity['Constants']['Ts']
+                Ts = viscosityModel['Constants']['Ts']
                 foobar, fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
                 self._fieldDict['alpha'] = mean_alpha * fluc
 
@@ -172,6 +171,7 @@ class energyHandler:
         if energyEquationType == 'ProgressVariableLinear': 
             return ['T', 'Tu', 'Tb', 'rho']
         if energyEquationType == 'primitive-p': 
-            return ['rho', 'cp', 'T', 'p', 'gamma', 'Pr']
+            # return ['rho', 'cp', 'T', 'p', 'gamma', 'Pr']
+            return ['rho', 'cp', 'T', 'p', 'gamma']
         else:
             return []

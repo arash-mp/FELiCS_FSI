@@ -11,3 +11,4 @@ DOCUMENTATION/autoapi
 public
 *env
 *.egg-info
+logs

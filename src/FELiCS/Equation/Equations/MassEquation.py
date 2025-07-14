@@ -32,7 +32,7 @@ class MassEquation(EquationTemplate):
     methods for the mass conservation equation.
     """
 
-    def __init__(self, eqColl, fluc, X, param):
+    def __init__(self, index, eqColl, fluc, X, param):
         """
         Initialize the MassEquation object.
 
@@ -53,7 +53,7 @@ class MassEquation(EquationTemplate):
             raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class
-        super().__init__(eqColl, fluc, X, param)
+        super().__init__(index, eqColl, fluc, X, param)
 
     def addWeightMatrixExpression(self, weakForm, mean):
         """
@@ -104,8 +104,7 @@ class MassEquation(EquationTemplate):
             # Iterate through all boundaries, at which forcing is applied
             for boundary_index in self.param.IOResolvent.ForcingBoundaryIndices:
                 # First subtract the boundary term from advection
-                # Correction wrt to index notation: We need to remove the rho*u term, not just the u!
-                weakForm.add((1j * iDot(self.n, self.fluc.rhou * iConj(self.X))).ufl_tens * self.J_hat * self.ds(boundary_index))
+                weakForm.add((1j * iDot(self.n, self.fluc.u * mean.rho * iConj(self.X))).ufl_tens * self.J_hat * self.ds(boundary_index))
                 # Then add the forcing at the boundary
                 weakForm.add((-1 * iDot(self.n, mean.u_forcing * mean.rho) * iConj(self.X)).ufl_tens * self.J_hat * self.ds(boundary_index))
 

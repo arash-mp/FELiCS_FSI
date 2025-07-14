@@ -10,7 +10,7 @@ def runModal(param):
         param: Parameter objects (see parameters.py), defining the case
     '''
     # import  FELiCS.IO.Import as Import
-    from    FELiCS.IO.ExportSolution            import ExportFromFile #, ExportGUI
+    from    FELiCS.IO.ExportSolution            import ExportFromFile 
     import  FELiCS.SpaceDisc.DefineFEMSpaces    as DefineFEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
@@ -31,16 +31,10 @@ def runModal(param):
                 param,
                 mesh,
                 )
-    
-    # read in mean flow
+     
+    # read in mean flow and export to h5-file
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
-    meanFlow.importDataFromFile()
-    
-    # export mean flow in "h5" file
-    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-        meanFlow.exportBaseFlowAsHDF5()
-    meanflowFilename = 'meanflow.h5'
-    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+    meanFlow.importDataFromFileAndExportToH5()
     
     # equation
     equation = EquationCollectionClass(

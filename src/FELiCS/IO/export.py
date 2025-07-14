@@ -1,7 +1,7 @@
 import  os
 import  h5py
 import  numpy               as np
-from    dolfinx.fem         import Function
+from    FELiCS.Fields.Field import Field
 from    FELiCS.Misc.logging import Logger
 
 # Get the logger
@@ -45,9 +45,11 @@ class export:
         self._param         = param
         self._exportMesh    = FEMSpaces.exportMesh
 
-        self._exportZeroScalarField = Function(self._FEMSpaces.P1Export)
-        self._exportZeroVectorField = Function(
-                self._FEMSpaces.FunctionSpaceVectorVelocityExport
+        self._exportZeroScalarField = Field(self._FEMSpaces.P1Export, self._exportMesh, name="exportZeroScalar")
+        self._exportZeroVectorField = Field(
+                self._FEMSpaces.FunctionSpaceVectorVelocityExport,
+                self._exportMesh, 
+                name="exportZeroVector"
                 )
 
     def _mapCalcToExport(self, exportObject):
@@ -81,27 +83,27 @@ class export:
                                                     list(exportObject.keys())
                                                         ):
 
-                ValueArray = exportObject[fieldNameFieldToExport].x.array
+                ValueArray = exportObject[fieldNameFieldToExport].getCoefficientArray()
 
-                numSubSpaces = exportObject[fieldNameFieldToExport].function_space.num_sub_spaces
+                numSubSpaces = exportObject[fieldNameFieldToExport].space.num_sub_spaces
                 if numSubSpaces > 1:
 
-                    valueDict[fieldNameFieldToExport] = Function(self._FEMSpaces.FunctionSpaceVectorVelocityExport)
+                    valueDict[fieldNameFieldToExport] = Field(self._FEMSpaces.FunctionSpaceVectorVelocityExport, self._exportMesh, name=[])
                     # dofsCoordsCalc = exportObject[fieldNameFieldToExport].function_space.tabulate_dof_coordinates()
                     #indexVector = self.mappingFunc(dofsCoordsCalc[:, 0:2], dofsExport[:, 0:2])
                     tempSolutionArray = np.zeros((self._param.Case.nDim,dofsExport.shape[0] ), dtype=complex)
                     for subSpaceNum in range(numSubSpaces):
-                        indicesOfComponentExport = valueDict[fieldNameFieldToExport].function_space.sub(subSpaceNum).collapse()[1]
+                        indicesOfComponentExport = valueDict[fieldNameFieldToExport].space.sub(subSpaceNum).collapse()[1]
                         indicesOfComponentCalc = self._FEMSpaces.FunctionSpaceVectorVelocity.sub(subSpaceNum).collapse()[1]
-                        valueDict[fieldNameFieldToExport].x.array[indicesOfComponentExport] = exportObject[fieldNameFieldToExport].x.array[indicesOfComponentCalc][P2CalcToP1ExportIndecies]
+                        valueDict[fieldNameFieldToExport].function.x.array[indicesOfComponentExport] = exportObject[fieldNameFieldToExport].function.x.array[indicesOfComponentCalc][P2CalcToP1ExportIndecies]
 
 
                 else:
-                    valueDict[fieldNameFieldToExport] = Function(self._FEMSpaces.P1Export)
+                    valueDict[fieldNameFieldToExport] = Field(self._FEMSpaces.P1Export, self._exportMesh, name=fieldNameFieldToExport)
                     #ValueArray = ( flucRealCalc.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.sub(indexOfFieldInList).collapse().x.array )
                     #subSpaceDofCoordinates = exportObject[fieldNameFieldToExport].function_space.tabulate_dof_coordinates()
                     #indexVector = self.mappingFunc(subSpaceDofCoordinates[:, 0:2], dofsExport[:, 0:2])
-                    valueDict[fieldNameFieldToExport].x.array[:] = exportObject[fieldNameFieldToExport].x.array[P2CalcToP1ExportIndecies]
+                    valueDict[fieldNameFieldToExport].function.x.array[:] = exportObject[fieldNameFieldToExport].function.x.array[P2CalcToP1ExportIndecies]
                     #tempSolutionArray = ValueArray[P2CalcToP1ExportIndecies]
                 #valueDict[fieldNameFieldToExport] = tempSolutionArray
 
@@ -114,13 +116,14 @@ class export:
 
 
         elif isinstance(exportObject, np.ndarray):
-            flucRealCalc = Function(self._FEMSpaces.VMixed)
-            flucImagCalc = Function(self._FEMSpaces.VMixed)
+            # TODO Sophie: give correct names?
+            flucRealCalc = Field(self._FEMSpaces.VMixed, None, name=[])
+            flucImagCalc = Field(self._FEMSpaces.VMixed, None, name=[])
 
-            flucRealCalc.vector[:] = np.real(exportObject[:]).astype(
+            flucRealCalc.function.x.array[:] = np.real(exportObject[:]).astype(
                                                                         float
                                                                             )
-            flucImagCalc.vector[:] = np.imag(exportObject[:]).astype(
+            flucImagCalc.function.x.array[:] = np.imag(exportObject[:]).astype(
                                                                         float
                                                                             )
 
@@ -134,11 +137,11 @@ class export:
                 if len(self._transportedQuantities) > 1:
                     indexOfFieldInList = self._transportedQuantities\
                     .index(field)
-                    numSubSpaces = flucRealCalc.function_space.sub(indexOfFieldInList).collapse()[0].num_sub_spaces
+                    numSubSpaces = flucRealCalc.space.sub(indexOfFieldInList).collapse()[0].num_sub_spaces
 
                     if numSubSpaces > 1:
                         # calculate the complex solution of the vectorfield
-                        ValueArray = ( flucRealCalc.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.sub(indexOfFieldInList).collapse().x.array )
+                        ValueArray = ( flucRealCalc.function.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.function.sub(indexOfFieldInList).collapse().x.array )
                         tempSolutionArray = np.zeros((numSubSpaces, self._exportMesh.coordinates().shape[0] ), dtype=complex)
                         # vectorSpaceDofCoords = flucRealCalc.function_space.sub(indexOfFieldInList).collapse()[0].tabulate_dof_coordinates()
 
@@ -150,12 +153,12 @@ class export:
                             # in the ordering of the exportMesh-coordinates
 
                             # get indices of vectorField-component:
-                            dofsOfCalc = flucRealCalc.sub(indexOfFieldInList).collapse().function_space.sub(subSpaceNum).collapse()[1]
+                            dofsOfCalc = flucRealCalc.function.sub(indexOfFieldInList).collapse().function_space.sub(subSpaceNum).collapse()[1]
                             tempSolutionArray[subSpaceNum, :] = ValueArray[dofsOfCalc][VectorCalcToP1ExportIndecies]
 
 
                     else:
-                        ValueArray = ( flucRealCalc.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.sub(indexOfFieldInList).collapse().x.array )
+                        ValueArray = ( flucRealCalc.function.sub(indexOfFieldInList).collapse().x.array + 1j * flucImagCalc.function.sub(indexOfFieldInList).collapse().x.array )
       
                         # Check if the transported quantity was obtained on P2 elts, otherwise we need to 
                         # interpolate from P1 to P2 meshes
@@ -176,7 +179,7 @@ class export:
                     valueDict[field] = tempSolutionArray
                 else:
                     # muss noch angepasst werden!
-                    ValueArray = ( flucRealCalc.x.array + 1j * flucImagCalc.x.array )
+                    ValueArray = ( flucRealCalc.getCoefficientArray() + 1j * flucImagCalc.getCoefficientArray() )
                     valueDict[field] = ValueArray[P2CalcToP1ExportIndecies]
 
         else:

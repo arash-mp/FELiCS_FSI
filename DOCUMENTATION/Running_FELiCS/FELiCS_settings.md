@@ -1,34 +1,12 @@
-# Settings files in FELiCS
-
-In the upcoming version of FELiCS, the input parameters will only be loaded from the three following **.json** files:
+# Setting files
+The input parameters are loaded from the three following **.json** files:
 - `settings.json`: contains most of the information about the FELiCS run.
 - `boundaries.json`: contains specific information about the boundary conditions.
-- `mixture.json`: contains specific information about the physical properties of the fluid considered.
-
-
-The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
-```bash
-FELiCS -file settings.json
-```
-
-The other two files are found via the corresponding entries of the `settings.json` file.
-
->**Warning:** only the parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.
-
-## Specific formatting for FELiCS settings and json
-
-* **booleans** are defined in lowercase (`true`, `false`)
-* json accepts exponential notation for all float-type inputs
-* **`EigenValueGuess`** and **`Omegas`** can be either
-  * list of strings for complex values: `["1.0-1j", "1.0+1j"]`
-  * list of floats for real values: `[1, 2, 1.2e-1]`
-  * combinations of the two above: `["1.0-1j", 1, "1.0+1j", 2]`
+- `mixture.json`(optional): contains specific information about the physical properties of the fluid considered.
 
 ## Structure of the `settings.json` file
+The typical `settings.json` file is divided into 6 main sections:
 
->**Note:** The name of the file is not important. 
-
-Below is the structure of the `settings.json` file, it is divided into 6 main sections:
 
 ``` json
 {
@@ -36,16 +14,22 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "BCsFilePath":      (str)   path to the "boundaries.json" file,
 },
 "Case":{
-    "AnalysisMode":     (str)   type of analysis ("Modal", "Resolvent", "InputOutput"),
+    "AnalysisMode":     (str)   type of analysis, one of: ("Modal", "Resolvent", "InputOutput"),
     "CalculateAdjoint": (bool)  if we compute the adjoint spectrum in "Modal" analysis,
-    "CoordinateSystem": (str)   coordinate system ("Cylindrical", "Cartesian"),
-    "m":                (float) wavenumber of fluctuations in the Fourier dimension (for 2D analysis),
+    "CoordinateSystem": (str)   coordinate system, one of: ("Cylindrical", "Cartesian"),
+    "m":                (float) wavenumber of fluctuations in the third, spectral dimension (for a 2D grid),
     "MeshFilePath":     (str)   path to the mesh file.
     "MixtureFilePath":  (str)   path to the "mixture.json" file.
-    "MolVisc":          (float) laminar viscosity (dynamic viscosity in compressible!) value when "MolViscModel" is set to "Constant"
-    "MolViscModel":     (str)   type of laminar viscosity model used for laminar viscosity,
+    "MolVisc":          (float) kinematic viscosity (dynamic viscosity in compressible flows) value when "MolViscModel" is set to "Constant"
+    "MolViscModel":     (str)   type of laminar viscosity model used for the viscosity,
+    "MolViscPerturbModel": (dict)   type of laminar viscosity model used for fluctuating laminar viscosity, specifying [type, empirical constants], e.g.:
+        {
+            "type":"Sutherland mean",
+            "Constants": {"Ts":170.672}
+        },
     "nDim":             (int)   number of dimensions resolved in the mesh.
-    "Reaction":         (bool)  if using chemistry reactions (DEPRECATED?)
+    "PrandtlNumber":    (int)   spatially global Prandtl number, only relevant for cases where thermal diffusion or conduction is involved
+    "Reaction":         (bool)  if using chemistry reactions (DEPRECATED? => DEFINED IN THE MIXTURE FILE?)
     "SetOfEquations":{  (dict)  with fields: [equations, variants, transported variables], all defined as str. e.g.:  
         "Momentum":{
             "Equation":"NSPrimitive",
@@ -68,93 +52,106 @@ Below is the structure of the `settings.json` file, it is divided into 6 main se
     "ForcingBoundaryIndices": (list of int) indices of boundaries where forcing is applied ("InputOutput" analysis),
     "ForcingCoeff":     (list of int)   variables onto which forcing is applied ("InputOutput" analysis),
     "ForcingMode":      (str)   type of forcing "Body" or "Boundary" ("InputOutput" analysis)
-    "ForcingNorm":      (str)   norm type for the forcing term ("Resolvent" analysis)
-    "ResponseNorm":     (str)   norm type for the response term ("Resolvent" analysis)
+    "ForcingNorm":      (str)   norm type for the forcing term ("Resolvent" analysis), one of: ("TKE" - default, "Chu")
+    "ResponseNorm":     (str)   norm type for the response term ("Resolvent" analysis), one of ("TKE" - default, "Chu)
     "Omegas":           (list)  angular frequency (see formatting in previous section),
 },
 "Numerics":{
     "EigenValueGuess":  (list)  eigenvalue guesses for "Modal" analysis (see formatting in previous section),
-    "nSolut":           (int)   number of solutions to compute (in "Modal" and "Resolvent" analysis)
+    "nSolut":           (int)   number of solutions to compute (number of nearest eigenvalues in  "Modal" analysis, number of resolvent modes per frequency in "Resolvent" analysis)
     "PolynomialOrder":  (dict)  sets the polynomial order for each transported variables (list must match "SetOfEquations"). e.g.: {"u": 2,"T": 1,"rho": 1}
 }}
 ```
+>**Note:** The name of the file is not important. 
+The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
+```bash
+FELiCS -file settings.json
+```
 
 ## Structure of the `boundaries.json` file
+The structure of this file is:
+```json
+{
+"ID1":{            (int as a str)    ID of the boundary. For gmsh *.msh* meshes, this must correspond to the index of an existing *PhysicalNames* entry.
+    "name":        (str)             name of boundary type; one of: ("zeroDirichlet", "wall", "custom", "symmetry","none")
+    "specifics":{  (dict)            only for boundary types "custom" and "symmetry"
+        "variable":(str)             the name of the variable considered; has to be one of the state vector varaibles, defined in the "SetOfEquations" part in the general config.json file
+        "type"    :(str)             type of boundary conditions, one of: ("Dirichlet", "Neumann", "None")
+        "value"   :(float)           value imposed on the variable (or its gradient)
+}}}
+```
 
-The structure of this file is expected to evolve soon. The current structure is:
+Here is an expamle for a `boundaries.json` file:
 
 ```json
 {
-"var1" (str):
-    [{"ID": (int), "type": (str) "Dirichlet" or "Neumann", "value": (float)},
-"var2" (str):
-    [{"ID": (int), "type": (str) "Dirichlet" or "Neumann", "value": (float)},
+    "1": {
+        "name": "zeroDirichlet"
+    },
+    "2": {
+        "name": "symmetry",
+        "specifics": [
+            {
+                "variable": "ux",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "uy",
+                "type": "Neumann",
+                "value": 0.0
+            },
+            {
+                "variable": "p",
+                "type": "Dirichlet",
+                "value": 0.0
+            }
+        ]
+    },
+    "3": {
+        "name": "wall"
+    }
 }
 ```
+>**Note:** The name of the file is not important. 
+The name of this json file should be set in the main settings file via the variable "BCsFilePath".
 
-where:
-* `"var" (str)` is the name of the variable considered. 
-* `"ID": (int)` is the index of the boundary considered. For gmsh *.msh* meshes, this must correspond to the index of an existing *PhysicalNames* entry.
-* `"type": (str)` is the type of BC applied at the boundary for the variable considered. Currently only accepts `"Dirichlet"` or `"Neumann"`.
-* `"value": (float)` is the value imposed on the variable (or its gradient). **Always 0.0 ??**
-
-An example of `boundaries.json` is
-
-```json
-{
-"300":
-    [{"variable": "ux", "type": "Dirichlet", "value": 0.0},
-    {"variable": "uy", "type": "Dirichlet", "value": 0.0},
-    {"variable": "p", "type": "Neumann", "value": 0.0}],
-"301":
-    [{"variable": "ux", "type": "Neumann", "value": 0.0},
-    {"variable": "uy", "type": "Neumann", "value": 0.0},
-    {"variable": "p", "type": "Dirichlet", "value": 0.0}]
-}
-```
 
 ## Structure of the `mixture.json` file
+>**TODO: ** review (Thomas?)
 
->**Warning:** No idea how this is organized. Please, Thomas or someone who knows about this completes the documentation here.
+In most cases that do not involve chemistry modelling or species transport, the `mixture.json` is not needed. 
 
-In most cases that do not involve chemistry modelling to describe the fluid, the `mixture.json` is not used and a dummy file is passed instead. The structure of the dummy file is:
-
-```json
-{
-"species":{
-    "Air" :{
-        "calc":"constraint"
-    }
-},
-"reaction":{}
-}
-```
-
-The following is an example of the `mixture.json` file for a case using chemistry:
+Below is the structure of the `mixture.json` file for a case using chemistry:
 
 ```json
 {
-"Species":{
-    "progress":{
-        "calc":"transported",
-        "Sc":0.9
-    }
-},
-"Pr":0.9,
-"Viscosity":{
-    "type":"Constant",
-    "Constants":{
-        "Viscosity":1.0
-    }
-},
-"Reaction_mechanism":{
-    "type": "KaiserCnF2023",
-    "additional_fields":["prefactor"],
-    "reactions":[{
+"Species":                        (dict) list of species that are considered, providing how they are calculated and additional species properties, e.g.:
+    { 
+        "phi":{                   (dict) name of species
+            "calc":"transported", (str) specify species that are returned, "all": all species, "transported": only species with separate transport equations, "constraint": only passive species without transport equations,
+            "Sc":0.9              (float) Schmidt number of the species
+        }
+    },
+"Reaction_mechanism": (dict) list with type of reaction model and all required settings, e.g.:
+{
+    "type": "KaiserCnF2023", (str) type of reaction model (currently only "KaiserCnF2023" is implemented)
+    "additional_fields":["prefactor"], (str) additional fields to be read in from the input *.fel file 
+    "reactions":[{ (dict) list of reactions that provides all involved educts and products and their corresponding stoichiometric coefficients
         "educts": [],
         "stochiometricCoefficientsEducts": [],
-        "products": ["progress"],
+        "products": ["progress"],  
         "stochiometricCoefficientsProducts": [1.0]
     }]
 }}
 ```
+
+## Specific formatting for FELiCS settings and json
+* **booleans** are defined in lowercase (`true`, `false`)
+* **`EigenValueGuess`** and **`Omegas`** can be either
+  * list of strings for complex values: `["1.0-1j", "1.0+1j"]`
+  * list of floats for real values: `[1, 2, 1.2e-1]`
+  * a combination of both: `["1.0-1j", 1, "1.0+1j", 2]`
+* json accepts exponential notation for all float-type inputs
+
+>**Warning:** only the parameters listed by `config.getAllSettingsDict()` in the `src/FELiCS/parameters/config.py` file will be considered by FELiCS. Add your new parameters there to be able to use them in the code.

@@ -7,8 +7,9 @@ from FELiCS.Misc.tensorUtils import (
     iGrad,
     iConj,
 )
-from .EquationTemplate      import EquationTemplate
-from FELiCS.Misc.logging    import Logger
+from .EquationTemplate        import EquationTemplate
+from FELiCS.Misc.logging      import Logger
+from FELiCS.Equation.Boundary import BoundaryType
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -27,7 +28,7 @@ class SpeciesEquation(EquationTemplate):
     parts for specific terms to facilitate numerical stability and boundary 
     conditions handling.
     """
-    def __init__(self, eqColl, fluc, X, species, param):
+    def __init__(self, index, eqColl, fluc, X, species, param):
         """
         Initialize the SpeciesEquation class.
 
@@ -56,7 +57,7 @@ class SpeciesEquation(EquationTemplate):
             raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
     
         # initialize variables in template class
-        super().__init__(eqColl, fluc, X, param)
+        super().__init__(index, eqColl, fluc, X, param)
 
         self.species = species
 
@@ -148,39 +149,21 @@ class SpeciesEquation(EquationTemplate):
         weakForm.add(( -1j*fluc.D(species)*(iDot(iGrad(mean.Y(species)),iGrad(iConj(X)))) ).ufl_tens*J_hat*dx)
         
         #--------------------------------Reaction
-        #reaction = mean.RR_prefactor * mean.rho * (fluc.Y(species) - 2 * fluc.Y(species) * mean.Y(species))\
-        #                 + mean.RR_prefactor * fluc.rho * (mean.Y(species) - mean.Y(species) * mean.Y(species))
-        ##weakForm.add((1j * fluc.omega(species)*iConj(X)).ufl_tens*J_hat*dx)
-        #weakForm.add((1j * reaction*iConj(X)).ufl_tens*J_hat*dx)
+        if self.param.Mixture.reactionMechanism['type'] == 'KaiserCnF2023':
+            reaction = mean.RR_prefactor * mean.rho * (fluc.Y(species) - 2 * fluc.Y(species) * mean.Y(species))\
+                            + mean.RR_prefactor * fluc.rho * (mean.Y(species) - mean.Y(species) * mean.Y(species))
+            weakForm.add((1j * reaction*iConj(X)).ufl_tens*J_hat*dx)
 
 
-        # ----------------------------------------- input output analysis and body forcing
-        if param.Case.AnalysisMode == 'Input-Output' and param.IOResolvent.ForcingMode == 'Body':
-            weakForm.add(( mean.forcing(species)*iConj(X) ).ufl_tens*J_hat*dx)
-            
-    
-        # ----------------------------------------- BC terms
-        for Boundary in param.__BCsDict__[species]:
-            # If forcing is applied at the boundary, and Input-Output mode is on...
-            if (param.Case.AnalysisMode in ['Input-Output']) and (Boundary['ID'] in param.IOResolvent.ForcingBoundaryIndices) :
+        # ----------------------------------------- Input/Output forcing
+        if self.param.Case.AnalysisMode in ['Input-Output']:
+            # add body forcing
+            if param.IOResolvent.ForcingMode == 'Body':
+                weakForm.add(( mean.forcing(species)*iConj(X) ).ufl_tens*J_hat*dx)
+            # Iterate through all boundaries, at which boundary forcing is applied
+            for boundary_index in self.param.IOResolvent.ForcingBoundaryIndices:
                 # First subtract the part added in a few lines above...
-                weakForm.add(( 1j*iDot(self.n,fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
+                weakForm.add(( 1j*iDot(self.n,fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index))
                 # Then add the forcing of the respective species given in the mean flow dict at the respective bounary
-                weakForm.add(( -1j*iDot(self.n,mean.u*mean.forcing(species)*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
-                
-            else:
-                # Check if boundary condition is Dirichlet or Neumann
-                # If it is Dirichlet, the BC is applied in the weak formulation
-                if Boundary['type'] in ['Dirichlet']:
-                    # First subtract the part added in a few lines above...
-                    weakForm.add(( 1j*iDot(self.n, fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
-                    # If BC value is 0, then the weak formulation throws an error, therefore check if it is zero...
-                    # ... if the value is zero, a treatment is not necessary anyway
-                    if Boundary['value'] not in [0.0]:
-                        logger.warning('--> Species eq: Dirichlet BC with non-zero value not validated in tensor framework! Treat results with care.')
-                        weakForm.add(( -1*iDot(self.n,Boundary['value']*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(Boundary['ID']))
-                        
-                if Boundary['type'] in ['Neumann']:
-                    if Boundary['value'] not in [0.0]:
-                        logger.warning('So far only homogeneous Neumann conditions are implemented... Please either change to another BC or - even better -  implement it yourself and upload your well documented implementation to gitlab...')
-    
+                weakForm.add(( -1j*iDot(self.n,mean.u*mean.forcing(species)*iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index))
+                    
