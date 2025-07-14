@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.tri as tri
 
 # --- User parameters ---
-case_path = '/mnt/c/Users/avillie/OneDrive/Documents/PhD/PINNs/c14toWsl/resolvent_tutorial'
+case_path = '/my/path/to/case'  # Path to the case directory
 
 gains_file = '/gains.csv'   
 mesh_file = '/Resolvent_mesh.h5'        
@@ -35,27 +35,13 @@ def mesh_triang(mesh):
     y = np.array(mesh_file_handle['coordinates/y'])
     connectivity =  mesh_file_handle['cells']['triangles']
     return tri.Triangulation(x, y, triangles=connectivity)
-triang = mesh_triang(case_path + mesh_file)
 
 def plot_field(x, y, field, triang, **kwargs):
-    '''
-    Plot the resolvent modes
-    
-    Possible extra inputs:
-        .ax:            axes handle from existing figure
-        .xlims, ylims:  plot limits
-        .cmap:          colormap
-        .shading:       shading option for tripcolor
-    '''
+    '''Plot a resolvent mode on a triangulated mesh.    '''
     if not 'ax' in kwargs:
         ax = plt.subplot()
     else:
         ax = kwargs['ax']
-        subplot_spec = ax.get_subplotspec()
-        total_rows = subplot_spec.get_gridspec().nrows
-        current_row = subplot_spec.rowspan.start
-        axis3 = not (total_rows is not None and current_row < total_rows - 1)
-
     if not 'cmap' in kwargs:
         cmap = plt.get_cmap('coolwarm') #'afmhot_r', 'plasma', 'viridis'
     else:
@@ -75,25 +61,13 @@ def plot_field(x, y, field, triang, **kwargs):
     else: 
         plt.ylim([np.min(y),np.max(y)])
 
-    # if 'title' in kwargs:
-    #     title = kwargs['title']
-        #plt.title(title, x = 0.45, y=0.8)
     title = kwargs['title'] if 'title' in kwargs else ''
     
-    if 'shading' in kwargs:
-        shading = kwargs['shading']
-    else: 
-        shading = 'gouraud'#'flat'
-    #print(np.min(field), np.max(field), "minmax")
-    #vmax, vmin = None,None 
-    if ('vmax' in kwargs):
-        vmax =  kwargs['vmax']
-    else: 
-        vmax = None 
-    if ('vmin' in kwargs):
-        vmin = kwargs['vmin']    
-    else: 
-        vmin = None    
+    shading = kwargs['shading'] if 'shading' in kwargs else 'gouraud'
+
+    vmax =  kwargs['vmax'] if 'vmax' in kwargs else None
+    vmin =  kwargs['vmin'] if 'vmin' in kwargs else None
+
     if 'triang_r' in kwargs:
         tpc = ax.tripcolor(triang, field, cmap=cmap, vmax = vmax, vmin = vmin, shading=shading)
         triang_r = kwargs['triang_r']
@@ -101,9 +75,6 @@ def plot_field(x, y, field, triang, **kwargs):
     else:
         tpc = ax.tripcolor(triang, field, cmap=cmap, vmax = vmax, vmin = vmin,shading=shading)
         
-    #cb =fig.colorbar(tpc)
-    #cb.remove()
-    #cb.ax.tick_params(labelsize=20)
     ax = plt.gca()
     ax.set_aspect('equal')
     ax.spines['top'].set_visible(False); ax.spines['right'].set_visible(False)
@@ -111,33 +82,13 @@ def plot_field(x, y, field, triang, **kwargs):
     from mpl_toolkits.axes_grid1 import make_axes_locatable 
     divider = make_axes_locatable(ax)
     colax = divider.append_axes("right", size="1%", pad=0.2)#
-    form = '%.1E'#'%1.2f'
+    form = '%1.2f'
     cbar = plt.colorbar(tpc, cax=colax, format=form, label=title) # 0.15 label=title,
 
     return tpc, ax
 
 def plot_mode_fromfile(filename, varname, meshfile, **kwargs):
-    """Load FELiCS fluctuation from file and plot it.
-
-    Parameters
-    ----------
-    filename : string
-        Full path of the solution file exported by FELiCS
-    varname : string
-        Name of the fluctuation variable to plot
-    meshfile : string
-        Full path of the mesh file exported by FELiCS
-    **kwargs : dict
-        The keyword arguments are passed to `plot_field()`
-
-    Returns
-    -------
-    ax : matplotlib.axes
-        ax object containing the plot
-    tpc : matplotlib.collections.PolyQuadMesh
-        pcolor object
-
-    """
+    """Load FELiCS fluctuation from file and plot it."""
         
     if not 'quantity' in kwargs:
         quantity = 'magnitude'
@@ -172,11 +123,24 @@ def plot_mode_fromfile(filename, varname, meshfile, **kwargs):
     tpc, ax = plot_field(x, y, varplot, **kwargs)
     
     return
-figure = plt.figure(figsize=(8, 6))
+# Forcing
+figure = plt.figure()
 ax1 = plt.subplot(3,1,1)
-plot_mode_fromfile(case_path+response_file,['ux'], case_path+mesh_file, quantity = 'real', ax=ax1, xlims=[-2,8], title='Real($u_x$)')
+plot_mode_fromfile(case_path+forcing_file,['ux'], case_path+mesh_file, quantity = 'real', ax=ax1, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_x$)')
 ax2 = plt.subplot(3,1,2)
-plot_mode_fromfile(case_path+response_file,['ur'], case_path+mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], title='Real($u_r$)')
+plot_mode_fromfile(case_path+forcing_file,['ur'], case_path+mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_r$)')
+ax2 = plt.subplot(3,1,2)
+plot_mode_fromfile(case_path+forcing_file,['ur'], case_path+mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_r$)')
+
 ax3 = plt.subplot(3,1,3)
-plot_mode_fromfile(case_path+response_file,['p'], case_path+mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], title='Real($p$)')
+plot_mode_fromfile(case_path+forcing_file,['p'], case_path+mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], vmin = -1.3e-3, vmax = 1.3e-3,title='Real($p$)')
+plt.show()
+# Response
+figure = plt.figure()
+ax1 = plt.subplot(3,1,1)
+plot_mode_fromfile(case_path+response_file,['ux'], case_path+mesh_file, quantity = 'real', ax=ax1, xlims=[-2,8], vmin = -2.5e-2, vmax = 2.5e-2, title='Real($u_x$)')
+ax2 = plt.subplot(3,1,2)
+plot_mode_fromfile(case_path+response_file,['ur'], case_path+mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-2, vmax = 2.5e-2, title='Real($u_r$)')
+ax3 = plt.subplot(3,1,3)
+plot_mode_fromfile(case_path+response_file,['p'], case_path+mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], vmin = -1.3e-2, vmax = 1.3e-2, title='Real($p$)')
 plt.show()
