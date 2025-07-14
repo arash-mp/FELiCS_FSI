@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Aug  7 15:39:58 2020
-
-@author: cwang
-"""
-
-#OneStep global reaction
 from dolfinx.fem import (
     Function,
     Expression,
