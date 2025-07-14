@@ -18,7 +18,7 @@ class FELiCSMesh:
     '''
     This class is a wrapper to the fenics mesh class
     '''
-    def __init__(self, coordinateSystem, meshFileName=None, m=0, inputMesh=None):
+    def __init__(self, coordinateSystem, meshFileName=None, gdim = None, m=0, inputMesh=None):
         if inputMesh is None:
             # Initialize gmsh and suppress its output
             gmsh.initialize()
@@ -38,7 +38,8 @@ class FELiCSMesh:
             from dolfinx.io import gmshio
             mesh_comm = MPI.COMM_WORLD
             model_rank = 0
-            gdim = gmsh.model.getDimension()
+            if gdim == None:
+                gdim = gmsh.model.getDimension()
             mesh, _, facet_tags = gmshio.model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=gdim)
                 
             self.dolfinxMesh = Mesh(mesh, mesh.ufl_domain())._cpp_object
