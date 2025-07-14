@@ -10,7 +10,38 @@ from 	FELiCS.Misc.logging         import Logger
 # Get the logger
 logger = Logger.get_logger("felics")
 
-class FEMSpacesClass():
+
+def getElementShape(meshDim):
+    if meshDim == 2:
+        return "triangle"
+    elif meshDim == 3:
+        return "tetrahedron"
+    else:
+        raise Exception("nDim is neither 2 or 3!")
+
+def getElementType():
+    return "CG"
+
+
+def getFELiCSSpace(mesh, order = 2, dimension = 1):
+
+    elementShape = getElementShape(mesh.gdim)
+    elementType  = getElementType()
+
+    if dimension == 1:
+        return functionspace(
+                    mesh.dolfinxMesh,
+                    element(elementType, elementShape, order)
+                    )
+    else:
+        return  functionspace(
+                     mesh.dolfinxMesh,
+                     (elementType, order,
+                     (dimension,))
+                     )
+
+
+class FEMSpaces():
     """
     Class containing all Finite Element (FE) spaces used in the simulation.
 
@@ -58,50 +89,50 @@ class FEMSpacesClass():
     def __init__(self, param, mesh, degree=2):
         logger.info('Defining FEM-spaces.')
 
-        if param.Case.nDim==2:
-            self.element_shape = "triangle"
-        elif param.Case.nDim==3:
-            self.element_shape = "tetrahedron"
-        else:
-            raise Exception("nDim is neither 2 or 3!")
-        
-        self.elementTypeStr         = 'CG'
-        self._nVelocityComponents   = param.BoundaryCondition.nVelocityComponents
+        self.element_shape  = getElementShape(mesh.gdim)
+        self.elementTypeStr = getElementType()
 
-        # Refine the mesh to get the exportMesh:
+
+        ## create export mesh
+        # Refine the mesh 
         logger.debug('Defining refined P1 export mesh.')
         refine_tuple        = refine(mesh.dolfinxMesh)
         exportMesh_dolfinx  = refine_tuple[0]
+        # create new FELiCSMesh
         exportMesh          = FELiCSMesh(param.Case.CoordinateSystem,inputMesh=exportMesh_dolfinx)
         exportMesh.gdim     = param.Case.nDim
+        # save mesh
         meshfileName        = f'{param.Case.AnalysisMode}_mesh.h5'
         exportMesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/{meshfileName}')
         self.exportMesh     = exportMesh
         
+
+        ## create vector spaces
+        self._nVelocityComponents   = param.BoundaryCondition.nVelocityComponents # dimension of velocity vector
         # Get the order of polynomials for velocity components
         if 'u' in param.getTransportedQuantityList():
             velocityOrder   = param.Numerics.PolynomialOrder['u']
         else:
             velocityOrder   = 2
-        
         # Define FEM spaces for the velocity vector
-        self.FunctionSpaceVectorVelocity = functionspace(
-            mesh.dolfinxMesh,
-            (self.elementTypeStr, velocityOrder,
-            (self._nVelocityComponents,)),
-            )
-        self.FunctionSpaceVectorVelocityExport = functionspace(
-            exportMesh.dolfinxMesh,
-            (self.elementTypeStr, 1,
-            (self._nVelocityComponents,))
-            )
+        self.FunctionSpaceVectorVelocity       = getFELiCSSpace(mesh, order = velocityOrder, dimension = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocityExport = getFELiCSSpace(exportMesh, order = 1, dimension = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocityP1     = getFELiCSSpace(mesh, order = 1, dimension = self._nVelocityComponents)
 
+
+        ## create scalar spaces
+        # Get function spaces for first order and second order elements.
+        self.P1 = getFELiCSSpace(mesh, order = 1)
+        self.P2 = getFELiCSSpace(mesh, order = 2)
+        # Get function spaces for first order and second order elements on the export mesh.
+        self.P1Export = getFELiCSSpace(exportMesh, order = 1)
+        self.P2Export = getFELiCSSpace(exportMesh, order = 2)
+
+
+        ### create VMixed Space
         # Prepare list to contain all the finite element spaces
         self.MixedList = []
-
-        # Then a scalar for all the remaining quantities
-        self.FunctionSpaceList          = []
-        self.FunctionSpaceListExport    = []
+        # create elements for mixed list 
         for name in param.getTransportedQuantityList():
             logger.debug("Adding FEM space of order "+
                          f"{param.Numerics.PolynomialOrder[name]} for "+
@@ -122,43 +153,14 @@ class FEMSpacesClass():
                     )
             self.MixedList.append(FE)        
         logger.debug('Mixed finite element list: ' + str(self.MixedList))
-
         # Create a element of the mixed function space
         MixedFE = mixed_element(self.MixedList)
-
         # Create a function space containing of mixed elements on the FEM mesh
         self.VMixed = functionspace(mesh.dolfinxMesh,MixedFE)
-
-        self.FunctionSpaceVectorVelocityP1 = functionspace(
-            mesh.dolfinxMesh,
-            (self.elementTypeStr, 1,
-            (self._nVelocityComponents,))
-            )
-        self.FunctionSpaceListExport = []
-
-#       # Get function spaces for first order and second order elements.
-        self.P1 = functionspace(
-            mesh.dolfinxMesh,
-            element(self.elementTypeStr, self.element_shape, 1)
-            )
-        self.P2 = functionspace(
-            mesh.dolfinxMesh,
-            element(self.elementTypeStr, self.element_shape, 2)
-            )
-
-#       # Create a function space containing of mixed elements on the export mesh
+        # Create a function space containing of mixed elements on the export mesh
         self.VMixedExport = functionspace(exportMesh.dolfinxMesh, MixedFE)
 
-        # Get function spaces for first order and second order elements on the export mesh.
-        self.P1Export = functionspace(
-            exportMesh.dolfinxMesh,
-            element(self.elementTypeStr, self.element_shape, 1)
-            )
-        self.P2Export = functionspace(
-            exportMesh.dolfinxMesh,
-            element(self.elementTypeStr, self.element_shape, 2)
-            )
-
+        # create mapping
         self.mappingObj = Mapping(self)
 
     def addCustomScalarSpaceToMixedSpace(self, mesh, order):

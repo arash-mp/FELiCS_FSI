@@ -11,7 +11,7 @@ def runModal(param):
     '''
     # import  FELiCS.IO.Import as Import
     from    FELiCS.IO.ExportSolution            import ExportFromFile 
-    import  FELiCS.SpaceDisc.DefineFEMSpaces    as DefineFEMSpaces
+    from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
     from    FELiCS.Misc.functions               import printDebug
@@ -27,7 +27,7 @@ def runModal(param):
     mesh = param.getMesh()
     
     # FEMSpaces
-    FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
+    FEMSpaces = FEMSpaces(
                 param,
                 mesh,
                 )
