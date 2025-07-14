@@ -1,18 +1,14 @@
-# How to: First steps in FELiCS 
+# How to import and export a h5 file
 
-[Link to installation guide]
-How to import FELiCS...
+Before you start, you should install all necessary FELiCS packages, and install FELiCS as a package itself. The [installation guide](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html) explains those steps in detail.
 
+After installing FELiCS you can start writing your first FELiCS script. 
 
-```python
-The <a href="https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/main/DOCUMENTATION/installation_guide.md"> installation guide </a> explains how to create the conda environment, download FELiCS and install FELiCS as a package.
+Here, we have used gmsh to create a square mesh, which we exported in ASCII format. If you need a more detailed explanation you can have a look here: (TODO: link to tutorial). 
 
-After installing FELiCS you can start writing your first FELiCS script.
-```
+**Step 1: Create a FELiCSMesh**
 
-We use gmsh to create a mesh. [TODO: link to tutorial]
-First we create a FELiCSMesh object from a gmsh mesh file. The FELiCSMesh is a wrapper for a dolfinx mesh, that contains additional attributes and methods, e.g. the coordinate system of your case.
-
+The FELiCSMesh is a wrapper for a dolfinx mesh, that contains additional attributes and methods, e.g. the coordinate system of your case. 
 
 
 ```python
@@ -25,18 +21,20 @@ coordinateSystem = "Cartesian"
 mesh = FELiCSMesh(coordinateSystem=coordinateSystem, meshFileName=meshFileName)
 ```
 
-Next we create a FEM function space from our FELiCSMesh object.
+**Step 2: Create a scalar function space**
+
+Next we create a dolfinx function space from our FELiCSMesh object with the polynomial order and the dimension of the space. We only use continuous Lagrange elements. Because our space should be scalar, we choose dim=1.
 
 
 ```python
 from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
 
 space = getFELiCSSpace(mesh, order=2, dim=1)
-
-
 ```
 
-Now things are getting interesting. The Field object can store fields on our function space, as the name suggests. We can import data to our Field from a h5 file, but also export our created data to h5. Fields can be naturally added to eachother using the standard python operators. Make sure, that the fields are defined on the same space, otherwise the fields cannot be added together.
+**Step 3: Create fields and import from H5 files**
+
+Now things are getting interesting. The Field object can store fields on our function space, as the name suggests. It contains a dolfinx function, as well as a FELiCS tensor object (which we use to make our expressions coordinatesystem independent). We can import data to our Field from a h5 file, but also export our created data to h5. Fields can be naturally added to eachother using the standard python operators. Make sure, that the fields are defined on the same space, otherwise the sum cannot be computed.
 
 
 ```python
@@ -52,3 +50,7 @@ Field3 = Field1 + Field2
 Field3.exportH5("field_sum")
 
 ```
+
+**Visualize the results**
+
+The resulting "xdmf" file can be load e.g. into Paraview. Our field now looks like this: (TODO: get plot from Field)
