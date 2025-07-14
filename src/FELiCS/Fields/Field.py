@@ -228,6 +228,8 @@ class Field:
         # There should also be an optional possibility to give the mesh, for scripting (or use it inside FELiCS as such?)
         from dolfinx.io import XDMFFile
         from mpi4py import MPI
+        import numpy as np
+
         if mesh != None:
             with XDMFFile(MPI.COMM_WORLD, fileName+".xdmf", "w") as xdmf:
                 xdmf.write_mesh(mesh.dolfinxMesh)
@@ -245,12 +247,14 @@ class Field:
         # There should also be an optional possibility to give the mesh, for scripting (or use it inside FELiCS as such?)
         from dolfinx.io import XDMFFile
         from mpi4py import MPI
+        import numpy as np
+
         #if meshFileName != None:
         #    with XDMFFile(MPI.COMM_WORLD, fileName+".xdmf", "r") as xdmf:
         #        mesh          = xdmf.read_mesh(meshFileName)
 
         # this is only a dummy for the scripting
-        self.setCoefficientArray(np.read(fileName+".npy")
+        self.setCoefficientArray(np.load(fileName+".npy"))
 
 
     def evaluateUflExpression(self, ufl_expression, bcs=[], restartSolver=False):
