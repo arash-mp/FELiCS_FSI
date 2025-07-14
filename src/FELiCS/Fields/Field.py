@@ -272,7 +272,7 @@ class Field:
         """
         from FELiCS.Solvers.LinearSolver import LinearSolver
         from FELiCS.Equation.UflDecorator import UflDecorator
-        import ufl 
+        import ufl
         import dolfinx
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
         if not hasattr(self.space, 'FEMWeightSolver') and not restartSolver:
@@ -289,17 +289,15 @@ class Field:
                 except:
                     matrix_ufl.add(ufl.conj(test)*trial_FEM[i]*ufl.dx)
                 i+=1
-            try:
-                matrix_ufl.setCorrectMeshObject(self.mesh)
-            except:
-                pass
-            matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
-            matrix.assemble()
+        
+            # matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
+            # matrix.assemble()
+            matrix = matrix_ufl.getAssembledMatrix(self.mesh, bcs)
             self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
-        petscVec = expr_ufl.getAssembledVector(self.mesh, bsc)
+        petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
 
 
@@ -362,7 +360,7 @@ class Field:
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
-        petscVec = expr_ufl.getAssembledVector(self.mesh, bsc)
+        petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
 
 
