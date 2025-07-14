@@ -22,7 +22,7 @@ cd workDir/cylinder_wake_tutorial/
 # 4. Mesh generation.
 
 Since the code is using the Finite Element Continuous Galerkin
-approach, a computational grid needs to be created, which spatially discretizes the domain. For 2D computations like the one in this tutorial, the code uses triangular elements only. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called ```cylinder_wake_mesh.py``` is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file, ```cylinder_wake.msh``` in Version 2 *ASCII* format. The documentation for using the ```python-gmsh``` package can be found [here](). 
+approach, a computational grid needs to be created, which spatially discretizes the domain. For 2D computations like the one in this tutorial, the code uses triangular elements only. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file,[```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format. The documentation for using the ```python-gmsh``` package can be found [here](./gmsh.md). 
 
 ```sh
 python cylinder_wake_mesh.py
@@ -38,7 +38,7 @@ Upon magnifying in the vicinity of the cylinder it looks like
 ![Image2](../../TUTORIALS/cylinder_wake_tutorial/magCylinderWake.png) <a id="fig:MagMesh"></a>
 Figure 2. Magnified version of [Figure 1](#fig:Mesh)
 
-The file ```cylinder_wake.msh``` consists of the following domains.
+The file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) consists of the following domains.
 
 ```sh
 $MeshFormat
@@ -58,7 +58,7 @@ In [Figure 1](#fig:Mesh), <code style="color : Darkorange">Inlet</code> is the l
 
 
 # 5. Obtaining the base flow. 
-The base flow for FELiCS can be obtained by various sources depending on the case: Numerical simulations, such as RANS, URANS, LES, DNS, as well as experimental results or analytical models. In this case, we will calculate our base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called ```solveBaseFlow.py``` can be found in the working directory. The newton flow solver doesn't need to be adapted, nevertheless, the interested reader will find that it is not hard at all to solve the flow equations for different Reynolds numbers. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
+The base flow for FELiCS can be obtained by various sources depending on the case: Numerical simulations, such as RANS, URANS, LES, DNS, as well as experimental results or analytical models. In this case, we will calculate our base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) can be found in the working directory. The newton flow solver doesn't need to be adapted, nevertheless, the interested reader will find that it is not hard at all to solve the flow equations for different Reynolds numbers. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
 
 ```sh
 conda activate felics2025_dolfin9
@@ -76,7 +76,7 @@ Furthermore, since we only solve the non-dimensionalized Navier-stokes continuit
 ```
 and in the <code style="color : Cyan">"SetofEquations"</code>, we set everything else to <code style="color : Darkorange">None</code>, except for <code style="color : Cyan">"Momentum"</code> and <code style="color : Cyan">"Mass"</code> equations. 
 
-Additionally we import the boundary conditions from the ```bc.json``` file. Overall the boundary conditions can be formulated as : 
+Additionally we import the boundary conditions from the [```bc.json```](./../../TUTORIALS/cylinder_wake_tutorial/bc.json) file. Overall the boundary conditions can be formulated as : 
 
 | Boundary | $u_x$     | $u_y$      | $p$       |
 |:----------|:-----------|:-----------|:-----------|
@@ -92,12 +92,29 @@ Finally, the mean-flow field is imported via
 "MeanFlowFilePath": "meanflow.fel"
 ```
 
-Lastly, we obtain the base flow via solving the python script ```solveBaseFlow.py``` as
+Lastly, we obtain the base flow via solving the python script [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) as
 
 ```sh
 python solveBaseFlow.py
 ```
-This will output the file ```base_flow.xdmf```, which in paraview can be visualised as 
+Upon executing the file [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) in python, the following files will be added to the working directory
+```bash
+.
+└── logs
+└── out 
+├ base_flow_for_FELiCS.fel
+├ base_flow_4_plot.fel
+├ baseFlow.npy
+├ BaseFlow_p.xdmf
+├ BaseFlow_nu.xdmf
+├ base_flow.xdmf
+├ BaseFlow_p.h5
+├ base_flow.h5
+├ BaseFlow_nu.h5
+└ ...
+```
+
+The file ```base_flow.xdmf```, which in paraview can be visualised as 
 
 ![Image3](../../TUTORIALS/cylinder_wake_tutorial/BaseFlow.png)
 Figure 3. Magnitude of the flow-field. 
