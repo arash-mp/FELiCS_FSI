@@ -1,5 +1,8 @@
 # 1. Goals of the tutorial.
-In this first tutorial, an introduction to setting up a FELiCS case will be given via solving for the base flow around a cylinder for a Reynolds number, $\mathrm{Re} = 50$.
+In this first tutorial, an introduction to setting up a FELiCS case will be given via solving for the base flow around a cylinder for a Reynolds number, $\mathrm{Re} = 50$. By the end of this tutorial, you will be able to:
+
+- Define a case in FELiCS.
+- Create a case folder with a mesh and base flow files.
 
 # 2. Requirements.
 
