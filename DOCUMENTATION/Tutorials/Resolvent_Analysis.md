@@ -7,7 +7,7 @@ The goal of this tutorial is to provide a step-by-step guide on performing resol
 - Define a case for resolvent analysis.
 - Create a case folder with a mesh and base flow files.
 - Perform resolvent analysis.
-- Postprocess and visualize the results.
+- Plot the gains and modes in Python.
 
 ## Case Definition
 
@@ -22,19 +22,15 @@ Feel free to play with the `CellsFineness` factor to see the influence of finer 
 
 **Warning:** For 2D computations, FELiCS handles only triangular elements only.
 
-Open the .geo file with GMSH. You should obtain this geometry:
-![Image1](../../TUTORIALS/resolvent_tutorial/GMSH.png)
-CLick on "Mesh" and "2D". Export the mesh in File -> Export it in a **.msh** format. Make sur to use `Version 2 ASCII`.
-
-![Alt Text](../../TUTORIALS/resolvent_tutorial/GMSH2.png)
-
-Place this `FeliCS_mesh.msh` file in your case folder. 
+Open the .geo file with GMSH an click on "Mesh" and "2D". You should obtain this mesh:
+![Figure1](../../TUTORIALS/resolvent_tutorial/Meshimage.png)
+Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FeliCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
 
 Our base flow is obtained by time-azimuthal-averaging the snapshots of a 3D LES. This could be a RANS solution, experimental data, or any other relevant flow field.
-The following python script loads the data and write a **.fel** file.
-Place this .fel file in your case folder. 
+Run the python script [meanFlow.py](../../TUTORIALS/resolvent_tutorial/meanFlow.py) to load the mean flow data and write a **.fel** file. This script also allows to define response and forcing domains, a sponge function and an eddy viscosity field.  
+Place the `meanFlow.fel` file in your case folder. 
 
 ### Boundary conditions
 
@@ -112,18 +108,32 @@ FELiCS -file resolvent_setting.json
 After the computation, check the `output_dir/`. You should have these files: 
 ```bash
 .
-├ meanflow.h5
-├ gains.csv
-├ Resolvent_mesh.h5
-├ Resolvent_Omega3.1_Forcing_gain0.xmf
-├ Resolvent_Omega3.1_Forcing_gain0.h5
-├ Resolvent_Omega3.1_Response_gain0.xmf
-├ Resolvent_Omega3.1_Response_gain0.h5
 └── output_dir
+    ├ gains.csv
+    ├ meanflow.h5
+    ├ Resolvent_mesh.h5
+    ├ Resolvent_Omega3.1_Forcing_gain0.xmf
+    ├ Resolvent_Omega3.1_Forcing_gain0.h5
+    ├ Resolvent_Omega3.1_Response_gain0.xmf
+    └ Resolvent_Omega3.1_Response_gain0.h5
 ```
-After solving several frequencies, you can plot the gains against the Strouhal number using the python script [postProd_gains.py](../../TUTORIALS/resolvent_tutorial/postProd_gains.py). 
+Try to solve several frequencies by providing for instance:
+```json
+"Omegas":[0.0628, 0.1048, 0.1748, 0.2916, 0.4865, 0.8115, 1.3537, 2.2581, 3.1, 4.367, 6.2832]
+``` 
+We postprocess the outputed files using the python script [PlotMode.py](../../TUTORIALS/resolvent_tutorial/PlotMode.py).
+
+Modify the defined path to your folder and run the script. 
+
+The resolvent gains are plotted against the Strouhal number:
+![Figure2](../../TUTORIALS/resolvent_tutorial/gains.png)
 
 To visualize the mode shape, open the file `Resolvent_Omega3.1_Response_gain0.xmf` with Paraview. 
+Get an idea of the mode shape by plotting the real part of the response fluctuations. 
+For $p', u_x', u_r'$ you should obtain:
+![Figure2](../../TUTORIALS/resolvent_tutorial/Resolvent_mode.png)
+
+**Note:** Here the frequency $\omega = 3.1$ corresponds to a Strouhal number $St = \omega/2\pi = 0.5$ and this Kelvind Helmoltz mode comes from the shear layer perturbation.
 >**Warning:** The gains provided by FELiCS are $sigma^2$. The forcing modes have a unitary norm on the defined forcing domain, but the response modes have the norm $sigma$ on the defined response domain.
 
 ## References
