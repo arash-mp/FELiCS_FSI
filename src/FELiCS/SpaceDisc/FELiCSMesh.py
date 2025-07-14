@@ -18,15 +18,15 @@ class FELiCSMesh:
     '''
     This class is a wrapper to the fenics mesh class
     '''
-    def __init__(self, coordinateSystem, filename=None, gdim=0, m=0, inputMesh=None):
+    def __init__(self, coordinateSystem, meshFileName=None, gdim = None, m=0, inputMesh=None):
         if inputMesh is None:
             # Initialize gmsh and suppress its output
             gmsh.initialize()
             gmsh.option.setNumber("General.Terminal", 0)  # Disable console log
             gmsh.option.setNumber("General.Verbosity", 0) # Disable all logging
             
-            logger.info(f"Opening mesh file: {filename}")
-            gmsh.open(filename)
+            logger.info(f"Opening mesh file: {meshFileName}")
+            gmsh.open(meshFileName)
             
             # Get mesh statistics
             nodes           = gmsh.model.mesh.getNodes()
@@ -38,6 +38,8 @@ class FELiCSMesh:
             from dolfinx.io import gmshio
             mesh_comm = MPI.COMM_WORLD
             model_rank = 0
+            if gdim == None:
+                gdim = gmsh.model.getDimension()
             mesh, _, facet_tags = gmshio.model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=gdim)
                 
             self.dolfinxMesh = Mesh(mesh, mesh.ufl_domain())._cpp_object
@@ -48,7 +50,7 @@ class FELiCSMesh:
             self._ufl_domain = mesh._ufl_domain
             self.calcConnectivity()
             # save the coordinates in gmsh order:
-            gmsh.open(filename)
+            gmsh.open(meshFileName)
         else:
             #self.dolfinxMesh = Mesh(inputMesh, inputMesh.ufl_domain())
             self.dolfinxMesh = inputMesh 

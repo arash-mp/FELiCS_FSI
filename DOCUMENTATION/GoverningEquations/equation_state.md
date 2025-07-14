@@ -1,3 +1,3 @@
-# Implementation of the equation of state - NOT STARTED YET
+# Equations of state
 
 (see Thomas' first version: "equation\_momentum\_mass\_species\_energy.md")

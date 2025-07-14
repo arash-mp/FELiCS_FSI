@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 10 10:31:52 2020
-
-@author: cwang
-Similar code structure as Max's c2sm2.py
-"""
-
-#TwoStep reaction methane-air combustion
-#adapted for BFER or 2S_CH4_CM2 model
-#CERFACS reference https://www.cerfacs.fr/cantera/mechanisms/meth.php
 
 
 from dolfinx.fem import (
@@ -22,7 +12,127 @@ from ufl import (
 import numpy as np
 import bisect as bs
 class TwoStepReaction():
+    """
+    Represents a two-step methane-air combustion reaction mechanism.
+
+    This class models two-step chemical reactions, adapted for BFER or 2S_CH4_CM2 models, and provides methods for reading reaction data, computing mean fields, and evaluating reaction rates.
+    See CERFACS for model reference https://www.cerfacs.fr/cantera/mechanisms/meth.php
+    
+    **Initialize the TwoStepReaction object**
+
+    Parameters
+    ----------
+    ModelName : str
+        Name of the reaction model to use.
+
+    Attributes
+    ----------
+    mixtureDirectory : str
+        Directory name for mixture data.
+    speciesDirectory : str
+        Directory name for species data.
+    p0 : float
+        Reference pressure.
+    R : float
+        Universal gas constant.
+    n_CH4_1 : float or None
+        Stoichiometric prefactor for CH4 in reaction 1.
+    n_O2_1 : float or None
+        Stoichiometric prefactor for O2 in reaction 1.
+    n_CO_1 : float or None
+        Stoichiometric prefactor for CO in reaction 1.
+    n_CO_2 : float or None
+        Stoichiometric prefactor for CO in reaction 2.
+    n_O2_2 : float or None
+        Stoichiometric prefactor for O2 in reaction 2.
+    n_CO2_2 : float or None
+        Stoichiometric prefactor for CO2 in reaction 2.
+    nu_CH4_1 : float or None
+        Kinematic exponent for CH4 in reaction 1.
+    nu_O2_1 : float or None
+        Kinematic exponent for O2 in reaction 1.
+    nu_CO_2 : float or None
+        Kinematic exponent for CO in reaction 2.
+    nu_O2_2 : float or None
+        Kinematic exponent for O2 in reaction 2.
+    nu_CO2_2 : float or None
+        Kinematic exponent for CO2 in reaction 2.
+    A1 : float or None
+        Pre-exponential factor for reaction 1.
+    Ta1 : float or None
+        Activation temperature for reaction 1.
+    beta1 : float or None
+        Temperature exponent for reaction 1.
+    h1 : float or None
+        Heat of reaction for reaction 1.
+    A2 : float or None
+        Pre-exponential factor for reaction 2.
+    Ta2 : float or None
+        Activation temperature for reaction 2.
+    beta2 : float or None
+        Temperature exponent for reaction 2.
+    h2 : float or None
+        Heat of reaction for reaction 2.
+    WO2 : float or None
+        Molar mass of O2.
+    WH2O : float or None
+        Molar mass of H2O.
+    WCH4 : float or None
+        Molar mass of CH4.
+    WCO : float or None
+        Molar mass of CO.
+    WCO2 : float or None
+        Molar mass of CO2.
+    WN2 : float or None
+        Molar mass of N2.
+    Q1 : object or None
+        Reaction progress rate for reaction 1.
+    Q2f : object or None
+        Forward reaction progress rate for reaction 2.
+    Q2r : object or None
+        Reverse reaction progress rate for reaction 2.
+    Q2 : object or None
+        Total reaction progress rate for reaction 2.
+    K2f : object or None
+        Forward reaction rate constant for reaction 2.
+    K2r : object or None
+        Reverse reaction rate constant for reaction 2.
+    lnexpInEqui_h : object or None
+        Linearized enthalpy term for equilibrium constant in reaction 2.
+    expInEqui : object or None
+        Exponential term for equilibrium constant in reaction 2.
+    Equi : object or None
+        Equilibrium constant for reaction 2.
+    i_rho : int or None
+        Index for density in solution variables.
+    i_CH4 : int or None
+        Index for CH4 in solution variables.
+    i_O2 : int or None
+        Index for O2 in solution variables.
+    i_CO2 : int or None
+        Index for CO2 in solution variables.
+    i_CO : int or None
+        Index for CO in solution variables.
+    T : object or None
+        Temperature field.
+    Y_CH4_limited : object or None
+        Limited CH4 mass fraction.
+    epsilon : float
+        Correction for base flow CH4.
+    reactionName : str
+        Name of the reaction.
+    """
+
     def __init__(self, ModelName):
+        """
+        Initializes the TwoStepReaction instance.
+
+        Parameters
+        ----------
+        ModelName : str
+            Name of the reaction model to use.
+        """
+
         self.mixtureDirectory = 'Mixture' #to be put in param
         self.speciesDirectory = 'Species' #to be put in param
 
@@ -115,6 +225,18 @@ class TwoStepReaction():
 
 
     def ReadReactionDict(self, ModelName):
+        """
+        Reads reaction parameters and species data from files and updates class attributes.
+
+        Parameters
+        ----------
+        ModelName : str
+            Name of the reaction model to use.
+
+        Notes
+        -----
+        This method sets stoichiometric prefactors, kinematic exponents, reaction constants, and molar masses based on the provided model name.
+        """
         fileMixture = open(self.mixtureDirectory,'r')
         mixtureDictDict = eval(fileMixture.read())
         fileMixture.close()
@@ -162,6 +284,29 @@ class TwoStepReaction():
         self.WN2 = speciesDictDict['N2']['mol_weight']
 
     def computeMeanField(self,MF,ele):
+        """
+        Computes the mean field reaction rates and equilibrium constants.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        ele : dolfinx.fem.FunctionSpace
+            Function space for interpolation.
+
+        Returns
+        -------
+        Q1 : object
+            Mean field for reaction 1.
+        Q2f : object
+            Forward mean field for reaction 2.
+        Q2r : object
+            Reverse mean field for reaction 2.
+
+        Notes
+        -----
+        This method also computes equilibrium constants and related fields for reaction 2.
+        """
         self.Y_CH4_limited = Expression("Y_CH4_ + epsilon_", Y_CH4_=MF['CH4'],epsilon_=self.epsilon, degree=2)
 
         ele.interpolate(Expression("A*exp(-Ta/T_) * pow(T_, beta)* pow(rho_, nu_CH4 + nu_O2) * pow(Y_CH4_ / W_CH4, nu_CH4) * pow(Y_O2_ / W_O2, nu_O2)",\
@@ -206,6 +351,31 @@ class TwoStepReaction():
 
 
     def addReaction(self, MF, testf, trialf, solutionList,ele):
+        """
+        Adds the reaction terms to the weak form for both reaction steps.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        testf : list
+            List of test functions.
+        trialf : dict
+            Dictionary of trial functions.
+        solutionList : list of str
+            List of solution variable names.
+        ele : dolfinx.fem.FunctionSpace
+            Function space for interpolation.
+
+        Returns
+        -------
+        reaction_term : ufl.Form
+            Weak form expression representing the reaction contributions.
+
+        Notes
+        -----
+        The method computes the indices for relevant variables and constructs the weak form using the reaction rates and heat release for both steps.
+        """
         self.i_rho=solutionList.index('rho')
         self.i_CH4=solutionList.index('CH4')
         self.i_O2=solutionList.index('O2')
@@ -233,6 +403,21 @@ class TwoStepReaction():
         return form
 
     def dQ1_(self, MF, trialf):
+        """
+        Computes the fluctuation of the reaction rate for the first reaction step.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        trialf : dict
+            Dictionary of trial functions.
+
+        Returns
+        -------
+        dQ1 : float
+            Fluctuation of the reaction rate for reaction 1.
+        """
         dT = -trialf['rho']/MF['rho']*MF['T']
         return ((self.nu_O2_1+self.nu_CH4_1)*trialf['rho']/MF['rho']\
                 +self.beta1*dT/MF['T']\
@@ -242,6 +427,21 @@ class TwoStepReaction():
 
 
     def dQ2f_(self, MF, trialf):
+        """
+        Computes the fluctuation of the forward reaction rate for the second reaction step.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        trialf : dict
+            Dictionary of trial functions.
+
+        Returns
+        -------
+        dQ2f : float
+            Fluctuation of the forward reaction rate for reaction 2.
+        """
         dT = -trialf['rho']/MF['rho']*MF['T']
         return ((self.nu_O2_2+self.nu_CO_2)*trialf['rho']/MF['rho']\
                 +self.beta2*dT/MF['T']\
@@ -250,6 +450,21 @@ class TwoStepReaction():
                 +self.nu_O2_2*trialf['O2']/MF['O2'])
 
     def dQ2r_(self, MF, trialf):
+        """
+        Computes the fluctuation of the reverse reaction rate for the second reaction step.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        trialf : dict
+            Dictionary of trial functions.
+
+        Returns
+        -------
+        dQ2r : float
+            Fluctuation of the reverse reaction rate for reaction 2.
+        """
         dK2rdT=self.dK2rdT_(self.T)
         dT = -trialf['rho']/MF['rho']*MF['T']
         return (\
@@ -265,9 +480,35 @@ class TwoStepReaction():
 #               )
 
     def dK2fdT_(self,T):
+        """
+        Computes the temperature derivative of the forward reaction rate constant for reaction 2.
+
+        Parameters
+        ----------
+        T : object
+            Temperature field.
+
+        Returns
+        -------
+        dK2fdT : object
+            Expression for the temperature derivative of the forward rate constant.
+        """
         return Expression("(Ta2 / pow(T_, 2)+beta2/T_)", Ta2=self.Ta2, T_=T, beta2=self.beta2, degree=2)
 
     def dK2rdT_(self, T):
+        """
+        Computes the temperature derivative of the reverse reaction rate constant for reaction 2.
+
+        Parameters
+        ----------
+        T : object
+            Temperature field.
+
+        Returns
+        -------
+        dK2rdT : object
+            Expression for the temperature derivative of the reverse rate constant.
+        """
 
         return Expression("Kf2dT_ -KcdT_/Kc",Kf2dT_=self.dK2fdT_(T), Kc=self.Equi, K2f_=self.K2f, K2r_=self.K2r,\
                     KcdT_=self.dEquidT_(self.T),  degree=2)
@@ -276,6 +517,19 @@ class TwoStepReaction():
 #                   KcdT_=self.dEquidT_(self.T),  degree=2)
 
     def dEquidT_(self, T):
+        """
+        Computes the temperature derivative of the equilibrium constant for reaction 2.
+
+        Parameters
+        ----------
+        T : object
+            Temperature field.
+
+        Returns
+        -------
+        dEquidT : object
+            Expression for the temperature derivative of the equilibrium constant.
+        """
         return Expression(
         "(Kp2dT - Kp2/T_ * (n_CO2_2 - n_O2_2 - n_CO_2)) * pow(pa / (R * T_), n_CO2_2-n_O2_2-n_CO_2)",
         Kp2dT=self.dexpInEquidT_(T), Kp2=self.expInEqui, pa=self.p0, R=self.R, T_=T,
@@ -289,6 +543,19 @@ class TwoStepReaction():
 #       degree=2)
 
     def dexpInEquidT_(self, T):
+        """
+        Computes the temperature derivative of the exponential part of the equilibrium constant for reaction 2.
+
+        Parameters
+        ----------
+        T : object
+            Temperature field.
+
+        Returns
+        -------
+        dexpInEquidT : object
+            Expression for the temperature derivative of the exponential part of the equilibrium constant.
+        """
         return Expression("- Kp2 /  T_ * H_",
         Kp2=self.expInEqui, R=self.R, T_=T,
         H_=self.lnexpInEqui_h,
@@ -296,6 +563,31 @@ class TwoStepReaction():
 
 
     def postHeatRelaese(self, MF, prho, pCH4, pO2, pCO, pCO2, ele):
+        """
+        Evaluates the fluctuation of heat release in post-processing.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        prho : float
+            Perturbation in density.
+        pCH4 : float
+            Perturbation in CH4 mass fraction.
+        pO2 : float
+            Perturbation in O2 mass fraction.
+        pCO : float
+            Perturbation in CO mass fraction.
+        pCO2 : float
+            Perturbation in CO2 mass fraction.
+        ele : dolfinx.fem.FunctionSpace
+            Function space for interpolation.
+
+        Returns
+        -------
+        heat_release_field : object
+            Projected fluctuation heat release field.
+        """
         #evalute fluctuation HeatRelease in post-processing
         #dQ1
         dQ1=self.postdQ1_(MF, prho, pO2, pCH4, ele)
@@ -309,6 +601,27 @@ class TwoStepReaction():
         return project(form,ele)
 
     def postdQ1_(self, MF, prho, pO2, pCH4, ele):
+        """
+        Computes the fluctuation of the reaction rate for the first reaction step in post-processing.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        prho : float
+            Perturbation in density.
+        pO2 : float
+            Perturbation in O2 mass fraction.
+        pCH4 : float
+            Perturbation in CH4 mass fraction.
+        ele : dolfinx.fem.FunctionSpace
+            Function space for interpolation.
+
+        Returns
+        -------
+        dQ1 : float
+            Fluctuation of the reaction rate for reaction 1.
+        """
 
 
         dT = -prho/MF['rho']*MF['T']
@@ -319,6 +632,25 @@ class TwoStepReaction():
                 +self.nu_CH4_1*pCH4/(MF['CH4']+self.epsilon))
 
     def postdQ2f_(self, MF, prho, pCO, pO2):
+        """
+        Computes the fluctuation of the forward reaction rate for the second reaction step in post-processing.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        prho : float
+            Perturbation in density.
+        pCO : float
+            Perturbation in CO mass fraction.
+        pO2 : float
+            Perturbation in O2 mass fraction.
+
+        Returns
+        -------
+        dQ2f : float
+            Fluctuation of the forward reaction rate for reaction 2.
+        """
         dT = -prho/MF['rho']*MF['T']
         return ((self.nu_O2_2+self.nu_CO_2)*prho/MF['rho']\
                 +self.beta2*dT/MF['T']\
@@ -327,6 +659,23 @@ class TwoStepReaction():
                 +self.nu_O2_2*pO2/MF['O2'])
 
     def postdQ2r_(self, MF, prho, pCO2):
+        """
+        Computes the fluctuation of the reverse reaction rate for the second reaction step in post-processing.
+
+        Parameters
+        ----------
+        MF : dict
+            Dictionary containing mean flow properties.
+        prho : float
+            Perturbation in density.
+        pCO2 : float
+            Perturbation in CO2 mass fraction.
+
+        Returns
+        -------
+        dQ2r : float
+            Fluctuation of the reverse reaction rate for reaction 2.
+        """
         dK2rdT=self.dK2rdT_(self.T)
         dT = -prho/MF['rho']*MF['T']
         return (\
@@ -337,6 +686,13 @@ class TwoStepReaction():
 
 
     def testM(self):
+        """
+        Prints the maximum reaction rates of the base flow for diagnostic purposes.
+
+        Notes
+        -----
+        This method outputs the maximum values of reaction rates for reaction 1, reaction 2 forward, and reaction 2 inverse.
+        """
         print('Reaction rates of base flow (maximum values)')
         print('reaction 1:')
         print(np.max(self.Q1.vector()[:]))

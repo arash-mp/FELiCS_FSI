@@ -44,56 +44,74 @@ logger = Logger.get_logger("felics")
 
 class EquationCollectionClass():
     """
-    Constructs variational formulations for various matrices and manages equations and boundary conditions.
+    Constructs variational formulations for equations and manages boundary conditions.
 
-    This class builds variational formulations for matrices such as:
-    - A (imaginary and real parts)
-    - B (imaginary and real parts)
-    - B_forcing (Resolvent forcing norm)
-    - B_response (Resolvent response norm)
+    This class generates variational formulations for various matrices, including:
+    - A (real and imaginary parts of the linear operator)
+    - B (real and imaginary parts of the weight/time-derivative matrix)
+    - B_forcing (resolvent forcing norm)
+    - B_response (resolvent response norm)
 
-    The convention ensures that the B matrix (time derivative) is positive and real.
+    It also manages test and trial functions, boundary conditions, and mesh-based
+    coordinate transformations. The design supports multiple physical models
+    (momentum, mass, energy, species) and enables configuration through an external
+    parameter object.
+
+    **Initialize the EquationCollectionClass object**
 
     Parameters
     ----------
     param : object
-        Parameters for the simulation, including boundary conditions and equations.
+        Parameters for the simulation, including boundary conditions, equations, and I/O settings.
     FEMSpaces : object
-        Finite Element Method spaces for the simulation.
+        Collection of Finite Element Method spaces for the mixed formulation.
     mean : object
         Mean flow fields used in variational formulations.
     mesh : object
-        Mesh defining the domain.
+        Mesh object defining the spatial domain and coordinate system.
 
     Attributes
     ----------
     x : ufl.SpatialCoordinate
-        Spatial coordinates of the mesh.
+        Spatial coordinates of the computational domain.
     ds : ufl.Measure
-        Measure for integrating along boundaries.
+        Measure for integration over boundary subdomains.
     all_ds : ufl.Measure
-        Measure for integrating over all boundaries.
+        Combined measure over all boundary subdomains.
     n_BC : ufl.FacetNormal
-        Normal vector on boundaries.
+        Outward-pointing unit normal on the domain boundary.
     n : Tensor
-        Boundary normal vector in the chosen coordinate system.
+        Tensor form of the boundary normal vector in the chosen coordinate system.
     BCs : list
-        List of Dirichlet boundary conditions.
+        List of Dirichlet boundary condition objects.
     trialFunctionsFEM : ufl.TrialFunctions
-        Trial functions for the variational formulation.
+        Mixed trial functions used in the variational problem.
     testFunctionsFEM : ufl.TestFunctions
-        Test functions for the variational formulation.
+        Mixed test functions used in the variational problem.
     X : list of Tensor
-        Test functions with additional structure.
+        List of structured test functions with tensor-awareness.
     R : ufl.Coefficient
-        Radial coordinate for cylindrical coordinates.
+        Radial coordinate value for cylindrical systems or unity for Cartesian.
     equationList : list
-        List of equations included in the model.
+        List of equation objects that define the weak formulations.
     resolventResponseIndices : numpy.ndarray
-        Indices for resolvent response in FEM spaces.
+        Indices selecting solution components used in the resolvent response norm.
     resolventForcingIndices : numpy.ndarray
-        Indices for resolvent forcing in FEM spaces.
+        Indices selecting solution components used in the resolvent forcing norm.
+
+    Notes
+    -----
+    The class dynamically loads and constructs equation objects depending on
+    the configuration provided in `param.Case.Equations`. It supports tensor-based
+    formulations and multiple coordinate systems.
+
+    Examples
+    --------
+    >>> eq_collection = EquationCollectionClass(param, FEMSpaces, mean, mesh)
+    >>> A = eq_collection.getLinearOperator(mean)
+    >>> B = eq_collection.getWeightMatrix(mean)
     """
+
 
     def __init__(self, param, FEMSpaces, mean, mesh):
         """
@@ -297,7 +315,7 @@ class EquationCollectionClass():
         Returns
         -------
         petsc4py.PETSc.Mat
-        Assembled linear operator matrix with boundary conditions applied
+            Assembled linear operator matrix with boundary conditions applied
         """
         # create ufl object with the linear equation system 
         A_ufl = UflDecorator()
@@ -310,23 +328,21 @@ class EquationCollectionClass():
 
     def getWeightMatrix(self, meanFlow):
         """
-        Construct the weight matrix representing the time derivative term.
+        Construct the weight matrix representing the time derivative term.  
 
-        This method assembles the weight matrix by iterating through all 
-        equations in the equation list and adding their weight matrix 
-        expressions.
+        Assembles the matrix by summing contributions from all equations.
+        Boundary conditions are included for resolvent analysis mode only.  
 
         Parameters
         ----------
         meanFlow : object
-            Mean flow properties used in constructing the weight matrix
+            Mean flow properties used in constructing the weight matrix.    
 
         Returns
         -------
         petsc4py.PETSc.Mat
-            Assembled weight matrix, with or without boundary conditions 
-            depending on the analysis mode
-        
+            Assembled weight matrix.
+       
         Notes
         -----
         - For Resolvent analysis, boundary conditions are applied
@@ -446,7 +462,23 @@ class EquationCollectionClass():
         return D_ufl.getAssembledMatrix(self._mesh, self.BCs)
 
 
-    def getFullRHS(self,func):
+    def getFullRHS(self, func):
+        """
+        Construct the full FEM right-hand side (RHS) vector.    
+
+        Forms the RHS by integrating each test function against the 
+        corresponding part of the provided function.    
+
+        Parameters
+        ----------
+        func : dolfinx.fem.Function
+            Mixed function representing the source term or solution.    
+
+        Returns
+        -------
+        petsc4py.PETSc.Vec
+            Assembled RHS vector.
+        """
 
         # create ufl object with the full FEM weight matrix expression
         rhs_ufl   = UflDecorator()
@@ -470,6 +502,24 @@ class EquationCollectionClass():
         return rhs_ufl.getAssembledVector(self._mesh)
 
     def getNonlinearExpression(self, meanFlow, setBC=True):
+        """
+        Construct the nonlinear vector expression for the system.
+
+        Assembles the nonlinear contributions from all equations.
+
+        Parameters
+        ----------
+        meanFlow : object
+            Mean flow field used in the nonlinear formulation.
+        setBC : bool, optional
+            Whether to apply boundary conditions (default is True).
+
+        Returns
+        -------
+        petsc4py.PETSc.Vec
+            Assembled nonlinear vector.
+        """
+
         N_ufl = UflDecorator()
         for equation in self.equationList:
             equation.addNonlinearExpression(N_ufl, meanFlow)
@@ -479,6 +529,22 @@ class EquationCollectionClass():
             return N_ufl.getAssembledVector(self._mesh)
 
     def getBilinearOperator(self, meanFlow):
+        """
+        Construct the bilinear operator matrix.
+
+        Assembles all bilinear terms across the system equations.
+
+        Parameters
+        ----------
+        meanFlow : object
+            Mean flow field used in the bilinear formulation.
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            Assembled bilinear operator matrix with boundary conditions applied.
+        """
+
         # create ufl object with the linear equation system 
         BL_ufl = UflDecorator()
         for equation in self.equationList:
@@ -487,7 +553,22 @@ class EquationCollectionClass():
         return BL_ufl.getAssembledMatrix(self._mesh, bcs=self.BCs)
 
     def getForcingForInputOutput(self,meanFlow):
-        # create ufl object with the linear equation system 
+        """
+        Construct the forcing vector for input-output analysis.
+
+        Creates ufl object with the linear equation system. 
+
+        Parameters
+        ----------
+        meanFlow : object
+            Mean flow properties used to construct the forcing vector.
+
+        Returns
+        -------
+        petsc4py.PETSc.Vec
+            Assembled complex forcing vector.
+        """
+
         f_ufl = UflDecorator()
         for equation in self.equationList:
             equation.addLinearExpression(f_ufl, meanFlow)
@@ -498,16 +579,41 @@ class EquationCollectionClass():
 
 
     def getResolventNorm_response(self, meanFlow):
+        """
+        Construct the resolvent response norm matrix.
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            PETSc matrix representing the response norm.
+        """
         # assemble petsc matrix
         return self.response_vf.getAssembledMatrix(self._mesh)
 
 
     def getResolventNorm_forcing(self, meanFlow):
+        """
+        Construct the resolvent forcing norm matrix.
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            PETSc matrix representing the forcing norm.
+        """
+
         # assemble petsc matrix
         return self.forcing_vf.getAssembledMatrix(self._mesh)
 
 
     def getResolventWeighting_FEM(self, meanFlow):
+        """
+        Construct FEM weighting matrix for resolvent analysis.
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            PETSc matrix with FEM weights based on variable projections.
+        """
 
         # create ufl object with the linear equation system 
         W_FEM_ufl = UflDecorator()
@@ -516,10 +622,27 @@ class EquationCollectionClass():
         return self.fem_weighting.getAssembledMatrix(self._mesh)
 
 
-########################### Resolvent Norm  ############################
-    def computeResolventNorms(self,X,param,mean,fluc):
-        ''' This function yields the norms for the resolvent analysis.
-        Note that both the forcing and response norm must be real!'''
+    ########################### Resolvent Norm  ############################
+    def computeResolventNorms(self, X, param, mean, fluc):
+        """
+        Compute energy norms for resolvent forcing and response.
+
+        Parameters
+        ----------
+        X : list of Tensor
+            Test functions with tensor awareness.
+        param : object
+            Simulation configuration parameters.
+        mean : object
+            Mean flow fields.
+        fluc : object
+            Fluctuation fields object.
+
+        Notes
+        -----
+        Only 'TKE' and 'Chu' norm types are currently implemented.
+        """
+
         #Initialize forcing and response
         self.forcing_vf     = UflDecorator()
         self.response_vf    = UflDecorator()
@@ -571,12 +694,21 @@ class EquationCollectionClass():
             logger.error(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
             raise Exception(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
 
-    def computeResolventFEMWeights(self,X,param,mean,fluc):
-        ''' 
-        This function yields a matrix containing the FEM weights
-        corresponding to a diagonal unit matrix.
-        (Need to chat with Sophie to better define this)
-        '''
+    def computeResolventFEMWeights(self, X, param, mean, fluc):
+        """
+        Compute FEM weighting matrix for resolvent input/output scaling.
+
+        Parameters
+        ----------
+        X : list of Tensor
+            Test functions.
+        param : object
+            Parameter configuration.
+        mean : object
+            Mean flow fields.
+        fluc : object
+            Fluctuation fields.
+        """
         
         # Initialize the matrix
         self.fem_weighting = UflDecorator()
@@ -604,8 +736,23 @@ class EquationCollectionClass():
 
 
     def getRestrictorMatResponse(self):
-        # provides a quadratic matrix, with the size of the solution space (VMixed)
-        # has the response restrictor values, given with the mean field, on the diagonal
+        """
+        Construct the response restrictor matrix for the resolvent analysis.
+
+        This matrix is diagonal and applies spatial restriction (if defined) to the 
+        response vector based on the `responseDomain` field in the mean flow.
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            PETSc matrix with diagonal entries corresponding to the spatial restriction mask.
+
+        Notes
+        -----
+        - Provides a quadratic matrix, with the size of the solution space (VMixed).
+        - Has the response restrictor values, given with the mean field, on the diagonal.
+        """
+
         from petsc4py import PETSc
         
         # First we check if response Domain is zero everywhere = no spatial limiter
@@ -662,8 +809,23 @@ class EquationCollectionClass():
         return P_petsc
 
     def getRestrictorMatForcing(self):
-        # provides a quadratic matrix, with the size of the solution space (VMixed)
-        # has the inverse of the forcing restrictor values, given with the mean field, on the diagonal
+        """
+        Construct the forcing restrictor matrix for the resolvent analysis.
+
+        This matrix is diagonal and applies spatial restriction (if defined) to the 
+        forcing vector based on the `forcingDomain` field in the mean flow.
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            PETSc matrix with diagonal entries corresponding to the spatial restriction mask.
+
+        Notes
+        -----
+        - Provides a quadratic matrix, with the size of the solution space (VMixed).
+        - Has the inverse of the forcing restrictor values, given with the mean field, on the diagonal.
+        """
+
         from petsc4py import PETSc
         
         # First we check if forcingDomain is zero everywhere = no spatial limiter
@@ -719,16 +881,13 @@ class EquationCollectionClass():
         return P_petsc
 
     def getShrinkerMatResponse(self):
-        """Creates a (possibly rectangular) matrix which serves 
-        the purpose to "shrink" the solution (response) vector 
-        to the requested size.
-        (e.g. only consider the velocity components when using 
-        the response norm "TKE")
+        """
+        Construct a shrinker matrix for the resolvent response vector.
 
         Returns
         -------
-        _type_
-            _description_
+        petsc4py.PETSc.Mat
+            PETSc matrix projecting full response to a reduced subspace.
         """
     
         from petsc4py import PETSc
@@ -752,10 +911,16 @@ class EquationCollectionClass():
 
         return P_petsc
 
-
     def getShrinkerMatForcing(self):
-        # creates a (possibly rectangular) matrix which serves the purpose to "shrink" the forcing vector to the requested size 
-        # (e.g. only consider the velocity components when using the forcing norm "TKE")
+        """
+        Creates a (possibly rectangular) matrix which serves the purpose to "shrink" the forcing vector to the requested size 
+        (e.g. only consider the velocity components when using the forcing norm "TKE").
+
+        Returns
+        -------
+        petsc4py.PETSc.Mat
+            PETSc matrix projecting full forcing vector to reduced subspace.
+        """
     
         from petsc4py import PETSc
 
