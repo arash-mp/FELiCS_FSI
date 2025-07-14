@@ -42,7 +42,7 @@ class UflDecorator():
         The right-hand side form of the expression.
     form : ufl.Form
         The complete form from the expression.
-    _expression : ufl.Form
+    expression : ufl.Form
         The underlying UFL expression.
 
     Notes
