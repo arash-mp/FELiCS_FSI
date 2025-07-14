@@ -250,7 +250,7 @@ class Field:
         #        mesh          = xdmf.read_mesh(meshFileName)
 
         # this is only a dummy for the scripting
-        self.setCoefficientArray(np.read(fileName+".npy")
+        self.setCoefficientArray(np.read(fileName+".npy"))
 
 
     def evaluateUflExpression(self, ufl_expression, bcs=[], restartSolver=False):
