@@ -651,7 +651,7 @@ class Janafopenfoam:
         gs : dolfinx.fem.Expression
             Expression for `gs` [J/kmol].
 
-         Notes
+        Notes
         -------
         - Computed by expression to be used on dolfin fields.
         """
