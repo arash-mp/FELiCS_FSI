@@ -23,12 +23,12 @@ def getElementType():
     return "CG"
 
 
-def getFELiCSSpace(mesh, order = 2, dimension = 1):
+def getFELiCSSpace(mesh, order = 2, dim = 1):
 
     elementShape = getElementShape(mesh.gdim)
     elementType  = getElementType()
 
-    if dimension == 1:
+    if dim == 1:
         return functionspace(
                     mesh.dolfinxMesh,
                     element(elementType, elementShape, order)
@@ -37,7 +37,7 @@ def getFELiCSSpace(mesh, order = 2, dimension = 1):
         return  functionspace(
                      mesh.dolfinxMesh,
                      (elementType, order,
-                     (dimension,))
+                     (dim,))
                      )
 
 
