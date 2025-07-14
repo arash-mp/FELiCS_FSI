@@ -109,17 +109,16 @@ Run the analysis with the command:
 FELiCS -file resolvent_setting.json
 ```
 ## Postprocessing
-After the computation, check the `output_dir/`. You should have these files: 
+After the computation, check the `output_dir/`. You should find these files: 
 ```bash
-.
-├ meanflow.h5
-├ gains.csv
-├ Resolvent_mesh.h5
-├ Resolvent_Omega3.1_Forcing_gain0.xmf
-├ Resolvent_Omega3.1_Forcing_gain0.h5
-├ Resolvent_Omega3.1_Response_gain0.xmf
-├ Resolvent_Omega3.1_Response_gain0.h5
 └── output_dir
+    ├ meanflow.h5
+    ├ Resolvent_mesh.h5
+    ├ gains.csv
+    ├ Resolvent_Omega3.1_Forcing_gain0.xmf
+    ├ Resolvent_Omega3.1_Forcing_gain0.h5
+    ├ Resolvent_Omega3.1_Response_gain0.xmf
+    ├ Resolvent_Omega3.1_Response_gain0.h5
 ```
 After solving several frequencies, you can plot the gains against the Strouhal number using the python script [postProd_gains.py](../../TUTORIALS/resolvent_tutorial/postProd_gains.py). 
 
