@@ -1,4 +1,4 @@
-# Tutorial on Resolvent Analysis with FELICS
+# Tutorial 3: Resolvent Analysis
 
 ## Goal of the Tutorial
 

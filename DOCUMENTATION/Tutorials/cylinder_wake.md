@@ -1,16 +1,17 @@
-# 1. Goals of the tutorial.
+# Tutorial 1: Solve the base flow
+## 1. Goals of the tutorial.
 In this first tutorial, an introduction to setting up a FELiCS case will be given via solving for the base flow around a cylinder for a Reynolds number, $\mathrm{Re} = 50$. By the end of this tutorial, you will be able to:
 
 - Define a case in FELiCS.
 - Create a case folder with a mesh and base flow files.
 
-# 2. Requirements.
+## 2. Requirements.
 
 * FELiCS should be installed as per the [FELiCS installation guide](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/installation_guide.md?ref_type=heads) with an active conda environment.
 
 * Choose a branch of the FELiCS that contains the base flow solver.
 
-# 3. Case setup.
+## 3. Case setup.
 
 In general it is recommended to create a folder for every case, where the source code, input and output files will be located. Here, the case folder can be found in ```felics2.0/TUTORIALS/cylinder_wake_tutorial```. Therefore, simply copy this tutorial to your working directory ```workDir```
 ```sh
@@ -19,7 +20,7 @@ cp -r felics2.0/TUTORIALS/cylinder_wake_tutorial workDir/
 cd workDir/cylinder_wake_tutorial/ 
 ```
 
-# 4. Mesh generation.
+## 4. Mesh generation.
 
 Since the code is using the Finite Element Continuous Galerkin
 approach, a computational grid needs to be created, which spatially discretizes the domain. For 2D computations like the one in this tutorial, the code uses triangular elements only. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file,[```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format. The documentation for using the ```python-gmsh``` package can be found [here](./gmsh.md). 
@@ -57,7 +58,7 @@ $EndPhysicalNames
 In [Figure 1](#fig:Mesh), <code style="color : Darkorange">Inlet</code> is the left vertical boundary of the domain, <code style="color : Darkorange">Outlet</code> is the right vertical boundary of the domain, <code style="color : Darkorange">Top</code> is the top horizontal boundary of the domain. <code style="color : Darkorange">Symmetry</code> is the bottom horizontal boundary of the domain, except the half-cylinder in [Figure 2](#fig:MagMesh), which is the <code style="color : Darkorange">Wall</code>.
 
 
-# 5. Obtaining the base flow. 
+## 5. Obtaining the base flow. 
 The base flow for FELiCS can be obtained by various sources depending on the case: Numerical simulations, such as RANS, URANS, LES, DNS, as well as experimental results or analytical models. In this case, we will calculate our base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) can be found in the working directory. The newton flow solver doesn't need to be adapted, nevertheless, the interested reader will find that it is not hard at all to solve the flow equations for different Reynolds numbers. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
 
 ```sh

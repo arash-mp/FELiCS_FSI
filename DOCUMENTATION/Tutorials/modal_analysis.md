@@ -1,14 +1,15 @@
-# 1. Goals of the tutorial
+# Tutorial 2: Modal Analysis
+## 1. Goals of the tutorial
 In this tutorial, we will do an eigenvalue decomposition of the base flow obtained in the tutorial of [cylinder wake](./cylinder_wake.md). By the end of this tutorial, you will be able to:
 
 - Run a modal analysis case.
 - Postprocess modal analysis results with paraview.
-# 2. Requirements
+## 2. Requirements
 Before you begin this tutorial make sure to 
 * have completed the [base flow tutorial](./cylinder_wake.md).
 * access the case folder ```felics2.0/TUTORIALS/modal_analysis_tutorial``` and copy it into your working directory.
 
-# 3. Modal analysis settings
+## 3. Modal analysis settings
 The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The complete architecture of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md). 
 
 Since the modal analysis is done for the base flow around the cylinder, we therefore will use the same mesh [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh). Hence, inside the file [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) we see that
@@ -48,7 +49,7 @@ The modal analysis can be run via
 ```sh
 FELiCS -file modal.json
 ```
-# 4. Postprocessing
+## 4. Postprocessing
 After running the modal analysis, the working directory should look like 
 
 ```bash
