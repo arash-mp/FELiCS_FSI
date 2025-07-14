@@ -1,4 +1,4 @@
-# Implementation of modal analysis operators - WORK IN PROGRESS (Xiuyang)
+# Modal analysis
 ### This is the documentation for modal analysis operators. Xiuyang is modifying based on Thomas' and Sophie's comments. Welcome for any new reviewing and comments.
 
 ## Modal analysis for a Linear System
