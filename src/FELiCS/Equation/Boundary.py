@@ -9,6 +9,41 @@ logger = Logger.get_logger("felics")
 
 
 class BoundaryHandler():
+    """
+    Boundary condition manager for FEM simulations.
+
+    Handles the initialization, validation, and construction of boundary condition
+    objects for each boundary defined in the mesh and specified in a JSON file.
+
+    **Initialize the BoundaryHandler object**
+
+    Parameters
+    ----------
+    variables : list of tuples
+        Each tuple contains the name of a variable and its components (e.g., [("u", ["x", "y"])]).
+    mesh : dolfinx.Mesh
+        The mesh object with tagged facets defining boundaries.
+    BCsFilePath : str
+        Path to the JSON file containing boundary condition specifications.
+
+    Attributes
+    ----------
+    facet_tags : dolfinx.mesh.meshtags
+        Facet tags from the mesh that identify boundary regions.
+    IDs : numpy.ndarray
+        Unique boundary IDs found in the mesh.
+    variables : list of tuples
+        Stored list of simulation variables.
+    boundaryList : list
+        List of boundary condition objects created from the boundary JSON file.
+
+    Notes
+    -----
+    Raises a `ValueError` if:
+    - The boundary ID in the file does not exist in the mesh.
+    - The boundary condition name is invalid.
+    """
+        
     def __init__(self, variables, mesh, BCsFilePath):
 
         ###### initialize list of boundaries ########
@@ -53,10 +88,41 @@ class BoundaryHandler():
 
 
     def getListOfBoundaries(self):
+        """
+        Return the list of all boundary condition objects.
+
+        Returns
+        -------
+        list
+        List of boundary condition objects associated with each mesh boundary.
+        """
+
         return self.boundaryList
 
 
-    def getListOfDirichletBCsForDolfinx(self,functionSpace):
+    def getListOfDirichletBCsForDolfinx(self, functionSpace):
+        """
+        Construct the list of Dirichlet boundary conditions for Dolfinx.
+
+        Loops through each variable and boundary, and extracts Dirichlet boundary conditions
+        for scalar and vector components as required.
+
+        Parameters
+        ----------
+        functionSpace : dolfinx.fem.FunctionSpace
+            The function space from which subspaces will be extracted for boundary condition application.
+
+        Returns
+        -------
+        list
+            List of DirichletBC objects from dolfinx.fem.dirichletbc.
+
+        Notes
+        -----
+        This function supports mixed function spaces and variables with multiple components.
+        Logs a debug message each time a boundary condition is added.
+        """
+
         from dolfinx.fem      import dirichletbc, locate_dofs_topological
         BCs = []
         #TODO: give a good description of what is done here:
@@ -82,16 +148,47 @@ class BoundaryHandler():
     
 
     def getListOfNonlinearBoundaries(self):
+        """
+        Placeholder for returning nonlinear boundary condition objects.
+
+        Notes
+        -----
+        To be implemented for base flow computations.
+        """
         #TODO Sophie: fill out later for base flow computations
         pass
 
 
     def getListOfNonlinearDirichletBCsForDolfinx(self):
+        """
+        Placeholder for returning nonlinear DirichletBCs for Dolfinx.
+
+        Notes
+        -----
+        To be implemented for base flow computations.
+        """
         #TODO Sophie: fill out later for base flow computations
         pass
 
 
 class BoundaryType(Enum):
+    """
+    Enum for different types of boundary conditions.
+
+    Attributes
+    ----------
+    NONE : int
+        No boundary condition.
+    DIRICHLET : int
+        Dirichlet boundary condition.
+    NEUMANN : int
+        Neumann boundary condition (currently equivalent to NONE).
+
+    Notes
+    -----
+    The NEUMANN type currently has no distinct behavior; this may change in future updates.
+    """
+
     NONE      = 0
     DIRICHLET = 1
     NEUMANN   = 2 # equal to "none" at the moment; this should be changed in the future, and also communicated really well
@@ -99,6 +196,38 @@ class BoundaryType(Enum):
 
 
 class BoundaryCondition():
+    """
+    Generic boundary condition class.
+
+    Serves both as the base class for all boundary conditions and
+    as the 'none' type condition when no boundary constraints are imposed.
+
+    **Initialize the BoundaryCondition object**
+
+    Parameters
+    ----------
+    boundaryID : int
+        Identifier for the boundary.
+    boundaryInfo : dict
+        Dictionary with boundary specifications from the JSON file.
+    boundaryHandler : BoundaryHandler
+        Reference to the parent BoundaryHandler.
+
+    Attributes
+    ----------
+    ID : int
+        Boundary ID.
+    info : dict
+        Boundary configuration details.
+    bH : BoundaryHandler
+        Reference to the boundary handler.
+    types : list of lists
+        Boundary condition types for each variable/component.
+    values : list of lists
+        Boundary values for each variable/component.
+    """
+
+
     # This class serves two functions:
     # 1. it is the parent class of all boundary conditions (all variables are initialized, all types are "none", all values are "0")
     # 2. it is the boundary condition "None" for all variables
@@ -127,6 +256,29 @@ class BoundaryCondition():
 
 
 class Custom(BoundaryCondition):
+    """
+    Custom boundary condition with user-defined specifications.
+
+    Interprets the "specifics" field in the boundary JSON file to assign boundary
+    conditions to individual variable components.
+
+    **Initialize the Custom object**
+
+    Parameters
+    ----------
+    boundaryID : int
+        Identifier for the boundary.
+    boundaryInfo : dict
+        Dictionary with boundary specifications including "specifics".
+    boundaryHandler : BoundaryHandler
+        Reference to the parent BoundaryHandler.
+
+    Notes
+    -----
+    Assumes valid keys and values exist under "specifics". Raises may occur if
+    structure or content is invalid (to be implemented).
+    """
+
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         super().__init__(boundaryID, boundaryInfo, boundaryHandler)
         self.name = "custom"
@@ -162,6 +314,23 @@ class Custom(BoundaryCondition):
 
 
 class ZeroDirichlet(BoundaryCondition):
+    """
+    Homogeneous Dirichlet condition for all variables.
+
+    Sets all variable components to have Dirichlet type with zero value.
+
+    **Initialize the ZeroDirichlet object**
+
+    Parameters
+    ----------
+    boundaryID : int
+        Identifier for the boundary.
+    boundaryInfo : dict
+        Dictionary with boundary specifications.
+    boundaryHandler : BoundaryHandler
+        Reference to the parent BoundaryHandler.
+    """
+
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         super().__init__(boundaryID, boundaryInfo, boundaryHandler)
         self.name = "zeroDirichlet"
@@ -175,6 +344,28 @@ class ZeroDirichlet(BoundaryCondition):
 
 
 class Wall(BoundaryCondition):
+    """
+    Wall boundary condition enforcing zero velocity.
+
+    Applies Dirichlet(0) for all components of velocity-type variables
+    (e.g., "u" or "rhou"). All other variables are left unconstrained.
+
+    **Initialize the Wall object**
+
+    Parameters
+    ----------
+    boundaryID : int
+        Identifier for the boundary.
+    boundaryInfo : dict
+        Dictionary with boundary specifications.
+    boundaryHandler : BoundaryHandler
+        Reference to the parent BoundaryHandler.
+
+    Notes
+    -----
+    Only handles velocity conditions. Future extensions may include temperature or other constraints.
+    """
+
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         super().__init__(boundaryID, boundaryInfo, boundaryHandler)
         self.name = "wall"
@@ -193,6 +384,31 @@ class Wall(BoundaryCondition):
 
 
 class Symmetry(BoundaryCondition):
+    """
+    Symmetry boundary condition for specified variables.
+
+    Uses the "specifics" field from the JSON file and validates:
+    - Only 'dirichlet' or 'neumann' types
+    - Only zero-valued conditions
+    - All variables are defined
+
+    **Initialize the Symmetry object**
+
+    Parameters
+    ----------
+    boundaryID : int
+        Identifier for the boundary.
+    boundaryInfo : dict
+        Dictionary with boundary specifications including "specifics".
+    boundaryHandler : BoundaryHandler
+        Reference to the parent BoundaryHandler.
+
+    Notes
+    -----
+    Performs stricter validation than the 'Custom' class to ensure
+    boundary conditions conform to symmetry constraints.
+    """
+
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         super().__init__(boundaryID, boundaryInfo, boundaryHandler)
         self.name = "symmetry"

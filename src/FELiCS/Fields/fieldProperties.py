@@ -21,36 +21,160 @@ logger = Logger.get_logger("felics")
 
 class fieldProperties:
     """
-    This class contains the property decorators for all field quantities by
-    accessing the fieldDict dictionary that is used in fluctuationClass and
-    meanFlowClass each.
+    Provides property decorators for accessing and transforming field quantities.
 
-    Parent classes:
+    This class defines a set of property methods and accessors for field variables,
+    enabling consistent access to physical quantities (e.g., velocity, pressure, temperature)
+    from the internal field dictionary. It is designed to be used as a mixin for
+    classes such as `fluctuationClass`, `fluctuationSolution`, `meanFlowClass`, and
+    `meanFlowVertexValues`.
 
-    Child classes:
-    - fluctuationClass
-    - fluctuationSolution
-    - meanFlowClass
-    - meanFlowVertexValues
+    **Initialize the fieldProperties object**
 
-    Private attributes:
+    Attributes
+    ----------
+    _fieldDict : dict
+        Dictionary containing all field variables for the current object.
+    _zeroField : object
+        Default fallback field for missing scalar quantities.
+    _oneField : object
+        Default fallback field with all coefficients set to one.
+    _zeroVelocityField : object
+        Default fallback field for missing velocity quantities.
+    _mean : object
+        Reference to the mean flow object, if available.
+    _FEMSpaces : object
+        Finite element spaces, used for projections.
+    _coordinateSystem : object
+        Coordinate system information for tensor operations.
+    __hSpec : dict
+        Additional species enthalpy information, if present.
+    __reaction : object
+        Reaction information, if present.
+    _param : object
+        Simulation parameter object, if present.
+    _mesh : object
+        Mesh object, if present.
+    _fluc : object
+        Fluctuation field object, if present.
+    _ScalarFunctionSpace : object
+        Scalar function space for field projections.
+    _meanflowFilename : str
+        Filename for the mean flow data, if present.
+    _transportedQuantities : list of str
+        List of transported quantity names, if present.
 
-    Protected attributes:
+    alpha : object
+        Field variable for alpha (e.g., thermal diffusivity or similar).
+    cp : object
+        Field variable for specific heat at constant pressure.
+    dQ : object
+        Field variable for heat release rate.
+    fieldDict : dict
+        Dictionary of all field variables, with special handling for mean flow classes.
+    FieldNames : list of str
+        List of field variable names.
+    fluc : object
+        Fluctuation field object.
+    forcingDomain : object
+        Field variable for the domain where forcing is applied.
+    gamma : object
+        Field variable for heat capacity ratio.
+    Pr : object
+        Field variable for Prandtl number.
+    UnitT : object
+        Real unit number in tensor form.
+    h : object
+        Field variable for enthalpy.
+    he : object
+        Field variable for total enthalpy.
+    hSpec : dict
+        Dictionary of species enthalpy fields.
+    meanflowFilename : str
+        Filename for the mean flow data.
+    molarMass : object
+        Field variable for molar mass.
+    nulam : object
+        Field variable for laminar viscosity.
+    nuTot : object
+        Field variable for total viscosity (laminar + turbulent + SGS).
+    p : object
+        Field variable for pressure.
+    RR_prefactor : object
+        Field variable for reaction rate prefactor.
+    Q : object
+        Field variable for total heat release.
+    R_spe : object
+        Field variable for specific gas constant.
+    reaction : object
+        Reaction object.
+    spg : object
+        Field variable for sponge region term.
+    rho : object
+        Field variable for density.
+    rhou : object
+        Field variable for momentum (density * velocity).
+    T : object
+        Field variable for temperature.
+    tau : object
+        Field variable for stress tensor.
+    Tb : object
+        Field variable for burnt temperature.
+    Tu : object
+        Field variable for unburnt temperature.
+    responseDomain : object
+        Field variable for the response domain mask.
+    u : object
+        Field variable for velocity.
+    u_forcing_i : object
+        Field variable for imaginary part of velocity forcing.
+    u_forcing_r : object
+        Field variable for real part of velocity forcing.
+    u_forcing : object
+        Field variable for complex velocity forcing.
+    ut : object
+        Field variable for transverse velocity component.
 
-    Public attributes:
-
+    Notes
+    -----
+    This class is not intended to be instantiated directly, but to be inherited by
+    classes that manage field data for mean or fluctuating flow quantities.
     """
 
     def isMeanFlowClass(self):
+        """
+        Check if the current object is an instance of meanFlowClass.
+
+        Returns
+        -------
+        bool
+            True if the object is a meanFlowClass instance, False otherwise.
+        """
         from FELiCS.Fields.meanFlowClass import meanFlowClass
         return isinstance(self, meanFlowClass)
 
     def isMeanFlowVertexValuesClass(self):
+        """
+        Check if the current object is an instance of meanFlowVertexValues.
+
+        Returns
+        -------
+        bool
+            True if the object is a meanFlowVertexValues instance, False otherwise.
+        """
         from FELiCS.Fields.meanFlowClass import meanFlowVertexValues
         return isinstance(self, meanFlowVertexValues)
 
     @property
     def alpha(self):
+        """
+        Get the alpha field variable, with fallback for missing data.
+
+        Returns
+        -------
+        object
+            Alpha field as tensor or fallback field.
+        """
         if self.isMeanFlowClass():
             if 'alpha' in list(self._fieldDict.keys()):
                 return  self._fieldDict['alpha'].getTensor()
@@ -66,16 +190,38 @@ class fieldProperties:
 
     @property
     def c(self):
+        # TODO: Sophie, could you delete this property? I think nobody uses it.
         return self._fieldDict['c']
 
     @property
     def cp(self):
+        """
+        Get the specific heat at constant pressure.
+
+        Returns
+        -------
+        object
+            Field variable for cp.
+        """
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             return self._fieldDict['cp'].getTensor()
         else:       
             return self._fieldDict['cp']
 
     def D(self, specie):
+        """
+        Get the diffusion coefficient for a given species.
+
+        Parameters
+        ----------
+        specie : str
+            Name of the species.
+
+        Returns
+        -------
+        object
+            Diffusion coefficient field for the species.
+        """
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             if 'D_' + specie in list(self._fieldDict.keys()):
                 return self._fieldDict['D_' + specie].getTensor()
@@ -89,11 +235,27 @@ class fieldProperties:
 
 
     @property
-    def dQ(self):  # heat release
+    def dQ(self):
+        """
+        Get the heat release rate field variable.
+
+        Returns
+        -------
+        object
+            Field variable for heat release rate.
+        """
         return self._fieldDict['dQ']
 
     @property
     def fieldDict(self):
+        """
+        Get the dictionary of all field variables, with special handling for mean flow classes.
+
+        Returns
+        -------
+        dict
+            Dictionary of field variables.
+        """
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             import copy
             Output = copy.copy(self._fieldDict)
@@ -116,77 +278,226 @@ class fieldProperties:
 
     @fieldDict.setter
     def fieldDict(self, value):
-        raise Exception('Properties of MeanFlow are not to be set after \
-                        initialization!')
+        """
+        Prevent setting the fieldDict property after initialization.
+
+        Raises
+        ------
+        Exception
+            Always raised to prevent modification.
+        """
+        raise Exception('Properties of MeanFlow are not to be set after initialization!')
 
     @property
     def FieldNames(self):
+        """
+        Get the list of field variable names.
+
+        Returns
+        -------
+        list of str
+            List of field variable names.
+        """
         return self.__FieldNames
 
     @FieldNames.setter
     def FieldNames(self, value):
-        raise Exception('Properties of MeanFlow are not to be set after \
-                        initialization!')
+        """
+        Prevent setting the FieldNames property after initialization.
+
+        Raises
+        ------
+        Exception
+            Always raised to prevent modification.
+        """
+        raise Exception('Properties of MeanFlow are not to be set after initialization!')
 
     @property
     def fluc(self):
+        """
+        Get the fluctuation field object.
+
+        Returns
+        -------
+        object
+            Fluctuation field object.
+        """
         return self._fluc
 
     def forcing_i(self, solution):
+        """
+        Get the imaginary part of the forcing field for a given solution variable.
+
+        Parameters
+        ----------
+        solution : str
+            Name of the solution variable.
+
+        Returns
+        -------
+        object
+            Imaginary part of the forcing field.
+        """
         return self._fieldDict[solution + '_forcing_i']
 
     def forcing_r(self, solution):
+        """
+        Get the real part of the forcing field for a given solution variable.
+
+        Parameters
+        ----------
+        solution : str
+            Name of the solution variable.
+
+        Returns
+        -------
+        object
+            Real part of the forcing field.
+        """
         return self._fieldDict[solution + '_forcing_r']
 
     def forcing(self,solution):
+        """
+        Get the complex forcing field for a given solution variable.
+
+        Parameters
+        ----------
+        solution : str
+            Name of the solution variable.
+
+        Returns
+        -------
+        object
+            Complex forcing field as a tensor.
+        """
         result = self.forcing_r(solution)+self.forcing_i(solution)*1j
         return result.getTensor()
 
     @property
     def forcingDomain(self):
+        """
+        Get the field variable for the domain where forcing is applied.
+
+        Returns
+        -------
+        object
+            Field variable for the forcing domain.
+        """
         return self._fieldDict['forcingDomain']
 
     @property
-    def gamma(self):    # Heat capacity ratio
+    def gamma(self):
+        """
+        Get the heat capacity ratio (gamma).
+
+        Returns
+        -------
+        object
+            Field variable for heat capacity ratio.
+        """
         return self._fieldDict['gamma'].getTensor()
-        
+
     @property
-    def Pr(self):    # Prandtl number 
+    def Pr(self):
+        """
+        Get the Prandtl number field variable.
+
+        Returns
+        -------
+        object
+            Field variable for Prandtl number.
+        """
         return self._fieldDict['Pr'].getTensor()
-    
+
     @property
-    def UnitT(self):    # Real unit number in tensor form
+    def UnitT(self):
+        """
+        Get the real unit number in tensor form.
+
+        Returns
+        -------
+        object
+            Tensor representing the real unit number.
+        """
         from dolfinx.fem import Constant
         from petsc4py import PETSc
         mesh = self._fieldDict[list(self._fieldDict.keys())[0]].space.mesh
         return Tensor(
             Constant(mesh, PETSc.ScalarType(1.0 + 0j)),
             self._coordinateSystem,
-            )
+        )
 
     @property
     def h(self):
+        """
+        Get the enthalpy field variable.
+
+        Returns
+        -------
+        object
+            Field variable for enthalpy.
+        """
         return self._fieldDict['h']
 
     @property
     def he(self):
+        """
+        Get the total enthalpy field variable.
+
+        Returns
+        -------
+        object
+            Field variable for total enthalpy.
+        """
         return self._fieldDict['he'].getTensor() \
                + 0.5 * iDot(self.u, self.u)
 
     @property
     def hSpec(self):
+        """
+        Get the dictionary of species enthalpy fields.
+
+        Returns
+        -------
+        dict
+            Dictionary of species enthalpy fields.
+        """
         return self.__hSpec
 
     @property
     def meanflowFilename(self):
+        """
+        Get the filename for the mean flow data.
+
+        Returns
+        -------
+        str
+            Filename for the mean flow data.
+        """
         return self._meanflowFilename
 
     @property
     def molarMass(self):
+        """
+        Get the molar mass field variable.
+
+        Returns
+        -------
+        object
+            Field variable for molar mass.
+        """
         return self._fieldDict['molarMass']
 
     @property
     def nulam(self):
+        """
+        Get the laminar viscosity field variable.
+
+        Returns
+        -------
+        object
+            Field variable for laminar viscosity.
+        """
         if self.isMeanFlowClass():
             if 'nulam' in list(self._fieldDict.keys()):
                 return self._fieldDict['nulam'].getTensor()
@@ -206,6 +517,14 @@ class fieldProperties:
 
     @property
     def nuTot(self):
+        """
+        Get the total viscosity field variable (laminar + turbulent + SGS).
+
+        Returns
+        -------
+        object
+            Field variable for total viscosity.
+        """
         from dolfinx.fem import Function
         nuTot = Field(self._ScalarFunctionSpace, self._mesh)
 
@@ -219,6 +538,14 @@ class fieldProperties:
 
     @property
     def p(self):
+        """
+        Get the pressure field variable, with fallback for missing data.
+
+        Returns
+        -------
+        object
+            Field variable for pressure.
+        """
         if self.isMeanFlowClass():
             if 'p' in list(self._fieldDict.keys()):
                 return self._fieldDict['p'].getTensor()
@@ -239,6 +566,7 @@ class fieldProperties:
             
     @property
     def phi(self):
+        # TODO: Sophie, could you check if we can delete this property? I think nobody uses it.
         if 'phi' in list(self._fieldDict.keys()):
             return self._fieldDict['phi']
         else:
@@ -246,6 +574,14 @@ class fieldProperties:
 
     @property
     def RR_prefactor(self):
+        """
+        Get the reaction rate prefactor field variable.
+
+        Returns
+        -------
+        object
+            Field variable for reaction rate prefactor.
+        """
         if self.isMeanFlowClass():
             if 'RR_prefactor' in list(self._fieldDict.keys()):
                 return self._fieldDict['RR_prefactor'].getTensor()
@@ -253,23 +589,63 @@ class fieldProperties:
             return self._fieldDict['RR_prefactor']
 
     @property
-    def Q(self):  # heat release
+    def Q(self):
+        """
+        Get the total heat release field variable.
+
+        Returns
+        -------
+        object
+            Field variable for total heat release.
+        """
         return self._fieldDict['Q']
     
     @property
-    def R_spe(self):  # Specific gas constant
+    def R_spe(self):
+        """
+        Get the specific gas constant field variable.
+
+        Returns
+        -------
+        object
+            Field variable for specific gas constant.
+        """
         return self._fieldDict['R_spe'].getTensor()
 
     @property
     def reaction(self):
+        """
+        Get the reaction object.
+
+        Returns
+        -------
+        object
+            Reaction object.
+        """
         return self.__reaction
     
     @property
-    def spg(self):  # Sponge region term
+    def spg(self):
+        """
+        Get the sponge region term field variable.
+
+        Returns
+        -------
+        object
+            Field variable for sponge region term.
+        """
         return self._fieldDict['spg'].getTensor()
 
     @property
     def rho(self):
+        """
+        Get the density field variable, with fallback for missing data.
+
+        Returns
+        -------
+        object
+            Field variable for density.
+        """
         if self.isMeanFlowClass():
             # Comment from Sophie: I added rho to the quantities to read in as default, s.t. a variable density
             # without rho as fluctuation variable is possible ("cold flow"). If rho is not given as a mean field,
@@ -294,16 +670,45 @@ class fieldProperties:
 
     @property
     def rhou(self):
+        """
+        Get the momentum field variable (density * velocity).
+
+        Returns
+        -------
+        object
+            Field variable for momentum.
+        """
         if 'rhou' in list(self._fieldDict.keys()):
             return self._fieldDict['rhou']
         else:
             return self._mean.rho * self.u + self.rho * self._mean.u
 
     def rhoY(self,species):
+        """
+        Get the product of density and species mass fraction.
+
+        Parameters
+        ----------
+        species : str
+            Name of the species.
+
+        Returns
+        -------
+        object
+            Field variable for rho * Y(species).
+        """
         return self._mean.rho * self.Y(species) + self.rho * self._mean.Y(species)
 
     @property
     def T(self):
+        """
+        Get the temperature field variable, with fallback for missing data.
+
+        Returns
+        -------
+        object
+            Field variable for temperature.
+        """
         if self.isMeanFlowClass():
             if 'T' in list(self._fieldDict.keys()):
                 return self._fieldDict['T'].getTensor()
@@ -324,6 +729,14 @@ class fieldProperties:
 
     @property
     def tau(self):
+        """
+        Get the stress tensor field variable.
+
+        Returns
+        -------
+        object
+            Field variable for stress tensor.
+        """
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             mean_nu = self.nuTot
             mean_u = self.u
@@ -349,6 +762,14 @@ class fieldProperties:
 
     @property
     def Tb(self):
+        """
+        Get the burnt temperature field variable.
+
+        Returns
+        -------
+        object
+            Field variable for burnt temperature.
+        """
         if self.isMeanFlowClass():
             if 'Tb' in list(self._fieldDict.keys()):
                 return self._fieldDict['Tb'].getTensor()
@@ -361,6 +782,14 @@ class fieldProperties:
 
     @property
     def Tu(self):
+        """
+        Get the unburnt temperature field variable.
+
+        Returns
+        -------
+        object
+            Field variable for unburnt temperature.
+        """
         if self.isMeanFlowClass():
             if 'Tu' in list(self._fieldDict.keys()):
                 return self._fieldDict['Tu'].getTensor()
@@ -373,14 +802,32 @@ class fieldProperties:
 
     @property
     def Tm(self):
+        # TODO: Sophie, could you check if we can delete this property? I think nobody uses it.
         return self._fieldDict['Tm']
+
 
     @property
     def responseDomain(self):
+        """
+        Get the response domain mask field variable.
+
+        Returns
+        -------
+        object
+            Field variable for response domain mask.
+        """
         return self._fieldDict['responseDomain']
 
     @property
     def u(self):
+        """
+        Get the velocity field variable, with fallback for missing data.
+
+        Returns
+        -------
+        object
+            Field variable for velocity.
+        """
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             if 'u' in list(self._fieldDict.keys()):
                 return self._fieldDict['u'].getTensor()
@@ -394,19 +841,51 @@ class fieldProperties:
 
     @property
     def u_forcing_i(self):
+        """
+        Get the imaginary part of the velocity forcing field variable.
+
+        Returns
+        -------
+        object
+            Field variable for imaginary part of velocity forcing.
+        """
         return self._fieldDict['u_forcing_i']
 
     @property
     def u_forcing_r(self):
+        """
+        Get the real part of the velocity forcing field variable.
+
+        Returns
+        -------
+        object
+            Field variable for real part of velocity forcing.
+        """
         return self._fieldDict['u_forcing_r']
 
     @property
     def u_forcing(self):
+        """
+        Get the complex velocity forcing field variable.
+
+        Returns
+        -------
+        object
+            Field variable for complex velocity forcing.
+        """
         forcing = self.u_forcing_r + self.u_forcing_i * 1j
         return forcing.getTensor()
 
     @property
     def ut(self):
+        """
+        Get the transverse velocity component field variable.
+
+        Returns
+        -------
+        object
+            Field variable for transverse velocity component.
+        """
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             if 'ut' in list(self._fieldDict.keys()):
                 return self._fieldDict['u'][2]
@@ -421,6 +900,19 @@ class fieldProperties:
                 return Constant(0)
 
     def Y(self, specie):
+        """
+        Get the mass fraction field variable for a given species.
+
+        Parameters
+        ----------
+        specie : str
+            Name of the species.
+
+        Returns
+        -------
+        object
+            Field variable for species mass fraction.
+        """
         if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
             return self._fieldDict[specie].getTensor()
         else:

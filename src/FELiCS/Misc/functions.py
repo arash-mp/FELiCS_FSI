@@ -25,7 +25,7 @@ from scipy.interpolate import griddata
 
 def getLastGitCommit():
     """
-    Returns the latest git commit hash of the repository.
+    Get the latest git commit hash of the repository.
 
     Returns
     -------
@@ -42,7 +42,7 @@ def getLastGitCommit():
 
 def getSpeciesListSolution(param):
     """
-    Returns the list of species to be solved for, based on the chemistry model.
+    Get the list of species to be solved for, based on the chemistry model.
 
     Parameters
     ----------
@@ -72,7 +72,7 @@ def getSpeciesListSolution(param):
 
 def getSpeciesListMean(param):
     """
-    Returns the list of species required in the mean fields based on the chemistry model.
+    Get the list of species required in the mean fields based on the chemistry model.
 
     Parameters
     ----------
@@ -106,7 +106,7 @@ def getSpeciesListMean(param):
 
 def getReactionList(param):
     """
-    Returns the list of chemical reactions defined for the selected chemistry model.
+    Get the list of chemical reactions defined for the selected chemistry model.
 
     Parameters
     ----------
@@ -196,7 +196,7 @@ def getReactionList(param):
 
 def getReverseReactionList(param):
     """
-    Returns a list of reverse reactions for the specified chemistry model.
+    Get a list of reverse reactions for the specified chemistry model.
 
     Parameters
     ----------
@@ -230,7 +230,7 @@ def getReverseReactionList(param):
 
 def getMolecularMass():
     """
-    Returns a dictionary of molecular masses for key chemical species.
+    Get a dictionary of molecular masses for key chemical species.
 
     Returns
     -------
@@ -248,34 +248,66 @@ def getMolecularMass():
     return MolecularMass
 
 def printError(string):
-    """DEPRECATED
+    """
+    Print an error message and abort the program. (DEPRECATED)
+
+    Parameters
+    ----------
+    string : str
+        Error message to print.
     """
     from colorama import Fore,Style
     print(Fore.RED+'ERROR!!! '+string+' Aborting Program...'+Style.RESET_ALL)
     exit()
 def printDebug(debug,string):
-    """DEPRECATED
+    """
+    Print a debug message if debugging is enabled. (DEPRECATED)
+
+    Parameters
+    ----------
+    debug : bool
+        Whether debugging is enabled.
+    string : str
+        Debug message to print.
     """
     if debug:
         print('DEBUGGING: ' + string)
 def printOK(string):
-    """DEPRECATED
+    """
+    Print a success message. (DEPRECATED)
+
+    Parameters
+    ----------
+    string : str
+        Success message to print.
     """
     from colorama import Fore,Style
     print(Fore.GREEN+string+Style.RESET_ALL)
 def printWarning(string):
-    """DEPRECATED
+    """
+    Print a warning message. (DEPRECATED)
+
+    Parameters
+    ----------
+    string : str
+        Warning message to print.
     """
     from colorama import Fore,Style
     print(Fore.YELLOW+'WARNING! '+string+Style.RESET_ALL)
 def printDeprecatedWarning(string):
-    """DEPRECATED
+    """
+    Print a deprecated warning message. (DEPRECATED)
+
+    Parameters
+    ----------
+    string : str
+        Deprecated warning message to print.
     """
     from colorama import Fore,Style
     print(Fore.BLUE+'DEPRECATED WARNING: '+string+Style.RESET_ALL)
 def getReactionName(Reaction):
     """
-    Returns the name of a reaction by concatenating its educt species.
+    Get the name of a reaction by concatenating its educt species.
 
     Parameters
     ----------
@@ -294,7 +326,7 @@ def getReactionName(Reaction):
 
 def getJANAFTable():
     """
-    Returns thermodynamic data from the JANAF table for key species.
+    Get thermodynamic data from the JANAF table for key species.
 
     Returns
     -------
@@ -322,7 +354,7 @@ def getJANAFTable():
 
 def index_2d(myList, v):
     """
-    Finds the 2D index of a value in a nested list.
+    Find the 2D index of a value in a nested list.
 
     Parameters
     ----------
@@ -342,10 +374,11 @@ def index_2d(myList, v):
 
 def rotateTheta(coordinates,Theta):
     """
-    Rotates 3D coordinates in the YZ-plane by a given angle Theta.
-    
-    This function takes coordinates (3 dimensionality is required) and calculates new 3 dimensional coordinates by rotating the origin coorindates with respect to the angle theta.
-    The first component of the three coordinates passed to the function is not altered. The second and third component are computed.
+    Rotate 3D coordinates in the YZ-plane by a given angle Theta.
+
+    This function takes coordinates (3D required) and calculates new coordinates by rotating the original
+    coordinates with respect to the angle theta. The first component is not altered; the second and third
+    are computed.
 
     Parameters
     ----------
@@ -376,10 +409,11 @@ def rotateTheta(coordinates,Theta):
 
 def ExtrudeFelicsGridToVTK(coords2D, Tri2D, angularSteps):
     """
-    Converts a 2D grid into a 3D cylindrical grid by azimuthal extrusion.
+    Convert a 2D grid into a 3D cylindrical grid by azimuthal extrusion.
 
-    This function expands a planar, 2 dimensional grid into azimuthal direction. It requires the coordinates of the cells' vertices and the amount of planes in azimuthal direction (angularSteps) and the 2d grid triangulation. 
-    
+    This function expands a planar, 2D grid into the azimuthal direction. It requires the coordinates of
+    the cells' vertices, the number of planes in azimuthal direction (angularSteps), and the 2D grid triangulation.
+
     Parameters
     ----------
     coords2D : np.ndarray
@@ -462,13 +496,11 @@ def ExtrudeFelicsGridToVTK(coords2D, Tri2D, angularSteps):
 
 def ParallelVideo(filename, i):
     """
-    Generates a 3D visualization from 2D fields expanded azimuthally.
+    Generate a 3D visualization from 2D fields expanded azimuthally. (DEPRECATED)
 
-    This function is used in parallel processes to export multiple frames
-    of a video visualization in VTK format. It is called within the ExportSolutions.py and starts 50 processes (for 50 snapshots)
-    or as many as possible. One process serves for saving one scene.
-
-    CAUTION: This function is deprecated and should be updated or removed.
+    This function is used in parallel processes to export multiple frames of a video visualization in VTK format.
+    It is called within ExportSolutions.py and starts 50 processes (for 50 snapshots) or as many as possible.
+    One process serves for saving one scene.
 
     Parameters
     ----------
@@ -528,7 +560,7 @@ def ParallelVideo(filename, i):
 
 def smoothFieldWithKernel(field,FEMSpaces, iterations):
     """
-    Smooths a scalar field on a finite element mesh using k-nearest neighbors.
+    Smooth a scalar field on a finite element mesh using k-nearest neighbors.
 
     Parameters
     ----------
@@ -562,7 +594,7 @@ def smoothFieldWithKernel(field,FEMSpaces, iterations):
 
 def SutherlandLaw(param,MeanFlowDict):
     """
-    Computes the molecular viscosity using Sutherland's law.
+    Compute the molecular viscosity using Sutherland's law.
 
     Parameters
     ----------
@@ -594,7 +626,7 @@ def SutherlandLaw(param,MeanFlowDict):
 
 def executeParallelInterpolation( solutDir, nCubes):
     """
-    Interpolates solution data onto finite element degrees of freedom for one cube in parallel.
+    Interpolate solution data onto finite element degrees of freedom for one cube in parallel.
 
     Parameters
     ----------
@@ -656,7 +688,7 @@ def executeParallelInterpolation( solutDir, nCubes):
 
 def parallelInterpolation(cubeBounds, dof_expanded, points, vals, tolerance, solutDir):
     """
-    Parallel interpolation of volumetric data onto an expanded finite element grid.
+    Perform parallel interpolation of volumetric data onto an expanded finite element grid.
 
     Parameters
     ----------
@@ -764,7 +796,7 @@ def parallelInterpolation(cubeBounds, dof_expanded, points, vals, tolerance, sol
 
 def loadCSV(path):
     """
-    Loads a CSV file into a dictionary with numpy arrays for each column.
+    Load a CSV file into a dictionary with numpy arrays for each column.
 
     Parameters
     ----------

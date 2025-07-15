@@ -4,44 +4,39 @@ import numpy as np
 
 class reactionClass:
     """
-    Represents a reaction in the system.
+    Represents a chemical reaction and computes associated reaction rates and source terms.
 
-    Parameters:
+    The class supports the KaiserCnF2023 reaction mechanism and uses mean and fluctuating fields
+    to evaluate the reaction rate. It also determines the reaction formula and provides access
+    to species involved in the reaction and source terms.
+
+    **Initialize the reactionClass object**
+
+    Parameters
     ----------
     reactionData : dict
-        A dictionary containing reaction data.
+        A dictionary containing the educts, products, and their stoichiometric coefficients.
     reactionType : str
-        The type of reaction.
+        The type of the reaction mechanism, e.g., 'KaiserCnF2023'.
     mean : object
-        The mean flow object.
+        The mean flow field object.
     fluc : object
-        The fluctuation object.
+        The fluctuation field object.
 
-    Attributes:
+    Attributes
     ----------
     _educts : list
-        List of educts in the reaction.
+        List of educt species in the reaction.
     _stochiometricCoefficientsEducts : list
-        List of stoichiometric coefficients for the educts.
+        Stoichiometric coefficients corresponding to the educts.
     _products : list
-        List of products in the reaction.
+        List of product species in the reaction.
     _stochiometricCoefficientsProducts : list
-        List of stoichiometric coefficients for the products.
+        Stoichiometric coefficients corresponding to the products.
     _reactionType : str
-        The type of reaction.
+        Type of the reaction mechanism.
     _RR : float
-        The reaction rate.
-
-    Methods:
-    -------
-    _determineReactionFormula()
-        Determines the reaction formula.
-    RR()
-        Returns the reaction rate.
-    species()
-        Returns the species involved in the reaction.
-    sourceTerm(specie)
-        Returns the source term for a given species.
+        Computed reaction rate based on mean and fluctuating fields.
     """
 
     def __init__(
@@ -51,6 +46,21 @@ class reactionClass:
                  mean,
                  fluc,
                 ):
+        """
+        Initializes the reactionClass instance.
+
+        Parameters
+        ----------
+        reactionData : dict
+            A dictionary containing educts, products, and their stoichiometric coefficients.
+        reactionType : str
+            The type of the reaction mechanism.
+        mean : object
+            The mean flow object.
+        fluc : object
+            The fluctuation object.
+        """
+
         self._educts = reactionData['educts']
         self._stochiometricCoefficientsEducts = reactionData['stochiometricCoefficientsEducts']
         self._products = reactionData['products']
@@ -83,8 +93,9 @@ class reactionClass:
 
     def _determineReactionFormula(self):
         """
-        Determines the reaction formula.
+        Determines the reaction formula from educts and products.
         """
+
         self._reactionFormula = ''
         for i_educt,educt in enumerate(self._educts):
             self._reactionFormula += str(self._stochiometricCoefficientsEducts) + educt + ' + '
@@ -98,7 +109,7 @@ class reactionClass:
         
     def RR(self):
         """
-        Returns the reaction rate.
+        Returns the computed reaction rate.
 
         Returns:
         -------
@@ -109,29 +120,36 @@ class reactionClass:
 
     def species(self):
         """
-        Returns the species involved in the reaction.
+        Returns the list of species involved in the reaction.
 
         Returns:
         -------
         list
-            List of species involved in the reaction.
+            Combined list of educt and product species.
         """
+
         return self._educts + self._products
         
     def sourceTerm(self, specie):
         """
-        Returns the source term for a given species.
+        Computes the source term for a specific species based on its role in the reaction.
 
-        Parameters:
+        Parameters
         ----------
         specie : str
             The species for which the source term is calculated.
 
-        Returns:
+        Returns
         -------
         float
-            The source term for the given species.
+            The source term corresponding to the input species.
+
+        Raises
+        ------
+        Exception
+            If the species is not part of the reaction.
         """
+
         if specie in self._educts:
             index = self._educts.index(specie)
             stoch = self._stochiometricCoefficientsEducts[index]
@@ -145,21 +163,17 @@ class reactionClass:
 
 class reactionHandler:
     """
-    This class is used to manage the variables for the linear reactions. 
-    It is applied last when all other variables are already calculated.
+    Manages and initializes chemical reactions and computes source terms for species.
 
-    Parent classes:
+    This class is responsible for setting up reaction objects, managing reaction data,
+    and computing omega values for species. It is intended to be used after all other
+    flow-related variables have been established.
 
-    Child classes:
-    - fluctuationClass
-    - fluctuationSolution
+    **Initialize the reactionHandler object**
 
-    Private attributes:
-
-    Protected attributes:
-
-    Public attributes:
-
+    Parameters
+    ----------
+    None
     """
 
     def __init__(
@@ -169,13 +183,19 @@ class reactionHandler:
 
     def _additionalFieldsToBeReadReaction(self):
         """
-        Returns a list of additional fields to be read for the reaction.
+        Determines which additional fields are needed for the reaction mechanism.
 
-        Returns:
+        Returns
         -------
         list
-            List of additional fields to be read for the reaction.
+            A list of additional field names required for the reaction mechanism.
+
+        Raises
+        ------
+        Exception
+            If the reaction mechanism type is unknown.
         """
+
         if self._param.Mixture.reactionMechanism['type'] == 'KaiserCnF2023': 
             outList = ['RR_prefactor']
         elif self._param.Mixture.reactionMechanism['type'] == 'None':
@@ -186,17 +206,18 @@ class reactionHandler:
     
     def _initializeReactions(self, mean='None'):
         """
-        Initializes the reactions and links them to the previously determined state and secondary variables.
+        Creates and initializes reactionClass objects using the defined mechanism and mean fields.
 
-        Parameters:
+        Parameters
         ----------
         mean : object, optional
-            The mean flow object. Default is 'None'.
+            The mean flow field object to be used for initializing reactions. Defaults to 'None'.
 
-        Returns:
+        Returns
         -------
         None
         """
+
         if mean == 'None':
             mean = self._mean
         reactionMechanism = self._param.Mixture.reactionMechanism
@@ -214,18 +235,20 @@ class reactionHandler:
 
     def omega(self, specie):
         """
-        Calculates the omega value for a given species.
+        Computes the net source term (omega) for a given species by aggregating contributions
+        from all reactions.
 
-        Parameters:
+        Parameters
         ----------
         specie : str
-            The species for which the omega value is calculated.
+            The species for which omega is computed.
 
-        Returns:
+        Returns
         -------
         float
-            The omega value for the given species.
+            The total omega value for the given species.
         """
+
         omegaTotal = 'not initialized'
         for i_reaction, reaction in enumerate(self._reactions):
             if specie in reaction._educts:
@@ -249,16 +272,17 @@ class reactionHandler:
         
     def RR(self, index):
         """
-        Returns the reaction rate for a given index.
+        Retrieves the reaction rate for a specified reaction.
 
-        Parameters:
+        Parameters
         ----------
         index : int
-            The index of the reaction.
+            Index of the reaction.
 
-        Returns:
+        Returns
         -------
         float
-            The reaction rate for the given index.
+            The reaction rate for the specified reaction.
         """
+        
         return self._fieldDict['RR'+str(index)]
