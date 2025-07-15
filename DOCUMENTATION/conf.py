@@ -32,7 +32,7 @@ extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'auto
 autoapi_dirs = ['../src/']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'special-members', 'imported-members']  # 'private-members', 'members' TODO: check with whole group if special members or not
+autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'special-members', 'no-imported-members']  # 'private-members', 'members' TODO: check with whole group if special members or not
 # autoapi_python_class_content = 'both' # renders __init__ docstring and class docstring together
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

@@ -95,7 +95,7 @@ class BoundaryHandler():
         Returns
         -------
         list
-        List of boundary condition objects associated with each mesh boundary.
+            List of boundary condition objects associated with each mesh boundary.
         """
 
         return self.boundaryList
@@ -217,6 +217,8 @@ class BoundaryCondition():
     ----------
     ID : int
         Boundary ID.
+    name: str
+        Name of boundary condition. One of: 'custom', 'wall', 'symmetry', 'zeroDerichlet', 'none'.
     info : dict
         Boundary configuration details from the boundaries-JSON file.
     bH : BoundaryHandler
@@ -224,13 +226,14 @@ class BoundaryCondition():
     types : list of lists
         Boundary condition types for each variable/component, all entries are attributes of the BoundaryType enum.
     values : list of lists
-        Boundary values for each variable/component. 
+        Boundary values for each variable/component.
     """
 
     def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
         self.ID   = boundaryID
         self.info = boundaryInfo
         self.bH   = boundaryHandler
+        self.name = "none"
 
         # initialize types and values lists with "NONE" and "0"
         self.types         = []
