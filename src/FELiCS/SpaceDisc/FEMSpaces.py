@@ -12,6 +12,24 @@ logger = Logger.get_logger("felics")
 
 
 def getElementShape(meshDim):
+    """
+    Get the element shape (triangle or tetrahedron) based on mesh dimension.
+
+    Parameters
+    ----------
+    meshDim : int
+        Geometric dimension of the mesh (2 or 3).
+
+    Returns
+    -------
+    str
+        'triangle' for 2D, 'tetrahedron' for 3D.
+
+    Raises
+    ------
+    Exception
+        If meshDim is not 2 or 3.
+    """
     if meshDim == 2:
         return "triangle"
     elif meshDim == 3:
@@ -20,10 +38,35 @@ def getElementShape(meshDim):
         raise Exception("nDim is neither 2 or 3!")
 
 def getElementType():
+    """
+    Get the default element type string for finite elements.
+
+    Returns
+    -------
+    str
+        The element type string ('CG' for continuous Galerkin).
+    """
     return "CG"
 
 
 def getFELiCSSpace(mesh, order = 2, dim = 1):
+    """
+    Create a finite element function space for the given mesh, order, and dimension.
+
+    Parameters
+    ----------
+    mesh : FELiCSMesh
+        The mesh object.
+    order : int, optional
+        Polynomial order of the element (default is 2).
+    dim : int, optional
+        Number of components (default is 1 for scalar fields).
+
+    Returns
+    -------
+    dolfinx.fem.FunctionSpace
+        The created function space.
+    """
 
     elementShape = getElementShape(mesh.gdim)
     elementType  = getElementType()
@@ -45,19 +88,20 @@ class FEMSpaces():
     """
     Class containing all Finite Element (FE) spaces used in the simulation.
 
-    This class organizes and initializes various FE spaces such as scalar, vector,
-    mixed, and export function spaces based on the mesh and problem configuration.
+    Organizes and initializes various FE spaces such as scalar, vector, mixed, and export function spaces
+    based on the mesh and problem configuration.
 
     **Initialize the FEMSpaces object**
 
     Parameters
     ----------
     param : ParameterClass
-        Configuration object containing simulation parameters including Case, 
-        BoundaryCondition, Numerics, and Export settings.
+        Configuration object containing simulation parameters including Case, BoundaryCondition, Numerics, and Export settings.
     mesh : FELiCSMesh
         Computational mesh object used to define the function spaces.
-        
+    degree : int, optional
+        Polynomial degree for the function spaces (default is 2).
+
     Attributes
     ----------
     element_shape : ufl.Cell
@@ -84,7 +128,6 @@ class FEMSpaces():
         First- and second-order scalar function spaces on the export mesh.
     mappingObj : Mapping
         Mapping object that links the function spaces to coordinate mappings.
-
     """
     def __init__(self, param, mesh, degree=2):
         logger.info('Defining FEM-spaces.')
@@ -167,13 +210,8 @@ class FEMSpaces():
         """
         Add a scalar finite element of a specified polynomial order to the mixed function space.
 
-        This method appends a new scalar finite element to the internal list of
-        elements that make up the mixed function space and rebuilds both the primary
-        and export mixed spaces.
-
-        Notes
-        -----
-        This method is most likely deprecated, it is not used in the codebase.
+        This method appends a new scalar finite element to the internal list of elements that make up the mixed
+        function space and rebuilds both the primary and export mixed spaces.
 
         Parameters
         ----------
@@ -181,6 +219,10 @@ class FEMSpaces():
             The mesh on which the new mixed function space is defined.
         order : int
             Polynomial order of the scalar finite element to be added.
+
+        Notes
+        -----
+        This method is most likely deprecated and is not used in the codebase.
         """
         # Create a element of the mixed function space
         MixedFE = MixedElement(self.MixedList)
