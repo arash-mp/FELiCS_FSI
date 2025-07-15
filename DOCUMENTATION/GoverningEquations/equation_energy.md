@@ -10,8 +10,8 @@ Use case:
 - tutorial example: turbulent flame? heat conduction?
 
 References:
-- Demange2024 AIAA
-- Kaiser2023 CnF
+- [Demange2024 AIAA](https://doi.org/10.2514/6.2024-3170)
+- [Kaiser2023 CnF](https://doi.org/10.1016/j.combustflame.2023.112778)
 
 Nomenclature:
 - $\mathbf{u}$: velocity vector
