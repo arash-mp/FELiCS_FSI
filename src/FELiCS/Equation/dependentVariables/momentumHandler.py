@@ -3,24 +3,44 @@ from FELiCS.Equation.dependentVariables.viscosityModels import *
 
 class momentumHandler:
     """
-    Handles the momentum-related calculations and transformations
-    for a given set of physical parameters and field data.
+    Handles momentum-related calculations and variable transformations.
+
+    This class provides methods for determining required fields, relating conservative
+    and primitive variables, and initializing molecular momentum diffusion fluctuations
+    based on the selected viscosity model.
+
+    **Initialize the momentumHandler object**
+
+    Parameters
+    ----------
+    None
+    
+    Attributes
+    ----------
+    _param : object
+        Simulation parameter object containing case configuration.
+    _fieldDict : dict
+        Dictionary of available field variables.
+    _mean : object
+        Mean flow field object.
+    _isSolution : bool
+        Indicates if the handler is used for a solution field.
     """
 
     def __init__(self):
         """
-        Initializes the momentumHandler object.
+        Initialize the momentumHandler instance.
         """
         pass
 
     def _getNeededFieldsForLinearMomentum(self):
         """
-        Determines the fields required for linear momentum calculations.
+        Determine the fields required for linear momentum calculations.
 
         Returns
         -------
         list of str
-            A list of field names required for linear momentum calculations.
+            List of field names required for linear momentum calculations.
         """
         outList = ['u', 'rhou', 'p']
         if not self._param.Case.MolViscPerturbModel['type'] == 'Constant': 
@@ -29,12 +49,12 @@ class momentumHandler:
 
     def _relateConservativeToPrimitiveVariablesMomentum(self, mean='None'):
         """
-        Relates conservative variables to primitive variables for momentum calculations.
+        Relate conservative variables to primitive variables for momentum calculations.
 
         Parameters
         ----------
         mean : str or object, optional
-            The mean values to use in the calculations. If 'None', uses the default mean values.
+            Mean values to use in the calculations. If 'None', uses the default mean values.
         """
         alreadyDeterminedFields = list(self._fieldDict.keys())        
         if mean == 'None':
@@ -56,13 +76,13 @@ class momentumHandler:
 
     def _initializeMolecularMomentumDiffusionFluctuation(self, mean='None'):
         """
-        Initializes molecular momentum diffusion fluctuations based on the viscosity model.
+        Initialize molecular momentum diffusion fluctuations based on the viscosity model.
 
         Parameters
         ----------
         mean : str or object, optional
-            The mean values to use in the calculations. If 'None', uses the default mean values.
-        
+            Mean values to use in the calculations. If 'None', uses the default mean values.
+
         Raises
         ------
         Exception
@@ -85,6 +105,10 @@ class momentumHandler:
 
     def _additionalFieldsToBeReadEnergy(self):
         """
-        Placeholder for determining additional fields required for energy calculations.
+        Determine additional fields required for energy calculations.
+
+        Notes
+        -----
+        This is a placeholder method and should be implemented as needed.
         """
         pass
