@@ -238,7 +238,7 @@ class Field:
         # Create  a Field for the gradient
         # The space must be a vector vor a scalar field
         # TODO Sophie: handle order (get it from function?)
-        order = 2
+        order = self.space.element.basix_element.degree
         dim = self.mesh.gdim 
         if self.hasSpectralDimension:
             dim += 1
@@ -259,6 +259,19 @@ class Field:
         gradientSpace.FEMWeightSolver.destroy()
 
         return gradientField
+
+    def calculateL2Norm(self):
+        import ufl
+        import numpy as np
+        from FELiCS.Misc.tensorUtils import iConj, iDot
+        from dolfinx.fem import assemble_scalar, form
+        norm_squared = 0.
+        list1 = self.getListOfSingleFields()
+        for field in list1:
+            norm_squared += assemble_scalar(form((iDot(iConj(scalarField), scalarField)*ufl.dx))
+        
+        return np.sqrt(norm_squared)
+
 
     def exportH5(self, fileName, mesh = None):
         # for now this is a dummy method that we use for the scripting part of the retreat.
