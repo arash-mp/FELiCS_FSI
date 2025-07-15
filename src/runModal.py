@@ -14,10 +14,8 @@ def runModal(param):
     import  FELiCS.SpaceDisc.DefineFEMSpaces    as DefineFEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
-    from    FELiCS.Misc.functions               import printDebug
     from    FELiCS.Solvers.LinearSolver         import LinearSolver 
     from    FELiCS.Fields.ModeCollection        import ModeCollection
-    # from    FELiCS.Fields.fluctuationClass import fluctuationSolutions
 
     logger.info("Running Modal analysis")
     #-----------------------------------------------------------------------
