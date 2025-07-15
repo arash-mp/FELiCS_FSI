@@ -70,12 +70,7 @@ The settings and the boundary conditions can be found in ```Re50.json``` and ```
 ```json
 "Molvisc":0.02
 ```
-Furthermore, since we only solve the non-dimensionalized Navier-stokes continuity and the momentum equation we set, 
-
-```json
-"Reaction": false
-```
-and in the <code style="color : Cyan">"SetofEquations"</code>, we set everything else to <code style="color : Darkorange">None</code>, except for <code style="color : Cyan">"Momentum"</code> and <code style="color : Cyan">"Mass"</code> equations. 
+We only solve the continuity and the momentum equation. Therefore we set everything to <code style="color : Darkorange">None</code> in the <code style="color : Cyan">"SetofEquations"</code>, except for <code style="color : Cyan">"Momentum"</code> and <code style="color : Cyan">"Mass"</code>. 
 
 Additionally we import the boundary conditions from the [```bc.json```](./../../TUTORIALS/cylinder_wake_tutorial/bc.json) file. Overall the boundary conditions can be formulated as : 
 

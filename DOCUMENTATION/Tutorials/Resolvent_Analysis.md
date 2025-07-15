@@ -1,19 +1,17 @@
 # Tutorial 3: Resolvent Analysis
 
 ## Goal of the Tutorial
-
 The goal of this tutorial is to provide a step-by-step guide on performing resolvent analysis in FELICS. By the end of this tutorial, you will be able to:
 
-- Define a case for resolvent analysis.
-- Create a case folder with a mesh and base flow files.
-- Perform resolvent analysis.
+- Write a mesh file using a python script.
+- Import the mean flow data and create a mean flow file for FELiCS.
+- Perform resolvent analysis for different frequencies.
 - Plot the gains and modes in Python.
 
 ## Case Definition
-In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see Ref. [[1]](#1). The inlet has a steady boundary condition with a Reynolds number 8000 based on the diameter and veloocity in the contraction. Using the case axisymmetry, the 3D solution is solved for a given azimuthal number.
+In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see Ref. [[1]](#1). The inlet has a steady boundary condition with a Reynolds number 8000 based on the diameter and veloocity in the contraction. Using the case axisymmetry, the 3D solution is solved for a given azimuthal wavenumber.
 
 ### Mesh generation
-
 We generate the 2D mesh on GMSH. 
 To do so, we write a **.geo** file readable by GMSH using the python script [geoMesh.py](../../TUTORIALS/resolvent_tutorial/geoMesh.py).
 
@@ -31,7 +29,6 @@ Run the python script [meanFlow.py](../../TUTORIALS/resolvent_tutorial/meanFlow.
 Place the `meanFlow.fel` file in your case folder. 
 
 ### Boundary conditions
-
 Here we set the axisymmetric boundary conditions in the `boundaries.json` file.
 First check in your readable .msh file the boundary ids.
 For instance in this file: 
@@ -60,18 +57,18 @@ Define the boundaries in the `boundaries.json`. In our case, we set:
 The setting file contains all the analysis information. It should be placed in our 
 An example of setting file is [resolvent_setting.json](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/TUTORIALS/resolvent_tutorial/resolvent.json?ref_type=heads). The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
-The azimuthal number is chosen:
+The azimuthal wavenumber is chosen:
 ```json
     "m":0.0,
 ```
-We set the moecular viscosity to be the inverse of the Reynolds number since we non-dimensionalized the variables and equations.
+We set the moecular viscosity to be the inverse of the Reynolds number since we non-dimensionalized the variables and equations:
 ```json
 "MolVisc":0.000125,
 ```
 You can increase this field in order to add a uniform eddy viscosity field. 
-Care should be brought to consistency accross the normalization. 
+Ensure consistency in the normalization approach throughout the analysis.
 
-We want to solve the Momentum and Mass equations only and set the others to `"None"`
+We want to solve the Momentum and Mass equations only and set the other equations in <code style="color : Blue">"SetofEquations"</code> to `"None"`
 
 If we wish to include a turbulent viscolity fields, we should be set:
 ```json
@@ -104,6 +101,7 @@ Run the analysis with the command:
 ```bash
 FELiCS -f resolvent_setting.json
 ```
+With the provided mesh, it should take about one minute to compute the two resolvent modes for each frequency (~25 minutes).
 ## Postprocessing
 After the computation, check the `output_dir/`. You should find these files: 
 ```bash
@@ -115,7 +113,8 @@ After the computation, check the `output_dir/`. You should find these files:
     ├ Resolvent_Omega3.1_Forcing_gain0.xmf
     ├ Resolvent_Omega3.1_Forcing_gain0.h5
     ├ Resolvent_Omega3.1_Response_gain0.xmf
-    └ Resolvent_Omega3.1_Response_gain0.h5
+    ├ Resolvent_Omega3.1_Response_gain0.h5
+    └ ...
 ```
 We postprocess the outputed files using the python script [PlotMode.py](../../TUTORIALS/resolvent_tutorial/PlotMode.py).
 

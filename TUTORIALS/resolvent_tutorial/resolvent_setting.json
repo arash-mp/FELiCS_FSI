@@ -52,7 +52,7 @@
     "ForcingMode":"Body",
     "ForcingNorm":"TKE",
     "ResponseNorm":"TKE",
-    "Omegas":[3.1]
+    "Omegas":[0.062, 0.10, 0.17, 0.29, 0.48, 0.81, 1.35, 2.26, 3.1, 4.36, 6.28]
 },
 "Numerics":{
     "EigenValueGuess":[],
