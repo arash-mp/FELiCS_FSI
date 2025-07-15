@@ -62,7 +62,28 @@ class Field:
             return ["x","r"]
         elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 3:
             return ["x","r","t"]
+        
+    def getGradientField(self):
+        
+        from ufl import TestFunction, dx
+        from FELiCS.Misc.tensorUtils import iGrad, iConj, iDot, Tensor
+        from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
+        # Create  a Field for the gradient
+        # The space must be a vector vor a scalar field
+        order = 2
+        gradientSpace = getFELiCSSpace(self.mesh, order=order, dim=self.mesh.gdim)
+        gradientField = Field(gradientSpace, self.mesh)
 
+        coordSystem = self.mesh.coordinateSystem
+        J_hat = coordSystem.J_hat
+
+        v = TestFunction(gradientSpace)
+        v_tens = Tensor(v, CoordSys=coordSystem, hasSpectralDimension=False)
+        expression = iDot(iGrad(self.getTensor()), iConj(v_tens)).ufl_tens * J_hat* dx
+
+        gradientField.evaluateUflExpression(expression)    
+
+        return gradientField
 
     def getTensor(self):
         from FELiCS.Misc.tensorUtils import Tensor
