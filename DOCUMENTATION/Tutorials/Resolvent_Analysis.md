@@ -25,6 +25,7 @@ Figure 1. Stenosis mesh
 Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FeliCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
+This tutorial case folder is located in ```felics2.0/TUTORIALS/modal_analysis_tutorial```.
 Our base flow is obtained by time-azimuthal-averaging the snapshots of a 3D LES. This could be a RANS solution, experimental data, or any other relevant flow field.
 Run the python script [```meanFlow.py```](../../TUTORIALS/resolvent_tutorial/meanFlow.py) to load the mean flow data and write a **.fel** file. 
 Change the `fold_path` to your data folder and run the script.
@@ -122,7 +123,7 @@ After the computation, check the `output_dir/`. You should find these files:
     ├ Resolvent_Omega3.1_Response_gain0.h5
     └ ...
 ```
-We postprocess the outputed files using the python script [PlotMode.py](../../TUTORIALS/resolvent_tutorial/PlotMode.py).
+We postprocess the outputed files using the python script [```PlotMode.py```](../../TUTORIALS/resolvent_tutorial/PlotMode.py).
 
 Modify the defined path to your folder and run the script. 
 
@@ -136,6 +137,7 @@ The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are 
 ![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
 
 Figure 3. Forcing mode shape
+
 ![Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/ResponseMode_dark.png) <a id="fig:Responsedomain"></a>
 
 Figure 4. Response mode shape

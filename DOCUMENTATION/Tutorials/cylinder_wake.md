@@ -13,7 +13,7 @@ In this first tutorial, an introduction to setting up a FELiCS case will be give
 
 ## Case setup.
 
-In general it is recommended to create a folder for every case, where the source code, input and output files will be located. Here, the case folder can be found in ```felics2.0/TUTORIALS/cylinder_wake_tutorial```. Therefore, simply copy this tutorial to your working directory ```workDir```
+In general it is recommended to create a folder for every case, where the source code, input and output files will be located. Here, the case folder can be found in ```felics2.0/TUTORIALS/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
 ```sh
 cp -r felics2.0/TUTORIALS/cylinder_wake_tutorial workDir/
 
@@ -22,8 +22,7 @@ cd workDir/cylinder_wake_tutorial/
 
 ## Mesh generation
 
-Since the code is using the Finite Element Continuous Galerkin
-approach, a computational grid needs to be created, which spatially discretizes the domain. For 2D computations like the one in this tutorial, the code uses triangular elements only. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [cylinder_wake_mesh.py](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file,[cylinder_wake.msh](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format.
+Since the code is using the Finite Element Continuous Galerkin approach, a computational grid needs to be created. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file,[cylinder_wake.msh](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format.
 
 ```sh
 python cylinder_wake_mesh.py
@@ -38,9 +37,8 @@ Upon magnifying in the vicinity of the cylinder it looks like
 
 ![Image2](../../TUTORIALS/cylinder_wake_tutorial/magCylinderWake.png) <a id="fig:MagMesh"></a>
 Figure 2. Magnified version of [Figure 1](#fig:Mesh)
-
-The file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) consists of the following domains.
-
+**Note:** For 2D computations, only triangular elements can be handeled. 
+The file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) includes the domains:
 ```sh
 $MeshFormat
 2.2 0 8
@@ -57,19 +55,18 @@ $EndPhysicalNames
 ```
 In [Figure 1](#fig:Mesh), <code style="color : Darkorange">Inlet</code> is the left vertical boundary of the domain, <code style="color : Darkorange">Outlet</code> is the right vertical boundary of the domain, <code style="color : Darkorange">Top</code> is the top horizontal boundary of the domain. <code style="color : Darkorange">Symmetry</code> is the bottom horizontal boundary of the domain, except the half-cylinder in [Figure 2](#fig:MagMesh), which is the <code style="color : Darkorange">Wall</code>.
 
-
 ## Obtaining the base flow
-The base flow for FELiCS can be obtained by various sources depending on the case: Numerical simulations, such as RANS, URANS, LES, DNS, as well as experimental results or analytical models. In this case, we will calculate our base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) can be found in the working directory. The newton flow solver doesn't need to be adapted, nevertheless, the interested reader will find that it is not hard at all to solve the flow equations for different Reynolds numbers. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
-
+The base flow for FELiCS can be obtained through various methods: numerical simulations, (RANS, LES, DNS, ...), experimental results or analytical models. In this case, we calculate the base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) can be found in the working directory. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
 ```sh
 conda activate felics2025_dolfin9
 ```
 
-The settings and the boundary conditions can be found in ```Re50.json``` and ```bc.json```. For $\mathrm{Re} = 50$,  the diameter of the cylinder, $d = 1$ and the bulk velocity $U_\infty = 1$, gives the viscostiy, $\nu = 0.02$. Therefore in the file ```Re50.json``` we have
-
+The settings and the boundary conditions of the base flow can be found in ```Re50.json``` and ```bc.json```. 
+In the file ```Re50.json``` we set the molecular viscostiy, $\nu = 0.02$:
 ```json
 "Molvisc":0.02
 ```
+based on the Reynolds number $\mathrm{Re} = 50$, the cylinder diameter $d = 1$ and the bulk velocity $U_\infty = 1$.
 We only solve the continuity and the momentum equation. Therefore we set everything to <code style="color : Darkorange">None</code> in the <code style="color : Cyan">"SetofEquations"</code>, except for <code style="color : Cyan">"Momentum"</code> and <code style="color : Cyan">"Mass"</code>. 
 
 Additionally we import the boundary conditions from the [```bc.json```](./../../TUTORIALS/cylinder_wake_tutorial/bc.json) file. Overall the boundary conditions can be formulated as : 
