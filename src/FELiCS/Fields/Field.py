@@ -253,7 +253,7 @@ class Field:
         v_tens = Tensor(v, CoordSys=coordSystem, m = self.m, hasSpectralDimension=self.hasSpectralDimension)
         expression = iDot(iGrad(self.getTensor()), iConj(v_tens)).ufl_tens * J_hat* dx
 
-        gradientField.evaluateUflExpression(expression)    
+        gradientField.evaluateUflTensorExpression(expression)    
 
         # TODO Sophie: check how to destroy all petsc objects, also matrix
         gradientSpace.FEMWeightSolver.destroy()
