@@ -46,7 +46,7 @@ Lastly and most importantly we initialise the solver using the guess or the init
 The modal analysis can be run via 
 
 ```sh
-FELiCS -file modal.json
+FELiCS -f modal.json
 ```
 # 4. Postprocessing
 After running the modal analysis, the working directory should look like 
