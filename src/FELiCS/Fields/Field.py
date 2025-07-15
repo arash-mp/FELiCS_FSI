@@ -526,6 +526,82 @@ class Field:
             return result
         return NotImplemented
 
+    def describeFunctionSpace(self):
+        """
+        Describe the structure of the function space and its subspaces.
+
+        Returns
+        -------
+        dict
+            A dictionary containing:
+            - 'type': str - 'scalar', 'vector', or 'mixed'
+            - 'num_subspaces': int - Number of subspaces
+            - 'subspaces': list - List of subspace descriptions for mixed spaces
+            - 'value_size': int - Total number of components
+            - 'description': str - Human-readable description
+
+        Examples
+        --------
+        For a scalar field:
+        {'type': 'scalar', 'num_subspaces': 0, 'value_size': 1, 'description': 'Single scalar space'}
+
+        For a vector field:
+        {'type': 'vector', 'num_subspaces': 3, 'value_size': 3, 'description': 'Single vector space with 3 components'}
+
+        For a mixed field:
+        {'type': 'mixed', 'num_subspaces': 2, 'subspaces': [...], 'value_size': 4, 'description': 'Mixed space with 2 subspaces'}
+        """
+        num_subspaces = self.space.num_sub_spaces
+        value_size = self.space.value_size
+        
+        result = {
+            'num_subspaces': num_subspaces,
+            'value_size': value_size,
+            'subspaces': []
+        }
+        
+        if num_subspaces == 0:
+            # Single space (scalar or vector)
+            result['type']              = 'scalar'
+            result['description']       = 'Single scalar space'
+            
+        else:
+            if num_subspaces == value_size:
+                # Single vector space
+                result['type']          = 'vector'
+                result['description']   = f'Single vector space with {value_size} components'
+            
+            else:
+                result['type']          = 'mixed'
+                subspace_descriptions   = []
+                
+                for i in range(num_subspaces):
+                    subspace = self.space.sub(i)
+                    sub_value_size = subspace.value_size
+                    sub_num_subspaces = subspace.num_sub_spaces
+                    
+                    if sub_value_size == 1:
+                        subspace_type = 'scalar'
+                        subspace_desc = f'Subspace {i}: scalar'
+                    else:
+                        subspace_type = 'vector'
+                        subspace_desc = f'Subspace {i}: vector ({sub_value_size} components)'
+                    
+                    subspace_info = {
+                        'index': i,
+                        'type': subspace_type,
+                        'value_size': sub_value_size,
+                        'num_sub_subspaces': sub_num_subspaces,
+                        'description': subspace_desc
+                    }
+                    
+                    subspace_descriptions.append(subspace_info)
+            
+                result['subspaces']     = subspace_descriptions
+                result['description']   = f'Mixed space with {num_subspaces} subspaces: ' + \
+                                  ', '.join([sub['description'].split(': ')[1] for sub in subspace_descriptions])
+        
+        return result
 
 
 
