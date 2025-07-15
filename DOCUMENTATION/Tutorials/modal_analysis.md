@@ -1,61 +1,105 @@
 # Tutorial 2: Modal Analysis
-## 1. Goals of the tutorial
+## Goals of the tutorial
 In this tutorial, we will do an eigenvalue decomposition of the base flow obtained in the tutorial of [cylinder wake](./cylinder_wake.md). By the end of this tutorial, you will be able to:
 
+- Define the boundary conditions.
 - Run a modal analysis case.
 - Postprocess modal analysis results with paraview.
-## 2. Requirements
-Before you begin this tutorial make sure to 
+## Requirements
+Before you begin this tutorial make sure to:
 * have completed the [base flow tutorial](./cylinder_wake.md).
 * access the case folder ```felics2.0/TUTORIALS/modal_analysis_tutorial``` and copy it into your working directory.
 
-## 3. Modal analysis settings
-The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The complete architecture of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md). 
+## Modal analysis settings
+### Boundary conditions
+The boundary conditions for the fluctuations are:
 
-Since the modal analysis is done for the base flow around the cylinder, we therefore will use the same mesh [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh). Hence, inside the file [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) we see that
+| Boundary | ID | $u'_x$     | $u'_y$      | $p'$       |
+|:----------|:--:|:-----------|:-----------|:-----------|
+| <code style="color : Darkorange">Inlet</code>    | 1 | Dirichlet | Dirichlet | Dirichlet   |
+| <code style="color : Darkorange">Symmetry</code> | 2 | Dirichlet   | Neumann | Dirichlet   |
+| <code style="color : Darkorange">Outlet</code>   | 3 | Dirichlet   | Dirichlet   | Dirichlet |
+| <code style="color : Darkorange">Top</code>      | 4 | Dirichlet   | Dirichlet | Dirichlet   |
+| <code style="color : Darkorange">Wall</code>     | 5 | Dirichlet | Dirichlet | Neumann   |
 
+**Note:** The BCs for the base flow variables ($\bar{u}_x, \bar{u}_y, \bar{p}$) in [base flow tutorial](./cylinder_wake.md) and for the perturbations ($u_x', u_y', p'$) current modal analysis are different.
+
+These BCs are implemented in [```bc_Modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) using different names.
+
+When all BCs are set to Dirichlet with a value 0 (always the case for fluctuations), we set: 
 ```json
-"MeshFilePath":"cylinder_wake.msh"
+    "1": {
+        "name": "zeroDirichlet"
+    },
+``` 
+We impose this for ```Inlet, Outlet, Top```.
+To impose a symmetric boundary condition we specify the BC for every variable:
+```json
+    "2":{
+        "name": "symmetry",
+        "specifics": [
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "ux"
+        },
+        {
+            "type": "Neumann",
+            "value": 0.0,
+            "variable": "uy"
+        },
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "p"
+        }
+        ]
+    },
+```
+The wall BC is imposed with: 
+```json
+    "5":{
+        "name": "wall"
+    }
+``` 
+The complete structure of this file is detailed in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+
+### Settings
+The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
+
+We specify the spatial domain dimension in the settings file as 2D:
+```json
+{"nDim": 2}
+```
+and set the coordinate system to Cartesian:
+```json
+{"CoordinateSystem": "Cartesian"}
 ```
 
-Furthermore, we will also utilise the base flow field file [```base_flow_for_FELiCS```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel), which will get generated upon running the [base flow tutorial](./cylinder_wake.md). Therefore
-
+We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_Modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) with these references:
 ```json
-"MeanFlowFilePath": "base_flow_for_FELiCS.fel"
-```
-It is also very important to note the boundary conditions (BCs) for modal analysis [```bc_Modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json), are quite different fromt the BCs of the [base flow tutorial](./cylinder_wake.md). This is because the BCs for modal analysis are the BCs for the fluctutations on the base flow. The boundary conditions can be formulated as 
-
-| Boundary | $u'_x$     | $u'_y$      | $p'$       |
-|:----------|:-----------|:-----------|:-----------|
-| <code style="color : Darkorange">Inlet</code>    | Dirichlet | Dirichlet | Dirichlet   |
-| <code style="color : Darkorange">Symmetry</code> | Dirichlet   | Neumann | Dirichlet   |
-| <code style="color : Darkorange">Outlet</code>   | Dirichlet   | Dirichlet   | Dirichlet |
-| <code style="color : Darkorange">Top</code>      | Dirichlet   | Dirichlet | Dirichlet   |
-| <code style="color : Darkorange">Wall</code>     | Dirichlet | Dirichlet | Neumann   |
-
-And we specify the its path as 
-
+{"MeshFilePath":"cylinder_wake.msh"}
+{"MeanFlowFilePath": "base_flow_for_FELiCS.fel"}
+{"BCsFilePath": "bc_modal.json"}
+We specify which eigenvalues to compute by providing a list of initial guesses:
 ```json
-"BCsFilePath": "bc_modal.json"
+{"EigenValueGuess": [0.7]}
 ```
-Lastly and most importantly we initialise the solver using the guess or the initial eigenvalue, and the number of eigenvalues we want the solver to search in its vicinity. Here,
-
+For each guess, the number of eigenvalues to be calculated closest to that value is set to:
 ```json
-"EigenValueGuess": ["0.7"], //Initital or guess eigevalue
-"nSolut": 100 //Number of eigenvalues
+{"nSolut": 100}
 ```
-The modal analysis can be run via 
-
+## Running the analysis
+Run the modal analysis via 
 ```sh
-FELiCS -file modal.json
+FELiCS -f modal.json
 ```
-## 4. Postprocessing
-After running the modal analysis, the working directory should look like 
-
+## Postprocessing
+After running the modal analysis, the working directory should look like:
 ```bash
 .
 └── logs
-└── out 
+└── output_dir
 ├ base_flow_for_FELiCS.fel
 ├ bc_modal.json
 ├ cylinder_wake.msh
@@ -64,26 +108,18 @@ After running the modal analysis, the working directory should look like
 ├ PlotScatter.py
 └ ...
 ```
-
-Inside the ```out``` directory, the all the eigenmodes in ```.h5``` and ```.xmf``` format can be found, along with eigenspectrum in ```spectrum.csv``` file. The complete spectrum of all the eigenvalues can be plotted via
-
-```sh
-python PlotScatter.py
-```
-
+Inside the ```output_dir``` directory, the all the eigenmodes in ```.h5``` and ```.xmf``` format can be found, along with eigenspectrum in ```spectrum.csv``` file. 
+Run the pyhton script [PlotScatter.py](./../../TUTORIALS/modal_analysis_tutorial/PlotScatter.py) to plot the computed eigenvalue spectrum:
 ![](./../../TUTORIALS/modal_analysis_tutorial/eigenspectrum.png) <a id="fig:EigSpec"></a>
-Figure 1. The plot of the eigenspectrum
+Figure 1. Eigenspectrum
 
-In [Figure 1](#EigSpec), we see an eigenvalue with a positive real part. Therefore, using paraview we visualise the corresponding real eigenmodes encrypted in the file ```ModalSolution_Omega_Direct_(0.745+0.013j).xmf```. 
+In [Figure 1](#EigSpec), an eigenvalue with a positive imaginary part stands out. We use paraview to visualize the corresponding real part of the eigenmode stored in `ModalSolution_Omega_Direct_(0.745+0.013j).xmf`. 
 
 ![](./../../TUTORIALS/modal_analysis_tutorial/ux_real.png) <a id="fig:RealUx"></a>
-
 Figure 2. Real eigenmode, $u'_x$
 
 ![](./../../TUTORIALS/modal_analysis_tutorial/uy_real.png) <a id="fig:RealUy"></a>
-
 Figure 3. Real eigenmode, $u'_y$
 
 ![](./../../TUTORIALS/modal_analysis_tutorial/p_real.png) <a id="fig:Realp"></a>
-
 Figure 4. Real eigenmode, $p'$

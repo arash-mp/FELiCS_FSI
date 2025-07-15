@@ -1,7 +1,5 @@
 {
-    "1": {
-        "name": "custom",
-        "specifics": [
+    "3": [
         {
             "type": "Dirichlet",
             "value": 0.0,
@@ -10,18 +8,42 @@
         {
             "type": "Dirichlet",
             "value": 0.0,
-            "variable": "uy"
+            "variable": "ur"
         },
         {
-            "type": "Neumann",
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "ut"
+        },
+        {
+            "type": "Dirichlet",
             "value": 0.0,
             "variable": "p"
         }
-    ]
-    },
-    "2": {
-        "name": "symmetry",
-        "specifics": [
+    ],
+    "4": [
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "ux"
+        },
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "ur"
+        },
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "ut"
+        },
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "p"
+        }
+    ],
+    "2": [
         {
             "type": "Neumann",
             "value": 0.0,
@@ -30,47 +52,34 @@
         {
             "type": "Dirichlet",
             "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Neumann",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ]
-    },
-    "3": {
-        "name": "custom",
-        "specifics": [
-        {
-            "type": "Neumann",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Neumann",
-            "value": 0.0,
-            "variable": "uy"
+            "variable": "ur"
         },
         {
             "type": "Dirichlet",
             "value": 0.0,
-            "variable": "p"
-        }
-    ]
-    },
-    "4": {
-        "name": "custom",
-        "specifics": [
+            "variable": "ut"
+        },
         {
             "type": "Neumann",
+            "value": 0.0,
+            "variable": "p"
+        }
+    ],
+    "5": [
+        {
+            "type": "Dirichlet",
             "value": 0.0,
             "variable": "ux"
         },
         {
             "type": "Dirichlet",
             "value": 0.0,
-            "variable": "uy"
+            "variable": "ur"
+        },
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "ut"
         },
         {
             "type": "Neumann",
@@ -78,8 +87,4 @@
             "variable": "p"
         }
     ]
-    },
-    "5": {
-        "name": "wall"
-    }
 }
