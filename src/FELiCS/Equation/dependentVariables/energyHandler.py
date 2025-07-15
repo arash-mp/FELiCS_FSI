@@ -3,49 +3,37 @@ from FELiCS.Equation.dependentVariables.viscosityModels import *
 
 class energyHandler:
     """
-    This class is used to link the temperature with the transported variable
-    (e.g. enthalpy, sensible energy...). Depending on which state variable
-    is linearized (or already known), the respective other is calculated.
+    Handles the relationship between temperature and transported energy variables
+    (e.g., enthalpy, sensible energy) for FELiCS simulations.
 
-    Parameters:
+    Depending on which state variable is linearized or known, the respective other is calculated.
+
+    **Initialize the energyHandler object**
+
+    Parameters
     ----------
     None
 
-    Attributes:
+    Attributes
     ----------
-    None
-
-    Methods:
-    -------
-    __init__():
-        Initializing the class and link temperature with transported energy variable
-        (e.g. enthalpy, sensible energy...)
-
-    _relateConservativeToPrimitiveVariablesEnergy(mean='None'):
-        Relates conservative variables to primitive variables for energy calculation.
-
-    _getNeededFieldsForLinearEnergy():
-        Returns the needed fields for linear energy calculation.
-
-    _initializeMolecularHeatDiffusionFluctuation(mean='None'):
-        Initializes molecular heat diffusion fluctuation.
-
-    _additionalFieldsToBeReadEnergy():
-        Returns additional fields to be read for energy calculation.
-
+    _param : object
+        FELiCS parameter object.
+    _mean : object
+        FELiCS mean flow object.
+    _fieldDict : dict
+        Dictionary of field variables.
+    _isSolution : bool
+        Flag indicating if the current field is a solution.
     """
 
 
     def __init__(self):
         """
-        Initializing the class and link temperature with transported energy variable
-        (e.g. enthalpy, sensible energy...)
+        Initializes the energyHandler instance and links temperature with the transported energy variable.
 
-        Parameters:
-        - param: FELiCS parameter object
-        - mean: FELiCS mean flow object
-
-        Returns:
+        Parameters
+        ----------
+        None
         """
         pass
 
@@ -54,12 +42,17 @@ class energyHandler:
                                             mean='None',
                                             ):
         """
-        Relates the conservative variables to primitive variables for energy equation.
+        Relates conservative variables to primitive variables for energy calculation.
 
-        Parameters:
-        - mean: FELiCS mean flow object
+        Parameters
+        ----------
+        mean : object, optional
+            FELiCS mean flow object. If not provided, uses self._mean.
 
-        Returns:
+        Raises
+        ------
+        Exception
+            If required fields for enthalpy or progress variable calculation are missing.
         """
 
         alreadyInitializedFields = list(self._fieldDict.keys())
@@ -116,8 +109,10 @@ class energyHandler:
         """
         Returns the list of fields needed for linear energy equation.
 
-        Returns:
-        - List of fields needed for linear energy equation.
+        Returns
+        -------
+        fields : list of str
+            List of fields needed for linear energy equation.
         """
 
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']
@@ -135,10 +130,10 @@ class energyHandler:
         """
         Initializes the molecular heat diffusion fluctuation.
 
-        Parameters:
-        - mean: FELiCS mean flow object
-
-        Returns:
+        Parameters
+        ----------
+        mean : object, optional
+            FELiCS mean flow object. If not provided, uses self._mean.
         """
 
         alreadyDeterminedFields = list(self._fieldDict.keys())
@@ -161,8 +156,10 @@ class energyHandler:
         """
         Returns the list of additional fields to be read for energy equation.
 
-        Returns:
-        - List of additional fields to be read for energy equation.
+        Returns
+        -------
+        fields : list of str
+            List of additional fields to be read for energy equation.
         """
 
         energyEquationType = self._param.Case.SetOfEquations['Energy']['Equation']

@@ -28,7 +28,23 @@ class dotdict(dict):
     __delattr__ = dict.__delitem__
 
 class config(ABC):
+    """
+    Abstract base class for FELiCS configuration management.
+
+    Handles loading, parsing, and exporting simulation parameters from JSON and HDF5 files,
+    manages default settings, and provides utility methods for parameter access and validation.
+
+    **Initialize the config object**
+
+    Parameters
+    ----------
+    None
+    """
+
     def __init__(self):
+        """
+        Initialize the config object with default settings.
+        """
         logger.debug("Initializing config class with defaults.")
         
         # Get an instance of the defaults settings
@@ -39,12 +55,12 @@ class config(ABC):
 
     def getAllSettingsDict(self):
         """
-        return SettingsDict of config object.
+        Return the settings dictionary for the config object.
 
         Returns
         -------
-        SettingsDict : Dictionary 
-            Dictionary of input parameters structured in subcategories
+        dict
+            Dictionary of input parameters structured in subcategories.
         """
         SettingsDict={
             'BoundaryCondition':{
@@ -110,16 +126,16 @@ class config(ABC):
     def parse_complex_list(self,data):
         """
         Convert a list of mixed strings and floats into complex numbers.
-        
-        Parameters:
+
+        Parameters
         ----------
         data : list
-            A list containing strings or floats representing complex numbers.
-        
-        Returns:
+            List containing strings, ints, or floats representing complex numbers.
+
+        Returns
         -------
-        result : list
-            A list of complex numbers.
+        list of complex
+            List of complex numbers.
         """
         result = []
         for item in data:
@@ -137,11 +153,29 @@ class config(ABC):
         return result
     
     def calculate_parameters(self):
+        """
+        Calculate and set derived parameters based on current configuration.
+        """
         self.BoundaryCondition.nVelocityComponents  = len(self.getVelocityComponents())
         self.Case.SolutionList                      = self.getTransportedQuantityList()
         self.BoundaryCondition.VelocityComponents   = self.getVelocityComponents()
 
     def check_for_mandatory_files(self,config_dict,mandatory_files):
+        """
+        Check that all mandatory files exist in the configuration.
+
+        Parameters
+        ----------
+        config_dict : dict
+            Configuration dictionary.
+        mandatory_files : list of str
+            List of required file keys in the format 'Category_Field'.
+
+        Raises
+        ------
+        Exception
+            If any mandatory file is missing.
+        """
         for field in mandatory_files:
             filename = config_dict[field.split("_")[0]][field.split("_")[1]]
             if not os.path.isfile(filename):
@@ -150,14 +184,15 @@ class config(ABC):
 
     def importFromFile(self, configFilePath):
         """
-        Imports parameters from .json file.
-        If parameter is not found in .json file the default is used.
-        Calls check_for_mandatory_files() and calculate parameters().
+        Import parameters from a .json file and update configuration.
+
+        If a parameter is not found in the .json file, the default is used. This method also calls
+        check_for_mandatory_files() and calculate_parameters().
 
         Parameters
         ----------
         configFilePath : str
-            path to .json file containing parameters
+            Path to the .json file containing parameters.
         """
 
         if not configFilePath.endswith(".json"):
@@ -232,6 +267,21 @@ class config(ABC):
         logger.info("Configuration loaded successfully")
 
     def importFromH5File(self, h5FileName):
+        """
+        Import parameters from an HDF5 file.
+
+        This function is not used in the current version of FELiCS. It used to be called when reading
+        'meanflow.h5' instead of a .fel file, in which case it would overwrite the parameters.
+
+        Parameters
+        ----------
+        h5FileName : str
+            Path to the HDF5 file containing parameters.
+
+        Returns
+        -------
+        None or updates internal configuration attributes.
+        """
         # NOTE: This function is not used in the current version of FELiCS
         # NOTE: It used to be called when reading 'meanflow.h5' instead of a .fel
         # NOTE: In that case it was overwritting the parameters.
@@ -267,10 +317,18 @@ class config(ABC):
 
 
     def export(self, filestring):
-        ## __________currently not working__________
-        '''function exporting the parameters to a file
-        \t Input:
-        \t -filestring: path of parameter file'''
+        """
+        Export the current configuration parameters to a file.
+
+        Parameters
+        ----------
+        filestring : str
+            Path of the parameter file to export to. Supports .h5 and text files.
+
+        Notes
+        -----
+        This function is currently not fully working for all export types.
+        """
         from inspect import isclass
 
         # Writing the parameters to a file
@@ -337,10 +395,23 @@ class config(ABC):
 
 
     def readDomainData(self,MeshFile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
+        """
+        Read all domain data from the mesh file and update mesh-related attributes.
+
+        Parameters
+        ----------
+        MeshFile : str
+            Path to the mesh file.
+        gDim : int
+            Geometric dimension of the mesh.
+        ExtendedTransportedQuantityList : list
+            List of transported quantities including velocity components.
+        coordinateSystem : str
+            Coordinate system type (e.g., 'Cartesian', 'Cylindrical').
+        m : int
+            Azimuthal wavenumber or mode.
+        """
         logger.debug(f"Reading domain data from '{MeshFile}'")
-        ''' Input: MeshFile
-        Read all the domain data from the mesh file '''
-        
         # Read mesh and store it in self.__mesh__
         if not MeshFile == '' and os.path.isfile(MeshFile):
             self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,gDim,m)
@@ -351,12 +422,25 @@ class config(ABC):
         
 
     def getMesh(self):
-        ''' Function is returning the mesh '''
+        """
+        Return the mesh object associated with the configuration.
+
+        Returns
+        -------
+        FELiCSMesh
+            The mesh object.
+        """
         return self.__mesh__
 
-
     def getInternalVelocityComponents(self):
-        ''' Provides a list of velocity components, which are directed within the dimensions of the mesh '''
+        """
+        Get a list of velocity components directed within the mesh dimensions.
+
+        Returns
+        -------
+        list of str
+            List of internal velocity component labels (e.g., ['x', 'y', 'z']).
+        """
         if self.Case["CoordinateSystem"] == 'Cartesian':
             VelCompList = ['x','y']
             if self.Case.nDim > 2:
@@ -366,7 +450,14 @@ class config(ABC):
         return VelCompList
 
     def getExternalVelocityComponents(self):
-        ''' Provides a list of velocity components, which are directed outside the dimensions of the mesh '''
+        """
+        Get a list of velocity components directed outside the mesh dimensions.
+
+        Returns
+        -------
+        list of str
+            List of external velocity component labels (e.g., ['z'], ['t'], or []).
+        """
         if self.Case["CoordinateSystem"] == 'Cartesian':
             if self.Case.m != 0 and self.Case.nDim == 2:
                 VelCompList = ['z']
@@ -378,14 +469,28 @@ class config(ABC):
         return VelCompList
 
     def getVelocityComponents(self):
-        ''' Provides a list of all velocity components, both mesh internal and external '''
+        """
+        Get a list of all velocity components, both internal and external.
+
+        Returns
+        -------
+        list of str
+            List of all velocity component labels.
+        """
         templist = self.getInternalVelocityComponents()
         templist.extend(self.getExternalVelocityComponents())
 
         return templist
 
     def getTransportedQuantityList(self):
-        ''' Provides a list of all transported quantities for the given case settings '''
+        """
+        Get a list of all transported quantities for the current case settings.
+
+        Returns
+        -------
+        list of str
+            List of transported quantity variable names.
+        """
         SolutionList = []
         if not self.Case["SetOfEquations"]['Momentum']['Variable'] == 'None':
             SolutionList.append(self.Case["SetOfEquations"]['Momentum']['Variable'])
@@ -407,6 +512,14 @@ class config(ABC):
 
 
     def getEquationList(self):
+        """
+        Get the list of equations with both defined equation and variable.
+
+        Returns
+        -------
+        list of tuple
+            List of (equation_name, equation_dict) tuples for active equations.
+        """
         ### TODO Sophie: make this the central equation list and clean up
         # TODO Sophie: throw warning if Equation != None and Variable == None (before that: move equation of state out of those equations)
         EquationsList = []
@@ -417,6 +530,19 @@ class config(ABC):
 
 
     def getStateVectorVariables(self, EquationList):
+        """
+        Get the list of state vector variables and their components.
+
+        Parameters
+        ----------
+        EquationList : list
+            List of (equation_name, equation_dict) tuples.
+
+        Returns
+        -------
+        list of tuple
+            List of (variable, components) tuples.
+        """
         ### TODO Sophie: make this the central list besides the equation list and clean up
         VariablesList = []
         for equation in EquationList:
@@ -430,14 +556,21 @@ class config(ABC):
 
 
     def getExtendedTransportedQuantityList(self):
-        ''' Like getTransportedQuantitiyList but with all velocity components '''
+        """
+        Get a list of all transported quantities, including all velocity components.
+
+        Returns
+        -------
+        list of str
+            List of transported quantities with velocity components expanded.
+        """
         SolutionList = []
         # First add all velocity components
         transportedQuantities = self.getTransportedQuantityList()
         if 'u' in transportedQuantities:
             for component in self.getVelocityComponents():
                 SolutionList.append('u'+component)
-        #Then extend the list by the transported quantity list
+        # Then extend the list by the transported quantity list
         SolutionList.extend(self.getTransportedQuantityList())
         # Finally, remove the component 'u' if present
         if 'u' in SolutionList:
@@ -445,7 +578,14 @@ class config(ABC):
         return SolutionList
 
     def getMeanFlowFieldNames(self):
-        ''' This function provides the mean fields which must be read in.'''
+        """
+        Get the list of mean flow field names required for input.
+
+        Returns
+        -------
+        list of str
+            List of mean field variable names to be read from file.
+        """
         MeanList=[]
         # Add velocity components
         MeanList.append('u')
@@ -499,4 +639,12 @@ class config(ABC):
         return MeanList
 
     def getNVelocityComponents(self):
+        """
+        Get the number of velocity components for the current configuration.
+
+        Returns
+        -------
+        int
+            Number of velocity components.
+        """
         return len(self.getVelocityComponents())

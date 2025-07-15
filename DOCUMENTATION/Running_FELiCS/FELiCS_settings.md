@@ -62,7 +62,6 @@ The typical `settings.json` file is divided into 6 main sections:
     "PolynomialOrder":  (dict)  sets the polynomial order for each transported variables (list must match "SetOfEquations"). e.g.: {"u": 2,"T": 1,"rho": 1}
 }}
 ```
->**Note:** The name of the file is not important. 
 The `settings.json` is directly given to FELiCS when running from the command line via the `-file` flag:
 ```bash
 FELiCS -file settings.json

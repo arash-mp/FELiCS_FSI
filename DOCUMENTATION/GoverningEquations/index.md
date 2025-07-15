@@ -1,10 +1,11 @@
-# Governing Equations
+# Mathematical theory and background
 
 [Some introductory text]
 
-##### 1. Standard scripts: possible analysis modes
+##### 1. Operator / linear analysis types
 
-[Some introductory text]
+- What can the code solve for?
+- What is the theory and motivation behind these types of analyses?
 
 ```{toctree}
 :maxdepth: 1
@@ -13,27 +14,43 @@ analysisMode_resolvent.md
 analysisMode_input_output.md
 ```
 
-##### 2. Implemented equations 
+##### 2. Partial differential equations
 
-[Some introductory text]
+- What are the governing equations for the physics?
+- What are the nonlinear, linear (and bilinear, or second-order derivative) forms of the equations?
+- What are the main assumptions and justifications used in deriving/formulating the equations?
+- What is the motivation or what are the use cases for each equations (with some references/examples)?
 
 ```{toctree}
 :maxdepth: 1
 equation_momentum_mass_species_energy.md
-equation_momentum.md
-equation_mass.md
+equation_navier_stokes.md
 equation_energy.md
-equation_species.nd
-equation_sponge.md
-equation_state.md
+equation_species.md
 equation_RANS_imcompressible_k-epsilon.md
 ```
 
-##### 3. Miscellaneous
+##### 3. Algebraic equations
 
-[Some introductory text]
+- These equations are required for closing the PDEs in some cases.
+- Nonlinear and linear (and bilinear maybe) forms of the equations.
+- What are the main assumptions and justifications used in deriving/formulating the equations?
+- What is the motivation or what are the use cases for each equations (with some references/examples)?
 
 ```{toctree}
 :maxdepth: 1
+equation_state.md
+equation_viscosity.md
+equation_reaction.md
+equation_heatrelease.md
+```
+
+##### 4. Miscellaneous
+
+- All other stuff (for now only sponge and tensorUtils)
+
+```{toctree}
+:maxdepth: 1
+equation_sponge.md
 misc_tensor_formalism.md
 ```

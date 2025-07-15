@@ -17,21 +17,43 @@ from FELiCS.Misc.logging    import Logger
 logger = Logger.get_logger("felics")
 
 class MomentumEquation(EquationTemplate):
-    """Class representing the momentum conservation equation.
+    """
+    Class representing the momentum conservation equation.
 
     This class formulates the momentum conservation equation in a tensorial framework.
     It includes convective, pressure gradient, and diffusion terms while supporting 
     both weak and strong formulations. The class integrates with the overall equation 
     collection and handles interactions with mean fields and fluctuations.
 
+    **Initialize the MomentumEquation object**
+
+    Parameters
+    ----------
+    index : int
+        Index of the equation in the system.
+    eqColl : EquationCollection
+        The equation collection object.
+    fluc : Fluctuations
+        The fluctuations object.
+    X : Function
+        The function representing the mesh coordinates.
+    param : Parameters
+        The parameters object.
+
+    Notes
+    -----
+    If the numerical scheme is 'Discontinuous Galerkin', an error will be raised 
+    since it is not implemented in the tensorial framework.
     """
 
     def __init__(self, index, eqColl, fluc, X, param):
         """
-        Initialize the MomentumEquation object.
+        Initialize the MomentumEquation instance.
 
         Parameters
         ----------
+        index : int
+            Index of the equation in the system.
         eqColl : EquationCollection
             The equation collection object.
         fluc : Fluctuations
@@ -43,8 +65,7 @@ class MomentumEquation(EquationTemplate):
 
         Notes
         -----
-        - If the numerical scheme is 'Discontinuous Galerkin', an error will be raised 
-          since it is not implemented in the tensorial framework.
+        If the numerical scheme is 'Discontinuous Galerkin', an error will be raised since it is not implemented in the tensorial framework.
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
@@ -68,8 +89,9 @@ class MomentumEquation(EquationTemplate):
 
         Notes
         -----
-        - This method incorporates time derivative terms into the weak form.
+        This method incorporates time derivative terms into the weak form for the momentum equation.
         """
+
         # Time derivative term
         weakForm += (iDot(mean.rho*self.fluc.u, iConj(self.X))).ufl_tens*self.J_hat*dx
 
@@ -162,7 +184,20 @@ class MomentumEquation(EquationTemplate):
     def addNonlinearExpression(self, weakForm, mean):
         """
         Add the nonlinear expression to the weak form.
+
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object to be updated.
+        mean : MeanFields
+            The mean fields object containing time-averaged variables.
+
+        Notes
+        -----
+        - This method assembles the full nonlinear form of the momentum conservation equation. 
+        - It supports integration by parts for convective and pressure terms and includes the diffusion term using the mean stress tensor.
         """
+
         X     = self.X
         J_hat = self.J_hat
 
@@ -204,6 +239,22 @@ class MomentumEquation(EquationTemplate):
 
 
     def addBilinearExpression(self, weakForm, mean):
+        """
+        Add the bilinear convection term for incompressible flows.
+
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object to be updated.
+        mean : MeanFields
+            The mean fields object containing time-averaged variables.
+
+        Notes
+        -----
+        - This method implements a simplified bilinear form for incompressible flow cases in the BOA project. 
+        - Only the convective term is considered, using a strong formulation.
+        """
+
         # Sophie: first and quick implementation for the BOA project. Only for incompressible flow and strong formulation (only convection term)
         u_bil = Tensor( mean._fieldDict['u_bilinear'], self.coordinateSystem)
         fluc  = self.fluc
