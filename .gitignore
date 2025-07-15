@@ -8,6 +8,7 @@ __pycache__/
 DOCUMENTATION/_build
 DOCUMENTATION/build
 DOCUMENTATION/autoapi
+.ipynb_checkpoints
 public
 *env
 *.egg-info
