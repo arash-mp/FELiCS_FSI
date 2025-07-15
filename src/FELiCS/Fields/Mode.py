@@ -30,10 +30,16 @@ class Mode(Field):
         Indicates if the mode is a response mode.
     """
 
-    def __init__(self,FEMSpace, mesh):
-        super().__init__(FEMSpace, mesh)
+    def __init__(self,FEMSpace, mesh, name= [], isStateVector = False):
+        super().__init__(FEMSpace, mesh, name, isStateVector)
         self.isAdjoint  = False
         self.isResponse = False
+
+    def getName(self):
+        if self.isStateVector:
+            return "q_hat"
+        else:
+            return __super__.getName()
 
     def setGain(self,gain):
         """

@@ -1,4 +1,5 @@
 from dolfinx.fem             import Function, petsc
+import basix
 
 class Field:
     """
@@ -25,7 +26,7 @@ class Field:
         Wave number. If this is set, the Field is assumed to have one spectral spatial dimension, regardless the value of m.
     """
 
-    def __init__(self, FEMSpace, mesh, name=[], m=None):
+    def __init__(self, FEMSpace, mesh, name=[], isStateVector = False, m=None):
         self.space    = FEMSpace
         self.mesh     = mesh
 
@@ -39,6 +40,8 @@ class Field:
         else:
             self.name = name
 
+        self.isStateVector = isStateVector
+
         # handle spectral dimension and wave number
         if m != None:
             self.hasSpectralDimension = True
@@ -51,9 +54,11 @@ class Field:
         self.function = Function(FEMSpace)
 
     def getName(self):
-        if len(self.name) == 0:
+        if self.isStateVector:
+            return "q"
+        elif len(self.name) == 0:
             return ""
-        elif len(self.name) == 1 and len(self.name[0][1])==0:
+        elif len(self.name) == 1: 
             return self.name[0][0]
         else:
             return self.name
@@ -61,17 +66,26 @@ class Field:
     def getComponentsNames(self):
         ## This is  a workaround for now, to use for the retreat.
         ## TODO Sophie: make this independent of the coordinate system, and also usable for mixed function spaces.
-        numberOfSubSpaces = self.space.num_sub_spaces
-        if numberOfSubSpaces == 0:
+        space_info = self.describeFunctionSpace
+        if isinstance (self.name, list) and len(self.name)>0 and isinstance(self.name[0],tuple) and self.getName() in ["u", "rhou"]:
+            numberOfSubSpaces = self.space.num_sub_spaces
+            if numberOfSubSpaces == 0:
+                return []
+            elif self.mesh.coordinateSystemName == "Cartesian" and numberOfSubSpaces == 2:
+                return ["x","y"]
+            elif self.mesh.coordinateSystemName == "Cartesian" and numberOfSubSpaces == 3:
+                return ["x","y","z"]
+            elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 2:
+                return ["x","r"]
+            elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 3:
+                return ["x","r","t"]
+        if len(self.name)>1:
+            componentsNames = []
+            for n in self.name:
+                componentsNames.append(n[0])
+            return componentsNames
+        else:
             return []
-        elif self.mesh.coordinateSystemName == "Cartesian" and numberOfSubSpaces == 2:
-            return ["x","y"]
-        elif self.mesh.coordinateSystemName == "Cartesian" and numberOfSubSpaces == 3:
-            return ["x","y","z"]
-        elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 2:
-            return ["x","r"]
-        elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 3:
-            return ["x","r","t"]
 
     def getTensor(self):
         from FELiCS.Misc.tensorUtils import Tensor
@@ -102,13 +116,16 @@ class Field:
             return listOfFields
 
         for i in range(numberOfSubSpaces):
+            # transfer names
+            if len(self.name) == numberOfSubSpaces:  
+                name = [self.name[i]]
+            elif len(self.name)==1 and len(self.name[0][0]) == numberOfSubSpaces:
+                name = [(self.name[0][0] + self.name[0][1][i], [])]
+
+            # transfer content
             space, mapping            = self.space.sub(i).collapse()
-            field                     = Field(space, self.mesh)
+            field                     = Field(space, self.mesh, name=name)
             field.function.x.array[:] = self.function.x.array[mapping]
-            # if len(self.name) == numberOfSubSpaces:  
-            #     field.name = [self.name[i]]
-            # elif len(self.name)==1 and len(self.name[0]) == numberOfSubSpaces:
-                # field.name = [(self.name[0][0] + self.name[0][1][i], [])]
             listOfFields.append(field)
 
         return listOfFields
@@ -153,7 +170,7 @@ class Field:
                 print("ERROR")
                 #TODO: Throw error!
 
-        return 
+        return  
 
 
 

@@ -32,11 +32,12 @@ class ModeCollection():
 
     """
 
-    def __init__(self, femSpace, mesh):
+    def __init__(self, femSpace, mesh, names=[]):
         self.modeList = []
 
         self.femSpace = femSpace
         self.mesh     = mesh
+        self.names    = names
 
 
     def appendMode(self, mode):
@@ -73,7 +74,7 @@ class ModeCollection():
             Whether the mode is an adjoint mode (default is False).
         """
 
-        mode = Mode(self.femSpace, self.mesh)
+        mode = Mode(self.femSpace, self.mesh, name=self.names, isStateVector = True)
         #mode.setCoefficientArray(vector)
         mode.function.x.array[:] = vector
 
@@ -104,7 +105,7 @@ class ModeCollection():
         numberOfModes = len(eigVals)
 
         for i in range(numberOfModes):
-            mode = Mode(self.femSpace, self.mesh)
+            mode = Mode(self.femSpace, self.mesh, name = self.names, isStateVector = True)
             mode.isAdjoint = adjoint
             mode.setError(error[i])
             mode.setGuess(guess)

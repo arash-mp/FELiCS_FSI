@@ -50,15 +50,16 @@ def runModal(param):
     B = equation.getWeightMatrix  (meanFlow)
 
     # get parameters for eigenproblem
-    guesses  = param.Numerics.EigenValueGuess
-    nSol     = param.Numerics.nSolut
-    adjoint  = param.Case.CalculateAdjoint
+    guesses          = param.Numerics.EigenValueGuess
+    nSol             = param.Numerics.nSolut
+    adjoint          = param.Case.CalculateAdjoint
+    names            = param.Case.StateVectorVariables
 
     # track time
     start= time.time()
 
     # solve eigenproblem for each guess
-    solution = ModeCollection(FEMSpaces.VMixed, mesh)
+    solution = ModeCollection(FEMSpaces.VMixed, mesh, names = names)
     for guess in guesses:
         
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))
@@ -80,6 +81,7 @@ def runModal(param):
                                                         adjoint=True)
 
             solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
+
 
     # end tracking time
     end = time.time() - start

@@ -55,12 +55,13 @@ def runInputOutput(param):
 
     # get parameters for input/output analysis
     omegas   = param.IOResolvent.Omegas
+    names    = param.Case.StateVectorVariables
 
     # track time
     start= time.time()
 
     # solve equation system 
-    solution = ModeCollection(FEMSpaces.VMixed, mesh)
+    solution = ModeCollection(FEMSpaces.VMixed, mesh, names=names)
     for omega in omegas:
         # define operator
         operator = A.copy()
