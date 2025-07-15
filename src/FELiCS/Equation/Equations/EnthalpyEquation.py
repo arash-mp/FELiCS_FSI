@@ -15,13 +15,45 @@ logger = Logger.get_logger("felics")
 
 
 class EnthalpyEquation(EquationTemplate):
-    """Class representing the enthalpy conservation equation.
+    """
+    Class representing the enthalpy conservation equation.
 
     This class formulates the enthalpy conservation equation using a 
     tensorial framework. It extends the `EquationTemplate` and implements 
     methods for adding weight matrices, linear expressions, and nonlinear 
     expressions to the weak form.
 
+    **Initialize the EnthalpyEquation object**
+
+    Parameters
+    ----------
+    index : int
+        The index of the equation in the equation collection.
+    eqColl : EquationCollection
+        The equation collection object.
+    fluc : Fluctuations
+        The fluctuations object containing fluctuating fields.
+    X : Function
+        The function representing the mesh coordinates.
+    param : Parameters
+        The parameters object used to configure the numerical scheme.
+
+    Attributes
+    ----------
+    J_hat : float or Function
+        Jacobian determinant or related geometric scaling factor.
+    X : Function
+        The mesh coordinate function.
+    fluc : Fluctuations
+        Container of fluctuation fields.
+    all_ds : Measure
+        Surface measure used for boundary integrals.
+
+    Notes
+    -----
+    If the numerical scheme specified in the parameters is 
+    'Discontinuous Galerkin', an error is raised because that scheme 
+    is not supported in the tensorial framework.
     """
 
     def __init__(self, index, eqColl, fluc, X, param):
@@ -30,6 +62,8 @@ class EnthalpyEquation(EquationTemplate):
 
         Parameters
         ----------
+        index : int
+            The index of the equation in the equation collection.
         eqColl : EquationCollection
             The equation collection object.
         fluc : Fluctuations
@@ -66,7 +100,8 @@ class EnthalpyEquation(EquationTemplate):
 
         Notes
         -----
-        - This method contributes the time derivative terms of the weak form.
+        This method adds the time derivative terms to the weak form using the
+        tensorial representation of fluctuating enthalpy and pressure.
         """
         #  Time derivative terms
         weakForm.add((mean.rho * self.fluc.h * iConj(self.X)).ufl_tens * self.J_hat * dx)
@@ -79,7 +114,8 @@ class EnthalpyEquation(EquationTemplate):
 
         Notes
         -----
-        - This function is currently a placeholder and does not modify the weak form.
+        This method is a placeholder and currently does not contribute any 
+        nonlinear terms to the weak form.
         """
         pass
 
@@ -96,10 +132,12 @@ class EnthalpyEquation(EquationTemplate):
 
         Notes
         -----
-        - This function constructs the weak form of the enthalpy conservation equation 
-          in a tensorial framework.
-        - It incorporates advection and diffusion terms using volume and boundary integrals.
-        - Debugging messages are printed when enabled in the parameters.
+        Constructs the linearized weak form by incorporating:
+        - Volume integrals of advection terms remaining after partial integration.
+        - Boundary integrals resulting from the partial integration of advection terms.
+        - Diffusion terms using gradient and dot product operations.
+
+        Debugging messages may be emitted if enabled via the parameters.
         """
 
         J_hat   = self.J_hat
