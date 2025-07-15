@@ -37,3 +37,19 @@ def read_csv_file(file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+
+import matplotlib.pyplot as plt
+
+import matplotlib
+matplotlib.use('TkAgg')
+
+x_coords, y_coords = read_csv_file("./out/spectrum.csv")
+# Plotting
+fig = plt.figure(figsize=(9, 6))
+plt.rcParams.update({'font.size': 24})
+plt.scatter(x_coords, y_coords, c='blue', marker='o')
+plt.title('Scatter Plot of Eigenvalues')
+plt.xlabel('Im(Eigenvalue)')
+plt.ylabel('Re(Eigenvalue)')
+plt.grid(True)
+plt.show()
