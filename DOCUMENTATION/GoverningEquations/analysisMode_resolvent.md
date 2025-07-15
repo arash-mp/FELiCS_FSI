@@ -1,8 +1,11 @@
-# General Resolvent Formulation
+# Resolvent Analysis
+
+## General Resolvent Formulation
 
 Resolvent analysis is a linear systems approach used to understand how a dynamical system responds to harmonic forcing. The method starts by linearizing the governing equations around a steady base state, then analyzing how the system amplifies input disturbances at different frequencies. By treating the linearized operator as a transfer function, one can identify which inputs (forcings) lead to the strongest outputs (responses). This is done using a singular value decomposition of the resolvent operator, which reveals the most amplified structures and quantifies the gain. The method captures both modal and nonmodal amplification, making it especially powerful for studying flows with strong non-normal behavior.
 
-## Nonlinear equation
+### Resolvent Operator
+
 We start with a general nonlinear equation, written in compact form as
 $$
 \frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g}
@@ -33,7 +36,6 @@ $$
 representing the  nonlinear operator linearized around the about the base flow $\mathbf{q}_b$ while the forcing $\mathbf{f}' = \mathcal{N}(\mathbf{q_{\mathbf{b}}})+O(|\mathbf{q'}|^2)+\mathbf{q} \in \mathbb{R}$ collects the nonlinear operator acting on the base flow, the nonlinear terms, and external forcing $\mathbf{g}$ ([Rolandi et al. 2024](https://doi.org/10.1007/s00162-024-00717-x)). 
 
 
-## Resolvent Operator
 
 We consider harmonic  forcing 
 $$
@@ -64,7 +66,7 @@ $$
 
 representing a tranfer function relating the linear reseponce to a given forcing. 
 
-## Optimal forcing-responce analysis
+### Optimal forcing-responce analysis
 
 It is the goal to identify optimal input-output pairs $(\hat{\mathbf f}, \hat{\mathbf q})$  maximizing amplification.
 
@@ -90,9 +92,9 @@ Note that the gain is sorted by decreasing order $\sigma_1\geq\sigma_2\geq ... \
 
 
 
-# FELiCS implementation (to be done)
+## FELiCS implementation (to be done)
 
-## Wheighting and limiter operators
+### Wheighting and limiter operators
 
 Applying a discretization scheme and considering a finite element method weighting:  
 $$
@@ -111,7 +113,7 @@ $$
 
 
 
-## Inner Product and Energy Norm
+### Inner Product and Energy Norm
 The inner product in the discretized domain is written as: 
 $$
 \langle \hat{a}, \hat{b} \rangle = \hat{a}^H W \hat{b},
@@ -122,7 +124,7 @@ The energy norm for the output term is then defined as $\|\hat{y}\|^2=\hat{y}^HW
 
 
 
-## Definition of the gain 
+### Definition of the gain 
 The gain squared is defined as: 
 $$
 \sigma^2 = \frac{\|\hat{y}\|^2}{\| \hat{\eta}\|^2} = \frac{\hat{y}^H W_{r} \hat{y}}{\hat{\eta}^H W_{f} \hat{\eta}}.
@@ -150,7 +152,7 @@ This is the expression implemented in FELiCS
 The full forcing is obtained from $\hat{f}=P_f\hat{\eta}$ and the response is $\hat{q} = R \hat{f}$.
 Note: for real operators, such as $P_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
 
-## Dimensions of the operators
+### Dimensions of the operators
 Setting $N$ the number of degrees of freedom of the linear operator:
 * The state and forcing vectors, $\hat{q}$ and $\hat{f}$, are of length $N$.
 * The linear operator and thus the initial resolvent operator $R$ are square matrices of dimension $[N\times N]$.

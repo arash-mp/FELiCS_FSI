@@ -1,9 +1,10 @@
-# Linear Stability Analysis Formulation
+# Linear Stability Analysis
+
 
 Linear stability analysis is a method used to determine whether small disturbances to a steady base state grow or decay over time. The system is linearized around the base flow, and solutions are sought in the form of exponentially growing or decaying modes. By solving an eigenvalue problem, one identifies the growth rates and shapes of these modes. If any mode grows over time, the base flow is considered unstable. This approach provides insight into the natural tendencies of the system to amplify disturbances without external forcing, focusing purely on the system’s internal dynamics.
 
 
-## Linear equation
+## Linear Operator 
 We start with a general nonlinear equation, written in compact form as
 $$
 \frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g}
@@ -31,7 +32,7 @@ $$
 $$
 representing the Jakobian evaluate at the base state  $\mathbf{q}_b$. 
 
-## Spectral analysis of the  linear operator
+### Spectral analysis of the  linear operator
 
 We assume the pertubation to have the form of normal modes, reading
 $$
@@ -56,14 +57,14 @@ By solving the eigenvalue problem the imaginary part of the eigenvalues detmerin
 - $\hat{\mathbf{q}}$ :=  mode shape  
 
 
-# FELiCS implementation (to be done)
+## FELiCS implementation (to be done)
 
 The discretized eigenvalue equation is solved with a SLEPc-based solver in FELiCS. A set of eigenvalues $\omega_i$ ($i=1,2,...,n$) are calculated near a defined guess value $\sigma$.
 For each $\omega_i$, the corresponding eigenvector $\hat{q_i}$ is also calculated.
 The maximum number of $\omega_i$ is defined as $n$.
 The real and imagine parts of the solved eigenvalues are gains and frequencies of specific mode while the real parts of the eigenvectors reveal the oscillation mode shape (or speak modal pattern).
 
-# Derivation: For incompressible Navier-Stokes equations
+### Derivation: For incompressible Navier-Stokes equations
 Modal analysis can be used for linear stability analysis on flow governed by Navier-Stokes equations (NSE). By linearize NSE around a steady state (so called base flow), one can get the aformentioned linear system and solve it. Here we show the linearization on the incompressible NSE, which is:
 $$\nabla \cdot \mathbf{u} = 0$$
 $$\frac{d\mathbf{u}}{dt} + ((\mathbf{u} \cdot\nabla)\mathbf{u}) + \frac{1}{\rho} \nabla p - \nu \nabla^2 (\mathbf{u}) = 0$$
@@ -81,7 +82,7 @@ Then insert the decompostion into NSE and ignore the high-order fluctuations, th
 $$(\nabla\cdot\hat{\mathbf{u}} )e^{-i \omega t} = 0$$
 $$\hat{\mathbf{u}} $$
 
-## Residual calculation
+### Residual calculation
 After calculation, the relative residuals for each pair of eigenvalues and eigenvectors are calculated as
 $$
 \mathcal{R}_i = \frac{||A\hat{q_i} - \omega_i B \hat{q_i}||}{||\omega_i B \hat{q_i}||} .
