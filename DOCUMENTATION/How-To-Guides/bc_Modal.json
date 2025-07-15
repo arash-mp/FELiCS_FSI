@@ -1,87 +1,34 @@
 {
-    "1": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ],
-    "2": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Neumann",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ],
-    "3": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ],
-    "4": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ],
-    "5": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Neumann",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ]
+    "1": {
+        "name": "zeroDirichlet"
+    },
+    "2": {
+        "name": "symmetry",
+        "specifics": [
+            {
+                "variable": "ux",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "uy",
+                "type": "Neumann",
+                "value": 0.0
+            },
+            {
+                "variable": "p",
+                "type": "Dirichlet",
+                "value": 0.0
+            }
+        ]
+    },
+    "3": {
+        "name": "zeroDirichlet"
+    },
+    "4": {
+        "name": "zeroDirichlet"
+    },
+    "5": {
+        "name": "wall"
+    }
 }
