@@ -62,7 +62,7 @@ In our case, we set:
 
 ### Settings
 The setting file contains all the analysis information. It should be placed in our 
-An example of setting file is [```resolvent_setting.json```](../../TUTORIALS/resolvent_tutorial/resolvent_setting.json). The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+An example of settings file is [```resolvent_settings.json```](../../TUTORIALS/resolvent_tutorial/resolvent_settings.json). The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
 The coordinates system is set to Cylindrical: 
 ```json
@@ -105,14 +105,14 @@ Your case folder should look like:
 .
 ├ FeliCS_mesh.msh
 ├ meanFlow.fel
-├ resolvent_setting.json
+├ resolvent_settings.json
 ├ boundaries.json
 ├ mixture.json
 └── output_dir
 ```
 Run the analysis with the command:
 ```bash
-FELiCS -f resolvent_setting.json
+FELiCS -f resolvent_settings.json
 ```
 With the provided mesh, it should take about two minute to compute the two resolvent modes for each frequency (~25 minutes).
 ## Postprocessing
