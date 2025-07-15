@@ -4,8 +4,16 @@ class EquationTemplate(ABC):
     """
     A base class for equation templates.
 
+    This abstract base class provides a structure for defining equations 
+    within a given coordinate system and with specified parameters. 
+    It interfaces with a collection of equations and fluctuation data.
+
+    **Initialize the EquationTemplate object**
+
     Parameters
     ----------
+    index : int
+            The index of the equation.
     eqColl : EquationCollection
         The equation collection object.
     fluc : Fluctuations
@@ -31,10 +39,27 @@ class EquationTemplate(ABC):
         The list of all ds.
     ds : list
         The list of ds.
-
     """
 
+
     def __init__(self, index, eqColl, fluc, X, param):
+        """
+        Initializes the EquationTemplate instance.
+
+        Parameters
+        ----------
+        index : int
+            The index of the equation.
+        eqColl : EquationCollection
+            The equation collection object.
+        fluc : Fluctuations
+            The fluctuations object.
+        X : CoordinateSystem
+            The coordinate system object.
+        param : dict
+            Dictionary of parameters for the equation.
+        """
+
         self.index             = index
         self.fluc              = fluc
         self.X                 = X
@@ -50,23 +75,40 @@ class EquationTemplate(ABC):
     @abstractmethod
     def addWeightMatrixExpression(self):
         """
-        Abstract method to add the weight matrix expression.
+        Define the weight matrix expression.
+
+        This abstract method must be implemented by subclasses to specify
+        how the weight matrix is constructed.
         """
         pass
 
     @abstractmethod
     def addLinearExpression(self):
         """
-        Abstract method to add the linear expression.
+        Define the linear expression.
+
+        This abstract method must be implemented by subclasses to specify
+        the linear part of the equation.
         """
         pass
 
     @abstractmethod
     def addNonlinearExpression(self):
         """
-        Abstract method to add the nonlinear expression.
+        Define the nonlinear expression.
+
+        This abstract method must be implemented by subclasses to specify
+        the nonlinear part of the equation.
         """
         pass
 
     def addBilinearExpression(self, *args):
+        """
+        Optionally define a bilinear expression.
+
+        Parameters
+        ----------
+        *args : tuple
+            Optional arguments required for the bilinear expression.
+        """
         pass

@@ -3,8 +3,42 @@ from dolfinx.fem import (
                         Expression,
                         )
 class Janafopenfoam:
+    """
+    Thermodynamic property evaluator using JANAF polynomials for OpenFOAM species.
+
+    This class provides methods to evaluate specific heat capacity, enthalpy, entropy,
+    and Gibbs free energy of chemical species based on JANAF polynomial coefficients.
+    It supports scalar and expression-based evaluations for compatibility with dolfinx.
+
+    **Initialize the Janafopenfoam object**
+
+    Parameters
+    ----------
+    P : int
+        Polynomial degree used in expression evaluation.
+
+    Attributes
+    ----------
+    P : int
+        Polynomial degree for expression evaluation.
+    R_univ : float
+        Universal gas constant [J/kmol·K].
+    Tstd : float
+        Standard reference temperature [K].
+    pref : float
+        Reference pressure [Pa].
+    """
 
     def __init__(self, P):
+        """    
+        Initialize the Janafopenfoam object.
+
+        Parameters
+        ----------
+        P : int
+            Polynomial degree used in expression evaluation.
+        """
+  
         # order of basis functions, needed for expression degree
         self.P = P
         # universal gas constant
@@ -15,9 +49,33 @@ class Janafopenfoam:
         self.pref = 1e5
 
     def janaf_cp(self, Specie, T):
-        # Specieific isobaric heat-capacity cp [J/kmol K]
-        # this is an implementation of the following OpenFOAM source-code:
-        # https://github.com/OpenFOAM/OpenFOAM-2.3.x/blob/master/src/thermophysicalModels/Specieie/thermo/janaf/janafThermoI.H
+        """
+        Compute specific isobaric heat capacity `cp` [J/kmol·K].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object containing JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        cp : float
+            Isobaric heat capacity [J/kmol·K].
+
+        Raises
+        ------
+        Exception
+            If temperature is out of the valid JANAF polynomial range.
+
+        Notes
+        ------
+        - This is an implementation of the following OpenFOAM source-code:
+        https://github.com/OpenFOAM/OpenFOAM-2.3.x/blob/master/src/thermophysicalModels/Specieie/thermo/janaf/janafThermoI.H .
+        
+        """
+
         if (T < Specie.Tlow) or (T > Specie.Thigh):
             raise Exception("Temperature not in temperature range for JANAF polynomial.")
 
@@ -30,10 +88,28 @@ class Janafopenfoam:
         return cp
 
     def janaf_cp_expr(self, Specie, T):
-        # Specieific isobaric heat-capacity cp [J/kmol K]
-        # computed by expression to be used on dolfin fields
-        # this is an implementation of the following OpenFOAM source-code:
-        # https://github.com/OpenFOAM/OpenFOAM-2.3.x/blob/master/src/thermophysicalModels/Specieie/thermo/janaf/janafThermoI.H
+        """
+        Generate an expression for specific isobaric heat capacity `cp` [J/kmol·K].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        cp : dolfinx.fem.Expression
+            Expression for `cp` [J/kmol·K].
+
+        Notes
+        ------
+        - Computed by expression to be used on dolfin fields.
+        - This is an implementation of the following OpenFOAM source-code:
+        https://github.com/OpenFOAM/OpenFOAM-2.3.x/blob/master/src/thermophysicalModels/Specieie/thermo/janaf/janafThermoI.H .
+
+        """
 
         # check where the high temperature coefficients are needed
         # returns 1 where T > Tcom, 0 elsewhere
@@ -51,14 +127,47 @@ class Janafopenfoam:
         return cp
 
     def janaf_hc(self, Specie):
-        # chemical enthalpy hc, also called enthalpy of formation [J/kmol]
+        """
+        Compute chemical enthalpy of formation `hc` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+
+        Returns
+        -------
+        hc : float
+            Enthalpy of formation [J/kmol].
+        """
+        
         hc = self.R_univ * (((((Specie.lowCpCoeffs[4]/5*self.Tstd + Specie.lowCpCoeffs[3]/4)*self.Tstd
                              + Specie.lowCpCoeffs[2]/3)*self.Tstd + Specie.lowCpCoeffs[1]/2)*self.Tstd
                              + Specie.lowCpCoeffs[0])*self.Tstd + Specie.lowCpCoeffs[5])
         return hc
 
     def janaf_ha(self, Specie, T):
-        # absolute enthalpy ha [J/kmol]
+        """
+        Compute absolute enthalpy `ha` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        ha : float
+            Absolute enthalpy [J/kmol].
+
+        Raises
+        ------
+        Exception
+            If temperature is out of the valid JANAF polynomial range.
+        """
+        
         if (T < Specie.Tlow) or (T > Specie.Thigh):
             raise Exception("Temperature not in temperature range for JANAF polynomial.")
 
@@ -71,8 +180,26 @@ class Janafopenfoam:
         return ha
 
     def janaf_ha_expr(self, Specie, T):
-        # absolute enthalpy ha [J/kmol]
-        # computed by expression to be used on dolfin fields
+        """
+        Generate an expression for absolute enthalpy `ha` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        ha : dolfinx.fem.Expression
+            Expression for `ha` [J/kmol].
+        
+        Notes
+        ------
+        - Computed by expression to be used on dolfin fields.
+        """
+        
         # check where the high temperature coefficients are needed
         # returns 1 where T > Tcom, 0 elsewhere
         highCoeff = Expression("T_ > Tcom", T_=T, Tcom=Specie.Tcommon, degree=self.P)
@@ -90,56 +217,211 @@ class Janafopenfoam:
         return ha
 
     def janaf_hs(self, Specie, T):
-        # sensible enthalpy hs [J/kmol]
+        """
+        Compute sensible enthalpy `hs` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        hs : float
+            Sensible enthalpy [J/kmol].
+
+        Raises
+        ------
+        Exception
+            If temperature is out of the valid JANAF polynomial range.
+        """
+
         if (T < Specie.Tlow) or (T > Specie.Thigh):
             raise Exception("Temperature not in temperature range for JANAF polynomial.")
         hs = self.janaf_ha(Specie, T) - self.janaf_hc(Specie)
         return hs
 
     def janaf_hs_expr(self, Specie, T):
-        # sensible enthalpy hs [J/kmol]
-        # computed by expression to be used on dolfin fields
+        """
+        Generate an expression for sensible enthalpy `hs` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        hs : dolfinx.fem.Expression
+            Expression for `hs` [J/kmol].
+
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
+        
         hs = Expression("ha - hc", ha=self.janaf_ha_expr(Specie, T), hc=self.janaf_hc(Specie), degree=self.P)
         return hs
 
     def janaf_Hc(self, Specie):
-        # chemical enthalpy Hc [J/kg]
+        """
+        Compute specific chemical enthalpy `Hc` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+
+        Returns
+        -------
+        Hc : float
+            Specific enthalpy of formation [J/kg].
+        """
+
         Hc = self.janaf_hc(Specie) / Specie.W
         return Hc
 
     def janaf_Ha(self, Specie, T):
-        # absolute enthalpy Ha [J/kg]
+        """
+        Compute specific absolute enthalpy `Ha` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        Ha : float
+            Specific absolute enthalpy [J/kg].
+        """
+
         Ha = self.janaf_ha(Specie, T) / Specie.W
         return Ha
 
     def janaf_Ha_expr(self, Specie, T):
-        # absolute enthalpy Ha [J/kg]
-        # computed by expression to be used on dolfin fields
+        """
+        Generate an expression for specific absolute enthalpy `Ha` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        Ha : dolfinx.fem.Expression
+            Expression for `Ha` [J/kg].
+        
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
+        
         Ha = Expression("ha / W", ha=self.janaf_ha_expr(Specie, T), W=Specie.W, degree=self.P)
         return Ha
 
     def janaf_Hs(self, Specie, T):
-        # sensible enthalpy Hs [J/kg]
+        """
+        Compute specific sensible enthalpy `Hs` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        Hs : float
+            Specific sensible enthalpy [J/kg].
+        """
+
         Hs = self.janaf_hs(Specie, T) / Specie.W
         return Hs
 
     def janaf_Hs_expr(self, Specie, T):
-        # sensible enthalpy Hs [J/kg]
+        """
+        Generate an expression for specific sensible enthalpy `Hs` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        Hs : dolfinx.fem.Expression
+            Expression for `Hs` [J/kg].
+
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
+
         # computed by expression to be used on dolfin fields
         Hs = Expression("hs / W", hs=self.janaf_hs_expr(Specie, T), W=Specie.W, degree=self.P)
         return Hs
 
     def janaf_s0(self, Specie):
-        # standard entropy s0 [J/kmol K]
-        # this is an implementation of the following OpenFOAM source-code:
-        # https://github.com/OpenFOAM/OpenFOAM-2.3.x/blob/master/src/thermophysicalModels/specie/thermo/janaf/janafThermoI.H
+        """
+        Compute standard entropy `s0` [J/kmol·K].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+
+        Returns
+        -------
+        s0 : float
+            Standard entropy [J/kmol·K].
+
+        Notes
+        -------
+        - This is an implementation of the following OpenFOAM source-code:
+        https://github.com/OpenFOAM/OpenFOAM-2.3.x/blob/master/src/thermophysicalModels/specie/thermo/janaf/janafThermoI.H .
+
+        """
+
         s0 = self.R_univ * ((((Specie.lowCpCoeffs[4]/4*self.Tstd + Specie.lowCpCoeffs[3]/3)*self.Tstd
                               + Specie.lowCpCoeffs[2]/2)*self.Tstd + Specie.lowCpCoeffs[1])*self.Tstd
                             + Specie.lowCpCoeffs[0]*np.log(self.Tstd) + Specie.lowCpCoeffs[6])
         return s0
 
     def janaf_s(self, Specie, T):
-        # entropy s [J/kmol K]
+        """
+        Compute entropy `s` [J/kmol·K].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        s : float
+            Entropy [J/kmol·K].
+
+        Raises
+        ------
+        Exception
+            If temperature is out of the valid JANAF polynomial range.
+        """
+
         if (T < Specie.Tlow) or (T > Specie.Thigh):
             raise Exception("Temperature not in temperature range for JANAF polynomial.")
 
@@ -154,8 +436,26 @@ class Janafopenfoam:
         return s
 
     def janaf_s_expr(self, Specie, T):
-        # entropy s [J/kmol K]
-        # computed by expression to be used on dolfin fields
+        """
+        Generate an expression for entropy `s` [J/kmol·K].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        s : dolfinx.fem.Expression
+            Expression for `s` [J/kmol·K].
+
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
+        
         # check where the high temperature coefficients are needed
         # returns 1 where T > Tcom, 0 elsewhere
         highCoeff = Expression("T_ > Tcom", T_=T, Tcom=Specie.Tcommon, degree=self.P)
@@ -173,24 +473,93 @@ class Janafopenfoam:
         return s
 
     def janaf_S0(self, Specie):
-        # standard Entropy S0 [J/kg K]
+        """
+        Compute standard entropy `S0` [J/kg·K].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+
+        Returns
+        -------
+        S0 : float
+            Standard entropy [J/kg·K].
+        """
+
         S0 = self.janaf_s0(Specie) / Specie.W
         return S0
 
     def janaf_S(self, Specie, T):
-        # Entropy S [J/kg K]
+        """
+        Compute entropy `S` [J/kg·K].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        S : float
+            Entropy [J/kg·K].
+        """
+
         S = self.janaf_s(Specie, T) / Specie.W
         return S
 
     def janaf_S_expr(self, Specie, T):
-        # standard Entropy S [J/kg K]
-        # computed by expression to be used on dolfin fields
+        """
+        Generate an expression for entropy `S` [J/kg·K].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        S : dolfinx.fem.Expression
+            Expression for `S` [J/kg·K].
+
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
+        
         S = Expression("s / W", s=self.janaf_s_expr(Specie, T), W=Specie.W, degree=self.P)
         return S
 
     def janaf_S_in_mix_expr(self, Specie, T, p, Y_spec, Wmix):
-        # Entropy S of one species in a mixture [J/kg K]
-        # computed by expression to be used on dolfin fields
+        """
+        Generate an expression for entropy `S` [J/kg·K] of a species in a mixture.
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+        p : dolfinx.fem.Function
+            Pressure field [Pa].
+        Y_spec : dolfinx.fem.Function
+            Mass fraction of the species.
+        Wmix : dolfinx.fem.Function
+            Mixture molecular weight.
+
+        Returns
+        -------
+        S_in_mix : dolfinx.fem.Expression
+            Entropy expression for the species in the mixture [J/kg·K].
+        
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
 
         # account for possible log(0) if Y_spec == 0 by thresholding
         thresh = 1e-6
@@ -203,45 +572,178 @@ class Janafopenfoam:
         return S_in_mix
 
     def janaf_g(self, Specie, T):
-        # gibbs free energy g [J/kmol]
+        """
+        Compute Gibbs free energy `g` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        g : float
+            Gibbs free energy [J/kmol].
+        """
+
         g = self.janaf_ha(Specie, T) - T * self.janaf_s(Specie, T)
         return g
 
     def janaf_gs(self, Specie, T):
-        # sensible gibbs free energy g [J/kmol]
+        """
+        Compute sensible Gibbs free energy `gs` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        gs : float
+            Sensible Gibbs free energy [J/kmol].
+        """
+
         gs = self.janaf_hs(Specie, T) - T * self.janaf_s(Specie, T)
         return gs
 
     def janaf_g_expr(self, Specie, T):
-        # gibbs free energy g [J/kmol]
-        # computed by expression to be used on dolfin fields
+        """
+        Generate an expression for Gibbs free energy `g` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        g : dolfinx.fem.Expression
+            Expression for `g` [J/kmol].
+
+         Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
+        
         g = Expression("ha - T_ * s", ha=self.janaf_ha_expr(Specie, T), T_=T, s=self.janaf_s_expr(Specie, T), degree=self.P)
         return g
 
     def janaf_gs_expr(self, Specie, T):
-        # sensible gibbs free energy g [J/kmol]
-        # computed by expression to be used on dolfin fields
+        """
+        Generate an expression for sensible Gibbs free energy `gs` [J/kmol].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        gs : dolfinx.fem.Expression
+            Expression for `gs` [J/kmol].
+
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
+        
         gs = Expression("hs - T_ * s", hs=self.janaf_hs_expr(Specie, T), T_=T, s=self.janaf_s_expr(Specie, T), degree=self.P)
         return gs
 
     def janaf_G(self, Specie, T):
-        # gibbs free energy G [J/kg]
+        """
+        Compute Gibbs free energy `G` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        G : float
+            Gibbs free energy [J/kg].
+        """
+
         G = self.janaf_g(Specie, T) / Specie.W
         return G
 
     def janaf_Gs(self, Specie, T):
-        # sensible gibbs free energy G [J/kg]
+        """
+        Compute sensible Gibbs free energy `Gs` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : float
+            Temperature [K].
+
+        Returns
+        -------
+        Gs : float
+            Sensible Gibbs free energy [J/kg].
+        """
+
         Gs = self.janaf_gs(Specie, T) / Specie.W
         return Gs
 
     def janaf_G_expr(self, Specie, T):
-        # gibbs free energy G [J/kg]
+        """
+        Generate an expression for Gibbs free energy `G` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        G : dolfinx.fem.Expression
+            Expression for `G` [J/kg].
+
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
+
         # computed by expression to be used on dolfin fields
         G = Expression("g / W", gs=self.janaf_g_expr(Specie, T), W=Specie.W, degree=self.P)
         return G
 
     def janaf_Gs_expr(self, Specie, T):
-        # sensible gibbs free energy G [J/kg]
+        """
+        Generate an expression for sensible Gibbs free energy `Gs` [J/kg].
+
+        Parameters
+        ----------
+        Specie : object
+            Species object with JANAF coefficients.
+        T : dolfinx.fem.Function
+            Temperature field.
+
+        Returns
+        -------
+        Gs : dolfinx.fem.Expression
+            Expression for `Gs` [J/kg].
+
+        Notes
+        -------
+        - Computed by expression to be used on dolfin fields.
+        """
         # computed by expression to be used on dolfin fields
         Gs = Expression("gs / W", gs=self.janaf_gs_expr(Specie, T), W=Specie.W, degree=self.P)
         return Gs

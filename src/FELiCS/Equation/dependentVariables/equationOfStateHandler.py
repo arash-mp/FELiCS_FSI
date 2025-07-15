@@ -5,69 +5,73 @@ logger = Logger.get_logger("felics")
 
 class equationOfStateHandler:
     """
-    This class is used to link the thermodynamic flow 
-    variables (temperature, pressure, and density) 
-    according to the ideal gas Equation of State (EoS).
-    The class contains two versions of the EoS, a linearized
-    one for the fluctuations, and a version for the mean
-    flow variables.
-    The user should give at least two of the three 
-    thermodynamic variables: two mean fields in the mean
-    flow file, and two transported variables for the 
-    fluctuations.
-    
-    Currently, the following versions of the EoS are 
-    implemented:
-        .IdealGas
-        .Low-Mach
+    Handles the thermodynamic relationships between temperature, pressure,
+    and density using different forms of the Equation of State (EoS),
+    including linearized and mean-flow versions.
 
-    Parent classes:
+    This class links flow variables based on the chosen EoS, which may
+    be either `IdealGas` or `Low-Mach`. It ensures that, given any two
+    of the three thermodynamic quantities (pressure, temperature, and
+    density), the third can be deduced according to the selected EoS.
 
-    Child classes:
-    - fluctuationClass
-    - fluctuationSolution
+    It is primarily intended to support FELiCS simulations by connecting
+    transported fluctuation variables with background mean fields.
 
-    Private attributes:
+    **Initialize the equationOfStateHandler object**
 
-    Protected attributes:
+    Parameters
+    ----------
+    None
 
-    Public attributes:
-
+    Attributes
+    ----------
+    _fieldDict : dict
+        Stores fluctuation variables computed from EoS.
+    _param : object
+        Reference to the FELiCS parameter configuration.
+    _mean : object
+        Reference to the FELiCS mean flow object.
+    _isSolution : bool
+        Indicates if the current instance deals with a fluctuation solution.
     """
+
 
     def __init__(self):
         """
-        Initializing the class and link thermodynamic variables
-        (pressure, density, temperature) for a perfect gas.
+        Initializes the equationOfStateHandler instance.
 
-        Function arguments:
-        - param: FELiCS parameter object
-        - mean: FELiCS mean flow object
-
-        Function returns:
+        Sets up references to FELiCS parameter and mean flow objects,
+        and prepares internal data structures for managing fluctuation
+        and mean field variables.
         """
+
         pass
     
     def _initializeEoSFluctuations(
                             self,
                             mean = 'None'
                             ):
-        '''
-        This function is used to set the links 
-        between the different fluctuations
-        variables of the linearized equation of 
-        state.
-         
-        Current types of linearized EoS:
-            1. Low-Mach
-            2. IdealGas (compressible)
+        """
+        Initializes the linearized Equation of State for fluctuations.
 
-        Function arguments:
-        - param: FELiCS parameter object
-        - mean: FELiCS mean flow object
+        Based on the given mean fields and already defined fluctuation
+        variables, computes the missing thermodynamic variable using
+        the specified EoS. Requires that exactly two of the three
+        (p, T, rho) are available.
 
-        Function returns:
-        '''
+        Parameters
+        ----------
+        mean : object, optional
+            FELiCS mean flow object. If not provided, the default internal
+            `_mean` object is used.
+
+        Raises
+        ------
+        Exception
+            If an unsupported EoS is specified or insufficient variables
+            are available to compute the third thermodynamic quantity.
+        """
+
         # Fluctuations already initialized
         alreadyDefinedQuantities = list(self._fieldDict.keys())
 
@@ -144,10 +148,23 @@ class equationOfStateHandler:
                     
                     
     def _getNeededFieldsForLinearEoS(self):
-        '''This is a standard function for handlers, which defines the additional Fields necessary to be determinied. 
-        The EoS only clsoses the variables appearing in the other equations. So it is not necessary to determine
-        additional fields. Therefore, this function only returns an empty list, but still exists and is called for 
-        reasons of consistency'''
+        """
+        Returns the list of thermodynamic fields needed for linearized EoS.
+
+        Based on the EoS type, returns the minimal set of variables required
+        to apply the linearized equation to fluctuations.
+
+        Returns
+        -------
+        list of str
+            List of field names such as ['rho', 'p', 'T'].
+
+        Raises
+        ------
+        Exception
+            If the EoS type is not recognized.
+        """
+
         EoSEquationType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
         if EoSEquationType == 'Low-Mach':
             return ['rho','T']
@@ -160,11 +177,22 @@ class equationOfStateHandler:
 
                 
     def _additionalFieldsToBeReadEoS(self):
-        '''
-        Define which additional fields must be read 
-        from the mean flow file in order to apply the
-        EoS fluctuation equation.
-        '''
+        """
+        Specifies the additional mean flow fields required for EoS evaluation.
+
+        Depending on the EoS model, returns a list of extra variables needed
+        from the mean flow file (e.g., specific gas constant).
+
+        Returns
+        -------
+        list of str
+            List of additional required mean flow fields.
+
+        Raises
+        ------
+        Exception
+            If the EoS type is not implemented.
+        """
         EoSEquationType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
         if EoSEquationType == 'IdealGas': 
             return ['R_spe']

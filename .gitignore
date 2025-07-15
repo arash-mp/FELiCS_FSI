@@ -13,3 +13,4 @@ public
 *env
 *.egg-info
 logs
+.github
