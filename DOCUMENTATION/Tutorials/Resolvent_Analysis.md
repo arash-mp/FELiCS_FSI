@@ -39,8 +39,6 @@ First check in your readable .msh file the boundary ids.
 For instance in this file: 
 ```bash
 $MeshFormat
-2.2 0 8
-$EndMeshFormat
 $PhysicalNames
 5
 1 2 "centerline"
@@ -126,22 +124,20 @@ We postprocess the outputed files using the python script [PlotMode.py](../../TU
 
 Modify the defined path to your folder and run the script. 
 
-The resolvent gains are plotted against the Strouhal number $St = \omega/2\pi$ in Figure 2.
-![Figure2](../../TUTORIALS/resolvent_tutorial/gains.png)
+The resolvent gains are plotted against the Strouhal number $St = \omega/2\pi$ in [Figure 2](#Resolvent_gains).
+![Figure2](../../TUTORIALS/resolvent_tutorial/gains.png) <a id="fig:Resolvent_gains"></a>
 Figure 2. Resolvent gains
 Note that in this case, only the leading and subleading resolvent modes were computed.
 
 The script also include functions to read the mesh, load and plot the mode in matplotlib. 
-The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are:
-![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png)
+The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are plotted in [Figure3](#Forcingdomain) and [Figure4](#Responsedomain):
+![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
 Figure 3. Forcing mode shape
-![Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/ResponseMode_dark.png)
+![Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/ResponseMode_dark.png) <a id="fig:Responsedomain"></a>
 Figure 4. Response mode shape
 The $u_\theta$ fluctuation is 0 in this case because we study axisymmetric perturbations ($m=0$).
 
 >**Warning:** The gains provided by FELiCS are $\sigma^2$. The forcing modes have a unitary norm on the defined forcing domain, but the response modes have the norm $\sigma$ on the defined response domain.
 
 ## References
-<a id="1">[1]</a> 
-
-Villié, A., Schmitter, S., von Saldern, J. G., Demange, S., & Oberleithner, K. . “Physics-informed neural networks for enhancing medical flow magnetic resonance imaging: Artifact correction and mean pressure and Reynolds stresses assimilation”. In: JPhysics of Fluids 37(2) (Jan. 2025). issn: 1089-7666. doi: 10.1063/5.0252852. url: https://pubs.aip.org/aip/pof/article-abstract/37/2/025194/3336391/Physics-informed-neural-networks-for-enhancing?redirectedFrom=fulltext.
+<a id="1">[1]</a> Villié, A., Schmitter, S., von Saldern, J. G., Demange, S., & Oberleithner, K. . “Physics-informed neural networks for enhancing medical flow magnetic resonance imaging: Artifact correction and mean pressure and Reynolds stresses assimilation”. In: JPhysics of Fluids 37(2) (Jan. 2025). issn: 1089-7666. doi: 10.1063/5.0252852. url: https://pubs.aip.org/aip/pof/article-abstract/37/2/025194/3336391/Physics-informed-neural-networks-for-enhancing?redirectedFrom=fulltext.
