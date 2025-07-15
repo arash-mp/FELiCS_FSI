@@ -108,7 +108,7 @@ Run the analysis with the command:
 ```bash
 FELiCS -f resolvent_setting.json
 ```
-With the provided mesh, it should take about one minute to compute the two resolvent modes for each frequency (~25 minutes).
+With the provided mesh, it should take about two minute to compute the two resolvent modes for each frequency (~25 minutes).
 ## Postprocessing
 After the computation, check the `output_dir/`. You should find these files: 
 ```bash

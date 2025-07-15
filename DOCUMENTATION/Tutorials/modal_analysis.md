@@ -2,6 +2,7 @@
 ## Goals of the tutorial
 In this tutorial, we will do an eigenvalue decomposition of the base flow obtained in the tutorial of [cylinder wake](./cylinder_wake.md). By the end of this tutorial, you will be able to:
 
+- Define the boundary conditions.
 - Run a modal analysis case.
 - Postprocess modal analysis results with paraview.
 ## Requirements
@@ -11,18 +12,56 @@ Before you begin this tutorial make sure to
 
 ## Modal analysis settings
 ### Boundary conditions
-We define the boundary conditions (BCs) for the modal analysis in [```bc_Modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json). The file structure is detailed in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
-The boundary conditions for the perturbations are: 
+The boundary conditions for the fluctuations are:
 
-| Boundary | $u'_x$     | $u'_y$      | $p'$       |
-|:----------|:-----------|:-----------|:-----------|
-| <code style="color : Darkorange">Inlet</code>    | Dirichlet | Dirichlet | Dirichlet   |
-| <code style="color : Darkorange">Symmetry</code> | Dirichlet   | Neumann | Dirichlet   |
-| <code style="color : Darkorange">Outlet</code>   | Dirichlet   | Dirichlet   | Dirichlet |
-| <code style="color : Darkorange">Top</code>      | Dirichlet   | Dirichlet | Dirichlet   |
-| <code style="color : Darkorange">Wall</code>     | Dirichlet | Dirichlet | Neumann   |
+| Boundary | ID | $u'_x$     | $u'_y$      | $p'$       |
+|:----------|:--:|:-----------|:-----------|:-----------|
+| <code style="color : Darkorange">Inlet</code>    | 1 | Dirichlet | Dirichlet | Dirichlet   |
+| <code style="color : Darkorange">Symmetry</code> | 2 | Dirichlet   | Neumann | Dirichlet   |
+| <code style="color : Darkorange">Outlet</code>   | 3 | Dirichlet   | Dirichlet   | Dirichlet |
+| <code style="color : Darkorange">Top</code>      | 4 | Dirichlet   | Dirichlet | Dirichlet   |
+| <code style="color : Darkorange">Wall</code>     | 5 | Dirichlet | Dirichlet | Neumann   |
 
-**Note:** The BCs for the base flow in [base flow tutorial](./cylinder_wake.md) and for modal analysis are different. 
+**Note:** The BCs for the base flow variables ($\bar{u}_x, \bar{u}_y, \bar{p}$) in [base flow tutorial](./cylinder_wake.md) and for the perturbations ($u_x', u_y', p'$) current modal analysis are different.
+
+These bounadry conditions are implemented in [```bc_Modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) using different names.
+When all boundary conditions are set to Dirichlet with a value 0 (always the case for fluctuations), we set: 
+```json
+    "1": {
+        "name": "zeroDirichlet"
+    },
+``` 
+We impose this for ```Inlet, Outlet, Top```.
+To impose a symmetric boundary condition we specify the BC for every variable:
+```json
+    "2":{
+        "name": "symmetry",
+        "specifics": [
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "ux"
+        },
+        {
+            "type": "Neumann",
+            "value": 0.0,
+            "variable": "uy"
+        },
+        {
+            "type": "Dirichlet",
+            "value": 0.0,
+            "variable": "p"
+        }
+        ]
+    },
+```
+The wall BC is imposed with: 
+```json
+    "5":{
+        "name": "wall"
+    }
+``` 
+The complete structure of this file is detailed in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
 ### Settings
 The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The complete architecture of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md). 
@@ -42,8 +81,8 @@ The BCs path as:
 ```
 Lastly, we initialize the solver using the eigenvalue guess, and the number of eigenvalues we want to compute:
 ```json
-"EigenValueGuess": ["0.7"], 
-"nSolut": 100
+{"EigenValueGuess": ["0.7"], }
+{"nSolut": 100}
 ```
 ## Running the analysis
 You can run the modal analysis via 

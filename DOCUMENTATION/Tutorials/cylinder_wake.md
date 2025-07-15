@@ -1,6 +1,6 @@
 # Tutorial 1: Solve the base flow
 ## Goals of the tutorial
-In this first tutorial, an introduction to setting up a FELiCS case will be given via solving for the base flow around a cylinder for a Reynolds number, $\mathrm{Re} = 50$. By the end of this tutorial, you will be able to:
+In this first tutorial, an introduction to setting up a FELiCS case. By the end of this tutorial, you will be able to:
 
 - Define a case in FELiCS.
 - Create a case folder with a mesh and base flow files.
@@ -11,32 +11,29 @@ In this first tutorial, an introduction to setting up a FELiCS case will be give
 
 * Choose a branch of the FELiCS that contains the base flow solver.
 
-## Case setup.
-
-In general it is recommended to create a folder for every case, where the source code, input and output files will be located. Here, the case folder can be found in ```felics2.0/TUTORIALS/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
+## Case Definition
+We want to study the linear stability of a 2D base flow around a cylinder at Reynolds number, $\mathrm{Re} = 50$.
+In general it is recommended to create a folder for every case, where the input and output files will be located. Here, the case folder can be found in ```felics2.0/TUTORIALS/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
 ```sh
 cp -r felics2.0/TUTORIALS/cylinder_wake_tutorial workDir/
-
 cd workDir/cylinder_wake_tutorial/ 
 ```
 
 ## Mesh generation
 
-Since the code is using the Finite Element Continuous Galerkin approach, a computational grid needs to be created. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file,[cylinder_wake.msh](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format.
+Since the code uses the Finite Element Continuous Galerkin approach, a computational grid needs to be created. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file [cylinder_wake.msh](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format.
 
 ```sh
 python cylinder_wake_mesh.py
 ```
-After generating the mesh it will look like:
+Open the mesh in GMSH. It should look like:
 
 ![Image1](../../TUTORIALS/cylinder_wake_tutorial/CylinderWakeMesh.png) <a id="fig:Mesh"></a>
-Figure 1. Mesh.
-
-
-Upon magnifying in the vicinity of the cylinder it looks like
+Figure 1. 2D Mesh.
 
 ![Image2](../../TUTORIALS/cylinder_wake_tutorial/magCylinderWake.png) <a id="fig:MagMesh"></a>
 Figure 2. Magnified version of [Figure 1](#fig:Mesh)
+
 **Note:** For 2D computations, only triangular elements can be handeled. 
 The file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) includes the domains:
 ```sh
@@ -69,7 +66,7 @@ In the file ```Re50.json``` we set the molecular viscostiy, $\nu = 0.02$:
 based on the Reynolds number $\mathrm{Re} = 50$, the cylinder diameter $d = 1$ and the bulk velocity $U_\infty = 1$.
 We only solve the continuity and the momentum equation. Therefore we set everything to <code style="color : Darkorange">None</code> in the <code style="color : Cyan">"SetofEquations"</code>, except for <code style="color : Cyan">"Momentum"</code> and <code style="color : Cyan">"Mass"</code>. 
 
-Additionally we import the boundary conditions from the [```bc.json```](./../../TUTORIALS/cylinder_wake_tutorial/bc.json) file. Overall the boundary conditions can be formulated as : 
+Additionally we import the boundary conditions from [```bc.json```](./../../TUTORIALS/cylinder_wake_tutorial/bc.json). They are summarized in the following tab: 
 
 | Boundary | $u_x$     | $u_y$      | $p$       |
 |:----------|:-----------|:-----------|:-----------|
@@ -79,18 +76,11 @@ Additionally we import the boundary conditions from the [```bc.json```](./../../
 | <code style="color : Darkorange">Top</code>      | Neumann   | Dirichlet | Neumann   |
 | <code style="color : Darkorange">Wall</code>     | Dirichlet | Dirichlet | Neumann   |
 
-
-Finally, the mean-flow field is imported via
-```json
-"MeanFlowFilePath": "meanflow.fel"
-```
-
-Lastly, we obtain the base flow via solving the python script [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) as
-
+We obtain the base flow via running the python script [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py):
 ```sh
 python solveBaseFlow.py
 ```
-Upon executing the file [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) in python, the following files will be added to the working directory
+After executing [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py), these files are be added to the working directory
 ```bash
 .
 └── logs
@@ -107,7 +97,7 @@ Upon executing the file [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake
 └ ...
 ```
 
-The file ```base_flow.xdmf```, which in paraview can be visualised as 
+The file ```base_flow.xdmf``` can be opened in Paraview to visualize the base flow: 
 
 ![Image3](../../TUTORIALS/cylinder_wake_tutorial/BaseFlow.png)
 Figure 3. Magnitude of the flow-field. 
