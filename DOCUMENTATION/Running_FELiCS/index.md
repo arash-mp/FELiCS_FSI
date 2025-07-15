@@ -25,7 +25,7 @@ flowchart LR
         B2[.fel file<br><a href="./fel_file.html">see details</a>]
         B3[.msh file<br><a href="../Tutorials/cylinder_wake.html">see Tutorial 1</a>]
         B4[boundaries.json<br><a href="./FELiCS_settings.html">see details</a><br><a href="../Tutorials/modal_analysis.html">see Tutorial 2</a>]
-        B5[mixture.json<br>only for reacting flows]
+        B5[mixture.json<br><a href="./FELiCS_settings.html">see details</a>]
 
         style PrepFiles fill:#f1faee,stroke:#457b9d,stroke-width:2px
         style B1 fill:#ffafcc,stroke:#333,stroke-width:1px

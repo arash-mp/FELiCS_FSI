@@ -1,4 +1,4 @@
-# Setting files
+# Configuration files
 The input parameters are loaded from the three following **.json** files:
 - `settings.json`: contains most of the information about the FELiCS run.
 - `boundaries.json`: contains specific information about the boundary conditions.
