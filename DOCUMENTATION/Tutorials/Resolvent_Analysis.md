@@ -20,7 +20,7 @@ Feel free to play with the `CellsFineness` factor to see the influence of finer 
 **Warning:** For 2D computations, FELiCS handles only triangular elements only.
 
 Open the .geo file with GMSH an click on "Mesh" and "2D". You should obtain this mesh:
-![Figure1](../../TUTORIALS/resolvent_tutorial/Meshimage.png)
+![Figure1](../../TUTORIALS/resolvent_tutorial/GMSH.png)
 Figure 1. Stenosis mesh
 Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FeliCS_mesh.msh` file in your case folder. 
 
