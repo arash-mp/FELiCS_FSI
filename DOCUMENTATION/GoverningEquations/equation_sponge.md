@@ -28,7 +28,7 @@ Assumptions:
 ## Nonlinear equations
 When sponge is activated, the following term is added to the left hand side of the equation regarding to the state variable.
 $$
-- \sigma (\phi -\phi_{target})
+-\sigma (\phi -\phi_{target})
 $$
 
 ### Weak form
