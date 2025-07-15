@@ -18,7 +18,7 @@ class FELiCSMesh:
     '''
     This class is a wrapper to the fenics mesh class
     '''
-    def __init__(self, coordinateSystem, meshFileName=None, gdim = None, m=0, inputMesh=None):
+    def __init__(self, coordinateSystemName, meshFileName=None, gdim = None, m=0, inputMesh=None):
         if inputMesh is None:
             # Initialize gmsh and suppress its output
             gmsh.initialize()
@@ -58,15 +58,15 @@ class FELiCSMesh:
             self._cpp_object = self.dolfinxMesh._cpp_object
         x = SpatialCoordinate(self.dolfinxMesh)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
-        self.coordinateSystemName = coordinateSystem
-        if coordinateSystem =='Cartesian':
+        self.coordinateSystemName = coordinateSystemName
+        if coordinateSystemName =='Cartesian':
             self.__coordinateSystem = CoordinateSystem(
                                     x, 
-                                    coordinateSystem.lower(), 
+                                    coordinateSystemName.lower(), 
                                     m = m,
                                     mesh_dims = (1, 1, 0),
                                     )
-        elif coordinateSystem =='Cylindrical':
+        elif coordinateSystemName =='Cylindrical':
             self.__coordinateSystem = CoordinateSystem(
                                     x,
                                     "cylindricalfelics", 
