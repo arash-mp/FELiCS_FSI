@@ -23,7 +23,7 @@ cd workDir/cylinder_wake_tutorial/
 ## Mesh generation
 
 Since the code is using the Finite Element Continuous Galerkin
-approach, a computational grid needs to be created, which spatially discretizes the domain. For 2D computations like the one in this tutorial, the code uses triangular elements only. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file,[```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format. The documentation for using the ```python-gmsh``` package can be found [here](./gmsh.md). 
+approach, a computational grid needs to be created, which spatially discretizes the domain. For 2D computations like the one in this tutorial, the code uses triangular elements only. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [cylinder_wake_mesh.py](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file,[cylinder_wake.msh](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format.
 
 ```sh
 python cylinder_wake_mesh.py

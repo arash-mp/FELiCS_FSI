@@ -13,7 +13,7 @@ In this tutorial, we will perform incompressible resolvent analysis about the 2D
 
 ### Mesh generation
 We generate the 2D mesh on GMSH. 
-To do so, we write a **.geo** file readable by GMSH using the python script [geoMesh.py](../../TUTORIALS/resolvent_tutorial/geoMesh.py).
+To do so, we write a **.geo** file readable by GMSH using the python script [```geoMesh.py```](../../TUTORIALS/resolvent_tutorial/geoMesh.py).
 
 Feel free to play with the `CellsFineness` factor to see the influence of finer meshes.
 
@@ -26,15 +26,17 @@ Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`.
 
 ### Base Flow
 Our base flow is obtained by time-azimuthal-averaging the snapshots of a 3D LES. This could be a RANS solution, experimental data, or any other relevant flow field.
-Run the python script [meanFlow.py](../../TUTORIALS/resolvent_tutorial/meanFlow.py) to load the mean flow data and write a **.fel** file. 
+Run the python script [```meanFlow.py```](../../TUTORIALS/resolvent_tutorial/meanFlow.py) to load the mean flow data and write a **.fel** file. 
 Change the `fold_path` to your data folder and run the script.
 This script also allows to define response and forcing domains, a sponge function and an eddy viscosity field.
 In our case, the response and forcing domains are the same, but we could restrict it to different regions. The sponge function is used to dampen the fluctuations near the inlet/outlet.
 
-Place the `meanFlow.fel` file in your case folder. 
+Place the ```meanFlow.fel``` file in your case folder. 
+
+## Resolvent parameters
 
 ### Boundary conditions
-Here we set the axisymmetric boundary conditions in the [boundaries.json](../../TUTORIALS/resolvent_tutorial/boundaries.json) file.
+Here we set the axisymmetric boundary conditions in the [```boundaries.json```](../../TUTORIALS/resolvent_tutorial/boundaries.json) file.
 First check in your readable .msh file the boundary ids.
 For instance in this file: 
 ```bash
@@ -57,9 +59,9 @@ In our case, we set:
 | <code style="color : Darkorange">Outlet</code> | Dirichlet | Dirichlet | Dirichlet | Dirichlet |
 | <code style="color : Darkorange">Wall</code> | Dirichlet | Dirichlet | Dirichlet | Neumann |
 
-## Resolvent parameters
+### Settings
 The setting file contains all the analysis information. It should be placed in our 
-An example of setting file is [resolvent_setting.json](../../TUTORIALS/resolvent_tutorial/resolvent_setting.json). The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+An example of setting file is [```resolvent_setting.json```](../../TUTORIALS/resolvent_tutorial/resolvent_setting.json). The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
 The azimuthal wavenumber is chosen:
 ```json
@@ -101,7 +103,7 @@ Your case folder should look like:
 ├ mixture.json
 └── output_dir
 ```
-Run the analysis with the command: 
+Run the analysis with the command:
 ```bash
 FELiCS -f resolvent_setting.json
 ```
