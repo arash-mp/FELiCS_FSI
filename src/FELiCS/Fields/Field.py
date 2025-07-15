@@ -96,10 +96,10 @@ class Field:
             space, mapping            = self.space.sub(i).collapse()
             field                     = Field(space, self.mesh)
             field.function.x.array[:] = self.function.x.array[mapping]
-            if len(self.name) == numberOfSubSpaces:  
-                field.name = [self.name[i]]
-            elif len(self.name)==1 and len(self.name[0]) == numberOfSubSpaces:
-                field.name = [(self.name[0][0] + self.name[0][1][i], [])]
+            # if len(self.name) == numberOfSubSpaces:  
+            #     field.name = [self.name[i]]
+            # elif len(self.name)==1 and len(self.name[0]) == numberOfSubSpaces:
+                # field.name = [(self.name[0][0] + self.name[0][1][i], [])]
             listOfFields.append(field)
 
         return listOfFields
