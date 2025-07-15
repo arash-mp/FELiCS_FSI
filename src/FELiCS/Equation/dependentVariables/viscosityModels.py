@@ -2,15 +2,23 @@ import numpy as np
 
 def SutherlandFluctuationMean(mean, rho, Ts):
     """
-    Calculate the fluctuation viscosity and fluctuation factor using the Sutherland model.
+    Calculate fluctuation viscosity and fluctuation factor using the Sutherland model.
 
-    Parameters:
-    mean (object): The mean temperature, density, and laminar viscosity.
-    rho (float): The density.
-    Ts (float): The fluctuation temperature.
+    Parameters
+    ----------
+    mean : object
+        Object containing mean temperature, density, and laminar viscosity (attributes: T, rho, nulam or fieldDict).
+    rho : float
+        Density value for the fluctuation calculation.
+    Ts : float
+        Fluctuation temperature.
 
-    Returns:
-    tuple: A tuple containing the fluctuation viscosity and fluctuation factor.
+    Returns
+    -------
+    nulam : float
+        Fluctuation viscosity computed from the Sutherland model.
+    fluct : float
+        Fluctuation factor for the viscosity.
     """
 
     if False:
