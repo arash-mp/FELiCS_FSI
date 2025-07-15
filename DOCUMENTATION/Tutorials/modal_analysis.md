@@ -70,7 +70,7 @@ python PlotScatter.py
 ```
 
 ![](./../../TUTORIALS/modal_analysis_tutorial/eigenspectrum.png) <a id="fig:EigSpec"></a>
-Figure 1. The plot of the eigenspectrum
+Figure 1. Eigenspectrum
 
 In [Figure 1](#EigSpec), we see an eigenvalue with a positive real part. Therefore, using paraview we visualise the corresponding real eigenmodes encrypted in the file ```ModalSolution_Omega_Direct_(0.745+0.013j).xmf```. 
 

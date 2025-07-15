@@ -5,12 +5,12 @@ import numpy as np
 import h5py
 
 # Set the base path for data files
-fold_path = '/home/avillie/repository/LESbis'
+fold_path = '/my/path/to/case'
 
 # File paths configuration
 case = {
-    'DATA_FILE': '/dynamics_bloodflow/utils/UMean.npy',  # Mean velocity data from LES data
-    'MESH_FILE': '/dynamics_bloodflow/utils/Mesh.npy',   # Mesh coordinates
+    'DATA_FILE': '/UMean.npy',  # Mean velocity data from LES data
+    'MESH_FILE': '/Mesh.npy',   # Mesh coordinates
     'SAVE_FILE': '/meanFlow.fel',           # Output file for FELiCS
 }
 
