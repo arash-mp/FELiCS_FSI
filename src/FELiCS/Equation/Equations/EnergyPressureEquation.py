@@ -112,6 +112,7 @@ class EnergyPressureEquation(EquationTemplate):
         mean : Function
             The mean function representing the average state.
         """
+        
         J_hat   = self.J_hat
         X       = self.X
         fluc    = self.fluc

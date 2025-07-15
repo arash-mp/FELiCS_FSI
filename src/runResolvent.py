@@ -12,7 +12,7 @@ def runResolvent(param):
     '''
 
     from    FELiCS.IO.ExportSolution            import ExportFromFile 
-    import  FELiCS.SpaceDisc.DefineFEMSpaces    as DefineFEMSpaces
+    from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Fields.fluctuationClass      import fluctuationSolutions
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
@@ -28,7 +28,7 @@ def runResolvent(param):
     mesh = param.getMesh()
     
     # Define the FEM spaces
-    FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
+    FEMSpaces = FEMSpaces(
             param,
             mesh,
         )

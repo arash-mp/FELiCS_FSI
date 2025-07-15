@@ -1,12 +1,55 @@
 class reactionClass:
-    def __init__(
-            self,
-            educts, 
-            products,
-            reactionMechanism, 
-            fluc, 
-            mean,
-            ):
+    """
+    Represents a chemical reaction with educts, products, and mechanism.
+
+    This class manages the definition, discretization, and evaluation of a chemical reaction, including educt and product species, and provides access to reaction rates and equations.
+
+    **Initialize the reactionClass object**
+
+    Parameters
+    ----------
+    educts : list or str
+        List of educt species.
+    products : list or str
+        List of product species.
+    reactionMechanism : str
+        Name of the reaction mechanism.
+    fluc : object
+        Fluctuation field (optional).
+    mean : object
+        Mean field (optional).
+
+    Attributes
+    ----------
+    __educts : list or str
+        Educt species.
+    __products : list or str
+        Product species.
+    __isDiscretized : bool
+        Flag indicating if the reaction is discretized.
+    __name : str
+        Reaction equation string.
+    __rr : object
+        Reaction rate (if discretized).
+    """
+
+    def __init__(self, educts, products, reactionMechanism, fluc, mean):
+        """
+        Initializes the reactionClass instance.
+
+        Parameters
+        ----------
+        educts : list or str
+            List of educt species.
+        products : list or str
+            List of product species.
+        reactionMechanism : str
+            Name of the reaction mechanism.
+        fluc : object
+            Fluctuation field (optional).
+        mean : object
+            Mean field (optional).
+        """
         educts_name = ''
         self.__educts = educts
         self.__products = products
@@ -22,20 +65,44 @@ class reactionClass:
         if not (fluc == None or mean == None):
             self.discretizeReaction()
 
-    def consumption(
-            self, 
-            specie
-            ):
+    def consumption(self, specie):
+        """
+        Returns the reaction rate for a consumed educt species.
+
+        Parameters
+        ----------
+        specie : str
+            Name of the educt species.
+
+        Returns
+        -------
+        rr : object
+            Reaction rate for the educt.
+
+        Raises
+        ------
+        Prints error if the species is not an educt.
+        """
         if specie in educts:
             return self.__rr
         else: 
             printError('Specie ' + specie + ' not a educt of reaction ' + self.__name + '.')
 
-    def discretizeReaction(
-            self,
-            mean,
-            fluc,
-            ):
+    def discretizeReaction(self, mean, fluc):
+        """
+        Discretizes the reaction using the provided mean and fluctuation fields.
+
+        Parameters
+        ----------
+        mean : object
+            Mean field.
+        fluc : object
+            Fluctuation field.
+
+        Notes
+        -----
+        Sets the reaction rate according to the specified mechanism.
+        """
         self.__isDisretized == True
         if reactionMechanism in ['EBU_CnF_Kaiser2023']:
             self.__rr = mean.RR_prefactor * mean.rho * (fluc.Y('progress') - 2 * fluc.Y('progress') * mean.Y('progress'))\
@@ -48,12 +115,35 @@ class reactionClass:
 
     @property
     def educts(self):
+        """
+        Returns the educt species.
+
+        Returns
+        -------
+        educts : list or str
+            Educt species.
+        """
         return self.__educts
 
-    def production(
-            self, 
-            specie,
-            ):
+    def production(self, specie):
+        """
+        Returns the reaction rate for a produced product species.
+
+        Parameters
+        ----------
+        specie : str
+            Name of the product species.
+
+        Returns
+        -------
+        rr : object
+            Reaction rate for the product.
+
+        Raises
+        ------
+        Prints error if the species is not a product.
+        """
+        # NOTE / TODO (LUKAS) the following code will not work, products is not defined
         if specie in products:
             return self.__rr
         else: 
@@ -61,24 +151,85 @@ class reactionClass:
 
     @property
     def products(self):
+        """
+        Returns the product species.
+
+        Returns
+        -------
+        products : list or str
+            Product species.
+        """
         return self.__products
 
     @property
     def reactionEquation(self):
+        """
+        Returns the reaction equation string.
+
+        Returns
+        -------
+        equation : str
+            Reaction equation.
+        """
         return self.__name
 
     @property
     def rr(self):
+        """
+        Returns the reaction rate.
+
+        Returns
+        -------
+        rr : object
+            Reaction rate.
+        """
         return self.__rr
 
 
 class reactionMechanismClass:
-    def __init__(
-            self,
-            reactionMechanism, 
-            fluc = None, 
-            mean = None,
-            ):
+    """
+    Represents a collection of chemical reactions for a given mechanism.
+
+    This class manages a list of reactions, species, and additional mean field quantities for a specified reaction mechanism.
+
+    **Initialize the reactionMechanismClass object**
+
+    Parameters
+    ----------
+    reactionMechanism : str
+        Name of the reaction mechanism.
+    fluc : object, optional
+        Fluctuation field.
+    mean : object, optional
+        Mean field.
+
+    Attributes
+    ----------
+    __numberOfSpecies : int
+        Number of species in the mechanism.
+    __numberOfReactions : int
+        Number of reactions in the mechanism.
+    __reactionList : list
+        List of reactionClass instances.
+    __additionalMeanFieldQuantities : list
+        List of additional mean field quantities.
+    __reactionMechanism : str
+        Name of the reaction mechanism.
+    """
+
+    def __init__(self, reactionMechanism, fluc=None, mean=None):
+        """
+        Initializes the reactionMechanismClass instance.
+
+        Parameters
+        ----------
+        reactionMechanism : str
+            Name of the reaction mechanism.
+        fluc : object, optional
+            Fluctuation field.
+        mean : object, optional
+            Mean field.
+        """
         self.__numberOfSpecies = 0
         self.__numberOfReactions = 0
         self.__reactionList = []
@@ -95,21 +246,61 @@ class reactionMechanismClass:
 
     @property
     def numberOfReactions(self):
+        """
+        Returns the number of reactions in the mechanism.
+
+        Returns
+        -------
+        numberOfReactions : int
+            Number of reactions.
+        """
         return self._numberOfReactions
 
     @property
     def numberOfSpecies(self):
+        """
+        Returns the number of species in the mechanism.
+
+        Returns
+        -------
+        numberOfSpecies : int
+            Number of species.
+        """
         return self._numberOfSpecies
 
     @property
     def reactionMechanism(self):
+        """
+        Returns the name of the reaction mechanism.
+
+        Returns
+        -------
+        reactionMechanism : str
+            Name of the reaction mechanism.
+        """
         return self.__reactionMechanism
 
     @property
     def reactions(self):
+        """
+        Returns the list of reactions.
+
+        Returns
+        -------
+        reactions : list
+            List of reactionClass instances.
+        """
         return self.__reactionList
 
     @property
     def additionalMeanFieldQuantities(self):
+        """
+        Returns the list of additional mean field quantities.
+
+        Returns
+        -------
+        additionalMeanFieldQuantities : list
+            List of additional mean field quantities.
+        """
         return self.__additionalMeanFieldQuantities
 

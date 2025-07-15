@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Aug  7 15:39:58 2020
-
-@author: cwang
-"""
-
-#OneStep global reaction
 from dolfinx.fem import (
     Function,
     Expression,
@@ -19,7 +12,64 @@ from ufl import (
 
 
 class GlobalReaction():
+    """
+    Represents a global one-step chemical reaction mechanism.
+
+    This class encapsulates the parameters and methods required to model a global reaction, including reading reaction data, computing mean fields, and handling heat release.
+
+    **Initialize the GlobalReaction object**
+
+    Parameters
+    ----------
+    reaction_mechanism : dict
+        Dictionary containing reaction mechanism parameters.
+
+    Attributes
+    ----------
+    mixtureDirectory : str
+        Directory name for mixture data.
+    speciesDirectory : str
+        Directory name for species data.
+    A : float or None
+        Pre-exponential factor for the reaction.
+    Ta : float or None
+        Activation temperature.
+    a : float or None
+        Stoichiometric coefficient for oxygen.
+    b : float or None
+        Stoichiometric coefficient for carbon.
+    beta : float or None
+        Temperature exponent.
+    h0 : float or None
+        Heat of reaction.
+    st_C : float or None
+        Stoichiometric coefficient for carbon species.
+    st_O : float or None
+        Stoichiometric coefficient for oxygen species.
+    WO : float or None
+        Molecular weight of oxygen.
+    WC : float or None
+        Molecular weight of carbon.
+    reactionName : str
+        Name of the reaction.
+    Q : dolfinx.fem.Function or None
+        Mean field reaction rate.
+    i_rho : int or None
+        Index of density in solution list.
+    i_C : int or None
+        Index of CH4 in solution list.
+    """
+
     def __init__(self, reaction_mechanism):
+        """
+        Initializes the GlobalReaction instance.
+
+        Parameters
+        ----------
+        reaction_mechanism : dict
+            Dictionary containing reaction mechanism parameters.
+        """
+
         self.mixtureDirectory = "Mixture" #to be put in param
         self.speciesDirectory = "Species" #to be put in param
 
@@ -43,12 +93,19 @@ class GlobalReaction():
         self.i_C=None
 
     def ReadReactionDict(self, reaction):
-        #fileMixture = open('Mixture','r')
-        #mixtureDictDict = eval(fileMixture.read())
-        #fileMixture.close()
-        #ModelName='WestbrookDryer_Max'
-        #MD = mixtureDictDict[ModelName]
-        #print(MD)
+        """
+        Reads reaction parameters from a dictionary and updates class attributes.
+
+        Parameters
+        ----------
+        reaction : dict
+            Dictionary containing reaction parameters.
+
+        Notes
+        -----
+        This method sets the reaction coefficients and molecular weights based on the provided reaction dictionary.
+        """
+
         self.A=reaction['reac_preexp']
         self.Ta=reaction['reac_act_tem']
         self.a=reaction['reac_nu_O']
@@ -67,8 +124,26 @@ class GlobalReaction():
         self.WC=speciesDictDict[educt_C]['mol_weight']
 
     def computeMeanField(self,mean,ele):
-        #import pdb
-        #import ufl
+        """
+        Computes the mean field reaction rate and interpolates it as a function.
+
+        Parameters
+        ----------
+        mean : object
+            Object containing mean flow properties (e.g., temperature, density, species mass fractions).
+        ele : dolfinx.fem.FunctionSpace
+            Function space for interpolation.
+
+        Returns
+        -------
+        Q : dolfinx.fem.Function
+            Interpolated mean field reaction rate.
+
+        Notes
+        -----
+        Uses the reaction parameters and mean flow properties to construct the reaction rate expression.
+        """
+
         self.Q = Function(ele)
         # https://jorgensd.github.io/dolfinx-tutorial/chapter1/membrane_code.html#interpolation-of-a-ufl-expression
         expressionUFL = self.A*exp(-self.Ta/mean.T) * mean.rho**(self.b + self.a) * (mean.Y('CH4') / self.WC) **self.b * (mean.Y('O2') / self.WO)**self.a
@@ -78,12 +153,56 @@ class GlobalReaction():
         return self.Q
 
     def addReaction(self, mean, testf, fluc, solutionList):
+        """
+        Adds the reaction term to the weak form.
+
+        Parameters
+        ----------
+        mean : object
+            Object containing mean flow properties.
+        testf : list
+            List of test functions.
+        fluc : object
+            Object containing fluctuation properties.
+        solutionList : list of str
+            List of solution variable names.
+
+        Returns
+        -------
+        reaction_term : ufl.Form
+            Weak form expression for the reaction term.
+
+        Notes
+        -----
+        The method computes the indices for relevant variables and constructs the weak form using the reaction rate and heat release.
+        """
+
         self.i_rho=solutionList.index('rho')
         self.i_C=solutionList.index('CH4')
         dQ=self.dQ_(mean, fluc)
         return -conj(testf[self.i_rho])*(dQ*self.Q)*self.h0*dx-conj(testf[self.i_C])*(dQ*self.Q)*self.st_C*self.WC*dx
 
     def dQ_(self, mean, fluc):
+        """
+        Computes the fluctuation of the reaction rate.
+
+        Parameters
+        ----------
+        mean : object
+            Object containing mean flow properties.
+        fluc : object
+            Object containing fluctuation properties.
+
+        Returns
+        -------
+        dQ : float
+            Fluctuation of the reaction rate.
+
+        Notes
+        -----
+        The calculation uses stoichiometric coefficients and mean/fluctuation values for temperature and species.
+        """
+
         dO2_= fluc.Y('CH4')/(self.st_C*self.WC)*self.st_O*self.WO
         dT_ = -fluc.rho/mean.rho*mean.T
         return ((self.a+self.b)*fluc.rho/mean.rho\
@@ -93,11 +212,53 @@ class GlobalReaction():
                 +self.b*fluc.Y('CH4')/mean.Y('CH4'))
 
     def postHeatRelease(self, mean, prho, pCH4, ele):
+        """
+        Computes the post-processed heat release form.
+
+        Parameters
+        ----------
+        mean : object
+            Object containing mean flow properties.
+        prho : float
+            Perturbation in density.
+        pCH4 : float
+            Perturbation in CH4 mass fraction.
+        ele : dolfinx.fem.FunctionSpace
+            Function space for interpolation.
+
+        Notes
+        -----
+        The `ele` parameter is included for compatibility with the original method signature; however, it is not used in this mehtod.
+
+        Returns
+        -------
+        heat_release_field : dolfinx.fem.Function
+            Interpolated post-processed heat release form.
+        """
+
         dQ=self.postdQ(mean, prho, pCH4)
         form =-(dQ*self.Q)*self.h0
         return dQ.interpolate(form)
 
     def postdQ(self, mean, prho, pCH4):
+        """
+        Computes the post-processed fluctuation of the reaction rate.
+
+        Parameters
+        ----------
+        mean : object
+            Object containing mean flow properties.
+        prho : float
+            Perturbation in density.
+        pCH4 : float
+            Perturbation in CH4 mass fraction.
+
+        Returns
+        -------
+        dQ : float
+            Post-processed fluctuation of the reaction rate.
+        """
+
         dO2_= pCH4/(self.st_C*self.WC)*self.st_O*self.WO
         dT_ = -prho/mean.rho*mean.T
         return ((self.a+self.b)*prho/mean.rho\

@@ -12,39 +12,112 @@ that start with a number or contain dashes, so c2sm2 it is...
 
 class C2SM2:
     """
-    C2SM2 class representing a chemical reaction mechanism.
+    C2SM2 class representing 2S-CM2 chemical reaction mechanism for a two-step combustion model. 
+
+    This class encapsulates the thermochemical and kinetic properties of a simplified
+    methane combustion mechanism involving key species and two global reactions.
+
+    **Initialize the C2SM2 object**
+
+    Parameters
+    ----------
+    YCH4_lim : float
+        The threshold value for the methane mass fraction.
+    P : int
+        Polynomial degree for finite element approximation.
 
     Attributes
     ----------
     YCH4_lim : float
         The threshold value for YCH4.
     P : int
-        The order of basis functions.
+        The order of basis functions used in FEniCS.
     janaf : Janafopenfoam
-        Instance of the Janafopenfoam class.
-    N2, CO2, O2, CH4, CO, H2O, AR : Janafspecie
-        Instances of the Janafspecie class representing different species.
-    h0r_1, h0r_2 : float
-        Enthalpy of reaction 1 and 2.
-    s0r_1, s0r_2 : float
-        Entropy of reaction 1 and 2.
-    A1, A2, Ta1, Ta2 : float
-        Reaction constants.
+        Object for evaluating thermochemical properties using JANAF polynomials.
+    N2 : Janafspecie
+        Instance representing nitrogen.
+    CO2 : Janafspecie
+        Instance representing carbon dioxide.
+    O2 : Janafspecie
+        Instance representing oxygen.
+    CH4 : Janafspecie
+        Instance representing methane.
+    CO : Janafspecie
+        Instance representing carbon monoxide.
+    H2O : Janafspecie
+        Instance representing water vapor.
+    AR : Janafspecie
+        Instance representing argon.
+    h0r_1 : float
+        Standard-state enthalpy of reaction 1.
+    h0r_2 : float
+        Standard-state enthalpy of reaction 2.
+    s0r_1 : float
+        Standard-state entropy of reaction 1.
+    s0r_2 : float
+        Standard-state entropy of reaction 2.
+    A1 : float
+        Pre-exponential factor for reaction 1.
+    A2 : float
+        Pre-exponential factor for reaction 2.
+    Ta1 : float
+        Activation temperature for reaction 1.
+    Ta2 : float
+        Activation temperature for reaction 2.
     pa : float
-        Pressure in N/m^2.
-    R, R_mol : float
-        Universal gas constants.
-    n_CH4_1, n_O2_1, n_CO_1, n_H2O_1 : float
-        Stoichiometric coefficients for reaction 1.
-    n_CO_2, n_O2_2, n_CO2_2 : float
-        Stoichiometric coefficients for reaction 2.
-    nu_CH4_1, nu_O2_1, nu_CO_1, nu_H2O_1 : float
-        Kinematic exponents for reaction 1.
-    nu_CO_2, nu_O2_2, nu_CO2_2 : float
-        Kinematic exponents for reaction 2.
-    Q1dT, Q1drho, Q1dYCH4, Q1dYO2, Q2dT, Q2drho, Q2dYCO, Q2dYO2, Q2dYCO2 : float
-        Sensitivity variables.
+        Reference pressure in N/m².
+    R : float
+        Universal gas constant (consistent with JANAF data).
+    R_mol : float
+        Molar gas constant (J/mol·K).
+    n_CH4_1 : float
+        Stoichiometric coefficient of CH4 in reaction 1.
+    n_O2_1 : float
+        Stoichiometric coefficient of O2 in reaction 1.
+    n_CO_1 : float
+        Stoichiometric coefficient of CO in reaction 1.
+    n_H2O_1 : float
+        Stoichiometric coefficient of H2O in reaction 1.
+    n_CO_2 : float
+        Stoichiometric coefficient of CO in reaction 2.
+    n_O2_2 : float
+        Stoichiometric coefficient of O2 in reaction 2.
+    n_CO2_2 : float
+        Stoichiometric coefficient of CO2 in reaction 2.
+    nu_CH4_1 : float
+        Kinetic exponent of CH4 in reaction 1.
+    nu_O2_1 : float
+        Kinetic exponent of O2 in reaction 1.
+    nu_CO_1 : float
+        Kinetic exponent of CO in reaction 1.
+    nu_H2O_1 : float
+        Kinetic exponent of H2O in reaction 1.
+    nu_CO_2 : float
+        Kinetic exponent of CO in reaction 2.
+    nu_O2_2 : float
+        Kinetic exponent of O2 in reaction 2.
+    nu_CO2_2 : float
+        Kinetic exponent of CO2 in reaction 2.
+    Q1dT : float or Expression
+        Sensitivity of reaction 1 rate with respect to temperature.
+    Q1drho : float or Expression
+        Sensitivity of reaction 1 rate with respect to density.
+    Q1dYCH4 : float or Expression
+        Sensitivity of reaction 1 rate with respect to CH4 mass fraction.
+    Q1dYO2 : float or Expression
+        Sensitivity of reaction 1 rate with respect to O2 mass fraction.
+    Q2dT : float or Expression
+        Sensitivity of reaction 2 rate with respect to temperature.
+    Q2drho : float or Expression
+        Sensitivity of reaction 2 rate with respect to density.
+    Q2dYCO : float or Expression
+        Sensitivity of reaction 2 rate with respect to CO mass fraction.
+    Q2dYO2 : float or Expression
+        Sensitivity of reaction 2 rate with respect to O2 mass fraction.
+    Q2dYCO2 : float or Expression
+        Sensitivity of reaction 2 rate with respect to CO2 mass fraction.
     """
+
 
     def __init__(self, YCH4_lim, P):
         """
@@ -1011,20 +1084,25 @@ class C2SM2:
 
     def add_source_to_weak_form(self, weakform, dQ_threshold=None):
         """
-        Add a source term for the reaction and species to the weak form.
+        Add reaction source terms to the weak form equations.
+
+        This method adds contributions from reaction source terms to the energy and species
+        equations within a variational formulation. If a heat release threshold is specified,
+        the source terms are only added where the mean heat release exceeds that threshold.
 
         Parameters
         ----------
         weakform : object
-            The weak form to which the source term is added.
+            The weak form object containing relevant fields and test functions for the formulation.
         dQ_threshold : float, optional
-            Limits the reaction term to be applied only where the mean heat release rate is larger than this threshold.
+            Minimum mean heat release rate required for the reaction source term to be applied.
 
         Returns
         -------
-        Form
-            Updated weak form with added source term.
+        eq_stiffness : object
+            The updated weak form including the added reaction source terms.
         """
+
         if dQ_threshold:
             dQMean = weakform.dQMean
             reaction_active = do.project(do.Expression("dQ>dQmin", dQ=dQMean, dQmin=dQ_threshold, degree=weakform.order), 

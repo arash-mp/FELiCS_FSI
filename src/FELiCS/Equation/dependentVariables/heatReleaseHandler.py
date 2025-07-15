@@ -1,32 +1,32 @@
 class heatReleaseHandler:
     """
-    This class is used to calculate the heat release.
+    Calculates the heat release for combustion simulations.
 
-    Parent classes:
+    This class computes the total and component-wise heat release rates
+    and stores them in the internal field dictionary. It is typically used as a
+    component of `fluctuationClass` and `fluctuationSolution`.
 
-    Child classes:
-    - fluctuationClass
-    - fluctuationSolution
+    **Initialize the heatReleaseHandler object**
 
-    Private attributes:
+    Parameters
+    ----------
+    reaction : object
+        FELiCS reaction object used to compute heat release rates.
 
-    Protected attributes:
-
-    Public attributes:
-
+    Attributes
+    ----------
+    _fieldDict : dict
+        Dictionary storing total and component heat release rates.
     """
 
-    def __init__(
-            self,
-            reaction
-    ):
+    def __init__(self, reaction):
         """
-        Adding heat release rate to the fieldDict
+        Initialize the heatReleaseHandler instance and compute heat release rates.
 
-        Function arguments:
-        - param: FELiCS reaction object
-
-        Function returns:
+        Parameters
+        ----------
+        reaction : object
+            FELiCS reaction object used to compute heat release rates.
         """
         Qtot, QList = reaction.dQ(self)
         self._fieldDict['Q'] = Qtot

@@ -42,39 +42,43 @@ class fluctuationClass(
     momentumHandler,
     ):
     """
-    This class fulfills two purposes. First, it is a wrapper for the test
-    functions. These correspond to the actually transported variables in the
-    equations and can be accessed from outside the class via public variables.
-    In addition to these transported variables, this class also provides
-    additional fluctuations in quantities, which are a function of the
-    transported variables (dependent variables). These are also accessible via
-    public variables. The second purpose is in the postprocessing. Since the
-    linear algebra solution only consists of the transported variables, this
-    class is used to determine the dependent variables from the transported
-    variables, which can be used for further data processing/export.
+    Container for fluctuating variables and derived fields for postprocessing.
 
-    Parent classes:
-    - fieldProperties
-    - viscosityHandler
-    - enthalpyHandler
-    - heatReleaseHandler
-    - laminarDiffusionHandler
-    - temperatureHandler
+    This class wraps the test functions representing transported variables
+    within the linearized governing equations. In addition to these, it also
+    derives secondary fields (dependent variables) from the transported
+    variables, which are needed for postprocessing and exporting results.
 
-    Child classes:
+    It plays a central role in calculating and organizing both transported
+    and derived quantities used in numerical simulations.
 
-    Private attributes:
-    - _fluc: The trial function in the mixed finite element space
-    - _mean: The temporal mean flow (meanFlowClass)
-    - _transportedQuantities: A List containing the string-names of all
-        transported quantities
-    - _zeroVelocityField: A fenics vector function containing zeros only
+    **Initialize the fluctuationClass object**
 
-    Protected attributes:
-    - _fieldDict: Dictionary containing both transported and dependent variables
-    - _zeroField: A fenics function containing zeros only
+    Parameters
+    ----------
+    param : FELiCSParameter
+        FELiCS parameter object containing simulation configuration.
+    mean : meanFlowClass
+        Mean flow object.
+    FEMSpaces : FEMSpaceHandler
+        Object encapsulating FEM spaces used in the simulation.
+    coordinateSystem : object
+        Representation of the simulation's coordinate system.
 
-    Public attributes:
+    Attributes
+    ----------
+    _fluc : ufl.argument.TrialFunction
+        Trial function for the mixed finite element space.
+    _mean : meanFlowClass
+        Temporal mean flow object.
+    _transportedQuantities : list of str
+        Names of the transported quantities.
+    _zeroVelocityField : dolfinx.Function
+        Zero-valued vector function in the velocity space.
+    _fieldDict : dict
+        Dictionary of calculated fields (both transported and dependent).
+    _zeroField : dolfinx.Function
+        Scalar zero field in the scalar space.
     """
 
     def __init__(
@@ -85,17 +89,20 @@ class fluctuationClass(
             coordinateSystem,
         ):
         """
-        Constructor of the fluctuationClass. This function initializes the
-        fields
+        Initializes fluctuation fields and derives dependent variables.
 
-        Function arguments:
-        - param: FELiCS parameter object
-        - mean: FELiCS mean flow object
-        - FEMSpaces: FELiCS FEM spaces object
-        - postProcessing: Flag if this class used in postprocessing or not
-
-        Function returns:
+        Parameters
+        ----------
+        param : FELiCSParameter
+            FELiCS parameter object.
+        mean : meanFlowClass
+            Mean flow object.
+        FEMSpaces : FEMSpaceHandler
+            FEM spaces to be used in calculation.
+        coordinateSystem : object
+            Coordinate system used in the domain.
         """
+
         self._param = param
         self._FEMSpaces = FEMSpaces
         self._coordinateSystem = coordinateSystem
@@ -183,53 +190,66 @@ class fluctuationSolutions(
     export,
 ):
     """
-    This class contains the solutions to the linearized equations in form of the
-    transported variables, which are stored in the vmmixed_vector.
+    Stores and manages linearized fluctuation solutions and their export.
 
-    The class is can export and import the solutions in compact and readable
-    format.
+    This class contains the computed fluctuation solutions in the mixed
+    function space. It supports exporting to and importing from HDF5/XDMF
+    formats for postprocessing and visualization in tools like ParaView.
 
-    TO DO: The export-method 'o', 'a' and 'a+' produce a high residuum at one
-    vertex point, which lead to failure of the validation cases. The error
-    leading to that residuum should be found
+    **Initialize the fluctuationSolutions object**
 
-    Parent classes:
-    - export
-    - fieldProperties
-    - viscosityHandler
-    - enthalpyHandler
-    - heatReleaseHandler
-    - LaminarDiffusion
-    - temperatureHandler
+    Parameters
+    ----------
+    param : FELiCSParameter
+        FELiCS parameter object containing simulation configuration.
+    mean : meanFlowClass
+        Mean flow object.
+    FEMSpaces : FEMSpaceHandler
+        Finite element space handler.
+    omega : complex
+        Complex eigenvalue representing the frequency of the solution.
+    vmixedVector : np.ndarray
+        Complex-valued vector representing the mixed solution.
+    isResponseOrDirect : bool
+        Flag indicating whether the solution is a Response/Direct (True)
+        or Forcing/Adjoint (False).
+    gainNumber : int, optional
+        Index of the gain value, default is -1.
+    gainValue : float, optional
+        Value of the gain, default is -1.
 
-    Child classes:
-
-    Private attributes:
-    - _zeroVelocityField: A fenics vector function in the calculation space
-        containing zeros only
-    - _FEMSpaces: FEMSpaces Object. Contains the high-dimensional calculation
-        space
-    - _mean: meanflow object. Instance of meanflowclass
-#   - _fieldDict: Contains the meanfield values in a dictionary
-    - _transportedQuantities
-    - _param: FELiCS parameter object
-    - _meshfilename: filename of the h5-file including the exportMesh
-    - _linearFunctionSpaces: FEMSpaces Object, contains the FEMSpaces of first
-        order of the exportMesh
-    - _exportZeroScalarField: fenics function containing a zeroField on the
-        exportMesh
-    - _exportZeroVectorField: fenics function containing a zero vector Field on
-        the exportMesh
-    - _exportMesh: Object of type FELiCSMesh, contains the export Mesh.
-    - _uValuesList: list of velocity component names
-    - _solution: a list containing all attributes of the solution
-    - _meanfieldDict: dictionary containing Field-Functions, which are
-        interpolated to the export Space.
-
-    Protected attributes:
-    - _fieldDict: Dictionary containing both transported and dependent variables
-    - _zeroField: A fenics function containing zeros only
-
+    Attributes
+    ----------
+    _zeroVelocityField : dolfinx.Function
+        Vector-valued zero field used for initialization (not stored).
+    _FEMSpaces : FEMSpaceHandler
+        High-order FEM spaces for simulation.
+    _mean : meanFlowClass
+        Mean flow object.
+    _transportedQuantities : list of str
+        Names of the transported quantities.
+    _param : FELiCSParameter
+        Simulation configuration object.
+    _meshfilename : str
+        Filename of the export mesh (if applicable).
+    _linearFunctionSpaces : FEMSpaceHandler
+        Low-order FEM spaces for export mesh (if applicable).
+    _exportZeroScalarField : dolfinx.Function
+        Scalar zero field on export mesh.
+    _exportZeroVectorField : dolfinx.Function
+        Vector zero field on export mesh.
+    _exportMesh : FELiCSMesh
+        Export mesh.
+    _uValuesList : list of str
+        List of velocity component names.
+    _solution : list
+        Solution vector components.
+    _meanfieldDict : dict
+        Dictionary containing mean field interpolated onto export space.
+    _fieldDict : dict
+        Dictionary of calculated fields (both transported and dependent).
+    _zeroField : np.ndarray
+        Zero-valued array for initialization.
     """
 
     def __init__(
@@ -244,19 +264,26 @@ class fluctuationSolutions(
             gainValue=-1
     ):
         """
-        Function arguments:
-        - param: FELiCS parameter object
-        - mean: FELiCS mean flow object
-        - FEMSpaces: FELiCS FEM spaces object
-        - omega: complex Eigenvalue of the solution
-        - vmixedVector: numpy-array containing the complex values of the
-            transported quantities at every DOF-coordinate.
-        - isResponseOrDirect: Boolean, is true if the solution is of Kind
-            Response or Direct and false if it is of type Forcing or Adjoint.
-        - gainNumber: Integer, which contains the number of the gain. For
-            solutions, which have no gain it is set -1
+        Initialize the fluctuationSolutions object.
 
-        Function returns:
+        Parameters
+        ----------
+        param : FELiCSParameter
+            FELiCS parameter object.
+        mean : meanFlowClass
+            Mean flow object.
+        FEMSpaces : FEMSpaceHandler
+            Finite element space handler.
+        omega : complex
+            Complex eigenvalue of the solution.
+        vmixedVector : np.ndarray
+            Complex-valued vector representing the mixed solution.
+        isResponseOrDirect : bool
+            Flag indicating whether the solution is of type Response/Direct or Forcing/Adjoint.
+        gainNumber : int, optional
+            Index for gain tracking, default is -1.
+        gainValue : float, optional
+            Gain value associated with the solution, default is -1.
         """
 
         # dolfinx specific: There is no compute_vertex_values anymore.
@@ -285,19 +312,18 @@ class fluctuationSolutions(
             param,
             FEMSpaces)
 
-    def _flucExportWrapper(
-            self,
-            group):
+    def _flucExportWrapper(self, group):
         """
-        This function calls the methods for the fluc export. Therefore, it
-        iterates over the sub-solutions and creates subgroups if needed.
+        Internal method to compute and export all fluctuation fields.
 
-        Function arguments:
-        - group: Points on a group inside the h5-file, in which the solution
-            should be exported.
+        This method maps the solution vector to field data, derives
+        dependent variables if needed, and writes everything to the
+        provided HDF5 group.
 
-        Function returns:
-
+        Parameters
+        ----------
+        group : h5py.Group
+            HDF5 group in which fields are to be written.
         """
 
         self._fieldDict = self._mapCalcToExport(self._vmixedVector)
@@ -372,23 +398,21 @@ class fluctuationSolutions(
             True
         )
 
-    def _importSolVector(
-            self,
-            filename
-    ):
+    def _importSolVector(self, filename):
         """
-        This function imports the VMixed-solution vector if it is present in raw
-        form inside a h5-file with the name filename.
+        Import raw VMixed solution vector from HDF5 file.
 
-        Function arguments:
-        - filename: String filename of the h5-file. To mark it as including the
-            VMixed-Vector, it ends with "_sol.h5"
+        Parameters
+        ----------
+        filename : str
+            Path to the HDF5 file ending in "_sol.h5".
 
-        Function returns:
-        - returns complex valued numpy array, which represents the
-            VMixed-solution
-
+        Returns
+        -------
+        np.ndarray
+            Complex-valued numpy array representing the solution.
         """
+ 
         hf = File(filename, 'r')
         frequency = hf['fluctuation/0/'].attrs.get('frequency')
         fieldMagnitude = np.array(hf[f'fluctuation/0/{frequency}/magnitude'][:])
@@ -396,24 +420,27 @@ class fluctuationSolutions(
 
         return fieldMagnitude * np.exp(1j * fieldAngle)
 
-    def exportSolution(
-            self,
-            filename,
-            flag
-    ):
+    def exportSolution(self, filename, flag):
         """
-        This method exports the Solution to the hdf5-format.
-        Furthermore, a XMF-file is constructed with which the solution can be
-        opened in paraview.
+        Export fluctuation solution to HDF5/XMF format.
 
-        Function arguments:
-        - filename: filename of the h5-file, where the fields should be exported
-        - flag: string flag, specifying the kind of export. Possible values are
-            'c', 'o', 'a' and 'a+'
+        Parameters
+        ----------
+        filename : str
+            Base filename for the exported HDF5 file.
+        flag : str
+            Export mode. Options are:
+            - 'o': overwrite
+            - 'a': append
+            - 'a+': write with new index suffix
+            - 'c': compact, raw vector only
 
-        Function returns:
-
+        Raises
+        ------
+        ValueError
+            If the provided flag is unknown.
         """
+
         filenameWithoutExtension = filename.split('.h5')[0]
         # filenameWithoutFolder = filename
         filename = f'{self._param.Export.ExportFolder}/' + filename
@@ -509,19 +536,16 @@ class fluctuationSolutions(
         else:
             print('The given flag is not known!')
 
-    def importSolution(
-            self,
-            filename
-    ):
+    def importSolution(self, filename):
         """
-        This Function imports a solution into the VMixed space.
+        Import a previously exported VMixed fluctuation solution.
 
-        Function arguments:
-        - filename: String containing the filename of the h5-File.
-
-        Function Returns:
-
+        Parameters
+        ----------
+        filename : str
+            Filename of the HDF5 file to import from.
         """
+
         # if the filename has the suffix "_sol", its the raw VMixed-Vector and
         # the import is easy:
         if '_sol.h5' in filename:
@@ -534,10 +558,28 @@ class fluctuationSolutions(
 
     @property
     def solutVector(self):
+        """
+        Complex-valued vector of the fluctuation solution.
+
+        Returns
+        -------
+        np.ndarray
+            Solution vector in mixed function space.
+        """
         return self._vmixedVector
+
 
     @property
     def solutionKind(self):
+        """
+        Type of the solution based on analysis mode and configuration.
+
+        Returns
+        -------
+        str
+            One of 'Response', 'Forcing', 'Direct', 'Adjoint', or empty string.
+        """
+
         if self._param.Case.AnalysisMode == 'Resolvent':
             if self._isResponseOrDirect:
                 return 'Response'
@@ -558,12 +600,39 @@ class fluctuationSolutions(
 
     @property
     def omega(self):
+        """
+        Eigenvalue (frequency) of the fluctuation solution.
+
+        Returns
+        -------
+        complex
+            Complex frequency associated with the solution.
+        """
         return self._omega
+
 
     @property
     def gainNumber(self):
+        """
+        Gain number identifier.
+
+        Returns
+        -------
+        int
+            Gain index or -1 if unused.
+        """
         return self._gainNumber
+
 
     @property
     def gainValue(self):
+        """
+        Gain magnitude.
+
+        Returns
+        -------
+        float
+            Real-valued gain.
+        """
         return self._gainValue
+

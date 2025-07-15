@@ -1,11 +1,30 @@
-
-
-"""
-"""
-
-
 class NOx:
+    """
+    Class for computing NO and NO2 source terms based on pre-tabulated data.
+
+    This class uses a CSV table to interpolate reaction source terms for NO and NO2
+    as a function of the mixture fraction or equivalence ratio (`phi`). These interpolated
+    values are used to add source terms to the weak form of a finite element formulation.
+
+    **Initialize the NOx object**
+
+    Parameters
+    ----------
+    P : any
+        Placeholder for configuration or context parameter (currently unused).
+    """
+
+
     def __init__(self, P):
+        """
+        Initializes the NOx instance by loading tabulated NOx source term data.
+
+        Parameters
+        ----------
+        P : any
+            Placeholder parameter (not currently used).
+        """
+
         import pathlib
         from FELiCS.Misc.functions import loadCSV
         tablePath=str(pathlib.Path(__file__).parent.absolute())+'/NOxTable.csv'
@@ -15,10 +34,27 @@ class NOx:
 
     def add_source_to_weak_form(self, weakform, dQ_threshold=None):
         """
-        Add a source term for the reaction and species to the weak form depending on the settings.
-        dQ_threshold limits the reaction term to be applied only where the mean heat release rate
-        is larger than dQ_threshold.
+        Add NO and NO2 source terms to the weak form based on interpolated data.
+
+        Interpolates pre-tabulated NO and NO2 production rates as a function of
+        the local `phi` field and assigns them as source terms in the weak form.
+        Optionally filters source terms based on a heat release threshold.
+
+        Parameters
+        ----------
+        weakform : object
+            The weak form structure, expected to include test functions `v_NO`, `v_NO2`,
+            and solution fields `phi` and `T`.
+        dQ_threshold : float, optional
+            A threshold for the mean heat release rate; source terms are suppressed
+            where the temperature `T` is below 1000 K.
+
+        Returns
+        -------
+        eq : ufl.Form
+            The assembled weak form with NO and NO2 source terms included.
         """
+
         from dolfinx.fem import (
                                 Function
                                 )

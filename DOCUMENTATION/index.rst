@@ -27,8 +27,8 @@ Content
 
    installation_guide
    Running_FELiCS/index
-   GoverningEquations/index
    Tutorials/index
+   GoverningEquations/index
    How-To-Guides/index
 
 Indices and tables
