@@ -64,11 +64,17 @@ In our case, we set:
 The setting file contains all the analysis information. It should be placed in our 
 An example of setting file is [```resolvent_setting.json```](../../TUTORIALS/resolvent_tutorial/resolvent_setting.json). The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
+The coordinates system is set to Cylindrical: 
+```json
+{"CoordinateSystem": "Cylindrical",}
+```
+**Note:** The velocity components are thus refered to as `ux, ur, ut` instead of `ux, uy, uz`.
+
 The azimuthal wavenumber is chosen:
 ```json
     "m":0.0,
 ```
-We set the moecular viscosity to be the inverse of the Reynolds number since we non-dimensionalized the variables and equations:
+We set the molecular viscosity $\nu$ to be the inverse of the Reynolds number since we non-dimensionalized the variables and equations:
 ```json
 "MolVisc":0.000125,
 ```
@@ -77,7 +83,7 @@ Ensure consistency in the normalization approach throughout the analysis.
 
 We want to solve the Momentum and Mass equations only and set the other equations in <code style="color : Blue">"SetofEquations"</code> to `"None"`
 
-If we wish to include a turbulent viscolity fields, we should be set:
+If we included a turbulent viscosity field in the ```meanFlow.py``` file, we should set:
 ```json
     {"TurbulenceModel":"File"}
 ```

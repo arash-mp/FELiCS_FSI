@@ -20,7 +20,6 @@ cd workDir/cylinder_wake_tutorial/
 ```
 
 ## Mesh generation
-
 Since the code uses the Finite Element Continuous Galerkin approach, a computational grid needs to be created. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file [cylinder_wake.msh](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format.
 
 ```sh
@@ -37,9 +36,6 @@ Figure 2. Magnified version of [Figure 1](#fig:Mesh)
 **Note:** For 2D computations, only triangular elements can be handeled. 
 The file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) includes the domains:
 ```sh
-$MeshFormat
-2.2 0 8
-$EndMeshFormat
 $PhysicalNames
 6
 1 1 "Inlet"
@@ -51,6 +47,7 @@ $PhysicalNames
 $EndPhysicalNames
 ```
 In [Figure 1](#fig:Mesh), <code style="color : Darkorange">Inlet</code> is the left vertical boundary of the domain, <code style="color : Darkorange">Outlet</code> is the right vertical boundary of the domain, <code style="color : Darkorange">Top</code> is the top horizontal boundary of the domain. <code style="color : Darkorange">Symmetry</code> is the bottom horizontal boundary of the domain, except the half-cylinder in [Figure 2](#fig:MagMesh), which is the <code style="color : Darkorange">Wall</code>.
+Detailed explanations about the boundary conditions format is provided in the next tutorial. 
 
 ## Obtaining the base flow
 The base flow for FELiCS can be obtained through various methods: numerical simulations, (RANS, LES, DNS, ...), experimental results or analytical models. In this case, we calculate the base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) can be found in the working directory. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
