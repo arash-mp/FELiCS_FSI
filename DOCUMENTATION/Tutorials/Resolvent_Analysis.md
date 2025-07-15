@@ -134,9 +134,12 @@ Note that in this case, only the leading and subleading resolvent modes were com
 The script also include functions to read the mesh, load and plot the mode in matplotlib. 
 The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are plotted in [Figure3](#Forcingdomain) and [Figure4](#Responsedomain):
 ![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
+
 Figure 3. Forcing mode shape
 ![Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/ResponseMode_dark.png) <a id="fig:Responsedomain"></a>
+
 Figure 4. Response mode shape
+
 The $u_\theta$ fluctuation is 0 in this case because we study axisymmetric perturbations ($m=0$).
 
 >**Warning:** The gains provided by FELiCS are $\sigma^2$. The forcing modes have a unitary norm on the defined forcing domain, but the response modes have the norm $\sigma$ on the defined response domain.
