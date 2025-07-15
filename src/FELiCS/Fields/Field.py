@@ -268,10 +268,44 @@ class Field:
         norm_squared = 0.
         list1 = self.getListOfSingleFields()
         for field in list1:
-            norm_squared += assemble_scalar(form((iDot(iConj(scalarField), scalarField)*ufl.dx))
+            norm_squared += assemble_scalar(form((iDot(iConj(field), field)*ufl.dx)))
         
         return np.sqrt(norm_squared)
 
+
+    def getVorticity(self):
+        from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
+        from ufl import TestFunction, dx
+        from FELiCS.Misc.tensorUtils import iGrad, iConj, iDot, Tensor
+        order = self.space.element.basix_element.degree
+        dim = 1 
+        
+        vorticitySpace = getFELiCSSpace(self.mesh, order=order, dim=dim)
+        vorticityField = Field(vorticitySpace, self.mesh)
+
+        componentGradient = []
+        velocityComponents = self.getListOfSingleFields()
+
+        for field in velocityComponents:
+            componentGradient.append(field.getGradientField())
+
+        dudy = componentGradient[0].getListOfSingleFields()[1]
+        dvdx = componentGradient[1].getListOfSingleFields()[0]
+
+        return dudy - dvdx
+
+        # coordSystem = self.mesh.coordinateSystem
+        # J_hat = coordSystem.J_hat
+
+        # v = TestFunction(vorticitySpace)
+        # # Sophie: m and hasSpectralDimension may not be needed for test function
+        # v_tens = Tensor(v, CoordSys=coordSystem, m = self.m, hasSpectralDimension=self.hasSpectralDimension)
+        # expression = iDot(iGrad(self.getTensor()), iConj(v_tens)).ufl_tens * J_hat* dx
+
+
+        vorticityField.evaluateUflTensorExpression(expression)
+
+        return vorticityField
 
     def exportH5(self, fileName, mesh = None):
         # for now this is a dummy method that we use for the scripting part of the retreat.
