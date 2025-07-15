@@ -127,15 +127,15 @@ We postprocess the outputed files using the python script [PlotMode.py](../../TU
 Modify the defined path to your folder and run the script. 
 
 The resolvent gains are plotted against the Strouhal number $St = \omega/2\pi$ in Figure 2.
-[Figure2](../../TUTORIALS/resolvent_tutorial/gains.png)
+![Figure2](../../TUTORIALS/resolvent_tutorial/gains.png)
 Figure 2. Resolvent gains
 Note that in this case, only the leading and subleading resolvent modes were computed.
 
 The script also include functions to read the mesh, load and plot the mode in matplotlib. 
 The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are:
-[Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png)
+![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png)
 Figure 3. Forcing mode shape
-[Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/ResponseMode_dark.png)
+![Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/ResponseMode_dark.png)
 Figure 4. Response mode shape
 The $u_\theta$ fluctuation is 0 in this case because we study axisymmetric perturbations ($m=0$).
 
