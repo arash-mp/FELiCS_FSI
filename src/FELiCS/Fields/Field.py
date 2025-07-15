@@ -21,9 +21,11 @@ class Field:
     mesh:      FELiCS.SpaceDisc.FELiCSMesh
         FEliCS mesh associated with the function space.
     name:      optional, list of tuples; e.g. [("name",[])] for a scalar space, or [("name",["x","y","z"]] for a vector space, a list of both types for a mixed space
+    m:         optional, integer
+        Wave number. If this is set, the Field is assumed to have one spectral spatial dimension, regardless the value of m.
     """
 
-    def __init__(self, FEMSpace, mesh, name=[]):
+    def __init__(self, FEMSpace, mesh, name=[], m=None):
         self.space    = FEMSpace
         self.mesh     = mesh
 
@@ -36,6 +38,14 @@ class Field:
             self.name  = [(name,[])]
         else:
             self.name = name
+
+        # handle spectral dimension and wave number
+        if m != None:
+            self.hasSpectralDimension = True
+            self.m = m
+        else:
+            self.hasSpectralDimension = False
+            self.m = 0
 
         # initialize function
         self.function = Function(FEMSpace)
@@ -63,11 +73,10 @@ class Field:
         elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 3:
             return ["x","r","t"]
 
-
     def getTensor(self):
         from FELiCS.Misc.tensorUtils import Tensor
         # TODO Sophie: handle Tensors of mixed functions (later)
-        return Tensor(self.function, self.mesh.coordinateSystem)
+        return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, hasSpectralDimension = self.hasSpectralDimension)
 
     def getListOfSingleFields(self):
         """
@@ -220,6 +229,37 @@ class Field:
         petsc.set_bc(petscArray,bcs)
         self.setCoefficientArray(petscArray.getArray())
 
+        
+    def getGradientField(self):
+        # TODO Sophie: throw error if Field is not scalar    
+        from ufl import TestFunction, dx
+        from FELiCS.Misc.tensorUtils import iGrad, iConj, iDot, Tensor
+        from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
+        # Create  a Field for the gradient
+        # The space must be a vector vor a scalar field
+        # TODO Sophie: handle order (get it from function?)
+        order = 2
+        dim = self.mesh.gdim 
+        if self.hasSpectralDimension:
+            dim += 1
+        gradientSpace = getFELiCSSpace(self.mesh, order=order, dim=dim)
+        gradientField = Field(gradientSpace, self.mesh)
+
+        coordSystem = self.mesh.coordinateSystem
+        J_hat = coordSystem.J_hat
+
+        v = TestFunction(gradientSpace)
+        # Sophie: m and hasSpectralDimension may not be needed for test function
+        v_tens = Tensor(v, CoordSys=coordSystem, m = self.m, hasSpectralDimension=self.hasSpectralDimension)
+        expression = iDot(iGrad(self.getTensor()), iConj(v_tens)).ufl_tens * J_hat* dx
+
+        gradientField.evaluateUflTensorExpression(expression)    
+
+        # TODO Sophie: check how to destroy all petsc objects, also matrix
+        gradientSpace.FEMWeightSolver.destroy()
+
+        return gradientField
+
     def exportH5(self, fileName, mesh = None):
         # for now this is a dummy method that we use for the scripting part of the retreat.
         # fileName: WITHOUT SUFFIX, but WITH PATH
@@ -272,7 +312,7 @@ class Field:
         """
         from FELiCS.Solvers.LinearSolver import LinearSolver
         from FELiCS.Equation.UflDecorator import UflDecorator
-        import ufl 
+        import ufl
         import dolfinx
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
         if not hasattr(self.space, 'FEMWeightSolver') and not restartSolver:
@@ -289,17 +329,15 @@ class Field:
                 except:
                     matrix_ufl.add(ufl.conj(test)*trial_FEM[i]*ufl.dx)
                 i+=1
-            try:
-                matrix_ufl.setCorrectMeshObject(self.mesh)
-            except:
-                pass
-            matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
-            matrix.assemble()
+        
+            # matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
+            # matrix.assemble()
+            matrix = matrix_ufl.getAssembledMatrix(self.mesh, bcs)
             self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
-        petscVec = expr_ufl.getAssembledVector(self.mesh, bsc)
+        petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
 
 
@@ -352,17 +390,12 @@ class Field:
                     ##LOGGING TODO (Sophie): throw error 
                     print("ERROR, in 'Field.evaluateUflExpression'")
                 i+=1
-            try:
-                matrix_ufl.setCorrectMeshObject(self.mesh)
-            except:
-                pass
-            matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
-            matrix.assemble()
+            matrix = matrix_ufl.getAssembledMatrix(self.mesh, bcs) 
             self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
-        petscVec = expr_ufl.getAssembledVector(self.mesh, bsc)
+        petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
 
 
