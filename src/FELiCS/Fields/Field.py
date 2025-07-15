@@ -390,12 +390,7 @@ class Field:
                     ##LOGGING TODO (Sophie): throw error 
                     print("ERROR, in 'Field.evaluateUflExpression'")
                 i+=1
-            try:
-                matrix_ufl.setCorrectMeshObject(self.mesh)
-            except:
-                pass
-            matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
-            matrix.assemble()
+            matrix = matrix_ufl.getAssembledMatrix(self.mesh, bcs) 
             self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
 
         ## assemble rhs and solve equation system
