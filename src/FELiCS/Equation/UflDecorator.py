@@ -47,7 +47,7 @@ class UflDecorator():
 
     Notes
     -----
-    Operator overloading is supported (+, +=, -, -=)
+    Operator overloading is supported (+, +=, -, -=).
     """
 
     def __init__(self, inputUfl = None):
