@@ -22,6 +22,7 @@ FELiCS is:
 - Integrated with **PETSc/SLEPc** for high-performance linear algebra
 - Equipped for **linear stability analysis**, **resolvent analysis**, and **input-output analysis**
 - Multi-physics: turbulence, mass transport, heat transport, chemical reactions, acoustics and many more
+- supports low-Mach compressibitly
 - Usable via the **command line** or integrated into **custom Python scripts**
 
 This documentation will guide you through everything you need to know to get started with FELiCS: from installation to running analyses and diving into the math behind it.
