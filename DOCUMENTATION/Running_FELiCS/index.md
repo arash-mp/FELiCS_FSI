@@ -89,7 +89,7 @@ This can be generated for instance with GMSH. Make sure the .msh file is saved i
 An example for the mesh generation is provided in [Tutorial 1](../Tutorials/modal_analysis.html).
 
 ## Mean flow file
-The base flow can be obtained numerical simulations, experimental results or analytical models. A RANS mean field can also be computed using the finite element Newton solver `FlowSolver.py` integrateed in FELiCS.
+The base flow can be obtained from numerical simulations, experimental results or analytical models. A RANS mean field can also be computed using the finite element Newton solver `FlowSolver.py` integrateed in FELiCS.
 The relevant mean flow information (velocities, pressure, viscosity, forcing and response domains, ...) are encapsulated in a **.fel** file. 
 The construction of such a file is presented in [fel file in FELiCS](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/DOCUMENTATION/_build/Running_FELiCS/fel_file).
 

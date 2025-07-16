@@ -1,6 +1,6 @@
 # Tutorial 1: Solve the base flow
 ## Goals of the tutorial
-In this first tutorial, an introduction to setting up a FELiCS case. By the end of this tutorial, you will be able to:
+This first tutorial gives an introduction for setting up a FELiCS case. By the end of this tutorial, you will be able to:
 
 - Define a case in FELiCS.
 - Create a case folder with a mesh and base flow files.
@@ -25,7 +25,7 @@ Since the code uses the Finite Element Continuous Galerkin approach, a computati
 ```sh
 python cylinder_wake_mesh.py
 ```
-Open the mesh in GMSH. It should look like:
+If you open the mesh in GMSH, click on 'Mesh -> 2D'. It should look like:
 
 ![Image1](../../TUTORIALS/cylinder_wake_tutorial/CylinderWakeMesh.png) <a id="fig:Mesh"></a>
 Figure 1. 2D Mesh.
@@ -61,7 +61,7 @@ In the file ```Re50.json``` we set the molecular viscostiy, $\nu = 0.02$:
 "Molvisc":0.02
 ```
 based on the Reynolds number $\mathrm{Re} = 50$, the cylinder diameter $d = 1$ and the bulk velocity $U_\infty = 1$.
-We only solve the continuity and the momentum equation. Therefore we set everything to <code style="color : Darkorange">None</code> in the <code style="color : Cyan">"SetofEquations"</code>, except for <code style="color : Cyan">"Momentum"</code> and <code style="color : Cyan">"Mass"</code>. 
+We only solve the continuity and the momentum equation. Therefore we set everything to <code style="color : Darkorange">None</code> in the <code style="color : Blue">"SetofEquations"</code>, except for <code style="color : Blue">"Momentum"</code> and <code style="color : Blue">"Mass"</code>. 
 
 Additionally we import the boundary conditions from [```bc.json```](./../../TUTORIALS/cylinder_wake_tutorial/bc.json). They are summarized in the following tab: 
 

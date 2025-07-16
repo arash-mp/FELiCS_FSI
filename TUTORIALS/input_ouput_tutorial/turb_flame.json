@@ -1,0 +1,68 @@
+{
+"BoundaryCondition":{
+    "BCsFilePath":"boundaries.json"
+},
+"Case":{
+    "AnalysisMode":"Input-Output",
+    "CalculateAdjoint":false,
+    "CoordinateSystem":"Cylindrical",
+    "m":0.0,
+    "MeshFilePath":"KITBurnerWallSep.msh",
+    "MixtureFilePath":"mixture.json",
+    "MolVisc":0.0002,
+    "MolViscModel":"Constant",
+    "MolViscPerturbModel":{
+        "type":"Constant",
+        "Constants":{
+            "Viscosity":1.0
+        }
+    },
+    "nDim":2,
+    "PrandtlNumber": 0.9,
+    "SetOfEquations":{
+        "Momentum":{
+            "Equation": "NSPrimitive",
+            "Variable": "u"
+        },
+        "Mass": {
+            "Equation": "Continuity",
+            "Variable": "p"
+        },
+        "Species":{
+            "Equation": "Non-conservative",
+            "Variable": "progress"
+	},
+        "Energy":{
+            "Equation": "ProgressVariableLinear",
+            "Variable": "None"
+        },
+        "EquationOfState":{
+            "Equation": "Low-Mach",
+            "Variable": "None"
+        }
+    },
+    "TransVelFluc":true,
+    "TurbulenceModel":"File"
+},
+"Export":{
+    "ExportFolder":"output_dir",
+    "Video":false
+},
+"FlowInput":{
+    "AveragingDirection":"None",
+    "MeanFlowFilePath":"KIT_confined.fel"
+},
+"IOResolvent":{
+    "ForcingBoundaryIndices":[1],
+    "ForcingCoeff":[0],
+    "ForcingMode":"Boundary",
+    "Omegas":[314]
+},
+"Numerics":{
+    "EigenValueGuess":[],
+    "nSolut":1,
+    "PolynomialOrder":{
+        "u": 2,
+        "p": 2,
+        "progress": 2}
+}}
