@@ -1,0 +1,101 @@
+{
+    "1": {
+        "name": "custom",
+        "specifics": [
+            {
+                "variable": "ux",
+                "type": "None",
+                "value": 0.0
+            },
+            {
+                "variable": "ur",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "ut",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "p",
+                "type": "None",
+                "value": 0.0
+            },
+            {
+                "variable": "progress",
+                "type": "Dirichlet",
+                "value": 0.0
+            }
+        ]
+    },
+    "2": {
+        "name": "custom",
+        "specifics": [
+            {
+                "variable": "ux",
+                "type": "None",
+                "value": 0.0
+            },
+            {
+                "variable": "ur",
+                "type": "None",
+                "value": 0.0
+            },
+            {
+                "variable": "ut",
+                "type": "None",
+                "value": 0.0
+            },
+            {
+                "variable": "p",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "progress",
+                "type": "None",
+                "value": 0.0
+            }
+        ]
+    },
+    "3": {
+        "name": "symmetry",
+        "specifics": [
+            {
+                "variable": "ux",
+                "type": "Neumann",
+                "value": 0.0
+            },
+            {
+                "variable": "ur",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "ut",
+                "type": "Neumann",
+                "value": 0.0
+            },
+            {
+                "variable": "p",
+                "type": "Neumann",
+                "value": 0.0
+            },
+            {
+                "variable": "progress",
+                "type": "Neumann",
+                "value": 0.0
+            }
+        ]
+    },
+    "4": {
+        "name": "wall"
+    },
+    "5": {
+        "name": "wall"
+    },
+    "6": {
+        "name": "wall"
+    }
+}

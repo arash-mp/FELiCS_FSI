@@ -1,13 +1,13 @@
 {
     "BoundaryCondition": {
-        "BCsFilePath": "bc_Modal.json"
+        "BCsFilePath": "bc_modal.json"
     },
     "Case": {
         "AnalysisMode": "Modal",
 	"CalculateAdjoint":false,
         "CoordinateSystem": "Cartesian",
         "m": 0.0,
-        "MeshFilePath": "CylinderWakeMesh.msh",
+        "MeshFilePath": "cylinder_wake.msh",
         "MolVisc": 0.02,
         "MolViscModel": "Constant",
         "nDim": 2,
@@ -44,7 +44,7 @@
     },
     "FlowInput": {
         "AveragingDirection": "None",
-        "MeanFlowFilePath": "base_flow_for_FELiCS_50.fel"
+        "MeanFlowFilePath": "base_flow_for_FELiCS.fel"
     },
     "IOResolvent": {
         "ForcingBoundaryIndices": [],
