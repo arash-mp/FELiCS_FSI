@@ -1,15 +1,16 @@
 # Linear stability analysis
+Linear stability analysis is a method used to determine whether small disturbances to a steady base state grow or decay over time. The system is linearized around the base flow, and solutions are sought in the form of exponentially growing or decaying modes. By solving an eigenvalue problem, one identifies the growth rates and shapes of these modes. If any mode grows over time, the base flow is considered unstable. This approach provides insight into the natural tendencies of the system to amplify disturbances without external forcing, focusing purely on the system’s internal dynamics.
 
-References:
+
+**References:**
 - [Barkley et al. 2006](https://doi.org/10.1209/epl/i2006-10168-7)
 - [Sipp et al. 2010](https://doi.org/10.1115/1.4001478)
 - [Kaiser et al. 2017](https://doi.org/10.1115/GT2017-63649)
 - [Müller et al. 2020](https://doi.org/10.1017/jfm.2019.1063)
 
-Linear stability analysis is a method used to determine whether small disturbances to a steady base state grow or decay over time. The system is linearized around the base flow, and solutions are sought in the form of exponentially growing or decaying modes. By solving an eigenvalue problem, one identifies the growth rates and shapes of these modes. If any mode grows over time, the base flow is considered unstable. This approach provides insight into the natural tendencies of the system to amplify disturbances without external forcing, focusing purely on the system’s internal dynamics.
 
 
-## Linear Operator 
+## Definition of the linear Operator 
 We start with a general nonlinear equation, written in compact form as
 $$
 \mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g}
@@ -37,7 +38,8 @@ $$
 $$
 representing the Jakobian evaluate at the base state  $\overline{\mathbf{q}}$. 
 
-### Spectral analysis of the  linear operator
+
+## Spectral analysis of the  linear operator
 
 We assume the pertubation to have the form of normal modes, reading
 $$

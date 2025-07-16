@@ -1,23 +1,24 @@
 # Resolvent analysis
 
-References:
+Resolvent analysis is a linear systems approach used to understand how a dynamical system responds to harmonic forcing. The method starts by linearizing the governing equations around a steady base state, then analyzing how the system amplifies input disturbances at different frequencies. By treating the linearized operator as a transfer function, one can identify which inputs (forcings) lead to the strongest outputs (responses). This is done using a singular value decomposition of the resolvent operator, which reveals the most amplified structures and quantifies the gain. The method captures both modal and nonmodal amplification, making it especially powerful for studying flows with strong non-normal behavior.
+
+**References:**
 - [Beneddine et al. 2016](https://doi.org/10.1017/jfm.2016.331)
 - [Towne et al. 2018](https://doi.org/10.1017/jfm.2018.675)
 - [von Saldern et al. 2024](https://doi.org/10.1017/jfm.2024.922)
 - [Müller et al. 2024](https://doi.org/10.1017/jfm.2024.679)
 
-## General Resolvent Formulation
 
-Resolvent analysis is a linear systems approach used to understand how a dynamical system responds to harmonic forcing. The method starts by linearizing the governing equations around a steady base state, then analyzing how the system amplifies input disturbances at different frequencies. By treating the linearized operator as a transfer function, one can identify which inputs (forcings) lead to the strongest outputs (responses). This is done using a singular value decomposition of the resolvent operator, which reveals the most amplified structures and quantifies the gain. The method captures both modal and nonmodal amplification, making it especially powerful for studying flows with strong non-normal behavior.
 
-### Resolvent Operator
+## Definition of the Resolvent Operator
 
 We start with a general nonlinear equation, written in compact form as
 $$
-\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g}
+\mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g}
 $$
 
 - $ \mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T}$: state vector (conservative variables) 
+- $\mathcal{B}$: Limiter operator; zero, if the time derivative is not considered, else one 
 - $\mathcal{N}$: nonlinear operator (e.g. Navier-Stokes)
 - $\mathbf{g}$: nonlinear forcing
 
@@ -31,7 +32,7 @@ $$
 Cinsidering a stationary baseflow we arrive at a Llinear Time-Invariant (LTI) dynamical system describing the pertubation, reading 
 
 $$
-\frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}')+\mathbf{f}'
+\mathcal{B}\frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}')+\mathbf{f}'
 $$
 
 with  
@@ -57,7 +58,7 @@ Inserting in the  LIT dynamical system and discretisation leads to the  matrix f
 $$
 -j\omega\mathbf{B} = \mathbf{A}\hat{\mathbf{q}}+\hat{\mathbf{f}}
 $$
- where the matrices $\mathbf{A}$ and $\mathbf{B}$  depend on the actual choince of nonlinear equations which is detailed in another section.  
+ where the matrices $\mathbf{A}$ and $\mathbf{B}$ are the discretized jacobian $\mathcal{L}$ and limiter matrix $\mathcal{B}$, respectively, and depend on the actual choice of nonlinear equations which is detailed in another section.  
 
 For the resolvent analysis we rearrange the equation to 
 
@@ -70,9 +71,9 @@ $$
 \mathbf{R} = -j \omega \mathbf{B}-\mathbf{A}
 $$
 
-representing a tranfer function relating the linear reseponce to a given forcing. 
+representing a transfer function relating the linear reseponce to a given forcing. 
 
-### Optimal forcing-responce analysis
+## Optimal forcing-responce analysis
 
 It is the goal to identify optimal input-output pairs $(\hat{\mathbf f}, \hat{\mathbf q})$  maximizing amplification.
 
@@ -98,20 +99,24 @@ Note that the gain is sorted by decreasing order $\sigma_1\geq\sigma_2\geq ... \
 
 
 
-## FELiCS implementation (to be done)
+## FELiCS implementation 
+In FELiCS, the resolvent implementation contains some additional utilities. They stem from more detailed definitions of the response and forcing norms. For example, it is possible to define spatial regions, in which the norm should be computed ("spatial restrictors") or weight spatial regions differently. In the following, it is described how those limiters are oncorporated in the resolvent formulation.
 
-### Wheighting and limiter operators
+
+
+
+#### Additional Weighting and limiter operators
 
 Applying a discretization scheme and considering a finite element method weighting:  
 $$
-\hat{q} = R W_{\text{FEM}} \hat{f},\quad \text{with}\quad \mathbf{R=J^{-1}}.
+\hat{q} = R W_{\text{FEM}} \hat{f}\ .
 $$
 We make the framework more flexible by introducing limiter operators ([see Towne et al. 2018](https://doi.org/10.1017/jfm.2018.283)), defining the projections:
 $$ 
 \hat{y} = P_r \hat{q}, \quad \hat{f} = P_f \hat{\eta},
 $$
 where $\hat{y}$ and $\hat{\eta}$ are the response and input of the reduced system, respectively. 
-The operators $P_r$ and $P_f$ allow to select the spatial regions and variables involved in the response and inputs, respectively.
+The operators $P_r$ and $P_f$ allow to select and weight the spatial regions and variables involved in the response and inputs, respectively.
 The resolvent operator for the new system becomes: 
 $$
 \hat{y}=P_r \hat{q} = \tilde{R}\hat{\eta},\quad\text{with}\quad \mathbf{\tilde{R}=P_r R W_{\text{FEM}}P_f}$$
@@ -119,7 +124,12 @@ $$
 
 
 
-### Inner Product and Energy Norm
+#### Inner Product and Energy Norm
+**ToDo**:
+- add Chu norm
+- make it clear that all the "Ws" are weights that origin in the FEM discretization (problem specific weights are in the "Ps").
+
+
 The inner product in the discretized domain is written as: 
 $$
 \langle \hat{a}, \hat{b} \rangle = \hat{a}^H W \hat{b},
@@ -130,12 +140,13 @@ The energy norm for the output term is then defined as $\|\hat{y}\|^2=\hat{y}^HW
 
 
 
-### Definition of the gain 
+#### Definition of the gain 
 The gain squared is defined as: 
 $$
 \sigma^2 = \frac{\|\hat{y}\|^2}{\| \hat{\eta}\|^2} = \frac{\hat{y}^H W_{r} \hat{y}}{\hat{\eta}^H W_{f} \hat{\eta}}.
 $$
-## Equivalent EVP
+
+### Equivalent EVP
 We then introduce the resolvent in the expression for the gains $$\sigma^2=\frac{\hat{\eta}^H \tilde{R}^H W_{r} \tilde{R} \hat{\eta}}{\hat{\eta}^H W_{f} \hat{\eta}}.
 $$
 Using the Cholesky decomposition for the forcing weighting matrix,  $W_{f} =  M_f^H M_f$, and introducing a new function $\hat{g}=M_f\hat{\eta}$, we can re-write the definition of the gain as 
@@ -154,15 +165,15 @@ Finally, we can also re-write the H-EPV in terms of the linear operator:
 $$
 (W_{f})^{-1}~P_f^H~ W_{\text{FEM}}^H~(J^{-1})^H~P_r^H~W_{r}~P_r~J^{-1}~W_{\text{FEM}}~P_f~\hat{\eta}=\lambda~\hat{\eta}.
 $$
-This is the expression implemented in FELiCS
+This is the final expression implemented in FELiCS.
 The full forcing is obtained from $\hat{f}=P_f\hat{\eta}$ and the response is $\hat{q} = R \hat{f}$.
 Note: for real operators, such as $P_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
 
-### Dimensions of the operators
+#### Dimensions of the operators
 Setting $N$ the number of degrees of freedom of the linear operator:
 * The state and forcing vectors, $\hat{q}$ and $\hat{f}$, are of length $N$.
 * The linear operator and thus the initial resolvent operator $R$ are square matrices of dimension $[N\times N]$.
 * The input $\hat{\eta}$ and output $\hat{y}$ have lengths $N_{\eta}$ and $N_{y}$ respectively.
-* The dimensions of the limitor operators must be $P_r:[N_y \times N]$ and $P_f:[N \times N_{\eta}]$. **NOTE: This is weird because in the old FELiCS the limitor operator for the response is a square matrix.** Might be combined with another operator for it to be the case (The forcing limitor operator has the right size in FELiCS).
-* The weighting operators used to define the input and output norms must necessary be square matrices of dimensions $W_{in}:[N_{\eta} \times N_{\eta}]$ and $W_{out}:[N_y \times N_{y}]$
+* The dimensions of the limitor operators must be $P_r:[N_y \times N]$ and $P_f:[N \times N_{\eta}]$. 
+* The FEM weighting operators used to define the input and output norms must necessary be square matrices of dimensions $W_{in}:[N_{\eta} \times N_{\eta}]$ and $W_{out}:[N_y \times N_{y}]$
 
