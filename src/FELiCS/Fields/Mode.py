@@ -31,6 +31,17 @@ class Mode(Field):
     """
 
     def __init__(self,FEMSpace, mesh):
+        """
+        Initializes the Mode instance.
+
+        Parameters
+        ----------
+        FEMSpace : object
+            The finite element space defining the discretization.
+        mesh : object
+            The mesh on which the FEM space is defined.
+        """
+        
         super().__init__(FEMSpace, mesh)
         self.isAdjoint  = False
         self.isResponse = False

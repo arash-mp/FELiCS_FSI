@@ -33,6 +33,17 @@ class ModeCollection():
     """
 
     def __init__(self, femSpace, mesh):
+        """
+        Initializes the ModeCollection instance.
+
+        Parameters
+        ----------
+        femSpace : object
+            The finite element space associated with the modes.
+        mesh : object
+            The mesh associated with the modes.
+        """
+        
         self.modeList = []
 
         self.femSpace = femSpace
