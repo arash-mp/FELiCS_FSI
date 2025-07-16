@@ -275,6 +275,8 @@ class Field:
 
 
     def getVorticityField(self):
+        # TODO Sophie: throw error if Field is not vector
+        # TODO: Add vorticity 3D field
         componentGradient = []
         velocityComponents = self.getListOfSingleFields()
 
@@ -323,10 +325,11 @@ class Field:
 
         # # this is only a dummy for the scripting
         if fileName == "function_values_2d":
-            data = np.load(fileName+".npy")
-
-            self.getListOfSingleFields()[0].setCoefficientArray(data[:,0])
-            self.getListOfSingleFields()[1].setCoefficientArray(data[:,1])
+            data = np.load(fileName+".npy").reshape(2,-1).T
+            field1, field2 = self.getListOfSingleFields()
+            field1.setCoefficientArray(data[:,0])  
+            field2.setCoefficientArray(data[:,1])
+            self.setListOfSingleFields([field1, field2])
         else:
             self.setCoefficientArray(np.load(fileName+".npy"))
 
