@@ -9,8 +9,7 @@ class CustomFormatter(logging.Formatter):
     """
     Custom log formatter with colored output for different log levels.
 
-    This class provides colored formatting for log messages in the terminal,
-    making it easier to distinguish between log levels such as DEBUG, INFO,
+    Provides colored formatting for log messages in the terminal, making it easier to distinguish between log levels such as DEBUG, INFO,
     WARNING, ERROR, and CRITICAL.
 
     **Initialize the CustomFormatter object**
@@ -33,8 +32,6 @@ class CustomFormatter(logging.Formatter):
         Log message format string.
     FORMATS : dict
         Mapping of log levels to their respective colored format strings.
-
-
     """
 
     grey = "\x1b[38;20m"
@@ -54,9 +51,9 @@ class CustomFormatter(logging.Formatter):
 
     def format(self, record):
         """
-        Format the specified log record as text.
+        Format the specified log record as text with color based on log level.
 
-        Applies color formatting based on the log level of the record.
+        Applies color formatting to the log message depending on the log level.
 
         Parameters
         ----------
@@ -77,8 +74,7 @@ class Logger:
     """
     Logger class for flexible and colored logging to file and console.
 
-    This class provides a singleton logger with support for colored console output,
-    file logging, dynamic log file location changes, and debug/test modes.
+    Provides a singleton logger with support for colored console output, file logging, dynamic log file location changes, and debug/test modes.
 
     **Initialize the Logger object**
 
@@ -101,13 +97,23 @@ class Logger:
         Name of the logger.
     _logger : logging.Logger
         The underlying Python logger instance.
-
     """
 
     _instance = None
     
     def __init__(self, debug_mode=False, test_mode=False, logger_name="log"):
-        # See class docstring for parameter documentation.
+        """
+        Initialize the Logger instance.
+
+        Parameters
+        ----------
+        debug_mode : bool, optional
+            If True, enables debug logging (default is False).
+        test_mode : bool, optional
+            If True, enables test mode logging (default is False).
+        logger_name : str, optional
+            Name of the logger and log file prefix (default is "log").
+        """
         self.debug_mode = debug_mode
         self.test_mode = test_mode
         self.logger_name = logger_name
@@ -188,8 +194,7 @@ class Logger:
         """
         Retrieve the singleton logger instance.
 
-        If the logger has not been initialized, creates a new instance with the
-        specified name.
+        If the logger has not been initialized, creates a new instance with the specified name.
 
         Parameters
         ----------
@@ -217,8 +222,7 @@ class Logger:
         """
         Move log files to a new directory and update file handlers.
 
-        Moves all current log files to the specified new directory and updates
-        the logger's file handlers to write to the new location.
+        Moves all current log files to the specified new directory and updates the logger's file handlers to write to the new location.
 
         Parameters
         ----------
@@ -232,20 +236,20 @@ class Logger:
         """
         if cls._instance is None:
             raise RuntimeError("Logger not initialized. Create a Logger instance first.")
-        
+
         instance = cls.get_logger()
-        
+
         os.makedirs(os.path.dirname(new_log_path), exist_ok=True)
-        
+
         file_handlers = [h for h in instance.handlers if isinstance(h, logging.FileHandler)]
-        
+
         for handler in file_handlers:
             log_level = handler.level
             log_formatter = handler.formatter
 
             instance.removeHandler(handler)
             handler.close()
-            
+
             if not os.path.exists(new_log_path):
                 os.makedirs(new_log_path)
 
@@ -253,7 +257,7 @@ class Logger:
             if os.path.exists(old_log_path):
                 shutil.move(old_log_path, new_log_path)
             new_log_file_path = os.path.join(new_log_path, os.path.basename(old_log_path))
-            
+
             new_file_handler = logging.FileHandler(new_log_file_path, encoding='utf-8')
             new_file_handler.setLevel(log_level)
             new_file_handler.setFormatter(log_formatter)

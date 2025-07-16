@@ -43,17 +43,18 @@ pages:
     - git --version
     - ls -all
     - |
-      if [ ! -d "local-runner-env" ] || [ ! -f "local-runner-env/bin/activate" ]; then
+      if [ ! -d "local-runner-env2" ] || [ ! -f "local-runner-env2/bin/activate" ]; then
         echo "\nCreating new virtual environment...\n"	
-        python3 -m venv local-runner-env
+        python3 -m venv local-runner-env2
       fi
       echo "Activating virtual environment..."	
-      source local-runner-env/bin/activate
+      source local-runner-env2/bin/activate
       
       if ! python -c "import sphinx" 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
         pip install -U pip
         pip install -U sphinx myst-parser sphinx-book-theme sphinx-autoapi
+        pip install sphinxcontrib-mermaid
       fi
 
   script:

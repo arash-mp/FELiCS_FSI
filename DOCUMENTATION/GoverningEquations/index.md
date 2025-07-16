@@ -1,8 +1,8 @@
-# Mathematical theory and background
+# Theory and implemented equations
 
 [Some introductory text]
 
-##### 1. Operator / linear analysis types
+##### 1. Linear analysis types
 
 - What can the code solve for?
 - What is the theory and motivation behind these types of analyses?
@@ -23,11 +23,10 @@ analysisMode_input_output.md
 
 ```{toctree}
 :maxdepth: 1
-equation_momentum_mass_species_energy.md
 equation_navier_stokes.md
 equation_energy.md
 equation_species.md
-equation_RANS_imcompressible_k-epsilon.md
+equation_kepsilon.md
 ```
 
 ##### 3. Algebraic equations
@@ -42,7 +41,6 @@ equation_RANS_imcompressible_k-epsilon.md
 equation_state.md
 equation_viscosity.md
 equation_reaction.md
-equation_heatrelease.md
 ```
 
 ##### 4. Miscellaneous

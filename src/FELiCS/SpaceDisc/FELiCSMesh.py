@@ -51,7 +51,7 @@ class FELiCSMesh:
         Cached array of mesh vertex coordinates.
     """
 
-    def __init__(self, coordinateSystemName,  meshFileName=None, gdim = None, m=0, inputMesh=None):
+    def __init__(self, coordinateSystemName, meshFileName=None, gdim = None, m=0, inputMesh=None):
         """
         Initializes the FELiCSMesh object, loading a mesh from file or using an existing mesh.
 
