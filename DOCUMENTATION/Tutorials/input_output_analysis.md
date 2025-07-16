@@ -44,7 +44,7 @@ Our base flow is a time-averaged reacting flow field that includes:
 - Temperature field $T$ (derived from progress variable)
 - Turbulent viscosity field $\nu_t$
 
-The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure1](#UXMean) 
+The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure 1](#UXMean) 
 ![](../../TUTORIALS/input_ouput_tutorial/pic/MeanFlow.png) <a id="fig:UXMean"></a>
 
 Figure 1: Mean flow axial velocity
@@ -178,4 +178,9 @@ FELiCS -f turb_flame.json
 ```
 
 ## Postprocessing
-Inside the ```output_dir``` directory, all the response modes can be found in the ```.h5``` and ```.xmf``` format, along with the amplification gains in ```gains.csv```. 
+Inside the ```output_dir``` directory, all the response modes can be found in the ```.h5``` and ```.xmf``` format, along with the amplification gains in ```gains.csv```.
+
+Open the ```.xmf``` file in Paraview. There you can visualize all the base flow variables and response modes. For instance [Figure 2](#UXT) plots the real part of $u_x'$ and $T'$. 
+![](../../TUTORIALS/input_ouput_tutorial/pic/Responsemodetuto4.png) <a id="fig:UXT"></a>
+
+Figure 2: $u_x'$ and $T'$
