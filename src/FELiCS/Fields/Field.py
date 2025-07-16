@@ -267,8 +267,9 @@ class Field:
         from dolfinx.fem import assemble_scalar, form
         norm_squared = 0.
         list1 = self.getListOfSingleFields()
+        J_hat = self.mesh.coordinateSystem.J_hat
         for field in list1:
-            norm_squared += assemble_scalar(form((iDot(iConj(field), field)*ufl.dx)))
+            norm_squared += assemble_scalar(form((iDot(iConj(field.getTensor()), field.getTensor())).ufl_tens*J_hat*ufl.dx))
         
         return np.sqrt(norm_squared)
 
@@ -323,7 +324,7 @@ class Field:
         # # this is only a dummy for the scripting
         if fileName == "function_values_2d":
             data = np.load(fileName+".npy")
-            
+
             self.getListOfSingleFields()[0].setCoefficientArray(data[:,0])
             self.getListOfSingleFields()[1].setCoefficientArray(data[:,1])
         else:
