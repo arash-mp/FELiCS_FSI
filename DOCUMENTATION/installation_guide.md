@@ -45,6 +45,7 @@ In case you want to give the environment a different name, you can change the fi
 As an example, if the downloaded _.yml_ file "_felics_v2.4_env.yml_" is in the "_yml_" folder of the git repository (located in your home folder), the command would be 
 ```bash
 conda env create -f ~/felics2.0/INSTALLATION/felics_v2.4_env.yml -y
+conda env create -f ~/felics2.0/INSTALLATION/felics_v2.4_env.yml -y
 ```
 
 ```{admonition} Optional
@@ -73,6 +74,7 @@ if [ -f "$FELICS_DIRECTORY/src/main.py" ]; then
 	echo -e "FELiCS_PATH=\"${FELICS_DIRECTORY}\" 
 	FELiCS() {
 	    export OMP_NUM_THREADS=2;
+	    python \$FELiCS_PATH/src/main.py \"\$@\";
 	    python \$FELiCS_PATH/src/main.py \"\$@\";
 	    unset OMP_NUM_THREADS
 	}" >> ~/.bashrc
