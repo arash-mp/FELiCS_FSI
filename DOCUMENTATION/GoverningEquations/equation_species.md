@@ -11,8 +11,8 @@ Use case:
 - tutorial example: turbulent flame?
 
 References:
-- [Kaiser et al. 2023](https://doi.org/10.1016/j.combustflame.2023.112778)
 - [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
+- [Kaiser et al. 2023](https://doi.org/10.1016/j.combustflame.2023.112778)
 
 Nomenclature:
 - $Y$: species or passive scalar
@@ -21,7 +21,7 @@ Nomenclature:
 - $\breve{D}$: density-premultiplied mass diffusivity
 - $\breve{D}_m$: density-premultiplied mass diffusivity, molecular
 - $\breve{D}_t$: density-premultiplied mass diffusivity, turbulent
-- f_Y: source term (e.g. chemical reaction rate due to a flame)
+- $f_Y$: source term (e.g. chemical reaction rate due to a flame)
 - $\mathrm{Sc}$: Schmidt number
 - $X_Y$: test function for species transport equation
 
@@ -31,7 +31,7 @@ Assumptions:
 - often Schmidt number is assumed to be constant
 - no gravitational forces
 
-### Nonlinear equation
+### Nonlinear species transport equation
 The nonlinear species transport equation is
 $$
 \rho \frac{\partial Y}{\partial t} + \rho \mathbf{u} \cdot \nabla Y = \nabla \cdot (\breve{D}_\textrm{eff} \nabla Y) + f_{Y}
@@ -44,17 +44,17 @@ __NOTE: The density-premultiplied effective mass diffusivity is defined as $\bre
 
 
 
-### Linear equation
+### Linearized species transport equation
 The linear species transport equation is
 $$
 \overline{\rho} \frac{\partial Y'}{\partial t} + \rho ' \overline{\mathbf{u}} \cdot \nabla \overline{Y} + \overline{\rho} \mathbf{u}' \cdot \nabla \overline{Y} + \overline{\rho} \overline{\mathbf{u}} \cdot \nabla Y' = \nabla \left(\cdot \breve{D}_\textrm{eff}' \nabla \overline{Y}\right) + \nabla \cdot \left(\overline{\breve{D}}_\textrm{eff} \nabla Y'\right) + f_{Y}'
 $$
 
 
-#### Weak form
+#### Weak form of the linearized species transport equation
 The weak form of the linearized species transport equation with normal mode ansatz, as implemented in FELiCS, is
 $$
 \int_\Omega \omega \overline{\rho} \hat{Y} X_Y^* \mathrm{d}\mathbf{x} = \int_\Omega j \, \overline{Y} \, \nabla \cdot \left( \hat{\rho} \, \overline{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \overline{Y} \, \hat{\rho} \, (\overline{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \, \mathrm{d}\mathbf{s} + \int_\Omega j \, \overline{Y} \, \nabla \cdot \left( \overline{\rho} \, \hat{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \overline{Y} \, \overline{\rho} \, (\hat{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \mathrm{d}\mathbf{s} + \int_\Omega j \, \hat{Y} \, \nabla \cdot \left( \overline{\rho} \, \overline{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \hat{Y} \, \overline{\rho} \, (\overline{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \mathrm{d}\mathbf{s} - \int_\Omega j \, \hat{\breve{D}}_\textrm{eff} \, \nabla \overline{Y} \cdot \nabla X_Y^* \, \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \, \hat{\breve{D}}_\textrm{eff} \, \left(\nabla \overline{Y} \cdot \mathbf{n}\right) X_Y^* \, \mathrm{d}\mathbf{s} - \int_\Omega j \, \overline{\breve{D}}_\textrm{eff} \, \nabla \hat{Y} \cdot \nabla X_Y^* \, \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \, \overline{\breve{D}}_\textrm{eff} \, \left(\nabla \hat{Y} \cdot \mathbf{n}\right) X_Y^* \, \mathrm{d}\mathbf{s} + \int_\Omega f_Y' \, X_Y^* \, \mathrm{d}\mathbf{x}
 $$
 
-__NOTE: The density-premultiplied mass diffusivity is defined as $\breve{D}_\textrm{eff} = \rho D$, with $[D_\textrm{eff}] = \mathrm{m}^2/\mathrm{s}$ if using SI units.__
+__NOTE: The density-premultiplied mass diffusivity is defined as $\breve{D}_\textrm{eff} = \rho D_\textrm{eff}$, with $[D_\textrm{eff}] = \mathrm{m}^2/\mathrm{s}$ if using SI units.__

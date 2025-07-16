@@ -1,4 +1,5 @@
 # Viscosity models
+Depending on the flow state, the effective viscosity $\mu_\textrm{eff} = \mu_m + \mu_t$ has to be treated with different models. In laminar, incompressible flows, the turbulent eddy viscosity $\mu_t = 0$ and only the molecular viscosity $\mu_m$ remains. For incompressible, isothermal flows, the molecular viscosity can usually be assumed to be spatially constant. For compressible and/or flows with a variable temperature field, the molecular viscosity is often assumed to be a function of the temperature according to Sutherland's law. In turbulent flows, $\mu_t \neq 0$ and an eddy viscosity model such as the classical Boussinesq model is required. Both of these models are briefly described in the following.
 
 ## Sutherland model
 The Sutherland model describe how molecular viscosity changes with temperature for a specific gas.
@@ -10,26 +11,30 @@ Use case:
 - cases with large gradient temperature which can affect molecular viscosity significantly. 
 
 References:
-- [Demange2024 AIAA](https://doi.org/10.2514/6.2024-3170)
-- [Sutherland1893](https://doi.org/10.1080/14786449308620508)
+- [Sutherland et al. 1893](https://doi.org/10.1080/14786449308620508)
+- [Demange et al. 2024](https://doi.org/10.2514/6.2024-3170)
 
 Nomenclature:
 - $T$: Temperature
 - $T_0$: Reference temperature
-- $\mu$: molecular dynamic viscousity at temperature $T$
-- $\mu_0$: Reference dynamic viscousity at reference temperature $T_0$
-- $C$: Sutherlands constant
+- $\mu$: molecular dynamic viscosity at temperature $T$
+- $\mu_0$: Reference dynamic viscosity at reference temperature $T_0$
+- $C$: Sutherland's constant
 
 Assumptions/justification:
 - Ideal gas behavior
 - Negligible intermolecular forces except during collisions
 - Viscosity depends only on temperature
 
-### Nonlinear equations
+The Sutherland model is
 $$
 \mu = \mu_0 \frac{T_0 +C}{T+C}(\frac{T}{T_0})^{3/2}
 $$
-It is only used for calculating dynamic viscosity of base flow
+It is used for calculating dynamic molecular viscosity of the mean flow.
+
+__NOTE: The linearized form of the Sutherland model is not implemented in FELiCS yet.__
+
+
 ## Boussinesq model
 The Boussinesq model is a turbulence closure approach that approximates the effect of turbulent fluctuations by introducing an eddy viscosity, which relates the Reynolds stresses to the mean strain rate. Eddy viscosity represents the enhanced momentum transport due to turbulence and is typically modeled as an additional scalar in diffusion term in momentum equation. 
 
@@ -55,7 +60,6 @@ Assumptions/justification:
 - Turbulent mixing is analogous to molecular viscosity, using an effective eddy viscosity.
 - Turbulent viscosity is isotropic.
 
-### Nonlinear equations
 The Boussinesq assumption models the Reynolds stress like 
 $$
 -\rho \overline{\mathbf{u}'\mathbf{u}'} =\mu_t (\nabla +\nabla^T )\mathbf{u} - \frac{2}{3} k \mathbf{I}
@@ -64,12 +68,14 @@ combine its first term on right hand side with diffusion term in Momentum equati
 $$
 \mu_{Eff} = \mu + \mu_t
 $$
-### Linear equations
-There are various methods on linearization eddy viscosity. The following methods are implemented in present version of FELiCS:
-- Frozen eddy viscosity
 
-#### Frozen eddy viscosity
+### Frozen eddy viscosity
 In this method, the fluctuation of eddy visicosity is ignore, which means
 $$
 \mu' = 0
 $$
+
+### Linear equations
+There are various methods on linearization eddy viscosity. The following methods are implemented in present version of FELiCS:
+- Frozen eddy viscosity
+
