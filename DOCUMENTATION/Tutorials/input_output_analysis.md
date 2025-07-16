@@ -67,7 +67,7 @@ The boundary conditions for reacting flows include additional considerations for
 ```{note}
 The forcing boundary (Boundary 1) is where external perturbations are applied to study the system's response. The progress variable boundary conditions ensure proper species transport at each boundary.
 ```
-Note that the name to `custom` in [```boundaries.json```](../../TUTORIALS/TURB_FLAME/boundaries.json) to manually design each component BC.
+Note that we set the name to `custom` in [```boundaries.json```](../../TUTORIALS/TURB_FLAME/boundaries.json) to manually design each component of the BC.
 ```json
 {
     "1": {
@@ -125,11 +125,11 @@ Here are some key settings for input/output analysis with reacting flows:
 "m": 0.0,
 "nDim": 2
 ```
-- We enables input/output analysis with
+- We enable input/output analysis with
 ```json
 "AnalysisMode": "Input-Output",
 ```
-- We include the Momentum, Mass, Energy equations, along with Species transport for progress variable. The low-Mach equation of state allows to assume the mean pressure to be constant. The density is only impacted by the temperature.
+- We include the `Momentum`, `Mass`, `Energy` equations, along with `Species` transport for progress variable. The `low-Mach` equation of state allows to assume the mean pressure to be constant. The density is only impacted by the temperature.
 ```json
 "SetOfEquations": {
     "Momentum": {
@@ -155,7 +155,7 @@ Here are some key settings for input/output analysis with reacting flows:
 }
 ```
 
-- The Prandtl number is defined for thermal diffusion and the eddy viscosity $\nu_t$ is red from the **.fel** file.
+- The Prandtl number is defined for thermal diffusion and the eddy viscosity $\nu_t$ is read from the **.fel** file.
 ```json
 "PrandtlNumber": 0.9,
 "TurbulenceModel": "File"
