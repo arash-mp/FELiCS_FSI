@@ -43,6 +43,13 @@ You will:
 
 ---
 
+## [Tutorial 4: Input-Output Analysis](input_output_analysis.md)
+Lorem Ipsum
+You will:
+- Do stuff
+
+---
+
 ## Additional Resources
 - [GMSH Quick Reference](gmsh.md):  Handy guide to the most important GMSH Python API commands for mesh generation.
 
@@ -58,4 +65,5 @@ For further details on settings and file formats, see the [FELiCS settings docum
 cylinder_wake.md
 modal_analysis.md
 Resolvent_Analysis.md
+input_output_analysis.md
 ```
