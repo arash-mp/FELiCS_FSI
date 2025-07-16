@@ -96,6 +96,7 @@ We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wa
 {"MeshFilePath":"cylinder_wake.msh"}
 {"MeanFlowFilePath": "base_flow_for_FELiCS.fel"}
 {"BCsFilePath": "bc_modal.json"}
+```
 We specify which eigenvalues to compute by providing a list of initial guesses:
 ```json
 {"EigenValueGuess": [0.7]}
