@@ -8,8 +8,8 @@ Motivation:
 
 Use case:
 - in every type of flow comprising Newton fluids (like air, water, gas flows at `normal' conditions)
-- tutorial example incompressible with link: cylinder wake
-- tutorial example compressible with link: cylinder wake
+- tutorial example incompressible with link: cylinder wake incompressible
+- tutorial example compressible with link: cylinder wake compressible
 
 References:
 - [Mueller et al. 2024](https://doi.org/10.1017/jfm.2024.679)
@@ -50,7 +50,7 @@ where the viscous stress tensor $\mathbf{\tau}$ is
 $$
 \mathbf{\tau} = \mu_\textrm{eff}(\nabla + \nabla ^T)\mathbf{u}
 $$
-and where $\mu_\textrm{eff}$ is the effective dynamic viscosity (see viscosity models for details).
+and where $\mu_\textrm{eff}$ is the effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
 
 ### Mean flow equations
 We consider the flow field to be comprised of a  time-invariant base flow, which can be either a time-averaged flow or fixed point solution (base flow), and the perturbation, such that 
@@ -94,13 +94,13 @@ where the mean viscous stress tensor $\overline{\tau}$ is
 $$
 \mathbf{\overline{\tau}} = \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T)\overline{\mathbf{u}}]
 $$
-and where $\overline{\mu}_\textrm{eff}$ is the mean effective dynamic viscosity (see viscosity models for details).
+and where $\overline{\mu}_\textrm{eff}$ is the mean effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
 
 
 
 
 ### Linear equations
-The continuity equation is
+The mass equation is
 $$
 \nabla \cdot \mathbf{u}' = 0
 $$
@@ -114,7 +114,7 @@ where the fluctuating viscous stress tensor $\tau'$ is
 $$
 \mathbf{\tau}' = \mu_\textrm{eff}'[(\nabla + \nabla ^T)\overline{\mathbf{u}}]+ \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T) \mathbf{u}']
 $$
-and where $\mu_\textrm{eff}'$ is the fluctuating effective dynamic viscosity (see viscosity models for details).
+and where $\mu_\textrm{eff}'$ is the fluctuating effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
 
 #### Weak form
 The weak form of the linearized Navier--Stokes equations with normal mode ansatz, as implemented in FELiCS, is
@@ -127,10 +127,6 @@ $$
 $$
 __NOTE: In the linearized equations, the convective term is *not* integrated by parts.__
 
-### Bilinear equations
-The bilinear equations are required for sensitivity analyses \ldots
-
-__NOTE: To be documented.__
 
 
 
@@ -158,7 +154,7 @@ where the viscous stress tensor $\tau$ is
 $$
 \tau = \mu_\textrm{eff}[(\nabla + \nabla ^T)\mathbf{u} - \frac{2}{3} (\nabla \cdot \mathbf{u})\mathbf{I}]
 $$
-where $\mu_\textrm{eff}$ is the effective dynamic viscosity (see viscosity models for details) and where $\mathbf{I}$ is the identity tensor.
+where $\mu_\textrm{eff}$ is the effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details) and where $\mathbf{I}$ is the identity tensor.
 
 ### Mean flow equations (to be reviewed by Simon)
 
@@ -201,7 +197,7 @@ where the mean viscous stress tensor $\overline{\tau}$ is
 $$
 \mathbf{\overline{\tau}} = \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T)\overline{\mathbf{u}}]
 $$
-and where $\overline{\mu}_\textrm{eff}$ is the mean effective dynamic viscosity (see viscosity models for details).
+and where $\overline{\mu}_\textrm{eff}$ is the mean effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
 
 
 ### Linear equations
@@ -220,7 +216,7 @@ where the fluctuating viscous stress tensor $\tau'$ is
 $$
 \tau' = \mu_\textrm{eff}'[(\nabla + \nabla ^T)\overline{\mathbf{u}} - \frac{2}{3} \nabla \cdot \overline{\mathbf{u}} \mathbf{I}]+ \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T) \mathbf{u}' - \frac{2}{3}( \nabla \cdot \mathbf{u}' )\mathbf{I}]
 $$
-and where $\mu_\textrm{eff}'$ is the effective dynamic viscosity (see viscosity models for details).
+and where $\mu_\textrm{eff}'$ is the effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
 
 #### Weak form
 The weak form of the linearized Navier--Stokes equations with normal mode ansatz, as implemented in FELiCS, is

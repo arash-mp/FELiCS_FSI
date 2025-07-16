@@ -1,4 +1,10 @@
-# Resolvent Analysis
+# Resolvent analysis
+
+References:
+- [Beneddine et al. 2016](https://doi.org/10.1017/jfm.2016.331)
+- [Towne et al. 2018](https://doi.org/10.1017/jfm.2018.675)
+- [von Saldern et al. 2024](https://doi.org/10.1017/jfm.2024.922)
+- [Müller et al. 2024](https://doi.org/10.1017/jfm.2024.679)
 
 ## General Resolvent Formulation
 
