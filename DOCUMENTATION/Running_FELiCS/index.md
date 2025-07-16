@@ -43,7 +43,7 @@ flowchart LR
     subgraph Output["Output"]
         D1[Modal Analysis<br><a href="../Tutorials/modal_analysis.html">see Tutorial 2</a>]
         D2[Resolvent Analysis<br><a href="../Tutorials/Resolvent_Analysis.html">see Tutorial 3</a>]
-        D3[Input-Output<br>Analysis]
+        D3[Input-Output<br>Analysis<br><a href="../Tutorials/input_output_analysis.html">see Tutorial 4</a>]
         style Output fill:#f1faee,stroke:#457b9d,stroke-width:2px
         style D1 fill:#a8dadc,stroke:#333,stroke-width:1px
         style D2 fill:#a8dadc,stroke:#333,stroke-width:1px

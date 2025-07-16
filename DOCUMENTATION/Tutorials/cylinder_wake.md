@@ -33,7 +33,9 @@ Figure 1. 2D Mesh.
 ![Image2](../../TUTORIALS/cylinder_wake_tutorial/magCylinderWake.png) <a id="fig:MagMesh"></a>
 Figure 2. Magnified version of [Figure 1](#fig:Mesh)
 
-**Note:** For 2D computations, only triangular elements can be handeled. 
+```{note}
+For 2D computations, only triangular elements can be handeled. 
+```
 The file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) includes the domains:
 ```sh
 $PhysicalNames

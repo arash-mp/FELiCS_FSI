@@ -1,7 +1,7 @@
 # Tutorial 4: Input/Output analysis
 
 ## Goal of the Tutorial
-The goal of this tutorial is to provide a step-by-step guide on performing input/output analysis for a reacting flow. By the end of this tutorial, you will be able to:
+The goal of this tutorial is to provide a step-by-step guide on performing input/output analysis for a reacting turbulent jet. By the end of this tutorial, you will be able to:
 
 - Configure reaction mechanisms and species transport in FELICS.
 - Write customed boundary conditions.
@@ -19,14 +19,16 @@ The input/output analysis will:
 6. Export results to the output directory
 
 ## Case Definition
-In this tutorial, we will perform a compressible input/output analysis about a 2D reacting jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonicaly forced at the inlet. The case uses a progress variable approach to model the reaction and includes species transport effects.
+In this tutorial, we will perform a compressible input/output analysis about a 2D reacting turbulent jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonicaly forced at the inlet. The case uses a progress variable approach to model the reaction and includes species transport effects.
 
 The 3D configuration is axisymmetric, allowing us to solve the 3D problem for a given azimuthal wavenumber and work with a 2D mesh. The reaction is modeled using a progress variable that tracks the reaction progress from reactants to products.
 
 ### Mesh generation
 We generate the 2D mesh on GMSH for the combustor geometry. The mesh file `KITBurnerWallSep.msh` is used in this tutorial, which represents a confined burner configuration.
 
-**Warning:** For 2D computations, FELiCS handles only triangular elements only.
+```{caution}
+For 2D computations, FELiCS handles only triangular elements only.
+```
 
 The mesh should include proper boundary identification for:
 - Inlet boundaries (for fuel/air injection)
@@ -62,8 +64,9 @@ The boundary conditions for reacting flows include additional considerations for
 | <span style="color:Darkorange">Symmetry</span>  | 3         | Neumann   | Dirichlet | Neumann   | Neumann   | Neumann    |
 | <span style="color:Darkorange">Walls</span>     | 4, 5, 6   | Dirichlet | Dirichlet | Dirichlet | Neumann   | Neumann    |
 
-**Note:** The forcing boundary (Boundary 1) is where external perturbations are applied to study the system's response. The progress variable boundary conditions ensure proper species transport at each boundary.
-
+```{note}
+The forcing boundary (Boundary 1) is where external perturbations are applied to study the system's response. The progress variable boundary conditions ensure proper species transport at each boundary.
+```
 Note that the name to `custom` in [```boundaries.json```](../../TUTORIALS/TURB_FLAME/boundaries.json) to manually design each component BC.
 ```json
 {

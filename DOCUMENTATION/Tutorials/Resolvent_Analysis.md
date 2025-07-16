@@ -25,8 +25,6 @@ To do so, we write a **.geo** file readable by GMSH using the python script [```
 
 Feel free to play with the `CellsFineness` factor to see the influence of finer meshes.
 
-**Warning:** For 2D computations, FELiCS handles only triangular elements only.
-
 Open the .geo file with GMSH an click on 'Mesh -> 2D'. You should obtain this mesh:
 ![Figure1](../../TUTORIALS/resolvent_tutorial/GMSH.png)
 Figure 1. Stenosis mesh
@@ -77,7 +75,9 @@ Here are some key settings for our resolvent analysis:
 ```json
 {"CoordinateSystem": "Cylindrical",}
 ```
-**Note:** The velocity components are thus refered to as `ux, ur, ut` instead of `ux, uy, uz`.
+```{note}
+The velocity components are thus refered to as `ux, ur, ut` instead of `ux, uy, uz`.
+'''
 
 - We choose to study axisymmetric perturbations by setting the azimuthal wavenumber to 0:
 ```json
@@ -103,8 +103,9 @@ Here are some key settings for our resolvent analysis:
 ```json
     {"nSolut": 2}
 ```
-**NOTE:** The following fields `CalculateAdjoint` and `EigenValueGuess` are not relevent for the resolvent analysis.
-
+```{note}
+The following fields `CalculateAdjoint` and `EigenValueGuess` are not relevent for the resolvent analysis.
+```
 ## Running the analysis
 Your case folder should look like:
 ```bash
@@ -113,8 +114,7 @@ Your case folder should look like:
 ├ meanFlow.fel
 ├ resolvent_settings.json
 ├ boundaries.json
-├ mixture.json
-└── output_dir
+└ mixture.json
 ```
 Run the analysis with the command:
 ```bash
@@ -122,7 +122,7 @@ FELiCS -f resolvent_settings.json
 ```
 With the provided mesh, it should take about two minute to compute the two resolvent modes for each frequency (~25 minutes).
 ## Postprocessing
-After the computation, check the `output_dir/`. You should find these files: 
+After the computation, the `output_dir/` has appeared. You will find there the following files: 
 ```bash
 .
 └── output_dir
@@ -156,7 +156,8 @@ Figure 4. Response mode shape
 
 The $u_\theta$ fluctuation is 0 in this case because we study axisymmetric perturbations ($m=0$).
 
->**Warning:** The gains provided by FELiCS are $\sigma^2$. The forcing modes have a unitary norm on the defined forcing domain, but the response modes have the norm $\sigma$ on the defined response domain.
-
+```{warning}
+The gains provided by FELiCS are $\sigma^2$. The forcing modes have a unitary norm on the defined forcing domain, but the response modes have the norm $\sigma$ on the defined response domain.
+```
 ## References
 <a id="1">[1]</a> Villié, A., Schmitter, S., von Saldern, J. G., Demange, S., & Oberleithner, K. . “Physics-informed neural networks for enhancing medical flow magnetic resonance imaging: Artifact correction and mean pressure and Reynolds stresses assimilation”. In: Physics of Fluids 37(2) (2025). doi: 10.1063/5.0252852.

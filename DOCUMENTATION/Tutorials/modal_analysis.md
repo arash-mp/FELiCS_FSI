@@ -33,7 +33,9 @@ The boundary conditions for the fluctuations are:
 | <code style="color : Darkorange">Top</code>      | 4 | Dirichlet   | Dirichlet | Dirichlet   |
 | <code style="color : Darkorange">Wall</code>     | 5 | Dirichlet | Dirichlet | Neumann   |
 
-**Note:** The BCs for the base flow variables ($\bar{u}_x, \bar{u}_y, \bar{p}$) in [base flow tutorial](./cylinder_wake.md) and for the perturbations ($u_x', u_y', p'$) current modal analysis are different.
+```{note}
+The BCs for the base flow variables ($\bar{u}_x, \bar{u}_y, \bar{p}$) in [base flow tutorial](./cylinder_wake.md) and for the perturbations ($u_x', u_y', p'$) current modal analysis are different.
+'''
 
 These BCs are implemented in [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) using different names.
 
