@@ -27,22 +27,25 @@ The mesh should include proper boundary identification for:
 This tutorial case folder is located in ```felics2.0/TUTORIALS/TURB_FLAME```.
 
 Our base flow is a time-averaged reacting flow field that includes:
-- Velocity components (ux, ur, ut in cylindrical coordinates)
-- Pressure field
-- Species concentration (progress variable)
-- Temperature field (derived from progress variable)
-- Turbulent viscosity field
+- Velocity components ($u_x, u_r, u_\theta$)
+- Pressure field $p$
+- Species concentration (progress variable $c$)
+- Temperature field $T$ (derived from progress variable)
+- Turbulent viscosity field $\nu_t$
 
-The base flow is stored in the file ```KIT_confined.fel``` and contains the mean flow data for the reacting flame. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis.
+The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure1](#UXMean) 
+![Figure1](../TUTORIALS/input_ouput_tutorial/pic/MeanFlow.png) <a id="fig:UXMean"></a>
+
+Figure 1: Mean flow axial velocity
 
 ## Input/Output Analysis Parameters
 
 ### Boundary conditions
 Here we set the axisymmetric boundary conditions in the [```boundaries.json```](../../TUTORIALS/TURB_FLAME/boundaries.json) file.
 
-The boundary conditions for reacting flows include additional considerations for species transport:
+The boundary conditions for reacting flows include additional considerations for species transport (here the progress $c'$):
 
-| Boundary | $u'_x$ | $u'_r$ | $u'_\theta$ | $p'$ | $c'$ (progress) |
+| Boundary | $u'_x$ | $u'_r$ | $u'_\theta$ | $p'$ | $c'$|
 |:----------|:-----------|:-----------|:-----------|:-----------|:-----------|
 | <code style="color : Darkorange">Forcing (Boundary 1)</code> | None | Dirichlet | Dirichlet | None | Dirichlet |
 | <code style="color : Darkorange">Outlet (Boundary 2)</code> | None | None | None | Dirichlet | None |

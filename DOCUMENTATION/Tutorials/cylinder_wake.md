@@ -25,7 +25,7 @@ Since the code uses the Finite Element Continuous Galerkin approach, a computati
 ```sh
 python cylinder_wake_mesh.py
 ```
-If you open the mesh in GMSH, click on 'Mesh -> 2D'. It should look like:
+If you open the mesh in GMSH, click on `Mesh -> 2D`. It should look like:
 
 ![Image1](../../TUTORIALS/cylinder_wake_tutorial/CylinderWakeMesh.png) <a id="fig:Mesh"></a>
 Figure 1. 2D Mesh.
