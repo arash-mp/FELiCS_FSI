@@ -5,13 +5,12 @@ import numpy as np
 import h5py
 
 # Set the base path for data files
-fold_path = '/my/path/to/case'
 
 # File paths configuration
 case = {
-    'DATA_FILE': '/UMean.npy',  # Mean velocity data from LES data
-    'MESH_FILE': '/Mesh.npy',   # Mesh coordinates
-    'SAVE_FILE': '/meanFlow.fel',           # Output file for FELiCS
+    'DATA_FILE': 'UMean.npy',  # Mean velocity data from LES data
+    'MESH_FILE': 'Mesh.npy',   # Mesh coordinates
+    'SAVE_FILE': 'meanFlow.fel',           # Output file for FELiCS
 }
 
 # Physical parameters
@@ -22,8 +21,8 @@ physpar = {
 }
 
 # Load the mesh and base flow data
-mesh = np.load(fold_path + case['MESH_FILE'])
-UMean = np.load(fold_path + case['DATA_FILE'])
+UMean = np.load('./' + case['DATA_FILE'])
+mesh = np.load(case['MESH_FILE'])
 
 # Extract and ravel coordinates and velocities
 x, y = mesh[:, :, 0].ravel(), mesh[:, :, 1].ravel()
@@ -46,6 +45,7 @@ plt.colorbar(sc1, ax=ax1)
 sc2 = ax2.scatter(x, y, c=ur)
 ax2.set_title('Response Domain')
 plt.colorbar(sc2, ax=ax2)
+plt.show()
 
 # Upstream sponge parameters
 x0inlet = -2  # Start of inlet sponge region
@@ -75,6 +75,7 @@ tpc = plt.scatter(x, y, c=spg)
 plt.axis('equal')
 plt.colorbar(tpc)
 
+
 # Define regions for forcing and response domains
 Wforcing = np.where((x > -4) & (x < 12), 1, 0)
 Wresponse = np.where((x > -4) & (x < 12), 1, 0)
@@ -85,11 +86,12 @@ plt.colorbar(sc1, ax=ax1)
 sc2 = ax2.scatter(x, y, c=Wresponse)
 ax2.set_title('Response Domain')
 plt.colorbar(sc2, ax=ax2)
+plt.show()
 
 # Create and save the FELiCS mean flow file
-print(f'-- Saving data to file: {fold_path + case["SAVE_FILE"]}')
+print(f'-- Saving data to file: {case["SAVE_FILE"]}')
 
-hf = h5py.File(fold_path + case['SAVE_FILE'], 'w')
+hf = h5py.File(case['SAVE_FILE'], 'w')
 # Save coordinates and velocity components
 hf.create_dataset('/MeanFlow/x', data=x)
 hf.create_dataset('/MeanFlow/r', data=y)

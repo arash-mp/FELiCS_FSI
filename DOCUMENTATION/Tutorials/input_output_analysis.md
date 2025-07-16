@@ -1,11 +1,15 @@
 # Tutorial 4: Input/Output analysis
 
 ## Goal of the Tutorial
-The goal of this tutorial is to provide a step-by-step guide on performing input/output analysis in FELICS for a reacting flow. By the end of this tutorial, you will be able to:
+The goal of this tutorial is to provide a step-by-step guide on performing input/output analysis for a reacting flow. By the end of this tutorial, you will be able to:
 
 - Configure reaction mechanisms and species transport in FELICS.
 - Write customed boundary conditions.
 - Perform input/output analysis with boundary forcing for reactive flows using the mass, momentum, species, and energy equations.
+
+The analysis provides insights into:
+- How the reacting flow responds to external perturbations
+- The coupling between fluid dynamics and chemical reactions
 
 The input/output analysis will:
 1. Load the reacting flame base flow
@@ -13,10 +17,6 @@ The input/output analysis will:
 3. Apply forcing at the specified boundary
 4. Solve for the system response and compute transfer functions
 6. Export results to the output directory
-
-The analysis provides insights into:
-- How the reacting flow responds to external perturbations
-- The coupling between fluid dynamics and chemical reactions
 
 ## Case Definition
 In this tutorial, we will perform a compressible input/output analysis about a 2D reacting jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonicaly forced at the inlet. The case uses a progress variable approach to model the reaction and includes species transport effects.
@@ -44,10 +44,10 @@ Our base flow is a time-averaged reacting flow field that includes:
 - Temperature field $T$ (derived from progress variable)
 - Turbulent viscosity field $\nu_t$
 
-The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure1](#UXMean) 
+The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure 1](#UXMean) 
 ![](../../TUTORIALS/input_ouput_tutorial/pic/MeanFlow.png) <a id="fig:UXMean"></a>
 
-Figure 1: Mean flow axial velocity
+Figure 1. Mean flow velocity $\bar{u}_x$
 
 ## Input/Output Analysis Parameters
 
@@ -172,20 +172,15 @@ Here are some key settings for input/output analysis with reacting flows:
 ```
 
 ## Running the analysis
-Your case folder should look like:
-```bash
-.
-├── KITBurnerWallSep.msh
-├── KIT_confined.fel
-├── turb_flame.json
-├── boundaries.json
-├── mixture.json
-└── output_dir/
-```
-
 Run the analysis with the command:
 ```bash
 FELiCS -f turb_flame.json
 ```
 
+## Postprocessing
+Inside the ```output_dir``` directory, all the response modes can be found in the ```.h5``` and ```.xmf``` format, along with the amplification gains in ```gains.csv```.
 
+Open the ```.xmf``` file in Paraview. There you can visualize all the base flow variables and response modes. For instance [Figure 2](#UXT) plots the real part of $u_x'$ and $T'$. 
+![](../../TUTORIALS/input_ouput_tutorial/pic/Responsemodetuto4.png) <a id="fig:UXT"></a>
+
+Figure 2. Real part of the response modes $u_x'$ and $T'$.
