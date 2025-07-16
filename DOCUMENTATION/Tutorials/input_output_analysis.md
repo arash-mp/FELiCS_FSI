@@ -47,7 +47,7 @@ Our base flow is a time-averaged reacting flow field that includes:
 The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure 1](#UXMean) 
 ![](../../TUTORIALS/input_ouput_tutorial/pic/MeanFlow.png) <a id="fig:UXMean"></a>
 
-Figure 1: Mean flow axial velocity
+Figure 1. Mean flow velocity $\bar{u}_x$
 
 ## Input/Output Analysis Parameters
 
@@ -183,4 +183,4 @@ Inside the ```output_dir``` directory, all the response modes can be found in th
 Open the ```.xmf``` file in Paraview. There you can visualize all the base flow variables and response modes. For instance [Figure 2](#UXT) plots the real part of $u_x'$ and $T'$. 
 ![](../../TUTORIALS/input_ouput_tutorial/pic/Responsemodetuto4.png) <a id="fig:UXT"></a>
 
-Figure 2: $u_x'$ and $T'$
+Figure 2. Real part of the response modes $u_x'$ and $T'$.

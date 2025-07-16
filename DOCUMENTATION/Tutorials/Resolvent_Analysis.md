@@ -69,44 +69,42 @@ In our case, we set:
 | <code style="color : Darkorange">Wall</code> | Dirichlet | Dirichlet | Dirichlet | Neumann |
 
 ### Settings
-The setting file contains all the analysis information. It should be placed in our 
-An example of settings file is [```resolvent_settings.json```](../../TUTORIALS/resolvent_tutorial/resolvent_settings.json). The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+The setting file [```resolvent_settings.json```](../../TUTORIALS/resolvent_tutorial/resolvent_settings.json) contains all the analysis information. The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
-The coordinates system is set to Cylindrical: 
+Here are some key settings for our resolvent analysis:
+
+- The coordinates system is set to Cylindrical: 
 ```json
 {"CoordinateSystem": "Cylindrical",}
 ```
 **Note:** The velocity components are thus refered to as `ux, ur, ut` instead of `ux, uy, uz`.
 
-The azimuthal wavenumber is chosen:
+- We choose to study axisymmetric perturbations by setting the azimuthal wavenumber to 0:
 ```json
     "m":0.0,
 ```
-We set the molecular viscosity $\nu$ to be the inverse of the Reynolds number since we non-dimensionalized the variables and equations:
+- Since we non-dimensionalized the variables and equations, we set the molecular viscosity $\nu$ to be the inverse of the Reynolds number:
 ```json
 "MolVisc":0.000125,
 ```
-You can increase this field in order to add a uniform eddy viscosity field. 
-Ensure consistency in the normalization approach throughout the analysis.
+    You can increase this field in order to add a uniform eddy viscosity field.Ensure consistency in the normalization approach throughout the analysis.
 
-We want to solve the Momentum and Mass equations only and set the other equations in <code style="color : Blue">"SetofEquations"</code> to `"None"`
+- We want to solve the ```Momentum``` and ```Mass``` equations only and set the other equations in <code style="color : Blue">"SetofEquations"</code> to `"None"`
 
-If we included a turbulent viscosity field in the ```meanFlow.py``` file, we should set:
+- If we included a turbulent viscosity field in the ```meanFlow.py``` file, we should set:
 ```json
     {"TurbulenceModel":"File"}
 ```
-The frequencies for which we compute the resolvent modes are provided in the field: 
+- The frequencies for which we compute the resolvent modes are provided in the field: 
 ```json
     {"Omegas":[0.062, 0.10, 0.17, 0.29, 0.48, 0.81, 1.35, 2.26, 3.1, 4.36, 6.28]}
 ```
-We can vary the number of resolvent modes that we want to compute with the field:
+- We can vary the number of resolvent modes that we want to compute with the field:
 ```json
     {"nSolut": 2}
 ```
-**NOTE:** The following fields are not relevent for the resolvent analysis:
-```json
-{"CalculateAdjoint", "EigenValueGuess"}
-```
+**NOTE:** The following fields `CalculateAdjoint` and `EigenValueGuess` are not relevent for the resolvent analysis.
+
 ## Running the analysis
 Your case folder should look like:
 ```bash
@@ -146,7 +144,7 @@ The resolvent gains are plotted against the Strouhal number $St = \omega/2\pi$ i
 Figure 2. Resolvent gains
 Note that in this case, only the leading and subleading resolvent modes were computed.
 
-The script also include functions to read the mesh, load and plot the mode in matplotlib. 
+The script also include functions to read the mesh, load and plot the mode in matplotlib.
 The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are plotted in [Figure3](#Forcingdomain) and [Figure4](#Responsedomain):
 ![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
 

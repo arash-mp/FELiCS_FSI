@@ -21,8 +21,8 @@ physpar = {
 }
 
 # Load the mesh and base flow data
+UMean = np.load('./' + case['DATA_FILE'])
 mesh = np.load(case['MESH_FILE'])
-UMean = np.load(case['DATA_FILE'])
 
 # Extract and ravel coordinates and velocities
 x, y = mesh[:, :, 0].ravel(), mesh[:, :, 1].ravel()
