@@ -1,6 +1,4 @@
-# Reynolds-averaged Navier--Stokes equations (incompressible)
-
-**Xiuyang has done a draft, and is reviewing. Welcome for any comments.**
+# $k$-$\varepsilon$ equations
 
 ## Nonlinear form of steady incompressible RANS equations
 The starting point are the four equations (Continuity, Momentum, k and epsilon equations) for incompressible flow:

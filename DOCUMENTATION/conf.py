@@ -39,7 +39,7 @@ autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inher
 
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
-
+html_logo = "_static/logo.png"
 
 # Napoleon settings
 napoleon_google_docstring = True
