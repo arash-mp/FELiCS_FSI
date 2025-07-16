@@ -118,7 +118,3 @@ class Mapping:
         mapping             = index_array[index_array[:, 0].argsort()][:, 1]
 
         return mapping
-
-    # @property
-    # def MappingVector(self):
-    #     return self._indexVector
