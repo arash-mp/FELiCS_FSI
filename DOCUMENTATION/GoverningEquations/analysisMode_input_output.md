@@ -11,10 +11,10 @@ $$
 - $\mathbf{C}$: input matrix (maps external forcing $\mathbf{f}$ into the state space)
 - $\mathbf{f}$: external forcing (e.g. actuation, volumne force)
 
-Let $\mathbf{q}_b$ be the steady base state , i.e. $\mathcal{N}(\mathbf{q}_b)=0$ and introduce a small pertubation 
+Let $\overline{\mathbf{q}}$ be the steady base state , i.e. $\mathcal{N}(\overline{\mathbf{q}})=0$ and introduce a small pertubation 
 
 $$
-\mathbf{q}(\mathbf{x},t) = \mathbf{q}_b(\mathbf{x})+\epsilon\mathbf{q}'(\mathbf{x},t), \qquad \epsilon \ll 1.
+\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\epsilon\mathbf{q}'(\mathbf{x},t), \qquad \epsilon \ll 1.
 $$
 
 Linearizsation gives the linearized input-output system:
@@ -23,8 +23,8 @@ $$
 \frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}')+\mathbf{C}\mathbf{f}(t)
 $$
 
-where  $\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\mathbf{q}_b}\in \mathbb{R}^{N\times N}$
-is the Jacobian at the base state $\mathbf{q}_b$. 
+where  $\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\overline{\mathbf{q}}}\in \mathbb{R}^{N\times N}$
+is the Jacobian at the base state $\overline{\mathbf{q}}$. 
 
 We further define the outpout equation 
 $$\mathbf{y}' =\mathrm{D}\mathbf{q}'$$

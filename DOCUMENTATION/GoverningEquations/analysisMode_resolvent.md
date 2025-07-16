@@ -16,10 +16,10 @@ $$
 - $\mathbf{g}$: nonlinear forcing
 
 
-We consider the flow field to be comprised of a  time-invariant base flow $\mathbf{q}_b \in \mathbb{R}^N  $, which can be either a time-averaged flow or fixed point solution, and the perturbation $ \mathbf{q}' \in \mathbb{R} $, such that 
+We consider the flow field to be comprised of a  time-invariant base flow $\overline{\mathbf{q}} \in \mathbb{R}^N  $, which can be either a time-averaged flow or fixed point solution, and the perturbation $ \mathbf{q}' \in \mathbb{R} $, such that 
 
 $$
-\mathbf{q}(\mathbf{x},t) = \mathbf{q}_b(\mathbf{x})+\mathbf{q}'(\mathbf{x},t)
+\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t)
 $$
 
 Cinsidering a stationary baseflow we arrive at a Llinear Time-Invariant (LTI) dynamical system describing the pertubation, reading 
@@ -31,9 +31,9 @@ $$
 with  
 
 $$
-\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\mathbf{q}_b}\in \mathbb{R}^{N\times N}
+\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\overline{\mathbf{q}}}\in \mathbb{R}^{N\times N}
 $$
-representing the  nonlinear operator linearized around the about the base flow $\mathbf{q}_b$ while the forcing $\mathbf{f}' = \mathcal{N}(\mathbf{q_{\mathbf{b}}})+O(|\mathbf{q'}|^2)+\mathbf{q} \in \mathbb{R}$ collects the nonlinear operator acting on the base flow, the nonlinear terms, and external forcing $\mathbf{g}$ ([Rolandi et al. 2024](https://doi.org/10.1007/s00162-024-00717-x)). 
+representing the  nonlinear operator linearized around the about the base flow $\overline{\mathbf{q}}$ while the forcing $\mathbf{f}' = \mathcal{N}(\mathbf{q_{\mathbf{b}}})+O(|\mathbf{q'}|^2)+\mathbf{q} \in \mathbb{R}$ collects the nonlinear operator acting on the base flow, the nonlinear terms, and external forcing $\mathbf{g}$ ([Rolandi et al. 2024](https://doi.org/10.1007/s00162-024-00717-x)). 
 
 
 

@@ -12,10 +12,10 @@ $$
 
 where $ \mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in  \mathbb{R}^N $ represents the state vector (conservative variables) and $\mathcal{N} demontes the nonlinear operator (e.g. the NS evolution operator).
 
-We consider the flow field to be comprised of a  time-invariant base flow $\mathbf{q}_b \in \mathbb{R}^N  $, which can be either a time-averaged flow or fixed point solution, and the perturbation $ \mathbf{q}' \in \mathbb{R} $, such that 
+We consider the flow field to be comprised of a  time-invariant base flow $\overline{\mathbf{q}} \in \mathbb{R}^N  $, which can be either a time-averaged flow or fixed point solution, and the perturbation $ \mathbf{q}' \in \mathbb{R} $, such that 
 
 $$
-\mathbf{q}(\mathbf{x},t) = \mathbf{q}_b(\mathbf{x})+\epsilon\mathbf{q}'(\mathbf{x},t)
+\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\epsilon\mathbf{q}'(\mathbf{x},t)
 $$
 
 In contrast to the resolvent analysis, we assume the pertubation to me small, $\epsilon \ll 1$. 
@@ -28,9 +28,9 @@ $$
 with  
 
 $$
-\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\mathbf{q}_b}\in \mathbb{R}^{N\times N}
+\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\overline{\mathbf{q}}}\in \mathbb{R}^{N\times N}
 $$
-representing the Jakobian evaluate at the base state  $\mathbf{q}_b$. 
+representing the Jakobian evaluate at the base state  $\overline{\mathbf{q}}$. 
 
 ### Spectral analysis of the  linear operator
 
