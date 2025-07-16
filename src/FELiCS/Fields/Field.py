@@ -277,18 +277,44 @@ class Field:
     def getVorticityField(self):
         # TODO Sophie: throw error if Field is not vector
         # TODO: Add vorticity 3D field
+
+        dim = self.space.num_sub_spaces
+        if dim < 2:
+            # Error message
+            pass
         componentGradient = []
         velocityComponents = self.getListOfSingleFields()
 
         for field in velocityComponents:
             componentGradient.append(field.getGradientField())
+        
+        
+        # 2D field -> scalar vorticity field
+        if dim == 2:
+            dvdx = componentGradient[1].getListOfSingleFields()[0]
+            dudy = componentGradient[0].getListOfSingleFields()[1]
+            vorticityField = dvdx - dudy
+            
+            return vorticityField
+        # 3D field -> vector vorticity field
+        # TODO: Still needs to be tested
+        if dim == 3:
+            dwdy = componentGradient[2].getListOfSingleFields()[1]
+            dvdz = componentGradient[1].getListOfSingleFields()[2]
 
-        dudy = componentGradient[0].getListOfSingleFields()[1]
-        dvdx = componentGradient[1].getListOfSingleFields()[0]
+            dudz = componentGradient[0].getListOfSingleFields()[2]
+            dwdx = componentGradient[2].getListOfSingleFields()[0]
 
-        vorticityField = dudy - dvdx
+            dvdx = componentGradient[1].getListOfSingleFields()[0]
+            dudy = componentGradient[0].getListOfSingleFields()[1]
 
-        return vorticityField
+            vorticity_x = dwdy - dvdz
+            vorticity_y = dudz - dwdx
+            vorticity_z = dvdx - dudy
+
+            vorticityField = Field(self.space, self.mesh)
+            vorticityField.setListOfSingleFields([vorticity_x, vorticity_y, vorticity_z])
+
 
     def exportH5(self, fileName, mesh = None):
         # for now this is a dummy method that we use for the scripting part of the retreat.
