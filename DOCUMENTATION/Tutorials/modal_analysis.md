@@ -35,7 +35,7 @@ The boundary conditions for the fluctuations are:
 
 **Note:** The BCs for the base flow variables ($\bar{u}_x, \bar{u}_y, \bar{p}$) in [base flow tutorial](./cylinder_wake.md) and for the perturbations ($u_x', u_y', p'$) current modal analysis are different.
 
-These BCs are implemented in [```bc_Modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) using different names.
+These BCs are implemented in [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) using different names.
 
 When all BCs are set to Dirichlet with a value 0 (always the case for fluctuations), we set: 
 ```json
@@ -76,7 +76,7 @@ The wall BC is imposed with:
 The complete structure of this file is detailed in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
 ### Settings
-The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
+The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
 
 The spanwise wavenumber is set to 0:
 ```json
@@ -91,7 +91,7 @@ and set the coordinate system to Cartesian:
 {"CoordinateSystem": "Cartesian"}
 ```
 
-We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_Modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) with these references:
+We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) with these references:
 ```json
 {"MeshFilePath":"cylinder_wake.msh"}
 {"MeanFlowFilePath": "base_flow_for_FELiCS.fel"}

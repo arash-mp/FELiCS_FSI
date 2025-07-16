@@ -1,6 +1,6 @@
 {
     "BoundaryCondition": {
-        "BCsFilePath": "bc_Modal.json"
+        "BCsFilePath": "bc_modal.json"
     },
     "Case": {
         "AnalysisMode": "Modal",
