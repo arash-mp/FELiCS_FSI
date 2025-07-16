@@ -14,9 +14,10 @@ git clone https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamic
 
 The recommended way of installation uses [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) for package management. Please make sure it is available on your machine or install it if not.
 
-After cloning the repository and installing conda, make sure you take the following two steps:
-1. [install necessary packages](#package-installation)
-2. [add FELiCS alias](#felics-alias)
+After cloning the repository and installing conda, make sure you take the following three steps:
+1. [Install Necessary Packages](#package-installation)
+2. [Add FELiCS alias](#felics-alias)
+3. [Verify Installtion](#Verify-Installation)
 
 
 ## Package Installation
@@ -118,47 +119,35 @@ Because FELiCS is installed in editable mode the standard unistallation procedur
 
 After changing your `~/.bashrc` you need to restart the terminal or ssh connection to make the changes take effect. 
 
-
 ## Verify Installation
-After finishing the installation steps you should be able to activate the new environment in your freshly opened terminal using
+
+After completing the installation steps, open a new terminal and activate your conda environment:
 ```bash
 conda activate felics2025_dolfin9
 ```
-If you chose another name for your environment, use the same name for activating the environment:
+If you used a different environment name, activate it accordingly:
 ```bash
-conda activate <other_name>
+conda activate <your_environment_name>
 ```
 
-If that succeeds, try running FELiCS with  ------ **OUT OF DATE. Maybe reference a tutorial here?** --------
+Once the environment is active, test the FELiCS alias:
 ```bash
 FELiCS
 ```
->**Remark:** when working on c14 via ssh make sure to enable visual output with the `-X` option of ssh.
+You should see the FELiCS logo displayed.
 
-To verify the installation of FELiCS as a package run 
+For a more thorough check, run a tutorial case:
+```bash
+FELiCS -f $FELiCS_PATH/TUTORIALS/modal_analysis_tutorial/modal.json
+```
+This example should complete in under a minute. If successful, you will see the message: `Finished FELiCS run.`
+
+To verify the FELiCS package installation, run:
 ```bash
 python -c "import FELiCS"
 ```
->**Remark:** Please note, that the package name is case sensitive, even though in the conda environment it is listed in lowercase letters. 
+> **Note:** The package name is case sensitive (`FELiCS`). In the conda environment, it may appear in lowercase, but you must use the correct capitalization when importing.
 
-In case of an error, please refer to the chapter [common problems](#CommonIssues) for possible solutions.
+If all these steps complete without errors, your FELiCS installation is ready to use.
 
-The environment can be deactivated using 
-```bash
-conda deactivate felics
-```
-
-### Manual Package Installation
----------- **OUT OF DATE! SHOULD BE UPDATED TO NEWER PACKAGES** ------------
-If the installation via _.yml_ files does not work, you can try installing the packages manually or [older yml files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/main/yml/old_versions?ref_type=heads). Since package compatibility can be tricky, it is recommended to stick to the following packages and versions which seem to be stable at the moment [August 2023].
-```bash
-conda create --name felics2.0 python=3.8
-conda activate felics2.0
-python3 -m pip cache purge
-conda install numpy=1.23.3
-pip install scipy==1.9.1 gmsh==4.10.5
-conda install matplotlib=3.3.2=0 colorama=0.4.5 h5py=3.7.0
-conda install -c conda-forge fenics-basix=0.5.0 fenics-dijitso=2019.1.0 fenics-dolfinx=0.5.1 fenics-fiat=2019.1.0
-conda install -c conda-forge pyvista
-```
 
