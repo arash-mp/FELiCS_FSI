@@ -65,13 +65,13 @@ We only solve the continuity and the momentum equation. Therefore we set everyth
 
 Additionally we import the boundary conditions from [```bc.json```](./../../TUTORIALS/cylinder_wake_tutorial/bc.json). They are summarized in the following tab: 
 
-| Boundary | $u_x$     | $u_y$      | $p$       |
-|:----------|:-----------|:-----------|:-----------|
-| <code style="color : Darkorange">Inlet</code>    | Dirichlet | Dirichlet | Neumann   |
-| <code style="color : Darkorange">Symmetry</code> | Neumann   | Dirichlet | Neumann   |
-| <code style="color : Darkorange">Outlet</code>   | Neumann   | Neumann   | Dirichlet |
-| <code style="color : Darkorange">Top</code>      | Neumann   | Dirichlet | Neumann   |
-| <code style="color : Darkorange">Wall</code>     | Dirichlet | Dirichlet | Neumann   |
+| Boundary | ID | $u_x$     | $u_y$      | $p$       |
+|:----------|:--:|:-----------|:-----------|:-----------|
+| <code style="color : Darkorange">Inlet</code>    | 1 | Dirichlet | Dirichlet | Neumann   |
+| <code style="color : Darkorange">Symmetry</code> | 2 | Neumann   | Dirichlet | Neumann   |
+| <code style="color : Darkorange">Outlet</code>   | 3 | Neumann   | Neumann   | Dirichlet |
+| <code style="color : Darkorange">Top</code>      | 4 | Neumann   | Dirichlet | Neumann   |
+| <code style="color : Darkorange">Wall</code>     | 5 | Dirichlet | Dirichlet | Neumann   |
 
 We obtain the base flow via running the python script [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py):
 ```sh
