@@ -12,7 +12,7 @@ If you haven't done so yet, see the [Installation Guide](../installation_guide.m
 ```
 
 ## [Tutorial 1: Cylinder Wake – Solve the Base Flow](cylinder_wake.md)
-Learn how to set up your first FELiCS case by computing the 2D base flow around a cylinder at Reynolds number 50.
+Learn how to set up your first FELiCS case by computing the 2D base flow around a cylinder.
 
 You will:
 - Define a case in FELiCS.
@@ -39,14 +39,20 @@ You will:
 - Generate a mesh with GMSH.
 - Import and process mean flow data.
 - Set up and run resolvent analysis for different frequencies.
-- Postprocess and plot gains and mode shapes.
+- Load the results on python.
+- Plot gains and mode shapes.
 
 ---
 
 ## [Tutorial 4: Input-Output Analysis](input_output_analysis.md)
-Lorem Ipsum
-You will:
-- Do stuff
+Perform input/output analysis for a reacting flow.
+
+Yous will:
+- Load the reacting flame base flow.
+- Set up the linearized equations for momentum, mass, species, and energy.
+- Apply a harmonic forcing at the specified boundary.
+- Solve for the system response and compute transfer functions.
+- Export results to the output directory.
 
 ---
 

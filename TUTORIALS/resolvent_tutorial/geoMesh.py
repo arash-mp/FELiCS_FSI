@@ -1,20 +1,8 @@
 # Import necessary libraries
 import numpy as np
-import os
-import sys
-
-# Add the path to custom utilities
-fold_path = '/home/avillie/repository/LESbis'
-sys.path.append(fold_path + '/dynamics_bloodflow/utils')
-import loadLES_data
 
 # Define the path and name for the output .geo file
-geo_file_name = 'FeliCS_mesh.geo'
-file_dir = os.path.join(fold_path, 'dynamics_bloodflow', 'resolvent', 'Stenosis2D', 'mesh')
-file_name = os.path.join(file_dir, geo_file_name)
-
-# Create directory if it doesn't exist
-os.makedirs(file_dir, exist_ok=True)
+file_name = 'FeliCS_mesh.geo'
 
 # Load the upper boundary points from LES data and normalize by diameter
 upB2D = np.load('upB2D.npy')
@@ -26,6 +14,7 @@ MAX_r = np.max(upB2D[:, 1])
 # Mesh generation parameters
 CellsFineness = 0.5  # Scaling factor for number of cells
 mesh_size = 0.01  # Base mesh size
+Nxfactor = 0.5  # Factor to adjust the number of cells in the x-direction
 
 # Create and write the .geo file
 with open(file_name, 'w') as geo_file:
@@ -124,4 +113,4 @@ with open(file_name, 'w') as geo_file:
     geo_file.write('Physical Curve("outlet") = {5};\n')
     geo_file.write('Physical Curve("wall") = {1, 2, 3, 4};\n')
 
-print(f'Gmsh .geo file "{geo_file_name}" has been successfully created in {file_dir}.')
+print(f'Gmsh .geo file "{file_name}" has been successfully created.')

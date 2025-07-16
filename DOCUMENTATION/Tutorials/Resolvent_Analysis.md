@@ -1,7 +1,7 @@
 # Tutorial 3: Resolvent Analysis
 
 ## Goal of the Tutorial
-The goal of this tutorial is to provide a step-by-step guide on performing resolvent analysis in FELICS. By the end of this tutorial, you will be able to:
+The goal of this tutorial is to provide a step-by-step guide on performing resolvent analysis in FELiCS. By the end of this tutorial, you will be able to:
 
 - Write a mesh file on GMSH using a python script.
 - Import the mean flow data and create a mean flow file for FELiCS.
@@ -17,7 +17,7 @@ The resolvent analysis will:
 2. Quantify the gain between input disturbances and flow response for each frequency.
 
 ## Case Definition
-In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see Ref. [[1]](#1). The inlet has a steady boundary condition with a Reynolds number 8000 based on the diameter and veloocity in the contraction. Using the case axisymmetry, the 3D solution is solved for a given azimuthal wavenumber.
+In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see Ref. [[1]](#1). The inlet has a steady boundary condition with a Reynolds number 8000 based on the diameter and veloocity in the contraction. Since the mean flow is axisymmetric, the 3D solution is solved for a given azimuthal wavenumber.
 
 ### Mesh generation
 We generate the 2D mesh on GMSH. 
@@ -33,8 +33,8 @@ Figure 1. Stenosis mesh
 Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FeliCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
-This tutorial case folder is located in ```felics2.0/TUTORIALS/modal_analysis_tutorial```.
-Our base flow is obtained by time-azimuthal-averaging the snapshots of a 3D LES. This could be a RANS solution, experimental data, or any other relevant flow field.
+This tutorial case folder is located in ```felics2.0/TUTORIALS/resolvent_tutorial```.
+Our base flow is obtained by time-azimuthal-averaging the snapshots of a 3D LES. Alternatively this could be a RANS solution, experimental data, or any other relevant flow field.
 Run the python script [```meanFlow.py```](../../TUTORIALS/resolvent_tutorial/meanFlow.py) to load the mean flow data and write a **.fel** file. 
 Change the `fold_path` to your data folder and run the script.
 This script also allows to define response and forcing domains, a sponge function and an eddy viscosity field.
@@ -161,4 +161,4 @@ The $u_\theta$ fluctuation is 0 in this case because we study axisymmetric pertu
 >**Warning:** The gains provided by FELiCS are $\sigma^2$. The forcing modes have a unitary norm on the defined forcing domain, but the response modes have the norm $\sigma$ on the defined response domain.
 
 ## References
-<a id="1">[1]</a> Villié, A., Schmitter, S., von Saldern, J. G., Demange, S., & Oberleithner, K. . “Physics-informed neural networks for enhancing medical flow magnetic resonance imaging: Artifact correction and mean pressure and Reynolds stresses assimilation”. In: JPhysics of Fluids 37(2) (Jan. 2025). issn: 1089-7666. doi: 10.1063/5.0252852. url: https://pubs.aip.org/aip/pof/article-abstract/37/2/025194/3336391/Physics-informed-neural-networks-for-enhancing?redirectedFrom=fulltext.
+<a id="1">[1]</a> Villié, A., Schmitter, S., von Saldern, J. G., Demange, S., & Oberleithner, K. . “Physics-informed neural networks for enhancing medical flow magnetic resonance imaging: Artifact correction and mean pressure and Reynolds stresses assimilation”. In: Physics of Fluids 37(2) (2025). doi: 10.1063/5.0252852.

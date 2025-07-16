@@ -1,11 +1,15 @@
 # Tutorial 4: Input/Output analysis
 
 ## Goal of the Tutorial
-The goal of this tutorial is to provide a step-by-step guide on performing input/output analysis in FELICS for a reacting flow. By the end of this tutorial, you will be able to:
+The goal of this tutorial is to provide a step-by-step guide on performing input/output analysis for a reacting flow. By the end of this tutorial, you will be able to:
 
 - Configure reaction mechanisms and species transport in FELICS.
 - Write customed boundary conditions.
 - Perform input/output analysis with boundary forcing for reactive flows using the mass, momentum, species, and energy equations.
+
+The analysis provides insights into:
+- How the reacting flow responds to external perturbations
+- The coupling between fluid dynamics and chemical reactions
 
 The input/output analysis will:
 1. Load the reacting flame base flow
@@ -13,10 +17,6 @@ The input/output analysis will:
 3. Apply forcing at the specified boundary
 4. Solve for the system response and compute transfer functions
 6. Export results to the output directory
-
-The analysis provides insights into:
-- How the reacting flow responds to external perturbations
-- The coupling between fluid dynamics and chemical reactions
 
 ## Case Definition
 In this tutorial, we will perform a compressible input/output analysis about a 2D reacting jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonicaly forced at the inlet. The case uses a progress variable approach to model the reaction and includes species transport effects.
@@ -172,20 +172,10 @@ Here are some key settings for input/output analysis with reacting flows:
 ```
 
 ## Running the analysis
-Your case folder should look like:
-```bash
-.
-├── KITBurnerWallSep.msh
-├── KIT_confined.fel
-├── turb_flame.json
-├── boundaries.json
-├── mixture.json
-└── output_dir/
-```
-
 Run the analysis with the command:
 ```bash
 FELiCS -f turb_flame.json
 ```
 
-
+## Postprocessing
+Inside the ```output_dir``` directory, all the response modes can be found in the ```.h5``` and ```.xmf``` format, along with the amplification gains in ```gains.csv```. 
