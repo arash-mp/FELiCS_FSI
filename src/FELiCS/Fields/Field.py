@@ -273,16 +273,7 @@ class Field:
         return np.sqrt(norm_squared)
 
 
-    def getVorticity(self):
-        from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
-        from ufl import TestFunction, dx
-        from FELiCS.Misc.tensorUtils import iGrad, iConj, iDot, Tensor
-        order = self.space.element.basix_element.degree
-        dim = 1 
-        
-        vorticitySpace = getFELiCSSpace(self.mesh, order=order, dim=dim)
-        vorticityField = Field(vorticitySpace, self.mesh)
-
+    def getVorticityField(self):
         componentGradient = []
         velocityComponents = self.getListOfSingleFields()
 
@@ -292,18 +283,7 @@ class Field:
         dudy = componentGradient[0].getListOfSingleFields()[1]
         dvdx = componentGradient[1].getListOfSingleFields()[0]
 
-        return dudy - dvdx
-
-        # coordSystem = self.mesh.coordinateSystem
-        # J_hat = coordSystem.J_hat
-
-        # v = TestFunction(vorticitySpace)
-        # # Sophie: m and hasSpectralDimension may not be needed for test function
-        # v_tens = Tensor(v, CoordSys=coordSystem, m = self.m, hasSpectralDimension=self.hasSpectralDimension)
-        # expression = iDot(iGrad(self.getTensor()), iConj(v_tens)).ufl_tens * J_hat* dx
-
-
-        vorticityField.evaluateUflTensorExpression(expression)
+        vorticityField = dudy - dvdx
 
         return vorticityField
 
@@ -340,8 +320,14 @@ class Field:
         #    with XDMFFile(MPI.COMM_WORLD, fileName+".xdmf", "r") as xdmf:
         #        mesh          = xdmf.read_mesh(meshFileName)
 
-        # this is only a dummy for the scripting
-        self.setCoefficientArray(np.load(fileName+".npy"))
+        # # this is only a dummy for the scripting
+        if fileName == "function_values_2d":
+            data = np.load(fileName+".npy")
+            
+            self.getListOfSingleFields()[0].setCoefficientArray(data[:,0])
+            self.getListOfSingleFields()[1].setCoefficientArray(data[:,1])
+        else:
+            self.setCoefficientArray(np.load(fileName+".npy"))
 
 
     def evaluateUflExpression(self, ufl_expression, bcs=[], restartSolver=False):
@@ -540,6 +526,35 @@ class Field:
         if isinstance(other, Field):
             result = Field(self.space, self.mesh)
             result.setCoefficientArray(self.getCoefficientArray() + other.getCoefficientArray())
+            return result 
+        return NotImplemented
+    
+
+    def __sub__(self, other):
+        """
+        Overload the `-` operator for adding two Field objects.
+
+        Parameters
+        ----------
+        other : Field
+            Another Field object.
+
+        Returns
+        -------
+        Field
+            A new Field object with the summed coefficient arrays.
+
+        Raises
+        ------
+        NotImplementedError
+            If `other` is not a Field object.
+        """
+        ## overrides '+'
+        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
             return result 
         return NotImplemented
 
