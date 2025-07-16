@@ -1,16 +1,27 @@
 # Tutorial 2: Modal Analysis
+
 ## Goals of the tutorial
 In this tutorial, we will do an eigenvalue decomposition of the base flow obtained in the tutorial of [cylinder wake](./cylinder_wake.md). By the end of this tutorial, you will be able to:
 
 - Define the boundary conditions.
-- Run a modal analysis case.
+- Run a linear stability analysis case.
 - Postprocess modal analysis results with paraview.
+
+The linear stability analysis provides insights into:
+- The growth or decay rates of small perturbations superimposed on the base flow.
+- The dominant spatial structures (modes) associated with flow instabilities.
+
+The modal analysis will:
+1. Identify which flow structures are most likely to become unstable.
+2. Quantify the stability characteristics by computing eigenvalues and corresponding eigenmodes.
+
 ## Requirements
 Before you begin this tutorial make sure to:
 * have completed the [base flow tutorial](./cylinder_wake.md).
 * access the case folder ```felics2.0/TUTORIALS/modal_analysis_tutorial``` and copy it into your working directory.
 
 ## Modal analysis settings
+
 ### Boundary conditions
 The boundary conditions for the fluctuations are:
 

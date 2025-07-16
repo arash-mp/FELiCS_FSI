@@ -7,6 +7,17 @@ The goal of this tutorial is to provide a step-by-step guide on performing input
 - Write customed boundary conditions.
 - Perform input/output analysis with boundary forcing for reactive flows using the mass, momentum, species, and energy equations.
 
+The input/output analysis will:
+1. Load the reacting flame base flow
+2. Set up the linearized equations for momentum, mass, species, and energy
+3. Apply forcing at the specified boundary
+4. Solve for the system response and compute transfer functions
+6. Export results to the output directory
+
+The analysis provides insights into:
+- How the reacting flow responds to external perturbations
+- The coupling between fluid dynamics and chemical reactions
+
 ## Case Definition
 In this tutorial, we will perform a compressible input/output analysis about a 2D reacting jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonicaly forced at the inlet. The case uses a progress variable approach to model the reaction and includes species transport effects.
 
@@ -115,7 +126,7 @@ Here are some key settings for input/output analysis with reacting flows:
 ```json
 "AnalysisMode": "Input-Output",
 ```
-- We include the Momentum, Mass, Energy equations, along with Species transport for progress variable
+- We include the Momentum, Mass, Energy equations, along with Species transport for progress variable. The low-Mach equation of state allows to assume the mean pressure to be constant. The density is only impacted by the temperature.
 ```json
 "SetOfEquations": {
     "Momentum": {
@@ -140,71 +151,41 @@ Here are some key settings for input/output analysis with reacting flows:
     }
 }
 ```
-The low-Mach equation of state allows to assume the mean pressure to be constant. The density is only impacted by the temperature.
 
+- The Prandtl number is defined for thermal diffusion and the eddy viscosity $\nu_t$ is red from the **.fel** file.
 ```json
-"MolVisc": 0.0002,
-"MolViscModel": "Constant",
 "PrandtlNumber": 0.9,
 "TurbulenceModel": "File"
 ```
-- Molecular viscosity set to 0.0002
-- Prandtl number for thermal diffusion
-- Turbulent viscosity read from file
-
-#### Forcing Configuration
+- The boundary forcing is applied at boundary index 1 and is applied on the axial velocity component (index 0). It is a harmonic forcing with frequency $\omega = 314$ Hz. 
 ```json
 "IOResolvent": {
     "ForcingBoundaryIndices": [1],
-    "ForcingCoeff": [0, 1],
+    "ForcingCoeff": [0],
     "ForcingMode": "Boundary",
     "Omegas": [314]
 }
 ```
-This configures:
-- Forcing applied at boundary index 1
-- Forcing coefficients for different variables
-- Boundary forcing mode
-- Analysis frequency (ω = 314)
-
-#### Reaction Settings
+- The mixture file provides the reaction mechanism
 ```json
-"Reaction": false,
 "MixtureFilePath": "Mixture.json"
 ```
-While direct reaction is disabled, the mixture file provides the reaction mechanism for the progress variable approach.
 
 ## Running the analysis
 Your case folder should look like:
 ```bash
 .
-├── mesh/
-│   └── KITBurnerWallSep.msh
-├── meanFlow/
-│   └── KIT_confined.fel
+├── KITBurnerWallSep.msh
+├── KIT_confined.fel
 ├── turb_flame.json
 ├── boundaries.json
-├── Mixture.json
-└── Out/
+├── mixture.json
+└── output_dir/
 ```
 
 Run the analysis with the command:
 ```bash
 FELiCS -f turb_flame.json
 ```
-
-The input/output analysis will:
-1. Load the reacting flame base flow
-2. Set up the linearized equations for momentum, mass, species, and energy
-3. Apply forcing at the specified boundary
-4. Solve for the system response and compute transfer functions
-5. Calculate adjoint fields for sensitivity analysis
-6. Export results to the output directory
-
-The analysis provides insights into:
-- How the reacting flow responds to external perturbations
-- The coupling between fluid dynamics and chemical reactions
-- Sensitivity of the flame to different forcing mechanisms
-- Transfer functions between input forcing and output response
 
 

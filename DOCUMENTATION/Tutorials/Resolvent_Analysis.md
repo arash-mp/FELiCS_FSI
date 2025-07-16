@@ -8,6 +8,14 @@ The goal of this tutorial is to provide a step-by-step guide on performing resol
 - Perform resolvent analysis for different frequencies.
 - Plot the gains and mode shapes in Python.
 
+The resolvent analysis provides insights into:
+- The amplification mechanisms of perturbations in the flow.
+- The spatial structure of the most responsive (response) and most receptive (forcing) flow modes at different frequencies.
+
+The resolvent analysis will:
+1. Identify frequencies and spatial regions where the flow is most sensitive to external forcing.
+2. Quantify the gain between input disturbances and flow response for each frequency.
+
 ## Case Definition
 In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see Ref. [[1]](#1). The inlet has a steady boundary condition with a Reynolds number 8000 based on the diameter and veloocity in the contraction. Using the case axisymmetry, the 3D solution is solved for a given azimuthal wavenumber.
 
@@ -19,7 +27,7 @@ Feel free to play with the `CellsFineness` factor to see the influence of finer 
 
 **Warning:** For 2D computations, FELiCS handles only triangular elements only.
 
-Open the .geo file with GMSH an click on "Mesh" and "2D". You should obtain this mesh:
+Open the .geo file with GMSH an click on 'Mesh -> 2D'. You should obtain this mesh:
 ![Figure1](../../TUTORIALS/resolvent_tutorial/GMSH.png)
 Figure 1. Stenosis mesh
 Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FeliCS_mesh.msh` file in your case folder. 
