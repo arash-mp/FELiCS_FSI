@@ -77,7 +77,9 @@ $$
 $$
 
 #### Weak form of the mean flow equations
-__NOTE: The weak form of the incompressible nonlinear base flow equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.__
+```{note}
+The weak form of the incompressible nonlinear base flow equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.
+```
 
 
 
@@ -101,7 +103,9 @@ $$
 and where $\mu_\textrm{eff}'$ is the fluctuating effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
 
 #### Weak form of the linearized Navier--Stokes equations
-__NOTE: The weak form of the incompressible linearized Navier--Stokes equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.__
+```{note}
+he weak form of the incompressible linearized Navier--Stokes equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.
+```
 
 
 
@@ -142,7 +146,9 @@ $$
 \mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t), \qquad \mathbf{q}=(\mathbf{u},p,\rho)^{T}
 $$
 
-Note that for the compressible equtions, the overbar represents a favre-abverage for the velocity and a Reynolds average for pressure and density.  
+```{note}
+For the compressible equtions, the overbar represents a favre-abverage for the velocity and a Reynolds average for pressure and density.  
+```
 
 Inserting this into the Navier--Stokes equations and taking the average we get the base  flow equations
 
@@ -209,4 +215,6 @@ with
 $$
 \widehat{\rho\mathbf{u}} = \overline{\rho}\mathbf{\hat{u}} + \hat{\rho}\mathbf{\overline{u}}
 $$
-__NOTE: In the linearized equations, the convective term is *not* integrated by parts.__
+```{note}
+In the linearized equations, the convective term is *not* integrated by parts.
+```

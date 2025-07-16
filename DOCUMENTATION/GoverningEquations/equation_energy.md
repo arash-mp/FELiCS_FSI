@@ -53,7 +53,9 @@ $$
 
 with $\mathbf{I}$ being the identity tensor.
 
-__NOTE: The nonlinear energy pressure equation is currently not implemented in FELiCS.__
+```{note}
+The nonlinear energy pressure equation is currently not implemented in FELiCS.
+```
 
 ### Linearized energy pressure equation
 The linear energy pressure equation is

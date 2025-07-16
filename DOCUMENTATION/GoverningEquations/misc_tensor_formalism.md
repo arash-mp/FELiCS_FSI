@@ -181,7 +181,11 @@ $$
 \end{equation}
 $$
 
-Note that Christoffel symbols are symmetric in the lower indices due to the symmetry of second derivatives (Schwarz's theorem). Plugging (17) into the gradient of a rank-2 tensor and using (20) gives:
+```{note}
+Christoffel symbols are symmetric in the lower indices due to the symmetry of second derivatives (Schwarz's theorem). 
+```
+
+Plugging (17) into the gradient of a rank-2 tensor and using (20) gives:
 
 $$
 \begin{align}

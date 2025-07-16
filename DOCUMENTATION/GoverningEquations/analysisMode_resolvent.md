@@ -95,7 +95,9 @@ $$\boxed{{\mathbf{R}(\omega) = Q \Sigma F^* } = \sum_j\hat{\mathbf q}_j\sigma_j\
 | left singular vector:     | $Q = \left[ \hat{\mathbf{q}}_1, \hat{\mathbf{q}}_2, ..., \hat{\mathbf{q}}_N \right]\ \in \mathbb{C}^{N\times N}$ | optimal response     |
 | singular values:          | $\Sigma = \mathrm{diag}(\sigma_1, \sigma_2, ..., \sigma_N )\ \in \mathbb{R}^{N\times N}$ | resolvent gain        |
 
-Note that the gain is sorted by decreasing order $\sigma_1\geq\sigma_2\geq ... \geq \sigma_N\geq 0$, with the resolvent norm  $\| \textbf{R} \| =\sigma_1$. 
+```{note}
+The gain is sorted by decreasing order $\sigma_1\geq\sigma_2\geq ... \geq \sigma_N\geq 0$, with the resolvent norm  $\| \textbf{R} \| =\sigma_1$. 
+```
 
 
 
@@ -167,7 +169,10 @@ $$
 $$
 This is the final expression implemented in FELiCS.
 The full forcing is obtained from $\hat{f}=P_f\hat{\eta}$ and the response is $\hat{q} = R \hat{f}$.
-Note: for real operators, such as $P_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
+
+```{note}
+For real operators, such as $P_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
+```
 
 #### Dimensions of the operators
 Setting $N$ the number of degrees of freedom of the linear operator:

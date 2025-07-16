@@ -38,9 +38,13 @@ $$
 $$
 where $\breve{D}_\textrm{eff}$ is the effective density-premultiplied mass diffusivity, and $f_Y$ is a source term, which occurs for example due to a chemical reaction of a flame. The effective density-premultiplied mass diffusivity consists of the molecular and turbulent diffusivity defined as $\breve{D}_\textrm{eff} = \breve{D} + \breve{D}_t$. In laminar flows $\breve{D}_t = 0$. In turbulent flows, one approach is to link the turbulent diffusivity $\breve{D}_t$ to the turbulent eddy viscosity $\mu_t$ via $\breve{D}_t = \mu_t / \mathrm{Sc}_t$, where $\mathrm{Sc}_t = \mu_t / \breve{D}_t$ is the turbulent Schmidt number that is often assumed to be constant. For more details on turbulent eddy viscosity, see [Viscosity models](./equation_viscosity.md).
 
-__NOTE: The nonlinear equations are currently *not* implemented in FELiCS.__
+```{note}
+The nonlinear equations are currently *not* implemented in FELiCS.
+```
 
-__NOTE: The density-premultiplied effective mass diffusivity is defined as $\breve{D}_\textrm{eff} = \rho D_\textrm{eff}$, with $[D_\textrm{eff}] = \mathrm{m}^2/\mathrm{s}$ if using SI units.__
+```{note}
+The density-premultiplied effective mass diffusivity is defined as $\breve{D}_\textrm{eff} = \rho D_\textrm{eff}$, with $[D_\textrm{eff}] = \mathrm{m}^2/\mathrm{s}$ if using SI units.
+```
 
 
 
@@ -57,4 +61,6 @@ $$
 \int_\Omega \omega \overline{\rho} \hat{Y} X_Y^* \mathrm{d}\mathbf{x} = \int_\Omega j \, \overline{Y} \, \nabla \cdot \left( \hat{\rho} \, \overline{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \overline{Y} \, \hat{\rho} \, (\overline{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \, \mathrm{d}\mathbf{s} + \int_\Omega j \, \overline{Y} \, \nabla \cdot \left( \overline{\rho} \, \hat{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \overline{Y} \, \overline{\rho} \, (\hat{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \mathrm{d}\mathbf{s} + \int_\Omega j \, \hat{Y} \, \nabla \cdot \left( \overline{\rho} \, \overline{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \hat{Y} \, \overline{\rho} \, (\overline{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \mathrm{d}\mathbf{s} - \int_\Omega j \, \hat{\breve{D}}_\textrm{eff} \, \nabla \overline{Y} \cdot \nabla X_Y^* \, \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \, \hat{\breve{D}}_\textrm{eff} \, \left(\nabla \overline{Y} \cdot \mathbf{n}\right) X_Y^* \, \mathrm{d}\mathbf{s} - \int_\Omega j \, \overline{\breve{D}}_\textrm{eff} \, \nabla \hat{Y} \cdot \nabla X_Y^* \, \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \, \overline{\breve{D}}_\textrm{eff} \, \left(\nabla \hat{Y} \cdot \mathbf{n}\right) X_Y^* \, \mathrm{d}\mathbf{s} + \int_\Omega f_Y' \, X_Y^* \, \mathrm{d}\mathbf{x}
 $$
 
-__NOTE: The density-premultiplied mass diffusivity is defined as $\breve{D}_\textrm{eff} = \rho D_\textrm{eff}$, with $[D_\textrm{eff}] = \mathrm{m}^2/\mathrm{s}$ if using SI units.__
+```{note}
+The density-premultiplied mass diffusivity is defined as $\breve{D}_\textrm{eff} = \rho D_\textrm{eff}$, with $[D_\textrm{eff}] = \mathrm{m}^2/\mathrm{s}$ if using SI units.
+```

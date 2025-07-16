@@ -32,7 +32,9 @@ $$
 $$
 It is used for calculating dynamic molecular viscosity of the mean flow.
 
-__NOTE: The linearized form of the Sutherland model is not implemented in FELiCS yet.__
+```{note}
+The linearized form of the Sutherland model is not implemented in FELiCS yet.
+```
 
 
 ## Boussinesq model for turbulent eddy viscosity
@@ -79,4 +81,6 @@ $$
 ### Linearized eddy viscosity
 There are various methods to linearize the eddy viscosity. One possible way is to introduce additional turbulence model equations that explicitly describe how the eddy viscosity changes in space and time.
 
-__NOTE: Currently, the $k$-$\varepsilon$ equations are being implemented and validated in FELiCS and will soon be publicly released.__
+```{note}
+Currently, the $k$-$\varepsilon$ equations are being implemented and validated in FELiCS and will soon be publicly released.
+```
