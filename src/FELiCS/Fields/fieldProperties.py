@@ -947,6 +947,7 @@ class fieldProperties:
     @property
     def ut(self):
         """
+        TODO: Deprecated variable must be deleted
         Get the transverse velocity component field variable.
 
         Returns
