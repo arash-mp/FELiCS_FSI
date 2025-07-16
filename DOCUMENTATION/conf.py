@@ -28,7 +28,7 @@ import sys
 sys.path.insert(0, os.path.abspath('../..'))
 # sys.path.insert(0, os.path.abspath('../Reactions/'))
 
-extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'autoapi.extension']#, 'sphinx.ext.inheritance_diagram'] # 'sphinx.ext.autodoc', 
+extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'autoapi.extension','sphinxcontrib.mermaid']#, 'sphinx.ext.inheritance_diagram'] # 'sphinx.ext.autodoc', 
 autoapi_dirs = ['../src/']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
@@ -58,5 +58,5 @@ napoleon_type_aliases = None
 napoleon_attr_annotations = True
 
 #Myst Parser settings
-myst_enable_extensions = ["dollarmath", "amsmath"]
+myst_enable_extensions = ["dollarmath", "amsmath", "colon_fence"]
 myst_dmath_double_inline = True

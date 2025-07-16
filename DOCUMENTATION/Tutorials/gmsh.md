@@ -1,4 +1,4 @@
- ```py
+```py
 import gmsh
 ```
 After importing the python-gmsh package the following methods become accessible:

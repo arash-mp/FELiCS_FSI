@@ -1,12 +1,14 @@
 {
     "BoundaryCondition": {
-        "BCsFilePath": "bc.json"
+        "BCsFilePath": "bc_Modal.json"
     },
     "Case": {
         "AnalysisMode": "Modal",
+	"CalculateAdjoint":false,
         "CoordinateSystem": "Cartesian",
         "m": 0.0,
         "MeshFilePath": "cylinder_wake.msh",
+        "MixtureFilePath": "Mixture.mix",
         "MolVisc": 0.02,
         "MolViscModel": "Constant",
         "nDim": 2,
@@ -38,12 +40,12 @@
         "TurbulenceModel": "None"
     },
     "Export": {
-        "ExportFolder": "out",
+        "ExportFolder": "output_dir",
         "Video": false
     },
     "FlowInput": {
         "AveragingDirection": "None",
-        "MeanFlowFilePath": "meanflow.fel"
+        "MeanFlowFilePath": "base_flow_for_FELiCS.fel"
     },
     "IOResolvent": {
         "ForcingBoundaryIndices": [],
@@ -55,7 +57,7 @@
         "EigenValueGuess": [
             "0.7"
         ],
-        "nSolut": 20,
+        "nSolut": 100,
         "PolynomialOrder": {
             "u": 2,
             "p": 2

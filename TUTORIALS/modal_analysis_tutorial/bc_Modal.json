@@ -1,22 +1,10 @@
 {
-    "1": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ],
-    "2": [
+    "1": {
+        "name": "zeroDirichlet"
+    },
+    "2":{
+        "name": "symmetry",
+        "specifics": [
         {
             "type": "Dirichlet",
             "value": 0.0,
@@ -32,56 +20,15 @@
             "value": 0.0,
             "variable": "p"
         }
-    ],
-    "3": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ],
-    "4": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ],
-    "5": [
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "ux"
-        },
-        {
-            "type": "Dirichlet",
-            "value": 0.0,
-            "variable": "uy"
-        },
-        {
-            "type": "Neumann",
-            "value": 0.0,
-            "variable": "p"
-        }
-    ]
+        ]
+    },
+    "3": {
+        "name": "zeroDirichlet"
+    },
+    "4": {
+        "name": "zeroDirichlet"
+    },
+    "5":{
+        "name": "wall"
+    }
 }
