@@ -26,7 +26,7 @@ To do so, we write a **.geo** file readable by GMSH using the python script [```
 Feel free to play with the `CellsFineness` factor to see the influence of finer meshes.
 
 Open the .geo file with GMSH an click on 'Mesh -> 2D'. You should obtain this mesh:
-![Figure1](../../TUTORIALS/resolvent_tutorial/GMSH.png)
+![Figure1](../../TUTORIALS/resolvent_tutorial/pic/GMSH.png)
 Figure 1. Stenosis mesh
 Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FeliCS_mesh.msh` file in your case folder. 
 
@@ -140,17 +140,18 @@ We postprocess the outputed files using the python script [```PlotMode.py```](..
 Modify the defined path to your folder and run the script. 
 
 The resolvent gains are plotted against the Strouhal number $St = \omega/2\pi$ in [Figure 2](#Resolvent_gains).
-![Figure2](../../TUTORIALS/resolvent_tutorial/gains.png) <a id="fig:Resolvent_gains"></a>
+![Figure2](../../TUTORIALS/resolvent_tutorial/pic/gains.png) <a id="fig:Resolvent_gains"></a>
+
 Figure 2. Resolvent gains
 Note that in this case, only the leading and subleading resolvent modes were computed.
 
 The script also include functions to read the mesh, load and plot the mode in matplotlib.
 The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are plotted in [Figure3](#Forcingdomain) and [Figure4](#Responsedomain):
-![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
+![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/pic/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
 
 Figure 3. Forcing mode shape
 
-![Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/ResponseMode_dark.png) <a id="fig:Responsedomain"></a>
+![Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/pic/ResponseMode_dark.png) <a id="fig:Responsedomain"></a>
 
 Figure 4. Response mode shape
 

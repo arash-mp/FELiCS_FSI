@@ -129,16 +129,16 @@ After running the modal analysis, the working directory should look like:
 ```
 Inside the ```output_dir``` directory, all the eigenmodes in ```.h5``` and ```.xmf``` format can be found, along with the eigenvalues in ```spectrum.csv``` file. 
 Run the pyhton script [PlotScatter.py](./../../TUTORIALS/modal_analysis_tutorial/PlotScatter.py) to plot the computed eigenvalue spectrum:
-![](./../../TUTORIALS/modal_analysis_tutorial/eigenspectrum.png) <a id="fig:EigSpec"></a>
+![](./../../TUTORIALS/modal_analysis_tutorial/pic/eigenspectrum.png) <a id="fig:EigSpec"></a>
 Figure 1. Eigenspectrum
 
 In [Figure 1](#EigSpec), an eigenvalue with a positive imaginary part stands out. We use paraview to visualize the corresponding real part of the eigenmode stored in `ModalSolution_Omega_Direct_(0.745+0.013j).xmf`. 
 
-![](./../../TUTORIALS/modal_analysis_tutorial/ux_real.png) <a id="fig:RealUx"></a>
+![](./../../TUTORIALS/modal_analysis_tutorial/pic/ux_real.png) <a id="fig:RealUx"></a>
 Figure 2. Real eigenmode, $u'_x$
 
-![](./../../TUTORIALS/modal_analysis_tutorial/uy_real.png) <a id="fig:RealUy"></a>
+![](./../../TUTORIALS/modal_analysis_tutorial/pic/uy_real.png) <a id="fig:RealUy"></a>
 Figure 3. Real eigenmode, $u'_y$
 
-![](./../../TUTORIALS/modal_analysis_tutorial/p_real.png) <a id="fig:Realp"></a>
+![](./../../TUTORIALS/modal_analysis_tutorial/pic/p_real.png) <a id="fig:Realp"></a>
 Figure 4. Real eigenmode, $p'$
