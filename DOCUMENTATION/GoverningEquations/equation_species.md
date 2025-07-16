@@ -18,8 +18,8 @@ Nomenclature:
 - $Y$: species or passive scalar
 - $\mathbf{u}$: velocity vector
 - $\rho$: density
-- $\breve{D}$: density-premultiplied mass diffusivity
-- $\breve{D}_m$: density-premultiplied mass diffusivity, molecular
+- $\breve{D}_\textrm{eff}$: density-premultiplied mass diffusivity, effective
+- $\breve{D}$: density-premultiplied mass diffusivity, molecular
 - $\breve{D}_t$: density-premultiplied mass diffusivity, turbulent
 - $f_Y$: source term (e.g. chemical reaction rate due to a flame)
 - $\mathrm{Sc}$: Schmidt number
@@ -36,7 +36,7 @@ The nonlinear species transport equation is
 $$
 \rho \frac{\partial Y}{\partial t} + \rho \mathbf{u} \cdot \nabla Y = \nabla \cdot (\breve{D}_\textrm{eff} \nabla Y) + f_{Y}
 $$
-where $\breve{D}_\textrm{eff}$ is the effective density-premultiplied mass diffusivity, and $f_Y$ is a source term, which occurs for example due to a chemical reaction of a flame. The effective density-premultiplied mass diffusivity consists of the molecular and turbulent diffusivity defined as $\breve{D}_\textrm{eff} = \breve{D}_m + \breve{D}_t$. In laminar flows $\breve{D}_t = 0$. In turbulent flows, one approach is to link the turbulent diffusivity $\breve{D}_t$ to the turbulent eddy viscosity $\mu_t$ via $\breve{D}_t = \mu_t / \mathrm{Sc}_t$, where $\mathrm{Sc}_t = \mu_t / \breve{D}_t$ is the turbulent Schmidt number that is often assumed to be constant. For more details on turbulent eddy viscosity, see [Viscosity models](./equation_viscosity.md).
+where $\breve{D}_\textrm{eff}$ is the effective density-premultiplied mass diffusivity, and $f_Y$ is a source term, which occurs for example due to a chemical reaction of a flame. The effective density-premultiplied mass diffusivity consists of the molecular and turbulent diffusivity defined as $\breve{D}_\textrm{eff} = \breve{D} + \breve{D}_t$. In laminar flows $\breve{D}_t = 0$. In turbulent flows, one approach is to link the turbulent diffusivity $\breve{D}_t$ to the turbulent eddy viscosity $\mu_t$ via $\breve{D}_t = \mu_t / \mathrm{Sc}_t$, where $\mathrm{Sc}_t = \mu_t / \breve{D}_t$ is the turbulent Schmidt number that is often assumed to be constant. For more details on turbulent eddy viscosity, see [Viscosity models](./equation_viscosity.md).
 
 __NOTE: The nonlinear equations are currently *not* implemented in FELiCS.__
 

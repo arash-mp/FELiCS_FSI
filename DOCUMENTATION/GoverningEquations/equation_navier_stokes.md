@@ -50,7 +50,7 @@ where the viscous stress tensor $\mathbf{\tau}$ is
 $$
 \mathbf{\tau} = \mu_\textrm{eff}(\nabla + \nabla ^T)\mathbf{u}
 $$
-and where $\mu_\textrm{eff}$ is the effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
+and where $\mu_\textrm{eff} = \mu + \mu_t$ is the effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
 
 ### Mean flow equations
 We consider the flow field to be comprised of a  time-invariant base flow, which can be either a time-averaged flow or fixed point solution (base flow), and the perturbation, such that 

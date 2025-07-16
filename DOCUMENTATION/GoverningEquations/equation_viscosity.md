@@ -1,8 +1,8 @@
 # Viscosity models
-Depending on the flow state, the effective viscosity $\mu_\textrm{eff} = \mu_m + \mu_t$ has to be treated with different models. In laminar, incompressible flows, the turbulent eddy viscosity $\mu_t = 0$ and only the molecular viscosity $\mu_m$ remains. For incompressible, isothermal flows, the molecular viscosity can usually be assumed to be spatially constant. For compressible and/or flows with a variable temperature field, the molecular viscosity is often assumed to be a function of the temperature according to Sutherland's law. In turbulent flows, $\mu_t \neq 0$ and an eddy viscosity model such as the classical Boussinesq model is required. Both of these models are briefly described in the following.
+Depending on the flow state, the effective viscosity $\mu_\textrm{eff} = \mu + \mu_t$ has to be treated with different models. In laminar, incompressible flows, the turbulent eddy viscosity $\mu_t = 0$ and only the molecular viscosity $\mu$ remains. For incompressible, isothermal flows, the molecular viscosity can usually be assumed to be spatially constant. For compressible flows and/or flows with a variable temperature field, the molecular viscosity is often assumed to be a function of the temperature according to Sutherland's law. In turbulent flows, $\mu_t \neq 0$ and an eddy viscosity model such as the classical Boussinesq model is required. Both of these models are briefly described in the following.
 
-## Sutherland model
-The Sutherland model describe how molecular viscosity changes with temperature for a specific gas.
+## Sutherland model for molecular viscosity
+The Sutherland model describes how molecular viscosity changes with temperature for a specific gas.
 
 Motivation:
 - The molecular viscosity of a specific gas can change with temperature, the Sutherland model can describe it.
@@ -35,11 +35,11 @@ It is used for calculating dynamic molecular viscosity of the mean flow.
 __NOTE: The linearized form of the Sutherland model is not implemented in FELiCS yet.__
 
 
-## Boussinesq model
-The Boussinesq model is a turbulence closure approach that approximates the effect of turbulent fluctuations by introducing an eddy viscosity, which relates the Reynolds stresses to the mean strain rate. Eddy viscosity represents the enhanced momentum transport due to turbulence and is typically modeled as an additional scalar in diffusion term in momentum equation. 
+## Boussinesq model for turbulent eddy viscosity
+The Boussinesq model is a turbulence closure approach that approximates the effect of turbulent fluctuations by introducing an eddy viscosity, which relates the Reynolds stresses to the mean strain rate. Eddy viscosity represents the enhanced momentum transport due to turbulence and is typically modeled as an additional scalar in diffusion term in momentum equation.
 
 Motivation:
-- to closure the RANS equaitons, Reynolds stress meeds to be modeled 
+- to closure the RANS equations, Reynolds stress meeds to be modeled 
 
 Use case:
 - most turbulent cases using RANS equations
@@ -49,6 +49,7 @@ References:
 
 Nomenclature:
 - $\rho \overline{\mathbf{u}'\mathbf{u}'}$: Reynolds stress tensor
+- $\mu$: molecular viscosity
 - $\mu_t$: eddy viscosity
 - $\mathbf{u}$: velocity vector
 - $k$: turbulent kenetic energy
@@ -64,18 +65,18 @@ The Boussinesq assumption models the Reynolds stress like
 $$
 -\rho \overline{\mathbf{u}'\mathbf{u}'} =\mu_t (\nabla +\nabla^T )\mathbf{u} - \frac{2}{3} k \mathbf{I}
 $$
-combine its first term on right hand side with diffusion term in Momentum equation, the viscosity can be expressed like:
+combine its first term on right hand side with diffusion term in momentum equation, the viscosity can be expressed like:
 $$
-\mu_{Eff} = \mu + \mu_t
+\mu_\textrm{eff} = \mu_m + \mu_t
 $$
 
 ### Frozen eddy viscosity
-In this method, the fluctuation of eddy visicosity is ignore, which means
+In this method, the fluctuation of eddy viscosity is ignored, which means
 $$
-\mu' = 0
+\mu_t' = 0
 $$
 
-### Linear equations
-There are various methods on linearization eddy viscosity. The following methods are implemented in present version of FELiCS:
-- Frozen eddy viscosity
+### Linearized eddy viscosity
+There are various methods to linearize the eddy viscosity. One possible way is to introduce additional turbulence model equations that explicitly describe how the eddy viscosity changes in space and time.
 
+__NOTE: Currently, the $k$-$\varepsilon$ equations are being implemented and validated in FELiCS and will soon be publicly released.__

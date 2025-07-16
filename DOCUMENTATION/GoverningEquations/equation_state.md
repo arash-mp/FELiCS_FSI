@@ -39,12 +39,13 @@ Assumptions/justification:
 - ideal gas with constant mean pressure, i.e. mean pressure in the entire flow field is constant due to low Mach numbers and the pressure field is set to the inlet pressure $p_0$
 - therefore, the density only changes with temperature, but not with pressure
 
+The low-Mach equation is
 $$
 \rho = \frac{p_0}{RT}
 $$
 
 ### Linearized low-Mach equation
-The linear form of the low-Mach ideal gas equation is
+The linearized form of the low-Mach equation is
 $$
 \rho' =  -\frac{\overline{\rho}T'}{\overline{T}}
 $$
