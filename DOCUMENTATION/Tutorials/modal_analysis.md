@@ -67,6 +67,10 @@ The complete structure of this file is detailed in [Setting files](hhttps://git.
 ### Settings
 The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
 
+The spanwise wavenumber is set to 0:
+```json
+{"m": 0.0,}
+```
 We specify the spatial domain dimension in the settings file as 2D:
 ```json
 {"nDim": 2}
@@ -104,11 +108,10 @@ After running the modal analysis, the working directory should look like:
 ├ bc_modal.json
 ├ cylinder_wake.msh
 ├ modal.json
-├ modal.json
 ├ PlotScatter.py
 └ ...
 ```
-Inside the ```output_dir``` directory, the all the eigenmodes in ```.h5``` and ```.xmf``` format can be found, along with eigenspectrum in ```spectrum.csv``` file. 
+Inside the ```output_dir``` directory, all the eigenmodes in ```.h5``` and ```.xmf``` format can be found, along with the eigenvalues in ```spectrum.csv``` file. 
 Run the pyhton script [PlotScatter.py](./../../TUTORIALS/modal_analysis_tutorial/PlotScatter.py) to plot the computed eigenvalue spectrum:
 ![](./../../TUTORIALS/modal_analysis_tutorial/eigenspectrum.png) <a id="fig:EigSpec"></a>
 Figure 1. Eigenspectrum

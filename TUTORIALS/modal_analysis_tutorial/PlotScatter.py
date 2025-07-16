@@ -41,9 +41,9 @@ def read_csv_file(file_path):
 import matplotlib.pyplot as plt
 
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 
-x_coords, y_coords = read_csv_file("./out/spectrum.csv")
+x_coords, y_coords = read_csv_file("./output_dir/spectrum.csv")
 # Plotting
 fig = plt.figure(figsize=(9, 6))
 plt.rcParams.update({'font.size': 24})
@@ -53,3 +53,5 @@ plt.xlabel('Im(Eigenvalue)')
 plt.ylabel('Re(Eigenvalue)')
 plt.grid(True)
 plt.show()
+
+# plt.savefig('eigenvalues_scatter_plot.png')

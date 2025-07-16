@@ -34,7 +34,7 @@ Our base flow is a time-averaged reacting flow field that includes:
 - Turbulent viscosity field $\nu_t$
 
 The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure1](#UXMean) 
-![Figure1](../TUTORIALS/input_ouput_tutorial/pic/MeanFlow.png) <a id="fig:UXMean"></a>
+![](../../TUTORIALS/input_ouput_tutorial/pic/MeanFlow.png) <a id="fig:UXMean"></a>
 
 Figure 1: Mean flow axial velocity
 
@@ -44,66 +44,78 @@ Figure 1: Mean flow axial velocity
 Here we set the axisymmetric boundary conditions in the [```boundaries.json```](../../TUTORIALS/TURB_FLAME/boundaries.json) file.
 
 The boundary conditions for reacting flows include additional considerations for species transport (here the progress $c'$):
-
-| Boundary | $u'_x$ | $u'_r$ | $u'_\theta$ | $p'$ | $c'$|
-|:----------|:-----------|:-----------|:-----------|:-----------|:-----------|
-| <code style="color : Darkorange">Forcing (Boundary 1)</code> | None | Dirichlet | Dirichlet | None | Dirichlet |
-| <code style="color : Darkorange">Outlet (Boundary 2)</code> | None | None | None | Dirichlet | None |
-| <code style="color : Darkorange">Symmetry (Boundary 3)</code> | Neumann | Dirichlet | Neumann | Neumann | Neumann |
-| <code style="color : Darkorange">Walls (Boundaries 4,5,6)</code> | Dirichlet | Dirichlet | Dirichlet | Neumann | Neumann |
+| Boundary Type | ID | $u'_x$ | $u'_r$ | $u'_\theta$ | $p'$ | $c'$ |
+|:---------------------|:---|:-----------|:-----------|:-----------|:-----------|:-----------|
+| <span style="color:Darkorange">Forcing</span>   | 1         | None      | Dirichlet | Dirichlet | None      | Dirichlet  |
+| <span style="color:Darkorange">Outlet</span>    | 2         | None      | None      | None      | Dirichlet | None       |
+| <span style="color:Darkorange">Symmetry</span>  | 3         | Neumann   | Dirichlet | Neumann   | Neumann   | Neumann    |
+| <span style="color:Darkorange">Walls</span>     | 4, 5, 6   | Dirichlet | Dirichlet | Dirichlet | Neumann   | Neumann    |
 
 **Note:** The forcing boundary (Boundary 1) is where external perturbations are applied to study the system's response. The progress variable boundary conditions ensure proper species transport at each boundary.
 
-### Reaction Mechanism
-The reaction mechanism is defined in the [```Mixture.json```](../../TUTORIALS/TURB_FLAME/Mixture.json) file. For this tutorial, we use a simplified progress variable approach:
-
+Note that the name to `custom` in [```boundaries.json```](../../TUTORIALS/TURB_FLAME/boundaries.json) to manually design each component BC.
 ```json
 {
-"Species":{
-    "progress":{
-        "calc":"transported",
-        "Sc":0.9
-    }
-},
-"Reaction_mechanism":{
-    "type": "KaiserCnF2023",
-    "additional_fields":["prefactor"],
-    "reactions":[{
-        "educts": [],
-        "stochiometricCoefficientsEducts": [],
-        "products": ["progress"],
-        "stochiometricCoefficientsProducts": [1.0]
-    }]
-}}
+    "1": {
+        "name": "custom",
+        "specifics": [
+            {
+                "variable": "ux",
+                "type": "None",
+                "value": 0.0
+            },
+            {
+                "variable": "ur",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "ut",
+                "type": "Dirichlet",
+                "value": 0.0
+            },
+            {
+                "variable": "p",
+                "type": "None",
+                "value": 0.0
+            },
+            {
+                "variable": "progress",
+                "type": "Dirichlet",
+                "value": 0.0
+            }
+        ]
+    },
+}
 ```
 
-This configuration defines:
-- A transported progress variable with Schmidt number 0.9
-- A reaction mechanism based on the KaiserCnF2023 model
-- Additional fields for reaction prefactor calculations
-- A single reaction that produces the progress variable
+### Reaction Mechanism
+The reaction mechanism is defined in the [```Mixture.json```](../../TUTORIALS/TURB_FLAME/Mixture.json) file. 
+For this tutorial, we use a Schmidt number
+```json
+{"Sc":0.9}
+```
+and use the implemented flame model
+```json
+{"type": "KaiserCnF2023",}
+```
 
 ### Settings
-The setting file [```turb_flame.json```](../../TUTORIALS/TURB_FLAME/turb_flame.json) contains all the analysis information. The explanation of each field is provided in [Setting files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+The setting file [```turb_flame.json```](../../TUTORIALS/TURB_FLAME/turb_flame.json) encapsulates the analysis information. The explanation of each field is provided in [Setting files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
 
-Key settings for input/output analysis with reacting flows:
+Here are some key settings for input/output analysis with reacting flows:
 
-#### Coordinate System and Geometry
+- The coordinates system is set to Cylindrical with azimuthal wavenumber m=0 (axisymmetric mode) on our 2D mesh:
 ```json
 "CoordinateSystem": "Cylindrical",
 "m": 0.0,
 "nDim": 2
 ```
-The coordinates system is set to Cylindrical with azimuthal wavenumber m=0 (axisymmetric mode).
-
-#### Analysis Mode
+- We enables input/output analysis with
 ```json
 "AnalysisMode": "Input-Output",
-"CalculateAdjoint": true
 ```
-This enables input/output analysis with adjoint calculation for sensitivity analysis.
-
-#### Equations Set
+- We include the Momentum, Mass, Energy equations, along with Species transport for progress variable
 ```json
 "SetOfEquations": {
     "Momentum": {
@@ -128,14 +140,8 @@ This enables input/output analysis with adjoint calculation for sensitivity anal
     }
 }
 ```
-This configuration solves:
-- Momentum equations for velocity fluctuations
-- Mass conservation for pressure
-- Species transport for progress variable
-- Energy equation coupled to progress variable
-- Low-Mach equation of state allows to assume hte mean ressure to be constant. The density is only impacted by the temperature.
+The low-Mach equation of state allows to assume the mean pressure to be constant. The density is only impacted by the temperature.
 
-#### Physical Properties
 ```json
 "MolVisc": 0.0002,
 "MolViscModel": "Constant",
