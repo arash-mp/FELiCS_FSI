@@ -247,7 +247,23 @@ class CoordinateSystem():
                 **kwargs,
                 ):
         """
-    
+        Initialize the CoordinateSystem object.
+
+        Parameters
+        ----------
+        SpatialCoordinateObj : ufl.SpatialCoordinate
+            Coordinate vector of the mesh.
+        name : str
+            Name of the coordinate system.
+        m : int, optional
+            Wave number for mean-flow homogeneous directions.
+        **kwargs : dict
+            Optional keyword arguments, e.g. 'mesh_dims' to reduce dimensionality.
+
+        Raises
+        ------
+        ValueError
+            If the coordinate system name is not recognized.
         """
 
         x = SpatialCoordinateObj
@@ -444,7 +460,7 @@ class Tensor():
         **kwargs,
         ):
         """
-        Initialize a tensor object.
+        Initialize a Tensor object.
 
         Parameters
         ----------
@@ -453,11 +469,11 @@ class Tensor():
         CoordSys : CoordinateSystem
             The coordinate system in which the tensor is defined.
         hasSpectralDimension : bool, optional
-            Whether this tensor has spectral dimension sdim, i.e. tensor = tensor_coefficients * exp(i*m*sdim) with wave number m. 
+            Whether this tensor has spectral dimension sdim, i.e. tensor = tensor_coefficients * exp(i*m*sdim) with wave number m.
         m : int, optional
             Optional wave number.
         **kwargs : dict
-            Optional arguments: 'basis' (covariant or contravariant), 'sym' (custom symmetry. not yet implemented).
+            Optional arguments: 'basis' (covariant or contravariant), 'sym' (custom symmetry).
 
         Notes
         -----
