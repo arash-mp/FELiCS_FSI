@@ -2,38 +2,74 @@
    sphinx-quickstart on Wed Jun 21 16:35:23 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
-   
-.. .. automodule::  FELiCS
-   :members:   
+
+.. .. automodule:: FELiCS
+   :members:
    :no-undoc-members:
 
+===============================
+Welcome to FELiCS 2.0
+===============================
 
-=====================================
-FELiCS2.0
-=====================================
+**FELiCS** (*Finite Element Linearized Combustion Solver*) is a Python-based CFD tool developed at the **Laboratory for Flow Instabilities and Dynamics**. It provides a powerful framework for analyzing and controlling fluid flows by solving the **linearized flow equations around a mean state**.
 
-The goal of the FELiCS project is to (further) develop a code (FELiCS) that applies linear analysis to multi-physics flow problems.
-The software should provide a simple access to the related methods (Stability analysis, Resolvent analysis, Input-Output analysis) and allow a user to apply the code without significant knowledge about its details and implementation to flows in complex geometries.
+Originally built for academic research, FELiCS is designed to extend the application of linearized methods to real-world engineering problems. It supports a wide range of physical phenomena—including turbulence, heat and mass transport, chemical reactions, and acoustics—through a modular and extensible design.
 
+FELiCS is:
 
-`Guides for developers can be found in the Wiki <https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/home>`_
+- Built on top of **FEniCS** for finite element discretization
+- Written in Python
+- Integrated with **PETSc/SLEPc** for high-performance linear algebra
+- Equipped for **linear stability analysis**, **resolvent analysis**, and **input-output analysis**
+- Multi-physics: turbulence, mass transport, heat transport, chemical reactions, acoustics and many more
+- Usable via the **command line** or integrated into **custom Python scripts**
 
----------------
+This documentation will guide you through everything you need to know to get started with FELiCS: from installation to running analyses and diving into the math behind it.
+
+--------------------------
+Getting Started
+--------------------------
+
+1. 🚀 `Installation Guide <installation_guide.html>`_ 
+
+   Step-by-step instructions for installing FELiCS and its dependencies.
+
+2. ⚙️ `Running FELiCS <Running_FELiCS/index.html>`_
+
+   Learn how to configure and run a simulation. This section also describes all available options and settings.
+
+3. 🎓 `Tutorials <Tutorials/index.html>`_ 
+
+   Experience modal and resolvent analysis.
+
+--------------------------
+Explore Further
+--------------------------
+
+* 📖 `Governing Equations <GoverningEquations/index.html>`_
+
+  An in-depth look at the equations FELiCS solves and their physical meaning.
+
+* 🛠️ `How-To-Guides <How-To-Guides/index.html>`_
+
+  Additional tips and instructions for specific tasks and advanced features.
+
+* 🧩 `API Documentation <autoapi/index.html>`_
+
+  More information on classes, methods and functions for developers and users.
+
+--------------------------
 Content
----------------
+--------------------------
+
 .. toctree::
    :maxdepth: 1
    :glob:
 
    installation_guide
    Running_FELiCS/index
-   GoverningEquations/index
    Tutorials/index
+   GoverningEquations/index
    How-To-Guides/index
 
-Indices and tables
--------------
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   

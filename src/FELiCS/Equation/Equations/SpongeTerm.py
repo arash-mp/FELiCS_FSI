@@ -14,12 +14,42 @@ class SpongeTerm(EquationTemplate):
     """
     Class representing the sponge term in the equation.
 
-    The sponge term is used to apply damping to fluctuations in the governing 
-    equations. It helps control artificial reflections and stabilize numerical 
-    simulations by gradually reducing disturbances in specified regions.
+    The sponge term applies damping to fluctuations or deviations from target
+    profiles in computational domains. It stabilizes numerical simulations by
+    attenuating reflections and enforcing desired flow behavior in designated
+    regions.
 
-    This implementation supports both linear and nonlinear damping terms and 
-    dynamically selects the appropriate variables based on the equation set.
+    **Initialize the SpongeTerm object**
+
+    Parameters
+    ----------
+    eqColl : EquationCollection
+        The equation collection object.
+    fluc : Fluctuations
+        The fluctuations object.
+    X : list
+        The list of solution variables.
+    param : Parameters
+        The parameters object.
+
+    Attributes
+    ----------
+    fluc : Fluctuations
+        Fluctuating fields used in the formulation.
+    X : list of Function
+        Trial/test functions for each variable.
+    param : Parameters
+        Configuration and problem parameters.
+    J_hat : Expression
+        Jacobian determinant for integration.
+    all_ds : Measure
+        Boundary integration measure.
+    n : FacetNormal
+        Unit normal vector on boundaries.
+
+    Notes
+    -----
+    Discontinuous Galerkin schemes are not supported in this tensorial framework.
     """
 
     def __init__(self, index, eqColl, fluc, X, param):
@@ -36,12 +66,6 @@ class SpongeTerm(EquationTemplate):
             The list of solution variables.
         param : Parameters
             The parameters object.
-
-        Notes
-        -----
-        - If the numerical scheme is 'Discontinuous Galerkin', an exception is raised 
-          since it is not implemented in the tensorial framework.
-        - The sponge term is initialized for all specified equations in the parameter set.
         """
         # Disclaimers
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
@@ -65,9 +89,9 @@ class SpongeTerm(EquationTemplate):
 
         Notes
         -----
-        - No sponge term is applied in this function.
+        This method does not apply any sponge term contributions.
         """
-        # nothing to add
+        # nothing to add for the sponge term
         pass
 
     def addLinearExpression(self, weakForm, mean):
@@ -83,10 +107,12 @@ class SpongeTerm(EquationTemplate):
 
         Notes
         -----
-        - Applies a damping term to the linearized fluctuations.
-        - Dynamically identifies the fluctuation variable associated with each equation.
-        - The sponge term for velocity (`u`) is treated separately with a dot product.
+        Applies linear sponge damping terms to the fluctuation variables,
+        as specified in the parameter set. For velocity variables, a dot
+        product is applied. Each variable's sponge term is weighted by the
+        sponge strength field `spg`.
         """
+
         J_hat = self.J_hat
         fluc  = self.fluc
         X     = self.X
@@ -138,9 +164,10 @@ class SpongeTerm(EquationTemplate):
 
         Notes
         -----
-        - Applies a nonlinear damping term to mean flow variables.
-        - The sponge term is applied to velocity, pressure, and other relevant fields.
-        - The target values for damping are retrieved dynamically.
+        Applies nonlinear sponge damping terms based on the deviation of
+        mean flow variables from their designated target profiles. These
+        target values are retrieved dynamically and matched to each variable.
+        Velocity terms are handled with tensor dot products.
         """
  
         J_hat = self.J_hat

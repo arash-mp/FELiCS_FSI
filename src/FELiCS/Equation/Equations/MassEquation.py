@@ -15,6 +15,14 @@ class MassEquation(EquationTemplate):
     """
     Class representing the mass conservation equation.
 
+    This class implements the weak form expressions for the mass conservation
+    equation, both linear and nonlinear, in the tensorial framework. It
+    handles the addition of relevant terms such as advection and boundary
+    contributions, and accounts for specific analysis modes like
+    Input-Output.
+
+    **Initialize the MassEquation object**
+
     Parameters
     ----------
     eqColl : EquationCollection
@@ -26,11 +34,28 @@ class MassEquation(EquationTemplate):
     param : Parameters
         The parameters object.
 
+    Attributes
+    ----------
+    fluc : Fluctuations
+        Fluctuating quantities used in the formulation.
+    X : Function
+        Trial/test function in the variational formulation.
+    param : Parameters
+        Configuration and problem parameters.
+    J_hat : Expression
+        Jacobian determinant for integration.
+    all_ds : Measure
+        Boundary integration measure.
+    n : FacetNormal
+        Unit normal vector on boundaries.
+
     Notes
     -----
-    This class inherits from EquationTemplate and implements the specific
-    methods for the mass conservation equation.
+    This class inherits from EquationTemplate and raises an exception if
+    a Discontinuous Galerkin scheme is selected, which is not implemented
+    in the tensorial framework.
     """
+
 
     def __init__(self, index, eqColl, fluc, X, param):
         """
@@ -62,14 +87,14 @@ class MassEquation(EquationTemplate):
         Parameters
         ----------
         weakForm : Form
-            The weak form object.
+            The weak form object to which the expression is added.
         mean : Function
-            The mean function.
+            The mean function providing averaged quantities.
 
         Notes
         -----
-        This function adds the time derivative term to the weak form,
-        only if density fluctuations are considered.
+        Adds the time-derivative term to the weak form if density is among the
+        transported quantities.
         """
         # ------------------------ Time derivative term used
         # Only if density fluctuations are considered
@@ -83,14 +108,15 @@ class MassEquation(EquationTemplate):
         Parameters
         ----------
         weakForm : Form
-            The weak form object.
+            The weak form object to which the expression is added.
         mean : Function
-            The mean function.
+            The mean function providing averaged quantities.
 
         Notes
         -----
-        This function builds the weak form of the linearized mass conservation equation,
-        in tensorial framework.
+        Constructs the weak form of the linearized mass conservation equation,
+        including volume and boundary terms via integration by parts. Special
+        handling is added for boundary forcing in Input-Output analysis mode.
         """
         # ------------------------ Advection terms
         # The advection term is integrated by parts
@@ -113,10 +139,17 @@ class MassEquation(EquationTemplate):
         """
         Add the nonlinear expression to the weak form.
 
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object to which the expression is added.
+        mean : Function
+            The mean function providing averaged quantities.
+
         Notes
         -----
-        This function builds the weak form of the nonlinear
-        mass conservation equation, in tensorial framework.
+        Constructs the weak form of the full nonlinear mass conservation
+        equation using integration by parts for advection terms.
         """
 
         # ------------------------ Advection terms

@@ -15,10 +15,60 @@ comm = MPI.COMM_WORLD
 logger = Logger.get_logger("felics")
 
 class FELiCSMesh:
-    '''
-    This class is a wrapper to the fenics mesh class
-    '''
-    def __init__(self, coordinateSystem, meshFileName=None, gdim = None, m=0, inputMesh=None):
+    """
+    Wrapper class for the DOLFINx mesh, with support for custom coordinate systems and FELiCS-specific utilities.
+
+    This class allows loading and saving of mesh data, extraction of cell and coordinate information, 
+    and computation of connectivity for use in FEM simulations. It supports both Cartesian and Cylindrical 
+    coordinate systems and includes functionality to convert and export mesh data in FELiCS format.
+
+    **Initialize the FELiCSMesh object**
+
+    Parameters
+    ----------
+    coordinateSystem : str
+        Name of the coordinate system ('Cartesian' or 'Cylindrical').
+    meshFileName : str, optional
+        Path to the mesh file to load.
+    gdim : int, optional
+        Geometric dimension of the mesh. If None, it is inferred from the Gmsh model.
+    m : int, optional
+        Parameter used in the coordinate system configuration.
+    inputMesh : dolfinx.mesh.Mesh, optional
+        Existing DOLFINx mesh object to wrap instead of reading from a file.
+
+    Attributes
+    ----------
+    dolfinxMesh : dolfinx.mesh.Mesh
+        The wrapped DOLFINx mesh object.
+    facet_tags : dolfinx.mesh.MeshTags
+        Boundary facet tags parsed from the mesh.
+    gdim : int
+        Geometric dimension of the mesh.
+    coordinateSystemName : str
+        Name of the selected coordinate system.
+    _coordinates : numpy.ndarray
+        Cached array of mesh vertex coordinates.
+    """
+
+    def __init__(self, coordinateSystemName, meshFileName=None, gdim = None, m=0, inputMesh=None):
+        """
+        Initializes the FELiCSMesh object, loading a mesh from file or using an existing mesh.
+
+        Parameters
+        ----------
+        coordinateSystem : str
+            Coordinate system type ('Cartesian' or 'Cylindrical').
+        meshFileName : str, optional
+            Path to the mesh file.
+        gdim : int, optional
+            Geometric dimension of the mesh.
+        m : int, optional
+            A parameter used when constructing the coordinate system.
+        inputMesh : dolfinx.mesh.Mesh, optional
+            An existing DOLFINx mesh object.
+        """
+
         if inputMesh is None:
             # Initialize gmsh and suppress its output
             gmsh.initialize()
@@ -58,15 +108,15 @@ class FELiCSMesh:
             self._cpp_object = self.dolfinxMesh._cpp_object
         x = SpatialCoordinate(self.dolfinxMesh)
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
-        self.coordinateSystemName = coordinateSystem
-        if coordinateSystem =='Cartesian':
+        self.coordinateSystemName = coordinateSystemName
+        if coordinateSystemName =='Cartesian':
             self.__coordinateSystem = CoordinateSystem(
                                     x, 
-                                    coordinateSystem.lower(), 
+                                    coordinateSystemName.lower(), 
                                     m = m,
                                     mesh_dims = (1, 1, 0),
                                     )
-        elif coordinateSystem =='Cylindrical':
+        elif coordinateSystemName =='Cylindrical':
             self.__coordinateSystem = CoordinateSystem(
                                     x,
                                     "cylindricalfelics", 
@@ -78,14 +128,19 @@ class FELiCSMesh:
         self._coordinates = self.coordinates()
 
     def saveInFELiCSFormat(self, filename):
-        '''
-        This function saves the computational mesh in the FELiCS format
+        """
+        Saves the computational mesh in the FELiCS HDF5-based format.
 
-        Function arguments:
-        - filename: The path where to save the mesh
+        Parameters
+        ----------
+        filename : str
+            Path to the output HDF5 file where the mesh will be saved.
 
-        Function returns:
-        '''
+        Notes
+        -----
+        - Only vertex coordinates and triangular cell connectivity are saved.
+        - Currently, degrees of freedom (DoFs) for boundary conditions are not included.
+        """
         
         # TODO: save the DoFs corresponding to the different BCs
         
@@ -108,8 +163,14 @@ class FELiCSMesh:
 
     def calcConnectivity(self):
         """
-        this method calculates the meshCells array in the fenics representation
+        Calculates and updates the internal mesh cell connectivity array.
+
+        Notes
+        -----
+        The meshCells attribute is reshaped from the mesh's topology connectivity.
+        This is essential for writing mesh data or querying cell connectivity.
         """
+
         connectivityCells = self.dolfinxMesh.topology.connectivity(2, 0)
         topology          = self.dolfinxMesh.topology
         self.meshCells    = connectivityCells.array.reshape(
@@ -117,25 +178,53 @@ class FELiCSMesh:
 
     def cells(self):
         """
-        this methods returns the cell-connectivity information
+        Returns the cell connectivity array of the mesh.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of mesh cells with vertex indices.
         """
+
         self.calcConnectivity()
         return self.meshCells
 
     def coordinates(self):
         """
-        This method acts as a getter-method for the vertex-coordinates.
+        Retrieves the vertex coordinates of the mesh.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of vertex coordinates, truncated to the mesh's geometric dimension.
         """
+
         return self.dolfinxMesh.geometry.x[:, 0:self.gdim]
     
     def getBCInfo(self):
-        """ 
-        This function provides both the IDs of the boundary conditions 
-        and also the boundary nodes.
         """
+        Retrieves boundary condition tags and corresponding boundary facets.
+
+        Returns
+        -------
+        numpy.ndarray
+            Unique boundary condition IDs.
+        dolfinx.mesh.MeshTags
+            Mesh tags object representing the boundary facets.
+        """
+
         from numpy import unique
         return unique(self.facet_tags.values), self.facet_tags 
 
     @property
     def coordinateSystem(self):
+        """
+        Coordinate system object associated with the mesh.
+
+        Returns
+        -------
+        CoordinateSystem
+            Tensor-based coordinate system initialized for the mesh.
+        """
+
         return self.__coordinateSystem

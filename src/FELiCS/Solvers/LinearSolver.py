@@ -32,16 +32,22 @@ from FELiCS.Misc.logging import Logger
 logger = Logger.get_logger("felics")
 
 class LinearSolver:
-    """Linear algebra utilities using PETSc and SLEPc.
+    """
+    Linear algebra utilities using PETSc and SLEPc.
 
-    This class provides methods for solving generalized eigenvalue problems (GEVP),
+    Provides static methods for solving generalized eigenvalue problems (GEVP),
     singular value decompositions (SVD), and linear systems efficiently using
     PETSc and SLEPc.
 
+    **Initialize the LinearSolver object**
+
+    Parameters
+    ----------
+    None
+
     Notes
     -----
-    Consists of only static methods that don't need an instance ("object") of this class. Call the methods via "LinearSolver.method()".
-
+    Consists of only static methods that don't need an instance of this class. Call the methods via "LinearSolver.method()".
 
     Examples
     --------
@@ -70,7 +76,7 @@ class LinearSolver:
                 isForEigenProblem=True, 
                 ):
         """
-        Solve the generalized eigenvalue problem (GEVP) using the SLEPc and PETSc libraries.
+        Solve the generalized eigenvalue problem (GEVP) using SLEPc and PETSc.
 
         Parameters
         ----------
@@ -163,7 +169,7 @@ class LinearSolver:
                 tol    = 1.e-16,
                 max_it = 200):
         """
-        Solve the SVD of a resolvent operator.
+        Solve the singular value decomposition (SVD) of a resolvent operator.
 
         Parameters
         ----------
@@ -226,7 +232,7 @@ class LinearSolver:
         destroy=False):
 
         """
-        Solve a linear system of equations Ax = b using the PETSc libraries.
+        Solve a linear system of equations Ax = b using PETSc.
 
         Parameters
         ----------
@@ -274,7 +280,7 @@ class LinearSolver:
         destroy=False):
 
         """
-        Solve the transpose of a linear system A^T x = b using PETSc libraries.
+        Solve the transpose of a linear system A^T x = b using PETSc.
 
         Parameters
         ----------
@@ -320,15 +326,17 @@ class LinearSolver:
         A):
 
         """
-        Creates a KSP petsc solver to solve a linear equation system. This is useful if several linear equation systems with the same matrix are solved, 
-        since it stores the preconditioner and the calculation time is significantly reduced.
-        To solve the equation system use the method "solveEquationSystemWithPredefinedSolver".
-        
+        Create a KSP PETSc solver to solve a linear equation system.
+
+        This is useful if several linear equation systems with the same matrix are solved, since it stores the preconditioner
+        and the calculation time is significantly reduced. To solve the equation system use the method
+        "solveEquationSystemWithPredefinedSolver".
+
         Parameters
         ----------
-        A : PETSc matrix
-            matrix of the linear system
-        
+        A : PETSc.Mat
+            Matrix of the linear system.
+
         Returns
         -------
         solver : PETSc.KSP
@@ -352,12 +360,12 @@ class LinearSolver:
         destroy=False):
 
         """
-        Solves a linear equation system Ax=b, using the PETSc libraries and a predefined solver.
-        
+        Solve a linear equation system Ax=b using PETSc and a predefined solver.
+
         Parameters
         ----------
-        solver : PETSc KSP solver
-                 can be created with the method "createEquationSystemSolver"
+        solver : PETSc.KSP
+            Preconfigured solver, can be created with the method "createEquationSystemSolver".
         b : PETSc.Vec
             Right-hand side of the equation.
         destroy : bool, optional
@@ -365,7 +373,7 @@ class LinearSolver:
         
         Returns
         -------
-        x:  numpy array
+        x : numpy.ndarray
             Solution vector of the linear equation system.
         """
         from petsc4py import PETSc
@@ -384,14 +392,14 @@ class LinearSolver:
 
 
 class ResolventOperator(object):         
-    """         
-    This class serves as a "matrix-free" representation of the Resolvent operator multiplicated with its conjugate transposed.
+    """
+    Matrix-free representation of the Resolvent operator multiplied with its conjugate transpose.
+    Used to conduct the singular value decomposition of the system for resolvent analysis. Contains a method called "mult",
+    which is called by the eigenvalue solver and returns a matrix-vector product of the represented matrix. The resolvent operator
+    requires additional full-size quadratic matrices to calculate the forcing and response norms, as well as (possibly rectangular)
+    restrictor matrices that limit the spatial domain and variable dimensions.
 
-    It is used to conduct the singular value decomposition of the system for resolvent analysis. It contains a method called "mult", which is called by the eigenvalue solver, 
-    and returns a matrix vector product of the represented matrix. 
-    The resolvent operator requires additional full-size quadratic matrices to calculate the forcing and response norms, as well as (possibly rectangular) restrictor matrices that limit the spatial domain and variable dimensions.     
-
-    More information can be found in our documentation on the governint equations ("Implementation of resolvent operators").   
+    **Initialize the ResolventOperator object**
 
     Parameters
     ----------
@@ -399,15 +407,15 @@ class ResolventOperator(object):
         Matrix representing the linear system.
     FEMWeightMatrix_fullSystem : PETSc.Mat
         Weight matrix for the full FEM system.
-    FEMWeightMatrix_forcingNorm: PETSc.Mat
+    FEMWeightMatrix_forcingNorm : PETSc.Mat
         Weight matrix for the forcing norm. Has default size of full system (surplus DOFs will be ignored).
-    FEMWeightMatrix_responseNorm: PETSc.Mat
+    FEMWeightMatrix_responseNorm : PETSc.Mat
         Weight matrix for the response norm. Has default size of full system (surplus DOFs will be ignored).
-    RestrictorMatrix_forcing: PETSc.Mat    
+    RestrictorMatrix_forcing : PETSc.Mat
         Restrictor matrix for forcing. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
-    RestrictorMatrix_response: PETSc.Mat
+    RestrictorMatrix_response : PETSc.Mat
         Restrictor matrix for response. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
-    """         
+    """
 
     def __init__(self,                      
             ResolventOperator, #A-i*omega*B                      
@@ -418,9 +426,23 @@ class ResolventOperator(object):
             RestrictorMatrix_response):    
 
         """
-        
+        Initialize the ResolventOperator object.
 
-        """                 
+        Parameters
+        ----------
+        ResolventOperator : PETSc.Mat
+            Matrix representing the linear system.
+        FEMWeightMatrix_fullSystem : PETSc.Mat
+            Weight matrix for the full FEM system.
+        FEMWeightMatrix_forcingNorm : PETSc.Mat
+            Weight matrix for the forcing norm.
+        FEMWeightMatrix_responseNorm : PETSc.Mat
+            Weight matrix for the response norm.
+        RestrictorMatrix_forcing : PETSc.Mat
+            Restrictor matrix for forcing.
+        RestrictorMatrix_response : PETSc.Mat
+            Restrictor matrix for response.
+        """               
 
         from petsc4py import PETSc                 
 
@@ -467,18 +489,18 @@ class ResolventOperator(object):
 
     def getSize(self):
         """
-        Return the size of the operator.
+        Get the size of the operator.
 
         Returns
         -------
         tuple
             The size of the operator (rows, columns).
-        """                 
-        return self._size         
+        """
+        return self._size
 
     def getVecs(self):
         """
-        Get vectors for the operator.
+        Get PETSc vectors for the operator.
 
         Returns
         -------
@@ -499,6 +521,11 @@ class ResolventOperator(object):
             Input vector.
         Y : PETSc.Vec
             Output vector.
+        
+        Returns
+        -------
+        PETSc.Vec
+            The result of the matrix-vector product.
         """                 
         # returns Y=mat*X                 
         # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcing                 
@@ -524,9 +551,9 @@ class ResolventOperator(object):
         Returns
         -------
         PETSc.KSP
-            KSP solver instance that solves the resolvent equation (without its conjuage transpose). Can be used to get the response to a given forcing.
-        """              
-        return self._ksp1         
+            KSP solver instance that solves the resolvent equation (without its conjugate transpose). Can be used to get the response to a given forcing.
+        """
+        return self._ksp1
 
     def destroySelf(self):                 
         """
