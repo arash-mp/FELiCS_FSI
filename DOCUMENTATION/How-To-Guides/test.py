@@ -19,6 +19,8 @@ phi.importH5("function_values_2d")
 vorticitySol = Field(scalarSpace, mesh=mesh)
 vorticitySol.importH5("vorticity_solution")
 
+vorticitySol.calculateL2Norm()
+
 
 import numpy as np
 
