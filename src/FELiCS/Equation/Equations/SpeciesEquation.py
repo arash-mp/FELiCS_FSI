@@ -16,18 +16,52 @@ logger = Logger.get_logger("felics")
 
 
 class SpeciesEquation(EquationTemplate):
-    """Class representing the species transport equation.
-
-    This class formulates the species transport equation in a tensorial framework.
-    It accounts for advection, diffusion, and potential reaction terms while ensuring 
-    compatibility with various boundary conditions. The equation is integrated 
-    into the larger system of equations used for modeling species transport in 
-    computational fluid dynamics.
-
-    The implementation supports input-output analysis and applies integration by 
-    parts for specific terms to facilitate numerical stability and boundary 
-    conditions handling.
     """
+    Class representing the species transport equation.
+
+    This class formulates the species transport equation in a tensorial framework,
+    capturing the effects of advection, diffusion, and chemical reactions. It supports
+    boundary forcing and input-output analysis, while enforcing integration by parts
+    to enable more robust numerical handling of fluxes and boundary conditions.
+
+    **Initialize the SpeciesEquation object**
+
+    Parameters
+    ----------
+    eqColl : EquationCollection
+        The equation collection object.
+    fluc : Fluctuations
+        The fluctuations object.
+    X : Function
+        The trial/test function in the weak formulation.
+    species : str
+        The species name being transported.
+    param : Parameters
+        The configuration and simulation parameters.
+
+    Attributes
+    ----------
+    species : str
+        Name of the species for which the equation is formulated.
+    fluc : Fluctuations
+        Fluctuating quantities used in the formulation.
+    X : Function
+        Trial/test function in the variational formulation.
+    param : Parameters
+        Configuration and problem parameters.
+    J_hat : Expression
+        Jacobian determinant for integration.
+    all_ds : Measure
+        Boundary integration measure.
+    n : FacetNormal
+        Unit normal vector on boundaries.
+
+    Notes
+    -----
+    Discontinuous Galerkin schemes are not supported in this tensorial framework.
+    """
+
+
     def __init__(self, index, eqColl, fluc, X, species, param):
         """
         Initialize the SpeciesEquation class.
@@ -44,13 +78,8 @@ class SpeciesEquation(EquationTemplate):
             The species name.
         param : Parameters
             The parameters object.
-
-        Notes
-        -----
-        - If the numerical scheme is 'Discontinuous Galerkin', an error will be raised 
-          since it is not implemented in the tensorial framework.
-        - The species name is stored internally for further processing.
         """
+
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
@@ -75,8 +104,10 @@ class SpeciesEquation(EquationTemplate):
 
         Notes
         -----
-        - This method incorporates time derivative terms into the weak form.
+        Adds the time derivative term to the weak form for the species equation.
+        This term incorporates fluctuations weighted by the mean density.
         """
+
         # Time derivative term
         weakForm.add((self.fluc.Y(self.species) * iConj(self.X) * mean.rho).ufl_tens * self.J_hat * dx)
 
@@ -84,10 +115,11 @@ class SpeciesEquation(EquationTemplate):
         """
         Add the nonlinear expression to the weak form.
 
-        Notes
+        Warning
         -----
-        - This method currently serves as a placeholder and is not implemented.
+        This method is currently a placeholder and not implemented.
         """
+
         pass
 
     def addLinearExpression(self, weakForm, mean):
@@ -103,12 +135,13 @@ class SpeciesEquation(EquationTemplate):
 
         Notes
         -----
-        - The equation is formulated in a convective form using a tensorial framework.
-        - Integration by parts is applied to the advection term.
-        - The diffusion term is integrated by parts but omits boundary contributions, 
-          imposing a Neumann condition.
-        - A warning is issued if the case parameter `m` is greater than zero, as 
-          validation for such cases is not complete.
+        Constructs the weak form using a tensorial formulation. The method
+        includes:
+        - Integration by parts for advection terms to capture boundary contributions.
+        - Volume-only integration of diffusion terms, effectively imposing Neumann boundary conditions.
+        - Reaction terms based on a KaiserCnF2023 mechanism if specified.
+        - Forcing terms for input-output analysis, including both body and boundary forcing.
+        A warning is issued if the case parameter `m > 0`, as it has not been validated.
         """
        
         param   = self.param
