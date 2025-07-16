@@ -238,7 +238,7 @@ class Field:
         # Create  a Field for the gradient
         # The space must be a vector vor a scalar field
         # TODO Sophie: handle order (get it from function?)
-        order = 2
+        order = self.space.element.basix_element.degree
         dim = self.mesh.gdim 
         if self.hasSpectralDimension:
             dim += 1
@@ -259,6 +259,62 @@ class Field:
         gradientSpace.FEMWeightSolver.destroy()
 
         return gradientField
+
+    def calculateL2Norm(self):
+        import ufl
+        import numpy as np
+        from FELiCS.Misc.tensorUtils import iConj, iDot
+        from dolfinx.fem import assemble_scalar, form
+        norm_squared = 0.
+        list1 = self.getListOfSingleFields()
+        J_hat = self.mesh.coordinateSystem.J_hat
+        for field in list1:
+            norm_squared += assemble_scalar(form((iDot(iConj(field.getTensor()), field.getTensor())).ufl_tens*J_hat*ufl.dx))
+        
+        return np.sqrt(norm_squared)
+
+
+    def getVorticityField(self):
+        # TODO Sophie: throw error if Field is not vector
+        # TODO: Add vorticity 3D field
+
+        dim = self.space.num_sub_spaces
+        if dim < 2:
+            # Error message
+            pass
+        componentGradient = []
+        velocityComponents = self.getListOfSingleFields()
+
+        for field in velocityComponents:
+            componentGradient.append(field.getGradientField())
+        
+        
+        # 2D field -> scalar vorticity field
+        if dim == 2:
+            dvdx = componentGradient[1].getListOfSingleFields()[0]
+            dudy = componentGradient[0].getListOfSingleFields()[1]
+            vorticityField = dvdx - dudy
+            
+            return vorticityField
+        # 3D field -> vector vorticity field
+        # TODO: Still needs to be tested
+        if dim == 3:
+            dwdy = componentGradient[2].getListOfSingleFields()[1]
+            dvdz = componentGradient[1].getListOfSingleFields()[2]
+
+            dudz = componentGradient[0].getListOfSingleFields()[2]
+            dwdx = componentGradient[2].getListOfSingleFields()[0]
+
+            dvdx = componentGradient[1].getListOfSingleFields()[0]
+            dudy = componentGradient[0].getListOfSingleFields()[1]
+
+            vorticity_x = dwdy - dvdz
+            vorticity_y = dudz - dwdx
+            vorticity_z = dvdx - dudy
+
+            vorticityField = Field(self.space, self.mesh)
+            vorticityField.setListOfSingleFields([vorticity_x, vorticity_y, vorticity_z])
+
 
     def exportH5(self, fileName, mesh = None):
         # for now this is a dummy method that we use for the scripting part of the retreat.
@@ -293,8 +349,15 @@ class Field:
         #    with XDMFFile(MPI.COMM_WORLD, fileName+".xdmf", "r") as xdmf:
         #        mesh          = xdmf.read_mesh(meshFileName)
 
-        # this is only a dummy for the scripting
-        self.setCoefficientArray(np.load(fileName+".npy"))
+        # # this is only a dummy for the scripting
+        if fileName == "function_values_2d":
+            data = np.load(fileName+".npy").reshape(2,-1).T
+            field1, field2 = self.getListOfSingleFields()
+            field1.setCoefficientArray(data[:,0])  
+            field2.setCoefficientArray(data[:,1])
+            self.setListOfSingleFields([field1, field2])
+        else:
+            self.setCoefficientArray(np.load(fileName+".npy"))
 
 
     def evaluateUflExpression(self, ufl_expression, bcs=[], restartSolver=False):
@@ -493,6 +556,35 @@ class Field:
         if isinstance(other, Field):
             result = Field(self.space, self.mesh)
             result.setCoefficientArray(self.getCoefficientArray() + other.getCoefficientArray())
+            return result 
+        return NotImplemented
+    
+
+    def __sub__(self, other):
+        """
+        Overload the `-` operator for adding two Field objects.
+
+        Parameters
+        ----------
+        other : Field
+            Another Field object.
+
+        Returns
+        -------
+        Field
+            A new Field object with the summed coefficient arrays.
+
+        Raises
+        ------
+        NotImplementedError
+            If `other` is not a Field object.
+        """
+        ## overrides '+'
+        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
             return result 
         return NotImplemented
 

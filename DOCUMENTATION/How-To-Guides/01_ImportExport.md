@@ -4,7 +4,7 @@ Before you start, you should install all necessary FELiCS packages, and install 
 
 After installing FELiCS you can start writing your first FELiCS script. 
 
-Here, we have used gmsh to create a square mesh, which we exported in ASCII format. If you need a more detailed explanation you can have a look here: (TODO: link to tutorial). 
+Here, we have used gmsh to create a square mesh, which we exported in ASCII format. If you need a more detailed explanation you can have a look [here](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/Tutorials/cylinder_wake.html).
 
 **Step 1: Create a FELiCSMesh**
 
@@ -15,15 +15,19 @@ The FELiCSMesh is a wrapper for a dolfinx mesh, that contains additional attribu
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 
 meshFileName = "./square_mesh.msh"
-coordinateSystem = "Cartesian"
+coordinateSystemName = "Cartesian"
 
 # Create a FELiCS mesh from the gmsh file
-mesh = FELiCSMesh(coordinateSystem=coordinateSystem, meshFileName=meshFileName)
+mesh = FELiCSMesh(coordinateSystemName=coordinateSystemName, meshFileName=meshFileName)
 ```
+
+    [38;20mInfo     | FELiCSMesh.py          | __init__                   (line 78  ) : Opening mesh file: ./square_mesh.msh[0m
+    [38;20mInfo     | FELiCSMesh.py          | __init__                   (line 86  ) : Mesh contains 513 nodes and 1024 elements[0m
+
 
 **Step 2: Create a scalar function space**
 
-Next we create a dolfinx function space from our FELiCSMesh object with the polynomial order and the dimension of the space. We only use continuous Lagrange elements. Because our space should be scalar, we choose dim=1.
+Next we create a dolfinx function space from our FELiCSMesh object with the polynomial order and the dimension of the space. In FELiCS, only continuous Lagrange elements are used. Because our space should be scalar, we choose dim=1.
 
 
 ```python
