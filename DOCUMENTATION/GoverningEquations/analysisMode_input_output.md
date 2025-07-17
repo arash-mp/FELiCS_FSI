@@ -1,4 +1,10 @@
 # Input-output analysis
+
+References:
+- [Avdonin et al. 2018](https://doi.org/10.1016/j.proci.2018.06.142)
+- [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
+- [Kaiser et al. 2023](https://doi.org/10.1016/j.combustflame.2023.112778)
+
 Input-output analysis is a framework used to study how a linearized dynamical system responds to a given external forcing. Starting from the linearized equations around a steady base state, one models the system as an operator that maps input disturbances to system responses in frequency space. The focus is not on natural instabilities, but rather on how specific inputs (e.g. body forces, boundary perturbations) generate specific outputs (e.g. velocity or pressure fields). Unlike resolvent analysis, which typically uses singular value decomposition to identify optimal forcings, input-output analysis directly computes the response to a prescribed forcing using the resolvent operator. This approach is particularly useful when the structure or frequency content of the disturbance is known or imposed.
 
 ## Linearized Input-output System

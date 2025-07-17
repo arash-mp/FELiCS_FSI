@@ -1,4 +1,4 @@
-# Tensor framework
+# Tensor formalism
 
 ## Introduction
 This documentation introduces the tensor formalism used in the script collection `tensor_utils` which is a subcomponent inside FELiCS. For a separate version of `tensor_utils` that relies solely on FEniCS and UFL including a more complete introduction, see [here](https://git.tu-berlin.de/kai.hildebrandt1/tensor_utils).
@@ -181,7 +181,11 @@ $$
 \end{equation}
 $$
 
-Note that Christoffel symbols are symmetric in the lower indices due to the symmetry of second derivatives (Schwarz's theorem). Plugging (17) into the gradient of a rank-2 tensor and using (20) gives:
+```{note}
+Christoffel symbols are symmetric in the lower indices due to the symmetry of second derivatives (Schwarz's theorem). 
+```
+
+Plugging (17) into the gradient of a rank-2 tensor and using (20) gives:
 
 $$
 \begin{align}

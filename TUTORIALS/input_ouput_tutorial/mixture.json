@@ -1,0 +1,17 @@
+{
+"Species":{
+    "progress":{
+        "calc":"transported",
+        "Sc":0.9
+    }
+},
+"Reaction_mechanism":{
+    "type": "KaiserCnF2023",
+    "additional_fields":["prefactor"],
+    "reactions":[{
+        "educts": [],
+        "stochiometricCoefficientsEducts": [],
+        "products": ["progress"],
+        "stochiometricCoefficientsProducts": [1.0]
+    }]
+}}

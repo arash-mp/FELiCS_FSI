@@ -1,22 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
-import pandas as pd
 import matplotlib.tri as tri
 
 # --- User parameters ---
-case_path = '/my/path/to/case'  # Path to the case directory
+case_path = '/outputdir' # Path to the case output_dire
 
-gains_file = '/gains.csv'   
-mesh_file = '/Resolvent_mesh.h5'        
-forcing_file = '/Resolvent_Omega3.1_Forcing_gain0.h5'      
-response_file = '/Resolvent_Omega3.1_Response_gain0.h5'      
+gains_file = '/gains.csv'
+mesh_file = '/Resolvent_mesh.h5'
+forcing_file = '/Resolvent_Omega3.1_Forcing_gain0.h5'
+response_file = '/Resolvent_Omega3.1_Response_gain0.h5'
 
 # --- Load gains and frequencies from CSV ---
-df = pd.read_csv(case_path + gains_file)
-St = df['omega'] / (2 * np.pi)             # Strouhal number
-gains = df.drop(columns=['omega']).values  # shape: (n_freqs, n_resp_modes)
-Nmodes = gains.shape[1]                    # Number of solutions computed
+data = np.genfromtxt(case_path+gains_file, delimiter=',', names=True)
+St = data['omega'] / (2 * np.pi)  # Strouhal number
+gains = np.column_stack([data[name] for name in data.dtype.names if name != 'omega'])
+Nmodes = gains.shape[1]  # Number of solutions computed
+
 # --- Plot gains ---
 plt.figure(figsize=(6, 4))
 for i in range(Nmodes):
@@ -126,21 +126,21 @@ def plot_mode_fromfile(filename, varname, meshfile, **kwargs):
 # Forcing
 figure = plt.figure()
 ax1 = plt.subplot(3,1,1)
-plot_mode_fromfile(case_path+forcing_file,['ux'], case_path+mesh_file, quantity = 'real', ax=ax1, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_x$)')
+plot_mode_fromfile(forcing_file,['ux'], mesh_file, quantity = 'real', ax=ax1, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_x$)')
 ax2 = plt.subplot(3,1,2)
-plot_mode_fromfile(case_path+forcing_file,['ur'], case_path+mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_r$)')
+plot_mode_fromfile(forcing_file,['ur'], mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_r$)')
 ax2 = plt.subplot(3,1,2)
-plot_mode_fromfile(case_path+forcing_file,['ur'], case_path+mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_r$)')
+plot_mode_fromfile(forcing_file,['ur'], mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-3, vmax = 2.5e-3, title='Real($u_r$)')
 
 ax3 = plt.subplot(3,1,3)
-plot_mode_fromfile(case_path+forcing_file,['p'], case_path+mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], vmin = -1.3e-3, vmax = 1.3e-3,title='Real($p$)')
+plot_mode_fromfile(forcing_file,['p'], mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], vmin = -1.3e-3, vmax = 1.3e-3,title='Real($p$)')
 plt.show()
 # Response
 figure = plt.figure()
 ax1 = plt.subplot(3,1,1)
-plot_mode_fromfile(case_path+response_file,['ux'], case_path+mesh_file, quantity = 'real', ax=ax1, xlims=[-2,8], vmin = -2.5e-2, vmax = 2.5e-2, title='Real($u_x$)')
+plot_mode_fromfile(response_file,['ux'], mesh_file, quantity = 'real', ax=ax1, xlims=[-2,8], vmin = -2.5e-2, vmax = 2.5e-2, title='Real($u_x$)')
 ax2 = plt.subplot(3,1,2)
-plot_mode_fromfile(case_path+response_file,['ur'], case_path+mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-2, vmax = 2.5e-2, title='Real($u_r$)')
+plot_mode_fromfile(response_file,['ur'], mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-2, vmax = 2.5e-2, title='Real($u_r$)')
 ax3 = plt.subplot(3,1,3)
-plot_mode_fromfile(case_path+response_file,['p'], case_path+mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], vmin = -1.3e-2, vmax = 1.3e-2, title='Real($p$)')
+plot_mode_fromfile(response_file,['p'], mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], vmin = -1.3e-2, vmax = 1.3e-2, title='Real($p$)')
 plt.show()
