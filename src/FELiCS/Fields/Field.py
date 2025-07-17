@@ -107,24 +107,32 @@ class Field:
         - If the space has multiple subspaces, each subspace is extracted as an 
           individual field.
         """
-        listOfFields = []
-
-        numberOfSubSpaces = self.space.num_sub_spaces
+        listOfFields            = []
+        
+        # Get the info about the field we are examining
+        infoSpaceField          = self.describeFunctionSpace()
+        numberOfSubSpaces       = self.space.num_sub_spaces
 
         if numberOfSubSpaces == 0: 
             listOfFields.append(self)
             return listOfFields
-
+        
+        # If we have a vector space, we need to create a new list of names
+        if infoSpaceField['type'] == 'vector':
+            name                = [None]*numberOfSubSpaces
+        else:
+            name                = self.name
+        
+        # Loop over sub-fields
         for i in range(numberOfSubSpaces):
-            # transfer names
-            if len(self.name) == numberOfSubSpaces:  
-                name = [self.name[i]]
-            elif len(self.name)==1 and len(self.name[0][0]) == numberOfSubSpaces:
-                name = [(self.name[0][0] + self.name[0][1][i], [])]
-
+            # For a vector space we give the name of the components
+            if infoSpaceField['type'] == 'vector':
+                comp    = self.getComponentsNames()
+                name[i] = [(self.name[0][0]+comp[i],[])]
+    
             # transfer content
             space, mapping            = self.space.sub(i).collapse()
-            field                     = Field(space, self.mesh, name=name)
+            field                     = Field(space, self.mesh, name=name[i])
             field.function.x.array[:] = self.function.x.array[mapping]
             listOfFields.append(field)
 
@@ -146,31 +154,35 @@ class Field:
         - If the space has multiple subspaces, their coefficients are mapped back.
         - Throws an error if the input list does not match the expected size.
         """
-        numberOfSubSpaces = self.space.num_sub_spaces
-
+        # Get info about the field we are examining
+        numberOfSubSpaces       = self.space.num_sub_spaces
+        infoSpaceField          = self.describeFunctionSpace()
+        
+        # Prepare names for field
+        # If we are assembling a vector we need only one name
+        if infoSpaceField['type'] == 'vector':
+            self.name = [listOfFields[0].name[0][0][:-1], self.getComponentsNames()]
+        # Maybe we are silly and "assemble" a single scalar...    
+        elif infoSpaceField['type'] == 'scalar':
+            self.name = listOfFields[0].name
+        # For a mixed space we keep the name as it was given
+        elif infoSpaceField['type'] == 'mixed':
+            self.name  = [None]*numberOfSubSpaces
+        
         if numberOfSubSpaces == 0:
-            try:
-                self.setCoefficientArray(listOfFields[0].getCoefficientArray())
-                self.name = listOfFields[0].name
-            except:
-                print("ERROR")
-                #TODO: Throw error!
-            return 
-
-        self.name  = [None]*numberOfSubSpaces
-        for i in range(numberOfSubSpaces):
-            try:
-                space, mapping                 = self.space.sub(i).collapse()
-                self.function.x.array[mapping] = listOfFields[i].getCoefficientArray()
-                # TODO Sophie: how to recognize velocity names? ux, uy, uz => [(u, [x,y,z]) ?
-                if len(listOfFields[i].name) > 0: #and len(listOfFields[i].name[0][1] == 0:
-                    self.name[i]               = listOfFields[i].name[0] 
-                      
-            except:
-                print("ERROR")
-                #TODO: Throw error!
-
-        return  
+            # TODO: check that the functionSpaces are the same!
+            self.setCoefficientArray(listOfFields[0].getCoefficientArray())
+            self.name = listOfFields[0].name
+            
+        else:
+            for i in range(numberOfSubSpaces):
+                # TODO: check that the functionSpaces are the same!
+                space, mapping                  = self.space.sub(i).collapse()
+                self.function.x.array[mapping]  = listOfFields[i].getCoefficientArray()
+                
+                # Define the names of sub-fields if we deal with a Mixed field
+                if infoSpaceField['type'] == 'mixed':
+                    self.name[i]                = listOfFields[i].name
 
 
 
