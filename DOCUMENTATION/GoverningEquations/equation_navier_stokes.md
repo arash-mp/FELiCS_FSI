@@ -1,15 +1,9 @@
 # Navier--Stokes equations
 
-The Navier--Stokes equations comprise the momentum and mass/continuity equations.
+The Navier–Stokes equations represent the fundamental principles of fluid mechanics, expressing the conservation of momentum and mass in a fluid. They provide a comprehensive description of fluid flow behavior across a wide range of physical situations. Because these equations capture the essential physics of Newtonian fluids--such as air, water, and gases under 'standard' conditions--they form the fundamental basis for analyzing and predicting flow dynamics.
 
-Motivation:
-- fundamental equations for EVERY type flow
-- conservation of momentum and mass
-
-Use case:
-- in every type of flow comprising Newton fluids (like air, water, gas flows at `normal' conditions)
-- tutorial example incompressible with link: cylinder wake incompressible
-- tutorial example compressible with link: cylinder wake compressible
+Example use case:
+- incompressible: [Solving for the base flow of the cylinder wake](./../Tutorials/cylinder_wake.md)
 
 References:
 - [Barkley et al. 2006](https://doi.org/10.1209/epl/i2006-10168-7)
@@ -31,7 +25,7 @@ Nomenclature:
 ## Incompressible
 Assumptions:
 - primitive variables
-- $\rho = \textrm{const}$, this is reasonable if Mach number is low, no large temperature gradients/changes, no acoustics, no combustion
+- $\rho = \textrm{const}$, this is reasonable if Mach number is low, no large temperature gradients, no acoustics, no combustion
 - no additional source terms
 - no gravitational forces
 
@@ -104,7 +98,7 @@ and where $\mu_\textrm{eff}'$ is the fluctuating effective dynamic viscosity (se
 
 #### Weak form of the linearized Navier--Stokes equations
 ```{note}
-he weak form of the incompressible linearized Navier--Stokes equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.
+The weak form of the incompressible linearized Navier--Stokes equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.
 ```
 
 

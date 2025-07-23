@@ -1,14 +1,13 @@
 # Species transport equation
 The species transport equation describes the transport behavior of a species $Y$ of a mixture, or the transport of a passive scalar.
 
-Motivation:
-- Component concentration can affect physical properties, so it needs to be track when a mixture is applied;
-- The transport of passive scalar fields are very important in some cases. For example progress variables in combustion models.
+Assumptions:
+- source terms need to be defined based on a given model, e.g. [reaction model](./equation_reaction.md)
+- Schmidt number, which relates mass diffusivity with eddy viscosity, is often assumed to be constant
 
-Use case:
-- in flows with chemical reactions
-- in flows with mixture which has non-uniform concentration distribution
-- tutorial example: turbulent flame?
+Example use case:
+- Passive scalar transport: [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
+- Reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
 
 References:
 - [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
@@ -25,11 +24,7 @@ Nomenclature:
 - $\mathrm{Sc}$: Schmidt number
 - $X_Y$: test function for species transport equation
 
-Assumptions:
-- The density $\rho$ usually changes due to chemical reactions, changes of component concentrations, high-Mach numbers, etc...
-- Source terms can be defined based on reaction / combustion models
-- often Schmidt number is assumed to be constant
-- no gravitational forces
+
 
 ### Nonlinear species transport equation
 The nonlinear species transport equation is

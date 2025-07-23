@@ -1,11 +1,5 @@
 # Equations of state
-Motivation:
-- equations for relating state variables to each other
-- important to close equation system
-
-Use case:
-- flows with acoustics, flows with combustion/chemical reactions
-- tutorial example: turbulent flame? heat conduction?
+The equations of state are required when thermodynamic processes become relevant in the flow field. The equations of state relate a set of state variables to each other.
 
 References:
 - [Kaiser et al. 2023](https://doi.org/10.1016/j.combustflame.2023.112778)
@@ -19,7 +13,10 @@ Nomenclature:
 - $R$: specific gas constant
 
 ## Ideal gas equation
-Assumptions/justification:
+Example use case:
+- Compressible flow including acoustics: [Demange et al. 2024](https://doi.org/10.2514/6.2024-3170)
+
+Assumptions:
 - classical ideal gas assumption, for a specific gas, its density, pressure and temperature are related to each other via the gas constant
 
 The ideal gas equation is
@@ -35,9 +32,12 @@ $$
 
 
 ## Low-Mach equation
-Assumptions/justification:
+Assumptions:
 - ideal gas with constant mean pressure, i.e. mean pressure in the entire flow field is constant due to low Mach numbers and the pressure field is set to the inlet pressure $p_0$
-- therefore, the density only changes with temperature, but not with pressure
+- density only changes with temperature, but not with pressure
+
+Example use case:
+- Reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
 
 The low-Mach equation is
 $$

@@ -4,11 +4,13 @@ Depending on the flow state, the effective viscosity $\mu_\textrm{eff} = \mu + \
 ## Sutherland model for molecular viscosity
 The Sutherland model describes how molecular viscosity changes with temperature for a specific gas.
 
-Motivation:
-- The molecular viscosity of a specific gas can change with temperature, the Sutherland model can describe it.
+Assumptions:
+- ideal gas behavior
+- negligible intermolecular forces except during collisions
+- molecular viscosity is only a function of the gas composition and the temperature
 
-Use case:
-- cases with large gradient temperature which can affect molecular viscosity significantly. 
+Example use case:
+- Compressible flow including acoustics: [Demange et al. 2024](https://doi.org/10.2514/6.2024-3170)
 
 References:
 - [Sutherland et al. 1893](https://doi.org/10.1080/14786449308620508)
@@ -21,10 +23,6 @@ Nomenclature:
 - $\mu_0$: Reference dynamic viscosity at reference temperature $T_0$
 - $C$: Sutherland's constant
 
-Assumptions/justification:
-- Ideal gas behavior
-- Negligible intermolecular forces except during collisions
-- Viscosity depends only on temperature
 
 The Sutherland model is
 $$
@@ -40,11 +38,14 @@ The linearized form of the Sutherland model is not implemented in FELiCS yet.
 ## Boussinesq model for turbulent eddy viscosity
 The Boussinesq model is a turbulence closure approach that approximates the effect of turbulent fluctuations by introducing an eddy viscosity, which relates the Reynolds stresses to the mean strain rate. Eddy viscosity represents the enhanced momentum transport due to turbulence and is typically modeled as an additional scalar in diffusion term in momentum equation.
 
-Motivation:
-- to closure the RANS equations, Reynolds stress meeds to be modeled 
+Assumptions:
+- turbulent Reynolds stresses are proportional to the mean strain rate
+- turbulent mixing is analogous to molecular viscosity, using an effective eddy viscosity
+- turbulent viscosity is isotropic
 
-Use case:
-- most turbulent cases using RANS equations
+Example use case:
+- Turbulent swirling jet: [Müller et al. 2020](https://doi.org/10.1017/jfm.2019.1063)
+- Turbulent flow in a stenosis: [Resolvent analysis](./../Tutorials/Resolvent_Analysis.md)
 
 References:
 - [Boussinesq 1872](https://gallica.bnf.fr/ark:/12148/bpt6k56673076/f2.item.texteImage)
@@ -57,11 +58,6 @@ Nomenclature:
 - $k$: turbulent kenetic energy
 - $\mathbf{I}$: identity tensor
 
-
-Assumptions/justification:
-- Turbulent Reynolds stresses are proportional to the mean strain rate.
-- Turbulent mixing is analogous to molecular viscosity, using an effective eddy viscosity.
-- Turbulent viscosity is isotropic.
 
 The Boussinesq assumption models the Reynolds stress like 
 $$
