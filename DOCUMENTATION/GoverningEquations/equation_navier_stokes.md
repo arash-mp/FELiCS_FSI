@@ -169,7 +169,7 @@ $$
 ### Weak form of the mean flow equations
 The weak form of the nonlinear mean flow equations, as implemented in FELiCS, is
 $$
-\int_\Omega j \nabla \cdot \left(\mathbf{X}_\mathbf{u}^* \otimes \overline{\rho}\overline{\mathbf{u}} \right) \cdot \overline{\mathbf{u}} \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} j \overline{\rho}\left( \left(\overline{\mathbf{u}} \otimes \mathbf{X}_\mathbf{u}^*\right) \cdot \overline{\mathbf{u}} \right)\cdot \mathbf{n} \, \mathrm{d}\mathbf{s}  + \int_\Omega j \overline{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} j \overline{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega j \overline{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \overline{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s} = 0
+\int_\Omega \mathrm{j} \nabla \cdot \left(\mathbf{X}_\mathbf{u}^* \otimes \overline{\rho}\overline{\mathbf{u}} \right) \cdot \overline{\mathbf{u}} \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \overline{\rho}\left( \left(\overline{\mathbf{u}} \otimes \mathbf{X}_\mathbf{u}^*\right) \cdot \overline{\mathbf{u}} \right)\cdot \mathbf{n} \, \mathrm{d}\mathbf{s}  + \int_\Omega \mathrm{j} \overline{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \overline{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega \mathrm{j} \overline{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} \mathrm{j} \overline{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s} = 0
 $$
 where the mean viscous stress tensor $\overline{\tau}$ is
 $$
@@ -199,11 +199,11 @@ and where $\mu_\textrm{eff}'$ is the effective dynamic viscosity (see [Viscosity
 #### Weak form of the linearized Navier--Stokes equations
 The weak form of the linearized Navier--Stokes equations with normal mode ansatz, as implemented in FELiCS, is
 $$
-\int_\Omega \omega \hat{\rho}X_p^* \mathrm{d}\mathbf{x} = \int_\Omega j \widehat{\rho\mathbf{u}} \cdot \nabla X_p^* \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} j \widehat{\rho\mathbf{u}} \cdot \mathbf{n} X_p^* \, \mathrm{d}\mathbf{s}
+\int_\Omega \omega \hat{\rho}X_p^* \mathrm{d}\mathbf{x} = \int_\Omega \mathrm{j} \widehat{\rho\mathbf{u}} \cdot \nabla X_p^* \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \widehat{\rho\mathbf{u}} \cdot \mathbf{n} X_p^* \, \mathrm{d}\mathbf{s}
 $$
 and
 $$
-\int_\Omega \omega \overline{\rho} \hat{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} = - \int_\Omega j \left(\overline{\rho}\overline{\mathbf{u}} \cdot \nabla \right) \hat{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} -\int_\Omega j \left(\overline{\rho}\hat{\mathbf{u}} \cdot \nabla \right) \overline{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} - \int_\Omega j \left(\hat{\rho}\overline{\mathbf{u}} \cdot \nabla \right) \overline{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} + \int_\Omega j \hat{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} j \hat{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega j \hat{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \hat{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s}
+\int_\Omega \omega \overline{\rho} \hat{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} = - \int_\Omega \mathrm{j} \left(\overline{\rho}\overline{\mathbf{u}} \cdot \nabla \right) \hat{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} -\int_\Omega \mathrm{j} \left(\overline{\rho}\hat{\mathbf{u}} \cdot \nabla \right) \overline{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} - \int_\Omega \mathrm{j} \left(\hat{\rho}\overline{\mathbf{u}} \cdot \nabla \right) \overline{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} + \int_\Omega \mathrm{j} \hat{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \hat{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega \mathrm{j} \hat{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} \mathrm{j} \hat{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s}
 $$
 with
 $$

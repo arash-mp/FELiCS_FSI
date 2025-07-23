@@ -41,30 +41,30 @@ with
 ### Harmonic forcing 
 We assume the forcing and respoce to be periodic in time, reading
 
-- harmonic forcing: $\mathbf{f}' = \hat{\mathbf{f}}\mathrm{e}^{-j\omega t} +c.c.$
-- harmonic responce: $\mathbf{q}' = \hat{\mathbf{q}}\mathrm{e}^{-j\omega t} +c.c.$
+- harmonic forcing: $\mathbf{f}' = \hat{\mathbf{f}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c.$
+- harmonic responce: $\mathbf{q}' = \hat{\mathbf{q}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c.$
 
 Insertin in the linearized system of equations leads to
 
 $$
--j\omega\mathbf{B}\hat{\mathbf{q}} = \mathbf{A}\hat{\mathbf{q}}+\mathbf{C}\hat{\mathbf{f}}.
+-\mathrm{j}\omega\mathbf{B}\hat{\mathbf{q}} = \mathbf{A}\hat{\mathbf{q}}+\mathbf{C}\hat{\mathbf{f}}.
 $$
 
 
 We solve for the output response  
 
 $$
- \hat{\mathbf{q}} = (-j \omega \mathbf{B}-\mathbf{A})^{-1}\mathbf{C}\hat{\mathbf{f}}=\mathbf{R}(\omega)\mathbf{C}\hat{\mathbf{f}},
+ \hat{\mathbf{q}} = (-\mathrm{j} \omega \mathbf{B}-\mathbf{A})^{-1}\mathbf{C}\hat{\mathbf{f}}=\mathbf{R}(\omega)\mathbf{C}\hat{\mathbf{f}},
 $$
 
 with 
 
-- resolvent operator:  $\mathbf{R} = (-j \omega \mathbf{B}-\mathbf{A})^{-1}$ .
+- resolvent operator:  $\mathbf{R} = (-\mathrm{j} \omega \mathbf{B}-\mathbf{A})^{-1}$ .
 
 The output is computed as  
 
 $$
- \hat{\mathbf{y}}= \mathbf{D}\hat{\mathbf{q}} = \mathbf{D}(-j \omega \mathbf{B}-\mathbf{A})^{-1}\mathbf{C}\hat{\mathbf{f}}=\mathbf{H}(\omega)\mathbf{C}\hat{\mathbf{f}},
+ \hat{\mathbf{y}}= \mathbf{D}\hat{\mathbf{q}} = \mathbf{D}(-\mathrm{j} \omega \mathbf{B}-\mathbf{A})^{-1}\mathbf{C}\hat{\mathbf{f}}=\mathbf{H}(\omega)\mathbf{C}\hat{\mathbf{f}},
 $$
 
 where 

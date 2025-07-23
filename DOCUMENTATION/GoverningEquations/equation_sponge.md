@@ -25,7 +25,7 @@ $$
 ### Weak form
 The weak form of the nonlinear sponge term, as implemented in FELiCS is
 $$
-\int_\Omega -j \sigma (\overline{\phi_{i}} - \phi_{i,target})\cdot X_{\phi_{i}} dx
+\int_\Omega -\mathrm{j} \sigma (\overline{\phi_{i}} - \phi_{i,target})\cdot X_{\phi_{i}} dx
 $$
 
 ## Linear equations
@@ -37,5 +37,5 @@ $$
 ### Weak form
 The weak form of the linearized sponge term, as implemented in FELiCS, is
 $$
-\int_\Omega -j\sigma \phi_{i} ' \cdot X_{\phi_{i}} dx
+\int_\Omega -\mathrm{j}\sigma \phi_{i} ' \cdot X_{\phi_{i}} dx
 $$
