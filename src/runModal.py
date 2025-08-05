@@ -53,13 +53,12 @@ def runModal(param):
     guesses          = param.Numerics.EigenValueGuess
     nSol             = param.Numerics.nSolut
     adjoint          = param.Case.CalculateAdjoint
-    names            = param.Case.StateVectorVariables
 
     # track time
     start= time.time()
 
     # solve eigenproblem for each guess
-    solution = ModeCollection(FEMSpaces.VMixed, mesh, names = names)
+    solution = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
         
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))

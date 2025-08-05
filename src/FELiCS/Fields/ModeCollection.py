@@ -48,7 +48,6 @@ class ModeCollection():
 
         self.femSpace = femSpace
         self.mesh     = mesh
-        self.names    = names
 
 
     def appendMode(self, mode):
