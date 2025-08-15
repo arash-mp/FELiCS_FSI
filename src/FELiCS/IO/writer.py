@@ -171,7 +171,7 @@ class Writer:
         
         # Set the names in the fem functions and save
         if infoSpaceField['type'] == 'vector' or infoSpaceField['type'] == 'scalar':
-            field.function.name = field.name[0][0]
+            field.function.name = field.name[0][0] # use get_name()
             with dolfinx.io.XDMFFile(MPI.COMM_WORLD, filename+".xdmf", "w") as xdmf:
                 xdmf.write_mesh(exportMesh)
                 xdmf.write_function(field.function)

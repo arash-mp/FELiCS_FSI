@@ -62,7 +62,7 @@ class ModeCollection():
 
         self.modeList.append(mode)
 
-    def appendModeFromVector(self, vector, gain=None, eigenValue=None, guess=None, waveNumber=None, frequency=None, isAdjoint=False):
+    def appendModeFromVector(self, vector, gain=None, eigenValue=None, guess=None, waveNumber=None, frequency=None, isAdjoint=False, name = [], m=None):
         """
         Create a Mode from a coefficient vector and properties, and append it to the collection.
 
@@ -84,7 +84,7 @@ class ModeCollection():
             Whether the mode is an adjoint mode (default is False).
         """
 
-        mode = Mode(self.femSpace, self.mesh, name=self.names, isStateVector = True)
+        mode = Mode(self.femSpace, self.mesh, name, isStateVector = True)
         #mode.setCoefficientArray(vector)
         mode.function.x.array[:] = vector
 
@@ -97,7 +97,7 @@ class ModeCollection():
 
         self.appendMode(mode)
 
-    def appendSolutionOfEigenProblem(self, solution, guess, adjoint=False):
+    def appendSolutionOfEigenProblem(self, solution, guess, adjoint=False, name=[]):
         """
         Append all modes from an eigenproblem solution to the collection.
 
@@ -115,7 +115,7 @@ class ModeCollection():
         numberOfModes = len(eigVals)
 
         for i in range(numberOfModes):
-            mode = Mode(self.femSpace, self.mesh, name = self.names, isStateVector = True)
+            mode = Mode(self.femSpace, self.mesh, name , isStateVector = True)
             mode.isAdjoint = adjoint
             mode.setError(error[i])
             mode.setGuess(guess)

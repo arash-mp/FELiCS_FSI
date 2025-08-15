@@ -26,7 +26,7 @@ class Field:
         Wave number. If this is set, the Field is assumed to have one spectral spatial dimension, regardless the value of m.
     """
 
-    def __init__(self, FEMSpace, mesh, name=[], isStateVector = False, m=None):
+    def __init__(self, FEMSpace, mesh, name=[], isStateVector=False, m=None):
         self.space    = FEMSpace
         self.mesh     = mesh
 
