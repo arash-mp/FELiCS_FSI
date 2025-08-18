@@ -61,7 +61,7 @@ def runInputOutput(param):
     start= time.time()
 
     # solve equation system 
-    solution = ModeCollection(FEMSpaces.VMixed, mesh, names=names)
+    solution = ModeCollection(FEMSpaces.VMixed, mesh)
     for omega in omegas:
         # define operator
         operator = A.copy()
