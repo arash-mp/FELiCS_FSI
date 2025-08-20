@@ -11,8 +11,6 @@ from 	FELiCS.Misc.logging			    import Logger
 # Get the logger
 logger = Logger.get_logger("felics")
 
-#from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
-
 class dotdict(dict):
     """
     Adds possibility to use dot notation to access entries of dictionary dict
