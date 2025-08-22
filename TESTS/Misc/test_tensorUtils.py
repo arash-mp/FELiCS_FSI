@@ -41,28 +41,47 @@ testMesh = mesh.create_rectangle(comm=MPI.COMM_WORLD,
 # 2. create function spaces and their test functions
 space_scalar = functionspace(testMesh, ("CG", 2))
 space_vector = functionspace(testMesh, ("CG", 2,(dim_vector,)))
+space_dyade = functionspace(testMesh, ("CG", 2,(dim_vector,dim_vector)))
 
 test_scalar  = TestFunction(space_scalar)
 test_vector  = TestFunction(space_vector)
+test_dyade   = TestFunction(space_dyade)
+
 trial_scalar = TrialFunction(space_scalar)
 trial_vector = TrialFunction(space_vector)
+trial_dyade   = TrialFunction(space_dyade)
 
 
 # 3. create functions with random coefficient arrays and smooth them
 smoothFactor           = 1.e-8
-func_scalar            = Function(space_scalar)
+random_float          = np.random.random() + 1j*np.random.random()
+
+func_scalar1            = Function(space_scalar)
+func_scalar2            = Function(space_scalar)
 func_vector1           = Function(space_vector)
 func_vector2           = Function(space_vector)
-func_scalar.x.array[:]  = np.random.rand(len(func_scalar.x.array[:])) + 1j*np.random.rand(len(func_scalar.x.array[:]))
+func_dyade1            = Function(space_dyade)  
+func_dyade2            = Function(space_dyade)
+
+func_scalar1.x.array[:]  = np.random.rand(len(func_scalar1.x.array[:])) + 1j*np.random.rand(len(func_scalar1.x.array[:]))
+func_scalar2.x.array[:]  = np.random.rand(len(func_scalar2.x.array[:])) + 1j*np.random.rand(len(func_scalar1.x.array[:]))
 func_vector1.x.array[:] = np.random.rand(len(func_vector1.x.array[:]))+ 1j*np.random.rand(len(func_vector1.x.array[:]))
 func_vector2.x.array[:] = np.random.rand(len(func_vector2.x.array[:]))+ 1j*np.random.rand(len(func_vector1.x.array[:]))
+func_dyade1.x.array[:]  = np.random.rand(len(func_dyade1.x.array[:])) + 1j*np.random.rand(len(func_dyade1.x.array[:]))
+func_dyade2.x.array[:]  = np.random.rand(len(func_dyade2.x.array[:])) + 1j*np.random.rand(len(func_dyade2.x.array[:]))
+
 # scalar smoothing
-rhs = func_scalar*conj(test_scalar)*dx
+rhs1 = func_scalar1*conj(test_scalar)*dx
+rhs2 = func_scalar2*conj(test_scalar)*dx
 lhs = conj(test_scalar)*trial_scalar*dx + smoothFactor*inner(grad(trial_scalar),grad(test_scalar))*dx
-problem = petsc.LinearProblem(lhs, rhs, bcs=[],
+problem = petsc.LinearProblem(lhs, rhs1, bcs=[],
                                   petsc_options={"ksp_type": "preonly",
                                                  "pc_type": "lu"})
-func_scalar = problem.solve()
+func_scalar1 = problem.solve()
+problem = petsc.LinearProblem(lhs, rhs2, bcs=[],
+                                  petsc_options={"ksp_type": "preonly",
+                                                 "pc_type": "lu"})
+func_scalar2 = problem.solve()
 # vector smoothing
 rhs1 = inner(func_vector1,  test_vector)*dx
 rhs2 = inner(func_vector2,  test_vector)*dx
@@ -71,11 +90,22 @@ problem = petsc.LinearProblem(lhs, rhs1, bcs=[], petsc_options={"ksp_type": "pre
 func_vector1 = problem.solve()
 problem = petsc.LinearProblem(lhs, rhs2, bcs=[], petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
 func_vector2 = problem.solve()
+# dyade smoothing
+rhs1 = inner(func_dyade1,  test_dyade)*dx
+rhs2 = inner(func_dyade2,  test_dyade)*dx
+lhs = inner(trial_dyade, test_dyade)*dx + smoothFactor*inner(grad(trial_dyade),grad(test_dyade))*dx
+problem = petsc.LinearProblem(lhs, rhs1, bcs=[], petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+func_dyade1 = problem.solve()
+problem = petsc.LinearProblem(lhs, rhs2, bcs=[], petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+func_dyade2 = problem.solve()
 
 
 def initializeTensorUtils():
+    # NOTE: Failed on defining dyade tensors.
+    
     # create tensorUtils specific things
-    global J_hat, itest_scalar, itest_vector, tens_vector1, tens_vector2
+    # global J_hat, itest_scalar, itest_vector, itest_dyade, tens_vector1, tens_vector2, tens_scalar1, tens_scalar2, tens_dyade1, tens_dyade2
+    global J_hat, itest_scalar, itest_vector, tens_vector1, tens_vector2, tens_scalar1, tens_scalar2
     testCoordinateSystem = CoordinateSystem(
                              SpatialCoordinate(testMesh),
                              coordinateSystemName,
@@ -85,8 +115,14 @@ def initializeTensorUtils():
     J_hat        = testCoordinateSystem.J_hat
     itest_scalar = Tensor(test_scalar, testCoordinateSystem,  hasSpectralDimension =True) 
     itest_vector = Tensor(test_vector, testCoordinateSystem,  hasSpectralDimension =True) 
+    # itest_dyade   = Tensor(test_dyade, testCoordinateSystem,  hasSpectralDimension =True)
+    
     tens_vector1 = Tensor(func_vector1, testCoordinateSystem, hasSpectralDimension = True)
     tens_vector2 = Tensor(func_vector2, testCoordinateSystem, hasSpectralDimension = True)
+    tens_scalar1 = Tensor(func_scalar1, testCoordinateSystem, hasSpectralDimension = True)
+    tens_scalar2 = Tensor(func_scalar2, testCoordinateSystem, hasSpectralDimension = True)
+    # tens_dyade1  = Tensor(func_dyade1, testCoordinateSystem, hasSpectralDimension = True)
+    # tens_dyade2  = Tensor(func_dyade2, testCoordinateSystem, hasSpectralDimension = True)
 
 
 def getValidGrad():
@@ -112,7 +148,507 @@ def checkIfVectorsAlign(petscVec1, petscVec2):
     assert np.linalg.norm(petscVec2.getArray())> 0
     assert np.linalg.norm(petscVec1.getArray()-petscVec2.getArray()) < 1.e-14
 
+# --------------------------------------------------------------
+# Tests for tensor algebra
+# --------------------------------------------------------------
+def validate_scalar_minus_float():
+    tensor_expr = ((tens_scalar1 - random_float) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (func_scalar1 - random_float) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
 
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_minus_float():
+    print("Testing scalar minus float")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_minus_float()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_minus_float()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_minus_float()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_minus_float()
+
+def validate_float_minus_scalar():
+    tensor_expr = ((-1 * tens_scalar1 + random_float) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (-1 * func_scalar1 + random_float) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_float_minus_scalar():
+    print("Testing float minus scalar")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_float_minus_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_float_minus_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_float_minus_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_float_minus_scalar()
+    
+def validate_scalar_minus_scalar():
+    tensor_expr = ((tens_scalar1 - tens_scalar2) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (func_scalar1 - func_scalar2) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_minus_scalar():
+    print("Testing scalar minus scalar")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_minus_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_minus_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_minus_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_minus_scalar()
+    
+def validate_scalar_plus_scalar():
+    tensor_expr = ((tens_scalar1 + tens_scalar2) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (func_scalar1 + func_scalar2) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_plus_scalar():
+    print("Testing scalar plus scalar")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_plus_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_plus_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_plus_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_plus_scalar()
+    
+def validate_float_times_scalar():
+    tensor_expr = ((random_float * tens_scalar1) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (random_float * func_scalar1) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_float_times_scalar():
+    print("Testing float times scalar")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_float_times_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_float_times_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_float_times_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_float_times_scalar()
+    
+def validate_scalar_times_float():
+    tensor_expr = ((tens_scalar1 * random_float) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (func_scalar1 * random_float) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_times_float():
+    print("Testing scalar times float.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_float()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_float()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_float()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_float()
+    
+def validate_scalar_times_scalar():
+    tensor_expr = ((tens_scalar1 * tens_scalar2) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (func_scalar1 * func_scalar2) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_times_scalar():
+    print("Testing scalar times scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_scalar()
+    
+def validate_scalar_divide_scalar():
+    tensor_expr = ((tens_scalar1 / tens_scalar2) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (func_scalar1 / func_scalar2) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_divide_scalar():
+    # NOTE: The unit test didn't pass through in the cylindrical coordinate system
+    print("Testing scalar divide scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_divide_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_divide_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_divide_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_divide_scalar()
+
+def validate_vector_dot_vector():
+    tensor_expr = (iDot(tens_vector1, tens_vector2) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (dot(func_vector1, func_vector2)) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_vector_dot_vector():
+    print("Testing vector dot vector.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_dot_vector()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_dot_vector()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_dot_vector()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_dot_vector()
+    
+def validate_scalar_times_vector():
+    tensor_expr = (iDot(tens_scalar1 * tens_vector1, iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (dot(func_scalar1 * func_vector1, conj(test_vector)))*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_times_vector():
+    print("Testing scalar times vector.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_vector()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_vector()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_vector()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_vector()
+    
+def validate_vector_times_scalar():
+    tensor_expr = (iDot(tens_vector1 * tens_scalar1, iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (dot(func_vector1 * func_scalar1, conj(test_vector)))*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_vector_times_scalar():
+    print("Testing vector times scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_times_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_times_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_times_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_times_scalar()
+
+def validate_one_divide_scalar_times_vector():
+    # NOTE: Don't know how to define 1 / scalar
+    tensor_expr = (iDot((1 + 1j) / tens_scalar1 * tens_vector1, iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (dot((1 + 1j) / func_scalar1 * func_vector1, conj(test_vector)))*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_one_divide_scalar_times_vector():
+    print("Testing one divide by scalar times vector.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_one_divide_scalar_times_vector()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_one_divide_scalar_times_vector()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_one_divide_scalar_times_vector()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_one_divide_scalar_times_vector()
+    
+def validate_vector_divided_by_scalar():
+    # NOTE: Don't know how to define 1 / scalar
+    tensor_expr = (iDot(tens_vector1 / tens_scalar1 , iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (dot(func_vector1 / func_scalar1 , conj(test_vector)))*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_vector_divided_by_scalar():
+    print("Testing vector divided by scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_divided_by_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_divided_by_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_divided_by_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_divided_by_scalar()
+
+# def validate_vector_dot_dyade():
+#     tensor_expr = (iDot(iDot(tens_vector1, tens_dyade1) , iConj(itest_vector))).ufl_tens*J_hat*dx
+#     valid_expr  = (dot(dot(func_vector1, func_dyade1), conj(test_vector)))*r*dx
+#     res1 = petsc.assemble_vector(form(tensor_expr))
+#     res2 = petsc.assemble_vector(form(valid_expr))
+#     res1.assemble()
+#     res2.assemble()
+
+#     checkIfVectorsAlign(res1, res2)
+#     return res1, res2
+
+# def test_vector_dot_dyade():
+#     print("Testing vector dot dyade.")
+#     global coordinateSystemName, m, r
+#     # 1. Cartesian Cordinates, m=0
+#     coordinateSystemName = "cartesian"; m = 0; r = 1.
+#     initializeTensorUtils()
+#     print("\n\n  #####, ", coordinateSystemName, m)
+#     validate_vector_dot_dyade()
+#     # 2. Cartesian Cordinates, m= random integer
+#     coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+#     initializeTensorUtils()
+#     print("\n\n  #####, ", coordinateSystemName, m)
+#     validate_vector_dot_dyade()
+#     # 3. Cylindrical Cordinates, m= 0
+#     coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+#     initializeTensorUtils()
+#     print("\n\n  #####, ", coordinateSystemName, m)
+#     validate_vector_dot_dyade()
+#     # 4. Cylindrical Cordinates, m= random integer
+#     coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+#     initializeTensorUtils()
+#     print("\n\n  #####, ", coordinateSystemName, m)
+#     validate_vector_dot_dyade()
+
+
+
+# ---------------------------------------------------------------
+# Tests for tensor analysis
+# ---------------------------------------------------------------
 def validateGrad():
     t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad()
     tensor_expr = (iDot((iDot(iGrad(tens_vector1),tens_vector2)),iConj(itest_vector))).ufl_tens*J_hat*dx
@@ -129,6 +665,7 @@ def validateGrad():
 
 
 def test_iGrad():
+    print("Testing iGrad")
     global coordinateSystemName, m, r
     # 1. Cartesian Cordinates, m=0
     coordinateSystemName = "cartesian"; m = 0; r = 1.
@@ -150,6 +687,44 @@ def test_iGrad():
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
     validateGrad()
+
+
+def validateDiv():
+    t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad()
+    tensor_expr = (iDiv(tens_vector1) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (t11 + t22 + t33)*conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+
+def test_iDiv():
+    print("Testing iDiv")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validateDiv()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validateDiv()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validateDiv()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validateDiv()
 
 
 
