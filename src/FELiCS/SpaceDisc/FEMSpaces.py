@@ -49,9 +49,10 @@ def getElementType():
     return "CG"
 
 
-def getFELiCSSpace(mesh, order = 2, dim = 1):
+def createFunctionSpace(mesh, order = 2, dim = 1):
     """
-    Create a finite element function space for the given mesh, order, and dimension.
+    Create a finite element function space for the given mesh, order, and dimension. 
+    ElementType is "CG".
 
     Parameters
     ----------
@@ -158,18 +159,18 @@ class FEMSpaces():
         else:
             velocityOrder   = 2
         # Define FEM spaces for the velocity vector
-        self.FunctionSpaceVectorVelocity       = getFELiCSSpace(mesh, order = velocityOrder, dim = self._nVelocityComponents)
-        self.FunctionSpaceVectorVelocityExport = getFELiCSSpace(exportMesh, order = 1, dim = self._nVelocityComponents)
-        self.FunctionSpaceVectorVelocityP1     = getFELiCSSpace(mesh, order = 1, dim = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocity       = createFunctionSpace(mesh, order = velocityOrder, dim = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocityExport = createFunctionSpace(exportMesh, order = 1, dim = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocityP1     = createFunctionSpace(mesh, order = 1, dim = self._nVelocityComponents)
 
 
         ## create scalar spaces
         # Get function spaces for first order and second order elements.
-        self.P1 = getFELiCSSpace(mesh, order = 1)
-        self.P2 = getFELiCSSpace(mesh, order = 2)
+        self.P1 = createFunctionSpace(mesh, order = 1)
+        self.P2 = createFunctionSpace(mesh, order = 2)
         # Get function spaces for first order and second order elements on the export mesh.
-        self.P1Export = getFELiCSSpace(exportMesh, order = 1)
-        self.P2Export = getFELiCSSpace(exportMesh, order = 2)
+        self.P1Export = createFunctionSpace(exportMesh, order = 1)
+        self.P2Export = createFunctionSpace(exportMesh, order = 2)
 
 
         ### create VMixed Space

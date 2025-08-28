@@ -234,7 +234,7 @@ class Field:
         # TODO Sophie: throw error if Field is not scalar    
         from ufl import TestFunction, dx
         from FELiCS.Misc.tensorUtils import iGrad, iConj, iDot, Tensor
-        from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
+        from FELiCS.SpaceDisc.FEMSpaces import createFunctionSpace
         # Create  a Field for the gradient
         # The space must be a vector vor a scalar field
         # TODO Sophie: handle order (get it from function?)
@@ -242,7 +242,7 @@ class Field:
         dim = self.mesh.gdim 
         if self.hasSpectralDimension:
             dim += 1
-        gradientSpace = getFELiCSSpace(self.mesh, order=order, dim=dim)
+        gradientSpace = createFunctionSpace(self.mesh, order=order, dim=dim)
         gradientField = Field(gradientSpace, self.mesh)
 
         coordSystem = self.mesh.coordinateSystem
