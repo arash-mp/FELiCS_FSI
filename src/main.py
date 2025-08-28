@@ -9,6 +9,7 @@
 # * To ask for permission please contact t.kaiser@tu-berlin.de.
 # */
 import 	argparse
+import  FELiCS.Misc.PrintLogo
 from 	runModal       				import  runModal      
 from 	runResolvent   				import  runResolvent  
 from 	runInputOutput 				import  runInputOutput
