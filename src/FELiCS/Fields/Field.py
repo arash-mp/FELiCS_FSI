@@ -528,7 +528,55 @@ class Field:
         petscVec = expr_ufl.getAssembledVector(self.mesh, bsc)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
 
+    def plot(self):
+        """
+        Plotting function for debugging purposes. This function can be used, to check if a
+        field looks as expected and rule out e.g. import problems.
 
+        Notes
+        -----
+        - This method provides a simple visualization of the field.
+        """
+        import matplotlib.pyplot as plt
+        from matplotlib.tri import Triangulation
+        import numpy as np
+
+        if self.space.num_sub_spaces > 1:
+            raise NotImplementedError("Plotting is only implemented for scalar fields. Use getListOfSingleFields() to get subfields. These can then be plotted individually with the same method.")
+        
+        FieldsList = self.getListOfSingleFields()
+
+        # Create figure outside the loop
+        fig, axes = plt.subplots(1, 1, figsize=(6, 6))
+
+        # Create the plot
+        phi = self.getCoefficientArray()
+        dof_coordinates = self.space.tabulate_dof_coordinates()
+
+        x = dof_coordinates[:, 0]
+        y = dof_coordinates[:, 1]
+        triang_scalar = Triangulation(x, y)
+
+        # Create contour plot of phi
+        contour = axes.tricontourf(triang_scalar, phi, levels=20, cmap='RdBu_r', alpha=0.7)
+        # contour_lines = axes.tricontour(triang_scalar, phi, levels=10, colors='black', alpha=0.5, linewidths=0.5)
+
+        # Add colorbar for phi
+        cbar = plt.colorbar(contour, ax=axes, label=r'$\phi$ '+ self.getName())
+
+        # Set labels and title
+        axes.set_xlabel('x')
+        axes.set_ylabel('y')
+        if self.getName() != "":
+            axes.set_title(self.getName())
+        else:
+            axes.set_title('Scalar Field ')
+        axes.set_aspect('equal')
+        axes.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.show()
+        
 
     ### dunder methods for overloading arithmetic operators ###
     def __add__(self, other):
