@@ -1,10 +1,14 @@
 import os
-import logging
+import logging, re
 import shutil
 from datetime import datetime
 
-
-
+def in_notebook():
+    try:
+        from IPython import get_ipython
+        return get_ipython() is not None
+    except ImportError:
+        return False
 class CustomFormatter(logging.Formatter):
     """
     Custom log formatter with colored output for different log levels.
@@ -33,20 +37,19 @@ class CustomFormatter(logging.Formatter):
     FORMATS : dict
         Mapping of log levels to their respective colored format strings.
     """
-
     grey = "\x1b[38;20m"
     yellow = "\x1b[33;20m"
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+    format_str = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
 
     FORMATS = {
-        logging.DEBUG: grey + format + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
+        logging.DEBUG: grey + format_str +  reset,
+        logging.INFO: grey + format_str +reset,
+        logging.WARNING: yellow + format_str + reset,
+        logging.ERROR: red + format_str + reset,
+        logging.CRITICAL: bold_red + format_str + reset
     }
 
     def format(self, record):
@@ -67,8 +70,24 @@ class CustomFormatter(logging.Formatter):
         """
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
-        return formatter.format(record)
+        if in_notebook():
+            # Strip ANSI codes inside notebooks
+            return re.sub(r'\x1b\[[0-9;]*m', '', formatter.format(record))
+        else:
+            return formatter.format(record)
+            # Add colors everywhere else
+            # log_color = self.FORMATS.get(record.levelno, "\x1b[0m")
+            # return f"{log_color}{formatter.format(record)}{"\x1b[0m"}"
 
+        # if 'IPYTHON' in globals():
+        #     return formatter.format(record)
+        # else:
+        #     return re.sub(r'\x1b\[[0-9;]*m', '', formatter.format(record))
+
+
+# 
+# handler = logging.StreamHandler()
+# handler.setFormatter(CustomFormatter(format_str))
 
 class Logger:
     """
