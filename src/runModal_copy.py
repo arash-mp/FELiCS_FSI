@@ -92,7 +92,7 @@ def runModal(param):
         solution.appendSolutionOfEigenProblem(tmp, guess)
         
         mode        = solution.modeList[0]
-        list_modeSubFields = mode.getListOfSingleFields()
+        list_modeSubFields = mode.getListOfSubFields()
         exportField = writer.getFieldsOnExportMesh(mode)
         writer.writeFieldToXDMF(exportField, "test_mode")
         mode_u      = list_modeSubFields[0]

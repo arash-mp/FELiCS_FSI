@@ -102,8 +102,8 @@ class Writer:
         def map_vector_field(originField, destinationField, dofsmapping):
             """Map a vector field from the source mesh to the export mesh."""
             # Split the fields into sub-fields
-            sub_destinationFields   = destinationField.getListOfSingleFields()
-            sub_originField         = originField.getListOfSingleFields()
+            sub_destinationFields   = destinationField.getListOfSubFields()
+            sub_originField         = originField.getListOfSubFields()
             # Loop over sub-fields and set arrays with mapping
             for iSub in range(len(sub_destinationFields)):
                 sub_destinationFields[iSub].setCoefficientArray(sub_originField[iSub].getCoefficientArray()[dofsmapping])
@@ -113,8 +113,8 @@ class Writer:
                 
         # Populate the export field based on the type of source field
         if infoSpaceField['type'] == 'mixed':
-            list_ofExportFields     = exportField.getListOfSingleFields()
-            list_ofSourceFields     = sourceField.getListOfSingleFields()
+            list_ofExportFields     = exportField.getListOfSubFields()
+            list_ofSourceFields     = sourceField.getListOfSubFields()
             
             # Loop over sub-fields and set arrays
             for iField in range(len(list_ofExportFields)):
@@ -178,7 +178,7 @@ class Writer:
             
         # For mixed spaces we need to iterate over the sub-fields
         elif infoSpaceField['type'] == 'mixed':
-            list_ofFields   = field.getListOfSingleFields()
+            list_ofFields   = field.getListOfSubFields()
             with dolfinx.io.XDMFFile(MPI.COMM_WORLD, filename+".xdmf", "w") as xdmf:
                 xdmf.write_mesh(exportMesh)
                 for i in range(len(list_ofFields)):

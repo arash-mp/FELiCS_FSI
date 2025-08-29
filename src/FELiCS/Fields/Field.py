@@ -92,7 +92,7 @@ class Field:
         # TODO Sophie: handle Tensors of mixed functions (later)
         return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, hasSpectralDimension = self.hasSpectralDimension)
 
-    def getListOfSingleFields(self):
+    def getListOfSubFields(self):
         """
         Get a list of single-component fields.
 
@@ -370,7 +370,7 @@ class Field:
         from FELiCS.Misc.tensorUtils import iConj, iDot
         from dolfinx.fem import assemble_scalar, form
         norm_squared = 0.
-        list1 = self.getListOfSingleFields()
+        list1 = self.getListOfSubFields()
         J_hat = self.mesh.coordinateSystem.J_hat
         for field in list1:
             norm_squared += assemble_scalar(form((iDot(iConj(field.getTensor()), field.getTensor())).ufl_tens*J_hat*ufl.dx))
@@ -387,7 +387,7 @@ class Field:
             # Error message
             pass
         componentGradient = []
-        velocityComponents = self.getListOfSingleFields()
+        velocityComponents = self.getListOfSubFields()
 
         for field in velocityComponents:
             componentGradient.append(field.getGradientField())
@@ -395,22 +395,22 @@ class Field:
         
         # 2D field -> scalar vorticity field
         if dim == 2:
-            dvdx = componentGradient[1].getListOfSingleFields()[0]
-            dudy = componentGradient[0].getListOfSingleFields()[1]
+            dvdx = componentGradient[1].getListOfSubFields()[0]
+            dudy = componentGradient[0].getListOfSubFields()[1]
             vorticityField = dvdx - dudy
             
             return vorticityField
         # 3D field -> vector vorticity field
         # TODO: Still needs to be tested
         if dim == 3:
-            dwdy = componentGradient[2].getListOfSingleFields()[1]
-            dvdz = componentGradient[1].getListOfSingleFields()[2]
+            dwdy = componentGradient[2].getListOfSubFields()[1]
+            dvdz = componentGradient[1].getListOfSubFields()[2]
 
-            dudz = componentGradient[0].getListOfSingleFields()[2]
-            dwdx = componentGradient[2].getListOfSingleFields()[0]
+            dudz = componentGradient[0].getListOfSubFields()[2]
+            dwdx = componentGradient[2].getListOfSubFields()[0]
 
-            dvdx = componentGradient[1].getListOfSingleFields()[0]
-            dudy = componentGradient[0].getListOfSingleFields()[1]
+            dvdx = componentGradient[1].getListOfSubFields()[0]
+            dudy = componentGradient[0].getListOfSubFields()[1]
 
             vorticity_x = dwdy - dvdz
             vorticity_y = dudz - dwdx
@@ -456,7 +456,7 @@ class Field:
         # # this is only a dummy for the scripting
         if fileName == "function_values_2d":
             data = np.load(fileName+".npy").reshape(2,-1).T
-            field1, field2 = self.getListOfSingleFields()
+            field1, field2 = self.getListOfSubFields()
             field1.setCoefficientArray(data[:,0])  
             field2.setCoefficientArray(data[:,1])
             self.setListOfSingleFields([field1, field2])
