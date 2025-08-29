@@ -215,7 +215,7 @@ class Field:
         
         return result
 
-    def setListOfSingleFields(self, listOfFields):
+    def setListOfSubFields(self, listOfFields):
         """
         Set the field coefficients from a list of single-component fields.
 
@@ -417,7 +417,7 @@ class Field:
             vorticity_z = dvdx - dudy
 
             vorticityField = Field(self.space, self.mesh)
-            vorticityField.setListOfSingleFields([vorticity_x, vorticity_y, vorticity_z])
+            vorticityField.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
 
 
     def exportH5(self, fileName, mesh = None):
@@ -459,7 +459,7 @@ class Field:
             field1, field2 = self.getListOfSubFields()
             field1.setCoefficientArray(data[:,0])  
             field2.setCoefficientArray(data[:,1])
-            self.setListOfSingleFields([field1, field2])
+            self.setListOfSubFields([field1, field2])
         else:
             self.setCoefficientArray(np.load(fileName+".npy"))
 

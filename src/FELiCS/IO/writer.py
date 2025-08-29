@@ -108,7 +108,7 @@ class Writer:
             for iSub in range(len(sub_destinationFields)):
                 sub_destinationFields[iSub].setCoefficientArray(sub_originField[iSub].getCoefficientArray()[dofsmapping])
             # Assemble the export field from sub-fields
-            destinationField.setListOfSingleFields(sub_destinationFields)
+            destinationField.setListOfSubFields(sub_destinationFields)
             return destinationField
                 
         # Populate the export field based on the type of source field
@@ -137,7 +137,7 @@ class Writer:
                         raise Exception(f"Element degree {degreeSource} not supported for export.")
                     
             # Assemble all the interpolated/mapped subfields into the export field
-            exportField.setListOfSingleFields(list_ofExportFields)    
+            exportField.setListOfSubFields(list_ofExportFields)    
         
         elif infoSpaceField['type'] == 'scalar':
             degree = sourceField.function.function_space._ufl_element.degree
