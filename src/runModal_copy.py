@@ -11,7 +11,7 @@ def runModal(param):
     '''
     # import  FELiCS.IO.Import as Import
     from    FELiCS.IO.ExportSolution            import ExportFromFile
-    from    FELiCS.IO.writer                    import Writer 
+    from    FELiCS.IO.Writer                    import Writer 
     from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
