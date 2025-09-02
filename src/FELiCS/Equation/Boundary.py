@@ -430,6 +430,7 @@ class Symmetry(BoundaryCondition):
                     component = var[-1]
                 else:
                     component = ""
+                # TODO Sophie: catch if a component is given which should not exist 
                 if  v[0]+component == var and  (len(component)==0 or component in v[1]): #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked
                     index1 = self.bH.variables.index(v)
                     if len(v[1])>1:
