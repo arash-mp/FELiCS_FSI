@@ -293,17 +293,17 @@ class Custom(BoundaryCondition):
             var    = spec["variable"]
             bcType = BoundaryType[spec["type"].upper()]
             value  = spec["value"]
-            if len(spec["variable"])>1:
-                comp = spec["variable"][1]
-            else:
-                comp = ""
 
             # 2. get index of specific variable
             for v in self.bH.variables:
-                if  v[0] == var or v[0] == var[:-1]: #var can be e.g. ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked 
+                if v[0] == var[:-1]:
+                    component = var[-1]
+                else:
+                    component = ""
+                if  v[0]+component == var and  (len(component)==0 or component in v[1]): #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked
                     index1 = self.bH.variables.index(v)
                     if len(v[1])>1:
-                        index2 = v[1].index(comp)
+                        index2 = v[1].index(component)
                     else:
                         index2 = 0
 
@@ -423,23 +423,24 @@ class Symmetry(BoundaryCondition):
             var    = spec["variable"]
             bcType = BoundaryType[spec["type"].upper()]
             value  = spec["value"]
-            if len(spec["variable"])>1:
-                comp = spec["variable"][1]
-            else:
-                comp = ""
 
             # 2. get index of specific variable
             for v in self.bH.variables:
-                if  v[0] == var or v[0] == var[:-1]: #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked 
+                if v[0] == var[:-1]:
+                    component = var[-1]
+                else:
+                    component = ""
+                if  v[0]+component == var and  (len(component)==0 or component in v[1]): #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked
                     index1 = self.bH.variables.index(v)
                     if len(v[1])>1:
-                        index2 = v[1].index(comp)
+                        index2 = v[1].index(component)
                     else:
                         index2 = 0
 
             # 3. set boundary condition
             self.types[index1][index2]  = bcType
             self.values[index1][index2] = ScalarType(np.real(value) + 1j*np.imag(value))
+
 
 
 
