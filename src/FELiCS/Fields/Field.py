@@ -30,6 +30,7 @@ class Field:
         self.space    = FEMSpace
         self.mesh     = mesh
 
+        self.info     = self.describeFunctionSpace()
         # if the name is in the wrong format, re-format
         # TODO Sophie: reformat if there is only a list of variables for a mixed space?
         # TODO Sophie: throw warning / error if the number of names does not coincide with the number of subspaces
@@ -91,6 +92,10 @@ class Field:
         from FELiCS.Misc.tensorUtils import Tensor
         # TODO Sophie: handle Tensors of mixed functions (later)
         return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, hasSpectralDimension = self.hasSpectralDimension)
+
+    def isReal(self):
+        import numpy as np
+        return np.linalg.norm(np.imag(self.getCoefficientArray()))==0
 
     def getListOfSubFields(self):
         """
@@ -259,6 +264,16 @@ class Field:
                 if infoSpaceField['type'] == 'mixed':
                     self.name[i]                = listOfFields[i].name
 
+    def getSize(self):
+        """
+        Get the length of the coefficient array from the underlying function.
+
+        Returns
+        -------
+        integer
+            length of coefficient array 
+        """
+        return len(self.function.x.array[:])
 
 
     def getCoefficientArray(self):
@@ -274,6 +289,37 @@ class Field:
         array = np.empty(len(self.function.x.array[:]),dtype=complex)
         array[:] = self.function.x.array[:]
         return array
+
+
+    def getRealCoefficientArray(self):
+        """
+        Get the real part of the coefficient array of the field.
+
+        Returns
+        -------
+        numpy.ndarray
+            A float-valued array representing the field coefficients.
+        """
+        import numpy as np
+        array = np.empty(len(self.function.x.array[:]),dtype=float)
+        array[:] = np.real(self.function.x.array[:])
+        return array
+
+    def getImagCoefficientArray(self):
+        """
+        Get the imaginary part of the coefficient array of the field.
+
+        Returns
+        -------
+        numpy.ndarray
+            A float-valued array representing the field coefficients.
+        """
+        import numpy as np
+        array = np.empty(len(self.function.x.array[:]),dtype=float)
+        array[:] = np.imag(self.function.x.array[:])
+        return array
+
+
 
     def setCoefficientArray(self, array):
         """
@@ -418,6 +464,13 @@ class Field:
 
             vorticityField = Field(self.space, self.mesh)
             vorticityField.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
+
+
+    def exportToH5(self, writer, fileName=None):
+        # Sophie: This will be the final method
+        if fileName == None:
+            fileName = self.getName()
+        writer.exportFieldToH5(self, fileName)
 
 
     def exportH5(self, fileName, mesh = None):

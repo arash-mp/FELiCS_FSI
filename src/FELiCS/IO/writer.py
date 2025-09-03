@@ -1,3 +1,4 @@
+
 import  dolfinx
 from    basix.ufl           import mixed_element
 from    scipy.interpolate   import griddata
@@ -10,7 +11,7 @@ logger = Logger.get_logger("felics")
 
 class Writer:
     
-    def __init__(self, param=None, FEMSpaces=None):
+    def __init__(self, param, FEMSpaces):
         """
         Function arguments:
         - FEMSpaces: Object containing the Cacluation FEM-Spaces, the export
@@ -20,12 +21,9 @@ class Writer:
         Function returns:
 
         """
-        self._FEMSpaces  = FEMSpaces
-        self._param      = param
-        if FEMSpaces != None:
-            self._exportMesh = FEMSpaces.exportMesh
-        else:
-            self._exportMesh = None
+        self._FEMSpaces     = FEMSpaces
+        self._param         = param
+        self._exportMesh    = FEMSpaces.exportMesh
 
 
     # Method to return fields on the export mesh
@@ -192,59 +190,48 @@ class Writer:
 
     # Sophies method to achieve the same as above, while debugging the mapping    
     def exportFieldToH5(self, field, fileName):
-        import h5py
-        import numpy as     np
-        from pathlib import Path
         
-        # get exportFolder and expand filename
-        exportFolder = self._param.Export.ExportFolder
-
-        xmfText  = self._createXMFHeader(exportFolder)
-
+        # DolfinX export mesh
+        exportMesh          = self._exportMesh.dolfinxMesh
+        
         # Check the info from the field
         infoSpaceField      = field.info
 
+        # get exportFolder and expand filename
+        exportFolder = self._param.Export.ExportFolder
         if len(exportFolder)>0:
-            fileName = exportFolder + "/" + fileName 
+            fileName = exportFolder + "/" + fileName
 
         if infoSpaceField['type'] == 'scalar':
-            h5FilePath = Path(fileName + ".h5")
-            with h5py.File(h5FilePath, 'w') as h5:
+            exportField = self.getFieldsOnExportMesh(field)
+            exportField.function.name = field.getName()
+
+            import h5py
+            from textwrap import dedent
+            from pathlib import Path
+            with h5py.File(fileName, 'w') as h5:
                 if field.isReal():
-                    h5.create_dataset(field.getName(), data = field.getRealCoefficientArray(),  dtype = float)
-                    xmfText += self._createXMFForScalarField(h5FilePath.name, field.getName(), field.getSize())
-                else:
-                    realName = field.getName()+"_real"
-                    imagName = field.getName()+"_imag"
-                    h5.create_dataset(realName, data = field.getRealCoefficientArray(),  dtype = np.float64)
-                    h5.create_dataset(imagName, data = field.getImagCoefficientArray(),  dtype = np.float64)
-                    xmfText += self._createXMFForScalarField(h5FilePath.name, realName, field.getSize())
-                    xmfText += self._createXMFForScalarField(h5FilePath.name, imagName, field.getSize())
-                    
-        xmfText += self._createXMFFooter()
-        Path(fileName+".xmf").write_text(xmfText, encoding="utf-8")
+                    dset = h5.create_dataset(field.getName(), data = field.getRealCoefficientArray(),  dtype = float)
+                   
+            xmf = dedent(f"""\
+                  <?xml version="1.0" ?>
+                  <Xdmf Version="2.0">
+                  """)
+            Path(fileName+".xmf").write_text(xmf, encoding="utf-8")
 
 
-    def _createXMFHeader(self, exportFolder, meshPath=None):
+    def _createXMFHeader(self, meshh5, meshPath=None):
         from textwrap import dedent
-        import h5py
 
-        # TODO: set standard mesh path; should be <OutputFolder>/Mesh.h5, now test wise modal mesh
-        # TODO: it should be created before by the writer if not already there
-        # TODO: relative mesh path should be created
         if meshPath == None:
-            meshPath = exportFolder + "/Modal_mesh.h5"
-            meshPath_rel = "Modal_mesh.h5"
-        else:
-            path = Path(meshPath)
-            meshPath_rel = path.name
+            meshPath = "Modal_mesh.h5"
 
         if self._param.Case.nDim == 2:
             cellStyle = "Triangle"
         else:
             cellStyle = "Tetrahedron"
 
-        meshh5 = h5py.File(meshPath, 'r')
+        meshh5 = h5py.File(meshFile, 'r')
         tri = meshh5['cells']['triangles']
 
         if self._param.Case.nDim == 2:
@@ -254,44 +241,21 @@ class Writer:
 
         xmf = dedent(f"""\
               <?xml version="1.0" ?>
-              <Xdmf Version="2.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+              <Xdmf Version="2.0">
                 <Domain>
-                  <Grid Collection="grid"  Name="grid">
-                    <Topology Type="{cellStyle}" NumberOfElements="{len(tri[:,0])}">
-                       <DataItem ItemType="Function" Dimensions="{len(tri[0,:])*len(tri[:,0])}" Function="$0 - 0">
-                          <DataItem Format="HDF" DataType="Int" Dimensions="{len(tri[0,:])*len(tri[:,0])}">
-                              {meshPath_rel}:/cells/triangles
+                  <Grid Name="grid
+                    <Topology Type="'+ cellStyle +'" NumberOfElements="     '+str(len(tri[:,0]))+'">
+                       <DataItem ItemType="Function" Dimensions="'+str(len(tri[0,:])*len(tri[:,0]))+'" Function="$0 - 0">
+                          <DataItem Format="HDF" DataType="Int" Dimensions="'+str(len(tri[0,:])*len(tri[:,0]))+'">
+                              '+relPathWithFileName+':/cells/triangles
                           </DataItem>
                        </DataItem>
                     </Topology>
-                    <Geometry Type="X_Y"> """)
-         
+                <Geometry Type="X_Y">
+              """)
         for key in list(meshh5['coordinates'].keys()):
-            xmf = xmf + dedent(f"""  
-                    <DataItem Format="HDF" ItemType="Uniform" Precision="8" NumberType="Float" Dimensions="{len(meshh5['coordinates'][key])}">
-                    {meshPath_rel}:/coordinates/{key}
-                    </DataItem> """)
-        xmf = xmf + dedent(f"""
-                </Geometry>""")
-        return xmf
-
-    def _createXMFForScalarField(self, h5FileName, fieldName, size, fieldNameInFile=None):
-        from textwrap import dedent
-
-        if fieldNameInFile==None:
-            fieldNameInFile = fieldName
-
-        xmf = dedent(f""" 
-            <Attribute Name="{fieldName}" Center="Node" AttributeType="Scalar">                  
-               <DataItem ItemType="Function" Dimensions="{size}" Function="$0">                      
-                   <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="{size}"> 
-                       {h5FileName}:{fieldNameInFile}                                           
-                   </DataItem>                                                                      
-               </DataItem>                                                                          
-            </Attribute>  
-            """)
-        return xmf
-
+            writer.write('           <DataItem Format="HDF" ItemType="Uniform" Precision="8" NumberType="Float" Dimensions="     '+str(len(meshh5['coordinates'][key]))+'">\n')
+            writer.write('              '+relPathWithFileName+':/coordinates/'+key+'\n')
 
     def _createXMFFooter(self):
         from textwrap import dedent
