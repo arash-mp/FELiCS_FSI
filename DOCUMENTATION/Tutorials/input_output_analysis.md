@@ -13,21 +13,21 @@ The analysis provides insights into:
 
 The input/output analysis will:
 1. Load the reacting flame base flow
-2. Set up the linearized equations for momentum, mass, species, and energy
+2. Set up the linearized equations for momentum, mass, and species
 3. Apply forcing at the specified boundary
 4. Solve for the system response and compute transfer functions
 6. Export results to the output directory
 
 ## Case Definition
-In this tutorial, we will perform a compressible input/output analysis about a 2D reacting turbulent jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonicaly forced at the inlet. The case uses a progress variable approach to model the reaction and includes species transport effects.
+In this tutorial, we will perform a compressible input/output analysis about a 2D reacting turbulent jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonicaly forced at the inlet. The linearized approach is built on several simplifications. The case uses a progress variable approach to model the reaction. A low-Mach approach is used, meaning density variations occur due to thermal expansion, but not to pressure fluctuations. Furthermore, gas properties are assumed to be constant. Using these simplifications, the temperature of the gas can be directly linked to the progress variable using the perfect gas law. A detailed description of the numerical set up is found in ***.
 
-The 3D configuration is axisymmetric, allowing us to solve the 3D problem for a given azimuthal wavenumber and work with a 2D mesh. The reaction is modeled using a progress variable that tracks the reaction progress from reactants to products.
+The 3D configuration is axisymmetric, allowing us to solve the 3D problem on a 2D mesh.
 
 ### Mesh generation
 We generate the 2D mesh on GMSH for the combustor geometry. The mesh file `KITBurnerWallSep.msh` is used in this tutorial, which represents a confined burner configuration.
 
 ```{caution}
-For 2D computations, FELiCS handles only triangular elements only.
+For 2D computations, FELiCS handles triangular elements only.
 ```
 
 The mesh should include proper boundary identification for:
