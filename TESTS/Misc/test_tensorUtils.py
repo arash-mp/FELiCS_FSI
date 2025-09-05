@@ -142,6 +142,15 @@ def getValidGrad(func_vector):
         t33 = 1j*m*func_vector[2]/r + func_vector[1]/r
     return t11, t12, t13, t21, t22, t23, t31, t32, t33
 
+def getValidScalarGrad(func_scalar):
+    t1 = Dx(func_scalar,0)
+    t2 = Dx(func_scalar,1)
+    if coordinateSystemName == "cartesian": 
+        t3 = 1j*m*func_scalar
+    elif coordinateSystemName == "cylindricalfelics": 
+        t3 = 1j*m*func_scalar/r
+    return t1, t2, t3
+
 
 def checkIfVectorsAlign(petscVec1, petscVec2):
     assert np.linalg.norm(petscVec1.getArray())> 0
@@ -758,15 +767,13 @@ def test_dyade_dot_vector():
     print("\n\n  #####, ", coordinateSystemName, m)
     validate_dyade_dot_vector()
 
-# ---------------------------------------------------------------
-# Tests for tensor analysis
-# ---------------------------------------------------------------
-def validateGrad():
+def validate_vector_dot_dyade_dot_vector():
     t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
-    tensor_expr = (iDot((iDot(iGrad(tens_vector1),tens_vector2)),iConj(itest_vector))).ufl_tens*J_hat*dx
-    valid_expr  = (t11*func_vector2[0] + t12*func_vector2[1] + t13*func_vector2[2])*conj(test_vector[0])*r*dx
-    valid_expr += (t21*func_vector2[0] + t22*func_vector2[1] + t23*func_vector2[2])*conj(test_vector[1])*r*dx
-    valid_expr += (t31*func_vector2[0] + t32*func_vector2[1] + t33*func_vector2[2])*conj(test_vector[2])*r*dx
+    tensor_expr = ((iDot(iDot(tens_vector1,iGrad(tens_vector1)), tens_vector2)) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (func_vector1[0] * t11 + func_vector1[0] * t21 + func_vector1[0] * t31) * func_vector2[0] * conj(test_scalar)*r*dx
+    valid_expr += (func_vector1[1] * t12 + func_vector1[1] * t22 + func_vector1[1] * t32) * func_vector2[1] * conj(test_scalar)*r*dx
+    if not (coordinateSystemName == "cartesian" and m == 0):
+        valid_expr += (func_vector1[2] * t13 + func_vector1[2] * t23 + func_vector1[2] * t33) * func_vector2[2] * conj(test_scalar)*r*dx
     res1 = petsc.assemble_vector(form(tensor_expr))
     res2 = petsc.assemble_vector(form(valid_expr))
     res1.assemble()
@@ -775,33 +782,497 @@ def validateGrad():
     checkIfVectorsAlign(res1, res2)
     return res1, res2
 
-
-def test_iGrad():
-    print("Testing iGrad")
+def test_vector_dot_dyade_dot_vector():
+    print("Testing vector dot dyade dot vector.")
     global coordinateSystemName, m, r
     # 1. Cartesian Cordinates, m=0
     coordinateSystemName = "cartesian"; m = 0; r = 1.
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
-    validateGrad()
+    validate_vector_dot_dyade_dot_vector()
     # 2. Cartesian Cordinates, m= random integer
     coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
-    validateGrad()
+    validate_vector_dot_dyade_dot_vector()
     # 3. Cylindrical Cordinates, m= 0
     coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
-    validateGrad()
+    validate_vector_dot_dyade_dot_vector()
     # 4. Cylindrical Cordinates, m= random integer
     coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
-    validateGrad()
+    validate_vector_dot_dyade_dot_vector()
+    
+def validate_dyade_dot_dyade():
+    # NOTE: Not implemented yet
+    pass
 
+def test_dyade_dot_dyade():
+    print("Testing dyade dot dyade.")
+    raise NotImplementedError("Not implemented yet.")
+    
+def validate_dyade_inner_dyade():
+    t11_1, t12_1, t13_1, t21_1, t22_1, t23_1, t31_1, t32_1, t33_1 = getValidGrad(func_vector1)
+    t11_2, t12_2, t13_2, t21_2, t22_2, t23_2, t31_2, t32_2, t33_2 = getValidGrad(func_vector2)
+    tensor_expr = (iInner(iGrad(tens_vector1),iGrad(tens_vector2)) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr = ((t11_1 * t11_2 + t21_1 * t21_2 + t31_1 * t31_2) + (t12_1 * t12_2 + t22_1 * t22_2 + t32_1 * t32_2) + (t13_1 * t13_2 + t23_1 * t23_2 + t33_1 * t33_2)) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
 
-def validateDiv():
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_dyade_inner_dyade():
+    print("Testing dyade inner dyade.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_inner_dyade()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_inner_dyade()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_inner_dyade()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_inner_dyade()
+    
+def validate_dyade_transpose():
+    t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
+    tensor_expr = (iDot(iDot(iT(iGrad(tens_vector1)),tens_vector2), iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (t11 * func_vector2[0]+ t21 * func_vector2[1] + t31 * func_vector2[2])*conj(test_vector[0])*r*dx
+    valid_expr += (t12 * func_vector2[0]+ t22 * func_vector2[1] + t32 * func_vector2[2])*conj(test_vector[1])*r*dx
+    if not (coordinateSystemName == "cartesian" and m == 0):
+        valid_expr += (t13 * func_vector2[0]+ t23 * func_vector2[1] + t33 * func_vector2[2])*conj(test_vector[2])*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_dyade_transpose():
+    print("Testing dyade transpose.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_transpose()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_transpose()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_transpose()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_transpose()
+    
+def validate_dyade_trace():
+    t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
+    tensor_expr = (iTr(iGrad(tens_vector1)) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (t11 * t11+ t22 * t22 + t33 * t33)*conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_dyade_trace():
+    print("Testing dyade trace.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_trace()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_trace()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_trace()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_trace()
+    
+def validate_scalar_conj():
+    tensor_expr = (iConj(tens_scalar1) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (conj(func_scalar1))*conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_conj():
+    print("Testing conjugate of scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_conj()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_conj()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_conj()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_conj()
+    
+def validate_vector_conj():
+    tensor_expr = (iDot(iConj(tens_vector1), iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = dot(conj(func_vector1),conj(test_vector))*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_vector_conj():
+    print("Testing conjugate of vector.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_conj()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_conj()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_conj()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_vector_conj()
+    
+def validate_dyade_hermitian():
+    t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
+    tensor_expr = (iDot(iDot(iT(iConj(iGrad(tens_vector1))), tens_vector2), iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr = (conj(t11) * func_vector2[0]+ conj(t21) * func_vector2[1] + conj(t31) * func_vector2[2])*conj(test_vector[0])*r*dx
+    valid_expr += (conj(t12) * func_vector2[0]+ conj(t22) * func_vector2[1] + conj(t32) * func_vector2[2])*conj(test_vector[1])*r*dx
+    if not (coordinateSystemName == "cartesian" and m == 0):
+        valid_expr += (conj(t13) * func_vector2[0]+ conj(t23) * func_vector2[1] + conj(t33) * func_vector2[2])*conj(test_vector[2])*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_dyade_hermitian():
+    print("Testing hermitian transpose of dyade.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_hermitian()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_hermitian()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_hermitian()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_hermitian()
+    
+def validate_identity():
+    # NOTE: Not implemented yet
+    pass
+
+def test_identity():
+    print("Testing identity functionality.")
+    raise NotImplementedError("Not implemented yet.")
+    
+def validate_grad_scalar_dot_grad_scalar():
+    t1_1, t2_1, t3_1 = getValidScalarGrad(func_scalar1)
+    t1_2, t2_2, t3_2 = getValidScalarGrad(func_scalar2)
+    tensor_expr = (iDot(iGrad(tens_scalar1), iGrad(tens_scalar2)) * iConj(itest_scalar)).ufl_tens*J_hat*dx
+    valid_expr  = (t1_1*t1_2 + t2_1*t2_2 + t3_1*t3_2) * conj(test_scalar)*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_grad_scalar_dot_grad_scalar():
+    print("Testing grad of scalar dot grad of scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_dot_grad_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_dot_grad_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_dot_grad_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_dot_grad_scalar()
+    
+def validate_scalar_times_grad_scalar():
+    t1_2, t2_2, t3_2 = getValidScalarGrad(func_scalar2)
+    tensor_expr = (iDot(tens_scalar1 * iGrad(tens_scalar2) , iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (func_scalar1 * t1_2) * conj(test_vector[0])*r*dx
+    valid_expr  += (func_scalar1 * t2_2) * conj(test_vector[1])*r*dx
+    if not (m == 0):
+        valid_expr  += (func_scalar1 * t3_2) * conj(test_vector[2])*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_scalar_times_grad_scalar():
+    print("Testing scalar times grad of scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_grad_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_grad_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_grad_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_scalar_times_grad_scalar()
+    
+def validate_grad_scalar_times_scalar():
+    t1_1, t2_1, t3_1 = getValidScalarGrad(func_scalar1)    
+    tensor_expr = (iDot(iGrad(tens_scalar1) * tens_scalar2 , iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (t1_1 * func_scalar2) * conj(test_vector[0])*r*dx
+    valid_expr  += (t2_1 * func_scalar2) * conj(test_vector[1])*r*dx
+    if not (m == 0):
+        valid_expr  += (t3_1 * func_scalar2) * conj(test_vector[2])*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_grad_scalar_times_scalar():
+    print("Testing grad of scalar times scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_times_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_times_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_times_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_times_scalar()
+    
+def validate_one_divide_scalar_times_grad_scalar():
+    # NOTE: Not implemented yet
+    pass
+
+def test_one_divide_scalar_times_grad_scalar():
+    print("Testing one divide scalar times grad of scalar.")
+    raise NotImplementedError("Not implemented yet.")
+
+def validate_grad_scalar_divided_by_scalar():
+    # NOTE: Not implemented yet
+    pass
+
+def test_grad_scalar_divided_by_scalar():
+    print("Testing grad of scalar divided by scalar.")
+    raise NotImplementedError("Not implemented yet.")
+
+def validate_grad_scalar_dot_dyade():
+    # NOTE: Not implemented yet
+    pass
+
+def test_grad_scalar_dot_dyade():
+    print("Testing grad of scalar dot dyade.")
+    raise NotImplementedError("Not implemented yet.")
+
+def validate_dyade_dot_grad_scalar():
+    t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
+    t1, t2, t3 = getValidScalarGrad(func_scalar2)
+    tensor_expr = (iDot(iDot(iGrad(tens_vector1), iGrad(tens_scalar2)) , iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (t11 * t1 + t12 * t2 + t13 * t3)*conj(test_vector[0])*r*dx
+    valid_expr += (t21 * t1 + t22 * t2 + t23 * t3)*conj(test_vector[1])*r*dx
+    valid_expr += (t31 * t1+ t32 * t2 + t33 * t3)*conj(test_vector[2])*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_dyade_dot_grad_scalar():
+    print("Testing dyade dot grad of scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_dot_grad_scalar()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_dot_grad_scalar()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_dot_grad_scalar()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_dyade_dot_grad_scalar()
+
+def validate_grad_scalar_dot_dyade_dot_grad_scalar():
+    # NOTE: Not implemented yet
+    pass
+
+def test_grad_scalar_dot_dyade_dot_grad_scalar():
+    print("Testing grad of scalar dot dyade dot grad of scalar.")
+    raise NotImplementedError("Not implemented yet.")
+
+def validate_grad_scalar_conj():
+    t1, t2, t3 = getValidScalarGrad(func_scalar1)
+    tensor_expr = (iDot(iConj(iGrad(tens_scalar1)), iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (conj(t1) * conj(test_vector[0]))*r*dx
+    valid_expr  += (conj(t2) * conj(test_vector[1]))*r*dx
+    if not (m == 0):
+        valid_expr  += (conj(t3) * conj(test_vector[2]))*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
+
+def test_grad_scalar_conj():
+    print("Testing conjugate of grad of scalar.")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_conj()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_conj()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_conj()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_conj()
+
+# ---------------------------------------------------------------
+# Tests for tensor analysis
+# ---------------------------------------------------------------
+
+def validate_div_vector():
     t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
     tensor_expr = (iDiv(tens_vector1) * iConj(itest_scalar)).ufl_tens*J_hat*dx
     valid_expr  = (t11 + t22 + t33)*conj(test_scalar)*r*dx
@@ -821,22 +1292,22 @@ def test_iDiv():
     coordinateSystemName = "cartesian"; m = 0; r = 1.
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
-    validateDiv()
+    validate_div_vector()
     # 2. Cartesian Cordinates, m= random integer
     coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
-    validateDiv()
+    validate_div_vector()
     # 3. Cylindrical Cordinates, m= 0
     coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
-    validateDiv()
+    validate_div_vector()
     # 4. Cylindrical Cordinates, m= random integer
     coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
     initializeTensorUtils()
     print("\n\n  #####, ", coordinateSystemName, m)
-    validateDiv()
+    validate_div_vector()
 
 
 
