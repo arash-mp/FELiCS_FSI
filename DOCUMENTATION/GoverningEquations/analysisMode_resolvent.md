@@ -26,7 +26,7 @@ $$
 \mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t)
 $$
 
-Considering a stationary baseflow we arrive at a Linear Time-Invariant (LTI) dynamical system describing the pertubation:
+Considering a stationary baseflow we arrive at a Linear Time-Invariant (LTI) dynamical system describing the perturbation:
 
 $$
 \mathcal{B}\frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}')+\mathbf{f}',

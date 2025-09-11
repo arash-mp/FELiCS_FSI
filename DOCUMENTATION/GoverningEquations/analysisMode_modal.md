@@ -24,8 +24,8 @@ $$
 \mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\epsilon\mathbf{q}'(\mathbf{x},t)\ .
 $$
 
-In contrast to the resolvent analysis, we assume the pertubation to be small, $\epsilon \ll 1$. 
-Upon inserting this ansatz into the governing equations and linearisation, we arrive at the homogeneous equation for a Linear Time-Invariant (LTI) dynamical system describing the pertubation:
+In contrast to the resolvent analysis, we assume the  perturbation to be small, $\epsilon \ll 1$. 
+Upon inserting this ansatz into the governing equations and linearisation, we arrive at the homogeneous equation for a Linear Time-Invariant (LTI) dynamical system describing the  perturbation:
 
 $$
 \frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}'),
@@ -41,15 +41,15 @@ represents the Jacobian evaluated at the base state $\overline{\mathbf{q}}$.
 
 ## Spectral analysis of the linear operator
 
-We assume the pertubation takes the form of normal modes,
+We assume the perturbation takes the form of normal modes,
 $$
-\mathbf{q}'=\hat{\mathrm{q}}\mathrm{e^{-\mathrm{j}\omega t}}+c.c., 
+\mathbf{q}'=\hat{\mathbf{q}}\mathrm{e^{-\mathrm{j}\omega t}}+c.c., 
 $$
 where $\hat{\mathbf{q}}$ denotes the complex amplitude, and the complex frequency is given by $\omega = \omega_r + \mathrm{j}\omega_i$.
-Inserting this in the linearized pertubation eqaution leads to the eigenvalue problem,
+Inserting this in the linearized perturbation equation leads to the eigenvalue problem,
 
 $$
-\mathbf{A} \hat{\mathbf{q}} = \mathrm{j} \omega \mathbf{B} \hat{\mathbf{q}},
+\mathbf{A} \hat{\mathbf{q}} = -\mathrm{j} \omega \mathbf{B} \hat{\mathbf{q}},
 $$
 
 where $\omega$ is the eigenvalue, $\hat{\mathbf{q}}$ is the eigenvector and $\mathbf{A}, \mathbf{B}$ are the discrete versions of the Jacobian $\mathcal{L}$ and $\mathcal{B}$, respectively.
