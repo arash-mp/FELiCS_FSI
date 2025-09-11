@@ -10,64 +10,64 @@ Linear stability analysis is a method used to determine whether small disturbanc
 
 
 
-## Definition of the linear Operator 
+## Definition of the linear operator 
 We start with a general nonlinear equation, written in compact form as
 $$
-\mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g}
+\mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g},
 $$
 
-where $ \mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in  \mathbb{R}^N $ represents the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear equation (e.g. the incompressible Navier-Stokes equations), and $\mathcal{B}$  is one in case the temporal derivative of the state vector variable is considered, and zero otherwise (e.g. it is zero for the continuity equation of the incompressible Navier-Stokes formulation).
+where $ \mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ represents the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. the incompressible Navier-Stokes equations), and $\mathcal{B}$ is one in case the temporal derivative of the state vector variable is considered, and zero otherwise (e.g. it is zero for the continuity equation of the incompressible Navier-Stokes formulation).
 
-We consider the flow field to be comprised of a  time-invariant base flow $\overline{\mathbf{q}} \in \mathbb{R}^N  $, which can be either a time-averaged flow or fixed point solution, and the perturbation $ \mathbf{q}' \in \mathbb{R} $, such that 
+We decompose the flow field into a time-invariant base flow, $\overline{\mathbf{q}} \in \mathbb{R}^N$, representing either a time-averaged state or a fixed-point solution, and a perturbation, $\mathbf{q}' \in \mathbb{R}^N$, such that 
 
 $$
 \mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\epsilon\mathbf{q}'(\mathbf{x},t)\ .
 $$
 
-In contrast to the resolvent analysis, we assume the pertubation to me small, $\epsilon \ll 1$. 
-Upon inserting this ansatz into the governing equations and linearisation, we  arrive at the homogenious equation for a Linear Time-Invariant (LTI) dynamical system describing the pertubation, reading 
+In contrast to the resolvent analysis, we assume the pertubation to be small, $\epsilon \ll 1$. 
+Upon inserting this ansatz into the governing equations and linearisation, we arrive at the homogeneous equation for a Linear Time-Invariant (LTI) dynamical system describing the pertubation:
 
 $$
-\frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}')
+\frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}'),
 $$
 
-with  
+where 
 
 $$
 \mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{{\mathbf{q}}}\in \mathbb{R}^{N\times N}
 $$
-representing the Jakobian evaluate at the base state  $\overline{\mathbf{q}}$. 
+represents the Jacobian evaluated at the base state $\overline{\mathbf{q}}$. 
 
 
-## Spectral analysis of the  linear operator
+## Spectral analysis of the linear operator
 
-We assume the pertubation to have the form of normal modes, reading
+We assume the pertubation takes the form of normal modes,
 $$
-\mathbf{q}'=\hat{\mathrm{q}}\mathrm{e^{-\mathrm{j}\omega t}}+c.c.
+\mathbf{q}'=\hat{\mathrm{q}}\mathrm{e^{-\mathrm{j}\omega t}}+c.c., 
 $$
-with the complex frequency $\omega = \omega_r+\mathrm{j}\omega_i$.
-Inserting this in the linearized pertubation eqaution leads to ein eigenvalue problem, reading in matrix form 
+where $\hat{\mathbf{q}}$ denotes the complex amplitude, and the complex frequency is given by $\omega = \omega_r + \mathrm{j}\omega_i$.
+Inserting this in the linearized pertubation eqaution leads to the eigenvalue problem,
 
 $$
-\mathbf{A} \hat{\mathbf{q}} = \mathrm{j} \omega \mathbf{B} \hat{\mathbf{q}}
+\mathbf{A} \hat{\mathbf{q}} = \mathrm{j} \omega \mathbf{B} \hat{\mathbf{q}},
 $$
 
-where $\mathbf{A}$ and $\mathbf{B}$ are the discrete versions of the Jacobian $\mathcal{L}$ and $\mathcal{B}$, respectively, $\omega$ is the eigenvalue, and $\hat{q}$ is the eigenvector.
+where $\omega$ is the eigenvalue, $\hat{\mathbf{q}}$ is the eigenvector and $\mathbf{A}, \mathbf{B}$ are the discrete versions of the Jacobian $\mathcal{L}$ and $\mathcal{B}$, respectively.
 
-By solving the eigenvalue problem the imaginary part of the eigenvalues determines  
+Solving the eigenvalue problem yields complex eigenvalues, whose components have the following interpretations:
 
-- $\omega_i>0$ := exponential temporal growth
+- $\omega_i > 0$: exponential temporal growth
 
-- $\omega_i<0$ := exponential temporal decay
+- $\omega_i < 0$: exponential temporal decay
 
-- $\omega_r$ := mode frequency
-- $\hat{\mathbf{q}}$ :=  mode shape  
+- $\omega_r$: oscillation frequency of the mode
+
+- $\hat{\mathbf{q}}$: spatial structure (mode shape)
 
 
 ## FELiCS implementation 
 
-The discretized eigenvalue problem is solved with a SLEPc-based solver in FELiCS. A set of eigenvalues $\omega_k$ ($k=1,2,...,n$) are calculated, which are nearest to a defined guess value $\omega_{\text {guess}}$.
-For each $\omega_k$, the corresponding eigenvector $\hat{q_k}$ is also calculated.
+The discretized eigenvalue problem is solved using a SLEPc-based solver implemented in FELiCS. The solver computes a set of eigenvalues $\omega_k$ ($k=1,2,...,n$) located nearest to a defined guess value $\omega{\text{guess}}$. For each eigenvalue $\omega_k$, the corresponding eigenvector $\hat{\mathbf{q}}_k$ is obtained.
 
 <!-- ### Derivation: For incompressible Navier-Stokes equations
 Modal analysis can be used for linear stability analysis on flow governed by Navier-Stokes equations (NSE). By linearize NSE around a steady state (so called base flow), one can get the aformentioned linear system and solve it. Here we show the linearization on the incompressible NSE, which is:
