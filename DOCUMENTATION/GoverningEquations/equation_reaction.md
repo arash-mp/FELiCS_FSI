@@ -4,7 +4,7 @@
 ## Eddy break-up model
 
 Assumptions:
-For the assumptions of the RANS EBU model the interested reader is kindly referred to [Poinsot & Veynante 2005](http://refhub.elsevier.com/S0010-2180(23)00162-1/sbref0058).
+- For the assumptions of the RANS EBU model the interested reader is kindly referred to [Poinsot & Veynante 2005](http://refhub.elsevier.com/S0010-2180(23)00162-1/sbref0058).
 
 Example use case:
 - Reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
