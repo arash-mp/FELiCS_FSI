@@ -24,7 +24,7 @@ Nomenclature:
 
 The mean reaction rate is
 $$
-\overline{\dot{\Omega}} = C_{EBU} \frac{\overline{\varepsilon}}{\overline{k}} \overline{\rho} \overline{c} (1-\overline{c}) =  A_{EBU} \overline{\rho} \overline{c} (1-\overline{c})
+\overline{\dot{\Omega}} = C_{EBU} \frac{\overline{\varepsilon}}{\overline{k}} \overline{\rho} \, \overline{c} (1-\overline{c}) =  A_{EBU} \overline{\rho} \, \overline{c} (1-\overline{c})
 $$
 where $A_\textrm{EBU}=C_{EBU} \frac{\overline{\varepsilon}}{\overline{k}}$ is constant in time, but may vary in space. It can be determined by inserting the temporal mean state, obtained by e.g. LES, into the equation above. 
 
