@@ -189,4 +189,4 @@ Open the ```.xmf``` file in Paraview. There you can visualize all the base flow 
 Figure 2. Real part of the response modes $u_x'$ and $T'$.
 
 ## References
-<a id="1">[1]</a> Kaiser T.L., Varillon G., Polifke W., Zhang F., & Zirwes T., Bockhorn H., Ovberleithner, K. “Modelling the response of a turbulent jet flame to acoustic forcing in a linearized framework using an active flame approach”. In: Combustion and Flame 253 (2023). doi: 10.1016/j.combustflame.2023.112778.
+<a id="1">[1]</a> Kaiser T.L., Varillon G., Polifke W., Zhang F., & Zirwes T., Bockhorn H., Oberleithner, K. “Modelling the response of a turbulent jet flame to acoustic forcing in a linearized framework using an active flame approach”. In: Combustion and Flame 253 (2023). doi: 10.1016/j.combustflame.2023.112778.
