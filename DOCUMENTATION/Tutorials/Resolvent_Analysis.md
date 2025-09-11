@@ -19,7 +19,7 @@ The resolvent analysis will:
 2. Quantify the gain between input disturbances and flow response for each frequency.
 
 ## Case Definition
-In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see Ref. [[1]](#1). The inlet has a steady inflow boundary condition with a Reynolds number of 8000 based on the diameter and bulk speed in the contraction. Since the mean flow is axisymmetric, the 3D solution is solved for a given azimuthal wavenumber.
+In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see [Villié et al. 2025](https://doi.org/10.1063/5.0252852). The inlet has a steady inflow boundary condition with a Reynolds number of 8000 based on the diameter and bulk speed in the contraction. Since the mean flow is axisymmetric, the 3D solution is solved for a given azimuthal wavenumber.
 
 ### Mesh generation
 We generate the 2D mesh on GMSH. 
@@ -162,5 +162,3 @@ The $u_\theta$ fluctuation is 0 in this case because we study axisymmetric pertu
 ```{warning}
 The gains provided by FELiCS are $\sigma^2$. The forcing modes have a unitary norm on the defined forcing domain, but the response modes have the norm $\sigma$ on the defined response domain.
 ```
-## References
-<a id="1">[1]</a> Villié, A., Schmitter, S., von Saldern, J. G., Demange, S., & Oberleithner, K. . “Physics-informed neural networks for enhancing medical flow magnetic resonance imaging: Artifact correction and mean pressure and Reynolds stresses assimilation”. In: Physics of Fluids 37(2) (2025). doi: 10.1063/5.0252852.
