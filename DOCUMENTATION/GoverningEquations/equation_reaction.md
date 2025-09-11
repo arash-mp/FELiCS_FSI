@@ -1,15 +1,10 @@
 # Reaction models
-The reaction models are used when chemical reactions due to a flame occur in the flow. The terms of the reaction models typically occur as source terms in the energy or species transport equation.
 
 
 ## Eddy break-up model
-In the modeling of turbulent flames within a RANS framework, turbulence-flame interactions are linked through a characteristic turbulent time scale. The reaction rate of the flame is directly related to the state variables of the turbulent flow, allowing a coupled representation of combustion and turbulence dynamics.
 
 Assumptions:
-- turbulence controls combustion rate, reaction rate is proportional to the turbulence dissipation rate
-- mixing-limited combustion, chemical reaction is assumed fast, mixing of reactants limits the combustion rate
-- flame structure not resolved, no detailed flame structure is modeled, averaged quantities are used
-- local equilibrium assumed, reactants are assumed to be locally in chemical equilibrium once mixed
+- For the assumptions of the RANS EBU model the interested reader is kindly referred to [Poinsot & Veynante 2005](http://refhub.elsevier.com/S0010-2180(23)00162-1/sbref0058).
 
 Example use case:
 - Reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
@@ -29,9 +24,9 @@ Nomenclature:
 
 The mean reaction rate is
 $$
-\overline{\dot{\Omega}} = C_{EBU} \frac{\overline{\varepsilon}}{\overline{k}} \overline{\rho} \overline{c} (1-\overline{c}) =  A_{EBU} \overline{\rho} \overline{c} (1-\overline{c})
+\overline{\dot{\Omega}} = C_{EBU} \frac{\overline{\varepsilon}}{\overline{k}} \overline{\rho} \, \overline{c} (1-\overline{c}) =  A_{EBU} \overline{\rho} \, \overline{c} (1-\overline{c})
 $$
-where $A_\textrm{EBU}$ is a model constant lumped together with the turbulent time scale $\overline{\varepsilon}/\overline{k}$.
+where $A_\textrm{EBU}=C_{EBU} \frac{\overline{\varepsilon}}{\overline{k}}$ is constant in time, but may vary in space. It can be determined by inserting the temporal mean state, obtained by e.g. LES, into the equation above. 
 
 
 ### Linearized eddy break-up model
