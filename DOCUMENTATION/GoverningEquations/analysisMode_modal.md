@@ -67,7 +67,7 @@ Solving the eigenvalue problem yields complex eigenvalues, whose components have
 
 ## FELiCS implementation 
 
-The discretized eigenvalue problem is solved using a SLEPc-based solver implemented in FELiCS. The solver computes a set of eigenvalues $\omega_k$ ($k=1,2,...,n$) located nearest to a defined guess value $\omega{\text{guess}}$. For each eigenvalue $\omega_k$, the corresponding eigenvector $\hat{\mathbf{q}}_k$ is obtained.
+The discretized eigenvalue problem is solved using a SLEPc-based solver implemented in FELiCS. The solver computes a set of eigenvalues $\omega_k$ ($k=1,2,...,n$) located nearest to a defined guess value $\omega_{\text{guess}}$. For each eigenvalue $\omega_k$, the corresponding eigenvector $\hat{\mathbf{q}}_k$ is obtained.
 
 <!-- ### Derivation: For incompressible Navier-Stokes equations
 Modal analysis can be used for linear stability analysis on flow governed by Navier-Stokes equations (NSE). By linearize NSE around a steady state (so called base flow), one can get the aformentioned linear system and solve it. Here we show the linearization on the incompressible NSE, which is:
