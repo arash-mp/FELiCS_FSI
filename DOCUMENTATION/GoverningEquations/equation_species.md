@@ -1,5 +1,5 @@
 # Species transport equation
-The species transport equation describes the transport behavior of a species $Y$ of a mixture, or the transport of a passive scalar.
+The species transport equation describes the transport behavior of a species k of a mixture.
 
 Assumptions:
 - source terms need to be defined based on a given model, e.g. [reaction model](./equation_reaction.md)
@@ -14,7 +14,7 @@ References:
 - [Kaiser et al. 2023](https://doi.org/10.1016/j.combustflame.2023.112778)
 
 Nomenclature:
-- $Y$: species or passive scalar
+- $Y_k$: mass fraction of species k
 - $\mathbf{u}$: velocity vector
 - $\rho$: density
 - $\breve{D}_\textrm{eff}$: density-premultiplied mass diffusivity, effective
@@ -22,7 +22,7 @@ Nomenclature:
 - $\breve{D}_t$: density-premultiplied mass diffusivity, turbulent
 - $f_Y$: source term (e.g. chemical reaction rate due to a flame)
 - $\mathrm{Sc}$: Schmidt number
-- $X_Y$: test function for species transport equation
+- $X_{Y_k}$: test function for species transport equation
 
 
 
