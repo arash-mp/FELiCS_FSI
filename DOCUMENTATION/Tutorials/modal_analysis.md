@@ -80,30 +80,32 @@ The complete structure of this file is detailed in [Setting files](hhttps://git.
 ### Settings
 The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
 
-The spanwise wavenumber is set to 0:
+Here are some key settings for our resolvent analysis:
+
+- The spanwise wavenumber is set to 0:
 ```json
 {"m": 0.0,}
 ```
-We specify the spatial domain dimension in the settings file as 2D:
+- We specify the spatial domain dimension in the settings file as 2D:
 ```json
 {"nDim": 2}
 ```
-and set the coordinate system to Cartesian:
+- The coordinate system is set to Cartesian:
 ```json
 {"CoordinateSystem": "Cartesian"}
 ```
 
-We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) with these references:
+- We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) with these references:
 ```json
 {"MeshFilePath":"cylinder_wake.msh"}
 {"MeanFlowFilePath": "base_flow_for_FELiCS.fel"}
 {"BCsFilePath": "bc_modal.json"}
 ```
-We specify which eigenvalues to compute by providing a list of initial guesses:
+- We specify which eigenvalues to compute by providing a list of initial guesses:
 ```json
 {"EigenValueGuess": [0.7]}
 ```
-For each guess, the number of eigenvalues to be calculated closest to that value is set to:
+- For each guess, the number of eigenvalues to be calculated closest to that value is set to:
 ```json
 {"nSolut": 100}
 ```
@@ -127,16 +129,16 @@ After running the modal analysis, the working directory should look like:
 ```
 Inside the ```output_dir``` directory, all the eigenmodes in ```.h5``` and ```.xmf``` format can be found, along with the eigenvalues in ```spectrum.csv``` file. 
 Run the pyhton script [PlotScatter.py](./../../TUTORIALS/modal_analysis_tutorial/PlotScatter.py) to plot the computed eigenvalue spectrum:
-![](./../../TUTORIALS/modal_analysis_tutorial/eigenspectrum.png) <a id="fig:EigSpec"></a>
+![](./../../TUTORIALS/modal_analysis_tutorial/pic/eigenspectrum.png) <a id="fig:EigSpec"></a>
 Figure 1. Eigenspectrum
 
 In [Figure 1](#EigSpec), an eigenvalue with a positive imaginary part stands out. We use paraview to visualize the corresponding real part of the eigenmode stored in `ModalSolution_Omega_Direct_(0.745+0.013j).xmf`. 
 
-![](./../../TUTORIALS/modal_analysis_tutorial/ux_real.png) <a id="fig:RealUx"></a>
+![](./../../TUTORIALS/modal_analysis_tutorial/pic/ux_real.png) <a id="fig:RealUx"></a>
 Figure 2. Real eigenmode, $u'_x$
 
-![](./../../TUTORIALS/modal_analysis_tutorial/uy_real.png) <a id="fig:RealUy"></a>
+![](./../../TUTORIALS/modal_analysis_tutorial/pic/uy_real.png) <a id="fig:RealUy"></a>
 Figure 3. Real eigenmode, $u'_y$
 
-![](./../../TUTORIALS/modal_analysis_tutorial/p_real.png) <a id="fig:Realp"></a>
+![](./../../TUTORIALS/modal_analysis_tutorial/pic/p_real.png) <a id="fig:Realp"></a>
 Figure 4. Real eigenmode, $p'$
