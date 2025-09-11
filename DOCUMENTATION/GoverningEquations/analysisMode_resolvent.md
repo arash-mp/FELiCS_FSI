@@ -46,29 +46,29 @@ representing the  nonlinear operator linearized around the about the base flow $
 
 We consider harmonic  forcing 
 $$
-\mathbf{f}' = \hat{\mathbf{f}}\mathrm{e}^{-j\omega t} +c.c.
+\mathbf{f}' = \hat{\mathbf{f}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c.
 $$
 and  harmonic responce
 $$
-\mathbf{q}' = \hat{\mathbf{q}}\mathrm{e}^{-j\omega t} +c.c.
+\mathbf{q}' = \hat{\mathbf{q}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c.
 $$
 
 Inserting in the  LIT dynamical system and discretisation leads to the  matrix formulation, reading   
 
 $$
--j\omega\mathbf{B} = \mathbf{A}\hat{\mathbf{q}}+\hat{\mathbf{f}}
+-\mathrm{j}\omega\mathbf{B} = \mathbf{A}\hat{\mathbf{q}}+\hat{\mathbf{f}}
 $$
  where the matrices $\mathbf{A}$ and $\mathbf{B}$ are the discretized jacobian $\mathcal{L}$ and limiter matrix $\mathcal{B}$, respectively, and depend on the actual choice of nonlinear equations which is detailed in another section.  
 
 For the resolvent analysis we rearrange the equation to 
 
 $$
-(-j \omega \mathbf{B}-\mathbf{A}) \hat{\mathbf{q}} = \hat{\mathbf{f}},
+(-\mathrm{j} \omega \mathbf{B}-\mathbf{A}) \hat{\mathbf{q}} = \hat{\mathbf{f}},
 $$
 with the {\bfseries resolvent operator} 
 
 $$
-\mathbf{R} = -j \omega \mathbf{B}-\mathbf{A}
+\mathbf{R} = -\mathrm{j} \omega \mathbf{B}-\mathbf{A}
 $$
 
 representing a transfer function relating the linear reseponce to a given forcing. 

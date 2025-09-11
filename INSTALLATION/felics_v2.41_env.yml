@@ -1,0 +1,15 @@
+name: felics2025_dolfin9_v2
+channels:
+- conda-forge
+- defaults
+dependencies:
+- fenics-dolfinx=0.9.*
+- petsc[build=complex*]
+- numpy
+- scipy
+- matplotlib
+- colorama
+- h5py
+- pyvista
+- gmsh
+- python-gmsh

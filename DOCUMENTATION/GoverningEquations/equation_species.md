@@ -1,14 +1,13 @@
 # Species transport equation
 The species transport equation describes the transport behavior of a species $Y$ of a mixture, or the transport of a passive scalar.
 
-Motivation:
-- Component concentration can affect physical properties, so it needs to be track when a mixture is applied;
-- The transport of passive scalar fields are very important in some cases. For example progress variables in combustion models.
+Assumptions:
+- source terms need to be defined based on a given model, e.g. [reaction model](./equation_reaction.md)
+- Schmidt number, which relates mass diffusivity with eddy viscosity, is often assumed to be constant
 
-Use case:
-- in flows with chemical reactions
-- in flows with mixture which has non-uniform concentration distribution
-- tutorial example: turbulent flame?
+Example use case:
+- Passive scalar transport: [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
+- Reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
 
 References:
 - [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
@@ -25,11 +24,7 @@ Nomenclature:
 - $\mathrm{Sc}$: Schmidt number
 - $X_Y$: test function for species transport equation
 
-Assumptions:
-- The density $\rho$ usually changes due to chemical reactions, changes of component concentrations, high-Mach numbers, etc...
-- Source terms can be defined based on reaction / combustion models
-- often Schmidt number is assumed to be constant
-- no gravitational forces
+
 
 ### Nonlinear species transport equation
 The nonlinear species transport equation is
@@ -58,7 +53,7 @@ $$
 #### Weak form of the linearized species transport equation
 The weak form of the linearized species transport equation with normal mode ansatz, as implemented in FELiCS, is
 $$
-\int_\Omega \omega \overline{\rho} \hat{Y} X_Y^* \mathrm{d}\mathbf{x} = \int_\Omega j \, \overline{Y} \, \nabla \cdot \left( \hat{\rho} \, \overline{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \overline{Y} \, \hat{\rho} \, (\overline{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \, \mathrm{d}\mathbf{s} + \int_\Omega j \, \overline{Y} \, \nabla \cdot \left( \overline{\rho} \, \hat{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \overline{Y} \, \overline{\rho} \, (\hat{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \mathrm{d}\mathbf{s} + \int_\Omega j \, \hat{Y} \, \nabla \cdot \left( \overline{\rho} \, \overline{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} j \, \hat{Y} \, \overline{\rho} \, (\overline{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \mathrm{d}\mathbf{s} - \int_\Omega j \, \hat{\breve{D}}_\textrm{eff} \, \nabla \overline{Y} \cdot \nabla X_Y^* \, \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \, \hat{\breve{D}}_\textrm{eff} \, \left(\nabla \overline{Y} \cdot \mathbf{n}\right) X_Y^* \, \mathrm{d}\mathbf{s} - \int_\Omega j \, \overline{\breve{D}}_\textrm{eff} \, \nabla \hat{Y} \cdot \nabla X_Y^* \, \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \, \overline{\breve{D}}_\textrm{eff} \, \left(\nabla \hat{Y} \cdot \mathbf{n}\right) X_Y^* \, \mathrm{d}\mathbf{s} + \int_\Omega f_Y' \, X_Y^* \, \mathrm{d}\mathbf{x}
+\int_\Omega \omega \overline{\rho} \hat{Y} X_Y^* \mathrm{d}\mathbf{x} = \int_\Omega \mathrm{j} \, \overline{Y} \, \nabla \cdot \left( \hat{\rho} \, \overline{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} \mathrm{j} \, \overline{Y} \, \hat{\rho} \, (\overline{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \, \mathrm{d}\mathbf{s} + \int_\Omega \mathrm{j} \, \overline{Y} \, \nabla \cdot \left( \overline{\rho} \, \hat{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} \mathrm{j} \, \overline{Y} \, \overline{\rho} \, (\hat{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \mathrm{d}\mathbf{s} + \int_\Omega \mathrm{j} \, \hat{Y} \, \nabla \cdot \left( \overline{\rho} \, \overline{\mathbf{u}} \, X_Y^* \right) \, \mathrm{d}\mathbf{x} - \int_{\partial \Omega} \mathrm{j} \, \hat{Y} \, \overline{\rho} \, (\overline{\mathbf{u}} \cdot \mathbf{n}) X_Y^* \mathrm{d}\mathbf{s} - \int_\Omega \mathrm{j} \, \hat{\breve{D}}_\textrm{eff} \, \nabla \overline{Y} \cdot \nabla X_Y^* \, \mathrm{d}\mathbf{x} + \int_{\partial\Omega} \mathrm{j} \, \hat{\breve{D}}_\textrm{eff} \, \left(\nabla \overline{Y} \cdot \mathbf{n}\right) X_Y^* \, \mathrm{d}\mathbf{s} - \int_\Omega \mathrm{j} \, \overline{\breve{D}}_\textrm{eff} \, \nabla \hat{Y} \cdot \nabla X_Y^* \, \mathrm{d}\mathbf{x} + \int_{\partial\Omega} \mathrm{j} \, \overline{\breve{D}}_\textrm{eff} \, \left(\nabla \hat{Y} \cdot \mathbf{n}\right) X_Y^* \, \mathrm{d}\mathbf{s} + \int_\Omega f_Y' \, X_Y^* \, \mathrm{d}\mathbf{x}
 $$
 
 ```{note}

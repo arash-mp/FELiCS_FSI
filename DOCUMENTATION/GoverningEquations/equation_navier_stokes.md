@@ -1,15 +1,9 @@
 # Navier--Stokes equations
 
-The Navier--Stokes equations comprise the momentum and mass/continuity equations.
+The Navier–Stokes equations represent the fundamental principles of fluid mechanics, expressing the conservation of momentum and mass in a fluid. They provide a comprehensive description of fluid flow behavior across a wide range of physical situations. Because these equations capture the essential physics of Newtonian fluids--such as air, water, and gases under 'standard' conditions--they form the fundamental basis for analyzing and predicting flow dynamics.
 
-Motivation:
-- fundamental equations for EVERY type flow
-- conservation of momentum and mass
-
-Use case:
-- in every type of flow comprising Newton fluids (like air, water, gas flows at `normal' conditions)
-- tutorial example incompressible with link: cylinder wake incompressible
-- tutorial example compressible with link: cylinder wake compressible
+Example use case:
+- incompressible: [Solving for the base flow of the cylinder wake](./../Tutorials/cylinder_wake.md)
 
 References:
 - [Barkley et al. 2006](https://doi.org/10.1209/epl/i2006-10168-7)
@@ -31,7 +25,7 @@ Nomenclature:
 ## Incompressible
 Assumptions:
 - primitive variables
-- $\rho = \textrm{const}$, this is reasonable if Mach number is low, no large temperature gradients/changes, no acoustics, no combustion
+- $\rho = \textrm{const}$, this is reasonable if Mach number is low, no large temperature gradients, no acoustics, no combustion
 - no additional source terms
 - no gravitational forces
 
@@ -104,7 +98,7 @@ and where $\mu_\textrm{eff}'$ is the fluctuating effective dynamic viscosity (se
 
 #### Weak form of the linearized Navier--Stokes equations
 ```{note}
-he weak form of the incompressible linearized Navier--Stokes equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.
+The weak form of the incompressible linearized Navier--Stokes equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.
 ```
 
 
@@ -175,7 +169,7 @@ $$
 ### Weak form of the mean flow equations
 The weak form of the nonlinear mean flow equations, as implemented in FELiCS, is
 $$
-\int_\Omega j \nabla \cdot \left(\mathbf{X}_\mathbf{u}^* \otimes \overline{\rho}\overline{\mathbf{u}} \right) \cdot \overline{\mathbf{u}} \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} j \overline{\rho}\left( \left(\overline{\mathbf{u}} \otimes \mathbf{X}_\mathbf{u}^*\right) \cdot \overline{\mathbf{u}} \right)\cdot \mathbf{n} \, \mathrm{d}\mathbf{s}  + \int_\Omega j \overline{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} j \overline{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega j \overline{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \overline{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s} = 0
+\int_\Omega \mathrm{j} \nabla \cdot \left(\mathbf{X}_\mathbf{u}^* \otimes \overline{\rho}\overline{\mathbf{u}} \right) \cdot \overline{\mathbf{u}} \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \overline{\rho}\left( \left(\overline{\mathbf{u}} \otimes \mathbf{X}_\mathbf{u}^*\right) \cdot \overline{\mathbf{u}} \right)\cdot \mathbf{n} \, \mathrm{d}\mathbf{s}  + \int_\Omega \mathrm{j} \overline{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \overline{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega \mathrm{j} \overline{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} \mathrm{j} \overline{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s} = 0
 $$
 where the mean viscous stress tensor $\overline{\tau}$ is
 $$
@@ -205,11 +199,11 @@ and where $\mu_\textrm{eff}'$ is the effective dynamic viscosity (see [Viscosity
 #### Weak form of the linearized Navier--Stokes equations
 The weak form of the linearized Navier--Stokes equations with normal mode ansatz, as implemented in FELiCS, is
 $$
-\int_\Omega \omega \hat{\rho}X_p^* \mathrm{d}\mathbf{x} = \int_\Omega j \widehat{\rho\mathbf{u}} \cdot \nabla X_p^* \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} j \widehat{\rho\mathbf{u}} \cdot \mathbf{n} X_p^* \, \mathrm{d}\mathbf{s}
+\int_\Omega \omega \hat{\rho}X_p^* \mathrm{d}\mathbf{x} = \int_\Omega \mathrm{j} \widehat{\rho\mathbf{u}} \cdot \nabla X_p^* \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \widehat{\rho\mathbf{u}} \cdot \mathbf{n} X_p^* \, \mathrm{d}\mathbf{s}
 $$
 and
 $$
-\int_\Omega \omega \overline{\rho} \hat{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} = - \int_\Omega j \left(\overline{\rho}\overline{\mathbf{u}} \cdot \nabla \right) \hat{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} -\int_\Omega j \left(\overline{\rho}\hat{\mathbf{u}} \cdot \nabla \right) \overline{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} - \int_\Omega j \left(\hat{\rho}\overline{\mathbf{u}} \cdot \nabla \right) \overline{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} + \int_\Omega j \hat{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} j \hat{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega j \hat{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} j \hat{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s}
+\int_\Omega \omega \overline{\rho} \hat{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} = - \int_\Omega \mathrm{j} \left(\overline{\rho}\overline{\mathbf{u}} \cdot \nabla \right) \hat{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} -\int_\Omega \mathrm{j} \left(\overline{\rho}\hat{\mathbf{u}} \cdot \nabla \right) \overline{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} - \int_\Omega \mathrm{j} \left(\hat{\rho}\overline{\mathbf{u}} \cdot \nabla \right) \overline{\mathbf{u}} \cdot \mathbf{X}_\mathbf{u}^* \, \mathrm{d}\mathbf{x} + \int_\Omega \mathrm{j} \hat{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \hat{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega \mathrm{j} \hat{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} \mathrm{j} \hat{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s}
 $$
 with
 $$

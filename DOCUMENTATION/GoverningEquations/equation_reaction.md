@@ -3,9 +3,7 @@ The reaction models are used when chemical reactions due to a flame occur in the
 
 
 ## Eddy break-up model
-Motivation:
-- for turbulent flames in a Reynolds-averaged Navier--Stokes approach, the turbulence-flame interactions are linked through a characteristic turbulent time scale
-- reaction rate (flame) is directly related to the state variables of the flow (turbulence)
+In the modeling of turbulent flames within a RANS framework, turbulence-flame interactions are linked through a characteristic turbulent time scale. The reaction rate of the flame is directly related to the state variables of the turbulent flow, allowing a coupled representation of combustion and turbulence dynamics.
 
 Assumptions:
 - turbulence controls combustion rate, reaction rate is proportional to the turbulence dissipation rate
@@ -13,8 +11,8 @@ Assumptions:
 - flame structure not resolved, no detailed flame structure is modeled, averaged quantities are used
 - local equilibrium assumed, reactants are assumed to be locally in chemical equilibrium once mixed
 
-Use case:
-- Active flame model of a turbulent flame
+Example use case:
+- Reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
 
 References:
 - [Poinsot & Veynante 2005](http://refhub.elsevier.com/S0010-2180(23)00162-1/sbref0058)

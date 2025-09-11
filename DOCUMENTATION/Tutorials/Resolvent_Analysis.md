@@ -9,15 +9,17 @@ The goal of this tutorial is to provide a step-by-step guide on performing resol
 - Plot the gains and mode shapes in Python.
 
 The resolvent analysis provides insights into:
-- The amplification mechanisms of perturbations in the flow.
-- The spatial structure of the most responsive (response) and most receptive (forcing) flow modes at different frequencies.
+- (Dominant) amplification mechanisms of harmonic perturbations in the flow, quantified by a frequency dependent gain function
+- In which flow region these amplification mechanisms are most efficiently triggered (optimal forcings mode)
+- What it the response to a optimal forcing (optimal response mode)
+
 
 The resolvent analysis will:
-1. Identify frequencies and spatial regions where the flow is most sensitive to external forcing.
+1. Identify frequencies and spatial regions where the flow is most sensitive to forcing.
 2. Quantify the gain between input disturbances and flow response for each frequency.
 
 ## Case Definition
-In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see Ref. [[1]](#1). The inlet has a steady boundary condition with a Reynolds number 8000 based on the diameter and veloocity in the contraction. Since the mean flow is axisymmetric, the 3D solution is solved for a given azimuthal wavenumber.
+In this tutorial, we will perform incompressible resolvent analysis about the 2D mean flow in a constricted pipe (stenosis). For the geometry details, see Ref. [[1]](#1). The inlet has a steady inflow boundary condition with a Reynolds number of 8000 based on the diameter and bulk speed in the contraction. Since the mean flow is axisymmetric, the 3D solution is solved for a given azimuthal wavenumber.
 
 ### Mesh generation
 We generate the 2D mesh on GMSH. 
@@ -28,7 +30,7 @@ Feel free to play with the `CellsFineness` factor to see the influence of finer 
 Open the .geo file with GMSH an click on 'Mesh -> 2D'. You should obtain this mesh:
 ![Figure1](../../TUTORIALS/resolvent_tutorial/pic/GMSH.png)
 Figure 1. Stenosis mesh
-Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FeliCS_mesh.msh` file in your case folder. 
+Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FELiCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
 This tutorial case folder is located in ```felics2.0/TUTORIALS/resolvent_tutorial```.
@@ -43,7 +45,7 @@ Place the ```meanFlow.fel``` file in your case folder.
 ## Resolvent parameters
 
 ### Boundary conditions
-Here we set the axisymmetric boundary conditions in the [```boundaries.json```](../../TUTORIALS/resolvent_tutorial/boundaries.json) file.
+Here, we set the axisymmetric boundary conditions in the [```boundaries.json```](../../TUTORIALS/resolvent_tutorial/boundaries.json) file.
 First check in your readable .msh file the boundary ids.
 For instance in this file: 
 ```bash
@@ -83,7 +85,7 @@ The velocity components are thus refered to as `ux, ur, ut` instead of `ux, uy, 
 ```json
     "m":0.0,
 ```
-- Since we non-dimensionalized the variables and equations, we set the molecular viscosity $\nu$ to be the inverse of the Reynolds number:
+- Since we non-dimensionalized the state variables, equations and the mesh/cmoputational domain, we set the molecular viscosity $\nu$ to be the inverse of the Reynolds number:
 ```json
 "MolVisc":0.000125,
 ```
@@ -110,7 +112,7 @@ The following fields `CalculateAdjoint` and `EigenValueGuess` are not relevent f
 Your case folder should look like:
 ```bash
 .
-├ FeliCS_mesh.msh
+├ FELiCS_mesh.msh
 ├ meanFlow.fel
 ├ resolvent_settings.json
 ├ boundaries.json
@@ -122,7 +124,7 @@ FELiCS -f resolvent_settings.json
 ```
 With the provided mesh, it should take about two minute to compute the two resolvent modes for each frequency (~25 minutes).
 ## Postprocessing
-After the computation, the `output_dir/` has appeared. You will find there the following files: 
+After the computation, the `output_dir/` has been created. You will find there the following files: 
 ```bash
 .
 └── output_dir
@@ -143,11 +145,11 @@ The resolvent gains are plotted against the Strouhal number $St = \omega/2\pi$ i
 ![Figure2](../../TUTORIALS/resolvent_tutorial/pic/gains.png) <a id="fig:Resolvent_gains"></a>
 
 Figure 2. Resolvent gains
-Note that in this case, only the leading and subleading resolvent modes were computed.
+Note that in this case, only the leading and first subleading resolvent modes were computed.
 
 The script also include functions to read the mesh, load and plot the mode in matplotlib.
-The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are plotted in [Figure3](#Forcingdomain) and [Figure4](#Responsedomain):
-![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/pic/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
+The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are plotted in [Figure3](#Forcingdomain) and [Figure4](#Responsedomain), respectively:
+![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
 
 Figure 3. Forcing mode shape
 

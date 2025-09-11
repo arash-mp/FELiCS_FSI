@@ -43,13 +43,13 @@ representing the Jakobian evaluate at the base state  $\overline{\mathbf{q}}$.
 
 We assume the pertubation to have the form of normal modes, reading
 $$
-\mathbf{q}'=\hat{\mathrm{q}}\mathrm{e^{-j\omega t}}+c.c.
+\mathbf{q}'=\hat{\mathrm{q}}\mathrm{e^{-\mathrm{j}\omega t}}+c.c.
 $$
-with the complex frequency $\omega = \omega_r+j\omega_i$.
+with the complex frequency $\omega = \omega_r+\mathrm{j}\omega_i$.
 Inserting this in the linearized pertubation eqaution leads to ein eigenvalue problem, reading in matrix form 
 
 $$
-\mathbf{A} \hat{\mathbf{q}} = j \omega \mathbf{B} \hat{\mathbf{q}}
+\mathbf{A} \hat{\mathbf{q}} = \mathrm{j} \omega \mathbf{B} \hat{\mathbf{q}}
 $$
 
 where $\mathbf{A}$ and $\mathbf{B}$ are the discrete versions of the Jacobian $\mathcal{L}$ and $\mathcal{B}$, respectively, $\omega$ is the eigenvalue, and $\hat{q}$ is the eigenvector.
