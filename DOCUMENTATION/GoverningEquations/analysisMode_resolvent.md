@@ -14,64 +14,63 @@ Resolvent analysis is a linear systems approach used to understand how a dynamic
 
 We start with a general nonlinear equation, written in compact form as
 $$
-\mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g}
+\mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q}),
 $$
 
-- $ \mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T}$: state vector (conservative variables) 
-- $\mathcal{B}$: Limiter operator; zero, if the time derivative is not considered, else one 
-- $\mathcal{N}$: nonlinear operator (e.g. Navier-Stokes)
-- $\mathbf{g}$: nonlinear forcing
+where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a limiter operator; zero if the time derivative is not considered, else one.
 
 
-We consider the flow field to be comprised of a  time-invariant base flow $\overline{\mathbf{q}} \in \mathbb{R}^N  $, which can be either a time-averaged flow or fixed point solution, and the perturbation $ \mathbf{q}' \in \mathbb{R} $, such that 
+We decompose the flow field into a time-invariant base flow, $\overline{\mathbf{q}} \in \mathbb{R}^N$, representing either a time-averaged state or a fixed-point solution, and a perturbation, $\mathbf{q}' \in \mathbb{R}^N$, such that
 
 $$
 \mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t)
 $$
 
-Cinsidering a stationary baseflow we arrive at a Llinear Time-Invariant (LTI) dynamical system describing the pertubation, reading 
+Considering a stationary baseflow we arrive at a Linear Time-Invariant (LTI) dynamical system describing the pertubation:
 
 $$
-\mathcal{B}\frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}')+\mathbf{f}'
+\mathcal{B}\frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}')+\mathbf{f}',
 $$
 
-with  
+where
 
 $$
 \mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\overline{\mathbf{q}}}\in \mathbb{R}^{N\times N}
 $$
-representing the  nonlinear operator linearized around the about the base flow $\overline{\mathbf{q}}$ while the forcing $\mathbf{f}' = \mathcal{N}(\mathbf{q_{\mathbf{b}}})+O(|\mathbf{q'}|^2)+\mathbf{q} \in \mathbb{R}$ collects the nonlinear operator acting on the base flow, the nonlinear terms, and external forcing $\mathbf{g}$ ([Rolandi et al. 2024](https://doi.org/10.1007/s00162-024-00717-x)). 
+represents the nonlinear operator linearized around the about the base flow $\overline{\mathbf{q}}$ while the forcing $\mathbf{f}' = \mathcal{N}(\mathbf{q_{\mathbf{b}}})+O(|\mathbf{q'}|^2)+\mathbf{q} \in \mathbb{R}$ collects the nonlinear operator acting on the base flow, the nonlinear terms, and external forcing $\mathbf{g}$ ([Rolandi et al. 2024](https://doi.org/10.1007/s00162-024-00717-x)). 
 
 
 
-We consider harmonic  forcing 
+We consider harmonic forcing 
 $$
-\mathbf{f}' = \hat{\mathbf{f}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c.
+\mathbf{f}' = \hat{\mathbf{f}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c., 
 $$
 and  harmonic responce
 $$
-\mathbf{q}' = \hat{\mathbf{q}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c.
+\mathbf{q}' = \hat{\mathbf{q}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c. \ .
 $$
 
-Inserting in the  LIT dynamical system and discretisation leads to the  matrix formulation, reading   
+Inserting in the LTI dynamical system and discretisation leads to the  matrix formulation
 
 $$
 -\mathrm{j}\omega\mathbf{B} = \mathbf{A}\hat{\mathbf{q}}+\hat{\mathbf{f}}
 $$
- where the matrices $\mathbf{A}$ and $\mathbf{B}$ are the discretized jacobian $\mathcal{L}$ and limiter matrix $\mathcal{B}$, respectively, and depend on the actual choice of nonlinear equations which is detailed in another section.  
 
-For the resolvent analysis we rearrange the equation to 
+where $\mathbf{A}, \mathbf{B}$ are the discrete versions of the Jacobian $\mathcal{L}$ and limiter matrix $\mathcal{B}$, respectively.  
+
+For resolvent analysis, this can be rearranged as
 
 $$
 (-\mathrm{j} \omega \mathbf{B}-\mathbf{A}) \hat{\mathbf{q}} = \hat{\mathbf{f}},
 $$
-with the {\bfseries resolvent operator} 
+
+which defines the resolvent operator
 
 $$
-\mathbf{R} = -\mathrm{j} \omega \mathbf{B}-\mathbf{A}
+\mathbf{R} = \left(-\mathrm{j} \omega \mathbf{B}-\mathbf{A}\right)^{-1}
 $$
 
-representing a transfer function relating the linear reseponce to a given forcing. 
+acting as a transfer function that maps a given forcing $\hat{\mathbf{f}}$ to the linear response $\hat{\mathbf{q}}$.
 
 ## Optimal forcing-responce analysis
 

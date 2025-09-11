@@ -13,10 +13,10 @@ Linear stability analysis is a method used to determine whether small disturbanc
 ## Definition of the linear operator 
 We start with a general nonlinear equation, written in compact form as
 $$
-\mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{g},
+\mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q}),
 $$
 
-where $ \mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ represents the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. the incompressible Navier-Stokes equations), and $\mathcal{B}$ is one in case the temporal derivative of the state vector variable is considered, and zero otherwise (e.g. it is zero for the continuity equation of the incompressible Navier-Stokes formulation).
+where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a limiter operator; zero if the time derivative is not considered, else one.
 
 We decompose the flow field into a time-invariant base flow, $\overline{\mathbf{q}} \in \mathbb{R}^N$, representing either a time-averaged state or a fixed-point solution, and a perturbation, $\mathbf{q}' \in \mathbb{R}^N$, such that 
 
@@ -34,7 +34,7 @@ $$
 where 
 
 $$
-\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{{\mathbf{q}}}\in \mathbb{R}^{N\times N}
+\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\overline{\mathbf{q}}}\in \mathbb{R}^{N\times N}
 $$
 represents the Jacobian evaluated at the base state $\overline{\mathbf{q}}$. 
 
