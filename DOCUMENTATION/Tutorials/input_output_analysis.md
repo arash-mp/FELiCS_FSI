@@ -3,9 +3,9 @@
 ## Goal of the Tutorial
 The goal of this tutorial is to provide a step-by-step guide on performing input/output analysis for a reacting turbulent jet. By the end of this tutorial, you will be able to:
 
-- Configure reaction mechanisms and species transport in FELICS.
-- Write customed boundary conditions.
-- Perform input/output analysis with boundary forcing for reactive flows using the mass, momentum, species, and energy equations.
+- Configure reaction mechanisms and species transport in FELiCS.
+- Write custom boundary conditions.
+- Perform input/output analysis with boundary forcing for reactive flows using the mass, momentum and species equations and supplementary algebraic equations.
 
 The analysis provides insights into:
 - How the reacting flow responds to external perturbations
@@ -19,9 +19,9 @@ The input/output analysis will:
 6. Export results to the output directory
 
 ## Case Definition
-In this tutorial, we will perform a compressible input/output analysis about a 2D reacting turbulent jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonicaly forced at the inlet. The linearized approach is built on several simplifications. The case uses a progress variable approach to model the reaction. A low-Mach approach is used, meaning density variations occur due to thermal expansion, but not to pressure fluctuations. Furthermore, gas properties are assumed to be constant. Using these simplifications, the temperature of the gas can be directly linked to the progress variable using the perfect gas law. A detailed description of the numerical set up is found in Kaiser et al. [1].
+In this tutorial, we will perform a compressible input/output analysis about a 2D reacting turbulent jet flame base flow. The analysis focuses on understanding how the system responds to a given boundary forcing. The axial component of the velocity $u_x$ is harmonically forced at the inlet. The linearized approach is built on several simplifications. The case uses a progress variable approach to model the reaction. A low-Mach approach is used, meaning density variations occur due to thermal expansion, but not due to pressure fluctuations. Furthermore, gas properties are assumed to be constant. Using these simplifications, the temperature of the gas can be directly linked to the progress variable using the perfect gas law. A detailed description of the numerical set up is found in Kaiser et al. [1].
 
-The 3D configuration is axisymmetric, allowing us to solve the 3D problem on a 2D mesh.
+The 3D configuration is purely axisymmetric, reducing the case to a 2D problem on a 2D mesh.
 
 ### Mesh generation
 We generate the 2D mesh on GMSH for the combustor geometry. The mesh file `KITBurnerWallSep.msh` is used in this tutorial, which represents a confined burner configuration.
@@ -32,7 +32,7 @@ For 2D computations, FELiCS handles triangular elements only.
 
 The mesh should include proper boundary identification for:
 - Inlet boundaries (for fuel/air injection)
-- Outlet boundaries (for product extraction)
+- Outlet boundaries (for gas outflow)
 - Wall boundaries (no-slip conditions)
 - Symmetry axis (for axisymmetric cases)
 
@@ -46,7 +46,7 @@ Our base flow is a time-averaged reacting flow field that includes:
 - Temperature field $T$ (derived from progress variable)
 - Turbulent viscosity field $\nu_t$
 
-The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure 1](#UXMean) 
+The base flow is stored in the file ```KIT_confined.fel```. This flow field represents the steady-state solution of the mean reacting flow equations and serves as the base state around which we perform the input/output analysis. The base flow axial velocity is displayed in [Figure 1](#UXMean) 
 ![](../../TUTORIALS/input_ouput_tutorial/pic/MeanFlow.png) <a id="fig:UXMean"></a>
 
 Figure 1. Mean flow velocity $\bar{u}_x$
@@ -111,7 +111,7 @@ For this tutorial, we use a Schmidt number
 ```
 and use the implemented flame model
 ```json
-{"type": "KaiserCnF2023",}
+{"type": "KaiserCnF2023"}
 ```
 
 ### Settings
