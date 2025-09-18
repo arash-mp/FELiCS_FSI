@@ -12,7 +12,9 @@ Nomenclature:
 - $\rho$: density
 - $R$: specific gas constant
 
-## Ideal gas equation
+Currently, two versions of the equation of state are implemented in FELiCS.
+
+## 1. Ideal gas equation
 Example use case:
 - Compressible flow including acoustics: [Demange et al. 2024](https://doi.org/10.2514/6.2024-3170)
 
@@ -31,7 +33,7 @@ p' = R (\rho' \overline{T} +\overline{\rho} T')
 $$
 
 
-## Low-Mach equation
+## 2. Low-Mach equation
 Assumptions:
 - Ideal gas with constant mean pressure, i.e. mean pressure in the entire flow field is constant due to low Mach numbers and the pressure field is set to the slow component of the pressure $p^{(0)}$ fixed at some point of the domain, *e.g.* at the outlet.
 - Density only changes with temperature, but not with pressure.
