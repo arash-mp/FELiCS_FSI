@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Created on Wed Dec 14 17:59:50 2022
-# @author: kai hildebrandt
-# Modifications: 
-# - Thomas L. Kaiser
-# - Simon Demange
+# This is a new tensor utils file, which is using the method and class names from Kai Hildebrandt,
+# but has a very simple ("hands-on") handling of the two FELiCS coordinate systems.
+# This is to eliminate the numerous bugs which the other version had in the cylindrical 
+# coordinate system.
+# Written by Sophie Knechtel
 
 from typing import Union
 from ufl import TrialFunction, TestFunction
@@ -32,32 +32,22 @@ class SpectralIndicator(Enum):
 
 class CoordinateSystem():
     """
-    The `CoordinateSystem` class supports several coordinate systems,
-    initializing key geometric quantities such as the metric tensors
-    and Christoffel symbols.
-
-    Supports various systems such as Cartesian, polar, cylindrical, and spherical.
-    Initializes geometric quantities like the metric tensors and Christoffel symbols
-    required for tensor analysis.
+    The `CoordinateSystem` class supports two coordinate systems,
+    'cartesian' and 'cylindricalfelics'.
 
     Parameters
     ----------
     SpatialCoordinateObj : ufl.SpatialCoordinate
         Coordinate vector of the mesh.
     name : str
-        Name of the coordinate system ("cartesian", "polar", etc.).
+        Name of the coordinate system ("cartesian", "cylindricalfelics").
+    gdim : int
+        Geometrical dimension of the mesh.
+    trueDim : int, optional
+        True dimension of the system, including a possible spectral dimension.
     m : int, optional
-        Wave number for mean-flow homogeneous directions.
-    **kwargs : dict
-        Optional keyword arguments, e.g. 'mesh_dims' to reduce dimensionality.
-        mesh_dims : list
-            This must be specified if a symmetry direction is solved for that
-            is not meshed. Then mesh_dims is a list of booleans containing
-            True if the direction of the chosen coordinate system is meshed
-            and False if it is not meshed.
-            
+        Wave number for spectral direction.
         
-
 
     Raises
     ------
@@ -73,6 +63,7 @@ class CoordinateSystem():
                 SpatialCoordinateObj, 
                 name: str,
                 gdim: int,
+                trueDim = None,
                 m = 0, 
                 ):
         """
@@ -87,7 +78,7 @@ class CoordinateSystem():
         gdim : int
             Geometric dimension of the coordinate system (without spectral dimensions).
         m : int, optional
-            Wave number for mean-flow homogeneous directions.
+            Wave number for spectral direction.
 
         Raises
         ------
@@ -99,7 +90,10 @@ class CoordinateSystem():
         
         self._m   = m
         self.gdim = gdim
-        self.dim  = gdim #should be updated by using "setTrueDim" if there are any spectral dimensions
+        if trueDim == None:
+            self.dim  = gdim #should be updated later by using "setTrueDim" if there are any spectral dimensions
+        else:
+            self.dim  = trueDim
         self.x    = x
 
         self.name = name
@@ -118,12 +112,23 @@ class CoordinateSystem():
                              "implemented.")
 
     def setTrueDimension(self,dim):
+        """
+        Corrects the true dimension of the system. This has to be called if a spectral dimension is included,
+        in which case the true dimension is higher than the geometrical dimension of the mesh.
+         
+        Parameters
+        ----------
+        dim: int 
+            True dimension of the system, including a possible spectral dimension. 
+
+        """
+
         self.dim = dim
 
     @property
     def m(self):
         """
-        Returns the wave number `m`, used in homogeneous directions.
+        Returns the wave number `m`, used in the spectral dimension.
 
         Returns
         -------
@@ -146,15 +151,6 @@ class Tensor():
         The underlying UFL tensor expression.
     CoordSys : CoordinateSystem
         Coordinate system in which this tensor is defined.
-    order : int
-        Order of the tensor (0: scalar, 1: vector, 2: matrix).
-    basis : list of booleans
-        A list of booleans in which False represents a covariante basis
-        vector and True a contravariant basis vector.
-    sym : list
-        A list of order self.order + 1, containing booleans. When computing
-        the gradient of the tensor this information is used to determine
-        if the partial derivative in this direction exists.
     mayHaveSpectralDimension : bool
         Whether this tensor has spectral dimension sdim, i.e. tensor = tensor_coefficients * exp(i*m*sdim) with wave number m
     m : int 
@@ -218,7 +214,8 @@ class Tensor():
 
         self.ufl_tens = ufl_tens
 
-        # this is for the case that the true dimension of the system is bigger than the geometric dimension: if a 2-dimensional vector is given but the true dimension is 3, then a third dimension is added with zero values
+        # this is for the case that the true dimension of the system is bigger than the geometric dimension: 
+        # if a 2-dimensional vector is given but the true dimension is 3, then a third dimension is added with zero values
         if self.order ==1:
             length = ufl_tens.ufl_shape[0]
             if length < self.dim:
@@ -551,10 +548,9 @@ def iDot(
          tensorB: Tensor,
          ):
     """
-    Performs a single contraction between two tensors using the appropriate metric.
+    Performs a single contraction between two tensors.
 
-    The function supports dot products between tensors of order 1 or 2 and uses 
-    the metric determined by the coordinate system and the tensor bases.
+    The function supports dot products between tensors of order 1 or 2.
 
     Parameters
     ----------
@@ -566,28 +562,10 @@ def iDot(
     Returns
     -------
     Tensor
-        Result of the dot product, with updated basis and metadata.
+        Result of the dot product, with updated metadata.
 
-    Raises
-    ------
-    ValueError
-        If both tensors contain test functions or fluctuations.
-    """
-   
+    """ 
     dotted = dot(tensorA.ufl_tens,tensorB.ufl_tens) 
-    ## Perform dot Product
-    #if tensorA.order == 1 and tensorB.order == 1:
-    #    i,j = indices(2)
-    #    dotted = A[i]*metric[i,j]*B[j]
-    #if tensorA.order == 1 and tensorB.order == 2:
-    #    i,j,k = indices(3)
-    #    dotted = as_tensor(A[i]*metric[i,j]*B[j,k], (k))
-    #if tensorA.order == 2 and tensorB.order == 1:
-    #    i,j,k = indices(3)
-    #    dotted = as_tensor(A[i,j]*metric[j,k]*B[k], (i))
-    #if tensorA.order == 2 and tensorB.order == 2:
-    #    i,j,k,l = indices(4)
-    #    dotted = as_tensor(A[i,j]*metric[j,k]*B[k,l], (i,l))
     
     return Tensor(
             dotted, 
@@ -645,7 +623,7 @@ def iGrad(T: Tensor):
     Returns
     -------
     Tensor
-        Gradient of the input tensor, with one additional contravariant basis.
+        Gradient of the input tensor.
 
     Raises
     ------
@@ -706,7 +684,6 @@ def iGrad(T: Tensor):
         gradient = as_matrix(diffs)
     
     else:
-        #raise ValueError("Gradients of tensors of order > 3 are not " \
         raise ValueError("Gradients of tensors of order > 2 are not " \
                          "implemented.")
         
@@ -772,7 +749,7 @@ def iT(tensor: Tensor):
     Returns
     -------
     Tensor
-        Transposed tensor with permuted bases.
+        Transposed tensor.
 
     Raises
     ------
@@ -783,11 +760,6 @@ def iT(tensor: Tensor):
         raise ValueError("Transpose only unambiously defined for tensors of " \
                          "order 2.")
     else:
-        # transposing by permuting the basis must not be performed (e.g. when
-        # order=2: tensor.basis[::-1]), because iDot cant handle the change in
-        # the order of contracted indices:
-        # A_ij g^j dyade g^i dot v^k g_k = A_kj v^k g^j. But iDot can only do:
-        # A_jk v^k --> neighboring contracted indices.
         return Tensor(
                       tensor.ufl_tens.T, 
                       tensor.CoordSys, 
@@ -815,8 +787,6 @@ def iTr(tensor: Tensor):
     ValueError
         If the input tensor is not of order 2.
     """
-    # tr(tensor.ufl_tens) is invariant. This function is only for when you
-    # need a Tensor object urned
     if tensor.order != 2:
         raise ValueError("Trace only working for tensors of order 2.")
     else:
@@ -827,7 +797,8 @@ def iTr(tensor: Tensor):
                       m = tensor.m
                       )
     
-    
+
+# not implemented anymore
 #def iDev(tensor: Tensor):
 #    """
 #    Computes the deviatoric (spherical-free) part of a second-order tensor.
@@ -860,7 +831,7 @@ def iIdentity(tensor: Tensor):
     Returns
     -------
     Tensor
-        Identity tensor with the same coordinate system and basis.
+        Identity tensor with the same coordinate system and dimension. 
     """
     return Tensor(
                   Identity(tensor.dim), 
@@ -905,12 +876,10 @@ def iOuter(tensorA: Tensor, tensorB: Tensor):
     Returns
     -------
     Tensor
-        Outer product tensor with combined bases.
+        Outer product tensor.
 
     Raises
     ------
-    ValueError
-        If both tensors contain test functions or fluctuations.
     Exception
         If scalar multiplication is attempted using this function.
     """
