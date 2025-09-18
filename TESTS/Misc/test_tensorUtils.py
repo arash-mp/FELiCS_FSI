@@ -770,10 +770,10 @@ def test_dyade_dot_vector():
 def validate_vector_dot_dyade_dot_vector():
     t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
     tensor_expr = ((iDot(iDot(tens_vector1,iGrad(tens_vector1)), tens_vector2)) * iConj(itest_scalar)).ufl_tens*J_hat*dx
-    valid_expr  = (func_vector1[0] * t11 + func_vector1[0] * t21 + func_vector1[0] * t31) * func_vector2[0] * conj(test_scalar)*r*dx
-    valid_expr += (func_vector1[1] * t12 + func_vector1[1] * t22 + func_vector1[1] * t32) * func_vector2[1] * conj(test_scalar)*r*dx
+    valid_expr  = (func_vector1[0] * t11 + func_vector1[1] * t21 + func_vector1[2] * t31) * func_vector2[0] * conj(test_scalar)*r*dx
+    valid_expr += (func_vector1[0] * t12 + func_vector1[1] * t22 + func_vector1[2] * t32) * func_vector2[1] * conj(test_scalar)*r*dx
     if not (coordinateSystemName == "cartesian" and m == 0):
-        valid_expr += (func_vector1[2] * t13 + func_vector1[2] * t23 + func_vector1[2] * t33) * func_vector2[2] * conj(test_scalar)*r*dx
+        valid_expr += (func_vector1[0] * t13 + func_vector1[1] * t23 + func_vector1[2] * t33) * func_vector2[2] * conj(test_scalar)*r*dx
     res1 = petsc.assemble_vector(form(tensor_expr))
     res2 = petsc.assemble_vector(form(valid_expr))
     res1.assemble()
@@ -1175,12 +1175,44 @@ def test_grad_scalar_divided_by_scalar():
     raise NotImplementedError("Not implemented yet.")
 
 def validate_grad_scalar_dot_dyade():
-    # NOTE: Not implemented yet
-    pass
+    t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
+    t1, t2, t3 = getValidScalarGrad(func_scalar1)
+    tensor_expr = (iDot(iDot(iGrad(tens_scalar1), iGrad(tens_vector1)) , iConj(itest_vector))).ufl_tens*J_hat*dx
+    valid_expr  = (t11 * t1 + t21 * t2 + t31 * t3)*conj(test_vector[0])*r*dx
+    valid_expr += (t12 * t1 + t22 * t2 + t32 * t3)*conj(test_vector[1])*r*dx
+    if not (coordinateSystemName == "cartesian" and m == 0):
+        valid_expr += (t13 * t1 + t23 * t2 + t33 * t3)*conj(test_vector[2])*r*dx
+    res1 = petsc.assemble_vector(form(tensor_expr))
+    res2 = petsc.assemble_vector(form(valid_expr))
+    res1.assemble()
+    res2.assemble()
+
+    checkIfVectorsAlign(res1, res2)
+    return res1, res2
 
 def test_grad_scalar_dot_dyade():
-    print("Testing grad of scalar dot dyade.")
-    raise NotImplementedError("Not implemented yet.")
+    print("Testing grad of scalar dot dyade")
+    global coordinateSystemName, m, r
+    # 1. Cartesian Cordinates, m=0
+    coordinateSystemName = "cartesian"; m = 0; r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_dot_dyade()
+    # 2. Cartesian Cordinates, m= random integer
+    coordinateSystemName = "cartesian"; m = np.random.randint(20); r = 1.
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_dot_dyade()
+    # 3. Cylindrical Cordinates, m= 0
+    coordinateSystemName = "cylindricalfelics"; m = 0; r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_dot_dyade()
+    # 4. Cylindrical Cordinates, m= random integer
+    coordinateSystemName = "cylindricalfelics"; m = np.random.randint(20); r   = SpatialCoordinate(testMesh)[1]
+    initializeTensorUtils()
+    print("\n\n  #####, ", coordinateSystemName, m)
+    validate_grad_scalar_dot_dyade()
 
 def validate_dyade_dot_grad_scalar():
     t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector1)
