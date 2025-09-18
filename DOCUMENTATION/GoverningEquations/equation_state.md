@@ -7,7 +7,7 @@ References:
 
 Nomenclature:
 - $p$: pressure
-- $p_0$: inlet pressure
+- $p^{(0)}$: slow pressure component in low-Mach expansion
 - $T$: temperature
 - $\rho$: density
 - $R$: specific gas constant
@@ -17,11 +17,11 @@ Example use case:
 - Compressible flow including acoustics: [Demange et al. 2024](https://doi.org/10.2514/6.2024-3170)
 
 Assumptions:
-- classical ideal gas assumption, for a specific gas, its density, pressure and temperature are related to each other via the gas constant
+- Valid for a hypothetical *ideal* gas.
 
 The ideal gas equation is
 $$
-p = R \rho T
+p = \rho R T
 $$
 
 ### Linearized ideal gas equation
@@ -33,15 +33,15 @@ $$
 
 ## Low-Mach equation
 Assumptions:
-- ideal gas with constant mean pressure, i.e. mean pressure in the entire flow field is constant due to low Mach numbers and the pressure field is set to the inlet pressure $p_0$
-- density only changes with temperature, but not with pressure
+- Ideal gas with constant mean pressure, i.e. mean pressure in the entire flow field is constant due to low Mach numbers and the pressure field is set to the slow component of the pressure $p^{(0)}$ fixed at some point of the domain, *e.g.* at the outlet.
+- Density only changes with temperature, but not with pressure.
 
 Example use case:
 - Reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
 
 The low-Mach equation is
 $$
-\rho = \frac{p_0}{RT}
+\rho = \frac{p^{(0)}}{RT}
 $$
 
 ### Linearized low-Mach equation
