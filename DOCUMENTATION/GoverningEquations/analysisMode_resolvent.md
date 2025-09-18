@@ -163,9 +163,9 @@ $$
 $$
 or in the original variables:
 $$
-(W_{f})^{-1} \tilde{R}^H W_{r} \tilde{R} \hat{\eta}=\lambda\hat{\eta}$$
+W_{f}^{-1} \tilde{R}^H W_{r} \tilde{R} \hat{\eta}=\lambda\hat{\eta}$$
 or:
-$$(W_{f})^{-1} P_f^H W_{\text{FEM}}^H R^H P_r^H W_{r}P_r R W_{\text{FEM}}P_f \hat{\eta}=\lambda\hat{\eta}.$$
+$$W_{f}^{-1} P_f^H W_{\text{FEM}}^H R^H P_r^H W_{r}P_r R W_{\text{FEM}}P_f \hat{\eta}=\lambda\hat{\eta}.$$
 
 ```{note}
 For real operators, such as $P_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
@@ -173,7 +173,7 @@ For real operators, such as $P_f,\, W_{FEM}, \,...$ the Hermitian transpose is j
 
 Finally, we can also re-write the H-EPV in terms of the linear operator:
 $$
-(W_{f})^{-1}~P_f^H~ W_{\text{FEM}}^H~(J^{-1})^H~P_r^H~W_{r}~P_r~J^{-1}~W_{\text{FEM}}~P_f~\hat{\eta}=\lambda~\hat{\eta}.
+W_{f}^{-1}~P_f^H~ W_{\text{FEM}}^H~(\left(-\mathrm{j} \omega \mathbf{B}-\mathbf{A}\right)^{-1})^H~P_r^H~W_{r}~P_r~\left(-\mathrm{j} \omega \mathbf{B}-\mathbf{A}\right)^{-1}~W_{\text{FEM}}~P_f~\hat{\eta}=\lambda~\hat{\eta}.
 $$
 This is the expression implemented in FELiCS.
 
