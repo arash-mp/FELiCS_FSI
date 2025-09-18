@@ -693,10 +693,10 @@ def test_vector_divided_by_scalar():
 def validate_vector_dot_dyade():
     t11, t12, t13, t21, t22, t23, t31, t32, t33 = getValidGrad(func_vector2)
     tensor_expr = (iDot(iDot(tens_vector1, iGrad(tens_vector2)) , iConj(itest_vector))).ufl_tens*J_hat*dx
-    valid_expr  = (func_vector1[0] * t11 + func_vector1[0] * t21 + func_vector1[0] * t31)*conj(test_vector[0])*r*dx
-    valid_expr += (func_vector1[1] * t12 + func_vector1[1] * t22 + func_vector1[1] * t32)*conj(test_vector[1])*r*dx
+    valid_expr  = (func_vector1[0] * t11 + func_vector1[1] * t21 + func_vector1[2] * t31)*conj(test_vector[0])*r*dx
+    valid_expr += (func_vector1[0] * t12 + func_vector1[1] * t22 + func_vector1[2] * t32)*conj(test_vector[1])*r*dx
     if not (coordinateSystemName == "cartesian" and m == 0):
-        valid_expr += (func_vector1[2] * t13 + func_vector1[2] * t23 + func_vector1[2] * t33)*conj(test_vector[2])*r*dx
+        valid_expr += (func_vector1[0] * t13 + func_vector1[1] * t23 + func_vector1[2] * t33)*conj(test_vector[2])*r*dx
     res1 = petsc.assemble_vector(form(tensor_expr))
     res2 = petsc.assemble_vector(form(valid_expr))
     res1.assemble()
