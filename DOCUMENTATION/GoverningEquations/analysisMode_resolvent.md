@@ -37,7 +37,7 @@ where
 $$
 \mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\overline{\mathbf{q}}}\in \mathbb{R}^{N\times N}
 $$
-represents the nonlinear operator linearized around the about the base flow $\overline{\mathbf{q}}$ while the forcing $\mathbf{f}' = \mathcal{N}(\mathbf{q_{\mathbf{b}}})+O(|\mathbf{q'}|^2)+\mathbf{q} \in \mathbb{R}$ collects the nonlinear operator acting on the base flow, the nonlinear terms, and external forcing $\mathbf{g}$ ([Rolandi et al. 2024](https://doi.org/10.1007/s00162-024-00717-x)). 
+represents the nonlinear operator linearized around the about the base flow $\overline{\mathbf{q}}$ while the forcing $\mathbf{f}' = \mathcal{N}(\mathbf{q_{\mathbf{b}}})+O(|\mathbf{q'}|^2)+\mathbf{q} \in \mathbb{R}$ collects the nonlinear operator acting on the base flow and the nonlinear terms ([Rolandi et al. 2024](https://doi.org/10.1007/s00162-024-00717-x)). 
 
 
 
