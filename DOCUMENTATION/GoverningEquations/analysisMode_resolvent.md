@@ -17,7 +17,7 @@ $$
 \mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q}),
 $$
 
-where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a limiter operator; zero if the time derivative is not considered, else one.
+where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector, $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is the weight operator.
 
 
 We decompose the flow field into a time-invariant base flow, $\overline{\mathbf{q}} \in \mathbb{R}^N$, representing either a time-averaged state or a fixed-point solution, and a perturbation, $\mathbf{q}' \in \mathbb{R}^N$, such that
@@ -99,6 +99,10 @@ This yields
 The gain is sorted by decreasing order $\sigma_1\geq\sigma_2\geq ... \geq \sigma_N\geq 0$, with the resolvent spectral norm $\| \textbf{R} \| =\sigma_1$. 
 ```
 
+```{note}
+In FELiCS, the values returned in the 'gains.csv' file are the gain squared: $\sigma^2$. 
+```
+
 
 ## FELiCS implementation 
 In FELiCS, the resolvent implementation contains some additional utilities. They stem from more detailed definitions of the response and forcing norms. For example, it is possible to define spatial regions, in which the norm should be computed ("spatial restrictors") or weight spatial regions differently. In the following, it is described how those limiters are oncorporated in the resolvent formulation.
@@ -124,10 +128,6 @@ $$
 
 
 #### Inner product and energy norm
-**ToDo**:
-- add Chu norm
-- make it clear that all the "Ws" are weights that origin in the FEM discretization (problem specific weights are in the "Ps").
-
 
 The inner product in the discretized domain is written as: 
 $$
@@ -141,6 +141,16 @@ The gain squared is defined using this energy norm:
 $$
 \sigma^2 = \frac{\|\hat{y}\|^2}{\| \hat{\eta}\|^2} = \frac{\hat{y}^H W_{r} \hat{y}}{\hat{\eta}^H W_{f} \hat{\eta}}.
 $$
+
+Currently, two norms are available by default in FELiCS:
+- **TKE**: The turbulent kinetic energy norm is defined as $k = \int_{\Omega} \frac{1}{2}\bar{\rho}(u'^2+v'^2+w'^2)dx$, where $u',\,v',\,w'$ are the components of the fluctuation velocity vector. 
+- **Chu**: The Chu norm for compressible fluctuations ([see George \& Sujith 2011](https://doi.org/10.1016/j.jsv.2011.06.016)), defined as $k=\int_{\Omega}\frac{1}{2}\bar{\rho}(u'^2+v'^2+w'^2)+\frac{1}{2}\frac{R\bar{T}}{\bar{\rho}}\rho'^2+\frac{1}{2}\frac{c_p\bar{\rho}}{\gamma\bar{T}}T'^2 dx$, where $R$ is the gas constant, $\gamma$ is the ratio of specific heats at constant pressure and volume, and $c_p$ is the specific heats at constant pressure.
+
+The discretized form of these expressions are contained in the $W_f$ and $W_r$ operators, defining the norm for the forcing and response terms, respectively.
+
+```{note}
+The current version of the Chu norm implemented in FELiCS is only compatible with the state vector defined as $q=[\rho, u, T]$. 
+```
 
 ### Equivalent EVP
 We then introduce the resolvent in the expression for the gains $$\sigma^2=\frac{\hat{\eta}^H \tilde{R}^H W_{r} \tilde{R} \hat{\eta}}{\hat{\eta}^H W_{f} \hat{\eta}}.
@@ -157,22 +167,18 @@ $$
 or:
 $$(W_{f})^{-1} P_f^H W_{\text{FEM}}^H R^H P_r^H W_{r}P_r R W_{\text{FEM}}P_f \hat{\eta}=\lambda\hat{\eta}.$$
 
-Finally, we can also re-write the H-EPV in terms of the linear operator:
-$$
-(W_{f})^{-1}~P_f^H~ W_{\text{FEM}}^H~(J^{-1})^H~P_r^H~W_{r}~P_r~J^{-1}~W_{\text{FEM}}~P_f~\hat{\eta}=\lambda~\hat{\eta}.
-$$
-This is the final expression implemented in FELiCS.
-The full forcing is obtained from $\hat{f}=P_f\hat{\eta}$ and the response is $\hat{q} = R \hat{f}$.
-
 ```{note}
 For real operators, such as $P_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
 ```
 
-#### Dimensions of the operators
-Setting $N$ the number of degrees of freedom of the linear operator:
-* The state and forcing vectors, $\hat{q}$ and $\hat{f}$, are of length $N$.
-* The linear operator and thus the initial resolvent operator $R$ are square matrices of dimension $[N\times N]$.
-* The input $\hat{\eta}$ and output $\hat{y}$ have lengths $N_{\eta}$ and $N_{y}$ respectively.
-* The dimensions of the limitor operators must be $P_r:[N_y \times N]$ and $P_f:[N \times N_{\eta}]$. 
-* The FEM weighting operators used to define the input and output norms must necessary be square matrices of dimensions $W_{in}:[N_{\eta} \times N_{\eta}]$ and $W_{out}:[N_y \times N_{y}]$
+Finally, we can also re-write the H-EPV in terms of the linear operator:
+$$
+(W_{f})^{-1}~P_f^H~ W_{\text{FEM}}^H~(J^{-1})^H~P_r^H~W_{r}~P_r~J^{-1}~W_{\text{FEM}}~P_f~\hat{\eta}=\lambda~\hat{\eta}.
+$$
+This is the expression implemented in FELiCS.
 
+After solving the HEVP, the full forcing vectors are obtained from $\hat{f}=P_f\hat{\eta}$ and the response vectors are re-computed by applying $\hat{q} = R \hat{f}$.
+
+```{note}
+Based on the above, the forcing vectors $\hat{f}$ obtained from FELiCS have a unit norm over the (forcing) domain, while the response vectors $\hat{q}$ have a norm equal to $\sigma$.
+```
