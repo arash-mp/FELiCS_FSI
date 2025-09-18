@@ -190,7 +190,7 @@ class EquationCollectionClass():
             X.append(Tensor(
                 i,
                 self._coordinateSystem,
-                hasSpectralDimension=True,
+                mayHaveSpectralDimension=True,
                 ))
         self.X = X
             
