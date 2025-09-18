@@ -145,6 +145,7 @@ class EquationCollectionClass():
         # Get spatial coordinates
         self.x                  = SpatialCoordinate(mesh.dolfinxMesh)
         self._coordinateSystem  = mesh.coordinateSystem
+        self._coordinateSystem.setTrueDimension(len(self._param.getVelocityComponents()))
 
         ## BOUNDARIES
         # Initialize boundary handler
@@ -158,7 +159,7 @@ class EquationCollectionClass():
         # Get boundary normals
         self.n_BC               = FacetNormal(self._FEMSpaces.P2.mesh)
         self.n                  = Tensor(
-            as_vector((self.n_BC[0], self.n_BC[1], 0.0)),
+            as_vector((self.n_BC[0], self.n_BC[1])),
             self._coordinateSystem
         )
         # Get Dirichlet boundary conditions

@@ -76,7 +76,7 @@ class Field:
     def getTensor(self):
         from FELiCS.Misc.tensorUtils import Tensor
         # TODO Sophie: handle Tensors of mixed functions (later)
-        return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, hasSpectralDimension = self.hasSpectralDimension)
+        return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, mayHaveSpectralDimension = self.hasSpectralDimension)
 
     def getListOfSingleFields(self):
         """
@@ -250,7 +250,7 @@ class Field:
 
         v = TestFunction(gradientSpace)
         # Sophie: m and hasSpectralDimension may not be needed for test function
-        v_tens = Tensor(v, CoordSys=coordSystem, m = self.m, hasSpectralDimension=self.hasSpectralDimension)
+        v_tens = Tensor(v, CoordSys=coordSystem, m = self.m, mayHaveSpectralDimension=self.hasSpectralDimension)
         expression = iDot(iGrad(self.getTensor()), iConj(v_tens)).ufl_tens * J_hat* dx
 
         gradientField.evaluateUflTensorExpression(expression)    
@@ -507,7 +507,7 @@ class Field:
                 iFluc = Tensor(trial_FEM[i], coordinateSystem, hasSpectralDirection=True)
                 if iTest.order  == 1:
                     matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*ufl.dx)
-                    matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iConj(iTest)))).ufl_tens*J_hat*dx)
+                    matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iTest))).ufl_tens*J_hat*dx)
                 elif iTest.order == 0:
                     matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*ufl.dx)
                     matrix_ufl.add((smoothFactor* iDot(iGrad(iFluc),iGrad(iConj(iTest)) )).ufl_tens*J_hat*dx)

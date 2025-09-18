@@ -171,7 +171,7 @@ class MomentumEquation(EquationTemplate):
         #       BC equivalent to stress-free BC
         
 
-        weakForm += ( -1j*iInner(fluc.tau,iGrad(iConj(X)) )).ufl_tens*J_hat*dx
+        weakForm += ( -1j*iInner(fluc.tau,iGrad(X) )).ufl_tens*J_hat*dx
         #weakForm.add(( 1j*iDot(iDot(fluc.tau,self.n ),iConj(X))).ufl_tens*J_hat*self.all_ds)
 
         ## ---- Visc. 3: viscous BC terms for input-output analysis
@@ -235,7 +235,7 @@ class MomentumEquation(EquationTemplate):
             raise Exception(' -> Pressure term without IbP not implemented in tensor framework.')
 
         # ------------------------ Diffusion term
-        weakForm.add(( -1j*iInner(mean.tau,iGrad(iConj(X)) )).ufl_tens*J_hat*dx)
+        weakForm.add(( -1j*iInner(mean.tau,iGrad(X) )).ufl_tens*J_hat*dx)
 
 
     def addBilinearExpression(self, weakForm, mean):

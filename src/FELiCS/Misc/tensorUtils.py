@@ -19,7 +19,17 @@ from dolfinx.fem import (
     Constant,
 )
 
-### CLASSES
+
+from enum import Enum
+
+class SpectralIndicator(Enum):
+    # for handling spectral dimensions
+    SPECTRAL     = 1 # this is a spectral dimension
+    NOTSPECTRAL  = 2 # this is not a spectral dimension but still a geometric dimension
+    ZERO         = 3 # this is not a spectral dimension and not a geometric dimension
+
+    
+
 class CoordinateSystem():
     """
     The `CoordinateSystem` class supports several coordinate systems,
@@ -145,7 +155,7 @@ class Tensor():
         A list of order self.order + 1, containing booleans. When computing
         the gradient of the tensor this information is used to determine
         if the partial derivative in this direction exists.
-    hasSpectralDimension : bool
+    mayHaveSpectralDimension : bool
         Whether this tensor has spectral dimension sdim, i.e. tensor = tensor_coefficients * exp(i*m*sdim) with wave number m
     m : int 
         wave number in spectral dimension
@@ -173,48 +183,47 @@ class Tensor():
             The UFL expression representing the tensor.
         CoordSys : CoordinateSystem
             The coordinate system in which the tensor is defined.
-        hasSpectralDimension : bool, optional
-            Whether this tensor has spectral dimension sdim, i.e. tensor = tensor_coefficients * exp(i*m*sdim) with wave number m.
+        mayHaveSpectralDimension : bool, optional
+            Whether this tensor could have a spectral dimension sdim, i.e. tensor = tensor_coefficients * exp(i*m*sdim) with wave number m (should be set to "True" for all trial and test functions)
         m : int, optional
             Optional wave number.
 
         Notes
         -----
-        - Automatically converts physical basis to tangent basis for vectors.
-        - Derives symbolic symmetry information if not explicitly provided.
         - Only tensors of order 0, 1, and 2 are currently supported.
 
-        Raises
-        ------
-        ValueError
-            If the tensor order is >= 2 and no transformation rule is provided.
         """
 
         self.CoordSys = CoordSys
         self.x        = CoordSys.x
         self.dim      = CoordSys.dim 
         self.order    = len(ufl_tens.ufl_shape) # scalar --> order = 0
-        self.hasSpectralDimension = (mayHaveSpectralDimension and CoordSys.gdim < CoordSys.dim) 
-        self.isSpectralDimension  = [False]*self.dim
+
+        # handling a possible spectral dimension
+        self.hasSpectralDimension = (mayHaveSpectralDimension and CoordSys.gdim < CoordSys.dim) #this is also true for m=0 
+        self.isSpectralDimension  = [SpectralIndicator.NOTSPECTRAL]*self.dim
         if self.hasSpectralDimension:
-            self.isSpectralDimension[-1] = True
+            self.isSpectralDimension[-1] = SpectralIndicator.SPECTRAL
             if m == None:
                 self.m = self.CoordSys.m
             else:
                 self.m = m
         else:
+            if CoordSys.gdim < CoordSys.dim:
+                self.isSpectralDimension[-1] = SpectralIndicator.ZERO
             self.m = 0
+
         # CAUTION: the following is valid for cartesian and cylindrical felics; for any new coordinatesystem this should be adjusted
-        self.r                    = CoordSys.J_hat           
-        # Sophie: We could check here if ufl_tens contains a test- or trialfunction and make the error messages clearer. 
-        #         E.g. we could do something in the direction of: 
-        #         for arg in ufl_tens.arguments():
-        #             if isinstance(arg, TestFunction):
-        #                 self.containsTestFunction = True
-        #             if isinstance(arg, TrialFunction):
-        #                 self.containsTestFunction = True
+        self.r                    = CoordSys.J_hat          
 
         self.ufl_tens = ufl_tens
+
+        # this is for the case that the true dimension of the system is bigger than the geometric dimension: if a 2-dimensional vector is given but the true dimension is 3, then a third dimension is added with zero values
+        if self.order ==1:
+            length = ufl_tens.ufl_shape[0]
+            if length < self.dim:
+                self.ufl_tens = \
+                        as_vector((ufl_tens[0],ufl_tens[1],0.0))
            
 
     # addition
@@ -252,7 +261,7 @@ class Tensor():
         return Tensor(
                     added, 
                     self.CoordSys, 
-                    hasSpectralDimension = self.hasSpectralDimension,
+                    mayHaveSpectralDimension = self.hasSpectralDimension,
                     m = self.m
                     )
 
@@ -285,7 +294,7 @@ class Tensor():
                 return Tensor(
                             self.ufl_tens / other.ufl_tens,
                             self.CoordSys, 
-                            hasSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
                             m = self.m - other.m
                             )
             else:
@@ -295,7 +304,7 @@ class Tensor():
             return Tensor(
                         self.ufl_tens / other,
                         self.CoordSys,
-                        hasSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                        mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
                         m = self.m 
                         )
         else:
@@ -331,7 +340,7 @@ class Tensor():
                 return Tensor(
                             other.ufl_tens / self.ufl_tens,
                             self.CoordSys, 
-                            hasSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
                             m = self.m - other.m
                             )
             else:
@@ -341,7 +350,7 @@ class Tensor():
             return Tensor(
                         other / self.ufl_tens,
                         self.CoordSys,
-                        hasSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                        mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
                         m = -self.m 
                         )
         else:
@@ -388,7 +397,7 @@ class Tensor():
         return Tensor(
                     subtracted, 
                     self.CoordSys, 
-                    hasSpectralDimension = self.hasSpectralDimension,
+                    mayHaveSpectralDimension = self.hasSpectralDimension,
                     m = self.m
                     )
 
@@ -423,14 +432,14 @@ class Tensor():
                 return Tensor(
                             self.ufl_tens * other.ufl_tens,
                             self.CoordSys, 
-                            hasSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
                             m = self.m + other.m 
                             )
             elif self.order == 0:
                 return Tensor(
                             self.ufl_tens * other.ufl_tens,
                             self.CoordSys,
-                            hasSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
                             m = self.m + other.m 
                             )
             else:
@@ -440,7 +449,7 @@ class Tensor():
             return Tensor(
                         self.ufl_tens * other,
                         self.CoordSys,
-                        hasSpectralDimension = self.hasSpectralDimension,
+                        mayHaveSpectralDimension = self.hasSpectralDimension,
                         m = self.m
                         )
         else:
@@ -474,7 +483,7 @@ class Tensor():
              return Tensor(
                        self.ufl_tens ** exponent,
                        self.CoordSys, 
-                       hasSpectralDimension = self.hasSpectralDimension,
+                       mayHaveSpectralDimension = self.hasSpectralDimension,
                        m = self.m * exponent
                        )
         else:
@@ -512,14 +521,14 @@ class Tensor():
                 return Tensor(
                             other.ufl_tens * self.ufl_tens, 
                             self.CoordSys,
-                            hasSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
                             m = self.m + other.m
                             )
             elif self.order == 0:
                 return Tensor(
                             other.ufl_tens * self.ufl_tens, 
                             self.CoordSys,
-                            hasSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
                             m = self.m + other.m
                             )
             else:
@@ -529,16 +538,11 @@ class Tensor():
             return Tensor(
                         other * self.ufl_tens,
                         self.CoordSys,
-                        hasSpectralDimension = self.hasSpectralDimension,
+                        mayHaveSpectralDimension = self.hasSpectralDimension,
                         m = self.m
                         )
             ValueError("Tensor multiplication only defined for Tensors, Constant, float, complex and integerr")
     
-    """
-    TODO: dont know if and how division is implemented in ufl
-    def __truediv__(self, other):
-        return Tensor(self.ufl_tens / other, self.CoordSys, self.basis, self.x)
-    """
 
 
 ### TENSOR OBJECT FUNCTIONS
@@ -569,11 +573,8 @@ def iDot(
     ValueError
         If both tensors contain test functions or fluctuations.
     """
-    # Metric depends on base vectors which are being contracted
-    A = tensorA.ufl_tens
-    B = tensorB.ufl_tens
    
-    dotted = dot(A,B) 
+    dotted = dot(tensorA.ufl_tens,tensorB.ufl_tens) 
     ## Perform dot Product
     #if tensorA.order == 1 and tensorB.order == 1:
     #    i,j = indices(2)
@@ -591,7 +592,7 @@ def iDot(
     return Tensor(
             dotted, 
             tensorA.CoordSys, 
-            hasSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension, 
+            mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension, 
             m = tensorA.m + tensorB.m
             )
 
@@ -627,7 +628,7 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
     return Tensor(
             innered,
             tensorA.CoordSys, 
-            hasSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension, 
+            mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension, 
             m = tensorA.m + tensorB.m
             )
 
@@ -656,7 +657,7 @@ def iGrad(T: Tensor):
     if T.order == 0:
         diffs = []
         for i in range(T.dim):
-            if not T.isSpectralDimension[i]:
+            if T.isSpectralDimension[i] == SpectralIndicator.NOTSPECTRAL:
                 diffs.append(T.ufl_tens.dx(i))
             else:
                 diffs.append(1j*T.m*T.ufl_tens/T.r)
@@ -668,7 +669,7 @@ def iGrad(T: Tensor):
         for i in range(T.dim):
             row = []
             for j in range(T.dim):
-                if not T.isSpectralDimension[j]:
+                if T.isSpectralDimension[j] == SpectralIndicator.NOTSPECTRAL:
                     row.append(T.ufl_tens[i].dx(j))
                 else:
                     term = 1j*T.m*T.ufl_tens[i]/T.r
@@ -679,34 +680,30 @@ def iGrad(T: Tensor):
                     row.append(term)
             diffs.append(row)
         gradient = as_matrix(diffs)
-                        
-    #elif T.order == 2:
-    #    # partial derivatives part
-    #    diffs =  []
-    #    for i in range(T.dim):
-    #        row = []
-    #        for j in range(T.dim):
-    #            column = []
-    #            mesh_iter = 0
-    #            for k in range(T.dim):
-    #                if T.sym[i][j][k] == 1:
-    #                    column.append(T.ufl_tens[i,j].dx(mesh_iter))
-    #                else:
-    #                    if T.m==0:
-    #                        column.append(0.0)
-    #                    else:
-    #                        column.append(1j*T.m*T.ufl_tens[i,j]) # Added wavenumber on homogeneous direction
-    #                if T.CoordSys.mesh_dims[k] == 1:
-    #                    mesh_iter += 1
-    #            row.append(column)
-    #        diffs.append(row)
-    #        
-    #    gradient = as_matrix(diffs)
-    #    #return Tensor(gradient, T.CoordSys, basis = T.basis + [True])
-    #    i, j, k, l = indices(4)
-    #    gradient += \
-    #        as_tensor(T.ufl_tens[l,j] * T.CoordSys.ch[i,l,k], (i,j,k)) + \
-    #        as_tensor(T.ufl_tens[i,l] * T.CoordSys.ch[j,l,k], (i,j,k))
+                       
+
+    #TODO test order 2 in unittests!!!
+    elif T.order == 2:
+        # partial derivatives part
+        diffs =  []
+        for i in range(T.dim):
+            row = []
+            for j in range(T.dim):
+                column = []
+                for k in range(T.dim):
+                    if T.isSpectralDimension[k] == SpectralIndicator.NOTSPECTRAL:
+                        column.append(T.ufl_tens[i,j].dx(k))
+                    else:
+                        term = 1j*T.m*T.ufl_tens[i]/T.r
+                        if T.CoordSys.name == "cylindricalfelics" and i==1:
+                            term -= T.ufl_tens[2]/T.r
+                        elif T.CoordSys.name == "cylindricalfelics" and i==2:
+                            term += T.ufl_tens[1]/T.r
+                        column.append(term)
+                row.append(column)
+            diffs.append(row)
+            
+        gradient = as_matrix(diffs)
     
     else:
         #raise ValueError("Gradients of tensors of order > 3 are not " \
@@ -716,7 +713,7 @@ def iGrad(T: Tensor):
     return Tensor(
                   gradient, 
                   T.CoordSys, 
-                  hasSpectralDimension = T.hasSpectralDimension,
+                  mayHaveSpectralDimension = T.hasSpectralDimension,
                   m = T.m,
                   )
     
@@ -749,17 +746,16 @@ def iDiv(tensor: Tensor):
         gradient = iGrad(tensor) # Added wavenumber on homogeneous direction
         i = indices(1)
         Div = tr(gradient.ufl_tens)
-   
-    #TODO raise not implemented error
-    #elif tensor.order == 2:
-    #    gradient = iGrad(tensor) # Added wavenumber on homogeneous direction
-    #    i,j = indices(2)
-    #    Div = as_tensor(gradient.ufl_tens[i,j,j], (i))
+
+    elif tensor.order == 2:
+        gradient = iGrad(tensor) # Added wavenumber on homogeneous direction
+        i,j = indices(2)
+        Div = as_tensor(gradient.ufl_tens[i,j,j], (i))
         
     return Tensor(
                   Div, 
                   tensor.CoordSys, 
-                  hasSpectralDimension = tensor.hasSpectralDimension,
+                  mayHaveSpectralDimension = tensor.hasSpectralDimension,
                   m = tensor.m
                   )
 
@@ -795,7 +791,7 @@ def iT(tensor: Tensor):
         return Tensor(
                       tensor.ufl_tens.T, 
                       tensor.CoordSys, 
-                      hasSpectralDimension = tensor.hasSpectralDimension,
+                      mayHaveSpectralDimension = tensor.hasSpectralDimension,
                       m = tensor.m
                       )
 
@@ -827,7 +823,7 @@ def iTr(tensor: Tensor):
         return Tensor(
                       tr(tensor.ufl_tens),
                       tensor.CoordSys, 
-                      hasSpectralDimension = tensor.hasSpectralDimension,
+                      mayHaveSpectralDimension = tensor.hasSpectralDimension,
                       m = tensor.m
                       )
     
@@ -869,7 +865,7 @@ def iIdentity(tensor: Tensor):
     return Tensor(
                   Identity(tensor.dim), 
                   tensor.CoordSys,
-                  hasSpectralDimension = False,
+                  mayHaveSpectralDimension = False,
                   m = 0
                   )
 
@@ -890,11 +886,11 @@ def iConj(tensor: Tensor):
     return Tensor(
             conj(tensor.ufl_tens),
             tensor.CoordSys,
-            hasSpectralDimension = tensor.hasSpectralDimension,
+            mayHaveSpectralDimension = tensor.hasSpectralDimension,
             m = -tensor.m
             )
 
-# TODO Kai: is this now validated? Otherwise it should raise a warning.
+# TODO: implement unit test in TESTS folder 
 def iOuter(tensorA: Tensor, tensorB: Tensor):
     """
     Computes the outer product of two tensors.
@@ -939,7 +935,7 @@ def iOuter(tensorA: Tensor, tensorB: Tensor):
     return Tensor(
                   outered, 
                   tensorA.CoordSys, 
-                  hasSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension,
+                  mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension,
                   m = tensorA.m + tensorB.m
                   ) 
     
