@@ -84,7 +84,7 @@ $$
 $$
 
 ```{note}
-In practice, the thermal conductivity (mean and fluctuation) is simplified out of the equation by using the Prandtl number: $\kappa=\frac{\mu_{mol} c_p}{Pr}$.
+In practice, the thermal conductivity (mean and fluctuation) is simplified out of the equation by using the Prandtl number: $\kappa=\frac{\mu_{tot} c_p}{Pr}$.
 ```
 
 ## 2. Progress variable equation
