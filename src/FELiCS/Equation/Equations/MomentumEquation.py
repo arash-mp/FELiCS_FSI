@@ -256,7 +256,7 @@ class MomentumEquation(EquationTemplate):
         """
 
         # Sophie: first and quick implementation for the BOA project. Only for incompressible flow and strong formulation (only convection term)
-        u_bil = Tensor( mean._fieldDict['u_bilinear'], self.coordinateSystem)
+        u_bil = mean._fieldDict['u_bilinear'].getTensor()
         fluc  = self.fluc
         X     = self.X
         J_hat = self.J_hat
@@ -265,3 +265,13 @@ class MomentumEquation(EquationTemplate):
         weakForm.add(( -1j*iDot(iDot(iGrad(u_bil),mean.rho*fluc.u),iConj(X)) ).ufl_tens*J_hat*dx)
 
 
+        # Sophie: additional terms for compressible equation; treat with care, so far not "Taylor"-tested
+        try: #only add additional terms if a "rho_bilinear" is there; TODO: handle this in a better way  
+            rho_bil = mean._fieldDict['rho_bilinear'].getTensor()
+        except:
+            #TODO: throw warning if fluc.rho exists as variable 
+            return
+        weakForm.add(( -1j*iDot(iDot(iGrad(mean.u),fluc.rho*u_bil),iConj(X)) ).ufl_tens*J_hat*dx)
+        weakForm.add(( -1j*iDot(iDot(iGrad(u_bil),fluc.rho*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
+        weakForm.add(( -1j*iDot(iDot(iGrad(fluc.u),rho_bil*mean.u),iConj(X)) ).ufl_tens*J_hat*dx)
+        weakForm.add(( -1j*iDot(iDot(iGrad(mean.u),rho_bil*fluc.u),iConj(X)) ).ufl_tens*J_hat*dx)
