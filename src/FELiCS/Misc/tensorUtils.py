@@ -672,11 +672,11 @@ def iGrad(T: Tensor):
                     if T.isSpectralDimension[k] == SpectralIndicator.NOTSPECTRAL:
                         column.append(T.ufl_tens[i,j].dx(k))
                     else:
-                        term = 1j*T.m*T.ufl_tens[i]/T.r
-                        if T.CoordSys.name == "cylindricalfelics" and i==1:
-                            term -= T.ufl_tens[2]/T.r
-                        elif T.CoordSys.name == "cylindricalfelics" and i==2:
-                            term += T.ufl_tens[1]/T.r
+                        term = 1j*T.m*T.ufl_tens[i,j]/T.r
+                        if T.CoordSys.name == "cylindricalfelics" and j==1:
+                            term -= T.ufl_tens[i,2]/T.r
+                        elif T.CoordSys.name == "cylindricalfelics" and j==2:
+                            term += T.ufl_tens[i,1]/T.r
                         column.append(term)
                 row.append(column)
             diffs.append(row)
@@ -900,7 +900,8 @@ def iOuter(tensorA: Tensor, tensorB: Tensor):
     
     elif tensorA.order == 0 or tensorB.order == 0:
         raise Exception('Use standard multiplication with the asterisk symbol *.')
-        
+       
+
     return Tensor(
                   outered, 
                   tensorA.CoordSys, 
