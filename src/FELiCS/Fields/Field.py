@@ -1,4 +1,5 @@
 from dolfinx.fem             import Function, petsc
+from FELiCS.IO.reader        import Reader
 import basix
 
 class Field:
@@ -214,6 +215,23 @@ class Field:
                                   ', '.join([sub['description'].split(': ')[1] for sub in subspace_descriptions])
         
         return result
+    
+
+
+
+    
+    
+    def importData(self, config, name, alreadyImported):
+        # initialize the reader
+        reader = Reader(config, self.space)
+        if config.Case.AnalysisMode == 'Modal':
+            self, notInFile = reader.importMeanflowFromFile(self, config, name)
+        return self, notInFile
+
+
+
+
+
 
     def setListOfSubFields(self, listOfFields):
         """
