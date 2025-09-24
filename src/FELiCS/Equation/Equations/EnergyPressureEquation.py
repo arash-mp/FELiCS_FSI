@@ -191,13 +191,17 @@ class EnergyPressureEquation(EquationTemplate):
         # Sophie: treat with care, so far not "Taylor"-tested!
         # Only for the state vector (u,rho,p), not for (u,rho,T).
 
+        try:
+            u_bil   = mean._fieldDict['u_bilinear'].getTensor()
+            p_bil   = mean._fieldDict['p_bilinear'].getTensor()
+            rho_bil = mean._fieldDict['rho_bilinear'].getTensor()
+        except:
+            # TODO: write some kind of message?
+            return
+
         J_hat   = self.J_hat
         X       = self.X
         fluc    = self.fluc
-
-        u_bil   = mean._fieldDict['u_bilinear'].getTensor()
-        p_bil   = mean._fieldDict['p_bilinear'].getTensor()
-        rho_bil = mean._fieldDict['rho_bilinear'].getTensor()
 
         # ------------------------  Advection terms
         # Add volume integral of pressure gradient term (1)
