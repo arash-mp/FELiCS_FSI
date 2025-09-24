@@ -64,29 +64,49 @@ class meanFlowClass(
         self._VectorFunctionSpace   = self._FEMSpaces.FunctionSpaceVectorVelocity
         
         nameListMean    = self._getMeanFieldsToBeRead()
-        # Check which type the input file is and read
-        if self._param.FlowInput.MeanFlowFilePath == '':
-            # no mean flow file, set everything to zero
-            logger.warning("No mean flow file, setting everything to zero.")
-            fieldDict       = {} 
-            for name in nameListMean:
-                if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
-                    fieldDict[name] = Field(
-                        self._FEMSpaces.FunctionSpaceVectorVelocity, self._mesh, name = name)
-                else:
-                    fieldDict[name] = Field(self._FEMSpaces.P2, self._mesh, name = name)
-            self._fieldDict = fieldDict
+        # fieldDict       = {} 
+        # for name in nameListMean:
+        #     if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
+        #         fieldDict[name] = Field(
+        #             self._FEMSpaces.FunctionSpaceVectorVelocity,
+        #             self._mesh,
+        #             name)
+        #     else:
+        #         fieldDict[name] = Field(
+        #             self._FEMSpaces.P2,
+        #             self._mesh,
+        #             name)
+
+        # self._fieldDict = fieldDict
+
+
+        fieldDict       = {}
+        reader = Reader(self._param, self._FEMSpaces)   # initialize the reader
+        if not self._param.Case.loadInterpolatedMeanFlow:
+            logger.info("Import mean flow from file without interpolation: " + self._param.FlowInput.MeanFlowFilePath)
         else:
-            # initialize the reader
-            reader = Reader(self._param, self._FEMSpaces)
-            if self._param.Case.loadInterpolatedMeanFlow:
-                # If the mean flow is already interpolated, we read it from the file
-                logger.info("Import mean flow from file without interpolation: " + self._param.FlowInput.MeanFlowFilePath)
-                self._fieldDict, self._notInFileList = reader.import_meanflow_from_file(self._mesh, nameListMean)
+            logger.info("Import mean flow from file and interpolate data: " + self._param.FlowInput.MeanFlowFilePath)
+        for name in nameListMean:
+            if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
+                field = Field(
+                    self._FEMSpaces.FunctionSpaceVectorVelocity,
+                    self._mesh,
+                    name)
             else:
-                # Import and interpolate mean flow from file
-                logger.info("Import mean flow from file with interpolation: " + self._param.FlowInput.MeanFlowFilePath)
-                self._fieldDict, self._notInFileList = reader.import_interpolate_meanflow_from_file(self._mesh, nameListMean, self._ScalarFunctionSpace, self._VectorFunctionSpace)
+                fieldDict[name] = Field(
+                    self._FEMSpaces.P2,
+                    self._mesh,
+                    name)
+            fieldDict[name], notInFile = field.importData(self._param, name, False)
+            if notInFile:
+                self._notInFileList.append(name)
+            if not self._param.Case.loadInterpolatedMeanFlow:
+                # TODO: Interpolate data
+                pass
+        
+        if 'ut' in list(fieldDict.keys()):
+            fieldDict['ut'].setConstant(0.)
+                
             
         # Define the viscosity and alfa fields
         # NOTE: This should move to a handler
