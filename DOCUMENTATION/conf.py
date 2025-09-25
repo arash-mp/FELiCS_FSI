@@ -14,7 +14,6 @@ autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inher
 
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
-html_js_files = ['version-switcher.js']
 
 html_logo = "_static/logo.png"
 
@@ -40,6 +39,7 @@ myst_dmath_double_inline = True
 
 
 # Where the switcher JSON lives (root of each deployment)
+html_js_files = ['version-switcher.js']
 _SWITCHER_JSON = "/versions.json"
 
 # Figure out which version we’re currently viewing:
@@ -48,7 +48,7 @@ _version = os.environ.get("CI_COMMIT_TAG", "latest")
 
 html_theme_options = {
     # Place the switcher in the right side of the header
-    "navbar_end": ["theme-switcher", "version-switcher"],
+    "navbar_end": ["version-switcher"],
 
     # Configure the switcher
     "switcher": {

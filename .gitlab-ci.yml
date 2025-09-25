@@ -1,13 +1,8 @@
-# Base image for building docs/tests
-image: continuumio/anaconda3
-
+# The Docker image that will be used to build your app
+image: continuumio/anaconda3 #continuumio/miniconda3:latest #python:3.10-slim-bullseye
 variables:
-  GIT_STRATEGY: clone
-
-stages:
-  - test
-  - build
-  - deploy
+  GIT_STRATEGY: clone  
+# Functions that should be executed before the build script is run
 
 cache:
   key: venv-cache
@@ -15,9 +10,6 @@ cache:
     - local-runner-env/
     - local-runner-env_tests/
 
-# ---------------------------
-# Tests (unchanged, just tidied)
-# ---------------------------
 test:
   stage: test
   before_script:
@@ -25,102 +17,64 @@ test:
     - ls -all
     - |
       if [ ! -d "local-runner-env-tests" ] || [ ! -f "local-runner-env-tests/bin/activate" ]; then
-        echo "Creating new virtual environment..."
+        echo "\nCreating new virtual environment...\n"	
         python3 -m venv local-runner-env-tests
       fi
-      echo "Activating virtual environment..."
-      source local-runner-env-tests/bin/activate
+      echo "Activating virtual environment..."	
+    - source local-runner-env-tests/bin/activate    
+      #- export PATH="$PATH:/opt/anaconda3/bin"
+      #- conda init
+      #- conda env create -f INSTALLATION/felics_v2.4_env.yml -p .env/ || true
+      #- conda activate felics2025_dolfin9
+      #- conda install pytest
     - pip install -U pip
     - pip install -U pytest
+      #- shopt -s expand_aliases
+      #- alias envrun="conda run -p .env/"
   script:
     - cd TESTS
-    # - python3 -m pytest
+    #- python3 -m pytest 
   only:
     - development
+    #- main
 
-# ---------------------------
-# Build docs once (for both latest + tags)
-# ---------------------------
-build:docs:
-  stage: build
+pages:
   before_script:
     - git --version
     - ls -all
     - |
       if [ ! -d "local-runner-env3" ] || [ ! -f "local-runner-env3/bin/activate" ]; then
-        echo "Creating new virtual environment..."
+        echo "\nCreating new virtual environment...\n"	
         python3 -m venv local-runner-env3
       fi
-      echo "Activating virtual environment..."
+      echo "Activating virtual environment..."	
       source local-runner-env3/bin/activate
+      
       if ! python -c "import sphinx" 2>/dev/null; then
-        echo "Installing Sphinx and dependencies..."
+        echo "installing sphinx and dependencies..."	
         pip install -U pip
         pip install -U sphinx myst-parser sphinx-book-theme
         pip install -U sphinx-autoapi==3.0.0
-        pip install -U sphinxcontrib-mermaid
+        pip install sphinxcontrib-mermaid
       fi
-  script:
-    - cd DOCUMENTATION
-    - mkdir -p ../public
-    - python3 --version
-    - pip list | sed -n '1,80p'
-    - sphinx-build -b html . _build
-    - cp -r _build/ ../public/.
-    - cd ..
-    - cp -r public/_build/* public/
-    - rm -r public/_build
-    # Optional: emit a tiny versions.json so your theme can render a version switcher.
-    # For tags we overwrite it in the deploy job to include the current tag.
-    - |
-      cat > public/versions.json <<'JSON'
-      [{"name":"latest","path":"/"}]
-      JSON
-  artifacts:
-    paths:
-      - public
-  rules:
-    # Build for "latest" (development) AND any TAG (releases)
-    - if: '$CI_COMMIT_BRANCH == "development"'
-    - if: '$CI_COMMIT_TAG'  # any tag
 
-# ---------------------------
-# Deploy "latest" (root, no path_prefix)
-# ---------------------------
-pages:latest:
-  stage: deploy
-  needs: ["build:docs"]
   script:
-    - echo "Publishing latest docs to ${CI_PAGES_URL}"
-  artifacts:
-    paths:
-      - public
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "development"'
+  - cd DOCUMENTATION
+  - mkdir ../public
+  - python3 --version
+  - pip list
+  #- make html
+  - sphinx-build -b html . _build
+  - ls
+  - cp -r _build/ ../public/.
+  - cd ..
+  - ls
+  - cp -r public/_build/* public/
+  - rm -r public/_build
 
-# ---------------------------
-# Deploy versioned releases under /$CI_COMMIT_TAG/
-# Uses Pages parallel deployments with path_prefix
-# ---------------------------
-pages:versioned:
-  stage: deploy
-  needs: ["build:docs"]
-  before_script:
-    - |
-      # Append/override versions.json to include this tag as an entry
-      if [ -n "$CI_COMMIT_TAG" ]; then
-        # Prepend current tag to the JSON (very simple join; adjust if you keep a registry)
-        echo "[{\"name\":\"$CI_COMMIT_TAG\",\"path\":\"/$CI_COMMIT_TAG/\"}, {\"name\":\"latest\",\"path\":\"/\"}]" > public/versions.json
-      fi
-  script:
-    - echo "Publishing docs for tag ${CI_COMMIT_TAG} to ${CI_PAGES_URL}/${CI_COMMIT_TAG}/"
   artifacts:
     paths:
       - public
-  rules:
-    - if: '$CI_COMMIT_TAG'
-  pages:
-    # Parallel deployment: each tag gets its own URL prefix, e.g. /v1.2.3/
-    path_prefix: "$CI_COMMIT_TAG"
-    # Keep release docs around (override the 24h default)
-    expire_in: never
+  only:
+    - development
+    #- main
