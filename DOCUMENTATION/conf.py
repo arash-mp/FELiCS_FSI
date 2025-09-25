@@ -1,44 +1,20 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-
-# TODO: this should work to exclude the attributes from being shown, but it doesn't.
-def skip_member(app, what, name, obj, skip, options):
-    if what == 'attribute':
-        return True
-    return skip
-
-def setup(app):
-    app.connect("autodoc-skip-member", skip_member)
-
 project = 'FELiCS2.0'
 copyright = '2025, Flow Group'
 author = 'Flow Group'
 
-# -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
-
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
-# sys.path.insert(0, os.path.abspath('../Reactions/'))
 
-extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'autoapi.extension','sphinxcontrib.mermaid']#, 'sphinx.ext.inheritance_diagram'] # 'sphinx.ext.autodoc', 
+extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'autoapi.extension','sphinxcontrib.mermaid']
 autoapi_dirs = ['../src/']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'special-members', 'no-imported-members']  # 'private-members', 'members' TODO: check with whole group if special members or not
-# autoapi_python_class_content = 'both' # renders __init__ docstring and class docstring together
-# -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'special-members', 'no-imported-members']
 
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
+
 html_logo = "_static/logo.png"
 
 # Napoleon settings
@@ -57,6 +33,26 @@ napoleon_preprocess_types = True
 napoleon_type_aliases = None
 napoleon_attr_annotations = True
 
-#Myst Parser settings
+# Myst Parser settings
 myst_enable_extensions = ["dollarmath", "amsmath", "colon_fence"]
 myst_dmath_double_inline = True
+
+
+# Where the switcher JSON lives (root of each deployment)
+html_js_files = ['version-switcher.js']
+_SWITCHER_JSON = "/versions.json"
+
+# Figure out which version we’re currently viewing:
+# In your Pages parallel deploys, tags render under /<tag>/ and “latest” at /
+_version = os.environ.get("CI_COMMIT_TAG", "latest")
+
+html_theme_options = {
+    # Place the switcher in the right side of the header
+    "navbar_end": ["version-switcher"],
+
+    # Configure the switcher
+    "switcher": {
+        "json_url": _SWITCHER_JSON,
+        "version_match": _version,
+    },
+}
