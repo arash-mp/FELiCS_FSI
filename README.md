@@ -32,7 +32,7 @@ Before submitting new code, ensure it is tested using the available validation c
 
 ## Citation
 
-If you use FELiCS in a scientific publication, we would appreciate using the following citations:
+If you use FELiCS in a scientific publication, we would appreciate citing [this paper](https://arc.aiaa.org/doi/10.2514/6.2023-3434) using the following citations:
 
 ```
 @inproceedings{Kaiser_felics,
