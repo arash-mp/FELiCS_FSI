@@ -37,3 +37,22 @@ napoleon_attr_annotations = True
 # Myst Parser settings
 myst_enable_extensions = ["dollarmath", "amsmath", "colon_fence"]
 myst_dmath_double_inline = True
+
+
+# Where the switcher JSON lives (root of each deployment)
+_SWITCHER_JSON = "/versions.json"
+
+# Figure out which version we’re currently viewing:
+# In your Pages parallel deploys, tags render under /<tag>/ and “latest” at /
+_version = os.environ.get("CI_COMMIT_TAG", "latest")
+
+html_theme_options = {
+    # Place the switcher in the right side of the header
+    "navbar_end": ["theme-switcher", "version-switcher"],
+
+    # Configure the switcher
+    "switcher": {
+        "json_url": _SWITCHER_JSON,
+        "version_match": _version,
+    },
+}
