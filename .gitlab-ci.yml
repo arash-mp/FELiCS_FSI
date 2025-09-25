@@ -87,6 +87,10 @@ build_docs:
   rules:
     - if: '$CI_COMMIT_BRANCH == "development"'
     - if: '$CI_COMMIT_TAG'
+  pages:
+    path_prefix: "$CI_COMMIT_BRANCH"
+    expire_in: never
+
 
 # ---------------------------
 # Deploy "latest" (root, no prefix) — development only
