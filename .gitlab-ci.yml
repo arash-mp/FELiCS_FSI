@@ -62,19 +62,20 @@ build_docs:
       fi
   script:
     - cd DOCUMENTATION
-    - mkdir -p ../public
-    - python3 --version
-    - pip list
-    # Create versions.json for the theme switcher (PyData/sphinx-book-theme)
+    - mkdir -p _static                 # ensure exists
+    # --- create versions.json BEFORE building ---
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
-        echo "[{\"version\":\"$CI_COMMIT_TAG\",\"url\":\"/$CI_COMMIT_TAG/\"},{\"version\":\"latest\",\"url\":\"/\"}]" > public/versions.json
-        echo "Created versions.json for tag: $CI_COMMIT_TAG"
+        echo '[{"version":"'"$CI_COMMIT_TAG"'","url":"/'"$CI_COMMIT_TAG"'/"},
+               {"version":"latest","url":"/"}]' > _static/versions.json
+        echo "Created _static/versions.json for tag: $CI_COMMIT_TAG"
       else
-        echo "[{\"version\":\"latest\",\"url\":\"/\"}]" > public/versions.json
-        echo "Created versions.json for latest only"
+        echo '[{"version":"latest","url":"/"}]' > _static/versions.json
+        echo "Created _static/versions.json for latest only"
       fi
-      cat public/versions.json
+      echo "versions.json content:" && cat _static/versions.json
+    # --- now build ---
+    - mkdir -p ../public
     - sphinx-build -b html . _build
     - cp -r _build/ ../public/.
     - cd ..

@@ -47,12 +47,9 @@ _SWITCHER_JSON = "/versions.json"
 _version = os.environ.get("CI_COMMIT_TAG", "latest")
 
 html_theme_options = {
-    # Place the switcher in the right side of the header
     "navbar_end": ["version-switcher"],
-
-    # Configure the switcher
     "switcher": {
-        "json_url": _SWITCHER_JSON,
-        "version_match": _version,
+        "json_url": "/versions.json",
+        "version_match": os.environ.get("CI_COMMIT_TAG", "latest"),
     },
 }
