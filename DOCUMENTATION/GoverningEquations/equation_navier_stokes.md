@@ -21,8 +21,9 @@ Nomenclature:
 - $X_p$: test function for mass equation
 - $\mathbf{X}_\mathbf{u}$: test function for momentum equations
 
-In the following, first the incompressible Navier--Stokes equations are described. Then the details on mass and momentum equation of the compressible 
-Navier--Stokes equations are given. For details on the energy equation, which is also needed for a compressible formulation, see [here](equation_energy.md)
+In the following, first the [incompressible](#1.-incompressible-equations) Navier--Stokes equations are described. 
+Then the details on mass and momentum equation of the [compressible](#2.-compressible-equations) 
+Navier--Stokes equations are given. For details on the energy equation, which is also needed for a compressible formulation, see [here](equation_energy.md).
 
 ## 1. Incompressible equations
 Assumptions:
@@ -59,17 +60,17 @@ Inserting this into the Navier--Stokes equations and taking the time-average we 
 
 The mass equation is
 $$
-\nabla \cdot \overline{\mathbf{u}} = 0
+\nabla \cdot \overline{\mathbf{u}} = 0\ .
 $$
 
 The momentum equations are
 $$
-\rho(\overline{\mathbf{u}}\cdot \nabla) \overline{\mathbf{u}} + \nabla \overline{p} - \nabla \cdot \overline{\mathbf{\tau}} = 0
+\rho(\overline{\mathbf{u}}\cdot \nabla) \overline{\mathbf{u}} + \nabla \overline{p} - \nabla \cdot \overline{\mathbf{\tau}} = 0\ ,
 $$
 
 where the mean viscous stress tensor $\overline{\mathbf{\tau}}$ is
 $$
-\overline{\mathbf{\tau}} = \overline{\mu}_\textrm{eff}(\nabla + \nabla ^T)\overline{\mathbf{u}}
+\overline{\mathbf{\tau}} = \overline{\mu}_\textrm{eff}(\nabla + \nabla ^T)\overline{\mathbf{u}}\ .
 $$
 
 #### Weak form of the incompressible mean flow equations
@@ -77,7 +78,7 @@ $$
 The weak form of the incompressible nonlinear base flow equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.
 ```
 
-#### Linearized (incompressible) Navier--Stokes equations
+#### Linearized incompressible Navier--Stokes equations
 The mass equation is
 $$
 \nabla \cdot \mathbf{u}' = 0\ .
@@ -113,10 +114,14 @@ Assumptions:
 - no additional source terms
 - no gravitational forces
 
+In the following, details on mass and momentum equations of the compressible 
+Navier--Stokes equations are given. For details on the energy equation, 
+which is also needed for a compressible formulation, see [here](equation_energy.md).
+
 #### Nonlinear compressible Navier--Stokes equations
 The mass equation is
 $$
-\frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \mathbf{u}) = 0 \.
+\frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \mathbf{u}) = 0\ .
 $$
 
 The momentum equations are
@@ -146,18 +151,18 @@ Inserting this into the Navier--Stokes equations and taking the average we get t
 
 The mass equation is
 $$
-\nabla \cdot (\overline{\rho}\, \overline{\mathbf{u}}) = 0
+\nabla \cdot (\overline{\rho}\, \overline{\mathbf{u}}) = 0\ .
 $$
 
 The momentum equations are
 $$
-\overline{\rho}(\overline{\mathbf{u}}\cdot \nabla) \overline{\mathbf{u}} + \nabla \overline{p} - \nabla \cdot \overline{\tau} = 0
+\overline{\rho}(\overline{\mathbf{u}}\cdot \nabla) \overline{\mathbf{u}} + \nabla \overline{p} - \nabla \cdot \overline{\tau} = 0\ ,
 $$
 
 
 where the mean viscous stress tensor $\overline{\mathbf{\tau}}$ is
 $$
-\overline{\tau} = \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T)\overline{\mathbf{u}} - \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}})\mathbf{I}]
+\overline{\tau} = \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T)\overline{\mathbf{u}} - \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}})\mathbf{I}]\ .
 $$
 
 
@@ -179,12 +184,12 @@ and where $\overline{\mu}_\textrm{eff}$ is the mean effective dynamic viscosity 
 #### Linearized compressible Navier--Stokes equations
 The mass equation is
 $$
-\frac{\partial \rho'}{\partial t} + \nabla \cdot (\overline{\rho} \mathbf{u}' + \rho' \overline{\mathbf{u}}) = 0
+\frac{\partial \rho'}{\partial t} + \nabla \cdot (\overline{\rho} \mathbf{u}' + \rho' \overline{\mathbf{u}}) = 0\ .
 $$
 
 The momentum equations are
 $$
-\overline{\rho} \frac{\partial \mathbf{u}'}{\partial t} + \overline{\rho} [(\overline{\mathbf{u}}\cdot \nabla) \mathbf{u}' + (\mathbf{u}' \cdot \nabla) \overline{\mathbf{u}}] + \rho' (\overline{\mathbf{u}}\cdot \nabla)\overline{\mathbf{u}} + \nabla p' - \nabla \cdot \tau ' = 0
+\overline{\rho} \frac{\partial \mathbf{u}'}{\partial t} + \overline{\rho} [(\overline{\mathbf{u}}\cdot \nabla) \mathbf{u}' + (\mathbf{u}' \cdot \nabla) \overline{\mathbf{u}}] + \rho' (\overline{\mathbf{u}}\cdot \nabla)\overline{\mathbf{u}} + \nabla p' - \nabla \cdot \tau ' = 0\ ,
 $$
 
 where the fluctuating viscous stress tensor $\tau'$ is
@@ -205,7 +210,7 @@ $$
 $$
 with
 $$
-\widehat{\rho\mathbf{u}} = \overline{\rho}\mathbf{\hat{u}} + \hat{\rho}\mathbf{\overline{u}}
+\widehat{\rho\mathbf{u}} = \overline{\rho}\mathbf{\hat{u}} + \hat{\rho}\mathbf{\overline{u}}\ .
 $$
 ```{note}
 In the linearized equations, the convective term is *not* integrated by parts.
