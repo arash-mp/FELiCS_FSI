@@ -87,12 +87,13 @@ class meanFlowClass(
             # import data from the .fel or .h5 file into the empty fields
             config = self._param
             fieldDict[name], notInFile = field.importData(
-                variableNames = name,
-                GroupName = 'Meanflow',
-                isComplex = False,
-                config = config,
-                needInterpolation = config.Case.needInterpolation,
-                originalMeshFile = None)
+                variableNames       = name,
+                GroupName           = 'meanflow',
+                isComplex           = False,
+                config              = config,
+                FEMSpaces           = self._FEMSpaces,
+                needInterpolation   = config.Case.needInterpolation,
+                originalMeshFile    = None)
             
             # collect parameters which should be imported, but are missing in the file
             if notInFile:
