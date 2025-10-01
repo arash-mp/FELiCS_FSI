@@ -3,363 +3,331 @@ import  h5py
 import  numpy               as np
 from    scipy               import interpolate
 from    FELiCS.Misc.logging import Logger
-from    FELiCS.IO.Mapping   import Mapping
 
 
 # Get the logger
 logger = Logger.get_logger("felics")
 
 class Reader:
-    def __init__(self, param, FEMSpaces):
-        """
-        Function arguments:
-        - FEMSpaces: Object containing the Cacluation FEM-Spaces, the export
-            FEM-Spaces and the corresponding meshes.
-        - param: Object, containing the parameters of the calculation.
-
-        Function returns:
-        """
-        self._FEMSpaces     = FEMSpaces
-        self._param         = param
-        self._mapping       = FEMSpaces.mappingObj
-        self._mesh          = param.getMesh()
-
-
-
-
-    def importFromFile(self, Field, variableNames, GroupName, isComplex, config, needInterpolation, originalMeshFile):
-        notInFile       = False
-        data            = h5py.File(config.FlowInput.MeanFlowFilePath, 'r') # TODO: adapt this later
-        analysisMode    = config.Case.AnalysisMode
-
-
-
-        # get list of coordinates
-        # TODO: get coordinates from where they are defined (mesh or boundary condition? // velocity components)
-        # TODO: move to meanFlowClass?
-        coordinates             = []
-        cartesianCoordinates    = ['x','y','z']
-        cylindricalCoordinates  = ['r','phi','z']
-        if config.Case.CoordinateSystem == "Cartesian":
-            coordinateSystem = cartesianCoordinates
-        else:
-            coordinateSystem = cylindricalCoordinates
-        for i in range(config.Case.nDim):
-                coordinates.append(coordinateSystem[i])
-            
-
-        if needInterpolation == False:
-
-            # TODO: move to meanFlowClass?
-            # TODO: get export folder from config
-            # get export mesh
-            if analysisMode == 'Input-Output':
-                exportMesh  = h5py.File(f"Out/{analysisMode}_mesh.h5", 'r')
-            else:
-                exportMesh  = h5py.File(f"Out{analysisMode}/{analysisMode}_mesh.h5", 'r')
-
-
-
-            # ########## TODO: use mapping.P1exportToP2CalcIndecies instead
-            # # arrange the export mesh coordinates in an array
-            # coordArray = np.zeros((exportMesh['coordinates/x'][:].shape[0], config.Case.nDim))
-            # coordArray[:, 0] = exportMesh['coordinates/x'][:]
-            # for i in range(config.Case.nDim - 1):
-            #     coordArray[:, i + 1] = exportMesh[f'coordinates/{coordinates[i + 1]}'][:]
-
-            # # map the coordinates of the P2-mesh to the export mesh coordinates
-            # coordinatesOfP2Mesh = self._FEMSpaces.P2.tabulate_dof_coordinates()[:,0:config.Case.nDim]
-            # indexMappingArray = mapping._mappingFunc(coordArray, coordinatesOfP2Mesh)
-            indexMappingArray = self._mapping.P1exportToP2CalcIndecies
-
-            # get the velocity components
-            velocityComponents = config.getInternalVelocityComponents()
-            for index, comp in enumerate(velocityComponents):
-                velocityComponents[index] = f'u{comp}'
-
-            if variableNames == 'u':
-                for index, component in enumerate(velocityComponents):
-                    indicesOfSubField = Field.space.sub(index).collapse()[1]
-                    Field.function.x.array[indicesOfSubField] = \
-                        data[f'{GroupName}/{component}/magnitude'][:][indexMappingArray]
-            else:
-                if variableNames in list(data[f'{GroupName}'].keys()):
-                    Field.function.x.array[:] = \
-                        data[f'{GroupName}/{component}/magnitude'][:][indexMappingArray]
-                else:
-                    notInFile = True
-
-
-
-
-
-        return Field, notInFile
-
-
-    # def import_meanflow_from_file(self, felics_mesh, nameListMean):
-    #     """
-    #     This function does the loading of the mean flow data from the hdf5 file
-    #     corresponding to fields already interpolated on the FELiCS mesh.
-    #     TODO: cleanup
-    #     """
-    #     meanflow        = h5py.File(self._param.FlowInput.MeanFlowFilePath, 'r')
-    #     exportMesh      = h5py.File(f"{self._param.Case.AnalysisMode}_mesh.h5", 'r')
-    #     coordNameList   = ['x', 'y', 'z']
-
-    #     # arrange the export mesh coordinates in an array
-    #     coordArray = np.zeros((exportMesh['coordinates/x'][:].shape[0], self._param.Case.nDim))
-    #     coordArray[:, 0] = exportMesh['coordinates/x'][:]
-    #     for i in range(self._param.Case.nDim - 1):
-    #         coordArray[:, i + 1] = exportMesh[f'coordinates/{coordNameList[i + 1]}'][:]
-
-    #     # map the coordinates of the P2-mesh to the export mesh coordinates
-    #     coordinatesOfP2Mesh = self._FEMSpaces.P2.tabulate_dof_coordinates()[:,0:self._param.Case.nDim]
-    #     mapping = Mapping(self._FEMSpaces)
-    #     indexMappingArray = mapping._mappingFunc(coordArray, coordinatesOfP2Mesh)
-
-    #     # get the velocity components
-    #     velocityComponents = self._param.getInternalVelocityComponents()
-    #     for index, comp in enumerate(velocityComponents):
-    #         velocityComponents[index] = f'u{comp}'
-
-    #     # loop over nameListMean and create the corresponding fields
-    #     fieldDict = {}
-    #     notInFileList = []
-    #     for name in nameListMean:
-    #         # NOTE: is it possible to get the field here?
-
-    #         if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
-    #             fieldDict[name] = Field(self._FEMSpaces.FunctionSpaceVectorVelocity, felics_mesh, name = name)
-    #         else:
-    #             fieldDict[name] = Field(self._FEMSpaces.P2, felics_mesh, name=name)
-
-    #         if name == 'u':
-    #             for index, component in enumerate(velocityComponents):
-    #                 indicesOfSubField = fieldDict[name].space.sub(index).collapse()[1]
-    #                 fieldDict[name].function.x.array[indicesOfSubField] = \
-    #                     meanflow[f'meanflow/{component}/magnitude'][:][indexMappingArray]
-    #         else:
-    #             if name in list(meanflow[f'meanflow'].keys()):
-    #                 fieldDict[name].function.x.array[:] = \
-    #                     meanflow[f'meanflow/{component}/magnitude'][:][indexMappingArray]
-    #             else:
-    #                 notInFileList.append(name)
-        
-    #     # set the constant value 0 for the ut field if it exists
-    #     if 'ut' in list(fieldDict.keys()):
-    #         fieldDict['ut'].setConstant(0.)
-
-    #     # set the resulting fieldDict
-    #     return fieldDict, notInFileList
-
-    # def import_interpolate_meanflow_from_file(self, felics_mesh, nameListMean, ScalarFunctionSpace, VectorFunctionSpace):
-    #     """
-    #     This method reads mean flow field data from a specified file, interpolates it onto the 
-    #     FELiCS mesh, and stores the results in the object's field dictionary.
     
-    #     Notes
-    #     -----
-    #     Vector fields like velocity ('u') and momentum ('rhou') are handled specially,
-    #     with components being assembled into vector function spaces.
-    #     TODO: Handle vector fields in a more automatic way based on "nameListMean".
-    #     Raises
-    #     ------
-    #     ValueError
-    #         If the coordinate system is not recognized.
-    #     """
+    def __init__(
+            self, 
+            param, 
+            FEMSpaces, 
+            filePath, 
+            GroupName, 
+            needInterpolation   = True,
+            originalMeshFile    = None,
+            isComplex           = False,
+            cacheData           = True,
+            ):
+        """
+        Initialize the Reader for loading and interpolating data onto FELiCS mesh.
         
-    #     param               = self._param
-    #     filePath            = param.FlowInput.MeanFlowFilePath
-    #     velocityComponents  = param.BoundaryCondition.VelocityComponents
-    #     coordSys            = param.Case.CoordinateSystem
+        This class handles reading data from HDF5 files and mapping/interpolating
+        them onto the FELiCS mesh. Each Reader instance corresponds to one file.
         
-    #     # Get the list of mean flow fields to be read
-    #     nameListMeanOriginal = nameListMean.copy()
-        
-        
-    #     # Function_Space = Field.describeFunctionSpace()
+        Parameters
+        ----------
+        param : object
+            Object containing calculation parameters.
+        FEMSpaces : object
+            Object containing calculation FEM spaces, export FEM spaces and meshes.
+        filePath : str
+            Path to the HDF5 file to be read.
+        GroupName : str
+            Name of the group in the file (used for coordinates in main file).
+        needInterpolation : bool, optional
+            Whether to interpolate data onto the FELiCS mesh, by default True.
+        isComplex : bool, optional
+            Whether the data is complex-valued, by default False.
+        originalMeshFile : str or None, optional
+            Path to original mesh file if coordinates not in main file, by default None.
+        cacheData : bool, optional
+            Whether to load all available data in file to a cache, by default True.
 
-    #     # TODO: Include in the nameListMean if variables are vectors and deal with components inside reader!
-    #     # Check if we ask for "u" and add corresponding veloctiy components
-    #     # (we always load 3D velocity components, even if the case is 2D)
-    #     if 'u' in nameListMean:
-    #         nameListMean.remove('u')
-    #         for component in reversed(velocityComponents):
-    #             nameListMean.insert(0, 'u' + component)
-    #     if 'rhou' in nameListMean:
-    #         nameListMean.remove('rhou')
-    #         for component in reversed(velocityComponents):
-    #             nameListMean.insert(0, 'rhou' + component)
-    #     if 'u_forcing_i' in nameListMean:
-    #         nameListMean.remove('u_forcing_i')
-    #         for component in reversed(velocityComponents):
-    #             nameListMean.insert(0, 'u' + component +'_forcing_i')
-    #     if 'u_forcing_r' in nameListMean:
-    #         nameListMean.remove('u_forcing_r')
-    #         for component in reversed(velocityComponents):
-    #             nameListMean.insert(0, 'u' + component +'_forcing_r')
+        Raises
+        ------
+        FileNotFoundError
+            If the specified file does not exist.
+        """
+        self._FEMSpaces         = FEMSpaces
+        self._param             = param
+        self._ndim              = param.Case.nDim
+        self._mapping           = FEMSpaces.mappingObj
+        self._mesh              = param.getMesh()
+        self._coordnames        = self._mesh.coordinateNames
+        self._groupName         = GroupName
+        self._needInterpolation = needInterpolation
+        self._filePath          = filePath
+        self._cacheData         = cacheData
+        self._isComplex         = isComplex
+        self._dataCache         = {}        # Where we store the numpy arrays
+
+        # Validate file existence
+        if not os.path.isfile(filePath):
+            logger.error(f"File '{filePath}' not found.")
+            raise FileNotFoundError(f"File '{filePath}' not found.")
         
-    #     # Define coordinate names
-    #     if coordSys == 'Cartesian':
-    #         list_of_coords = ['MeanFlow/x', 'MeanFlow/y']
-    #         if param.Case.nDim == 3:
-    #             list_of_coords.append('MeanFlow/z')
-    #     elif coordSys == 'Cylindrical':
-    #         list_of_coords = ['MeanFlow/x', 'MeanFlow/r']
-    #         if param.Case.nDim == 3:
-    #             list_of_coords.append('MeanFlow/t')
-    #     else:
-    #         logger.error(f"Names of coordinate system '{coordSys}' not recognized.")
-    #         raise ValueError(f"Names of coordinate system '{coordSys}' not recognized.")
+        # Cache for loaded data to avoid reloading
+        self._availableVars     = self._getListOfAvailableVariables()
+        if self._cacheData:
+            self._cacheVariables(self._availableVars)
+        
+        # Get calculation mesh coordinates
+        self._calcP2MeshCoords  = FEMSpaces.P2.tabulate_dof_coordinates()[:, 0:self._ndim]
+        self._calcP1MeshCoords  = FEMSpaces.P1.tabulate_dof_coordinates()[:, 0:self._ndim]
+        
+        # Load import mesh coordinates
+        self._load_importMesh_coordinates(needInterpolation, originalMeshFile, filePath)
+        
+        # Create mapping from import to calculation mesh
+        self._import_to_P2calc  = self._mapping._mappingFunc(
+            self._importMeshCoords, 
+            self._calcP2MeshCoords
+        )
+        # NOTE: For P1 we rarely need it, so commented for now
+        # self._import_to_P1calc = self._mapping._mappingFunc(
+        #     self._importMeshCoords, 
+        #     self._calcP1MeshCoords
+        # )
+
+    def _getListOfAvailableVariables(self):
+        """
+        Get list of available variables in the file group.
+        
+        Returns
+        -------
+        list
+            List of available variable names in the specified group.
+        """
+        with h5py.File(self._filePath, 'r') as f:
+            if self._groupName in f:
+                self._availableVars = list(f[self._groupName].keys())
+            else:
+                logger.warning(f"Group '{self._groupName}' not found in file.")
+                self._availableVars = []
+        return self._availableVars
+
+    def _cacheVariables(self, listOfVars):
+        """
+        Load variables in the list into a dictionnary.
+        """
+        with h5py.File(self._filePath, 'r') as f:
+            for varName in listOfVars:
+                if varName not in self._dataCache:
+                    datasetName = f'{self._groupName}/{varName}'
+                    if self._isComplex:
+                        # For complex variables, load magnitude and angle to make real and imag parts
+                        magnitude   = self._load_or_error(f, datasetName + '/magnitude')
+                        angle       = self._load_or_error(f, datasetName + '/angle')
+                        self._dataCache[varName + '_real'] = magnitude * np.cos(angle)
+                        self._dataCache[varName + '_imag'] = magnitude * np.sin(angle)
+                    else:
+                        if not self._needInterpolation:
+                            # If we don't interpolate, we load a FELiCS file with magnitude only
+                            self._dataCache[varName] = self._load_or_error(f, datasetName + '/magnitude')
+                        else:
+                            # Otherwise we load the full variable
+                            self._dataCache[varName] = self._load_or_error(f, datasetName)
+
+    def _load_importMesh_coordinates(self, needInterpolation, originalMeshFile, filePath):
+        """
+        Load mesh coordinates based on interpolation requirements and file sources.
+
+        Parameters
+        ----------
+        needInterpolation : bool
+            Whether interpolation is needed.
+        originalMeshFile : str or None
+            Path to the original mesh file, if available.
+        filePath : str
+            Path to the main data file.
+        """
+        if needInterpolation and originalMeshFile is not None:
+            # Load coordinates from original mesh file
+            mesh_file       = originalMeshFile
+            coord_prefix    = 'coordinates/' # NOTE: we might want to make this more general
+        elif needInterpolation and originalMeshFile is None:
+            # Load coordinates from main file with group name
+            mesh_file       = filePath
+            coord_prefix    = f'{self._groupName}'
+        else:
+            # Load coordinates from FELiCS exported mesh
+            mesh_file       = os.path.join(self._param.Export.ExportFolder, f"{self._param.Case.AnalysisMode}_mesh.h5")
+            coord_prefix    = 'coordinates/'
+
+        with h5py.File(mesh_file, 'r') as handle:
+            self._sizeImportCoord   = handle[coord_prefix + self._coordnames[0]][:].shape
+            self._importMeshCoords  = np.zeros((max(self._sizeImportCoord), len(self._coordnames)))
+            for i, coord in enumerate(self._coordnames):
+                self._importMeshCoords[:, i] = self._load_or_error(handle, coord_prefix + coord)
+
+    def _load_or_error(self, fileHandle, datasetName):
+        """
+        Helper function to load a dataset from an HDF5 file or raise an error if not found.
+        """
+        if datasetName in fileHandle:
+            return fileHandle[datasetName][:]
+        else:
+            logger.error(f"Dataset '{datasetName}' not found in the file.")
+            raise KeyError(f"Dataset '{datasetName}' not found in the file.")
+    
+    def _getNameVarsToLoadForField(self, Field):
+        """
+        This function returns the names of the arrays to be loaded from file
+        depending on the configuration.
+        It takes into account that vector fields need to load each component
+        separately.
+        NOTE: Assumes the names in the Field are the same as in the file.
+        """
+        nameList                = []
+        
+        # Check what type of field we are loading the data into
+        fieldInfo               = Field.describeFunctionSpace()
+        
+        # If we deal with a mixed space, get the subfields
+        if fieldInfo['type'] == "mixed":
+            subFields           = Field.getListOfSubFields()
+        else:
+            subFields           = [Field]
+
+        # Loop over the subfield to check if vectors or scalars are needed
+        for subField in subFields:
+            subFieldInfo        = subField.describeFunctionSpace()
             
-    #     # Add "MeanFlow/" prefix to the names
-    #     nameListMean = [f'MeanFlow/{name}' for name in nameListMean]
-        
-    #     self._interpFlowDict, notInFileList = self.read_and_interpolate_on_felics_mesh(
-    #         filePath,
-    #         nameListMean,
-    #         list_of_coords
-    #     )
-    #     list_of_available_vars = list(self._interpFlowDict.keys())
-        
-    #     fieldDict = {}
-    #     # Define fields in the fieldDict
-    #     for name in nameListMeanOriginal:
-    #         # TODO: deal with vectors in an automatic way! using the namelist
-    #         if name == "u" or name == "rhou":
-    #             # Create a vector field for the velocity
-    #             fieldDict[name] = Field(
-    #                 VectorFunctionSpace, 
-    #                 felics_mesh, 
-    #                 name=name
-    #             )
-    #             # Loop over components to set function coeff values
-    #             for icomp, comp in enumerate(velocityComponents):
-    #                 if name+comp in list_of_available_vars:
-    #                     dofIDX = VectorFunctionSpace.sub(icomp).collapse()[1]
-    #                     # Set the function values
-    #                     fieldDict[name].function.sub(icomp).x.array[dofIDX] = \
-    #                         np.array(self._interpFlowDict[name+comp])
-    #         elif name == "u_forcing_r" or name == "u_forcing_i":
-    #             # Create a vector field for the velocity
-    #             fieldDict[name] = Field(
-    #                 VectorFunctionSpace, 
-    #                 felics_mesh, 
-    #                 name=name
-    #             )
-    #             # Loop over components to set function coeff values
-    #             for icomp, comp in enumerate(velocityComponents):
-    #                 if name[0]+comp+name[1:] in list_of_available_vars:
-    #                     dofIDX = VectorFunctionSpace.sub(icomp).collapse()[1]
-    #                     fieldDict[name].function.sub(icomp).x.array[dofIDX] = \
-    #                         np.array(self._interpFlowDict[name[0]+comp+name[1:]])
-       
-    #         else:
-    #             if name in list_of_available_vars:
-    #                 # Create a scalar field for the other quantities
-    #                 fieldDict[name] = Field(ScalarFunctionSpace, felics_mesh, name=name)
-    #                 fieldDict[name].function.x.array[:] = np.array(self._interpFlowDict[name])
-        
-    #     del self._interpFlowDict
-    #     return fieldDict, notInFileList
-
-
-    def read_and_interpolate_on_felics_mesh(
-        self, 
-        filename, 
-        list_of_variables, 
-        list_of_coords, 
-        destinationSpace=None
-    ):
-        """
-        Interpolate a field on the FELiCS mesh.
-
-        This method is not yet implemented.
-        """
-        
-        list_of_missing_vars                = []
-        
-        # Default space is P2 scalar space
-        if destinationSpace is None:
-            destinationSpace                = self._FEMSpaces.P2
-        
-        # Open file and check for variables
-        with h5py.File(filename, 'r') as h5file:
-            # Check which variables are present
-            for var in list_of_variables:
-                if var not in h5file:
-                    list_of_missing_vars.append(var)
-                    logger.warning(f"Variable '{var}' not found in file '{filename}', set to default (see fieldProperties.py).")
-            list_of_available_vars          = [var for var in list_of_variables if var not in list_of_missing_vars]
-                    
-            # Get the number of input data points
-            coord_shape     = h5file[list_of_coords[0]][:].shape
-            N_input_data    = max(coord_shape) if isinstance(coord_shape, tuple) else coord_shape
-                    
-            # Read the input mesh
-            input_mesh                      = np.zeros((N_input_data, len(list_of_coords)))
-            for i, coord in enumerate(list_of_coords):
-                input_mesh[:, i]            = h5file[coord][:]
+            if subFieldInfo['type'] == "vector":
+                # Get component names from the Field
+                componentNames  = subField.getComponentsNames()
                 
-            # Read the input data
-            input_data                      = np.zeros((N_input_data, len(list_of_available_vars)))
-            for i, var in enumerate(list_of_available_vars):
-                input_data[:, i]            = h5file[var][:]
-        
-        # Interpolation on FELiCS mesh
-        interpolated_data = self.interpolate_on_felics_mesh(
-            input_mesh,
-            input_data,
-            destinationSpace
-        )
-        
-        # List of variables without prefix
-        list_of_available_vars              = [var.split('/')[-1] for var in list_of_available_vars]
-        list_of_missing_vars                = [var.split('/')[-1] for var in list_of_missing_vars]
-        
-        # Populating dictionary with the interpolated fields
-        dict_interpolated_fields            = {}
-        for i, var in enumerate(list_of_available_vars):
-            dict_interpolated_fields[var]   = interpolated_data[:, i]
-        
-        return dict_interpolated_fields, list_of_missing_vars
-        
-        
-    def interpolate_on_felics_mesh(self, input_mesh, input_data, destinationSpace):
-        """
-        Interpolate data from input mesh to destination space.
-        NOTE: At this stage we only interpolate on "single" spaces, 
-        i.e. not on vector spaces or mixed spaces.
-        """
-        
-        # Get the Dofs corresponding to destination space
-        nDim                    = self._param.Case.nDim    
-        destinationMesh         = destinationSpace.tabulate_dof_coordinates()[:, np.arange(nDim)]
-        
-        # First attempt to interpolate with nearest neighbor
-        interp_data_nearest     = interpolate.griddata(
-            input_mesh, 
-            input_data, 
-            destinationMesh, 
-            method='nearest'
-        )
-        
-        # Attempt linear interpolation, fallback to nearest neighbor if it fails
-        try:
-            interp_data             = interpolate.griddata(
-                input_mesh, 
-                input_data, 
-                destinationMesh, 
-                method='linear'
-            )
+                # Add the components to the nameList
+                for compName in componentNames:
+                    nameList.append(subField.getName() + compName)
             
-            # Replace NaNs with nearest neighbor values
-            nan_mask                = np.isnan(interp_data)
-            interp_data[nan_mask]   = interp_data_nearest[nan_mask]
-            
-        except Exception as e:
-            logger.warning(f"Linear interpolation failed: {str(e)}. Using nearest neighbor interpolation instead.")
-            interp_data             = interp_data_nearest
+            else:
+                # We have a scalar field, so we just add the name
+                nameList.append(subField.getName())
+                
+        return nameList
+    
+    def _interpolateDataToFELiCSMesh(self, Field, nameList):
+        """
+        This function interpolates the data from the import mesh to the FELiCS calculation mesh.
+        """
+        interpolatedData        = {}
+        
+        logger.error("Interpolation not yet implemented.")
+        raise NotImplementedError("Interpolation not yet implemented.")
+        
+        return interpolatedData
+    
+    def _mapDataToFELiCSMesh(self, Field, nameList):
+        """
+        This function maps the data from the import mesh to the FELiCS calculation mesh.
+        """
+        mappedData              = {}
+        
+        # Loop over variables and map the data using the precomputed mapping
+        for varName in nameList:
+            if varName in self._dataCache:
+                mappedData[varName] = self._dataCache[varName][self._import_to_P2calc]
+            else:
+                logger.warning(f"Variable '{varName}' not found in cached data.")
 
-        return interp_data
+        return mappedData
+    
+    def _setArraysToField(self, dictOfArrays, Field):
+        """
+        This function sets the values of a given field from a dictionary of arrays.
+        The keys of the dictionary are the names of the variables.
+        """
         
+        # Get the Field information
+        fieldInfo               = Field.describeFunctionSpace()
+        
+        # NOTE: We might have to be careful to set the arrays into sub.sub fields if we have mixed type.
+        if fieldInfo['type'] == "mixed":
+            logger.error("Setting arrays to mixed fields is not implemented yet.")
+            raise NotImplementedError("Setting arrays to mixed fields is not implemented yet.")
+        
+        if fieldInfo['type'] == "vector":
+            # Get component names from the Field
+            componentNames      = Field.getComponentsNames()
+            
+            # Loop over components sub-fields
+            for icomp, compName in enumerate(componentNames):
+                
+                # Mapping check: for debugging purposes
+                assert np.allclose(
+                    self._importMeshCoords[self._import_to_P2calc],
+                    Field.space.sub(icomp).collapse()[0].tabulate_dof_coordinates()[:, 0:self._ndim],
+                    atol=1e-12, rtol=0
+                ), "Coordinate mismatch: import and P2 coords differ beyond tolerance."
+
+                fullCompName    = Field.getName() + compName
+                if fullCompName in dictOfArrays:
+                    # Get indices of the subfield in the mixed space
+                    indicesOfSubField = Field.space.sub(icomp).collapse()[1]
+                    Field.function.x.array[indicesOfSubField] = dictOfArrays[fullCompName]
+                    
+                # Extra debug:
+                # import matplotlib
+                # import matplotlib.pyplot as plt
+                # matplotlib.use("TkAgg")
+                # comp_coords = Field.space.sub(icomp).collapse()[0].tabulate_dof_coordinates()[:, 0:self._ndim]
+                # plt.figure()
+                # plt.tricontourf(comp_coords[:,0], comp_coords[:,1], dictOfArrays[fullCompName], levels=14)
+                # plt.colorbar()
+                # plt.title(f'{fullCompName} mapped')
+                # plt.show()
+        else:
+            # We have a scalar field, so we just add the name
+            varName = Field.getName()
+            if varName in dictOfArrays:
+                Field.function.x.array[:] = dictOfArrays[varName]
+        
+        return Field
+        
+    def importInField(
+            self,
+            Field,
+        ):
+        """
+        This function does the loading of the data from the file into the given Field.
+        NOTE: Assumes the names in the Field are the same as in the file!
+        """
+        
+        # Get the list of variables we want in the field
+        nameListField       = self._getNameVarsToLoadForField(Field)
+        logger.debug(f"Loading {nameListField}...")
+        
+        # Check which variables are not available in the file and filter the list to only those available
+        missingVars         = [name for name in nameListField if name not in self._availableVars]
+        nameListField       = [name for name in nameListField if name not in missingVars]
+        if missingVars:
+            logger.warning(f"Variables {missingVars} not found in file '{self._filePath}'. Set to default values.")
+            
+        # If we didn't cache the data, we need to load the variables now
+        if not self._cacheData and nameListField:
+            self._cacheVariables(nameListField)
+            
+        # Debug that the data matches the import coordinates
+        # import matplotlib
+        # import matplotlib.pyplot as plt
+        # matplotlib.use("TkAgg")
+        # plt.figure()
+        # plt.tricontourf(self._importMeshCoords[:,0], self._importMeshCoords[:,1], self._dataCache['ux'], levels=14)
+        # plt.colorbar()
+        # plt.title(f'ux imported')
+        # plt.show()
+            
+        # Interpolate or map the data to the FELiCS mesh
+        if self._needInterpolation:
+            dataForField    = self._interpolateDataToFELiCSMesh(Field, nameListField)
+        else:
+            dataForField    = self._mapDataToFELiCSMesh(Field, nameListField)
+
+        # Set the data to the corresponding field entries
+        Field               = self._setArraysToField(dataForField, Field)
+
+        return Field, missingVars
