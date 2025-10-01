@@ -228,3 +228,33 @@ class FELiCSMesh:
         """
 
         return self.__coordinateSystem
+    
+    @property
+    def coordinateNames(self):
+        """
+        Names of the coordinates in the mesh's coordinate system.
+
+        Returns
+        -------
+        list of str
+            List of coordinate names (e.g., ['x', 'y', 'z']).
+        """
+        if self.coordinateSystemName =='Cartesian':
+            coordinateNames = ['x']
+            if self.gdim > 1:
+                coordinateNames.append('y')
+            if self.gdim > 2:
+                coordinateNames.append('z')
+        
+        elif self.coordinateSystemName =='Cylindrical':
+            coordinateNames = ['r']
+            if self.gdim > 1:
+                coordinateNames.append('z')
+            if self.gdim > 2:
+                coordinateNames.append('theta')
+                
+        else:
+            logger.error('Coord. syst not yet implemented in tensor framework.')
+            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
+
+        return coordinateNames
