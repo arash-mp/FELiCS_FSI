@@ -35,7 +35,7 @@ def runInputOutput(param):
     
     # read in mean flow and export to h5-file
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
-    meanFlow.importDataFromFileAndExportToH5()
+    meanFlow.importData()
     
     # equation
     equation = EquationCollectionClass(
