@@ -39,7 +39,7 @@ class fieldProperties:
         Default fallback field for missing scalar quantities.
     _oneField : object
         Default fallback field with all coefficients set to one.
-    _zeroVelocityField : object
+    _zeroVectorField : object
         Default fallback field for missing velocity quantities.
     _mean : object
         Reference to the mean flow object, if available.
@@ -866,12 +866,12 @@ class fieldProperties:
             if 'u' in list(self._fieldDict.keys()):
                 return self._fieldDict['u'].getTensor()
             else:
-                return self._zeroVelocityField.getTensor()
+                return self._zeroVectorField.getTensor()
         else:
             if 'u' in self._transportedQuantities:
                 return  self._fieldDict['u']
             else:
-                return self._zeroVelocityField
+                return self._zeroVectorField
 
     @property
     def u_forcing_i(self):

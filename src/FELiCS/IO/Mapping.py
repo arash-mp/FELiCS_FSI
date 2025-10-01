@@ -58,6 +58,7 @@ class Mapping:
         self.VMixedVectorDofCoords              = FEMSpaces.VMixed.sub(0).collapse()[0].tabulate_dof_coordinates()
         self.P2CalcToP1ExportIndecies           = self._mappingFunc(self.P2CalcDofCoordinates, self.P1ExportDofCoordinates)
         self.VectorCalcToP1ExportIndecies       = self._mappingFunc(self.VMixedVectorDofCoords, self.P1ExportDofCoordinates)
+        self.P1exportToP2CalcIndecies           = self._mappingFunc(self.P1ExportDofCoordinates, self.P2CalcDofCoordinates)
 
         # print('Calculating mapping Vector from Vector-Calc-P2 Space to Vector-P1-Export Space...')
         # self.VectorCalcToP1VectorExportIndecies = self._mappingFunc(self.VMixedVectorDofCoords, self.VectorP1ExportCalcDofCoordinates)

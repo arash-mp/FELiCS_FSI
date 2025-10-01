@@ -21,43 +21,77 @@ class Reader:
         """
         self._FEMSpaces     = FEMSpaces
         self._param         = param
+        self._mapping       = FEMSpaces.mappingObj
+        self._mesh          = param.getMesh()
 
 
 
 
-    def ImportMeanflowFromFile(self, Field, config, name):
-        notInFile = False
-        meanflow        = h5py.File(config.FlowInput.MeanFlowFilePath, 'r')
-        exportMesh      = h5py.File(f"{config.Case.AnalysisMode}_mesh.h5", 'r')
-        coordNameList   = ['x', 'y', 'z']
+    def importFromFile(self, Field, variableNames, GroupName, isComplex, config, needInterpolation, originalMeshFile):
+        notInFile       = False
+        data            = h5py.File(config.FlowInput.MeanFlowFilePath, 'r') # TODO: adapt this later
+        analysisMode    = config.Case.AnalysisMode
 
-        # arrange the export mesh coordinates in an array
-        coordArray = np.zeros((exportMesh['coordinates/x'][:].shape[0], config.Case.nDim))
-        coordArray[:, 0] = exportMesh['coordinates/x'][:]
-        for i in range(config.Case.nDim - 1):
-            coordArray[:, i + 1] = exportMesh[f'coordinates/{coordNameList[i + 1]}'][:]
 
-        # map the coordinates of the P2-mesh to the export mesh coordinates
-        coordinatesOfP2Mesh = self._FEMSpaces.P2.tabulate_dof_coordinates()[:,0:config.Case.nDim]
-        mapping = Mapping(self._FEMSpaces)
-        indexMappingArray = mapping._mappingFunc(coordArray, coordinatesOfP2Mesh)
 
-        # get the velocity components
-        velocityComponents = config.getInternalVelocityComponents()
-        for index, comp in enumerate(velocityComponents):
-            velocityComponents[index] = f'u{comp}'
-
-        if name == 'u':
-            for index, component in enumerate(velocityComponents):
-                indicesOfSubField = Field.space.sub(index).collapse()[1]
-                Field.function.x.array[indicesOfSubField] = \
-                    meanflow[f'meanflow/{component}/magnitude'][:][indexMappingArray]
+        # get list of coordinates
+        # TODO: get coordinates from where they are defined (mesh or boundary condition? // velocity components)
+        # TODO: move to meanFlowClass?
+        coordinates             = []
+        cartesianCoordinates    = ['x','y','z']
+        cylindricalCoordinates  = ['r','phi','z']
+        if config.Case.CoordinateSystem == "Cartesian":
+            coordinateSystem = cartesianCoordinates
         else:
-            if name in list(meanflow[f'meanflow'].keys()):
-                Field.function.x.array[:] = \
-                    meanflow[f'meanflow/{component}/magnitude'][:][indexMappingArray]
+            coordinateSystem = cylindricalCoordinates
+        for i in range(config.Case.nDim):
+                coordinates.append(coordinateSystem[i])
+            
+
+        if needInterpolation == False:
+
+            # TODO: move to meanFlowClass?
+            # TODO: get export folder from config
+            # get export mesh
+            if analysisMode == 'Input-Output':
+                exportMesh  = h5py.File(f"Out/{analysisMode}_mesh.h5", 'r')
             else:
-                notInFile = True
+                exportMesh  = h5py.File(f"Out{analysisMode}/{analysisMode}_mesh.h5", 'r')
+
+
+
+            # ########## TODO: use mapping.P1exportToP2CalcIndecies instead
+            # # arrange the export mesh coordinates in an array
+            # coordArray = np.zeros((exportMesh['coordinates/x'][:].shape[0], config.Case.nDim))
+            # coordArray[:, 0] = exportMesh['coordinates/x'][:]
+            # for i in range(config.Case.nDim - 1):
+            #     coordArray[:, i + 1] = exportMesh[f'coordinates/{coordinates[i + 1]}'][:]
+
+            # # map the coordinates of the P2-mesh to the export mesh coordinates
+            # coordinatesOfP2Mesh = self._FEMSpaces.P2.tabulate_dof_coordinates()[:,0:config.Case.nDim]
+            # indexMappingArray = mapping._mappingFunc(coordArray, coordinatesOfP2Mesh)
+            indexMappingArray = self._mapping.P1exportToP2CalcIndecies
+
+            # get the velocity components
+            velocityComponents = config.getInternalVelocityComponents()
+            for index, comp in enumerate(velocityComponents):
+                velocityComponents[index] = f'u{comp}'
+
+            if variableNames == 'u':
+                for index, component in enumerate(velocityComponents):
+                    indicesOfSubField = Field.space.sub(index).collapse()[1]
+                    Field.function.x.array[indicesOfSubField] = \
+                        data[f'{GroupName}/{component}/magnitude'][:][indexMappingArray]
+            else:
+                if variableNames in list(data[f'{GroupName}'].keys()):
+                    Field.function.x.array[:] = \
+                        data[f'{GroupName}/{component}/magnitude'][:][indexMappingArray]
+                else:
+                    notInFile = True
+
+
+
+
 
         return Field, notInFile
 

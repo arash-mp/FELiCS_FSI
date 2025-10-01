@@ -73,7 +73,7 @@ class fluctuationClass(
         Temporal mean flow object.
     _transportedQuantities : list of str
         Names of the transported quantities.
-    _zeroVelocityField : dolfinx.Function
+    _zeroVectorField : dolfinx.Function
         Zero-valued vector function in the velocity space.
     _fieldDict : dict
         Dictionary of calculated fields (both transported and dependent).
@@ -114,7 +114,7 @@ class fluctuationClass(
         self._isSolution = False
         self._zeroField = Function(FEMSpaces.P2)
         # TODO Sophie: set correct name
-        self._zeroVelocityField \
+        self._zeroVectorField \
             = Field(FEMSpaces.FunctionSpaceVectorVelocity, self._param.getMesh(), name=[]).getTensor()
         self._zeroField = Field(FEMSpaces.P2, self._param.getMesh(), name="zero").getTensor()
         self._fieldDict = {}
@@ -220,7 +220,7 @@ class fluctuationSolutions(
 
     Attributes
     ----------
-    _zeroVelocityField : dolfinx.Function
+    _zeroVectorField : dolfinx.Function
         Vector-valued zero field used for initialization (not stored).
     _FEMSpaces : FEMSpaceHandler
         High-order FEM spaces for simulation.
@@ -291,8 +291,8 @@ class fluctuationSolutions(
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroField.x.array[:] = 0.0
         self._zeroField = self._zeroField.x.array[:]
-        #self._zeroVelocityField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
-        #self._zeroVelocityField.x.array[:] = 0.0
+        #self._zeroVectorField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
+        #self._zeroVectorField.x.array[:] = 0.0
 
         # if np.imag(gainValue) > 1e-10 * np.real(gainValue):
         #     printWarning('The gain is a complex number, while it should be \

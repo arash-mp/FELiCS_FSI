@@ -221,11 +221,18 @@ class Field:
 
     
     
-    def importData(self, config, name, alreadyImported):
-        # initialize the reader
-        reader = Reader(config, self.space)
-        if config.Case.AnalysisMode == 'Modal':
-            self, notInFile = reader.importMeanflowFromFile(self, config, name)
+    def importData(self, variableNames, GroupName , isComplex, config, FEMSpaces, needInterpolation = True, originalMeshFile = None):
+        # initialize and call the reader
+        reader = Reader(config, FEMSpaces)
+        self, notInFile = reader.importFromFile(
+            self,
+            variableNames,
+            GroupName,
+            isComplex,
+            config,
+            needInterpolation,
+            originalMeshFile)
+        
         return self, notInFile
 
 
