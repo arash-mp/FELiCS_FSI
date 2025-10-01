@@ -59,49 +59,50 @@ class meanFlowClass(
         # Initialization
         self._fieldDict             = {}
         self._notInFileList         = []
-        self._RawFlowDict           = {}
-        self._nDimRawData           = 0
         self._ScalarFunctionSpace   = self._FEMSpaces.P2
         self._VectorFunctionSpace   = self._FEMSpaces.FunctionSpaceVectorVelocity
         
+        # Get variable list to be read
         nameListMean    = self._getMeanFieldsToBeRead()
-        fieldDict       = {}
-        if not self._param.Case.loadInterpolatedMeanFlow:
-            logger.info("Import mean flow from file without interpolation: " + self._param.FlowInput.MeanFlowFilePath)
-        else:
-            logger.info("Import mean flow from file and interpolate data: " + self._param.FlowInput.MeanFlowFilePath)
+        
+        # Initialize the reader
+        reader          = Reader(
+            self._param,
+            self._FEMSpaces,
+            self._param.FlowInput.MeanFlowFilePath,
+            "meanflow",
+            needInterpolation   = self._param.Case.needInterpolation,
+            originalMeshFile    = None,
+            cacheData           = True  # Load everything at once 
+        )
 
+        # Create empty fields for all variables
         for name in nameListMean:
-            # create empty fields
-            if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
+            if name == 'u': # TODO: Include the tensor order in the field names
                 field = Field(
                     self._FEMSpaces.FunctionSpaceVectorVelocity,
                     self._mesh,
-                    name)
+                    name
+                )
             else:
                 field = Field(
                     self._FEMSpaces.P2,
                     self._mesh,
-                    name)
+                    name
+                )
                 
-            # import data from the .fel or .h5 file into the empty fields
-            config = self._param
-            fieldDict[name], notInFile = field.importData(
-                variableNames       = name,
-                GroupName           = 'meanflow',
-                isComplex           = False,
-                config              = config,
-                FEMSpaces           = self._FEMSpaces,
-                needInterpolation   = config.Case.needInterpolation,
-                originalMeshFile    = None)
+            # Load the data from file into the field
+            self._fieldDict[name], notInFile = field.importData(
+                reader,
+            )
             
-            # collect parameters which should be imported, but are missing in the file
+            # Variables not found in the file are stored in a list
             if notInFile:
                 self._notInFileList.append(name)
         
         # set 'ut' field to zero
-        if 'ut' in list(fieldDict.keys()):
-            fieldDict['ut'].setConstant(0.)
+        if 'ut' in list(self._fieldDict.keys()):
+            self._fieldDict['ut'].setConstant(0.)
                 
         # Define the viscosity and alfa fields
         # NOTE: This should move to a handler

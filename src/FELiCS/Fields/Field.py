@@ -67,7 +67,7 @@ class Field:
     def getComponentsNames(self):
         ## This is  a workaround for now, to use for the retreat.
         ## TODO Sophie: make this independent of the coordinate system, and also usable for mixed function spaces.
-        space_info = self.describeFunctionSpace
+        # space_info = self.describeFunctionSpace
         if isinstance (self.name, list) and len(self.name)>0 and isinstance(self.name[0],tuple) and self.getName() in ["u", "rhou"]:
             numberOfSubSpaces = self.space.num_sub_spaces
             if numberOfSubSpaces == 0:
@@ -164,13 +164,15 @@ class Field:
         For a mixed field:
         {'type': 'mixed', 'num_subspaces': 2, 'subspaces': [...], 'value_size': 4, 'description': 'Mixed space with 2 subspaces'}
         """
-        num_subspaces = self.space.num_sub_spaces
-        value_size = self.space.value_size
-        
+        num_subspaces                   = self.space.num_sub_spaces
+        value_size                      = self.space.value_size
+        nDofsMesh                       = len(self.mesh._coordinates)
+
         result = {
-            'num_subspaces': num_subspaces,
-            'value_size': value_size,
-            'subspaces': []
+            'num_subspaces':            num_subspaces,
+            'value_size':               value_size,
+            'nDofsMesh':                nDofsMesh,
+            'subspaces':                []
         }
         
         if num_subspaces == 0:
@@ -189,23 +191,23 @@ class Field:
                 subspace_descriptions   = []
                 
                 for i in range(num_subspaces):
-                    subspace = self.space.sub(i)
-                    sub_value_size = subspace.value_size
-                    sub_num_subspaces = subspace.num_sub_spaces
-                    
+                    subspace            = self.space.sub(i)
+                    sub_value_size      = subspace.value_size
+                    sub_num_subspaces   = subspace.num_sub_spaces
+
                     if sub_value_size == 1:
-                        subspace_type = 'scalar'
-                        subspace_desc = f'Subspace {i}: scalar'
+                        subspace_type   = 'scalar'
+                        subspace_desc   = f'Subspace {i}: scalar'
                     else:
-                        subspace_type = 'vector'
-                        subspace_desc = f'Subspace {i}: vector ({sub_value_size} components)'
+                        subspace_type   = 'vector'
+                        subspace_desc   = f'Subspace {i}: vector ({sub_value_size} components)'
                     
                     subspace_info = {
-                        'index': i,
-                        'type': subspace_type,
-                        'value_size': sub_value_size,
+                        'index':        i,
+                        'type':         subspace_type,
+                        'value_size':   sub_value_size,
                         'num_sub_subspaces': sub_num_subspaces,
-                        'description': subspace_desc
+                        'description':  subspace_desc
                     }
                     
                     subspace_descriptions.append(subspace_info)
@@ -215,23 +217,16 @@ class Field:
                                   ', '.join([sub['description'].split(': ')[1] for sub in subspace_descriptions])
         
         return result
-    
 
-
-
-    
-    
-    def importData(self, variableNames, GroupName , isComplex, config, FEMSpaces, needInterpolation = True, originalMeshFile = None):
-        # initialize and call the reader
-        reader = Reader(config, FEMSpaces)
-        self, notInFile = reader.importFromFile(
+    def importData(
             self,
-            variableNames,
-            GroupName,
-            isComplex,
-            config,
-            needInterpolation,
-            originalMeshFile)
+            reader,
+        ):
+        
+        # Just call the reader function
+        self, notInFile = reader.importInField(
+            self,
+        )
         
         return self, notInFile
 
