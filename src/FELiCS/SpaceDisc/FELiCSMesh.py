@@ -233,6 +233,9 @@ class FELiCSMesh:
     def coordinateNames(self):
         """
         Names of the coordinates in the mesh's coordinate system.
+        Currently implemented systems are:
+            - Cartesian:    ['x', 'y', 'z']
+            - Cylindrical:  ['x', 'r', 'theta']
 
         Returns
         -------
@@ -247,9 +250,9 @@ class FELiCSMesh:
                 coordinateNames.append('z')
         
         elif self.coordinateSystemName =='Cylindrical':
-            coordinateNames = ['r']
+            coordinateNames = ['x']
             if self.gdim > 1:
-                coordinateNames.append('z')
+                coordinateNames.append('r')
             if self.gdim > 2:
                 coordinateNames.append('theta')
                 
