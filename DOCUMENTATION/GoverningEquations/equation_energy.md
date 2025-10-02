@@ -44,10 +44,8 @@ $$
 with the viscous stress tensor $\tau$ being defined as
 
 $$
-\tau = \mu \left[\left(\nabla + \nabla ^T\right)\mathbf{u} - \frac{2}{3} (\nabla \cdot \mathbf{u}) \mathbf{I}\right]
+\tau = \mu \left[\left(\nabla + \nabla ^T\right)\mathbf{u} - \frac{2}{3} (\nabla \cdot \mathbf{u}) \mathbf{I}\right].
 $$
-
-with $\mathbf{I}$ being the identity tensor.
 
 ```{note}
 The nonlinear energy pressure equation is currently not implemented in FELiCS.
@@ -56,23 +54,22 @@ The nonlinear energy pressure equation is currently not implemented in FELiCS.
 ### Linearized energy pressure equation
 The linear energy pressure equation is
 $$
-\frac{\partial p'}{\partial t} + \overline{\mathbf{u}} \cdot \nabla p' + \mathbf{u}' \cdot \nabla \overline{p} + \overline{\gamma}\left[ \overline{p}(\nabla \cdot \mathbf{u}') + p'(\nabla \cdot \overline{\mathbf{u}}) \right] - (\overline{\gamma} - 1)\left[ \nabla (\overline{\kappa} \nabla T' + \kappa' \nabla \overline{T} + \overline{\tau} : \nabla \mathbf{u}' + \tau' : \nabla \overline{\mathbf{u}}) \right] = 0
+\frac{\partial p'}{\partial t} + \overline{\mathbf{u}} \cdot \nabla p' + \mathbf{u}' \cdot \nabla \overline{p} + \overline{\gamma}\left[ \overline{p}(\nabla \cdot \mathbf{u}') + p'(\nabla \cdot \overline{\mathbf{u}}) \right] - (\overline{\gamma} - 1)\left[ \nabla (\overline{\kappa} \nabla T' + \kappa' \nabla \overline{T} + \overline{\tau} : \nabla \mathbf{u}' + \tau' : \nabla \overline{\mathbf{u}}) \right] = 0,
 $$
 
-with the mean viscous stress tensor $\overline{\tau}$ being defined as
+where the mean viscous stress tensor $\overline{\tau}$ is defined as
 
 $$
-\mathbf{\overline{\tau}} = \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T)\overline{\mathbf{u}} - \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}}) \mathbf{I}]
+\mathbf{\overline{\tau}} = \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T)\overline{\mathbf{u}} - \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}}) \mathbf{I}].
 $$
 
-
-the fluctuating viscous shear stress tensor $\tau'$ being defined as
+The fluctuating viscous shear stress tensor $\tau'$ is defined as
 
 $$
 \tau' = \mu' \left[\left(\nabla + \nabla ^T\right)\overline{\mathbf{u}} - \frac{2}{3} (\nabla \cdot \overline{\mathbf{u}}) \mathbf{I}\right] + \overline{\mu}\left[(\nabla + \nabla ^T) \mathbf{u}' - \frac{2}{3} (\nabla \cdot \mathbf{u}') \mathbf{I}\right]
 $$
 
-with $\overline{\mu}_\textrm{eff}$ and $\mu_\textrm{eff}'$ being the mean and fluctuating effective dynamic viscosity, respectively (see [Viscosity models](./equation_viscosity.md) for details).
+where $\overline{\mu}_\textrm{eff}$ and $\mu_\textrm{eff}'$ are the mean and fluctuating effective dynamic viscosity, respectively (see [Viscosity models](./equation_viscosity.md) for details).
 
 
 #### Weak form of the linearized energy pressure equation
