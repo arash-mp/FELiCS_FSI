@@ -16,7 +16,6 @@ def runResolvent(param):
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Fields.fluctuationClass      import fluctuationSolutions
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
-    from    FELiCS.Misc.functions               import printDebug
     from    FELiCS.Solvers.LinearSolver         import LinearSolver, ResolventOperator
     # import FELiCS.IO.Import as Import
 
@@ -35,7 +34,7 @@ def runResolvent(param):
         
     # read in mean flow and export to h5-file
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
-    meanFlow.importData()
+    meanFlow.importDataFromFileAndExportToH5()
  
     # Define the equations
     equation = EquationCollectionClass(
