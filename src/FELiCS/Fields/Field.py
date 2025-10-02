@@ -67,8 +67,10 @@ class Field:
     def getComponentsNames(self):
         ## This is  a workaround for now, to use for the retreat.
         ## TODO Sophie: make this independent of the coordinate system, and also usable for mixed function spaces.
+        # TODO: make this independent of the variable name
         # space_info = self.describeFunctionSpace
-        if isinstance (self.name, list) and len(self.name)>0 and isinstance(self.name[0],tuple) and self.getName() in ["u", "rhou"]:
+        if isinstance (self.name, list) and len(self.name)>0 and isinstance(self.name[0],tuple) and \
+            self.getName() in ["u", "rhou", "u_forcing_r", "u_forcing_i"]:
             numberOfSubSpaces = self.space.num_sub_spaces
             if numberOfSubSpaces == 0:
                 return []

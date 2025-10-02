@@ -53,7 +53,7 @@ class meanFlowClass(
         self._customMeanFlowQuantities = []
         
 
-    def importData(self):
+    def importDataFromFileAndExportToH5(self):
         logger.info(f"Reading input flow from: '{self._param.FlowInput.MeanFlowFilePath}'")
 
         # Initialization
@@ -65,12 +65,18 @@ class meanFlowClass(
         # Get variable list to be read
         nameListMean    = self._getMeanFieldsToBeRead()
         
+        # Get the group name depending on the file type (NOTE: uniformize this or find way around it)
+        if self._param.Case.needInterpolation:
+            groupName = "MeanFlow"
+        else:
+            groupName = "meanflow"
+        
         # Initialize the reader
         reader          = Reader(
             self._param,
             self._FEMSpaces,
             self._param.FlowInput.MeanFlowFilePath,
-            "meanflow",
+            groupName,
             needInterpolation   = self._param.Case.needInterpolation,
             originalMeshFile    = None,
             cacheData           = True  # Load everything at once 
@@ -78,7 +84,7 @@ class meanFlowClass(
 
         # Create empty fields for all variables
         for name in nameListMean:
-            if name == 'u': # TODO: Include the tensor order in the field names
+            if name == 'u' or name == 'u_forcing_r' or name == 'u_forcing_i': # TODO: Include the tensor order in the field names
                 field = Field(
                     self._FEMSpaces.FunctionSpaceVectorVelocity,
                     self._mesh,
