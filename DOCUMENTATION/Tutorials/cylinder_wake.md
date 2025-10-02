@@ -27,10 +27,10 @@ python cylinder_wake_mesh.py
 ```
 If you open the mesh in GMSH, click on `Mesh -> 2D`. It should look like:
 
-![Image1](../../TUTORIALS/cylinder_wake_tutorial/CylinderWakeMesh.png) <a id="fig:Mesh"></a>
+![Image1](../../TUTORIALS/cylinder_wake_tutorial/pic/CylinderWakeMesh.png) <a id="fig:Mesh"></a>
 Figure 1. 2D Mesh.
 
-![Image2](../../TUTORIALS/cylinder_wake_tutorial/magCylinderWake.png) <a id="fig:MagMesh"></a>
+![Image2](../../TUTORIALS/cylinder_wake_tutorial/pic/magCylinderWake.png) <a id="fig:MagMesh"></a>
 Figure 2. Magnified version of [Figure 1](#fig:Mesh)
 
 ```{note}
@@ -98,7 +98,7 @@ After executing [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutoria
 
 The file ```base_flow.xdmf``` can be opened in Paraview to visualize the base flow: 
 
-![Image3](../../TUTORIALS/cylinder_wake_tutorial/BaseFlow.png)
+![Image3](../../TUTORIALS/cylinder_wake_tutorial/pic/BaseFlow.png)
 Figure 3. Magnitude of the flow-field. 
 
 

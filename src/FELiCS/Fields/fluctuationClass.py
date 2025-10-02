@@ -128,7 +128,7 @@ class fluctuationClass(
             self._fieldDict[field] = Tensor(
                                             self._fluc[indexOfFieldInList],
                                             self._coordinateSystem,
-                                            hasSpectralDimension = True,
+                                            mayHaveSpectralDimension = True,
                                             )
 
         # Get all the variables, which need to be present

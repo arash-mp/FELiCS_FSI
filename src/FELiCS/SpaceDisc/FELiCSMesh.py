@@ -114,14 +114,14 @@ class FELiCSMesh:
                                     x, 
                                     coordinateSystemName.lower(), 
                                     m = m,
-                                    mesh_dims = (1, 1, 0),
+                                    gdim = self.gdim,
                                     )
         elif coordinateSystemName =='Cylindrical':
             self.__coordinateSystem = CoordinateSystem(
                                     x,
                                     "cylindricalfelics", 
                                     m = m,
-                                    mesh_dims = (1, 1, 0),
+                                    gdim = self.gdim,
                                     )
         else:
             printError('Coord. syst not yet implemented in tensor framework.')

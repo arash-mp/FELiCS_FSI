@@ -13,9 +13,9 @@ $$
 \frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q})+\mathbf{C}\mathbf{f}
 $$
 
-- $\mathcal{N}$: nonlinear operator (e.g. navier-Stokes)
+- $\mathcal{N}$: nonlinear operator (e.g. Navier-Stokes)
 - $\mathbf{C}$: input matrix (maps external forcing $\mathbf{f}$ into the state space)
-- $\mathbf{f}$: external forcing (e.g. actuation, volumne force)
+- $\mathbf{f}$: external forcing (e.g. actuation, volume force)
 
 Let $\overline{\mathbf{q}}$ be the steady base state , i.e. $\mathcal{N}(\overline{\mathbf{q}})=0$ and introduce a small pertubation 
 
@@ -32,7 +32,7 @@ $$
 where  $\mathcal{L}\equiv\nabla_{\mathbf{q}}\mathcal{N}\big|_{\overline{\mathbf{q}}}\in \mathbb{R}^{N\times N}$
 is the Jacobian at the base state $\overline{\mathbf{q}}$. 
 
-We further define the outpout equation 
+We further define the output equation 
 $$\mathbf{y}' =\mathrm{D}\mathbf{q}'$$
 
 with 
@@ -41,30 +41,30 @@ with
 ### Harmonic forcing 
 We assume the forcing and respoce to be periodic in time, reading
 
-- harmonic forcing: $\mathbf{f}' = \hat{\mathbf{f}}\mathrm{e}^{-j\omega t} +c.c.$
-- harmonic responce: $\mathbf{q}' = \hat{\mathbf{q}}\mathrm{e}^{-j\omega t} +c.c.$
+- harmonic forcing: $\mathbf{f}' = \hat{\mathbf{f}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c.$
+- harmonic responce: $\mathbf{q}' = \hat{\mathbf{q}}\mathrm{e}^{-\mathrm{j}\omega t} +c.c.$
 
-Insertin in the linearized system of equations leads to
+Inserting this in the linearized system of equations leads to
 
 $$
--j\omega\mathbf{B}\hat{\mathbf{q}} = \mathbf{A}\hat{\mathbf{q}}+\mathbf{C}\hat{\mathbf{f}}.
+-\mathrm{j}\omega\mathbf{B}\hat{\mathbf{q}} = \mathbf{A}\hat{\mathbf{q}}+\mathbf{C}\hat{\mathbf{f}}.
 $$
 
 
 We solve for the output response  
 
 $$
- \hat{\mathbf{q}} = (-j \omega \mathbf{B}-\mathbf{A})^{-1}\mathbf{C}\hat{\mathbf{f}}=\mathbf{R}(\omega)\mathbf{C}\hat{\mathbf{f}},
+ \hat{\mathbf{q}} = (-\mathrm{j} \omega \mathbf{B}-\mathbf{A})^{-1}\mathbf{C}\hat{\mathbf{f}}=\mathbf{R}(\omega)\mathbf{C}\hat{\mathbf{f}},
 $$
 
 with 
 
-- resolvent operator:  $\mathbf{R} = (-j \omega \mathbf{B}-\mathbf{A})^{-1}$ .
+- resolvent operator:  $\mathbf{R} = (-\mathrm{j} \omega \mathbf{B}-\mathbf{A})^{-1}$ .
 
 The output is computed as  
 
 $$
- \hat{\mathbf{y}}= \mathbf{D}\hat{\mathbf{q}} = \mathbf{D}(-j \omega \mathbf{B}-\mathbf{A})^{-1}\mathbf{C}\hat{\mathbf{f}}=\mathbf{H}(\omega)\mathbf{C}\hat{\mathbf{f}},
+ \hat{\mathbf{y}}= \mathbf{D}\hat{\mathbf{q}} = \mathbf{D}(-\mathrm{j} \omega \mathbf{B}-\mathbf{A})^{-1}\mathbf{C}\hat{\mathbf{f}}=\mathbf{H}(\omega)\mathbf{C}\hat{\mathbf{f}},
 $$
 
 where 
