@@ -369,9 +369,9 @@ class UflDecorator():
         """
         result = UlfDecorator(self._expression)
         if isinstance(other, UflDecorator):
-            result.substract(other._expression)
+            result.subtract(other._expression)
         else:
-            result.substract(other)
+            result.subtract(other)
         return result
 
     def __isub__(self, other):
@@ -393,9 +393,9 @@ class UflDecorator():
         Does not currently validate that `other` is a valid UFL expression.
         """
         if isinstance(other, UflDecorator):
-            self.substract(other._expression)
+            self.subtract(other._expression)
         else:
-            self.substract(other)
+            self.subtract(other)
         return self
 
 
