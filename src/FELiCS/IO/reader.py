@@ -1,7 +1,9 @@
 import  os
 import  h5py
 import  numpy               as np
-from    scipy               import interpolate
+# from    scipy               import interpolate
+from    scipy.spatial       import Delaunay
+from    scipy.interpolate   import LinearNDInterpolator, NearestNDInterpolator
 from    FELiCS.Misc.logging import Logger
 from    functools           import cached_property
 
@@ -77,11 +79,23 @@ class Reader:
     # Cached mesh and mapping data
     # --------------------------
     @cached_property
-    def ndim(self): return self._param.Case.nDim
+    def ndim(self):
+        if self._param is None:
+            raise RuntimeError("ndim accessed before bind_env()")
+        return self._param.Case.nDim
 
     @cached_property
-    def coordnames(self): return self._param.getMesh().coordinateNames
-        
+    def coordnames(self):
+        if self._param is None:
+            raise RuntimeError("coordnames accessed before bind_env()")
+        return self._param.getMesh().coordinateNames
+    
+    @cached_property
+    def _triangulationImportMesh(self):
+        """Cached Delaunay triangulation of the import mesh for interpolation."""
+        import_coords = self.importMeshCoords[:, :self.ndim]
+        return Delaunay(import_coords)
+    
     @cached_property
     def calcMeshCoords(self):
         """
@@ -178,6 +192,7 @@ class Reader:
         
         # Set new source if different
         key                     = (os.path.abspath(filePath), groupName)
+        # NOTE: might need completion of the variable list
         if key != self._source_key:
             self._source_key    = key
             self._availableVars = None
@@ -253,21 +268,34 @@ class Reader:
     # --------------------------
     def _interpolate_to_calc_mesh(self, var_names):
         """Interpolate given variables from import mesh to calculation mesh."""
-        src     = self.importMeshCoords[:, :self.ndim]
-        dst     = self.calcMeshCoords
-        data    = np.column_stack([self._rawDataDict[v] for v in var_names])
+        import_coords   = self.importMeshCoords[:, :self.ndim]
+        calc_coords     = self.calcMeshCoords
+        n_import        = import_coords.shape[0]
+        
+        # Sanity check: all variables have same length as import mesh
+        for v in var_names:
+            if self._rawDataDict[v].shape[0] != n_import:
+                raise ValueError(
+                    f"Variable '{v}' has length {len(self._rawDataDict[v])}, "
+                    f"but import mesh has {n_import} points."
+                )
+    
+        # Stack data columns (N, K)
+        values          = np.column_stack([self._rawDataDict[v] for v in var_names])
 
-        if len(src) != len(data):
-            logger.error(f"Source data and mesh coordinates must have the same length; got {len(src)} and {len(data)}.")
-            raise ValueError("Source data and mesh coordinates must have the same length.")
+        # Use cached triangulation
+        linear_interp   = LinearNDInterpolator(self._triangulationImportMesh, values)
+        interpolated    = linear_interp(calc_coords)   # shape (M, K)
+        
+        # Handle NaNs by nearest-neighbour fill (vectorized)
+        if np.isnan(interpolated).any():
+            nearest_interp          = NearestNDInterpolator(import_coords, values)
+            nearest_values          = nearest_interp(calc_coords)
+            nan_mask                = np.isnan(interpolated)
+            interpolated[nan_mask]  = nearest_values[nan_mask]
 
-        nn      = interpolate.griddata(src, data, dst, method="nearest")
-        lin     = interpolate.griddata(src, data, dst, method="linear")
-        mask    = np.argwhere(np.isnan(lin[:, 0]))
-        if np.any(mask):
-            logger.warning(f"Linear interpolation produced NaNs for {mask.size} points; filling with nearest.")
-            lin[mask, :] = nn[mask, :]
-        return {v: lin[:, i] for i, v in enumerate(var_names)}
+        # Return a dict {var_name: array}
+        return {v: interpolated[:, i] for i, v in enumerate(var_names)}
 
     def _map_to_calc_mesh(self, var_names):
         """Map given variables using precomputed index mapping."""
