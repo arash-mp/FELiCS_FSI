@@ -227,11 +227,15 @@ class Field:
     def importData(
             self,
             reader,
+            importFilePath,
+            groupName = None
         ):
         
         # Just call the reader function
         self, notInFile = reader.importInField(
             self,
+            importFilePath,
+            groupName
         )
         
         return self, notInFile

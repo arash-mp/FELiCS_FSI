@@ -73,18 +73,19 @@ class meanFlowClass(
         
         # Initialize the reader
         reader          = Reader(
-            self._param,
-            self._FEMSpaces,
-            self._param.FlowInput.MeanFlowFilePath,
-            groupName,
             needInterpolation   = self._param.Case.needInterpolation,
             originalMeshFile    = None,
-            cacheData           = True  # Load everything at once 
+            isComplex           = False, # NOTE: Should be an attribute of the field, not the reader?
+            cacheData           = True,
         )
+        # TEMPORARY: Bind the params and FEM spaces to the reader
+        reader.bind_env(self._param, self._FEMSpaces)
 
-        # Create empty fields for all variables
+        # Create empty fields for each variable 
+        # TODO: Create new type of Field collection for mean flow? (Similar to mode collection.)
         for name in nameListMean:
-            if name == 'u' or name == 'u_forcing_r' or name == 'u_forcing_i': # TODO: Include the tensor order in the field names
+            # TODO: Include the tensor order in the field names to avoid hardcoding.
+            if name == 'u' or name == 'u_forcing_r' or name == 'u_forcing_i':
                 field = Field(
                     self._FEMSpaces.FunctionSpaceVectorVelocity,
                     self._mesh,
@@ -100,6 +101,8 @@ class meanFlowClass(
             # Load the data from file into the field
             self._fieldDict[name], notInFile = field.importData(
                 reader,
+                self._param.FlowInput.MeanFlowFilePath,
+                groupName
             )
             
             # Variables not found in the file are stored in a list
