@@ -137,6 +137,8 @@ class Reader:
     def ndim(self):
         """
         Get the number of spatial dimensions.
+        TODO: get from the Field, but needs to be kept in memory for multiple fields or import files
+        NOTE: Concept is 1 calc mesh per Reader instance
 
         Returns
         -------
@@ -156,7 +158,8 @@ class Reader:
     def coordnames(self):
         """
         Get the names of the coordinate variables.
-
+        TODO: get from the Field, but needs to be kept in memory for multiple fields or import files
+        NOTE: Concept is 1 calc mesh per Reader instance
         Returns
         -------
         list of str
@@ -188,6 +191,8 @@ class Reader:
     def calcMeshCoords(self):
         """
         Get the coordinates of the calculation mesh (P2).
+        TODO: get from the Field, but needs to be kept in memory for multiple fields or import files
+        NOTE: Concept is 1 calc mesh per Reader instance
 
         Returns
         -------
@@ -221,12 +226,12 @@ class Reader:
             if self._originalMeshFile:
                 # Option 1: load from original mesh file
                 with h5py.File(self._originalMeshFile, "r") as fileHandle:
-                    prefix          = "coordinates/"  # NOTE: we want to get rid of groups in files
-                    numCoords       = len(self.coordnames)
-                    firstCoordShape = fileHandle[prefix + self.coordnames[0]][:].shape
-                    coordsArray     = np.zeros((max(firstCoordShape), numCoords))
+                    prefix                  = "coordinates/"  # NOTE: we want to get rid of groups in files
+                    numCoords               = len(self.coordnames)
+                    firstCoordShape         = fileHandle[prefix + self.coordnames[0]][:].shape
+                    coordsArray             = np.zeros((max(firstCoordShape), numCoords))
                     for i, coordName in enumerate(self.coordnames):
-                        coordsArray[:, i] = fileHandle[prefix + coordName][:]
+                        coordsArray[:, i]   = fileHandle[prefix + coordName][:]
                 return coordsArray
             else:
                 # Option 2: load from main file under group name
@@ -234,25 +239,25 @@ class Reader:
                 # Build from the first current file that has coords
                 self._ensure_source_set()
                 self._get_list_available_vars()
-                missingCoords           = [coord for coord in self.coordnames if coord not in self._rawDataDict.keys()]
+                missingCoords               = [coord for coord in self.coordnames if coord not in self._rawDataDict.keys()]
                 if missingCoords:
                     self._load_from_h5(missingCoords)
-                firstCoordShape         = self._rawDataDict[self.coordnames[0]].shape
-                coordsArray             = np.zeros((max(firstCoordShape), len(self.coordnames)))
+                firstCoordShape             = self._rawDataDict[self.coordnames[0]].shape
+                coordsArray                 = np.zeros((max(firstCoordShape), len(self.coordnames)))
                 for i, coordName in enumerate(self.coordnames):
-                    coordsArray[:, i]   = self._rawDataDict[coordName]
+                    coordsArray[:, i]       = self._rawDataDict[coordName]
                 return coordsArray
         else:
             # Option 3: load from FELiCS exported mesh file
             meshFile = os.path.join(
                 self._param.Export.ExportFolder,
-                f"{self._param.Case.AnalysisMode}_mesh.h5"  # TODO: call all FELiCS meshes the same way
+                "mesh.h5"
             )
             with h5py.File(meshFile, "r") as fileHandle:
                 prefix                  = "coordinates/"
                 firstCoordShape         = fileHandle[prefix + "x"][:].shape
                 coordsArray             = np.zeros((max(firstCoordShape), self.ndim))
-                # NOTE: in FELiCS mesh the coordinates are always x,y,z! Change?
+                # NOTE: in FELiCS mesh the coordinates are always x,y,z! Needed for ParaView?
                 for i, coordName in enumerate(["x", "y", "z"][:self.ndim]):
                     coordsArray[:, i]   = fileHandle[prefix + coordName][:]
             return coordsArray

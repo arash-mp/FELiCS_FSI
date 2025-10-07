@@ -136,21 +136,20 @@ class FEMSpaces():
         self.elementTypeStr = getElementType()
 
 
-        ## create export mesh
+        ## Create export mesh
         # Refine the mesh 
         logger.debug('Defining refined P1 export mesh.')
         refine_tuple        = refine(mesh.dolfinxMesh)
         exportMesh_dolfinx  = refine_tuple[0]
-        # create new FELiCSMesh
+        # Create new FELiCSMesh
         exportMesh          = FELiCSMesh(param.Case.CoordinateSystem,inputMesh=exportMesh_dolfinx)
         exportMesh.gdim     = param.Case.nDim
-        # save mesh
-        meshfileName        = f'{param.Case.AnalysisMode}_mesh.h5'
-        exportMesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/{meshfileName}')
+        # Save mesh
+        exportMesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
         self.exportMesh     = exportMesh
         
 
-        ## create vector spaces
+        ## Create vector spaces
         self._nVelocityComponents   = param.BoundaryCondition.nVelocityComponents # dim of velocity vector
         # Get the order of polynomials for velocity components
         if 'u' in param.getTransportedQuantityList():

@@ -456,9 +456,11 @@ class fluctuationSolutions(
 
             self._flucExportWrapper(pointGroup)
 
-            self.writeXMFFile(f'{self._param.Export.ExportFolder}/'
-                              + f'{self._param.Case.AnalysisMode}_mesh.h5',
-                              self._mean.meanflowFilename, hf)
+            self.writeXMFFile(
+                f'{self._param.Export.ExportFolder}/mesh.h5',
+                self._mean.meanflowFilename, 
+                hf
+            )
 
             # export the param-object to the h5-file as string:
             self._param.export(f'{hf.filename}')
@@ -475,9 +477,11 @@ class fluctuationSolutions(
 
             self._flucExportWrapper(pointGroup)
 
-            self.writeXMFFile(f'{self._param.Export.ExportFolder}/'
-                              + f'{self._param.Case.AnalysisMode}_mesh.h5',
-                              self._mean.meanflowFilename, hf)
+            self.writeXMFFile(
+                f'{self._param.Export.ExportFolder}/mesh.h5',
+                self._mean.meanflowFilename, 
+                hf
+            )
 
             # export the param-object to the h5-file as string:
             self._param.export(f'{hf.filename}')
@@ -501,9 +505,11 @@ class fluctuationSolutions(
 
             self._flucExportWrapper(pointGroup)
 
-            self.writeXMFFile(f'{self._param.Export.ExportFolder}/'
-                              + f'{self._param.Case.AnalysisMode}_mesh.h5',
-                              self._mean.meanflowFilename, hf)
+            self.writeXMFFile(
+                f'{self._param.Export.ExportFolder}/mesh.h5',
+                self._mean.meanflowFilename, 
+                hf
+            )
 
             # export the param-object to the h5-file as string:
             self._param.export(f'{hf.filename}')
