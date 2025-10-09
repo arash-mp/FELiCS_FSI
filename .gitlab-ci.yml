@@ -34,6 +34,7 @@ test:
       #  echo "Installing FELiCS environment and dependecies..."
       #  pip install -U pip
       #  pip install -U pytest
+      #  --- insert FELiCS packages & pytest
   script:
     - cd TESTS
     # - python3 -m pytest
