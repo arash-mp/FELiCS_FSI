@@ -16,21 +16,17 @@ test:
     - git --version
     - ls -all
     - |
-      if [ ! -d "local-runner-env-tests" ] || [ ! -f "local-runner-env-tests/bin/activate" ]; then
-        echo "\nCreating new virtual environment...\n"	
-        python3 -m venv local-runner-env-tests
+      if [ ! -d "local-runner-envTests" ] || [ ! -f "local-runner-envTests/bin/activate" ]; then
+        echo "Creating new virtual environment..."
+        python3 -m venv local-runner-envTests
       fi
-      echo "Activating virtual environment..."	
-    - source local-runner-env-tests/bin/activate    
-      #- export PATH="$PATH:/opt/anaconda3/bin"
-      #- conda init
-      #- conda env create -f INSTALLATION/felics_v2.4_env.yml -p .env/ || true
-      #- conda activate felics2025_dolfin9
-      #- conda install pytest
-    - pip install -U pip
-    - pip install -U pytest
-      #- shopt -s expand_aliases
-      #- alias envrun="conda run -p .env/"
+      echo "Activating virtual environment..."
+      source local-runner-envTests/bin/activate
+      #if ! python -c "import FELiCS" 2>/dev/null; then
+      #  echo "Installing FELiCS environment and dependecies..."
+      #  pip install -U pip
+      #  pip install -U pytest
+      #  --- insert FELiCS packages & pytest
   script:
     - cd TESTS
     #- python3 -m pytest 
