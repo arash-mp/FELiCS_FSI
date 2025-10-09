@@ -1,5 +1,4 @@
 from dolfinx.fem             import Function, petsc
-from FELiCS.IO.reader        import Reader
 import basix
 
 class Field:

@@ -117,8 +117,8 @@ class export:
 
         elif isinstance(exportObject, np.ndarray):
             # TODO Sophie: give correct names?
-            flucRealCalc = Field(self._FEMSpaces.VMixed, None, name=[])
-            flucImagCalc = Field(self._FEMSpaces.VMixed, None, name=[])
+            flucRealCalc = Field(self._FEMSpaces.VMixed, self._exportMesh, name=[])
+            flucImagCalc = Field(self._FEMSpaces.VMixed, self._exportMesh, name=[])
 
             flucRealCalc.function.x.array[:] = np.real(exportObject[:]).astype(
                                                                         float
