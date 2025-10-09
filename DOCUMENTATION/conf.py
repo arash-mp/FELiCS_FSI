@@ -37,19 +37,3 @@ napoleon_attr_annotations = True
 myst_enable_extensions = ["dollarmath", "amsmath", "colon_fence"]
 myst_dmath_double_inline = True
 
-
-# Where the switcher JSON lives (root of each deployment)
-html_js_files = ['version-switcher.js']
-_SWITCHER_JSON = "/versions.json"
-
-# Figure out which version we’re currently viewing:
-# In your Pages parallel deploys, tags render under /<tag>/ and “latest” at /
-_version = os.environ.get("CI_COMMIT_TAG", "latest")
-
-html_theme_options = {
-    "navbar_end": ["version-switcher"],
-    "switcher": {
-        "json_url": "/versions.json",
-        "version_match": os.environ.get("CI_COMMIT_TAG", "latest"),
-    },
-}
