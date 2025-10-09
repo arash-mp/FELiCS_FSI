@@ -33,7 +33,7 @@ def runModal(param):
     # read in mean flow and export to h5-file
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
     meanFlow.importDataFromFileAndExportToH5()
-    
+
     # equation
     equation = EquationCollectionClass(
                                       param,

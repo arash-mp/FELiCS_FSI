@@ -56,38 +56,63 @@ class meanFlowClass(
     def importDataFromFileAndExportToH5(self):
         logger.info(f"Reading input flow from: '{self._param.FlowInput.MeanFlowFilePath}'")
 
+        # Initialization
         self._fieldDict             = {}
         self._notInFileList         = []
-        self._RawFlowDict           = {}
-        self._nDimRawData           = 0
         self._ScalarFunctionSpace   = self._FEMSpaces.P2
         self._VectorFunctionSpace   = self._FEMSpaces.FunctionSpaceVectorVelocity
         
+        # Get variable list to be read
         nameListMean    = self._getMeanFieldsToBeRead()
-        # Check which type the input file is and read
-        if self._param.FlowInput.MeanFlowFilePath == '':
-            # no mean flow file, set everything to zero
-            logger.warning("No mean flow file, setting everything to zero.")
-            fieldDict       = {} 
-            for name in nameListMean:
-                if name[0] == 'u' and not (name == 'ut' or name == 'ut_forcing'):
-                    fieldDict[name] = Field(
-                        self._FEMSpaces.FunctionSpaceVectorVelocity, self._mesh, name = name)
-                else:
-                    fieldDict[name] = Field(self._FEMSpaces.P2, self._mesh, name = name)
-            self._fieldDict = fieldDict
+        
+        # Get the group name depending on the file type (NOTE: uniformize this or find way around it)
+        if self._param.Case.needInterpolation:
+            groupName = "MeanFlow"
         else:
-            # initialize the reader
-            reader = Reader(self._param, self._FEMSpaces)
-            if self._param.Case.loadInterpolatedMeanFlow:
-                # If the mean flow is already interpolated, we read it from the file
-                logger.info("Import mean flow from file without interpolation: " + self._param.FlowInput.MeanFlowFilePath)
-                self._fieldDict, self._notInFileList = reader.import_meanflow_from_file(self._mesh, nameListMean)
+            groupName = "meanflow"
+        
+        # Initialize the reader
+        reader          = Reader(
+            needInterpolation   = self._param.Case.needInterpolation,
+            originalMeshFile    = None,
+            isComplex           = False, # NOTE: Should be an attribute of the field, not the reader?
+            cacheData           = True,
+        )
+        # TEMPORARY: Bind the params and FEM spaces to the reader
+        reader.bind_env(self._param, self._FEMSpaces)
+
+        # Create empty fields for each variable 
+        # TODO: Create new type of Field collection for mean flow? (Similar to mode collection.)
+        for name in nameListMean:
+            # TODO: Include the tensor order in the field names to avoid hardcoding.
+            if name == 'u' or name == 'u_forcing_r' or name == 'u_forcing_i':
+                field = Field(
+                    self._FEMSpaces.FunctionSpaceVectorVelocity,
+                    self._mesh,
+                    name
+                )
             else:
-                # Import and interpolate mean flow from file
-                logger.info("Import mean flow from file with interpolation: " + self._param.FlowInput.MeanFlowFilePath)
-                self._fieldDict, self._notInFileList = reader.import_interpolate_meanflow_from_file(self._mesh, nameListMean, self._ScalarFunctionSpace, self._VectorFunctionSpace)
+                field = Field(
+                    self._FEMSpaces.P2,
+                    self._mesh,
+                    name
+                )
+                
+            # Load the data from file into the field
+            self._fieldDict[name], notInFile = field.importData(
+                reader,
+                self._param.FlowInput.MeanFlowFilePath,
+                groupName
+            )
             
+            # Variables not found in the file are stored in a list
+            if notInFile:
+                self._notInFileList.append(name)
+        
+        # set 'ut' field to zero
+        if 'ut' in list(self._fieldDict.keys()):
+            self._fieldDict['ut'].setConstant(0.)
+                
         # Define the viscosity and alfa fields
         # NOTE: This should move to a handler
         self.initLamDiff()

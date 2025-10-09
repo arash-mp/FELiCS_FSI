@@ -47,7 +47,7 @@ You will:
 ## [Tutorial 4: Input-Output Analysis](input_output_analysis.md)
 Perform input/output analysis for a reacting flow.
 
-Yous will:
+You will:
 - Load the reacting flame base flow.
 - Set up the linearized equations for momentum, mass, species, and energy.
 - Apply a harmonic forcing at the specified boundary.

@@ -70,7 +70,7 @@ class config(ABC):
                 'CoordinateSystem':         {'datatype':str,    'default':'Cartesian'},
                 # 'HeatCapacityConstPressure':{'datatype':int,    'default':1005},
                 # 'HeatCapacityRatio':        {'datatype':int,    'default':1.4},
-                'loadInterpolatedMeanFlow': {'datatype':bool,   'default':True},
+                'needInterpolation':        {'datatype':bool,   'default':True},
                 'm':                        {'datatype':int,    'default':0},
                 'MeshFilePath':             {'datatype':str,    'default':''},
                 'MixtureFilePath':          {'datatype':str,    'default':''},

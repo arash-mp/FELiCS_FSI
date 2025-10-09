@@ -6,6 +6,8 @@ from FELiCS.Misc.tensorUtils import (
     iDiv,
     iGrad,
     iConj,
+    iT,
+    iIdentity
 )
 from .EquationTemplate      import EquationTemplate
 from FELiCS.Misc.logging    import Logger
@@ -147,7 +149,7 @@ class EnergyPressureEquation(EquationTemplate):
         # The term is: -j*(gamma-1)*div(kappa_m*grad(T_f) + kappa_f*grad(T_m))
         # which is integrated by parts,
         # TEMPORARY: use constant Pr definition (This should move to fieldProperty or a handler)
-        kappa_m = mean.nulam*mean.cp/mean.Pr            
+        kappa_m = mean.nuTot*mean.cp/mean.Pr            
         kappa_f = fluc.nulam*mean.cp/mean.Pr
         # Volume term:  
         #   j*(gamma-1)[(grad(conj(X)).(kappa_m*grad(T_f)) + (grad(conj(X)).(kappa_f*grad(T_m))]*dx
@@ -174,4 +176,59 @@ class EnergyPressureEquation(EquationTemplate):
         #   --> Neglected to impose the proper BC
         
     
+    def addBilinearExpression(self, weakForm, mean):
+        """
+        Add the bilinear convection term. CAUTION: not tested yet, treat with care!
+        Only for linearization around p, not T.
 
+        Parameters
+        ----------
+        weakForm : Form
+            The weak form object to be updated.
+        mean : MeanFields
+            The mean fields object containing time-averaged variables.
+        """
+        # Sophie: treat with care, so far not "Taylor"-tested!
+        # Only for the state vector (u,rho,p), not for (u,rho,T).
+
+        try:
+            u_bil   = mean._fieldDict['u_bilinear'].getTensor()
+            p_bil   = mean._fieldDict['p_bilinear'].getTensor()
+            rho_bil = mean._fieldDict['rho_bilinear'].getTensor()
+        except:
+            # TODO: write some kind of message?
+            return
+
+        J_hat   = self.J_hat
+        X       = self.X
+        fluc    = self.fluc
+
+        # ------------------------  Advection terms
+        # Add volume integral of pressure gradient term (1)
+        weakForm.add(( 1j*iDiv(iConj(X)*u_bil)*fluc.p ).ufl_tens*J_hat*dx)
+        weakForm.add(( 1j*iDiv(iConj(X)*fluc.u)*p_bil ).ufl_tens*J_hat*dx)
+        # Add volume integral of velocity divergence term (2)
+        weakForm.add(( 1j*mean.gamma*iDot(iGrad(iConj(X)*p_bil),fluc.u) ).ufl_tens*J_hat*dx)
+        weakForm.add(( 1j*mean.gamma*iDot(iGrad(iConj(X)*fluc.p),u_bil) ).ufl_tens*J_hat*dx)
+        # Add boundary integral of (1) and (2)
+        weakForm.add(( -1j*(mean.gamma+1)*iDot(u_bil*fluc.p*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
+        weakForm.add(( -1j*(mean.gamma+1)*iDot(fluc.u*p_bil*iConj(X),self.n) ).ufl_tens*J_hat*self.all_ds)
+   
+        ## ------------------------  Thermal diffusion term (Fourier law) => ignored
+        #kappa_m = mean.nuTot*mean.cp/mean.Pr            
+        #kappa_f = fluc.nulam*mean.cp/mean.Pr
+        ## Volume term:  
+        #weakForm.add(( -1j*(mean.gamma-1)*iDot(iGrad(iConj(X)),kappa_m*iGrad(fluc.T)) ).ufl_tens*J_hat*dx)
+        #weakForm.add(( -1j*(mean.gamma-1)*iDot(iGrad(iConj(X)),kappa_f*iGrad(mean.T)) ).ufl_tens*J_hat*dx)
+        # reference: self._fieldDict['T'] = (self.p - self.rho*mean_Rspe*mean_T)/(mean_Rspe*mean_rho)
+
+        ## ------------------------  Viscous diffusion term 
+        tau_bil  = mean.nuTot * iGrad(u_bil)
+        tau_bil += iT(tau_bil)
+        tau_bil += -2.0/3.0 * mean.nuTot * \
+                        iDiv(u_bil) * iIdentity(iGrad(u_bil))
+        weakForm.add(( -1j*(mean.gamma-1)*iDot(iDiv(tau_bil),fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
+        weakForm.add(( -1j*(mean.gamma-1)*iDot(iDiv(fluc.tau),u_bil*iConj(X)) ).ufl_tens*J_hat*dx)
+        
+        
+ 

@@ -114,14 +114,14 @@ class FELiCSMesh:
                                     x, 
                                     coordinateSystemName.lower(), 
                                     m = m,
-                                    mesh_dims = (1, 1, 0),
+                                    gdim = self.gdim,
                                     )
         elif coordinateSystemName =='Cylindrical':
             self.__coordinateSystem = CoordinateSystem(
                                     x,
                                     "cylindricalfelics", 
                                     m = m,
-                                    mesh_dims = (1, 1, 0),
+                                    gdim = self.gdim,
                                     )
         else:
             printError('Coord. syst not yet implemented in tensor framework.')
@@ -228,3 +228,36 @@ class FELiCSMesh:
         """
 
         return self.__coordinateSystem
+    
+    @property
+    def coordinateNames(self):
+        """
+        Names of the coordinates in the mesh's coordinate system.
+        Currently implemented systems are:
+            - Cartesian:    ['x', 'y', 'z']
+            - Cylindrical:  ['x', 'r', 'theta']
+
+        Returns
+        -------
+        list of str
+            List of coordinate names (e.g., ['x', 'y', 'z']).
+        """
+        if self.coordinateSystemName =='Cartesian':
+            coordinateNames = ['x']
+            if self.gdim > 1:
+                coordinateNames.append('y')
+            if self.gdim > 2:
+                coordinateNames.append('z')
+        
+        elif self.coordinateSystemName =='Cylindrical':
+            coordinateNames = ['x']
+            if self.gdim > 1:
+                coordinateNames.append('r')
+            if self.gdim > 2:
+                coordinateNames.append('theta')
+                
+        else:
+            logger.error('Coord. syst not yet implemented in tensor framework.')
+            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
+
+        return coordinateNames

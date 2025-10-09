@@ -206,7 +206,7 @@ class UflDecorator():
 
         """
         self._setCorrectMeshObject(mesh)
-        return assemble_scalar(form(ufl_expression))
+        return assemble_scalar(form(self._expression))
 
     def lhsIsZero(self):
         """
@@ -318,7 +318,10 @@ class UflDecorator():
         -----
         Does not currently validate that `other` is a valid UFL expression.
         """
-        result = UlfDecorator(self._expression)
+        if hasattr(self, "_expression"):
+            result = UflDecorator(self._expression)
+        else: 
+            result = UflDecorator()
         if isinstance(other, UflDecorator):
             result.add(other._expression)
         else:
@@ -367,11 +370,14 @@ class UflDecorator():
         -----
         Does not currently validate that `other` is a valid UFL expression.
         """
-        result = UlfDecorator(self._expression)
+        if hasattr(self, "_expression"):
+            result = UflDecorator(self._expression)
+        else: 
+            result = UflDecorator()
         if isinstance(other, UflDecorator):
-            result.substract(other._expression)
+            result.subtract(other._expression)
         else:
-            result.substract(other)
+            result.subtract(other)
         return result
 
     def __isub__(self, other):
@@ -393,9 +399,9 @@ class UflDecorator():
         Does not currently validate that `other` is a valid UFL expression.
         """
         if isinstance(other, UflDecorator):
-            self.substract(other._expression)
+            self.subtract(other._expression)
         else:
-            self.substract(other)
+            self.subtract(other)
         return self
 
 
