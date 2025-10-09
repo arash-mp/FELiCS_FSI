@@ -24,16 +24,16 @@ test:
     - git --version
     - ls -all
     - |
-      if [ ! -d "local-runner-env-tests" ] || [ ! -f "local-runner-env-tests/bin/activate" ]; then
+      if [ ! -d "local-runner-envTests" ] || [ ! -f "local-runner-envTests/bin/activate" ]; then
         echo "Creating new virtual environment..."
-        python3 -m venv local-runner-env-tests
+        python3 -m venv local-runner-envTests
       fi
       echo "Activating virtual environment..."
-      source local-runner-env-tests/bin/activate
-      if ! python -c "import FELiCS" 2>/dev/null; then
-        echo "Installing FELiCS environment and dependecies..."
-        pip install -U pip
-        pip install -U pytest
+      source local-runner-envTests/bin/activate
+      #if ! python -c "import FELiCS" 2>/dev/null; then
+      #  echo "Installing FELiCS environment and dependecies..."
+      #  pip install -U pip
+      #  pip install -U pytest
   script:
     - cd TESTS
     # - python3 -m pytest
