@@ -32,6 +32,7 @@ We describe the physical models and state equations required to close the govern
 :maxdepth: 1
 equation_state.md
 equation_viscosity.md
+equation_turbulence_models.md
 equation_reaction.md
 ```
 
