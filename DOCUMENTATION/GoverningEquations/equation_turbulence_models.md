@@ -93,13 +93,11 @@ where:
 
 When $\overline{\mu}_t$ is **uniform** (and also $\overline{\mu}$), the linear viscous contribution reduces to $(\overline{\mu}+\overline{\mu}_t)\nabla^2\mathbf{u}'$. For spatially varying $\overline{\mu}_t(\mathbf{x})$, the operator includes $\nabla\!\cdot\!\big(2\,\overline{\mu}_t\,\mathbf{S}'\big)$ with the appropriate product-rule terms.
 
-```{note}
 **Compressible note:** if compressibility is considered, the stress form used in FELiCS mirrors the molecular one:  
 $$
 \boldsymbol{\tau}_\text{eff} = \mu_\text{eff}\big[(\nabla+\nabla^T)\mathbf{u} - \tfrac{2}{3}(\nabla\!\cdot\!\mathbf{u})\mathbf{I}\big],
 $$  
 with $\mu_\text{eff}=\mu+\mu_t$.
-```
 
 ## FELiCS-specific hypotheses
 - **Frozen eddy viscosity:** Currently, the fluctuations of eddy viscosity are neglected $(\mu_t'=0)$.  
@@ -131,7 +129,7 @@ In such case, the FELiCS [configuration file](./../Running_FELiCS/FELiCS_setting
 and the [mean flow file](./../Running_FELiCS/fel_file.md) should contain an array called `nuturb`, defining $\overline{\mu}_t(x)$ over the mean flow mesh.
 
 ```{note}
-:fearful: Small FELiCS quirck: eventhough the eddy and molecular viscosity are called `nuturb` and `nulam` in the code, they actually refer to the dynamic viscosity $\mu$. :fearful:
+Small FELiCS quirck: eventhough the eddy and molecular viscosity are called `nuturb` and `nulam` in the code, they actually refer to the dynamic viscosity $\mu$. :fearful:
 ```
 
 ```{note}
