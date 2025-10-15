@@ -1,6 +1,7 @@
-
-from 	FELiCS.Misc.logging import Logger
+import  os
+import  numpy               as np
 from    .Field              import Field
+from 	FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -30,7 +31,7 @@ class Mode(Field):
         Indicates if the mode is a response mode.
     """
 
-    def __init__(self, FEMSpace, mesh, name=[], isStateVector=False, m=None):
+    def __init__(self, FEMSpace, mesh, name=[], isStateVector=True, m=None):
         """
         Initializes the Mode instance.
 
@@ -42,6 +43,11 @@ class Mode(Field):
             The mesh on which the FEM space is defined.
         """
         super().__init__(FEMSpace, mesh, name, isStateVector, m)
+        # NOTE: why are these hardcoded here?
+
+        if not name:
+            self.name = "q_hat"
+        
         self.isAdjoint  = False
         self.isResponse = False
 
@@ -213,5 +219,45 @@ class Mode(Field):
         except: 
             logger.error('For this mode object no error was defined. Returning "-9999."...')
             return -9999.
+        
+    def importData(
+            self,
+            reader,
+            importDirPath,
+            analysis,
+        ):
+        
+        # Get info on mode used to define filename
+        if analysis == 'Modal':
+            eigval      = self.getEigenValue()
+            modeType    = 'Direct' if not self.isAdjoint else 'Adjoint'
+            fileName    = f'{analysis}Solution_Omega_{modeType}_{np.round(eigval, 3)}.h5'
+        elif analysis == 'Resolvent':
+            frequency   = self.getFrequency()   
+            modeType    = 'Response' if self.isResponse else 'Forcing'
+            fileName    = f'{analysis}_Omega{np.round(frequency, 3)}_{modeType}_gain0.h5'   # NOTE: gain0 is a placeholder
+        elif analysis == 'Input-Output':
+            frequency   = self.getFrequency()
+            modeType    = 'Response'
+            fileName    = f'{analysis}_Omega{np.round(frequency, 3)}_{modeType}_gain0.h5'   # NOTE: Always gain 0 for IO modes
+        else:
+            logger.error(f'Analysis type "{analysis}" not recognized. Cannot import mode data.')
+            return self, None
+        
+        # File name and group name
+        importFilePath  = os.path.join(importDirPath, fileName)
+        groupName       = "fluctuation/0/"
+        
+        # Call the reader from Field parent class
+        self, notInFile = self.importData(
+            self,
+            importFilePath,
+            groupName
+        )
+        
+        # Set the mode properties from the file
+        
+        
+        return self, notInFile
 
 

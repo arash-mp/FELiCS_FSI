@@ -172,7 +172,7 @@ class Reader:
         """
         if self._param is None:
             raise RuntimeError("coordnames accessed before bind_env()")
-        return self._param.getMesh().coordinateNames
+        return self._param.getMesh().axisNames
 
     @cached_property
     def _triangulationImportMesh(self):
@@ -478,7 +478,7 @@ class Reader:
     # --------------------------
     # Field helpers
     # --------------------------
-    def _names_for_field(self, Field):
+    def _names_for_field(self, field):
         """
         Determine variable names to load from file for this Field.
 
@@ -493,18 +493,18 @@ class Reader:
             List of variable names.
         """
         names           = []
-        info            = Field.describeFunctionSpace()
-        subFields       = Field.getListOfSubFields() if info["type"] == "mixed" else [Field]
+        info            = field.info
+        subFields       = field.getListOfSubFields() if info["type"] == "mixed" else [field]
         for subField in subFields:
-            subInfo     = subField.describeFunctionSpace()
+            subInfo     = subField.info
             if subInfo["type"] == "vector":
-                for component in subField.getComponentsNames():
+                for component in subField.getNamesOfSubFields():
                     # NOTE: this is an annoying workaround for u_forcing
                     # TODO: make the same pattern for all vector variables!
-                    if Field.getName()[0] == "u":
-                        names.append(subField.getName()[0] + component + subField.getName()[1:])
+                    if field.getName()[0] == "u":
+                        names.append(subField.getName()[0] + component[-1] + subField.getName()[1:])
                     else:
-                        names.append(subField.getName() + component)
+                        names.append(component)
             else:
                 # Then it's a scalar
                 names.append(subField.getName())
@@ -584,6 +584,7 @@ class Reader:
 
         self._update_data_source(filePath, groupName)
         self._get_list_available_vars()
+
 
         wantedVars  = self._names_for_field(Field)
         missingVars = [var for var in wantedVars if var not in self._availableVars]

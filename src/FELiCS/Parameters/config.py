@@ -629,10 +629,10 @@ class config(ABC):
             MeanList.append('nuturb')
         if self.Case.MolViscModel in ['File'] or self.Case.MolViscPerturbModel in ['Sutherland mean']:
             MeanList.append('nulam')
-        if self.Case.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.Case["CoordinateSystem"] == 'Cylindrical':
-            MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
-        elif self.Case.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.Case["CoordinateSystem"] == 'Cartesian':
-            MeanList.extend(['rstxx', 'rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
+        # if self.Case.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.Case["CoordinateSystem"] == 'Cylindrical':
+        #     MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
+        # elif self.Case.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.Case["CoordinateSystem"] == 'Cartesian':
+        #     MeanList.extend(['rstxx', 'rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
         if self.Case.Reaction:
             MeanList.append('dQ')
         return MeanList
