@@ -38,11 +38,10 @@ def runModal(param):
     # Solve eigenproblem for each guess
     solution        = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
-        if not adjoint:
-            logger.info("Solving direct GEVP for guess: omega = " + str(guess))
-            tmp     = LinearSolver.solveGeneralEigenproblem(A,B,guess,nSol)
-            solution.appendSolutionOfEigenProblem(tmp, guess)
-        elif adjoint:
+        logger.info("Solving direct GEVP for guess: omega = " + str(guess))
+        tmp         = LinearSolver.solveGeneralEigenproblem(A,B,guess,nSol)
+        solution.appendSolutionOfEigenProblem(tmp, guess)
+        if adjoint:
             logger.info("Solving adjoint GEVP for guess: omega = " + str(guess))
             tmp     = LinearSolver.solveGeneralEigenproblem(A,B,guess,nSol,adjoint=True)
             solution.appendSolutionOfEigenProblem(tmp,guess,adjoint=True)
@@ -54,8 +53,18 @@ def runModal(param):
     # Get a mode to check structure
     exampleMode     = solution.modeList[0]
     
-    # Create an empty mode
-    importMode      = Mode(FEMSpaces,mesh,name=[],isStateVector=True)
+    # Create an empty mode to import into 
+    # NOTE set isStateVector to False to test setting subnames manually
+    importMode      = Mode(
+        FEMSpaces.VMixed, 
+        mesh,
+        name='q_hat_import',
+        isStateVector=False
+    )
+    # Test if the setSubFieldNames method works
+    importMode.setNamesOfSubFields(['u', 'p'])
+    # Set the eigenvalue of the mode we want to import
+    importMode.setEigenValue(exampleMode.getEigenValue())
 
     # Instantiate a reader and use to load mode
     r               = Reader(
@@ -64,6 +73,19 @@ def runModal(param):
         isComplex           = True,
         cacheData           = True,
     )
+    # TEMPORARY: Bind the params and FEM spaces to the reader
+    r.bind_env(param, FEMSpaces)
     importMode.importData(
         r,
+        param.Export.ExportFolder,
     )
+    
+    # Set a fake eigenvalue and append this mode to the collection
+    importMode.setEigenValue(999.999)
+    solution.appendMode(importMode)
+    
+    # Export again the mode collection so we can check the imported mode
+    fluctSolutList_new      = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    ExportFromFile(param,FEMSpaces,fluctSolutList_new,meanFlow)
+    
+    
