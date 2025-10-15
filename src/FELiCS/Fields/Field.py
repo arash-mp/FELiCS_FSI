@@ -1,5 +1,4 @@
 from dolfinx.fem             import Function, petsc
-from FELiCS.IO.reader        import Reader
 import basix
 
 class Field:
@@ -94,7 +93,7 @@ class Field:
 
     def setNamesOfSubFields(self, nameList):
         # TODO docu
-        if len(nameList) != self.ino['num_subspaces']:
+        if len(nameList) != self.info['num_subspaces']:
             #TODO throw error, or warning? And then use default names / don't update the list?
             return
         self.namesOfSubFields = nameList 
@@ -105,6 +104,10 @@ class Field:
         from FELiCS.Misc.tensorUtils import Tensor
         # TODO Sophie: handle Tensors of mixed functions (later)
         return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, mayHaveSpectralDimension = self.hasSpectralDimension)
+
+    def isReal(self):
+        import numpy as np
+        return np.linalg.norm(np.imag(self.getCoefficientArray()))==0
 
     def getListOfSubFields(self):
         """
@@ -125,7 +128,6 @@ class Field:
         
         # Get the number of subspaces
         numberOfSubSpaces       = self.info['num_subspaces']
-        print('#####', numberOfSubSpaces, "###")
 
         # If there are no subspaces, return a list with one entry (this field)
         if numberOfSubSpaces == 0: 
@@ -140,10 +142,55 @@ class Field:
             # transfer content
             space, mapping            = self.space.sub(i).collapse()
             field                     = Field(space, self.mesh, name=namesOfSubFields[i])
-            field.setCoefficientArray(self.function.getCoefficientArray()[mapping])
+            field.setCoefficientArray(self.getCoefficientArray()[mapping])
             listOfFields.append(field)
 
         return listOfFields
+
+
+
+    def setListOfSubFields(self, listOfFields, name=[]):
+        """
+        Set the field coefficients from a list of single-component fields.
+
+        Parameters
+        ----------
+        listOfFields : list
+            A list of `Field` objects representing individual subspaces.
+        name: string, optional
+            The name of the new field that contains all the given fields as subfields.
+
+        Notes
+        -----
+        - This only works if the "listOfFields" contains fields with the correct spaces, 
+          which are subspaces of the space which which this field has been initialized.
+        - If the space has multiple subspaces, their coefficients are mapped back.
+        - Throws an error if the input list does not match the expected size.
+        """
+
+        # Get info about the field we are examining
+        numberOfSubSpaces       = self.info['num_subspaces']
+        
+        if numberOfSubSpaces == 0:
+            # TODO: check that the functionSpaces are the same!
+            self.setCoefficientArray(listOfFields[0].getCoefficientArray())
+            if not name or not isinstance(name, str):
+                self.name = listOfFields[0].getName()
+            else:
+                self.name = name
+            
+        else:
+            namesOfSubFields = []
+            for i in range(numberOfSubSpaces):
+                # TODO: check that the functionSpaces are the same!
+                space, mapping                  = self.space.sub(i).collapse()
+                self.function.x.array[mapping]  = listOfFields[i].getCoefficientArray()
+                namesOfSubFields.append(listOfFields[i].getName())
+                self.setNamesOfSubFields(namesOfSubFields)
+                if isinstance(name,str):
+                    self.name = name
+                
+
 
     def describeFunctionSpace(self):
         """
@@ -245,54 +292,16 @@ class Field:
         return self, notInFile
 
 
-
-
-
-
-    def setListOfSubFields(self, listOfFields):
+    def getSize(self):
         """
-        Set the field coefficients from a list of single-component fields.
+        Get the length of the coefficient array from the underlying function.
 
-        Parameters
-        ----------
-        listOfFields : list
-            A list of `Field` objects representing individual subspaces.
-
-        Notes
-        -----
-        - If the space has multiple subspaces, their coefficients are mapped back.
-        - Throws an error if the input list does not match the expected size.
+        Returns
+        -------
+        integer
+            length of coefficient array 
         """
-        # Get info about the field we are examining
-        numberOfSubSpaces       = self.space.num_sub_spaces
-        infoSpaceField          = self.describeFunctionSpace()
-        
-        # Prepare names for field
-        # If we are assembling a vector we need only one name
-        if infoSpaceField['type'] == 'vector':
-            self.name = [listOfFields[0].name[0][0][:-1], self.getComponentsNames()]
-        # Maybe we are silly and "assemble" a single scalar...    
-        elif infoSpaceField['type'] == 'scalar':
-            self.name = listOfFields[0].name
-        # For a mixed space we keep the name as it was given
-        elif infoSpaceField['type'] == 'mixed':
-            self.name  = [None]*numberOfSubSpaces
-        
-        if numberOfSubSpaces == 0:
-            # TODO: check that the functionSpaces are the same!
-            self.setCoefficientArray(listOfFields[0].getCoefficientArray())
-            self.name = listOfFields[0].name
-            
-        else:
-            for i in range(numberOfSubSpaces):
-                # TODO: check that the functionSpaces are the same!
-                space, mapping                  = self.space.sub(i).collapse()
-                self.function.x.array[mapping]  = listOfFields[i].getCoefficientArray()
-                
-                # Define the names of sub-fields if we deal with a Mixed field
-                if infoSpaceField['type'] == 'mixed':
-                    self.name[i]                = listOfFields[i].name
-
+        return len(self.function.x.array[:])
 
 
     def getCoefficientArray(self):
@@ -308,6 +317,37 @@ class Field:
         array = np.empty(len(self.function.x.array[:]),dtype=complex)
         array[:] = self.function.x.array[:]
         return array
+
+
+    def getRealCoefficientArray(self):
+        """
+        Get the real part of the coefficient array of the field.
+
+        Returns
+        -------
+        numpy.ndarray
+            A float-valued array representing the field coefficients.
+        """
+        import numpy as np
+        array = np.empty(len(self.function.x.array[:]),dtype=float)
+        array[:] = np.real(self.function.x.array[:])
+        return array
+
+    def getImagCoefficientArray(self):
+        """
+        Get the imaginary part of the coefficient array of the field.
+
+        Returns
+        -------
+        numpy.ndarray
+            A float-valued array representing the field coefficients.
+        """
+        import numpy as np
+        array = np.empty(len(self.function.x.array[:]),dtype=float)
+        array[:] = np.imag(self.function.x.array[:])
+        return array
+
+
 
     def setCoefficientArray(self, array):
         """
@@ -454,6 +494,13 @@ class Field:
 
             vorticityField = Field(self.space, self.mesh)
             vorticityField.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
+
+
+    def exportToH5(self, writer, fileName=None):
+        # Sophie: This will be the final method
+        if fileName == None:
+            fileName = self.getName()
+        writer.exportFieldToH5(self, fileName)
 
 
     def exportH5(self, fileName, mesh = None):
