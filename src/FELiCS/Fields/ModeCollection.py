@@ -115,7 +115,7 @@ class ModeCollection():
         numberOfModes = len(eigVals)
 
         for i in range(numberOfModes):
-            mode = Mode(self.femSpace, self.mesh, name , isStateVector = True)
+            mode = Mode(self.femSpace, self.mesh, name, isStateVector = True)
             mode.isAdjoint = adjoint
             mode.setError(error[i])
             mode.setGuess(guess)

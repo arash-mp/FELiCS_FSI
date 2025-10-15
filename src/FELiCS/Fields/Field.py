@@ -34,13 +34,19 @@ class Field:
         # get Info
         self.info     = self.describeFunctionSpace()
 
-        if name == None:
+        if name == None or not isinstance(name, str):
+            # TODO: write warning if "name" is not a string? 
             if self.info['type']=='scalar':
                 self.name = 'scalarField'
             elif self.info['type']=='vector':
                 self.name = 'vectorField'
             elif self.info['type']=='mixed':
                 self.name = 'mixedField'
+            else: 
+                self.name = 'field'
+        elif name:
+            self.name = name
+
         self.namesOfSubFields = []
         
         self.isStateVector = isStateVector
@@ -68,7 +74,7 @@ class Field:
         if self.info['type'] == 'scalar':
             return [] #TODO: put warning
         elif self.info['type'] == 'vector':
-            axisNames = self.mesh.getAxisNames()
+            axisNames = self.mesh.axisNames
             subFieldNames = []
             for i in range(self.info['num_subspaces']):
                 subFieldNames.append(self.name+axisNames[i])
@@ -84,8 +90,10 @@ class Field:
                     # TODO: finish this, get the right info, call subspaces['Scalar1', 'Scalar2', 'Vector2', ...]
                     self.info['subSpaces']['type']
                     subFieldNames.append(self.name+axisNames[i])
+        return subFieldNames
 
     def setNamesOfSubFields(self, nameList):
+        # TODO docu
         if len(nameList) != self.ino['num_subspaces']:
             #TODO throw error, or warning? And then use default names / don't update the list?
             return
@@ -93,6 +101,7 @@ class Field:
 
 
     def getTensor(self):
+        # TODO docu
         from FELiCS.Misc.tensorUtils import Tensor
         # TODO Sophie: handle Tensors of mixed functions (later)
         return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, mayHaveSpectralDimension = self.hasSpectralDimension)
@@ -114,37 +123,24 @@ class Field:
         """
         listOfFields            = []
         
-        # Get the info about the field we are examining
-        infoSpaceField          = self.describeFunctionSpace()
-        numberOfSubSpaces       = self.space.num_sub_spaces
+        # Get the number of subspaces
+        numberOfSubSpaces       = self.info['num_subspaces']
+        print('#####', numberOfSubSpaces, "###")
 
+        # If there are no subspaces, return a list with one entry (this field)
         if numberOfSubSpaces == 0: 
             listOfFields.append(self)
             return listOfFields
+      
+        # Else get the names of the subfields
+        namesOfSubFields        = self.getNamesOfSubFields()
         
-        # If we have a vector space, we need to create a new list of names
-        if infoSpaceField['type'] == 'vector':
-            name                = [None]*numberOfSubSpaces
-        else:
-            name                = self.name
-        
-        # Loop over sub-fields
+        # Loop over sub-fields and append to list
         for i in range(numberOfSubSpaces):
-            # For a vector space we give the name of the components
-            if infoSpaceField['type'] == 'vector':
-                comp    = self.getComponentsNames()
-                name[i] = [(self.name[0][0]+comp[i],[])]
-    
             # transfer content
             space, mapping            = self.space.sub(i).collapse()
-            field                     = Field(space, self.mesh, name=name[i])
-            field.function.x.array[:] = self.function.x.array[mapping]
-            if len(self.name) == numberOfSubSpaces:  
-                field.name = [self.name[i]]
-            elif len(self.name)==1 and self.name[0] == None:
-                field.name = []
-            elif len(self.name)==1 and len(self.name[0]) == numberOfSubSpaces:
-                field.name = [(self.name[0][0] + self.name[0][1][i], [])]
+            field                     = Field(space, self.mesh, name=namesOfSubFields[i])
+            field.setCoefficientArray(self.function.getCoefficientArray()[mapping])
             listOfFields.append(field)
 
         return listOfFields
@@ -176,7 +172,11 @@ class Field:
         """
         num_subspaces                   = self.space.num_sub_spaces
         value_size                      = self.space.value_size
-        nDofsMesh                       = len(self.mesh._coordinates)
+        # TODO: remove after the writer has been updated. The input mesh in field HAS TO BE A FELiCSMesh, and CANNOT be a dolfinx mesh
+        try:
+            nDofsMesh                       = len(self.mesh._coordinates)
+        except:
+            nDofsMesh                       = self.space.dofmap.index_map.size_global
 
         result = {
             'num_subspaces':            num_subspaces,
