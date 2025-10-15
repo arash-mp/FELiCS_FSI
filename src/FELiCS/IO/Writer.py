@@ -10,22 +10,28 @@ logger = Logger.get_logger("felics")
 
 class Writer:
     
-    def __init__(self, param=None, FEMSpaces=None):
+    def __init__(self, mesh, exportFolder = "Output", exportMesh = None):
         """
         Function arguments:
-        - FEMSpaces: Object containing the Cacluation FEM-Spaces, the export
-            FEM-Spaces and the corresponding meshes.
-        - param: Object, containing the parameters of the calculation.
+        - mesh: FELiCSMesh object 
+        - exportFolder: str, optional 
+               folder in which the files will be saved
+        - exportMesh: FELiCSMesh object, optional
+               export mesh; will be generated if not given
 
         Function returns:
 
+
         """
-        self._FEMSpaces  = FEMSpaces
-        self._param      = param
-        if FEMSpaces != None:
-            self._exportMesh = FEMSpaces.exportMesh
-        else:
-            self._exportMesh = None
+
+        import os
+
+        self.mesh         = mesh
+        self.exportFolder = exportFolder
+        self.exportMesh   = exportMesh
+
+        os.makedirs(exportFolder, exist_ok=True)
+
 
 
     # Method to return fields on the export mesh
@@ -190,25 +196,38 @@ class Writer:
             raise Exception(f"Unknown field type: {infoSpaceField['type']}")
       
 
+
     # Sophies method to achieve the same as above, while debugging the mapping    
     def exportFieldToH5(self, field, fileName):
         import h5py
-        import numpy as     np
-        from pathlib import Path
-        
-        # get exportFolder and expand filename
-        exportFolder = self._param.Export.ExportFolder
+        import numpy   as     np
+        from   pathlib import Path
 
-        xmfText  = self._createXMFHeader(exportFolder)
+        # TODO: check if mesh is already exported; if not: export!!
 
-        # Check the info from the field
-        infoSpaceField      = field.info
+        # This is from FEMSpaces:
+        ## Create export mesh
+        ## Refine the mesh
+        #logger.debug('Defining refined P1 export mesh.')
+        #refine_tuple        = refine(mesh.dolfinxMesh)
+        #exportMesh_dolfinx  = refine_tuple[0]
+        ## Create new FELiCSMesh
+        #exportMesh          = FELiCSMesh(param.Case.CoordinateSystem,inputMesh=exportMesh_dolfinx)
+        #exportMesh.gdim     = param.Case.nDim
+        ## Save mesh
+        #exportMesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
+        #self.exportMesh     = exportMesh
 
-        if len(exportFolder)>0:
-            fileName = exportFolder + "/" + fileName 
 
-        if infoSpaceField['type'] == 'scalar':
-            h5FilePath = Path(fileName + ".h5")
+        xmfText  = self._createXMFHeader()
+
+        if len(self.exportFolder)>0:
+            fileName = self.exportFolder + "/" + fileName 
+
+        # h5 file path
+        h5FilePath = Path(fileName + ".h5")
+
+        if field.info['type'] == 'scalar':
             with h5py.File(h5FilePath, 'w') as h5:
                 if field.isReal():
                     h5.create_dataset(field.getName(), data = field.getRealCoefficientArray(),  dtype = float)
@@ -220,37 +239,33 @@ class Writer:
                     h5.create_dataset(imagName, data = field.getImagCoefficientArray(),  dtype = np.float64)
                     xmfText += self._createXMFForScalarField(h5FilePath.name, realName, field.getSize())
                     xmfText += self._createXMFForScalarField(h5FilePath.name, imagName, field.getSize())
-                    
+                   
+        if field.info['type'] == 'vector':
+            with h5py.File(h5FilePath, 'w') as h5:
+                listOfFields = field.getListOfSubFields()
+                for subField in listOfFields:
+                    h5.create_dataset(subField.getName(), data = subField.getRealCoefficientArray(),  dtype = float)
+                    xmfText += self._createXMFForScalarField(h5FilePath.name, subField.getName(), subField.getSize())
+
+
         xmfText += self._createXMFFooter()
         Path(fileName+".xmf").write_text(xmfText, encoding="utf-8")
 
 
-    def _createXMFHeader(self, exportFolder, meshPath=None):
+    def _createXMFHeader(self):
         from textwrap import dedent
         import h5py
 
-        # TODO: set standard mesh path; should be <OutputFolder>/Mesh.h5, now test wise modal mesh
-        # TODO: it should be created before by the writer if not already there
-        # TODO: relative mesh path should be created
-        if meshPath == None:
-            meshPath = exportFolder + "/Modal_mesh.h5"
-            meshPath_rel = "Modal_mesh.h5"
-        else:
-            path = Path(meshPath)
-            meshPath_rel = path.name
+        meshPath = self.exportFolder + "/mesh.h5"
+        meshPath_rel = "mesh.h5"
 
-        if self._param.Case.nDim == 2:
+        if self.mesh.gdim == 2:
             cellStyle = "Triangle"
         else:
             cellStyle = "Tetrahedron"
 
         meshh5 = h5py.File(meshPath, 'r')
         tri = meshh5['cells']['triangles']
-
-        if self._param.Case.nDim == 2:
-            cellStyle = "Triangle"
-        else:
-            cellStyle = "Tetrahedron"
 
         xmf = dedent(f"""\
               <?xml version="1.0" ?>

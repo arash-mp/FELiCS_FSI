@@ -38,10 +38,20 @@ def runModal(param):
         mesh
     )
     meanFlow.importDataFromFileAndExportToH5()
-    
+   
+
+
     # get one field from meanflow
-    writer          = Writer(param, FEMSpaces)
+    writer          = Writer(mesh, exportFolder="OutputTest", exportMesh = FEMSpaces.exportMesh)
+    field_scalar    = meanFlow._fieldDict['nulam']
+    field_scalar.setCoefficientArray(field_scalar.getCoefficientArray()*2. + 1j*field_scalar.getCoefficientArray())
+    field_scalar.exportToH5(writer)
     field_vector    = meanFlow._fieldDict['u']
+    field_vector.exportToH5(writer)
+    exit()
+
+
+
     exportField     = writer.getFieldsOnExportMesh(field_vector)
     writer.writeFieldToXDMF(exportField, "test_u")
     exit()
