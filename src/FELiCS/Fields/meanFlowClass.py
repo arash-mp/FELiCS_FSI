@@ -63,14 +63,15 @@ class meanFlowClass(
         self._VectorFunctionSpace   = self._FEMSpaces.FunctionSpaceVectorVelocity
         
         # Get variable list to be read
-        nameListMean    = self._getMeanFieldsToBeRead()
+        nameListMean                = self._getMeanFieldsToBeRead()
         
-        # Get the group name depending on the file type (NOTE: uniformize this or find way around it)
+        # Get the group name depending on the file type
+        # TODO: remove groups into FELiCS files
         if self._param.Case.needInterpolation:
-            groupName = "MeanFlow"
+            groupName               = "MeanFlow"
         else:
-            groupName = "meanflow"
-        
+            groupName               = "meanflow"
+
         # Initialize the reader
         reader          = Reader(
             needInterpolation   = self._param.Case.needInterpolation,

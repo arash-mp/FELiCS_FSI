@@ -83,13 +83,13 @@ def runModal(param):
 
 
     # end tracking time
-    end = time.time() - start
+    end             = time.time() - start
     logger.info('Solving the general eigenproblem took %4g s' % end)
-    residuum_max = solution.getMaximumError()
+    residuum_max    = solution.getMaximumError()
     logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
 
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION
     #-----------------------------------------------------------------------
-    fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    fluctSolutList  = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
     ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
