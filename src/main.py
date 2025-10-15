@@ -9,7 +9,8 @@
 # * To ask for permission please contact t.kaiser@tu-berlin.de.
 # */
 import 	argparse
-from 	runModal       				import  runModal      
+# from 	runModal       				import  runModal 
+from    runModal_testReader         import  runModal     
 from 	runResolvent   				import  runResolvent  
 from 	runInputOutput 				import  runInputOutput
 from 	FELiCS.Parameters.config	import 	config
