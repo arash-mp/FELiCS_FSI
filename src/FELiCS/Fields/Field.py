@@ -27,20 +27,22 @@ class Field:
         Wave number. If this is set, the Field is assumed to have one spectral spatial dimension, regardless the value of m.
     """
 
-    def __init__(self, FEMSpace, mesh, name=[], isStateVector=False, m=None):
+    def __init__(self, FEMSpace, mesh, name=None, isStateVector=False, m=None):
         self.space    = FEMSpace
         self.mesh     = mesh
 
-        # if the name is in the wrong format, re-format
-        # TODO Sophie: reformat if there is only a list of variables for a mixed space?
-        # TODO Sophie: throw warning / error if the number of names does not coincide with the number of subspaces
-        if isinstance (name, list) and len(name)>0 and isinstance(name[0],tuple):
-            self.name  = name
-        elif isinstance(name, str):
-            self.name  = [(name,[])]
-        else:
-            self.name = name
+        # get Info
+        self.info     = self.describeFunctionSpace()
 
+        if name == None:
+            if self.info['type']=='scalar':
+                self.name = 'scalarField'
+            elif self.info['type']=='vector':
+                self.name = 'vectorField'
+            elif self.info['type']=='mixed':
+                self.name = 'mixedField'
+        self.namesOfSubFields = []
+        
         self.isStateVector = isStateVector
 
         # handle spectral dimension and wave number
@@ -54,39 +56,41 @@ class Field:
         # initialize function
         self.function = Function(FEMSpace)
 
-    def getName(self):
-        if self.name == None or len(self.name) == 0:
-            return ""
-        elif len(self.name) == 1: 
-            return self.name[0][0]
-        else:
-            return self.name
 
-    def getComponentsNames(self):
-        ## This is  a workaround for now, to use for the retreat.
-        ## TODO Sophie: make this independent of the coordinate system, and also usable for mixed function spaces.
-        # TODO: make this independent of the variable name
-        # space_info = self.describeFunctionSpace
-        if isinstance (self.name, list) and len(self.name)>0 and isinstance(self.name[0],tuple) and \
-            self.getName() in ["u", "rhou", "u_forcing_r", "u_forcing_i"]:
-            numberOfSubSpaces = self.space.num_sub_spaces
-            if numberOfSubSpaces == 0:
-                return []
-            elif self.mesh.coordinateSystemName == "Cartesian" and numberOfSubSpaces == 2:
-                return ["x","y"]
-            elif self.mesh.coordinateSystemName == "Cartesian" and numberOfSubSpaces == 3:
-                return ["x","y","z"]
-            elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 2:
-                return ["x","r"]
-            elif self.mesh.coordinateSystemName == "Cylindrical" and numberOfSubSpaces == 3:
-                return ["x","r","t"]
-        if len(self.name)>1:
-            componentsNames = []
-            for n in self.name:
-                componentsNames.append(n[0])
-            return componentsNames
-        else:
-            return []
+    def getName(self):
+        return self.name
+
+    def setName(self, name):
+        self.name = name
+
+    def getNamesOfSubFields(self):
+        #TODO: docu
+        if self.info['type'] == 'scalar':
+            return [] #TODO: put warning
+        elif self.info['type'] == 'vector':
+            axisNames = self.mesh.getAxisNames()
+            subFieldNames = []
+            for i in range(self.info['num_subspaces']):
+                subFieldNames.append(self.name+axisNames[i])
+                # TODO: throw error if the number of axisnames is not enough. There can be more axisNames than components though
+        elif self.info['type'] == 'mixed':
+            if self.isStateVector and not self.namesOfSubFields:
+                return self.space.stateVectorNames
+            elif self.namesOfSubFields:
+                return self.namesOfSubFields
+            else: 
+                subFieldNames = []
+                for i in range(self.info['num_subspaces']):
+                    # TODO: finish this, get the right info, call subspaces['Scalar1', 'Scalar2', 'Vector2', ...]
+                    self.info['subSpaces']['type']
+                    subFieldNames.append(self.name+axisNames[i])
+
+    def setNamesOfSubFields(self, nameList):
+        if len(nameList) != self.ino['num_subspaces']:
+            #TODO throw error, or warning? And then use default names / don't update the list?
+            return
+        self.namesOfSubFields = nameList 
+
 
     def getTensor(self):
         from FELiCS.Misc.tensorUtils import Tensor
