@@ -2,10 +2,8 @@ import  gmsh
 import  h5py
 import  numpy                   as np
 from    FELiCS.Misc.tensorUtils import CoordinateSystem
-# from    FELiCS.Misc.functions   import printDeprecatedWarning, printError
 from    mpi4py                  import MPI
 from    ufl                     import SpatialCoordinate
-from    dolfinx                 import __version__
 from    dolfinx.mesh            import Mesh 
 from    FELiCS.Misc.logging     import Logger
 
@@ -107,6 +105,7 @@ class FELiCSMesh:
             self.gdim        = inputMesh.topology.dim
             self._cpp_object = self.dolfinxMesh._cpp_object
         x = SpatialCoordinate(self.dolfinxMesh)
+        
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
         self.coordinateSystemName = coordinateSystemName
         if coordinateSystemName =='Cartesian':
@@ -127,6 +126,21 @@ class FELiCSMesh:
             logger.error('Coord. syst not yet implemented in tensor framework.')
             raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
         self._coordinates = self.coordinates()
+
+    def setTrueDimension(self, dim):
+        """
+        Corrects the true dimension of the system. This has to be called if a spectral dimension is included,
+        in which case the true dimension is higher than the geometrical dimension of the mesh.
+         
+        Parameters
+        ----------
+        dim: int 
+            True dimension of the system, including a possible spectral dimension. 
+
+        """
+
+        self.dim = dim
+        self.__coordinateSystem.setTrueDimension(dim)
 
     def saveInFELiCSFormat(self, filename):
         """
@@ -233,10 +247,44 @@ class FELiCSMesh:
     @property
     def axisNames(self):
         """
+        Names of the axes in the coordinate system.
+        These include both FEM and mesh dimensions.
+        Currently implemented systems are:
+            - Cartesian:    ['x', 'y', 'z']
+            - Cylindrical:  ['x', 'r', 't']
+
+        Returns
+        -------
+        list of str
+            List of coordinate names (e.g., ['x', 'y', 'z']).
+        """
+        if self.coordinateSystemName =='Cartesian':
+            coordinateNames = ['x']
+            if self.dim > 1:
+                coordinateNames.append('y')
+            if self.dim > 2:
+                coordinateNames.append('z')
+        
+        elif self.coordinateSystemName =='Cylindrical':
+            coordinateNames = ['x']
+            if self.dim > 1:
+                coordinateNames.append('r')
+            if self.dim > 2:
+                coordinateNames.append('t')
+                
+        else:
+            logger.error('Coord. syst not yet implemented in tensor framework.')
+            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
+
+        return coordinateNames
+    
+    @property
+    def meshAxisNames(self):
+        """
         Names of the axes in the mesh's coordinate system.
         Currently implemented systems are:
             - Cartesian:    ['x', 'y', 'z']
-            - Cylindrical:  ['x', 'r', 'theta']
+            - Cylindrical:  ['x', 'r', 't']
 
         Returns
         -------
@@ -255,7 +303,7 @@ class FELiCSMesh:
             if self.gdim > 1:
                 coordinateNames.append('r')
             if self.gdim > 2:
-                coordinateNames.append('theta')
+                coordinateNames.append('t')
                 
         else:
             logger.error('Coord. syst not yet implemented in tensor framework.')

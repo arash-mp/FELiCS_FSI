@@ -145,7 +145,7 @@ class EquationCollectionClass():
         # Get spatial coordinates
         self.x                  = SpatialCoordinate(mesh.dolfinxMesh)
         self._coordinateSystem  = mesh.coordinateSystem
-        self._coordinateSystem.setTrueDimension(len(self._param.getVelocityComponents()))
+        # self._coordinateSystem.setTrueDimension(len(self._param.getVelocityComponents())) # NOTE: moved to config.py
 
         ## BOUNDARIES
         # Initialize boundary handler
