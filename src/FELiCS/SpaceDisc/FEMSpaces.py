@@ -135,6 +135,8 @@ class FEMSpaces():
         self.element_shape  = getElementShape(mesh.gdim)
         self.elementTypeStr = getElementType()
 
+        # get names for state vector (to put in the mixed space)
+        self.stateVectorNames = param.Case.StateVectorVariables
 
         ## Create export mesh
         # Refine the mesh 
@@ -201,6 +203,10 @@ class FEMSpaces():
         self.VMixed = functionspace(mesh.dolfinxMesh,MixedFE)
         # Create a function space containing of mixed elements on the export mesh
         self.VMixedExport = functionspace(exportMesh.dolfinxMesh, MixedFE)
+
+        # Set state vector names to the VMixed space
+        self.VMixed.stateVectorNames = self.stateVectorNames
+        self.VMixedExport.stateVectorNames = self.stateVectorNames
 
         # create mapping
         self.mappingObj = Mapping(self)

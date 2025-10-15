@@ -230,9 +230,9 @@ class FELiCSMesh:
         return self.__coordinateSystem
     
     @property
-    def coordinateNames(self):
+    def axisNames(self):
         """
-        Names of the coordinates in the mesh's coordinate system.
+        Names of the axes in the mesh's coordinate system.
         Currently implemented systems are:
             - Cartesian:    ['x', 'y', 'z']
             - Cylindrical:  ['x', 'r', 'theta']

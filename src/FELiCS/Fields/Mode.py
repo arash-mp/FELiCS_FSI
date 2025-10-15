@@ -31,7 +31,7 @@ class Mode(Field):
         Indicates if the mode is a response mode.
     """
 
-    def __init__(self, FEMSpace, mesh, name=[], isStateVector=False, m=None):
+    def __init__(self, FEMSpace, mesh, name=[], isStateVector=True, m=None):
         """
         Initializes the Mode instance.
 
@@ -44,6 +44,10 @@ class Mode(Field):
         """
         super().__init__(FEMSpace, mesh, name, isStateVector, m)
         # NOTE: why are these hardcoded here?
+
+        if not name:
+            self.name = "q_hat"
+        
         self.isAdjoint  = False
         self.isResponse = False
 
