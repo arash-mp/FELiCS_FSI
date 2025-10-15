@@ -44,6 +44,7 @@ def runModal(param):
     field_vector    = meanFlow._fieldDict['u']
     exportField     = writer.getFieldsOnExportMesh(field_vector)
     writer.writeFieldToXDMF(exportField, "test_u")
+    exit()
     field_scalar    = meanFlow._fieldDict['nulam']
     exportField     = writer.getFieldsOnExportMesh(field_scalar)
     writer.writeFieldToXDMF(exportField, "test_nulam")
