@@ -88,7 +88,7 @@ class export:
                 numSubSpaces = exportObject[fieldNameFieldToExport].space.num_sub_spaces
                 if numSubSpaces > 1:
 
-                    valueDict[fieldNameFieldToExport] = Field(self._FEMSpaces.FunctionSpaceVectorVelocityExport, self._exportMesh, name=[])
+                    valueDict[fieldNameFieldToExport] = Field(self._FEMSpaces.FunctionSpaceVectorVelocityExport, self._exportMesh)
                     # dofsCoordsCalc = exportObject[fieldNameFieldToExport].function_space.tabulate_dof_coordinates()
                     #indexVector = self.mappingFunc(dofsCoordsCalc[:, 0:2], dofsExport[:, 0:2])
                     tempSolutionArray = np.zeros((self._param.Case.nDim,dofsExport.shape[0] ), dtype=complex)
@@ -117,8 +117,8 @@ class export:
 
         elif isinstance(exportObject, np.ndarray):
             # TODO Sophie: give correct names?
-            flucRealCalc = Field(self._FEMSpaces.VMixed, None, name=[])
-            flucImagCalc = Field(self._FEMSpaces.VMixed, None, name=[])
+            flucRealCalc = Field(self._FEMSpaces.VMixed, None)
+            flucImagCalc = Field(self._FEMSpaces.VMixed, None)
 
             flucRealCalc.function.x.array[:] = np.real(exportObject[:]).astype(
                                                                         float

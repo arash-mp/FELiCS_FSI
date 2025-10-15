@@ -97,9 +97,10 @@ class ModeCollection():
 
         self.appendMode(mode)
 
-    def appendSolutionOfEigenProblem(self, solution, guess, adjoint=False, name=[]):
+    def appendSolutionOfEigenProblem(self, solution, guess, adjoint=False, name=None):
         """
         Append all modes from an eigenproblem solution to the collection.
+        This assumes that we are doing a 'Modal' analysis.
 
         Parameters
         ----------
@@ -115,7 +116,13 @@ class ModeCollection():
         numberOfModes = len(eigVals)
 
         for i in range(numberOfModes):
-            mode = Mode(self.femSpace, self.mesh, name, isStateVector = True)
+            mode = Mode(
+                self.femSpace, 
+                self.mesh, 
+                name = name, 
+                isStateVector = True,
+                analysis = 'Modal'
+                )
             mode.isAdjoint = adjoint
             mode.setError(error[i])
             mode.setGuess(guess)
