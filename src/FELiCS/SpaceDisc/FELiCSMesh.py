@@ -248,7 +248,7 @@ class FELiCSMesh:
     def axisNames(self):
         """
         Names of the axes in the coordinate system.
-        These include both FEM and mesh dimensions.
+        These include both spectral and mesh dimensions.
         Currently implemented systems are:
             - Cartesian:    ['x', 'y', 'z']
             - Cylindrical:  ['x', 'r', 't']
