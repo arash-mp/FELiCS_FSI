@@ -429,9 +429,9 @@ class Reader:
         ValueError
             If variable lengths do not match the import mesh.
         """
-        importCoords    = self.importMeshCoords[:, :self.ndim]
-        calcCoords      = self.calcMeshCoords
-        numImportPoints = importCoords.shape[0]
+        importCoords                = self.importMeshCoords[:, :self.ndim]
+        calcCoords                  = self.calcMeshCoords
+        numImportPoints             = importCoords.shape[0]
 
         # Sanity check: all variables have same length as import mesh
         for varName in varNames:
@@ -536,19 +536,19 @@ class Reader:
             # TODO: implement :P
             raise NotImplementedError("Setting arrays to mixed fields is not implemented yet.")
         if info["type"] == "vector":
-            for i, component in enumerate(Field.getComponentsNames()):
+            for i, subFieldName in enumerate(Field.getNamesOfSubFields()):
                 # NOTE: this is an annoying workaround for u_forcing
                 # TODO: make the same pattern for all vector variables!
-                fullName = (Field.getName()[0] + component + Field.getName()[1:]) if Field.getName()[0] == "u" \
-                    else (Field.getName() + component)
-                if fullName in arrays:
-                    indices = Field.space.sub(i).collapse()[1]
-                    Field.function.x.array[indices] = arrays[fullName]
+                # fullName = (Field.getName()[0] + component + Field.getName()[1:]) if Field.getName()[0] == "u" \
+                #     else (Field.getName() + component)
+                if subFieldName in arrays:
+                    indices                         = Field.space.sub(i).collapse()[1]
+                    Field.function.x.array[indices] = arrays[subFieldName]
         else:
             # Then it's a scalar
-            varName = Field.getName()
+            varName                                 = Field.getName()
             if varName in arrays:
-                Field.function.x.array[:] = arrays[varName]
+                Field.function.x.array[:]           = arrays[varName]
         return Field
 
     # --------------------------

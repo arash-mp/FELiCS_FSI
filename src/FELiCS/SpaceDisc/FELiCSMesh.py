@@ -2,7 +2,7 @@ import  gmsh
 import  h5py
 import  numpy                   as np
 from    FELiCS.Misc.tensorUtils import CoordinateSystem
-from    FELiCS.Misc.functions   import printDeprecatedWarning, printError
+# from    FELiCS.Misc.functions   import printDeprecatedWarning, printError
 from    mpi4py                  import MPI
 from    ufl                     import SpatialCoordinate
 from    dolfinx                 import __version__
@@ -124,7 +124,8 @@ class FELiCSMesh:
                                     gdim = self.gdim,
                                     )
         else:
-            printError('Coord. syst not yet implemented in tensor framework.')
+            logger.error('Coord. syst not yet implemented in tensor framework.')
+            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
         self._coordinates = self.coordinates()
 
     def saveInFELiCSFormat(self, filename):

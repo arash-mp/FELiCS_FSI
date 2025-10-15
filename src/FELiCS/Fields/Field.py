@@ -52,7 +52,7 @@ class Field:
         self.isStateVector = isStateVector
 
         # handle spectral dimension and wave number
-        if m != None:
+        if m is not None:
             self.hasSpectralDimension = True
             self.m = m
         else:
