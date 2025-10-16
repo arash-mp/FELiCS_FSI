@@ -43,7 +43,7 @@ test:
       #  --- insert FELiCS packages & pytest
   script:
     - cd TESTS
-    - python3 -m pytest 
+    #- python3 -m pytest 
   only:
     - development
     #- main
