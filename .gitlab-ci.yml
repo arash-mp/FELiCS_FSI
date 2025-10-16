@@ -16,8 +16,6 @@ test:
     - git --version
     - pwd
     - ls -all
-    - ls -all /opt
-    - ls -all /home/knechtel/anaconda3
     - |
       if [ ! -d "local-runner-envTests" ] || [ ! -f "local-runner-envTests/bin/activate" ]; then
         echo "Creating new virtual environment..."
@@ -57,7 +55,7 @@ pages:
 
       
       #if python3 -c "import sphinx" 2>/dev/null; then
-      if sphinx-build --version 2>/dev/null; then
+      if ! sphinx-build --version 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
         pip install -U pip
         pip install -U sphinx myst-parser sphinx-book-theme
