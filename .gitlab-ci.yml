@@ -8,7 +8,7 @@ cache:
   key: venv-cache
   paths:
     - /etc/builds/ztsbMKyCH/0/local-runner-env3
-    - local-runner-envTests/
+    - /etc/builds/ztsbMKyCH/0/local-runner-envTests/
 
 test:
   stage: test
@@ -17,19 +17,21 @@ test:
     - pwd
     - ls -all
     - |
-      if [ ! -d "local-runner-envTests" ] || [ ! -f "local-runner-envTests/bin/activate" ]; then
+      VENV_DIR="/etc/builds/ztsbMKyCH/0/local-runner-envTests"
+      if [ ! -d "$VENV_DIR" ]; then
         echo "Creating new virtual environment..."
         python3 -m venv local-runner-envTests
       fi
       echo "Activating virtual environment..."
       source local-runner-envTests/bin/activate
       
-      #if ! local-runner-envTests/bin/python3 -c "import FELiCS" 2>/dev/null; then
-      #  echo "Installing FELiCS environment and dependecies..."
+      if ! python3 -c "import FELiCS" 2>/dev/null; then
+        echo "Installing FELiCS environment and dependecies..."
+        wget -O "$VENV_DIR" https://repo.anaconda.com/archive/Anaconda3-2025.06-1-Linux-x86_64.sh
       #  /opt/conda/bin/conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
       #  conda activate felics2025_dolfin9_v2
       #  pip install -e .
-      #fi
+      fi
       #  pip install -U pytest
       #  pip install -U pip
       #  pip install -U pytest
