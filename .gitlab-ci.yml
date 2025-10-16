@@ -22,6 +22,16 @@ test:
     - ls -all
     - cd ..
     - ls -all
+    - cd ..
+    - ls -all
+    - cd ..
+    - ls -all
+    - cd ..
+    - ls -all
+    - cd ..
+    - ls -all
+    - cd ..
+    - ls -all
     - /opt/conda/bin/conda --version
     - |
       if [ ! -d "local-runner-envTests" ] || [ ! -f "local-runner-envTests/bin/activate" ]; then
