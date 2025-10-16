@@ -22,6 +22,7 @@ test:
       fi
       echo "Activating virtual environment..."
       source local-runner-envTests/bin/activate
+      
       if ! python -c "import FELiCS" 2>/dev/null; then
         echo "Installing FELiCS environment and dependecies..."
         conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
@@ -49,7 +50,7 @@ pages:
       fi
       echo "Activating virtual environment..."	
       source local-runner-env3/bin/activate
-      
+
       if ! python -c "import sphinx" 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
         pip install -U pip
