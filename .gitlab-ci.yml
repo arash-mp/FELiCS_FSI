@@ -22,8 +22,12 @@ test:
       fi
       echo "Activating virtual environment..."
       source local-runner-envTests/bin/activate
-      #if ! python -c "import FELiCS" 2>/dev/null; then
-      #  echo "Installing FELiCS environment and dependecies..."
+      if ! python -c "import FELiCS" 2>/dev/null; then
+        echo "Installing FELiCS environment and dependecies..."
+        conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
+        conda activate felics2025_dolfin9_v2
+        pip install -e .
+      #  pip install -U pytest
       #  pip install -U pip
       #  pip install -U pytest
       #  --- insert FELiCS packages & pytest
