@@ -32,9 +32,9 @@ test:
         #"$VENV_DIR/anaconda3_install.sh" -b -p "$VENV_DIR/anaconda3"
         export PATH="$VENV_DIR/anaconda3/bin:$PATH"
         conda --version
-      #  /opt/conda/bin/conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
-      #  conda activate felics2025_dolfin9_v2
-      #  pip install -e .
+        conda env create -f INSTALLATION/felics_v2.41_env.yml -y
+        conda activate felics2025_dolfin9_v2
+        pip install -e .
       fi
       #  pip install -U pytest
       #  pip install -U pip
@@ -42,7 +42,7 @@ test:
       #  --- insert FELiCS packages & pytest
   script:
     - cd TESTS
-    #- python3 -m pytest 
+    - python3 -m pytest 
   only:
     - development
     #- main
