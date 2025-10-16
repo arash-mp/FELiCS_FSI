@@ -52,7 +52,7 @@ pages:
       echo "Activating virtual environment..."	
       source local-runner-env3/bin/activate
 
-      if ! local-runner-envTests/bin/python3 -c "import sphinx" 2>/dev/null; then
+      if ! local-runner-env3/bin/python3 -c "import sphinx" 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
         pip install -U pip
         pip install -U sphinx myst-parser sphinx-book-theme
