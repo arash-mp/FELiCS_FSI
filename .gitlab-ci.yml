@@ -53,12 +53,12 @@ pages:
       echo "Activating virtual environment..."	
       source local-runner-env3/bin/activate
       
-      if local-runner-env3/bin/sphinx-build --version 2>/dev/null; then
+      if ! local-runner-env3/bin/sphinx-build --version 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
-        pip install -U pip
-        pip install -U sphinx myst-parser sphinx-book-theme
-        pip install -U sphinx-autoapi==3.0.0
-        pip install sphinxcontrib-mermaid
+        local-runner-env3/bin/pip install -U pip
+        local-runner-env3/bin/pip install -U sphinx myst-parser sphinx-book-theme
+        local-runner-env3/bin/pip install -U sphinx-autoapi==3.0.0
+        local-runner-env3/bin/pip install sphinxcontrib-mermaid
       fi
 
   script:
