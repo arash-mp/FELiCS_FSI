@@ -46,8 +46,8 @@ pages:
     - git --version
     - ls -all
     - |
-      if [ ! -d "local-runner-env3" ] || [ ! -f "local-runner-env3/bin/activate" ]; then
-        echo "\nCreating new virtual environment...\n"	
+      if [ ! -f local-runner-env3/bin/activate ]; then
+        echo "Creating new virtual environment..."	
         python3 -m venv local-runner-env3
       fi
       echo "Activating virtual environment..."	
