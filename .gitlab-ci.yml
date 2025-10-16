@@ -7,7 +7,7 @@ variables:
 cache:
   key: venv-cache
   paths:
-    - local-runner-env3/
+    - /etc/builds/ztsbMKyCH/0/local-runner-env3
     - local-runner-envTests/
 
 test:
@@ -43,31 +43,32 @@ test:
 
 pages:
   before_script:
+    - VENV_DIR = /etc/builds/ztsbMKyCH/0/local-runner-env3
     - git --version
     - ls -all
     - |
-      if [ ! -d "local-runner-env3" ]; then
+      if [ ! -d "$VENV_DIR" ]; then
         echo "Creating new virtual environment..."	
-        python3 -m venv local-runner-env3
+        python3 -m venv "$VENV_DIR"
       fi
       echo "Activating virtual environment..."	
-      source local-runner-env3/bin/activate
+      source "$VENV_DIR/bin/activate"
       
-      if ! local-runner-env3/bin/sphinx-build --version 2>/dev/null; then
+      if ! sphinx_build --version 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
-        local-runner-env3/bin/pip install -U pip
-        local-runner-env3/bin/pip install -U sphinx myst-parser sphinx-book-theme
-        local-runner-env3/bin/pip install -U sphinx-autoapi==3.0.0
-        local-runner-env3/bin/pip install sphinxcontrib-mermaid
+        pip install -U pip
+        pip install -U sphinx myst-parser sphinx-book-theme
+        pip install -U sphinx-autoapi==3.0.0
+        pip install sphinxcontrib-mermaid
       fi
 
   script:
   - cd DOCUMENTATION
   - mkdir ../public
   - python3 --version
-  - ../local-runner-env3/bin/pip list
+  - pip list
   #- make html
-  - ../local-runner-env3/bin/sphinx-build -b html . _build
+  - sphinx-build -b html . _build
   - ls
   - cp -r _build/ ../public/.
   - cd ..
