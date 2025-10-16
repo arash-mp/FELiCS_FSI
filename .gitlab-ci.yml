@@ -43,10 +43,10 @@ test:
 
 pages:
   before_script:
-    - VENV_DIR = /etc/builds/ztsbMKyCH/0/local-runner-env3
     - git --version
     - ls -all
     - |
+      VENV_DIR="/etc/builds/ztsbMKyCH/0/local-runner-env3"
       if [ ! -d "$VENV_DIR" ]; then
         echo "Creating new virtual environment..."	
         python3 -m venv "$VENV_DIR"
