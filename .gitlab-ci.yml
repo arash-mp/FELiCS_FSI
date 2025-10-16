@@ -18,8 +18,6 @@ test:
     - ls -all
     - ls -all /opt
     - ls -all /home/knechtel/anaconda3
-    - . /opt/conda/etc/profile.d/conda.sh
-    - conda --version
     - |
       if [ ! -d "local-runner-envTests" ] || [ ! -f "local-runner-envTests/bin/activate" ]; then
         echo "Creating new virtual environment..."
@@ -28,12 +26,12 @@ test:
       echo "Activating virtual environment..."
       source local-runner-envTests/bin/activate
       
-      if ! local-runner-envTests/bin/python3 -c "import FELiCS" 2>/dev/null; then
-        echo "Installing FELiCS environment and dependecies..."
-        /opt/conda/bin/conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
-        conda activate felics2025_dolfin9_v2
-        pip install -e .
-      fi
+      #if ! local-runner-envTests/bin/python3 -c "import FELiCS" 2>/dev/null; then
+      #  echo "Installing FELiCS environment and dependecies..."
+      #  /opt/conda/bin/conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
+      #  conda activate felics2025_dolfin9_v2
+      #  pip install -e .
+      #fi
       #  pip install -U pytest
       #  pip install -U pip
       #  pip install -U pytest
@@ -57,7 +55,8 @@ pages:
       echo "Activating virtual environment..."	
       source local-runner-env3/bin/activate
 
-      if ! local-runner-env3/bin/python -c "import sphinx" 2>/dev/null; then
+      #if ! local-runner-env3/bin/python -c "import sphinx" 2>/dev/null; then
+      if ! local-runner-env3/bin/python3 -c "import sphinx" >/dev/null 2>&1; then
         echo "installing sphinx and dependencies..."	
         pip install -U pip
         pip install -U sphinx myst-parser sphinx-book-theme
