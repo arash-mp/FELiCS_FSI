@@ -17,7 +17,7 @@ test:
     - pwd
     - ls -all
     - ls -all /opt
-    - ls -all /opt/conda
+    - ls -all /home/knechtel/anaconda3
     - . /opt/conda/etc/profile.d/conda.sh
     - conda --version
     - |
