@@ -15,6 +15,7 @@ test:
   before_script:
     - git --version
     - ls -all
+    - /opt/conda/bin/conda --version
     - |
       if [ ! -d "local-runner-envTests" ] || [ ! -f "local-runner-envTests/bin/activate" ]; then
         echo "Creating new virtual environment..."
@@ -25,7 +26,7 @@ test:
       
       if ! local-runner-envTests/bin/python3 -c "import FELiCS" 2>/dev/null; then
         echo "Installing FELiCS environment and dependecies..."
-        conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
+        /opt/conda/bin/conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
         conda activate felics2025_dolfin9_v2
         pip install -e .
       fi
@@ -52,7 +53,7 @@ pages:
       echo "Activating virtual environment..."	
       source local-runner-env3/bin/activate
 
-      if ! local-runner-env3/bin/python3 -c "import sphinx" 2>/dev/null; then
+      if ! local-runner-env3/bin/python -c "import sphinx" 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
         pip install -U pip
         pip install -U sphinx myst-parser sphinx-book-theme
