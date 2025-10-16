@@ -29,7 +29,9 @@ test:
         echo "Installing FELiCS environment and dependecies..."
         #wget -O "$VENV_DIR/anaconda3_install.sh" https://repo.anaconda.com/archive/Anaconda3-2025.06-1-Linux-x86_64.sh
         #chmod +x "$VENV_DIR/anaconda3_install.sh"
-        "$VENV_DIR/anaconda3_install.sh" -b -p "$VENV_DIR/anaconda3"
+        #"$VENV_DIR/anaconda3_install.sh" -b -p "$VENV_DIR/anaconda3"
+        "$VENV_DIR/anaconda3/etc/profile.d/conda.sh"
+        conda --version
       #  /opt/conda/bin/conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
       #  conda activate felics2025_dolfin9_v2
       #  pip install -e .
