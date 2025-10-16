@@ -13,3 +13,4 @@ dependencies:
 - pyvista
 - gmsh
 - python-gmsh
+- pytest
