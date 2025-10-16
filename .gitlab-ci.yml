@@ -7,7 +7,7 @@ variables:
 cache:
   key: venv-cache
   paths:
-    - local-runner-env/
+    - local-runner-env3/
     - local-runner-envTests/
 
 test:
