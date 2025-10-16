@@ -7,8 +7,8 @@ variables:
 cache:
   key: venv-cache
   paths:
-    - /etc/builds/ztsbMKyCH/0/local-runner-env3
-    - /etc/builds/ztsbMKyCH/0/local-runner-envTests/
+    - ../../local-runner-env3
+    - ../../local-runner-envTests/
 
 test:
   stage: test
@@ -17,7 +17,7 @@ test:
     - pwd
     - ls -all
     - |
-      VENV_DIR="/etc/builds/ztsbMKyCH/0/local-runner-envTests"
+      VENV_DIR="../../local-runner-envTests"
       if [ ! -d "$VENV_DIR" ]; then
         echo "Creating new virtual environment..."
         python3 -m venv "$VENV_DIR"
@@ -57,7 +57,7 @@ pages:
     - git --version
     - ls -all
     - |
-      VENV_DIR="/etc/builds/ztsbMKyCH/0/local-runner-env3"
+      VENV_DIR="../../local-runner-env3"
       if [ ! -d "$VENV_DIR" ]; then
         echo "Creating new virtual environment..."	
         python3 -m venv "$VENV_DIR"
