@@ -65,9 +65,9 @@ pages:
   - cd DOCUMENTATION
   - mkdir ../public
   - python3 --version
-  - local-runner-env3/bin/pip list
+  - ../local-runner-env3/bin/pip list
   #- make html
-  - local-runner-env3/bin/sphinx-build -b html . _build
+  - ../local-runner-env3/bin/sphinx-build -b html . _build
   - ls
   - cp -r _build/ ../public/.
   - cd ..
