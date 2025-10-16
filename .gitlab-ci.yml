@@ -23,11 +23,12 @@ test:
       echo "Activating virtual environment..."
       source local-runner-envTests/bin/activate
       
-      if ! python -c "import FELiCS" 2>/dev/null; then
+      if ! local-runner-envTests/bin/python3 -c "import FELiCS" 2>/dev/null; then
         echo "Installing FELiCS environment and dependecies..."
         conda env create -f ~/felics2.0/INSTALLATION/felics_v2.41_env.yml -y
         conda activate felics2025_dolfin9_v2
         pip install -e .
+      fi
       #  pip install -U pytest
       #  pip install -U pip
       #  pip install -U pytest
@@ -51,7 +52,7 @@ pages:
       echo "Activating virtual environment..."	
       source local-runner-env3/bin/activate
 
-      if ! python -c "import sphinx" 2>/dev/null; then
+      if ! local-runner-envTests/bin/python3 -c "import sphinx" 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
         pip install -U pip
         pip install -U sphinx myst-parser sphinx-book-theme
