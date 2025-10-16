@@ -1,5 +1,5 @@
 # The Docker image that will be used to build your app
-image: continuumio/anaconda3 #continuumio/miniconda3:latest #python:3.10-slim-bullseye
+image: continuumio/miniconda3:latest #python:3.10-slim-bullseye continuumio/anaconda3
 variables:
   GIT_STRATEGY: clone  
 # Functions that should be executed before the build script is run
@@ -16,23 +16,7 @@ test:
     - git --version
     - pwd
     - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - /opt/conda/bin/conda --version
+    - conda --version
     - |
       if [ ! -d "local-runner-envTests" ] || [ ! -f "local-runner-envTests/bin/activate" ]; then
         echo "Creating new virtual environment..."
