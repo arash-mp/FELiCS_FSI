@@ -661,17 +661,19 @@ class Reader:
                                 )
                 # Update cached data
                 self._dataForField.update(processedData)
+            else:
+                logger.debug("Using cached data.")
 
             # Check if there are any new variables to load, missing from cached data
             extraVars           = [var for var in presentVars if var not in self._dataForField]
             if extraVars:
+                logger.debug(f"Loading and interpolating/mapping extra variables: {extraVars}")
                 self._load_from_h5(extraVars)
                 updatedData     = (self._interpolate_to_calc_mesh(extraVars)
                                     if self._needInterpolation else
                                     self._map_to_calc_mesh(extraVars)
                                 )
                 self._dataForField.update(updatedData)
-            logger.debug("Reader: using cached data for field assignment.")
             arrays              = {var: self._dataForField[var] for var in presentVars}
 
         else:
