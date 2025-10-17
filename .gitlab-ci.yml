@@ -30,17 +30,18 @@ test:
         wget -O "$VENV_DIR/anaconda3_install.sh" https://repo.anaconda.com/archive/Anaconda3-2025.06-1-Linux-x86_64.sh
         chmod +x "$VENV_DIR/anaconda3_install.sh"
         "$VENV_DIR/anaconda3_install.sh" -b -p "$VENV_DIR/anaconda3"
+        echo "Creating conda environment for FELiCS..."
         conda env create -f INSTALLATION/felics_v2.41_env.yml -y
+        export PATH="$VENV_DIR/anaconda3/bin:$PATH"
+        source activate base
+        conda activate felics2025_dolfin9_v2
+        pip install -e .
+      else
+        echo "Activating conda environment..."
+        export PATH="$VENV_DIR/anaconda3/bin:$PATH"
+        source activate base
+        conda activate felics2025_dolfin9_v2
       fi
-      echo "Activating conda environment..."
-      export PATH="$VENV_DIR/anaconda3/bin:$PATH"
-      source activate base
-      conda activate felics2025_dolfin9_v2
-      pip install -e .
-      #  pip install -U pytest
-      #  pip install -U pip
-      #  pip install -U pytest
-      #  --- insert FELiCS packages & pytest
   script:
     - cd TESTS
     #- python3 -m pytest 
