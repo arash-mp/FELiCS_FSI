@@ -44,7 +44,7 @@ test:
       fi
   script:
     - cd TESTS
-    #- python3 -m pytest 
+    - python3 -m pytest 
   only:
     - development
     #- main
