@@ -68,7 +68,7 @@ class ModeCollection():
 
         self.modeList.append(mode)
 
-    def appendModeFromVector(self, vector, gain=None, eigenValue=None, guess=None, waveNumber=None, frequency=None, isAdjoint=False, name = [], m=None):
+    def appendModeFromVector(self, vector, gain=None, eigenValue=None, guess=None, waveNumber=None, frequency=None, isAdjoint=False, name = None, m=None):
         """
         Create a Mode from a coefficient vector and properties, and append it to the collection.
 
@@ -117,6 +117,11 @@ class ModeCollection():
         adjoint : bool, optional
             Whether the modes are adjoint modes (default is False).
         """
+        
+        # Check that we are in Modal analysis
+        if self.analysis != 'Modal':
+            logger.error('appendSolutionOfEigenProblem called for non-Modal analysis in ModeCollection.')
+            return
 
         [eigVals, eigVecs, error] = solution
         numberOfModes = len(eigVals)
@@ -126,7 +131,7 @@ class ModeCollection():
                 self.femSpace, 
                 self.mesh, 
                 name = name, 
-                isStateVector = True,
+                isStateVector = True,   # NOTE: always True?
                 analysis = 'Modal'
                 )
             mode.isAdjoint = adjoint
@@ -135,6 +140,106 @@ class ModeCollection():
             mode.setEigenValue(eigVals[i])
             mode.function.x.array[:] = eigVecs[i,:]
             self.modeList.append(mode)
+            
+
+
+    def appendSolutionOfSVDProblem(self, forcingArray, omega, gains, resolventOperator, name=None):
+        """
+        Append all forcing modes from a SVD solution to the collection for one frequency.
+        Then compute the corresponding response modes and append them as well.
+        This assumes that we are doing a 'Resolvent' analysis.
+
+        Parameters
+        ----------
+        forcingArray : array-like
+            The forcing array.
+        omega : float
+            The frequency.
+        gains : array-like
+            The gains from the SVD solution.
+        resolventOperator : FELiCS object
+            The resolvent operator, instance of the ResolventOperator class.
+        name : str, optional
+            The name of the mode.
+        """
+
+        # Check that we are in Resolvent analysis
+        if self.analysis != 'Resolvent':
+            logger.error('appendSolutionOfSVDProblem called for non-Resolvent analysis in ModeCollection.')
+            return
+        
+        # Get required operators from the resolvent operator
+        if not hasattr(resolventOperator, '_W_forcing'):
+            logger.error('Resolvent operator missing _W_forcing attribute in _computeResolventResponseFromForcing.')
+            return
+        else:
+            W_forcing                       = resolventOperator._W_forcing
+        if not hasattr(resolventOperator, '_W_FEM'):
+            logger.error('Resolvent operator missing _W_FEM attribute in _computeResolventResponseFromForcing.')
+            return
+        else:
+            W_FEM                           = resolventOperator._W_FEM
+        if not hasattr(resolventOperator, '_P_forcing'):
+            logger.error('Resolvent operator missing _P_forcing attribute in _computeResolventResponseFromForcing.')
+            return
+        else:
+            P_forcing                       = resolventOperator._P_forcing
+        if not hasattr(resolventOperator, 'getKSP'):
+            logger.error('Resolvent operator missing getKSP method in _computeResolventResponseFromForcing.')
+            return
+        
+        # Number of solutions
+        numberOfSolutions                   = gains.shape[0]
+        
+        # For each forcing, append to mode and compute response
+        logger.debug(f'Appending {numberOfSolutions} forcing and response modes for omega={omega}.')
+        for i in range(numberOfSolutions):
+            # Get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)             
+            X1, X2                          = W_forcing.getVecs()             
+            X1.setValues(range(0,len(forcingArray)), forcingArray[:,i])             
+            Y1, Y2                          = W_FEM.getVecs()             
+
+            # Solve forcings = Pu*eigenVectors             
+            P_forcing.mult(X1,Y1)             
+            forcings                        = Y1.getValues(range(0, Y1.getSize()))
+
+            # Setting forcing into mode object
+            modeForcing                     = Mode(
+                self.femSpace, 
+                self.mesh, 
+                name                        = name, 
+                isStateVector               = True, # NOTE: always True?
+                analysis                    = 'Resolvent'
+                )
+            modeForcing.setGain(np.real(gains[i]))  # NOTE: These are gains squared
+            modeForcing.setGainNumber(i)
+            modeForcing.setFrequency(omega)
+            modeForcing.function.x.array[:] = forcings
+            self.modeList.append(modeForcing)
+            
+            # Compute response
+            # Solve Y1 = -1j * B_femWeight * forcings
+            W_FEM.mult(Y1,Y2)             
+            Y2.scale(-1j)             
+            # Solve (A-omega*B)*responses = Y1
+            resolventOperator.getKSP().solve(Y2,Y1)
+            responses                       = Y1.getValues(range(0, Y1.getSize()))
+            
+            # Setting response into mode object
+            modeForcing                     = Mode(
+                self.femSpace, 
+                self.mesh, 
+                name                        = name, 
+                isStateVector               = True,
+                analysis                    = 'Resolvent'
+                )
+            modeForcing.setGain(np.real(gains[i]))  # NOTE: These are gains squared
+            modeForcing.setGainNumber(i)
+            modeForcing.setFrequency(omega)
+            modeForcing.function.x.array[:] = responses
+            modeForcing.isResponse          = True
+            self.modeList.append(modeForcing)
+
 
     def getMaximumError(self):
         """
@@ -291,6 +396,22 @@ class ModeCollection():
                                         mode.getGain()
                                          )
                 )
+        elif param.Case.AnalysisMode == "Resolvent":
+            for mode in self.modeList:
+                fluctSolutObjList.append(fluctuationSolutions(                                 
+                    param,                                 
+                    meanFlow,                                 
+                    FEMSpaces,                                 
+                    mode.getFrequency(),                                 
+                    mode.function.x.array[:],                                
+                    False if not mode.isResponse else True,                                 
+                    mode.getGainNumber(),                                 
+                    mode.getGain(),                                 
+                ))
+            
+        else:
+            logger.error("Analysis type not recognized in getOldSolutionObject of ModeCollection.")
+            raise RuntimeError("Analysis type not recognized in getOldSolutionObject of ModeCollection.")
 
 
 

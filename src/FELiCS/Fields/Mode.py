@@ -53,11 +53,13 @@ class Mode(Field):
         self.isStateVector     = isStateVector
     
         # Define name of the subfields (variables of the mode)
-        self.namesOfSubFields   = self.getNamesOfSubFields()    
+        self.namesOfSubFields   = self.getNamesOfSubFields()
 
-        # Set some defaults in not a good way .> TODO: fix this
+        # Set some defaults in not a good way .> TODO: fix this as a property
         self.isAdjoint          = False
         self.isResponse         = False
+
+    # TODO: fix the setter/getter methods with properties
 
     def getName(self):
         if self.isStateVector:
@@ -75,6 +77,17 @@ class Mode(Field):
             Gain of the mode.
         """
         self._gain = gain
+
+    def setGainNumber(self,gainNumber):
+        """
+        Set the gain number for the mode.
+
+        Parameters
+        ----------
+        gainNumber : int
+            Gain number of the mode.
+        """
+        self._gainNumber = gainNumber
 
     def setFrequency(self,frequency):
         """
@@ -149,6 +162,21 @@ class Mode(Field):
         except: 
             logger.error('For this mode object no gain was defined. Returning "-9999."...')
             return -9999.
+        
+    def getGainNumber(self):
+        """
+        Get the gain number of the mode.
+
+        Returns
+        -------
+        int
+            Gain number of the mode. Returns -1 if undefined.
+        """
+        try:
+            return self._gainNumber
+        except: 
+            logger.error('For this mode object no gain number was defined. Returning "-1"...')
+            return -1
 
 
     def getFrequency(self):
