@@ -10,8 +10,9 @@
 # */
 import 	argparse
 from 	runModal       				import  runModal 
-# from    runModal_testReader         import  runModal     # NOTE: for testing the reader on a mode
+# from    runModal_testReader         import  runModal      # NOTE: for testing the reader on a mode
 from 	runResolvent   				import  runResolvent  
+# from 	runResolvent_testReader		import  runResolvent    # NOTE: for testing the reader on a mode
 from 	runInputOutput 				import  runInputOutput
 from 	FELiCS.Parameters.config	import 	config
 from 	FELiCS.Misc.logging			import  Logger
