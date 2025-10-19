@@ -94,6 +94,10 @@ class Field:
                 logger.error(f"Not enough axis names {axisNames} in the coordinate system for the vector field with {numSubSpaces} components.")
                 raise ValueError("Not enough axis names in the coordinate system for the vector field.")
 
+            # If the vector was not given before, we set a default
+            if self.name is None or not isinstance(self.name, str):
+                self.name       = 'vectorField'
+
             for i in range(numSubSpaces):
                 subFieldNames.append(self.name+axisNames[i])
         
@@ -266,8 +270,9 @@ class Field:
             'nDofsMesh':                nDofsMesh,
             'subspaces':                []
         }
-        
-        if num_subspaces == 0:
+
+        # This handles a single scalar or a VMixed with a single scalar inside
+        if num_subspaces == 0 or (num_subspaces == 1 and value_size == 1):
             # Single space (scalar or vector)
             result['type']              = 'scalar'
             result['description']       = 'Single scalar space'
