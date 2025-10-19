@@ -19,7 +19,7 @@ def runModal(param):
     from    FELiCS.Fields.Mode                  import Mode
     from    FELiCS.IO.reader                    import Reader
 
-    logger.info("Running Modal analysis")
+    logger.warning("Running Modal analysis with Reader testing")
     
     # Get FELiCS objects required for analysis
     mesh            = param.getMesh()
