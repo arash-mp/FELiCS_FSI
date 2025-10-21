@@ -75,7 +75,7 @@ The wall BC is imposed with:
         "name": "wall"
     }
 ``` 
-The complete structure of this file is detailed in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+The complete structure of this file is detailed in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
 
 ### Settings
 The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
@@ -95,7 +95,7 @@ Here are some key settings for our resolvent analysis:
 {"CoordinateSystem": "Cartesian"}
 ```
 
-- We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) with these references:
+- We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS.fel```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) with these references:
 ```json
 {"MeshFilePath":"cylinder_wake.msh"}
 {"MeanFlowFilePath": "base_flow_for_FELiCS.fel"}

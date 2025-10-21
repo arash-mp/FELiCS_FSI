@@ -61,6 +61,10 @@ if the installation fails due to "No space left on device", you can specify an a
 
 An alias is a shortcut command that you define in your shell configuration (such as `.bashrc`). It allows you to run FELiCS by simply typing `FELiCS` in your terminal, instead of specifying the full path and command each time. This makes it easier and faster to launch FELiCS from any location in your terminal.
 
+```{note}
+For Mac users, the ```bashrc``` file is called ```zshrc```.
+```
+
 To create an alias, you have two options:
 
 **Option 1: Automatically add the FELiCS alias to your `.bashrc`**
@@ -88,7 +92,6 @@ if you receive the error "`this does not seem to be a FELiCS directory`", please
 ```
 
 After adding content to your `~/.bashrc`, you need to run it. To do so, run ```source ~/.bashrc```
-
 
 **Option 2: Manually add the lines to your .bashrc**
 
