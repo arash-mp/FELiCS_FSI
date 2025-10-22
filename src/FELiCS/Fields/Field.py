@@ -73,7 +73,7 @@ class Field:
         return self.name
 
     def setName(self, name):
-        self.name               = name
+        self.name = name
 
     def getNamesOfSubFields(self):
         #TODO: docu

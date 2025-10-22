@@ -9,12 +9,12 @@ class Mapping:
 
     @staticmethod
     def calculateMappingFromSpaces(
-            space,
-            exportSpace):
+            inputSpace,
+            outputSpace):
 
         # get numpy arrays of dof coordinates
-        inputDofs  = space.tabulate_dof_coordinates()
-        outputDofs = exportSpace.tabulate_dof_coordinates()
+        inputDofs  = inputSpace.tabulate_dof_coordinates()
+        outputDofs = outputSpace.tabulate_dof_coordinates()
 
         inputMesh  = np.copy(inputDofs)
         outputMesh = np.copy(outputDofs)
@@ -37,12 +37,12 @@ class Mapping:
 
     @staticmethod
     def calculateMappingFromDofs(
-            dofs,
-            exportDofs):
+            inputDofs,
+            outputDofs):
 
         # get numpy arrays of dof coordinates
-        inputMesh  = np.copy(dofs)
-        outputMesh = np.copy(exportDofs)
+        inputMesh  = np.copy(inputDofs)
+        outputMesh = np.copy(outputDofs)
 
         # append indices as last column
         inputMesh               = np.append(inputMesh, np.arange(len(inputMesh)).reshape(len(inputMesh),1), axis=1).round(11)
