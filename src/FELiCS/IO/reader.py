@@ -5,6 +5,7 @@ from    scipy.spatial       import Delaunay
 from    scipy.interpolate   import LinearNDInterpolator, NearestNDInterpolator
 from    FELiCS.Misc.logging import Logger
 from    functools           import cached_property
+from    .Mapping            import Mapping
 
 # Debug
 # import matplotlib
@@ -290,7 +291,7 @@ class Reader:
             return None
         else:
             nDimMesh = len(self.meshDim)
-        return self._FEMSpaces.mappingObj._mappingFunc(
+        return Mapping.calculateMappingFromDofs(
             self.importMeshCoords[:, :nDimMesh],
             self.calcMeshCoords
         )

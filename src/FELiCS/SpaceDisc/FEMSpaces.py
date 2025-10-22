@@ -208,8 +208,6 @@ class FEMSpaces():
         self.VMixed.stateVectorNames = self.stateVectorNames
         self.VMixedExport.stateVectorNames = self.stateVectorNames
 
-        # create mapping
-        self.mappingObj = Mapping(self)
 
     def addCustomScalarSpaceToMixedSpace(self, mesh, order):
         """
