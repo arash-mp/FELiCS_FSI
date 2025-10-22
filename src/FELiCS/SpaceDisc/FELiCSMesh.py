@@ -4,7 +4,7 @@ import  numpy                   as np
 from    FELiCS.Misc.tensorUtils import CoordinateSystem
 from    mpi4py                  import MPI
 from    ufl                     import SpatialCoordinate
-from    dolfinx.mesh            import Mesh 
+from    dolfinx.mesh            import Mesh, refine 
 from    FELiCS.Misc.logging     import Logger
 
 
@@ -144,7 +144,7 @@ class FELiCSMesh:
 
     def saveInFELiCSFormat(self, filename):
         """
-        Saves the computational mesh in the FELiCS HDF5-based format.
+        Saves the refined ("export") mesh in the FELiCS HDF5-based format.
 
         Parameters
         ----------
@@ -158,10 +158,19 @@ class FELiCSMesh:
         """
         
         # TODO: save the DoFs corresponding to the different BCs
-        
-        coordinates = self.coordinates()
-        self.calcConnectivity()
-        meshCells = self.meshCells
+
+        # if not already there: initialize and save export mesh
+        if not hasattr(self, "exportMesh"):
+            # refine the mesh and create new FELiCSMesh
+            logger.debug('Defining refined P1 export mesh.')
+            self.dolfinxMesh.topology.create_entities(1)
+            refine_tuple        = refine(self.dolfinxMesh)
+            exportMesh_dolfinx  = refine_tuple[0]
+            self.exportMesh     = FELiCSMesh(self.coordinateSystemName,inputMesh=exportMesh_dolfinx, gdim=self.gdim)
+
+        coordinates = self.exportMesh.coordinates()
+        self.exportMesh.calcConnectivity()
+        meshCells = self.exportMesh.meshCells
         nDim = coordinates.shape[1]
         coordinateNames = ['x']
         if nDim > 1:

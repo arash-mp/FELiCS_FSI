@@ -249,7 +249,7 @@ class meanFlowClass(
         Function returns:
         instance of the class meanFlowVertexValues
         """
-        return meanFlowVertexValues(self._meanfieldDict, self._FEMSpaces.exportMesh)
+        return meanFlowVertexValues(self._meanfieldDict, self._mesh.exportMesh)
 
     def _getMeanFieldsToBeRead(self):
         """

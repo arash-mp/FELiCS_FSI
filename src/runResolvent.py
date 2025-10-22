@@ -21,6 +21,8 @@ def runResolvent(param):
     
     # Get FELiCS objects required for analysis
     mesh                        = param.getMesh()
+    mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
+
     FEMSpaces                   = FEMSpaces(param, mesh)
     meanFlow                    = meanFlowClass(param, FEMSpaces, mesh)
     meanFlow.importDataFromFileAndExportToH5()
