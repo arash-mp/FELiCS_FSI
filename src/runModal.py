@@ -23,6 +23,7 @@ def runModal(param):
     #-----------------------------------------------------------------------
     # mesh
     mesh = param.getMesh()
+    mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
     
     # FEMSpaces
     FEMSpaces = FEMSpaces(
