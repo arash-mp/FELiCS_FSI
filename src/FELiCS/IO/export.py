@@ -44,7 +44,7 @@ class export:
         """
         self._FEMSpaces     = FEMSpaces
         self._param         = param
-        self._exportMesh    = FEMSpaces.exportMesh
+        self._exportMesh    = param.getMesh().exportMesh
 
         self._exportZeroScalarField = Field(self._FEMSpaces.P1Export, self._exportMesh, name="exportZeroScalar")
         self._exportZeroVectorField = Field(
