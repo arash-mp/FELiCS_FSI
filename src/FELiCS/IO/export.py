@@ -3,6 +3,7 @@ import  h5py
 import  numpy               as np
 from    FELiCS.Fields.Field import Field
 from    FELiCS.Misc.logging import Logger
+from    .Mapping            import Mapping
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -43,7 +44,7 @@ class export:
         """
         self._FEMSpaces     = FEMSpaces
         self._param         = param
-        self._exportMesh    = FEMSpaces.exportMesh
+        self._exportMesh    = param.getMesh().exportMesh
 
         self._exportZeroScalarField = Field(self._FEMSpaces.P1Export, self._exportMesh, name="exportZeroScalar")
         self._exportZeroVectorField = Field(
@@ -73,11 +74,21 @@ class export:
   
         valueDict = {}
         dofsExport = self._exportMesh.coordinates()
-        # get the index-vector for the mapping from P2 to P1-Export Space:
-        VectorCalcToP1ExportIndecies = self._FEMSpaces.mappingObj.VectorCalcToP1ExportIndecies
-        P2CalcToP1ExportIndecies = self._FEMSpaces.mappingObj.P2CalcToP1ExportIndecies
 
-        #VectorCalcToP1VectorExportIndecies = self._FEMSpaces.mappingObj.VectorCalcToP1VectorExportIndecies
+        # Sophie: intermediate mapping, before the writer is in place (to be removed)
+        # get the index-vector for the mapping from P2 to P1-Export Space:
+        if not hasattr(self._FEMSpaces.P2, 'FELiCSMappingToExport'):
+            self._FEMSpaces.P2.FELiCSMappingToExport = Mapping.calculateMappingFromSpaces(
+                    self._FEMSpaces.P2, self._FEMSpaces.P1Export)
+        P2CalcToP1ExportIndecies = self._FEMSpaces.P2.FELiCSMappingToExport
+
+        if not hasattr(self._FEMSpaces.VMixed, 'FELiCSMappingVectorSpaceToExport'):
+            self._FEMSpaces.VMixed.FELiCSMappingVectorSpaceToExport = Mapping.calculateMappingFromDofs(
+                    self._FEMSpaces.VMixed.sub(0).collapse()[0].tabulate_dof_coordinates(), 
+                    self._FEMSpaces.P1Export.tabulate_dof_coordinates())
+        VectorCalcToP1ExportIndecies = self._FEMSpaces.VMixed.FELiCSMappingVectorSpaceToExport 
+
+
         if isinstance(exportObject, dict):
             for indexOfFieldInList, fieldNameFieldToExport in enumerate(
                                                     list(exportObject.keys())
@@ -88,7 +99,7 @@ class export:
                 numSubSpaces = exportObject[fieldNameFieldToExport].space.num_sub_spaces
                 if numSubSpaces > 1:
 
-                    valueDict[fieldNameFieldToExport] = Field(self._FEMSpaces.FunctionSpaceVectorVelocityExport, self._exportMesh, name=[])
+                    valueDict[fieldNameFieldToExport] = Field(self._FEMSpaces.FunctionSpaceVectorVelocityExport, self._exportMesh)
                     # dofsCoordsCalc = exportObject[fieldNameFieldToExport].function_space.tabulate_dof_coordinates()
                     #indexVector = self.mappingFunc(dofsCoordsCalc[:, 0:2], dofsExport[:, 0:2])
                     tempSolutionArray = np.zeros((self._param.Case.nDim,dofsExport.shape[0] ), dtype=complex)
@@ -116,9 +127,8 @@ class export:
 
 
         elif isinstance(exportObject, np.ndarray):
-            # TODO Sophie: give correct names?
-            flucRealCalc = Field(self._FEMSpaces.VMixed, self._exportMesh, name=[])
-            flucImagCalc = Field(self._FEMSpaces.VMixed, self._exportMesh, name=[])
+            flucRealCalc = Field(self._FEMSpaces.VMixed, self._exportMesh)
+            flucImagCalc = Field(self._FEMSpaces.VMixed, self._exportMesh)
 
             flucRealCalc.function.x.array[:] = np.real(exportObject[:]).astype(
                                                                         float

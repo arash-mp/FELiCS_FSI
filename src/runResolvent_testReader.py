@@ -17,12 +17,10 @@ def runResolvent(param):
     from    FELiCS.Solvers.LinearSolver         import LinearSolver, ResolventOperator
     from    FELiCS.Fields.ModeCollection        import ModeCollection
 
-    logger.warning("Running Resolvent analysis")
+    logger.warning("Running Resolvent analysis with Reader testing")
     
     # Get FELiCS objects required for analysis
     mesh                        = param.getMesh()
-    mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
-
     FEMSpaces                   = FEMSpaces(param, mesh)
     meanFlow                    = meanFlowClass(param, FEMSpaces, mesh)
     meanFlow.importDataFromFileAndExportToH5()

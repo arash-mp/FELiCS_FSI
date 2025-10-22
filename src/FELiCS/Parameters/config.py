@@ -158,6 +158,7 @@ class config(ABC):
         self.BoundaryCondition.nVelocityComponents  = len(self.getVelocityComponents())
         self.Case.SolutionList                      = self.getTransportedQuantityList()
         self.BoundaryCondition.VelocityComponents   = self.getVelocityComponents()
+        self.__mesh__.setTrueDimension(self.BoundaryCondition.nVelocityComponents)
 
     def check_for_mandatory_files(self,config_dict,mandatory_files):
         """

@@ -1,5 +1,8 @@
-from dolfinx.fem             import Function, petsc
-import basix
+from    dolfinx.fem             import Function, petsc
+from    FELiCS.Misc.logging     import Logger
+
+# Get the logger
+logger = Logger.get_logger("felics")
 
 class Field:
     """
@@ -21,7 +24,7 @@ class Field:
         The finite element function space.
     mesh:      FELiCS.SpaceDisc.FELiCSMesh
         FEliCS mesh associated with the function space.
-    name:      optional, list of tuples; e.g. [("name",[])] for a scalar space, or [("name",["x","y","z"]] for a vector space, a list of both types for a mixed space
+    name:      optional, string
     m:         optional, integer
         Wave number. If this is set, the Field is assumed to have one spectral spatial dimension, regardless the value of m.
     """
@@ -33,8 +36,8 @@ class Field:
         # get Info
         self.info     = self.describeFunctionSpace()
 
-        if name == None or not isinstance(name, str):
-            # TODO: write warning if "name" is not a string? 
+        if name is None or not isinstance(name, str):
+            
             if self.info['type']=='scalar':
                 self.name = 'scalarField'
             elif self.info['type']=='vector':
@@ -43,7 +46,12 @@ class Field:
                 self.name = 'mixedField'
             else: 
                 self.name = 'field'
-        elif name:
+                logger.warning("Field type not recognized. Using default name 'field'.")
+
+            if not isinstance(name, str) and name is not None:
+                logger.warning("Field initialized a 'name' not being a string. Using default names based on field type.")
+                
+        else:
             self.name = name
 
         self.namesOfSubFields = []
@@ -61,7 +69,6 @@ class Field:
         # initialize function
         self.function = Function(FEMSpace)
 
-
     def getName(self):
         return self.name
 
@@ -70,31 +77,63 @@ class Field:
 
     def getNamesOfSubFields(self):
         #TODO: docu
+        
+        # Default value
+        subFieldNames           = []
+        
         if self.info['type'] == 'scalar':
-            return [] #TODO: put warning
+            logger.warning("getNamesOfSubFields() called for single scalar field. Returning empty list.")
+            return subFieldNames
+        
         elif self.info['type'] == 'vector':
-            axisNames = self.mesh.axisNames
-            subFieldNames = []
-            for i in range(self.info['num_subspaces']):
+            axisNames           = self.mesh.axisNames
+            numSubSpaces        = self.info['num_subspaces']
+            
+            # Check that the number of axis names is sufficient
+            if len(axisNames) < numSubSpaces:
+                logger.error(f"Not enough axis names {axisNames} in the coordinate system for the vector field with {numSubSpaces} components.")
+                raise ValueError("Not enough axis names in the coordinate system for the vector field.")
+
+            # If the vector was not given before, we set a default
+            if self.name is None or not isinstance(self.name, str):
+                self.name       = 'vectorField'
+
+            for i in range(numSubSpaces):
                 subFieldNames.append(self.name+axisNames[i])
-                # TODO: throw error if the number of axisnames is not enough. There can be more axisNames than components though
+        
         elif self.info['type'] == 'mixed':
+            # If it was not set before and is a state vector, use state vector names
+            # NOTE: assumes stateVectorNames is a list of tuples 
             if self.isStateVector and not self.namesOfSubFields:
-                return self.space.stateVectorNames
+                for name in self.space.stateVectorNames:
+                    subFieldNames.append(name[0])
+                return subFieldNames
+            
+            # If it was set before, return the stored names
             elif self.namesOfSubFields:
                 return self.namesOfSubFields
-            else: 
-                subFieldNames = []
+            
+            # Otherwise, set default names
+            else:
+                counter_scalars     = 1
+                counter_vectors     = 1
                 for i in range(self.info['num_subspaces']):
-                    # TODO: finish this, get the right info, call subspaces['Scalar1', 'Scalar2', 'Vector2', ...]
-                    self.info['subSpaces']['type']
-                    subFieldNames.append(self.name+axisNames[i])
+                    if self.info['subspaces'][i]['type'] == 'scalar':
+                        subFieldNames.append(f'scalar{counter_scalars}')
+                        counter_scalars += 1
+                    elif self.info['subspaces'][i]['type'] == 'vector':
+                        subFieldNames.append(f'vector{counter_vectors}')
+                        counter_vectors += 1
+                    else:
+                        logger.error("Subspace type neither scalar nor vector.")
+                        raise ValueError("Subspace type neither scalar nor vector.") 
+
         return subFieldNames
 
     def setNamesOfSubFields(self, nameList):
         # TODO docu
         if len(nameList) != self.info['num_subspaces']:
-            #TODO throw error, or warning? And then use default names / don't update the list?
+            logger.warning("setNamesOfSubFields() called with a list of names that does not match the number of subspaces. No names were set.")
             return
         self.namesOfSubFields = nameList 
 
@@ -231,8 +270,9 @@ class Field:
             'nDofsMesh':                nDofsMesh,
             'subspaces':                []
         }
-        
-        if num_subspaces == 0:
+
+        # This handles a single scalar or a VMixed with a single scalar inside
+        if num_subspaces == 0 or (num_subspaces == 1 and value_size == 1):
             # Single space (scalar or vector)
             result['type']              = 'scalar'
             result['description']       = 'Single scalar space'

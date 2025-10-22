@@ -103,22 +103,31 @@ class fluctuationClass(
             Coordinate system used in the domain.
         """
 
-        self._param = param
-        self._FEMSpaces = FEMSpaces
-        self._coordinateSystem = coordinateSystem
-        fieldProperties.__init__(
-            self
-        )
-        self._isFluctuation = True
-        self._isMean = False
-        self._isSolution = False
-        self._zeroField = Function(FEMSpaces.P2)
-        # TODO Sophie: set correct name
-        self._zeroVectorField \
-            = Field(FEMSpaces.FunctionSpaceVectorVelocity, self._param.getMesh(), name=[]).getTensor()
-        self._zeroField = Field(FEMSpaces.P2, self._param.getMesh(), name="zero").getTensor()
-        self._fieldDict = {}
-        self._mean = mean
+        # Useful objects
+        self._param                 = param
+        self._FEMSpaces             = FEMSpaces
+        self._coordinateSystem      = coordinateSystem
+        fieldProperties.__init__(self)
+        
+        # Default flags
+        self._isFluctuation         = True
+        self._isMean                = False
+        self._isSolution            = False
+        
+        # Zero-value tensors
+        self._zeroVectorField       = Field(
+            FEMSpaces.FunctionSpaceVectorVelocity, 
+            self._param.getMesh(), 
+            name="zeroVector"
+            ).getTensor()
+        self._zeroField             = Function(FEMSpaces.P2)
+        self._zeroField             = Field(
+            FEMSpaces.P2, 
+            self._param.getMesh(), 
+            name="zeroScalar"
+            ).getTensor()
+        self._fieldDict             = {}
+        self._mean                  = mean
         self._transportedQuantities = param.getTransportedQuantityList()
 
         # _fluc is constructed. 

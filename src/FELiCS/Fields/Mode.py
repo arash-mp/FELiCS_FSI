@@ -1,4 +1,5 @@
 import  os
+import  h5py
 import  numpy               as np
 from    .Field              import Field
 from 	FELiCS.Misc.logging import Logger
@@ -31,7 +32,7 @@ class Mode(Field):
         Indicates if the mode is a response mode.
     """
 
-    def __init__(self, FEMSpace, mesh, name=[], isStateVector=True, m=None):
+    def __init__(self, FEMSpace, mesh, name="q_hat", isStateVector=True, m=0, analysis='Modal'):
         """
         Initializes the Mode instance.
 
@@ -44,18 +45,27 @@ class Mode(Field):
         """
         super().__init__(FEMSpace, mesh, name, isStateVector, m)
         # NOTE: why are these hardcoded here?
-
-        if not name:
-            self.name = "q_hat"
         
-        self.isAdjoint  = False
-        self.isResponse = False
+        # Set values
+        self.name              = name
+        self.analysis          = analysis
+        self.m                 = m
+        self.isStateVector     = isStateVector
+    
+        # Define name of the subfields (variables of the mode)
+        self.namesOfSubFields   = self.getNamesOfSubFields()
+
+        # Set some defaults in not a good way .> TODO: fix this as a property
+        self.isAdjoint          = False
+        self.isResponse         = False
+
+    # TODO: fix the setter/getter methods with properties
 
     def getName(self):
         if self.isStateVector:
             return "q_hat"
         else:
-            return __super__.getName()
+            return super().getName()
 
     def setGain(self,gain):
         """
@@ -67,6 +77,17 @@ class Mode(Field):
             Gain of the mode.
         """
         self._gain = gain
+
+    def setGainNumber(self,gainNumber):
+        """
+        Set the gain number for the mode.
+
+        Parameters
+        ----------
+        gainNumber : int
+            Gain number of the mode.
+        """
+        self._gainNumber = gainNumber
 
     def setFrequency(self,frequency):
         """
@@ -94,6 +115,7 @@ class Mode(Field):
     def setWaveNumber(self,waveNumber):
         """
         Set the wave number for the mode.
+        # NOTE: Why do we have this AND self.m?
 
         Parameters
         ----------
@@ -140,6 +162,21 @@ class Mode(Field):
         except: 
             logger.error('For this mode object no gain was defined. Returning "-9999."...')
             return -9999.
+        
+    def getGainNumber(self):
+        """
+        Get the gain number of the mode.
+
+        Returns
+        -------
+        int
+            Gain number of the mode. Returns -1 if undefined.
+        """
+        try:
+            return self._gainNumber
+        except: 
+            logger.error('For this mode object no gain number was defined. Returning "-1"...')
+            return -1
 
 
     def getFrequency(self):
@@ -224,40 +261,53 @@ class Mode(Field):
             self,
             reader,
             importDirPath,
-            analysis,
+            importFile = None,
         ):
         
-        # Get info on mode used to define filename
-        if analysis == 'Modal':
-            eigval      = self.getEigenValue()
-            modeType    = 'Direct' if not self.isAdjoint else 'Adjoint'
-            fileName    = f'{analysis}Solution_Omega_{modeType}_{np.round(eigval, 3)}.h5'
-        elif analysis == 'Resolvent':
-            frequency   = self.getFrequency()   
-            modeType    = 'Response' if self.isResponse else 'Forcing'
-            fileName    = f'{analysis}_Omega{np.round(frequency, 3)}_{modeType}_gain0.h5'   # NOTE: gain0 is a placeholder
-        elif analysis == 'Input-Output':
-            frequency   = self.getFrequency()
-            modeType    = 'Response'
-            fileName    = f'{analysis}_Omega{np.round(frequency, 3)}_{modeType}_gain0.h5'   # NOTE: Always gain 0 for IO modes
+        # In case we want to import from a specific file
+        if importFile is not None:
+            fileName        = importFile
         else:
-            logger.error(f'Analysis type "{analysis}" not recognized. Cannot import mode data.')
-            return self, None
+            # Check that analysis type is set to set a default name
+            if self.analysis == 'Modal':
+                eigval      = self.getEigenValue()
+                modeType    = 'Direct' if not self.isAdjoint else 'Adjoint'
+                fileName    = f'{self.analysis}Solution_Omega_{modeType}_{np.round(eigval, 3)}.h5'
+            elif self.analysis == 'Resolvent':
+                frequency   = self.getFrequency()   
+                modeType    = 'Response' if self.isResponse else 'Forcing'
+                fileName    = f'{self.analysis}_Omega{np.round(frequency, 3)}_{modeType}_gain0.h5'   # NOTE: gain0 is a placeholder
+            elif self.analysis == 'Input-Output':
+                frequency   = self.getFrequency()
+                fileName    = f'{self.analysis}_Omega{np.round(frequency, 3)}_Response_gain0.h5'   # NOTE: Always gain 0 for IO modes
+            else:
+                logger.error(f'Analysis type "{self.analysis}" not recognized. Cannot import mode data.')
+                return self, None
         
         # File name and group name
-        importFilePath  = os.path.join(importDirPath, fileName)
-        groupName       = "fluctuation/0/"
+        importFilePath      = os.path.join(importDirPath, fileName)
+        groupName           = "fluctuation/0/pointData/"  # TODO: remove all group names in FELiCS files
         
         # Call the reader from Field parent class
-        self, notInFile = self.importData(
-            self,
+        self, notInFile     = super().importData(
+            reader,
             importFilePath,
             groupName
         )
         
-        # Set the mode properties from the file
-        
+        # Read eignvalue or gain from file
+        if self.analysis == 'Modal':
+            with h5py.File(importFilePath, 'r') as f:
+                eigval = complex(f["fluctuation/0"].attrs['frequency']) # TODO: save the eigenvalue not as a string in files!
+                self.setEigenValue(eigval)
+        elif self.analysis == 'Resolvent' or self.analysis == 'Input-Output':
+            with h5py.File(importFilePath, 'r') as f:
+                freq_string = f["fluctuation/0"].attrs['frequency']
+                if 'j' in freq_string:
+                    frequency = complex(freq_string)
+                else:
+                    frequency = float(freq_string)
+                self.setFrequency(frequency)
+        # TODO: Save the gain in files and load only for resolvent modes
         
         return self, notInFile
-
-
