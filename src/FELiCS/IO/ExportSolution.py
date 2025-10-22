@@ -90,41 +90,43 @@ def ExportFromFile(param,FEMSpaces,fluctSolutList,MeanFlow):
 
     if param.Case.AnalysisMode in ['Resolvent','Input-Output']:
         # get the gains from the list of fluctuation Solutions:
-        gains   = np.zeros((param.Numerics.nSolut, len(param.IOResolvent.Omegas)))
+        # gains   = np.zeros((param.Numerics.nSolut, len(param.IOResolvent.Omegas)))
+        # NOTE: Removed the gains export to file from here, as it is now done by modeCollection.exportSpectrumToCSV
         ct      = 1
         for fluctSolut in fluctSolutList:
             logger.debug(f"Saving output file {ct:0.0f} / {len(fluctSolutList):0.0f}")
-            if fluctSolut.solutionKind == 'Response':
-                indexOmega = param.IOResolvent.Omegas.index(fluctSolut.omega)
-                gains[fluctSolut.gainNumber, indexOmega] = fluctSolut.gainValue
+            # if fluctSolut.solutionKind == 'Response':
+            #     indexOmega = param.IOResolvent.Omegas.index(fluctSolut.omega)
+            #     gains[fluctSolut.gainNumber, indexOmega] = fluctSolut.gainValue
             fileName = f'{param.Case.AnalysisMode}_Omega{np.round(fluctSolut.omega, 3)}_{fluctSolut.solutionKind}_gain{fluctSolut.gainNumber}.h5'
             fluctSolut.exportSolution(fileName, 'o')
             ct += 1
-        writeCSVGains(param,gains)
+        # writeCSVGains(param,gains)
         writeLastGitCommit(param)
 
     # in case of modal analysis: export the whole spectrum and every mode
     elif param.Case.AnalysisMode == 'Modal':
 
-        eValDirect = []
-        eValAdjoint = []
+        # NOTE: Removed the gains export to file from here, as it is now done by modeCollection.exportSpectrumToCSV
+        # eValDirect = []
+        # eValAdjoint = []
 
-        for fluctSolut in fluctSolutList:
-            if fluctSolut.solutionKind == 'Direct':
-                eValDirect.append(fluctSolut.omega)
-            else:
-                eValAdjoint.append(fluctSolut.omega)
+        # for fluctSolut in fluctSolutList:
+        #     if fluctSolut.solutionKind == 'Direct':
+        #         eValDirect.append(fluctSolut.omega)
+        #     else:
+        #         eValAdjoint.append(fluctSolut.omega)
 
         # convert the list of eVals to a np-array:
-        eValDirect      = np.array(eValDirect)
+        # eValDirect      = np.array(eValDirect)
         # idxDirect       = np.argmax(np.imag(eValDirect))
         
-        if param.Case.CalculateAdjoint:
-            eValAdjoint = np.array(eValAdjoint)
-            # idxAdjoint  = np.argmax(np.imag(eValAdjoint))
-            writeCSVSpectrum(param,eValDirect,eValAdjoint)
-        else:
-            writeCSVSpectrum(param,eValDirect)  
+        # if param.Case.CalculateAdjoint:
+        #     eValAdjoint = np.array(eValAdjoint)
+        #     # idxAdjoint  = np.argmax(np.imag(eValAdjoint))
+        #     writeCSVSpectrum(param,eValDirect,eValAdjoint)
+        # else:
+        #     writeCSVSpectrum(param,eValDirect)  
 
         for fluctSolut in fluctSolutList:
             fileName    = f'{param.Case.AnalysisMode}Solution_Omega_{fluctSolut.solutionKind}_{np.round(fluctSolut.omega, 3)}.h5'

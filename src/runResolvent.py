@@ -88,6 +88,10 @@ def runResolvent(param):
         
     # End tracking time
     logger.info(f"Solving the SVD(s) took {time.time()-start:.4g} s")
+    
+    # Exporting the gains to a file
+    spectrumFile        = param.Export.ExportFolder + "/gains.csv"
+    solution.exportSpectrumToCSV(spectrumFile)
 
     # Convert solution to fluctuationSolution objects for export
     fluctSolutList              = solution.getOldSolutionObject(

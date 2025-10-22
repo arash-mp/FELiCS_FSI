@@ -276,7 +276,7 @@ class Mode(Field):
             elif self.analysis == 'Resolvent':
                 frequency   = self.getFrequency()   
                 modeType    = 'Response' if self.isResponse else 'Forcing'
-                fileName    = f'{self.analysis}_Omega{np.round(frequency, 3)}_{modeType}_gain0.h5'   # NOTE: gain0 is a placeholder
+                fileName    = f'{self.analysis}_Omega{np.round(frequency, 3)}_{modeType}_gain{self.getGainNumber()}.h5'
             elif self.analysis == 'Input-Output':
                 frequency   = self.getFrequency()
                 fileName    = f'{self.analysis}_Omega{np.round(frequency, 3)}_Response_gain0.h5'   # NOTE: Always gain 0 for IO modes
@@ -300,6 +300,7 @@ class Mode(Field):
             with h5py.File(importFilePath, 'r') as f:
                 eigval = complex(f["fluctuation/0"].attrs['frequency']) # TODO: save the eigenvalue not as a string in files!
                 self.setEigenValue(eigval)
+        
         elif self.analysis == 'Resolvent' or self.analysis == 'Input-Output':
             with h5py.File(importFilePath, 'r') as f:
                 freq_string = f["fluctuation/0"].attrs['frequency']
@@ -308,6 +309,7 @@ class Mode(Field):
                 else:
                     frequency = float(freq_string)
                 self.setFrequency(frequency)
-        # TODO: Save the gain in files and load only for resolvent modes
+        
+        # TODO: Save the gain and eigenvalues in files and set them here
         
         return self, notInFile
