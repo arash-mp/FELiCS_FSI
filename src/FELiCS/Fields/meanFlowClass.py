@@ -53,7 +53,7 @@ class meanFlowClass(
         self._customMeanFlowQuantities = []
         
 
-    def importDataFromFileAndExportToH5(self):
+    def importDataFromFileAndExportToH5(self, writer):
         logger.info(f"Reading input flow from: '{self._param.FlowInput.MeanFlowFilePath}'")
 
         # Initialization
@@ -119,8 +119,13 @@ class meanFlowClass(
         self.initLamDiff()
         self.initThermodynamicQuantities()
 
-        # export mean flow to "meanflow.h5" file
-        self.mapToExportMeshAndExport(self._FEMSpaces, "MeanFlow.h5")
+        exportFields = []
+        for key, value in self._fieldDict.items():
+            exportFields.append(value)
+            print(key, type(value))
+
+        self.xmfHeader = writer.exportListOfFieldsToH5(exportFields, "meanFlow")
+
 
 
     def initLamDiff(self):

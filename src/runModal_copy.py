@@ -10,8 +10,8 @@ def runModal(param):
         param: Parameter objects (see parameters.py), defining the case
     '''
     # import  FELiCS.IO.Import as Import
-    from    FELiCS.IO.ExportSolution            import ExportFromFile
-    from    FELiCS.IO.Writer                    import Writer 
+    from    FELiCS.IO.ExportSolution            import ExportFromFile 
+    from    FELiCS.IO.Writer                    import Writer
     from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
@@ -22,85 +22,63 @@ def runModal(param):
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
-    # Mesh
-    mesh            = param.getMesh()
-    mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
-    
+    # mesh
+    mesh      = param.getMesh()
+
     # FEMSpaces
-    FEMSpaces       = FEMSpaces(
-        param,
-        mesh,
-    )
+    FEMSpaces = FEMSpaces(param, mesh)
      
-    # Read in mean flow and export to h5-file
-    meanFlow        = meanFlowClass(
-        param, 
-        FEMSpaces, 
-        mesh
-    )
-    meanFlow.importDataFromFileAndExportToH5()
-   
+    # writer to export the results in files
+    writer    = Writer(mesh, param.Export.ExportFolder)
+
+    # read in mean flow and export to h5-file
+    meanFlow = meanFlowClass(param, FEMSpaces, mesh)
+    meanFlow.importDataFromFileAndExportToH5(writer)
+
     # equation
-    equation        = EquationCollectionClass(
-        param,
-        FEMSpaces,
-        meanFlow,
-        mesh
-    )
+    equation = EquationCollectionClass(
+                                      param,
+                                      FEMSpaces,
+                                      meanFlow,
+                                      mesh
+                                      )
 
     #-----------------------------------------------------------------------
     ## MAIN PART
     #-----------------------------------------------------------------------
     # get matrices for eigenproblem
-    A               = equation.getLinearOperator(meanFlow)
-    B               = equation.getWeightMatrix  (meanFlow)
+    A = equation.getLinearOperator(meanFlow)
+    B = equation.getWeightMatrix  (meanFlow)
 
     # get parameters for eigenproblem
-    guesses         = param.Numerics.EigenValueGuess
-    nSol            = param.Numerics.nSolut
-    adjoint         = param.Case.CalculateAdjoint
-    names           = param.Case.StateVectorVariables
+    guesses          = param.Numerics.EigenValueGuess
+    nSol             = param.Numerics.nSolut
+    adjoint          = param.Case.CalculateAdjoint
 
     # track time
-    start           = time.time()
+    start= time.time()
 
     # solve eigenproblem for each guess
-    solution        = ModeCollection(
-        FEMSpaces.VMixed, 
-        mesh, 
-        names=names
-    )
-    
+    solution = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
         
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))
-        tmp         = LinearSolver.solveGeneralEigenproblem(
-            A,
-            B,
-            guess,
-            nSol,
-        )
+        tmp     = LinearSolver.solveGeneralEigenproblem(A,
+                                                        B,
+                                                        guess,
+                                                        nSol,
+                                                        )
 
         solution.appendSolutionOfEigenProblem(tmp, guess)
-        
-        mode        = solution.modeList[0]
-        list_modeSubFields = mode.getListOfSubFields()
-        exportField = writer.getFieldsOnExportMesh(mode)
-        writer.writeFieldToXDMF(exportField, "test_mode")
-        mode_u      = list_modeSubFields[0]
-        exportField = writer.getFieldsOnExportMesh(mode_u)
-        writer.writeFieldToXDMF(exportField, "test_mode_u")
 
         if adjoint:
             
             logger.info("Solving adjoint GEVP for guess: omega = " + str(guess))
-            tmp     = LinearSolver.solveGeneralEigenproblem(
-                A,
-                B,
-                guess,
-                nSol,
-                adjoint=True
-            )
+            tmp = LinearSolver.solveGeneralEigenproblem(A,
+                                                        B,
+                                                        guess,
+                                                        nSol,
+                                                        adjoint=True)
 
             solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
 
@@ -110,9 +88,15 @@ def runModal(param):
     logger.info('Solving the general eigenproblem took %4g s' % end)
     residuum_max    = solution.getMaximumError()
     logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
+   
 
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION
     #-----------------------------------------------------------------------
+    # Exporting the spectrum to a file
+    spectrumFile    = param.Export.ExportFolder + "/spectrum.csv"
+    solution.exportSpectrumToCSV(spectrumFile)
+
+    # Exporting the modes into files
     fluctSolutList  = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
     ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
