@@ -88,6 +88,10 @@ def runModal(param):
     logger.info('Solving the general eigenproblem took %4g s' % end)
     residuum_max    = solution.getMaximumError()
     logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
+    
+    # Exporting the spectrum to a file
+    spectrumFile    = param.Export.ExportFolder + "/spectrum.csv"
+    solution.exportSpectrumToCSV(spectrumFile)
 
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION

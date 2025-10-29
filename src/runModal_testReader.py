@@ -51,34 +51,41 @@ def runModal(param):
     ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
     
     # Get a mode to check structure
-    exampleMode     = solution.modeList[0]
+    # exampleMode     = solution.modeList[0]
+    
+    # Get the spectrum from the solution
+    spectrum, header = solution.getSpectrum()
+    
+    # Export the spectrum to a file
+    spectrumFile    = param.Export.ExportFolder + "/spectrum.csv"
+    solution.exportSpectrumToCSV(spectrumFile)
     
     # ======= TEST IMPORTING A MODE COLLECTION =======
     # Create empty mode collection to import into
     logger.info("Testing importing a mode collection from directory")
-    importSolution     = ModeCollection(FEMSpaces.VMixed, mesh)
+    # importSolution     = ModeCollection(FEMSpaces.VMixed, mesh)
     
-    # Instantiate a reader and use to load mode collection
-    r               = Reader(
-        needInterpolation   = False,
-        originalMeshFile    = None, 
-        isComplex           = True,
-        cacheData           = True,
-    )
-    # TEMPORARY: Bind the params and FEM spaces to the reader
-    r.bind_env(param, FEMSpaces)
-    # Import test for collection
-    importSolution.importData(
-        r,
-        param.Export.ExportFolder,
-        modeType='Direct'
-    )
-    # Adding +100 to eigenvalues to distinguish imported modes
-    for mode in importSolution.modeList:
-        mode.setEigenValue(mode.getEigenValue()+100.0)
-    # Export again the mode collection so we can check the imported modes
-    fluctSolutList_new      = importSolution.getOldSolutionObject(meanFlow, param, FEMSpaces)
-    ExportFromFile(param,FEMSpaces,fluctSolutList_new,meanFlow)
+    # # Instantiate a reader and use to load mode collection
+    # r               = Reader(
+    #     needInterpolation   = False,
+    #     originalMeshFile    = None, 
+    #     isComplex           = True,
+    #     cacheData           = True,
+    # )
+    # # TEMPORARY: Bind the params and FEM spaces to the reader
+    # r.bind_env(param, FEMSpaces)
+    # # Import test for collection
+    # importSolution.importData(
+    #     r,
+    #     param.Export.ExportFolder,
+    #     modeType='Direct'
+    # )
+    # # Adding +100 to eigenvalues to distinguish imported modes
+    # for mode in importSolution.modeList:
+    #     mode.setEigenValue(mode.getEigenValue()+100.0)
+    # # Export again the mode collection so we can check the imported modes
+    # fluctSolutList_new      = importSolution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    # ExportFromFile(param,FEMSpaces,fluctSolutList_new,meanFlow)
     
     # ======= TEST IMPORTING A MODE FROM FILE =======
     # logger.info("Testing importing a mode from file")

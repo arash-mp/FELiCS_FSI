@@ -275,7 +275,96 @@ class ModeCollection():
             if not mode.isAdjoint:
                 spectrum.append(mode.getEigenValue())
         return spectrum
+    
+    def getSpectrum(self):
+        """
+        Returns the spectrum for either `Modal` or `Resolvent` type of analysis.
+        
+        
+        Returns:
+        -------
+        spectrum: array-like 
+            Array of eigenvalues or gains at each omega and either (i) Direct/Adjoint for 'Modal'
+            or (ii) GainNumber for `Resolvent`.
+        header: list
+            List of headers corresponding to the spectrum values.
+        """
+        
+        # Mode list
+        modeList        = self.modeList
+        
+        # For modal analysis
+        if self.analysis == 'Modal':
+            hasAdjoint  = any(mode.isAdjoint for mode in modeList)
+            nLines      = len(modeList)//2 if hasAdjoint else len(modeList)
+            nCols       = 4 if hasAdjoint else 2
+            
+            # Define the header
+            if hasAdjoint:
+                header  = ['omega_direct_r','omega_direct_i','omega_adjoint_r','omega_adjoint_i']
+            else:
+                header  = ['omega_direct_r','omega_direct_i']
+                
+            # Define the spectrum array
+            spectrum    = np.zeros((nLines, nCols), dtype=float)
+            ctr_line_direct     = 0
+            ctr_line_adjoint    = 0
+            for i, mode in enumerate(modeList):
+                if not mode.isAdjoint:
+                    spectrum[ctr_line_direct,0] = mode.getEigenValue().real
+                    spectrum[ctr_line_direct,1] = mode.getEigenValue().imag
+                    ctr_line_direct += 1
+                else:
+                    spectrum[ctr_line_adjoint,2] = mode.getEigenValue().real
+                    spectrum[ctr_line_adjoint,3] = mode.getEigenValue().imag
+                    ctr_line_adjoint += 1
+            
+        # Resolvent or IO case (consider only the response modes)
+        elif self.analysis in ['Resolvent', 'Input-Output']:
+            Ncols           = 2 + max(mode.getGainNumber() for mode in modeList) # Mode numbers start at 0
+            frequencyList   = np.unique([mode.getFrequency() for mode in modeList])
+            NLines          = len(frequencyList)
 
+            # Define the header
+            header          = ["omega"]
+            header.extend([f'gain_{i}' for i in range(Ncols - 1)])
+
+            # Define the spectrum array
+            spectrum    = np.zeros((NLines, Ncols), dtype=float)
+            hasResponse = any(mode.isResponse for mode in modeList)
+            # Only loop on one type of modes to avoid duplicates
+            modeTypeToLoop = 'Response' if hasResponse else 'Forcing'
+            for i, mode in enumerate(modeList):
+                if (modeTypeToLoop == 'Response' and mode.isResponse) or (modeTypeToLoop == 'Forcing' and not mode.isResponse):
+                    currentFrequency    = mode.getFrequency()
+                    LineIndex           = np.where(frequencyList == currentFrequency)[0]
+                    spectrum[LineIndex[0], 0] = currentFrequency
+                    spectrum[LineIndex[0], 1 + mode.getGainNumber()] = mode.getGain()
+
+        return spectrum, header
+
+    def exportSpectrumToCSV(self, filePath):
+        """
+        Export the spectrum to a CSV file.
+
+        Parameters
+        ----------
+        filePath : str
+            Path to the output CSV file.
+        """
+
+        spectrum, header = self.getSpectrum()
+        np.savetxt(
+            filePath, 
+            spectrum, 
+            delimiter=',', 
+            header=','.join(header), 
+            comments=''
+        )
+        if self.analysis == 'Modal':
+            logger.info(f'Eigenvalue spectrum exported to {filePath}.')
+        else:
+            logger.info(f'Gains spectrum exported to {filePath}.')
 
     def getNearestMode(self, gain=None, eigenValue=None, guess=None, waveNumber=None, frequency=None):
         """
@@ -455,6 +544,8 @@ class ModeCollection():
         -------
         list
             Sorted list of mode file names.
+
+        TODO: return the gainNumber for resolvent case (for IO it's always 0)
         """
 
         # List of all h5 files in the folder
@@ -482,6 +573,7 @@ class ModeCollection():
         # Go over files and classify them
         omegasModeFiles         = []
         typesModeFiles          = []
+        gainNumbersModeFiles    = []
         for i, f in enumerate(modeFiles):
             
             # First we get the type
@@ -501,7 +593,12 @@ class ModeCollection():
                 else:
                     logger.error(f'Could not determine mode type from filename "{f}". Skipping this file.')
                     raise RuntimeError(f'Could not determine mode type from filename "{f}".')
+                # Get the gain number from filename
+                gainNumberStr       = f.split('gain')[1].split('.h5')[0]
+                gainNumbersModeFiles.append(int(gainNumberStr))
+
             elif self.analysis == 'Input-Output':
+                gainNumbersModeFiles.append(0)  # Always 0 for IO modes
                 if responsePattern in f:
                     typesModeFiles.append('Response')
                 else:
@@ -509,7 +606,11 @@ class ModeCollection():
                     raise RuntimeError(f'Could not determine mode type from filename "{f}".')
             
             # Extract omega from filename
-            omegaStr            = f.split(filePrefix+typesModeFiles[i]+'_')[1].split('.h5')[0]
+            # NOTE: different structure of name for Modal and Resolvent TODO: unify?
+            if self.analysis == 'Modal':
+                omegaStr            = f.split(filePrefix+typesModeFiles[i]+'_')[1].split('.h5')[0]
+            else:
+                omegaStr            = f.split(filePrefix)[1].split('_')[0]
             # Can be float (no "j") or a complex number (with "j")
             if 'j' in omegaStr:
                 try:
@@ -524,25 +625,29 @@ class ModeCollection():
                     logger.error(f'Could not parse omega from filename "{f}". Skipping this file. Error: {e}')
                     continue
             omegasModeFiles.append(omega)
-        
-        return modeFiles, omegasModeFiles, typesModeFiles
 
-    def importData(self, reader, importFolder, omegas=None, modeType=None):
+        return modeFiles, omegasModeFiles, typesModeFiles, gainNumbersModeFiles
+
+    def importData(self, reader, importFolder, omegas=None, modeType=None, gainNumber=None):
         """
         Import mode collection data from a specified folder using a reader.
 
         Parameters
         ----------
-        reader : object
-            Reader object to handle data import.
+        reader : Reader
+            The Reader object used to read the mode data.
         importFolder : str
-            Path to the folder containing the mode collection data.
-        omegas : list, optional
-            List of eigenfrequencies to import. If None, all modes are imported.
+            Path to the folder containing the mode files.
+        omegas : list of float, optional
+            List of frequencies to import. If None, all frequencies are imported.
+        modeType : str, optional
+            Type of mode to import (e.g., 'Direct', 'Adjoint', 'Response', 'Forcing'). If None, all types are imported.
+        gainNumber : int, optional
+            Gain number to import (for Resolvent analysis). If None, all gain numbers are imported
         """
         
         # Get the list of mode files in the directory, omegas values, and mode types
-        h5Files, fileOmegas, fileTypes  = self._getAndSortModeFilesInDir(importFolder)
+        h5Files, fileOmegas, fileTypes, gainNb  = self._getAndSortModeFilesInDir(importFolder)
         
         # If omega was given as input, filter files accordingly
         if omegas is not None:
@@ -551,6 +656,7 @@ class ModeCollection():
                 logger.error('No matching omegas found in the import folder for the specified omegas.')
                 return
             h5Files                     = [h5Files[i] for i in matchingOmegasIndices]
+            logger.info(f'Importing only modes for omegas: {np.round([fileOmegas[i] for i in matchingOmegasIndices],3)}')
 
         # If a mode type was given as input, filter files accordingly
         if modeType is not None:
@@ -559,6 +665,16 @@ class ModeCollection():
                 logger.error(f'No matching mode types found in the import folder for the specified type "{modeType}".')
                 return
             h5Files                     = [h5Files[i] for i in matchingTypeIndices]
+            logger.info(f'Importing only modes with type: {modeType}')
+            
+        # If a gain number was given as input, filter files accordingly (for Resolvent analysis)
+        if gainNumber is not None and self.analysis == 'Resolvent':
+            matchingGainIndices         = [i for i, gNum in enumerate(gainNb) if gNum == gainNumber]
+            if len(matchingGainIndices) == 0:
+                logger.error(f'No matching gain numbers found in the import folder for the specified gain number "{gainNumber}".')
+                return
+            h5Files                     = [h5Files[i] for i in matchingGainIndices]
+            logger.info(f'Importing only modes with gain number: {gainNumber}')
 
         # Import each mode file
         numberOfModes                   = len(h5Files)
@@ -571,6 +687,21 @@ class ModeCollection():
                 m=self.m, 
                 analysis=self.analysis
             )
+            
+            # For resolvent an IO, set gainNumber before importing
+            if self.analysis in ['Resolvent', 'Input-Output']:
+                mode.setGainNumber(gainNb[i])
+                
+            # For resolvent, set isResponse based on filename
+            # TODO: use a more general "modeType" attribute in Mode?
+            if self.analysis == 'Resolvent':
+                if 'Response' in h5Files[i]:
+                    mode.isResponse = True
+                else:
+                    mode.isResponse = False
+            elif self.analysis == 'Input-Output':
+                mode.isResponse = True  # Always response for IO modes
+            
             mode.importData(
                 reader,
                 importFolder,

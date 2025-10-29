@@ -1,5 +1,6 @@
 import  time
 from 	FELiCS.Misc.logging     import Logger
+from    FELiCS.IO.reader        import Reader
 
 # Get the logger
 logger                          = Logger.get_logger("felics")
@@ -17,7 +18,7 @@ def runResolvent(param):
     from    FELiCS.Solvers.LinearSolver         import LinearSolver, ResolventOperator
     from    FELiCS.Fields.ModeCollection        import ModeCollection
 
-    logger.warning("Running Resolvent analysis with Reader testing")
+    logger.warning("Running Resolvent analysis")
     
     # Get FELiCS objects required for analysis
     mesh                        = param.getMesh()
@@ -101,3 +102,49 @@ def runResolvent(param):
         fluctSolutList, 
         meanFlow
     )
+    
+    # ====================== Test reader ======================
+    # Get a mode to check structure
+    # exampleMode     = solution.modeList[0]
+    
+    # Get the spectrum from the solution
+    spectrum, header    = solution.getSpectrum()
+    spectrumFile        = param.Export.ExportFolder + "/gains.csv"
+    solution.exportSpectrumToCSV(spectrumFile)
+    
+    # Loop over all modes and print their attributes to verify successful conversion to mode collection
+    for i, mode in enumerate(solution.modeList):
+        logger.info(f"Mode {i}: Frequency = {mode.getFrequency()}, Gain = {mode.getGain()}, Gain Number = {mode.getGainNumber()}")
+    
+    # ======= TEST IMPORTING A MODE COLLECTION =======
+    # Create empty mode collection to import into
+    logger.info("Testing importing a mode collection from directory")
+    importSolution     = ModeCollection(FEMSpaces.VMixed, mesh, analysis='Resolvent')
+    
+    # Instantiate a reader and use to load mode collection
+    r               = Reader(
+        needInterpolation   = False,
+        originalMeshFile    = None, 
+        isComplex           = True,
+        cacheData           = True,
+    )
+    # TEMPORARY: Bind the params and FEM spaces to the reader
+    r.bind_env(param, FEMSpaces)
+    # Import test for collection
+    importSolution.importData(
+        r,
+        param.Export.ExportFolder,
+    )
+    
+    # NOTE: for now the gains are not stored in fles, so we cannot check them here
+    # Loop over all modes and print their attributes to verify successful import
+    for i, mode in enumerate(importSolution.modeList):
+        logger.info(f"Imported Mode {i}: Frequency = {mode.getFrequency()}, Gain = {mode.getGain()}, Gain Number = {mode.getGainNumber()}")
+    
+    # Change the gain number in new collection to distinguish imported modes
+    for i, mode in enumerate(importSolution.modeList):
+        importSolution.modeList[i].setGainNumber(mode.getGainNumber()+10)
+    
+    # Export again the mode collection so we can check the imported modes
+    fluctSolutList_new      = importSolution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    ExportFromFile(param,FEMSpaces,fluctSolutList_new,meanFlow)
