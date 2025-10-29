@@ -66,7 +66,6 @@ class FELiCSMesh:
         inputMesh : dolfinx.mesh.Mesh, optional
             An existing DOLFINx mesh object.
         """
-
         if inputMesh is None:
             # Initialize gmsh and suppress its output
             gmsh.initialize()
@@ -127,6 +126,20 @@ class FELiCSMesh:
             raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
         self._coordinates = self.coordinates()
 
+    @property
+    def exportMesh(self):
+        """
+        Lazy-loaded refined export mesh for exporting simulation results.
+
+        Returns
+        -------
+        ExportMesh
+            An instance of ExportMesh, created on first access if not already initialized.
+        """
+        if not hasattr(self, '_exportMesh') or self._exportMesh is None:
+            self._exportMesh = ExportMesh(self)
+        return self._exportMesh
+
     def setTrueDimension(self, dim):
         """
         Corrects the true dimension of the system. This has to be called if a spectral dimension is included,
@@ -159,19 +172,11 @@ class FELiCSMesh:
         
         # TODO: save the DoFs corresponding to the different BCs
 
-        # if not already there: initialize and save export mesh
-        if not hasattr(self, "exportMesh"):
-            # refine the mesh and create new FELiCSMesh
-            logger.debug('Defining refined P1 export mesh.')
-            self.dolfinxMesh.topology.create_entities(1)
-            refine_tuple        = refine(self.dolfinxMesh)
-            exportMesh_dolfinx  = refine_tuple[0]
-            self.exportMesh     = FELiCSMesh(self.coordinateSystemName,inputMesh=exportMesh_dolfinx, gdim=self.gdim)
-
-        coordinates = self.exportMesh.coordinates()
+        # Compute additional export mesh properties
+        coordinates     = self.exportMesh.coordinates()
         self.exportMesh.calcConnectivity()
-        meshCells = self.exportMesh.meshCells
-        nDim = coordinates.shape[1]
+        meshCells       = self.exportMesh.meshCells
+        nDim            = coordinates.shape[1]
         coordinateNames = ['x']
         if nDim > 1:
             coordinateNames.append('y')
@@ -319,3 +324,26 @@ class FELiCSMesh:
             raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
 
         return coordinateNames
+
+
+class ExportMesh(FELiCSMesh):
+    """
+    Subclass of FELiCSMesh for refined export meshes.
+
+    This class is intended for creating refined meshes suitable for exporting simulation results.
+    """
+    
+    def __init__(self, base_mesh: FELiCSMesh):
+        logger.debug("Initializing refined P1 export mesh.")
+        
+        # Refine the mesh
+        base_mesh.dolfinxMesh.topology.create_entities(1)
+        refine_tuple        = refine(base_mesh.dolfinxMesh)
+        exportMesh_dolfinx  = refine_tuple[0]
+
+        # Create the new ExportMesh instance
+        super().__init__(
+            coordinateSystemName    = base_mesh.coordinateSystemName,
+            inputMesh               = exportMesh_dolfinx,
+            gdim                    = base_mesh.gdim,
+        )
