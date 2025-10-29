@@ -18,6 +18,9 @@ def runInputOutput(param):
 
     logger.info("Running input/output analysis")
     
+    #-----------------------------------------------------------------------
+    ## INITIALIZATION
+    #-----------------------------------------------------------------------
     # Get FELiCS objects required for analysis
     mesh                    = param.getMesh()
     mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
@@ -27,6 +30,10 @@ def runInputOutput(param):
     meanFlow.importDataFromFileAndExportToH5()
     equation                = EquationCollectionClass(param,FEMSpaces,meanFlow,mesh)
 
+
+    #-----------------------------------------------------------------------
+    ## MAIN PART
+    #-----------------------------------------------------------------------
     # Get operators required for input/output analysis
     A                       = equation.getLinearOperator(meanFlow)
     B                       = equation.getWeightMatrix  (meanFlow)
@@ -50,6 +57,10 @@ def runInputOutput(param):
     # End tracking time
     logger.info(f"Solving the input/output problem took {time.time()-start:.4g} s")
 
+
+    #-----------------------------------------------------------------------
+    ## EXPORT SOLUTION
+    #-----------------------------------------------------------------------
     # Exporting the solution to file
     fluctSolutList          = solution.getOldSolutionObject(
         meanFlow, 

@@ -19,6 +19,9 @@ def runResolvent(param):
 
     logger.warning("Running Resolvent analysis")
     
+    #-----------------------------------------------------------------------
+    ## INITIALIZATION
+    #-----------------------------------------------------------------------
     # Get FELiCS objects required for analysis
     mesh                        = param.getMesh()
     mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
@@ -28,6 +31,10 @@ def runResolvent(param):
     meanFlow.importDataFromFileAndExportToH5()
     equation                    = EquationCollectionClass(param,FEMSpaces,meanFlow, mesh)
 
+
+    #-----------------------------------------------------------------------
+    ## MAIN PART
+    #-----------------------------------------------------------------------
     # Get operators required for resolvent analysis
     A                           = equation.getLinearOperator(meanFlow)
     B                           = equation.getWeightMatrix  (meanFlow)
@@ -90,7 +97,11 @@ def runResolvent(param):
         
     # End tracking time
     logger.info(f"Solving the SVD(s) took {time.time()-start:.4g} s")
-    
+
+
+    #-----------------------------------------------------------------------
+    ## EXPORT SOLUTION
+    #-----------------------------------------------------------------------
     # Exporting the gains to a file
     spectrumFile        = param.Export.ExportFolder + "/gains.csv"
     solution.exportSpectrumToCSV(spectrumFile)

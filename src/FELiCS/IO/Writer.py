@@ -5,12 +5,14 @@ from    mpi4py              import MPI
 from    FELiCS.Fields.Field import Field
 from    FELiCS.Misc.logging import Logger
 
+from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
+
 # Get the logger
 logger = Logger.get_logger("felics")
 
 class Writer:
     
-    def __init__(self, mesh, exportFolder = "Output", exportMesh = None):
+    def __init__(self, mesh, exportFolder = "Output"):
         """
         Function arguments:
         - mesh: FELiCSMesh object 
@@ -28,7 +30,7 @@ class Writer:
 
         self.mesh         = mesh
         self.exportFolder = exportFolder
-        self.exportMesh   = exportMesh
+        self.exportMesh   = mesh.exportMesh
 
         os.makedirs(exportFolder, exist_ok=True)
 
@@ -203,53 +205,103 @@ class Writer:
         import numpy   as     np
         from   pathlib import Path
 
-        # TODO: check if mesh is already exported; if not: export!!
+        #-----------------------------------------------------------------------
+        ## preliminary checks 
+        #-----------------------------------------------------------------------
+        # check if there is already a file called "mesh.h5"; if not, export the mesh
+        # TODO: write output (debug?) if a mesh is exported
+        meshFileName = self.exportFolder + "/mesh.h5"
+        meshPath     = Path(meshFileName)
+        if not meshPath.is_file():
+            self.mesh.saveInFELiCSFormat(meshFileName)    
 
-        # This is from FEMSpaces:
-        ## Create export mesh
-        ## Refine the mesh
-        #logger.debug('Defining refined P1 export mesh.')
-        #refine_tuple        = refine(mesh.dolfinxMesh)
-        #exportMesh_dolfinx  = refine_tuple[0]
-        ## Create new FELiCSMesh
-        #exportMesh          = FELiCSMesh(param.Case.CoordinateSystem,inputMesh=exportMesh_dolfinx)
-        #exportMesh.gdim     = param.Case.nDim
-        ## Save mesh
-        #exportMesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
-        #self.exportMesh     = exportMesh
+        listOfExportFields = self._getListOfScalarExportFields(field)
 
 
+        #-----------------------------------------------------------------------
+        ## write in  h5 file and create xmf text 
+        #-----------------------------------------------------------------------
         xmfText  = self._createXMFHeader()
 
         if len(self.exportFolder)>0:
             fileName = self.exportFolder + "/" + fileName 
 
         # h5 file path
+        fileName.removesuffix(".h5") # this makes sure that also fileNames with the correct ending can be given
         h5FilePath = Path(fileName + ".h5")
 
-        if field.info['type'] == 'scalar':
+        for exportField in listOfExportFields:
+            
             with h5py.File(h5FilePath, 'w') as h5:
-                if field.isReal():
-                    h5.create_dataset(field.getName(), data = field.getRealCoefficientArray(),  dtype = float)
-                    xmfText += self._createXMFForScalarField(h5FilePath.name, field.getName(), field.getSize())
+                if exportField.isReal():
+                    h5.create_dataset(exportField.getName(), data = exportField.getRealCoefficientArray(),  dtype = float)
+                    xmfText += self._createXMFForScalarField(h5FilePath.name, exportField.getName(), exportField.getSize())
                 else:
-                    realName = field.getName()+"_real"
-                    imagName = field.getName()+"_imag"
-                    h5.create_dataset(realName, data = field.getRealCoefficientArray(),  dtype = np.float64)
-                    h5.create_dataset(imagName, data = field.getImagCoefficientArray(),  dtype = np.float64)
-                    xmfText += self._createXMFForScalarField(h5FilePath.name, realName, field.getSize())
-                    xmfText += self._createXMFForScalarField(h5FilePath.name, imagName, field.getSize())
+                    realName = exportField.getName()+"_real"
+                    imagName = exportField.getName()+"_imag"
+                    h5.create_dataset(realName, data = exportField.getRealCoefficientArray(),  dtype = np.float64)
+                    h5.create_dataset(imagName, data = exportField.getImagCoefficientArray(),  dtype = np.float64)
+                    xmfText += self._createXMFForScalarField(h5FilePath.name, realName, exportField.getSize())
+                    xmfText += self._createXMFForScalarField(h5FilePath.name, imagName, exportField.getSize())
                    
-        if field.info['type'] == 'vector':
-            with h5py.File(h5FilePath, 'w') as h5:
-                listOfFields = field.getListOfSubFields()
-                for subField in listOfFields:
-                    h5.create_dataset(subField.getName(), data = subField.getRealCoefficientArray(),  dtype = float)
-                    xmfText += self._createXMFForScalarField(h5FilePath.name, subField.getName(), subField.getSize())
-
-
         xmfText += self._createXMFFooter()
+
+        #-----------------------------------------------------------------------
+        ## create xmf file 
+        #-----------------------------------------------------------------------
         Path(fileName+".xmf").write_text(xmfText, encoding="utf-8")
+
+
+    def _getListOfScalarExportFields(self, field):
+
+        # convert vector fields and mixed fields into a list of scalar fields
+        if field.info['type'] == 'scalar':
+            listOfSubFields = []
+            field.isScalarSub = True
+            listOfSubFields.append(field)
+        elif field.info['type'] == 'vector':
+            listOfSubFields = field.getListOfSubFields()
+            for subField in listOfSubFields:
+                subField.isScalarSub = False
+            if not hasattr(self, "mappingVecToExport"): 
+                from FELiCS.IO.Mapping import Mapping
+                exportSpace = getFELiCSSpace(self.mesh.exportMesh, order = 1, dim = 1)  
+                self.mappingVecToExport = Mapping.calculateMappingFromDofs(
+                    field.space.sub(0).collapse()[0].tabulate_dof_coordinates(), 
+                    exportSpace.tabulate_dof_coordinates())
+
+        # and then convert the list to export fields
+        listOfExportFields = []
+        for subField in listOfSubFields:
+            listOfExportFields.append(self._getExportField(subField))
+
+        return listOfExportFields
+
+
+    def _getExportField(self, field):
+        #only works for scalar fields
+
+        degree = field.space.ufl_element().degree
+        if degree == 2:
+            # check if there is already a mapping
+            # TODO: change this after export mesh updates from Simon
+            from FELiCS.IO.Mapping import Mapping
+            exportSpace = getFELiCSSpace(self.mesh.exportMesh, order = 1, dim = 1)  
+            if field.isScalarSub:
+                if not hasattr(self, "mappingP2ToExport"): 
+                    self.mappingP2ToExport = Mapping.calculateMappingFromSpaces(
+                                             field.space, exportSpace)
+                exportField = Field(exportSpace, self.mesh.exportMesh, name=field.getName())
+                exportField.function.x.array[self.mappingP2ToExport] = field.function.x.array[:]
+            else:
+                exportField = Field(exportSpace, self.mesh.exportMesh, name=field.getName())
+                exportField.function.x.array[self.mappingVecToExport] = field.function.x.array[:]
+
+            print("### export field created with name: ", exportField.getName())
+        else: 
+            # TODO: write error message for "not implemented"
+            raise NotImplementedError
+        return exportField
 
 
     def _createXMFHeader(self):

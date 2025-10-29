@@ -24,6 +24,7 @@ def runModal(param):
     #-----------------------------------------------------------------------
     # Mesh
     mesh            = param.getMesh()
+    mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
     
     # FEMSpaces
     FEMSpaces       = FEMSpaces(
@@ -39,10 +40,8 @@ def runModal(param):
     )
     meanFlow.importDataFromFileAndExportToH5()
    
-
-
     # get one field from meanflow
-    writer          = Writer(mesh, exportFolder="OutputTest", exportMesh = FEMSpaces.exportMesh)
+    writer          = Writer(mesh, exportFolder="OutputTest")
     field_scalar    = meanFlow._fieldDict['nulam']
     field_scalar.setCoefficientArray(field_scalar.getCoefficientArray()*2. + 1j*field_scalar.getCoefficientArray())
     field_scalar.exportToH5(writer)
