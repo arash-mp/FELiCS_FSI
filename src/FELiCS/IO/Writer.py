@@ -31,6 +31,7 @@ class Writer:
         self.mesh         = mesh
         self.exportFolder = exportFolder
         self.exportMesh   = mesh.exportMesh
+        self.exportSpace  = getFELiCSSpace(self.exportMesh, order = 1, dim = 1)  
 
         os.makedirs(exportFolder, exist_ok=True)
 
@@ -215,7 +216,14 @@ class Writer:
         if not meshPath.is_file():
             self.mesh.saveInFELiCSFormat(meshFileName)    
 
-        listOfExportFields = self._getListOfScalarExportFields(field)
+        # get a list of purely scalar fields from the field 
+        # (which could be scalar/vector/mixed)
+        listOfSubFields = self._getListOfScalarFields(field)
+
+        # convert the list of (sub-)fields to export fields defined on the export mesh
+        listOfExportFields = []
+        for subField in listOfSubFields:
+            listOfExportFields.append(self._getExportField(subField))
 
 
         #-----------------------------------------------------------------------
@@ -230,12 +238,12 @@ class Writer:
         fileName.removesuffix(".h5") # this makes sure that also fileNames with the correct ending can be given
         h5FilePath = Path(fileName + ".h5")
 
-        for exportField in listOfExportFields:
-            
-            with h5py.File(h5FilePath, 'w') as h5:
+        with h5py.File(h5FilePath, 'w') as h5:
+            for exportField in listOfExportFields:
                 if exportField.isReal():
-                    h5.create_dataset(exportField.getName(), data = exportField.getRealCoefficientArray(),  dtype = float)
+                    h5.create_dataset(exportField.getName(), data = exportField.getRealCoefficientArray(),  dtype = np.float64)
                     xmfText += self._createXMFForScalarField(h5FilePath.name, exportField.getName(), exportField.getSize())
+                    print(exportField.getName(), h5FilePath.name)
                 else:
                     realName = exportField.getName()+"_real"
                     imagName = exportField.getName()+"_imag"
@@ -252,56 +260,79 @@ class Writer:
         Path(fileName+".xmf").write_text(xmfText, encoding="utf-8")
 
 
-    def _getListOfScalarExportFields(self, field):
+    def _getListOfScalarFields(self, field):
 
         # convert vector fields and mixed fields into a list of scalar fields
+        listOfSubFields = []
+
         if field.info['type'] == 'scalar':
-            listOfSubFields = []
-            field.isScalarSub = True
             listOfSubFields.append(field)
+
         elif field.info['type'] == 'vector':
-            listOfSubFields = field.getListOfSubFields()
-            for subField in listOfSubFields:
-                subField.isScalarSub = False
-            if not hasattr(self, "mappingVecToExport"): 
-                from FELiCS.IO.Mapping import Mapping
-                exportSpace = getFELiCSSpace(self.mesh.exportMesh, order = 1, dim = 1)  
-                self.mappingVecToExport = Mapping.calculateMappingFromDofs(
-                    field.space.sub(0).collapse()[0].tabulate_dof_coordinates(), 
-                    exportSpace.tabulate_dof_coordinates())
+            names        = field.getNamesOfSubFields()
+            degree       = field.space.ufl_element().degree
+            space_scalar = getFELiCSSpace(field.mesh, order = degree, dim=1)
+            for i in range(field.info['num_subspaces']):
+                indices_mapping = field.space.sub(i).collapse()[1]
+                field_scalar    = Field(space_scalar, field.mesh, name=names[i])
+                field_scalar.setCoefficientArray(field.getCoefficientArray()[indices_mapping])
+                listOfSubFields.append(field_scalar)
 
-        # and then convert the list to export fields
-        listOfExportFields = []
-        for subField in listOfSubFields:
-            listOfExportFields.append(self._getExportField(subField))
+        elif field.info['type'] == 'mixed':
+            listOfFields    = field.getListOfSubFields()
+            for fieldMixed in listOfFields:
+                listOfSubFields.extend(self._getListOfScalarFields(fieldMixed))
 
-        return listOfExportFields
+        else:
+            raise Exception(f"Unknown field type: {field.info['type']}")
+
+
+        return listOfSubFields
+
 
 
     def _getExportField(self, field):
         #only works for scalar fields
 
-        degree = field.space.ufl_element().degree
+        exportField = Field(self.exportSpace, field.mesh.exportMesh, name=field.getName())
+
+        degree      = field.space.ufl_element().degree
+
         if degree == 2:
             # check if there is already a mapping
             # TODO: change this after export mesh updates from Simon
             from FELiCS.IO.Mapping import Mapping
-            exportSpace = getFELiCSSpace(self.mesh.exportMesh, order = 1, dim = 1)  
-            if field.isScalarSub:
-                if not hasattr(self, "mappingP2ToExport"): 
-                    self.mappingP2ToExport = Mapping.calculateMappingFromSpaces(
-                                             field.space, exportSpace)
-                exportField = Field(exportSpace, self.mesh.exportMesh, name=field.getName())
-                exportField.function.x.array[self.mappingP2ToExport] = field.function.x.array[:]
-            else:
-                exportField = Field(exportSpace, self.mesh.exportMesh, name=field.getName())
-                exportField.function.x.array[self.mappingVecToExport] = field.function.x.array[:]
+            if not hasattr(self, "mappingP2ToExport"): 
+                self.mappingP2ToExport = Mapping.calculateMappingFromSpaces(
+                                             field.space, self.exportSpace)
+            exportField.setCoefficientArray( field.getCoefficientArray()[self.mappingP2ToExport])
 
-            print("### export field created with name: ", exportField.getName())
-        else: 
-            # TODO: write error message for "not implemented"
-            raise NotImplementedError
+        else:
+            # TODO: write warning that this may be slow and that data may be lost, if used on degree > 2
+            self._interpolateWithGridData(field, exportField)
+
         return exportField
+
+
+    def _interpolateWithGridData(self, field, exportField):
+        ## Interpolating a P1 FELiCS field to a P1 export field using griddata:
+        # field: input field 
+        # exportField: export field for writing in file
+
+        # Dimension of the source and export meshes
+        source_dim          = field.mesh.dolfinxMesh.geometry.dim
+        # Get the coordinates of the source and export meshes
+        source_coords       =       field.space.tabulate_dof_coordinates()[:, :source_dim]
+        export_coords       = exportField.space.tabulate_dof_coordinates()[:, :source_dim]
+        # Interpolate the source field values to the export mesh coordinates
+        interpolated_values = griddata(
+                source_coords, 
+                field.getCoefficientArray(), 
+                export_coords, 
+                method='linear'
+            )
+        # Set the interpolated values to the export field
+        exportField.setCoefficientArray(interpolated_values)
 
 
     def _createXMFHeader(self):
