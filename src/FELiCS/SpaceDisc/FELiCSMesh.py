@@ -137,7 +137,6 @@ class FELiCSMesh:
             An instance of ExportMesh, created on first access if not already initialized.
         """
         if not hasattr(self, '_exportMesh') or self._exportMesh is None:
-            logger.debug("Initializing refined P1 export mesh.")
             self._exportMesh = ExportMesh(self)
         return self._exportMesh
 
@@ -172,15 +171,6 @@ class FELiCSMesh:
         """
         
         # TODO: save the DoFs corresponding to the different BCs
-
-        # # if not already there: initialize and save export mesh
-        # if not hasattr(self, "exportMesh"):
-        #     # refine the mesh and create new FELiCSMesh
-        #     logger.debug('Defining refined P1 export mesh.')
-        #     self.dolfinxMesh.topology.create_entities(1)
-        #     refine_tuple        = refine(self.dolfinxMesh)
-        #     exportMesh_dolfinx  = refine_tuple[0]
-        #     self.exportMesh     = FELiCSMesh(self.coordinateSystemName,inputMesh=exportMesh_dolfinx, gdim=self.gdim)
 
         # Compute additional export mesh properties
         coordinates     = self.exportMesh.coordinates()
