@@ -82,6 +82,8 @@ class Writer:
 
     def _export(self, listOfExportFields, fileName):
 
+
+
         #-----------------------------------------------------------------------
         ## write in  h5 file and simultaneously create xmf text 
         #-----------------------------------------------------------------------
@@ -150,7 +152,7 @@ class Writer:
 
     def _getExportField(self, field):
         #only works for scalar fields
-
+        # TODO: check real quick if the field mesh is the same as the export mesh and throw error?
         exportField = Field(self.exportSpace, field.mesh.exportMesh, name=field.getName())
 
         degree      = field.space.ufl_element().degree

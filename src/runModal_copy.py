@@ -97,6 +97,9 @@ def runModal(param):
     spectrumFile    = param.Export.ExportFolder + "/spectrum.csv"
     solution.exportSpectrumToCSV(spectrumFile)
 
+    solution.exportModes(writer)
+    exit()
+
     # Exporting the modes into files
     fluctSolutList  = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
     ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)

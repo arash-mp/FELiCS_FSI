@@ -35,7 +35,7 @@ class ModeCollection():
 
     """
 
-    def __init__(self, femSpace, mesh, isStateVector=True, m=0, analysis='Modal'):
+    def __init__(self, femSpace, mesh, isStateVector=True, analysisType='Modal'):
         """
         Initializes the ModeCollection instance.
 
@@ -52,8 +52,7 @@ class ModeCollection():
         self.femSpace       = femSpace
         self.mesh           = mesh
         self.isStateVector  = isStateVector
-        self.m              = m
-        self.analysis       = analysis
+        self.analysisType   = analysisType
 
 
     def appendMode(self, mode):
@@ -119,7 +118,7 @@ class ModeCollection():
         """
         
         # Check that we are in Modal analysis
-        if self.analysis != 'Modal':
+        if self.analysisType != 'Modal':
             logger.error('appendSolutionOfEigenProblem called for non-Modal analysis in ModeCollection.')
             return
 
@@ -164,10 +163,12 @@ class ModeCollection():
         """
 
         # Check that we are in Resolvent analysis
-        if self.analysis != 'Resolvent':
+        if self.analysisType != 'Resolvent':
             logger.error('appendSolutionOfSVDProblem called for non-Resolvent analysis in ModeCollection.')
             return
         
+        ## Sophie @Simon: are all the safety measures really necessary? either we give a resolvent operator object or not?
+        ## (makes it very hard to read)
         # Get required operators from the resolvent operator
         if not hasattr(resolventOperator, '_W_forcing'):
             logger.error('Resolvent operator missing _W_forcing attribute in _computeResolventResponseFromForcing.')
@@ -294,7 +295,7 @@ class ModeCollection():
         modeList        = self.modeList
         
         # For modal analysis
-        if self.analysis == 'Modal':
+        if self.analysisType == 'Modal':
             hasAdjoint  = any(mode.isAdjoint for mode in modeList)
             nLines      = len(modeList)//2 if hasAdjoint else len(modeList)
             nCols       = 4 if hasAdjoint else 2
@@ -320,7 +321,7 @@ class ModeCollection():
                     ctr_line_adjoint += 1
             
         # Resolvent or IO case (consider only the response modes)
-        elif self.analysis in ['Resolvent', 'Input-Output']:
+        elif self.analysisType in ['Resolvent', 'Input-Output']:
             Ncols           = 2 + max(mode.getGainNumber() for mode in modeList) # Mode numbers start at 0
             frequencyList   = np.unique([mode.getFrequency() for mode in modeList])
             NLines          = len(frequencyList)
@@ -361,7 +362,7 @@ class ModeCollection():
             header=','.join(header), 
             comments=''
         )
-        if self.analysis == 'Modal':
+        if self.analysisType == 'Modal':
             logger.info(f'Eigenvalue spectrum exported to {filePath}.')
         else:
             logger.info(f'Gains spectrum exported to {filePath}.')
@@ -552,19 +553,19 @@ class ModeCollection():
         h5Files             = [f for f in os.listdir(importFolder) if f.endswith('.h5')]
         
         # File patterns based on analysis type
-        if self.analysis == 'Modal':
+        if self.analysisType == 'Modal':
             filePrefix      = 'ModalSolution_Omega_'
             directPattern   = 'Direct'
             adjointPattern  = 'Adjoint'
-        elif self.analysis == 'Resolvent':
+        elif self.analysisType == 'Resolvent':
             filePrefix      = 'Resolvent_Omega'
             responsePattern = 'Response'
             forcingPattern  = 'Forcing'
-        elif self.analysis == 'Input-Output':
+        elif self.analysisType == 'Input-Output':
             filePrefix      = 'Input-Output_Omega'
             responsePattern = 'Response'
         else:
-            logger.error(f'Analysis type "{self.analysis}" not recognized. Cannot import mode collection.')
+            logger.error(f'Analysis type "{self.analysisType}" not recognized. Cannot import mode collection.')
             return
         
         # List of files that match the prefix
@@ -577,7 +578,7 @@ class ModeCollection():
         for i, f in enumerate(modeFiles):
             
             # First we get the type
-            if self.analysis == 'Modal':
+            if self.analysisType == 'Modal':
                 if directPattern in f:
                     typesModeFiles.append('Direct')
                 elif adjointPattern in f:
@@ -585,7 +586,7 @@ class ModeCollection():
                 else:
                     logger.error(f'Could not determine mode type from filename "{f}".')
                     raise RuntimeError(f'Could not determine mode type from filename "{f}".')
-            elif self.analysis == 'Resolvent':
+            elif self.analysisType == 'Resolvent':
                 if responsePattern in f:
                     typesModeFiles.append('Response')
                 elif forcingPattern in f:
@@ -597,7 +598,7 @@ class ModeCollection():
                 gainNumberStr       = f.split('gain')[1].split('.h5')[0]
                 gainNumbersModeFiles.append(int(gainNumberStr))
 
-            elif self.analysis == 'Input-Output':
+            elif self.analysisType == 'Input-Output':
                 gainNumbersModeFiles.append(0)  # Always 0 for IO modes
                 if responsePattern in f:
                     typesModeFiles.append('Response')
@@ -607,7 +608,7 @@ class ModeCollection():
             
             # Extract omega from filename
             # NOTE: different structure of name for Modal and Resolvent TODO: unify?
-            if self.analysis == 'Modal':
+            if self.analysisType == 'Modal':
                 omegaStr            = f.split(filePrefix+typesModeFiles[i]+'_')[1].split('.h5')[0]
             else:
                 omegaStr            = f.split(filePrefix)[1].split('_')[0]
@@ -627,6 +628,31 @@ class ModeCollection():
             omegasModeFiles.append(omega)
 
         return modeFiles, omegasModeFiles, typesModeFiles, gainNumbersModeFiles
+
+
+    def exportModes(self, writer):
+        for mode in self.modeList:
+            # determine file name
+            fileName = self.analysisType 
+            
+            if self.analysisType == "Modal":
+                if mode.isAdjoint:
+                    fileName += "_Adjoint"
+                else:
+                    fileName += "_Direct"
+                fileName += "_Lambda_"
+                fileName += "{:.3f}".format(mode.getEigenValue())
+            elif self.analysisType == "Resolvent":
+                if mode.isResponse:
+                    fileName += "_Response"
+                else:
+                    fileName += "_Forcing"
+            elif self.analysisType == "Input-Output":
+                fileName += "_Response"
+
+            mode.exportToH5(writer, fileName)
+
+
 
     def importData(self, reader, importFolder, omegas=None, modeType=None, gainNumber=None):
         """
@@ -668,7 +694,7 @@ class ModeCollection():
             logger.info(f'Importing only modes with type: {modeType}')
             
         # If a gain number was given as input, filter files accordingly (for Resolvent analysis)
-        if gainNumber is not None and self.analysis == 'Resolvent':
+        if gainNumber is not None and self.analysisType == 'Resolvent':
             matchingGainIndices         = [i for i, gNum in enumerate(gainNb) if gNum == gainNumber]
             if len(matchingGainIndices) == 0:
                 logger.error(f'No matching gain numbers found in the import folder for the specified gain number "{gainNumber}".')
@@ -685,21 +711,21 @@ class ModeCollection():
                 self.mesh, 
                 isStateVector=self.isStateVector, 
                 m=self.m, 
-                analysis=self.analysis
+                analysis=self.analysisType
             )
             
             # For resolvent an IO, set gainNumber before importing
-            if self.analysis in ['Resolvent', 'Input-Output']:
+            if self.analysisType in ['Resolvent', 'Input-Output']:
                 mode.setGainNumber(gainNb[i])
                 
             # For resolvent, set isResponse based on filename
             # TODO: use a more general "modeType" attribute in Mode?
-            if self.analysis == 'Resolvent':
+            if self.analysisType == 'Resolvent':
                 if 'Response' in h5Files[i]:
                     mode.isResponse = True
                 else:
                     mode.isResponse = False
-            elif self.analysis == 'Input-Output':
+            elif self.analysisType == 'Input-Output':
                 mode.isResponse = True  # Always response for IO modes
             
             mode.importData(
