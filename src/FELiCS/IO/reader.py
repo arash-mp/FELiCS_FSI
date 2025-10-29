@@ -545,21 +545,21 @@ class Reader:
             
         return names
 
-    def _set_arrays_to_field(self, arrays, Field):
+    def _set_arrays_to_field(self, arrays, field):
         """
-        Assign interpolated/mapped arrays to a given Field.
+        Assign interpolated/mapped arrays to a given field.
 
         Parameters
         ----------
         arrays : dict
             Dictionary of arrays to assign.
-        Field : object
+        field : object
             The FELiCS field object.
 
         Returns
         -------
         object
-            The updated Field.
+            The updated field.
 
         Raises
         ------
@@ -567,26 +567,26 @@ class Reader:
             For mixed function spaces.
         """
         # Field info
-        info        = Field.describeFunctionSpace()
+        info        = field.describeFunctionSpace()
             
         # Set the arrays in FEM depending on field type
         if info["type"] == "mixed":
             # Loop over the subfields
-            for iField, subFieldName in enumerate(Field.getNamesOfSubFields()):
+            for iField, subFieldName in enumerate(field.getNamesOfSubFields()):
                 # If subfield is a vector, loop over its components
                 if info['subspaces'][iField]['type'] == 'vector':
-                    subFields                               = Field.getListOfSubFields()
+                    subFields                               = field.getListOfSubFields()
                     for jComp, compName in enumerate(subFields[iField].getNamesOfSubFields()):
                         if compName in arrays:
-                            indices                         = Field.space.sub(iField).sub(jComp).collapse()[1]
-                            Field.function.x.array[indices] = arrays[compName]
+                            indices                         = field.space.sub(iField).sub(jComp).collapse()[1]
+                            field.function.x.array[indices] = arrays[compName]
                         else:
                             logger.warning(f"Component '{compName}' not found in loaded arrays for vector subfield '{subFieldName}'. Leaving unchanged.")
                 # For a scalar subfield, just set the array
                 elif info['subspaces'][iField]['type'] == 'scalar':
                     if subFieldName in arrays:
-                        indices                             = Field.space.sub(iField).collapse()[1]
-                        Field.function.x.array[indices]     = arrays[subFieldName]
+                        indices                             = field.space.sub(iField).collapse()[1]
+                        field.function.x.array[indices]     = arrays[subFieldName]
                     else:
                         logger.warning(f"Subfield '{subFieldName}' not found in loaded arrays for scalar subfield. Leaving unchanged.")
                 else:
@@ -594,18 +594,18 @@ class Reader:
                     raise NotImplementedError("Subfield type not supported in Reader yet.")
                 
         elif info["type"] == "vector":
-            for i, subFieldName in enumerate(Field.getNamesOfSubFields()):
+            for i, subFieldName in enumerate(field.getNamesOfSubFields()):
                 if subFieldName in arrays:
-                    indices                         = Field.space.sub(i).collapse()[1]
-                    Field.function.x.array[indices] = arrays[subFieldName]
+                    indices                         = field.space.sub(i).collapse()[1]
+                    field.function.x.array[indices] = arrays[subFieldName]
                 else:
-                    logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{Field.getName()}'. Leaving unchanged.")
+                    logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{field.getName()}'. Leaving unchanged.")
         else:
             # Then it's a scalar
-            varName                                 = Field.getName()
+            varName                                 = field.getName()
             if varName in arrays:
-                Field.function.x.array[:]           = arrays[varName]
-        return Field
+                field.function.x.array[:]           = arrays[varName]
+        return field
 
     # --------------------------
     # Main API
