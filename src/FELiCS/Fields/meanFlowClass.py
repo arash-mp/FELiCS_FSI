@@ -9,7 +9,7 @@ from FELiCS.Equation.dependentVariables.energyHandler           import energyHan
 from FELiCS.Equation.dependentVariables.equationOfStateHandler  import equationOfStateHandler
 from FELiCS.Equation.dependentVariables.reactionHandler         import reactionHandler
 from FELiCS.Misc.logging                                        import Logger
-from FELiCS.IO.reader                                           import Reader
+from FELiCS.IO.Reader                                           import Reader
 from FELiCS.IO.Mapping                                          import Mapping
 from FELiCS.Fields.Field                                        import Field
 

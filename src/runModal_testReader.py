@@ -17,7 +17,7 @@ def runModal(param):
     from    FELiCS.Solvers.LinearSolver         import LinearSolver 
     from    FELiCS.Fields.ModeCollection        import ModeCollection
     from    FELiCS.Fields.Mode                  import Mode
-    from    FELiCS.IO.reader                    import Reader
+    from    FELiCS.IO.Reader                    import Reader
 
     logger.warning("Running Modal analysis with Reader testing")
     
