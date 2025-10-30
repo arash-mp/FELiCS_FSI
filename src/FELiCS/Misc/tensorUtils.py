@@ -301,7 +301,7 @@ class Tensor():
             return Tensor(
                         self.ufl_tens / other,
                         self.CoordSys,
-                        mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                        mayHaveSpectralDimension = self.hasSpectralDimension,
                         m = self.m 
                         )
         else:
