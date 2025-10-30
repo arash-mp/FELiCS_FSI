@@ -90,8 +90,7 @@ class ModeCollection():
         """
 
         mode = Mode(self.femSpace, self.mesh, name, isStateVector = True)
-        #mode.setCoefficientArray(vector)
-        mode.function.x.array[:] = vector
+        mode.setCoefficientArray(vector)
 
         mode.setGain(gain)
         mode.setEigenValue(eigenValue)
@@ -131,13 +130,13 @@ class ModeCollection():
                 self.mesh, 
                 name = name, 
                 isStateVector = True,   # NOTE: always True?
-                analysis = 'Modal'
+                analysisType = 'Modal'
                 )
             mode.isAdjoint = adjoint
             mode.setError(error[i])
             mode.setGuess(guess)
             mode.setEigenValue(eigVals[i])
-            mode.function.x.array[:] = eigVecs[i,:]
+            mode.setCoefficientArray(eigVecs[i,:])
             self.modeList.append(mode)
             
 
@@ -210,9 +209,9 @@ class ModeCollection():
                 self.mesh, 
                 name                        = name, 
                 isStateVector               = True, # NOTE: always True?
-                analysis                    = 'Resolvent'
+                analysisType                = 'Resolvent'
                 )
-            modeForcing.setGain(np.real(gains[i]))  # NOTE: These are gains squared
+            modeForcing.gain = np.real(gains[i])  # NOTE: These are gains squared
             modeForcing.setGainNumber(i)
             modeForcing.setFrequency(omega)
             modeForcing.function.x.array[:] = forcings
@@ -232,9 +231,9 @@ class ModeCollection():
                 self.mesh, 
                 name                        = name, 
                 isStateVector               = True,
-                analysis                    = 'Resolvent'
+                analysisType                = 'Resolvent'
                 )
-            modeForcing.setGain(np.real(gains[i]))  # NOTE: These are gains squared
+            modeForcing.gain = np.real(gains[i])  # NOTE: These are gains squared
             modeForcing.setGainNumber(i)
             modeForcing.setFrequency(omega)
             modeForcing.function.x.array[:] = responses
@@ -394,7 +393,8 @@ class ModeCollection():
         This method is not yet implemented.
         """
 
-        #ToDo: get nearest mode to one of the above. Change handling of parameters
+        #TODO: get nearest mode to one of the above. Change handling of parameters
+        #TODO: until then: throw ERROR!!!!
         pass
 
 

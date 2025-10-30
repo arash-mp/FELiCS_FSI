@@ -537,7 +537,7 @@ class Reader:
                     names.append(component)
                     
             elif subInfo["type"] == "scalar":
-                names.append(subField.getName())
+                names.append(subField.name)
                 
             else:
                 logger.error(f"Field type '{subInfo['type']}' not supported in Reader yet.")
@@ -602,7 +602,7 @@ class Reader:
                     logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{field.getName()}'. Leaving unchanged.")
         else:
             # Then it's a scalar
-            varName                                 = field.getName()
+            varName                                 = field.name
             if varName in arrays:
                 field.function.x.array[:]           = arrays[varName]
         return field

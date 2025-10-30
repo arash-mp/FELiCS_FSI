@@ -5,6 +5,7 @@ from    pathlib             import Path
 from    scipy.interpolate   import griddata
 from    FELiCS.Fields.Field import Field
 from    FELiCS.Misc.logging import Logger
+from    FELiCS.IO.Mapping   import Mapping
 
 from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
 
@@ -26,7 +27,7 @@ class Writer:
 
         # Notes:
         # - the writer is specified for a mesh and an export folder
-        # - when initialized, the writer creats the export folder and exports the mesh
+        # - when initialized, the writer creates the export folder and exports the mesh
 
         import os
 
@@ -45,44 +46,53 @@ class Writer:
 
 
     def exportListOfFieldsToH5(self, listOfFields, fileName):
+        """
+        Function arguments:
+        - listOfFields: list of Field (or child class) objects
+               fields that are to be written into one H5 file
+        - fileName: str
+               filename of H5 file (and of corresponding xmf file)
 
-        #-----------------------------------------------------------------------
-        ## conversions to export fields 
-        #-----------------------------------------------------------------------
+        Function returns:
+
+        """
+
         # get a list of purely scalar fields from the field list
+        # (which could be scalar/vector/mixed fields)
         listOfSubFields = []
         for field in listOfFields:
             listOfSubFields.extend(self._getListOfScalarFields(field))
 
-        # convert the list of (sub-)fields to export fields defined on the export mesh
-        listOfExportFields = []
-        for subField in listOfSubFields:
-            listOfExportFields.append(self._getExportField(subField))
-
-        return self._export(listOfExportFields, fileName) 
-
+        return self._export(listOfSubFields, fileName) 
 
 
     def exportFieldToH5(self, field, fileName):
+        """
+        Function arguments:
+        - fields: Field (or child class) objects
+               field that is to be written as H5 file
+        - fileName: str
+               filename of H5 file (and of corresponding xmf file)
+
+        Function returns:
+
+        """
+        # get a list of purely scalar fields from the field 
+        # (which could be a scalar/vector/mixed field)
+        listOfSubFields = self._getListOfScalarFields(field)
+
+        return self._export(listOfSubFields, fileName)
+
+
+    def _export(self, listOfScalarFields, fileName):
 
         #-----------------------------------------------------------------------
         ## conversions to export fields
         #-----------------------------------------------------------------------
-        # get a list of purely scalar fields from the field 
-        # (which could be scalar/vector/mixed)
-        listOfSubFields = self._getListOfScalarFields(field)
-
         # convert the list of (sub-)fields to export fields defined on the export mesh
         listOfExportFields = []
-        for subField in listOfSubFields:
-            listOfExportFields.append(self._getExportField(subField))
-
-        return self._export(listOfExportFields, fileName)
-
-
-    def _export(self, listOfExportFields, fileName):
-
-
+        for field in listOfScalarFields:
+            listOfExportFields.append(self._getExportField(field))
 
         #-----------------------------------------------------------------------
         ## write in  h5 file and simultaneously create xmf text 
@@ -99,12 +109,11 @@ class Writer:
         with h5py.File(h5FilePath, 'w') as h5:
             for exportField in listOfExportFields:
                 if exportField.isReal():
-                    h5.create_dataset(exportField.getName(), data = exportField.getRealCoefficientArray(),  dtype = np.float64)
-                    xmfText += self._createXMFForScalarField(h5FilePath.name, exportField.getName(), exportField.getSize())
-                    print(exportField.getName(), h5FilePath.name)
+                    h5.create_dataset(exportField.name, data = exportField.getRealCoefficientArray(),  dtype = np.float64)
+                    xmfText += self._createXMFForScalarField(h5FilePath.name, exportField.name, exportField.getSize())
                 else:
-                    realName = exportField.getName()+"_real"
-                    imagName = exportField.getName()+"_imag"
+                    realName = exportField.name+"_real"
+                    imagName = exportField.name+"_imag"
                     h5.create_dataset(realName, data = exportField.getRealCoefficientArray(),  dtype = np.float64)
                     h5.create_dataset(imagName, data = exportField.getImagCoefficientArray(),  dtype = np.float64)
                     xmfText += self._createXMFForScalarField(h5FilePath.name, realName, exportField.getSize())
@@ -139,13 +148,26 @@ class Writer:
                 listOfSubFields.append(field_scalar)
 
         elif field.info['type'] == 'mixed':
-            listOfFields    = field.getListOfSubFields()
-            for fieldMixed in listOfFields:
-                listOfSubFields.extend(self._getListOfScalarFields(fieldMixed))
+            names        = field.getNamesOfSubFields()
+            for i in range(field.info['num_subspaces']):
+                degree          = field.space.sub(i).ufl_element().degree
+                num_subspaces   = field.space.sub(i).num_sub_spaces
+                space_scalar    = getFELiCSSpace(field.mesh, order = degree, dim=1)
+                if num_subspaces == 0: # mapping of scalar field
+                    indices_mapping = field.space.sub(i).collapse()[1]
+                    field_scalar    = Field(space_scalar, field.mesh, name=names[i])
+                    field_scalar.setCoefficientArray(field.getCoefficientArray()[indices_mapping])
+                    listOfSubFields.append(field_scalar)
+                else:
+                    axisNames = field.mesh.axisNames
+                    for j in range(num_subspaces): # mapping of vector field
+                        indices_mapping = field.space.sub(i).sub(j).collapse()[1]
+                        field_scalar    = Field(space_scalar, field.mesh, name=names[i]+axisNames[j])
+                        field_scalar.setCoefficientArray(field.getCoefficientArray()[indices_mapping])
+                        listOfSubFields.append(field_scalar)
 
         else:
             raise Exception(f"Unknown field type: {field.info['type']}")
-
 
         return listOfSubFields
 
@@ -153,14 +175,12 @@ class Writer:
     def _getExportField(self, field):
         #only works for scalar fields
         # TODO: check real quick if the field mesh is the same as the export mesh and throw error?
-        exportField = Field(self.exportSpace, field.mesh.exportMesh, name=field.getName())
+        exportField = Field(self.exportSpace, field.mesh.exportMesh, name=field.name)
 
         degree      = field.space.ufl_element().degree
 
         if degree == 2:
             # check if there is already a mapping
-            # TODO: change this after export mesh updates from Simon
-            from FELiCS.IO.Mapping import Mapping
             if not hasattr(self, "mappingP2ToExport"): 
                 self.mappingP2ToExport = Mapping.calculateMappingFromSpaces(
                                              field.space, self.exportSpace)

@@ -1,11 +1,26 @@
 import  os
 import  h5py
 import  numpy               as np
+from    enum                import Enum
 from    .Field              import Field
 from 	FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
+
+class ModeType(Enum):
+    NONE     = 0
+    DIRECT   = 1
+    ADJOINT  = 2
+    RESPONSE = 3
+    FORCING  = 4
+
+class AnalysisType(Enum):
+    NONE         = 0
+    MODAL        = 1
+    RESOLVENT    = 2
+    INPUT_OUTPUT = 3
+
 
 class Mode(Field):
     """
@@ -32,7 +47,7 @@ class Mode(Field):
         Indicates if the mode is a response mode.
     """
 
-    def __init__(self, FEMSpace, mesh, name="q_hat", isStateVector=True, m=0, analysis='Modal'):
+    def __init__(self, FEMSpace, mesh, name="q_hat", isStateVector=True, m=0, analysisType='Modal'):
         """
         Initializes the Mode instance.
 
@@ -47,36 +62,45 @@ class Mode(Field):
         # NOTE: why are these hardcoded here?
         
         # Set values
-        self.name              = name
-        self.analysis          = analysis
-        self.m                 = m
-        self.isStateVector     = isStateVector
+        self.analysisType      = AnalysisType[analysisType.upper()]
     
         # Define name of the subfields (variables of the mode)
         self.namesOfSubFields   = self.getNamesOfSubFields()
 
         # Set some defaults in not a good way .> TODO: fix this as a property
+        if self.analysisType == AnalysisType.MODAL:
+            self.modeType = ModeType.DIRECT
+        elif self.analysisType == AnalysisType.RESOLVENT:
+            self.modeType = ModeType.FORCING
+        elif self.analysisType == AnalysisType.INPUT_OUTPUT:
+            self.modeType = ModeType.RESPONSE
+         
         self.isAdjoint          = False
         self.isResponse         = False
 
     # TODO: fix the setter/getter methods with properties
 
-    def getName(self):
+    @property
+    def name(self):
         if self.isStateVector:
             return "q_hat"
         else:
-            return super().getName()
+            return super().name
 
-    def setGain(self,gain):
-        """
-        Set the gain value for the mode.
 
-        Parameters
-        ----------
-        gain : float
-            Gain of the mode.
-        """
+    @property
+    def gain(self):
+        try:
+            return self._gain
+        except: 
+            logger.error('For this mode object no gain was defined. Returning "-9999."...')
+            return -9999.
+
+    @gain.setter
+    def gain(self, gain):
         self._gain = gain
+
+
 
     def setGainNumber(self,gainNumber):
         """
@@ -148,21 +172,6 @@ class Mode(Field):
         self._error = error
 
 
-    def getGain(self):
-        """
-        Get the gain value of the mode.
-
-        Returns
-        -------
-        float
-            Gain of the mode. Returns -9999. if undefined.
-        """
-        try:
-            return self._gain
-        except: 
-            logger.error('For this mode object no gain was defined. Returning "-9999."...')
-            return -9999.
-        
     def getGainNumber(self):
         """
         Get the gain number of the mode.
@@ -261,28 +270,25 @@ class Mode(Field):
             self,
             reader,
             importDirPath,
-            importFile = None,
+            importFileName = None,
         ):
         
         # In case we want to import from a specific file
-        if importFile is not None:
-            fileName        = importFile
+        if importFileName is not None:
+            fileName        = importFileName
         else:
             # Check that analysis type is set to set a default name
-            if self.analysis == 'Modal':
+            if self.analysisType == AnalysisType.MODAL:
                 eigval      = self.getEigenValue()
                 modeType    = 'Direct' if not self.isAdjoint else 'Adjoint'
-                fileName    = f'{self.analysis}Solution_Omega_{modeType}_{np.round(eigval, 3)}.h5'
-            elif self.analysis == 'Resolvent':
+                fileName    = f'ModalSolution_Omega_{modeType}_{np.round(eigval, 3)}.h5'
+            elif self.analysisType == AnalysisType.RESOLVENT:
                 frequency   = self.getFrequency()   
                 modeType    = 'Response' if self.isResponse else 'Forcing'
-                fileName    = f'{self.analysis}_Omega{np.round(frequency, 3)}_{modeType}_gain{self.getGainNumber()}.h5'
-            elif self.analysis == 'Input-Output':
+                fileName    = f'Resolvent_Omega{np.round(frequency, 3)}_{modeType}_gain{self.getGainNumber()}.h5'
+            elif self.analysisType == AnalysisType.INPUT_OUTPUT:
                 frequency   = self.getFrequency()
-                fileName    = f'{self.analysis}_Omega{np.round(frequency, 3)}_Response_gain0.h5'   # NOTE: Always gain 0 for IO modes
-            else:
-                logger.error(f'Analysis type "{self.analysis}" not recognized. Cannot import mode data.')
-                return self, None
+                fileName    = f'Input-Output_Omega{np.round(frequency, 3)}_Response_gain0.h5'   # NOTE: Always gain 0 for IO modes
         
         # File name and group name
         importFilePath      = os.path.join(importDirPath, fileName)
@@ -296,12 +302,12 @@ class Mode(Field):
         )
         
         # Read eignvalue or gain from file
-        if self.analysis == 'Modal':
+        if self.analysisType == AnalysisType.MODAL:
             with h5py.File(importFilePath, 'r') as f:
                 eigval = complex(f["fluctuation/0"].attrs['frequency']) # TODO: save the eigenvalue not as a string in files!
                 self.setEigenValue(eigval)
         
-        elif self.analysis == 'Resolvent' or self.analysis == 'Input-Output':
+        elif self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
             with h5py.File(importFilePath, 'r') as f:
                 freq_string = f["fluctuation/0"].attrs['frequency']
                 if 'j' in freq_string:

@@ -39,22 +39,22 @@ class Field:
         if name is None or not isinstance(name, str):
             
             if self.info['type']=='scalar':
-                self.name = 'scalarField'
+                self._name = 'scalarField'
             elif self.info['type']=='vector':
-                self.name = 'vectorField'
+                self._name = 'vectorField'
             elif self.info['type']=='mixed':
-                self.name = 'mixedField'
+                self._name = 'mixedField'
             else: 
-                self.name = 'field'
+                self._name = 'field'
                 logger.warning("Field type not recognized. Using default name 'field'.")
 
             if not isinstance(name, str) and name is not None:
                 logger.warning("Field initialized a 'name' not being a string. Using default names based on field type.")
                 
         else:
-            self.name = name
+            self._name = name
 
-        self.namesOfSubFields = []
+        self._namesOfSubFields = []
         
         self.isStateVector = isStateVector
 
@@ -69,11 +69,13 @@ class Field:
         # initialize function
         self.function = Function(FEMSpace)
 
-    def getName(self):
-        return self.name
-
-    def setName(self, name):
-        self.name = name
+    @property 
+    def name(self):
+        return self._name
+  
+    @name.setter
+    def name(self, name):
+        self._name = name
 
     def getNamesOfSubFields(self):
         #TODO: docu
@@ -95,23 +97,23 @@ class Field:
                 raise ValueError("Not enough axis names in the coordinate system for the vector field.")
 
             # If the vector was not given before, we set a default
-            if self.name is None or not isinstance(self.name, str):
-                self.name       = 'vectorField'
+            if self._name is None or not isinstance(self._name, str):
+                self._name       = 'vectorField'
 
             for i in range(numSubSpaces):
-                subFieldNames.append(self.name+axisNames[i])
+                subFieldNames.append(self._name+axisNames[i])
         
         elif self.info['type'] == 'mixed':
             # If it was not set before and is a state vector, use state vector names
             # NOTE: assumes stateVectorNames is a list of tuples 
-            if self.isStateVector and not self.namesOfSubFields:
+            if self.isStateVector and not self._namesOfSubFields:
                 for name in self.space.stateVectorNames:
                     subFieldNames.append(name[0])
                 return subFieldNames
             
             # If it was set before, return the stored names
-            elif self.namesOfSubFields:
-                return self.namesOfSubFields
+            elif self._namesOfSubFields:
+                return self._namesOfSubFields
             
             # Otherwise, set default names
             else:
@@ -135,7 +137,7 @@ class Field:
         if len(nameList) != self.info['num_subspaces']:
             logger.warning("setNamesOfSubFields() called with a list of names that does not match the number of subspaces. No names were set.")
             return
-        self.namesOfSubFields = nameList 
+        self._namesOfSubFields = nameList 
 
 
     def getTensor(self):
@@ -214,9 +216,9 @@ class Field:
             # TODO: check that the functionSpaces are the same!
             self.setCoefficientArray(listOfFields[0].getCoefficientArray())
             if not name or not isinstance(name, str):
-                self.name = listOfFields[0].getName()
+                self._name = listOfFields[0].name
             else:
-                self.name = name
+                self._name = name
             
         else:
             namesOfSubFields = []
@@ -224,10 +226,10 @@ class Field:
                 # TODO: check that the functionSpaces are the same!
                 space, mapping                  = self.space.sub(i).collapse()
                 self.function.x.array[mapping]  = listOfFields[i].getCoefficientArray()
-                namesOfSubFields.append(listOfFields[i].getName())
+                namesOfSubFields.append(listOfFields[i].name)
                 self.setNamesOfSubFields(namesOfSubFields)
                 if isinstance(name,str):
-                    self.name = name
+                    self._name = name
                 
 
 
@@ -314,23 +316,6 @@ class Field:
                                   ', '.join([sub['description'].split(': ')[1] for sub in subspace_descriptions])
         
         return result
-
-    def importData(
-            self,
-            reader,
-            importFilePath,
-            groupName = None
-        ):
-        
-        # Just call the reader function
-        self, notInFile = reader.importInField(
-            self,
-            importFilePath,
-            groupName
-        )
-        
-        return self, notInFile
-
 
     def getSize(self):
         """
@@ -539,8 +524,27 @@ class Field:
     def exportToH5(self, writer, fileName=None):
         # Sophie: This will be the final method
         if fileName == None:
-            fileName = self.getName()
+            fileName = self.name
         writer.exportFieldToH5(self, fileName)
+
+
+    def importData(
+            self,
+            reader,
+            importFilePath,
+            groupName = None
+        ):
+        
+        # Just call the reader function
+        self, notInFile = reader.importInField(
+            self,
+            importFilePath,
+            groupName
+        )
+        
+        return self, notInFile
+
+
 
 
     def exportH5(self, fileName, mesh = None):
