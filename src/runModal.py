@@ -21,67 +21,74 @@ def runModal(param):
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
-    # mesh
-    mesh = param.getMesh()
+    # Mesh
+    mesh            = param.getMesh()
     mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
     
     # FEMSpaces
-    FEMSpaces = FEMSpaces(
-                param,
-                mesh,
-                )
+    FEMSpaces       = FEMSpaces(
+        param,
+        mesh,
+    )
      
     # read in mean flow and export to h5-file
-    meanFlow = meanFlowClass(param, FEMSpaces, mesh)
+    meanFlow        = meanFlowClass(
+        param, 
+        FEMSpaces, 
+        mesh
+    )
     meanFlow.importDataFromFileAndExportToH5()
 
     # equation
-    equation = EquationCollectionClass(
-                                      param,
-                                      FEMSpaces,
-                                      meanFlow,
-                                      mesh
-                                      )
+    equation        = EquationCollectionClass(
+        param,
+        FEMSpaces,
+        meanFlow,
+        mesh
+    )
 
     #-----------------------------------------------------------------------
     ## MAIN PART
     #-----------------------------------------------------------------------
-    # get matrices for eigenproblem
-    A = equation.getLinearOperator(meanFlow)
-    B = equation.getWeightMatrix  (meanFlow)
+    # Get matrices for eigenproblem
+    A               = equation.getLinearOperator(meanFlow)
+    B               = equation.getWeightMatrix(meanFlow)
 
-    # get parameters for eigenproblem
-    guesses          = param.Numerics.EigenValueGuess
-    nSol             = param.Numerics.nSolut
-    adjoint          = param.Case.CalculateAdjoint
+    # Get parameters for eigenproblem
+    guesses         = param.Numerics.EigenValueGuess
+    nSol            = param.Numerics.nSolut
+    adjoint         = param.Case.CalculateAdjoint
 
     # track time
-    start= time.time()
+    start           = time.time()
 
     # solve eigenproblem for each guess
-    solution = ModeCollection(FEMSpaces.VMixed, mesh)
+    solution       = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
         
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))
-        tmp     = LinearSolver.solveGeneralEigenproblem(A,
-                                                        B,
-                                                        guess,
-                                                        nSol,
-                                                        )
-
+        tmp         = LinearSolver.solveGeneralEigenproblem(
+            A,
+            B,
+            guess,
+            nSol,
+        )
         solution.appendSolutionOfEigenProblem(tmp, guess)
 
         if adjoint:
-            
             logger.info("Solving adjoint GEVP for guess: omega = " + str(guess))
-            tmp = LinearSolver.solveGeneralEigenproblem(A,
-                                                        B,
-                                                        guess,
-                                                        nSol,
-                                                        adjoint=True)
-
+            tmp     = LinearSolver.solveGeneralEigenproblem(
+                A,
+                B,
+                guess,
+                nSol,
+                adjoint = True
+            )
             solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
 
+    # Exporting the eigenvalue spectrum to a file
+    spectrumFile    = param.Export.ExportFolder + "/spectrum.csv"
+    solution.exportSpectrumToCSV(spectrumFile)
 
     # end tracking time
     end             = time.time() - start
@@ -89,10 +96,6 @@ def runModal(param):
     residuum_max    = solution.getMaximumError()
     logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
     
-    # Exporting the spectrum to a file
-    spectrumFile    = param.Export.ExportFolder + "/spectrum.csv"
-    solution.exportSpectrumToCSV(spectrumFile)
-
     #-----------------------------------------------------------------------
     ## EXPORT SOLUTION
     #-----------------------------------------------------------------------
