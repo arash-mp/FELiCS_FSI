@@ -37,7 +37,6 @@ class Field:
         self.info     = self.describeFunctionSpace()
 
         if name is None or not isinstance(name, str):
-            
             if self.info['type']=='scalar':
                 self.name = 'scalarField'
             elif self.info['type']=='vector':
@@ -271,18 +270,23 @@ class Field:
             'subspaces':                []
         }
 
+        # Single space (scalar)
         # This handles a single scalar or a VMixed with a single scalar inside
         if num_subspaces == 0 or (num_subspaces == 1 and value_size == 1):
-            # Single space (scalar or vector)
             result['type']              = 'scalar'
             result['description']       = 'Single scalar space'
+            result['degree']            = self.space.ufl_element().degree
+            result['nDofsSpace']        = self.space.dofmap.index_map.size_global
             
         else:
+            # Single vector space
             if num_subspaces == value_size:
-                # Single vector space
                 result['type']          = 'vector'
                 result['description']   = f'Single vector space with {value_size} components'
-            
+                result['degree']        = self.space.ufl_element().degree
+                result['nDofsSpace']    = self.space.sub(0).dofmap.index_map.size_global
+
+            # Mixed space
             else:
                 result['type']          = 'mixed'
                 subspace_descriptions   = []
@@ -295,16 +299,20 @@ class Field:
                     if sub_value_size == 1:
                         subspace_type   = 'scalar'
                         subspace_desc   = f'Subspace {i}: scalar'
+                        subspace_nDofs  = len(subspace.collapse()[1])
                     else:
                         subspace_type   = 'vector'
                         subspace_desc   = f'Subspace {i}: vector ({sub_value_size} components)'
+                        subspace_nDofs  = len(subspace.sub(0).collapse()[1])
                     
                     subspace_info = {
                         'index':        i,
                         'type':         subspace_type,
                         'value_size':   sub_value_size,
                         'num_sub_subspaces': sub_num_subspaces,
-                        'description':  subspace_desc
+                        'description':  subspace_desc,
+                        'degree':       subspace.ufl_element().degree,
+                        'nDofsSpace':   subspace_nDofs
                     }
                     
                     subspace_descriptions.append(subspace_info)
