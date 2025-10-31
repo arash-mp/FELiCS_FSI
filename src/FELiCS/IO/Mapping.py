@@ -5,56 +5,74 @@ from 	FELiCS.Misc.logging         import Logger
 logger = Logger.get_logger("felics")
 
 class Mapping:
-    #TODO: Docstrings
+    """
+    A class for calculating mappings between finite element spaces or DOF coordinates.
+
+    This class provides static methods to compute index mappings between input and output
+    spaces or DOF arrays, useful for data transfer in FEM simulations.
+    """
 
     @staticmethod
     def calculateMappingFromSpaces(
             inputSpace,
             outputSpace):
+        """
+        Calculate the mapping indices from input space to output space.
 
-        # get numpy arrays of dof coordinates
-        inputDofs  = inputSpace.tabulate_dof_coordinates()
-        outputDofs = outputSpace.tabulate_dof_coordinates()
+        Parameters
+        ----------
+        inputSpace : object
+            The input finite element space.
+        outputSpace : object
+            The output finite element space.
 
-        inputMesh  = np.copy(inputDofs)
-        outputMesh = np.copy(outputDofs)
+        Returns
+        -------
+        numpy.ndarray
+            Array of indices mapping input DOFs to output DOFs.
+        """
 
-        # append indices as last column
-        inputMesh               = np.append(inputMesh, np.arange(len(inputMesh)).reshape(len(inputMesh),1), axis=1).round(11)
-        outputMesh              = np.append(outputMesh, np.arange(len(outputMesh)).reshape(len(outputMesh),1), axis=1).round(11)
+        # Get numpy arrays of dof coordinates
+        inputDofs           = inputSpace.tabulate_dof_coordinates()
+        outputDofs          = outputSpace.tabulate_dof_coordinates()
 
-        # sort by x,y,z
-        inputMeshSorted         = inputMesh[np.lexsort((inputMesh[:,2], inputMesh[:,1], inputMesh[:,0]))].astype(int)
-        outputMeshSorted        = outputMesh[np.lexsort((outputMesh[:, 2], outputMesh[:, 1], outputMesh[:, 0]))].astype(int)
-
-        # find indices of sorted inputMesh in outputMesh
-        index_array             = np.vstack((outputMeshSorted[:, -1], inputMeshSorted[:, -1])).T
-        mapping                 = index_array[index_array[:, 0].argsort()][:, 1]
-
-        return mapping
-
-
+        return Mapping.calculateMappingFromDofs(inputDofs, outputDofs)
 
     @staticmethod
     def calculateMappingFromDofs(
             inputDofs,
             outputDofs):
+        """
+        Calculate the mapping indices from input DOF coordinates to output DOF coordinates.
 
-        # get numpy arrays of dof coordinates
-        inputMesh  = np.copy(inputDofs)
-        outputMesh = np.copy(outputDofs)
+        Parameters
+        ----------
+        inputDofs : numpy.ndarray
+            Array of input DOF coordinates.
+        outputDofs : numpy.ndarray
+            Array of output DOF coordinates.
 
-        # append indices as last column
-        inputMesh               = np.append(inputMesh, np.arange(len(inputMesh)).reshape(len(inputMesh),1), axis=1).round(11)
-        outputMesh              = np.append(outputMesh, np.arange(len(outputMesh)).reshape(len(outputMesh),1), axis=1).round(11)
+        Returns
+        -------
+        numpy.ndarray
+            Array of indices mapping input DOFs to output DOFs.
+        """
 
-        # sort by x,y,z
-        inputMeshSorted         = inputMesh[np.lexsort((inputMesh[:,2], inputMesh[:,1], inputMesh[:,0]))].astype(int)
-        outputMeshSorted        = outputMesh[np.lexsort((outputMesh[:, 2], outputMesh[:, 1], outputMesh[:, 0]))].astype(int)
+        # Get numpy arrays of dof coordinates
+        inputMesh           = np.copy(inputDofs)
+        outputMesh          = np.copy(outputDofs)
 
-        # find indices of sorted inputMesh in outputMesh
-        index_array             = np.vstack((outputMeshSorted[:, -1], inputMeshSorted[:, -1])).T
-        mapping                 = index_array[index_array[:, 0].argsort()][:, 1]
+        # Append indices as last column
+        inputMesh           = np.append(inputMesh, np.arange(len(inputMesh))[:, None], axis=1).round(11)
+        outputMesh          = np.append(outputMesh, np.arange(len(outputMesh))[:, None], axis=1).round(11)
+
+        # Sort by x,y,z
+        inputMeshSorted     = inputMesh[np.lexsort((inputMesh[:,2], inputMesh[:,1], inputMesh[:,0]))].astype(int)
+        outputMeshSorted    = outputMesh[np.lexsort((outputMesh[:, 2], outputMesh[:, 1], outputMesh[:, 0]))].astype(int)
+
+        # Find indices of sorted inputMesh in outputMesh
+        index_array         = np.vstack((outputMeshSorted[:, -1], inputMeshSorted[:, -1])).T
+        mapping             = index_array[index_array[:, 0].argsort()][:, 1]
 
         return mapping
 
