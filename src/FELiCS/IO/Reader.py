@@ -1,11 +1,17 @@
+# Standard libraries
 import  os
 import  h5py
+from    functools           import cached_property
+from    typing              import Optional, List, Dict, Any, Tuple
+
+# Third party libraries
 import  numpy               as np
 from    scipy.spatial       import Delaunay
 from    scipy.interpolate   import LinearNDInterpolator, NearestNDInterpolator
+
+# Local libraries and methods
 from    FELiCS.Misc.logging import Logger
-from    functools           import cached_property
-from    .Mapping            import Mapping
+from    FELiCS.IO.Mapping   import Mapping
 
 # Debug
 # import matplotlib
@@ -23,45 +29,45 @@ class Reader:
     to the calculation mesh, and assigns the data to FELiCS fields. It supports caching for performance
     and can handle complex-valued data.
 
-    **Initialize the Reader object**
-
-    Parameters
-    ----------
-    needInterpolation : bool, optional
-        Whether to interpolate data onto the FELiCS mesh, by default True.
-    originalMeshFile : str or None, optional
-        Path to the original mesh file if coordinates are not in the main file, by default None.
-    isComplex : bool, optional
-        Whether the data is complex-valued, by default False.
-    cacheData : bool, optional
-        Whether to cache loaded data for reuse, by default True.
-
     Attributes
     ----------
+    _sourceDir : str
+        The source directory for data files.
     _needInterpolation : bool
-        Indicates if interpolation is required.
-    _originalMeshFile : str or None
-        Path to the original mesh file.
+        Whether to interpolate data onto the FELiCS mesh.
+    _felicsMeshFilePath : str or None
+        Path to the FELiCS mesh file.
     _isComplex : bool
-        Indicates if data is complex-valued.
+        Whether the data is complex-valued.
     _cacheData : bool
-        Indicates if data caching is enabled.
-    _param : object or None
-        FELiCS parameter object, set via bind_env.
-    _FEMSpaces : object or None
-        FELiCS finite element spaces object, set via bind_env.
+        Whether to cache loaded data for reuse.
     _sourceKey : tuple or None
-        Current data source as (filePath, groupName).
+        Current source key (filePath, groupName).
     _availableVars : list or None
         List of available variables in the current source.
     _rawDataDict : dict
-        Dictionary of raw loaded data.
+        Raw data dictionary from HDF5 files.
     _dataForField : dict
-        Dictionary of processed data for fields.
+        Processed data for fields.
+    _calcMeshCoords : numpy.ndarray or None
+        Coordinates of the calculation mesh.
+    _calcMeshP1Coords : numpy.ndarray or None
+        Coordinates of the P1 calculation mesh.
+    _mappingImportToCalc : numpy.ndarray or None
+        Mapping from import to calculation mesh.
+    _fullAxisNames : list or None
+        Full axis names.
+    _meshAxisNames : list or None
+        Mesh axis names.
+    _numDoFsCalcMeshP2 : int
+        Number of DoFs for P2 calculation mesh.
+    _numDoFsCalcMeshP1 : int
+        Number of DoFs for P1 calculation mesh.
+    _spacesDegrees : list or None
+        Degrees of spaces.
 
     Notes
     -----
-    - The class relies on external dependencies like param and FEMSpaces, which must be bound before use.
     - Caching is per-file and cleared when switching sources.
     - Interpolation uses Delaunay triangulation for efficiency.
 
@@ -77,11 +83,12 @@ class Reader:
 
     def __init__(
         self,
-        needInterpolation   = True,
-        originalMeshFile    = None,
-        isComplex           = False,  # NOTE: Should be an attribute of the field, not the reader?
-        cacheData           = True,
-    ):
+        sourceDir:          str,
+        needInterpolation:  bool = True,
+        felicsMeshFilePath: Optional[str] = None,
+        isComplex:          bool = False,
+        cacheData:          bool = True,
+    ) -> None:
         """
         Initialize the Reader instance.
 
@@ -89,58 +96,43 @@ class Reader:
         ----------
         needInterpolation : bool, optional
             Whether to interpolate data onto the FELiCS mesh, by default True.
-        originalMeshFile : str or None, optional
-            Path to the original mesh file if coordinates are not in the main file, by default None.
+        felicsMeshFilePath : str or None, optional
+            Path to the FELiCS mesh file WHEN it is in a different directory than the source data.
         isComplex : bool, optional
             Whether the data is complex-valued, by default False.
         cacheData : bool, optional
             Whether to cache loaded data for reuse, by default True.
         """
         # Configuration (fixed for this Reader instance)
-        self._needInterpolation = needInterpolation
-        self._originalMeshFile  = originalMeshFile
-        self._isComplex         = isComplex
-        self._cacheData         = cacheData
-
-        # Environment dependencies (TODO: get rid of these dependencies?)
-        self._param             = None
-        self._FEMSpaces         = None
-        self._mesh              = None
+        self._sourceDir             = sourceDir
+        self._needInterpolation     = needInterpolation
+        self._felicsMeshFilePath    = felicsMeshFilePath
+        self._isComplex             = isComplex
+        self._cacheData             = cacheData
 
         # Per-file caches (reset when source changes)
-        self._sourceKey         = None  # (filePath, groupName)
-        self._availableVars     = None
-        self._rawDataDict       = {}
-        self._dataForField      = {}
+        self._sourceKey             = None  # (filePath, groupName) TODO: remove groupname from files
+        self._availableVars         = None
+        self._rawDataDict           = {}
+        self._dataForField          = {}
+        
+        # Per-calculation mesh/FEM space caches
+        self._calcMeshCoords        = None
+        self._calcMeshP1Coords      = None
+        self._mappingImportToCalc   = None
+        self._fullAxisNames         = None
+        self._meshAxisNames         = None
+        self._numDoFsCalcMeshP2     = 0
+        self._numDoFsCalcMeshP1     = 0
+        self._spacesDegrees         = None
 
     # --------------------------
-    # Environment binding
-    # --------------------------
-    # NOTE: TEMPORARY solution until updates in Field are made
-    # TODO: get rid of dependencies to these objects?
-    def bind_env(self, param, FEMSpaces):
-        """
-        Bind the FELiCS environment objects to this Reader.
-
-        Parameters
-        ----------
-        param : object
-            The FELiCS parameter object.
-        FEMSpaces : object
-            The FELiCS finite element spaces object.
-        """
-        self._param     = param
-        self._FEMSpaces = FEMSpaces
-        self._mesh      = param.getMesh()
-
-    # --------------------------
-    # Cached mesh and mapping data
+    # Cached properties
     # --------------------------
     @cached_property
-    def meshDim(self):
+    def meshAxisNames(self):
         """
-        Get the number of spatial dimensions in the mesh.
-        TODO: rename property
+        Names of the full spatial dimensions: mesh + spectral.
 
         Returns
         -------
@@ -152,16 +144,12 @@ class Reader:
         RuntimeError
             If accessed before bind_env is called.
         """
-        if self._mesh is None:
-            logger.error("meshDim accessed before bind_env() which sets self._mesh")
-            raise RuntimeError("meshDim accessed before bind_env() which sets self._mesh")
-        return self._mesh.meshAxisNames
+        return self._meshAxisNames
     
     @cached_property
-    def fullDim(self):
+    def fullAxisNames(self):
         """
-        Get the full number of spatial dimensions: mesh + spectral.
-        TODO: rename property
+        Get the names of all spatial dimensions: mesh + spectral.
 
         Returns
         -------
@@ -173,9 +161,7 @@ class Reader:
         RuntimeError
             If accessed before bind_env is called.
         """
-        if self._mesh is None:
-            raise RuntimeError("fullDim accessed before bind_env() which sets self._mesh")
-        return self._mesh.axisNames
+        return self._fullAxisNames
 
     @cached_property
     def _triangulationImportMesh(self):
@@ -187,29 +173,51 @@ class Reader:
         scipy.spatial.Delaunay
             The triangulation object for the import mesh.
         """
-        nDimMesh = len(self.meshDim)
-        importCoords = self.importMeshCoords[:, :nDimMesh]
+        nDimMesh        = len(self.meshAxisNames)
+        importCoords    = self.importMeshCoords[:, :nDimMesh]
         return Delaunay(importCoords)
 
     @cached_property
-    def calcMeshCoords(self):
+    def calcMeshP2Coords(self):
         """
-        Get the coordinates of the calculation mesh (P2).
-        TODO: get from the Field, but needs to be kept in memory for multiple fields or import files
-        NOTE: Concept is 1 calc mesh per Reader instance
+        Get the coordinates of the calculation mesh.
 
         Returns
         -------
         numpy.ndarray
             Array of shape (nPoints, nDimMesh) with the coordinates of the calculation mesh.
+        """
+        return self._calcMeshP2Coords
+    
+    @cached_property
+    def calcMeshP1Coords(self):
+        """
+        Get the coordinates of the P1 calculation mesh.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of shape (nPoints, nDimMesh) with the coordinates of the P1 calculation mesh.
+        """
+        return self._calcMeshP1Coords
+
+    @cached_property
+    def mappingImportToCalcP2(self):
+        """
+        Get the mapping from import mesh to calculation mesh (P2).
+
+        Returns
+        -------
+        numpy.ndarray or None
+            The mapping array if no interpolation is needed, otherwise None.
 
         Notes
         -----
-        TODO: Might want to add P1 support as well.
         """
-        logger.debug("Getting the calculation mesh coordinates.")
-        nDimMesh = len(self.meshDim)
-        return self._FEMSpaces.P2.tabulate_dof_coordinates()[:, :nDimMesh]
+        if self._needInterpolation:
+            return None
+        else:
+            return self._mappingImportToCalc
 
     @cached_property
     def importMeshCoords(self):
@@ -226,27 +234,49 @@ class Reader:
         numpy.ndarray
             Array of shape (nPoints, nDimMesh) with the coordinates of the import mesh.
         """
-        
+
+        logger.debug("Associating import mesh to Reader instance.")
+
         # Number and names of mesh axes
-        meshAxisNames                   = self.meshDim
-        numMeshAxis                     = len(meshAxisNames)
+        meshAxisNames                       = self.meshAxisNames
+        numMeshAxis                         = len(meshAxisNames)
         logger.debug(f"Getting the {numMeshAxis}D import mesh coordinates ({meshAxisNames}).")
 
+        def _load_coordinates_from_file(file_path: str, prefix: str, coord_names: List[str]) -> np.ndarray:
+            """
+            Helper to load coordinates from HDF5 file.
+
+            Parameters
+            ----------
+            file_path : str
+                Path to the HDF5 file.
+            prefix : str
+                Prefix for the dataset paths.
+            coord_names : list of str
+                Names of the coordinate datasets.
+
+            Returns
+            -------
+            numpy.ndarray
+                Array of coordinates.
+            """
+            with h5py.File(file_path, "r") as fh:
+                first_shape         = fh[prefix + coord_names[0]][:].shape
+                coords              = np.zeros((max(first_shape), len(coord_names)))
+                for i, name in enumerate(coord_names):
+                    coords[:, i]    = fh[prefix + name][:]
+            return coords
+        
         if self._needInterpolation:
             
-            if self._originalMeshFile:
-                # Option 1: load from original mesh file
-                with h5py.File(self._originalMeshFile, "r") as fileHandle:
-                    prefix                  = "coordinates/"  # NOTE: we want to get rid of groups in files
-                    firstCoordShape         = fileHandle[prefix + meshAxisNames[0]][:].shape
-                    coordsArray             = np.zeros((max(firstCoordShape), numMeshAxis))
-                    for i, coordName in enumerate(meshAxisNames):
-                        coordsArray[:, i]   = fileHandle[prefix + coordName][:]
+            if self._felicsMeshFilePath:
+                # Option 1: load from a given FELiCS mesh file
+                coordsArray = _load_coordinates_from_file(self._felicsMeshFilePath, "coordinates/", meshAxisNames)
                 return coordsArray
+            
             else:
-                # Option 2: load from main file under group name
-                # NOTE: we assume the coordinates are in the same group as the variables
-                # Build from the first current file that has coords
+                # Option 2: Coords into file containing the data. Load at first file access
+                # NOTE: assumes the coordinates are in the same group as the variables
                 self._ensure_source_set()
                 self._get_list_available_vars()
                 missingCoords               = [coord for coord in meshAxisNames if coord not in self._rawDataDict.keys()]
@@ -257,49 +287,32 @@ class Reader:
                 for i, coordName in enumerate(meshAxisNames):
                     coordsArray[:, i]       = self._rawDataDict[coordName]
                 return coordsArray
+        
         else:
-            # Option 3: load from FELiCS exported mesh file
-            meshFile = os.path.join(
-                self._param.Export.ExportFolder,
-                "mesh.h5"
-            )
-            with h5py.File(meshFile, "r") as fileHandle:
-                prefix                  = "coordinates/"
-                firstCoordShape         = fileHandle[prefix + "x"][:].shape
-                coordsArray             = np.zeros((max(firstCoordShape), numMeshAxis))
-                # NOTE: in FELiCS mesh the coordinates are always x,y,z! Needed for ParaView?
-                for i, coordName in enumerate(["x", "y", "z"][:numMeshAxis]):
-                    coordsArray[:, i]   = fileHandle[prefix + coordName][:]
+            # Option 3: Load the FELiCS mesh
+            if self._felicsMeshFilePath is not None:
+                # For example when we load the mean flow, the FELiCS mesh is usually in another directory
+                meshFile                    = self._felicsMeshFilePath
+            else:
+                # Default FELiCS mesh file in the source directory (e.g. when loading modes)
+                meshFile                    = os.path.join(self._sourceDir, "mesh.h5")
+            
+            # Check that the file exists
+            if not os.path.isfile(meshFile):
+                logger.error(f"FELiCS mesh file for import not found: {meshFile}")
+                raise FileNotFoundError(meshFile)
+
+            coordsArray = _load_coordinates_from_file(meshFile, "coordinates/", ["x", "y", "z"][:numMeshAxis])
             return coordsArray
-
-    @cached_property
-    def import_to_P2calc(self):
-        """
-        Get the mapping from import mesh to calculation mesh (P2).
-
-        Returns
-        -------
-        numpy.ndarray or None
-            The mapping array if no interpolation is needed, otherwise None.
-
-        Notes
-        -----
-        TODO: Might want to add mapping to P1 as well.
-        TODO: Use the mapping from Field once it's implemented.
-        """
-        if self._needInterpolation:
-            return None
-        else:
-            nDimMesh = len(self.meshDim)
-        return Mapping.calculateMappingFromDofs(
-            self.importMeshCoords[:, :nDimMesh],
-            self.calcMeshCoords
-        )
 
     # --------------------------
     # Source management
     # --------------------------
-    def _update_data_source(self, filePath, groupName):
+    def _update_data_source(
+        self, 
+        filePath: str, 
+        groupName: str
+    ) -> None:
         """
         Switch to a new file/group if different, clearing per-file caches.
 
@@ -315,8 +328,19 @@ class Reader:
         FileNotFoundError
             If the file does not exist.
         """
+
+        # Check that the file exists
         if not os.path.isfile(filePath):
             raise FileNotFoundError(filePath)
+
+        # Check that the source directory fits that of the reader instance
+        currentSourceDir         = os.path.dirname(filePath)
+        if os.path.abspath(currentSourceDir) != os.path.abspath(self._sourceDir):
+            # NOTE: maybe we do something specific in that case?
+            logger.warning(
+                f"Reader source directory '{currentSourceDir}' does not match "
+                f"the Reader instance sourceDir '{self._sourceDir}': expected behavior issues."
+            )
 
         # Set new source if different
         key = (os.path.abspath(filePath), groupName)
@@ -327,8 +351,110 @@ class Reader:
             self._rawDataDict   = {}
             self._dataForField  = {}
             logger.debug(f"Reader: switched source to {key}, cleared per-file caches.")
+            
+    def _update_calc_mesh(
+        self, 
+        field: Any
+    ) -> None:
+        """
+        Switch to a new calculation mesh if different from cached one.
+        Clearing per-calculation mesh caches.
+        
+        The calculation mesh is defined as the DoFs in the field.
+        Specific treatment needed for mixed spaces with different DOF counts (e.g., P1 vs P2).
+        
+        This updates the following cached properties:
+        - fullAxisNames
+        - meshAxisNames
+        - calcMeshP2Coords
+        - mappingImportToCalcP2
+        and the following internal attributes:
+        - _numDoFsCalcMeshP2
+        - _numDoFsCalcMeshP1
 
-    def _ensure_source_set(self):
+        Parameters
+        ----------
+        Field : object
+            The FELiCS field object.
+
+        Raises
+        ------
+        NotImplementedError
+            If the field type is not supported.
+        """
+        
+        # Get the field type
+        fieldType               = field.info["type"]
+
+        # Polynomial degrees of all subfields (not for vector subspaces)
+        subFields               = field.getListOfSubFields() if fieldType == "mixed" else [field]
+        degrees                 = [subField.info.get("degree", None) for subField in subFields]
+        if max(degrees) > 2:
+            logger.error("Reader currently only supports P1 and P2 FEM spaces.")
+            raise NotImplementedError("Reader currently only supports P1 and P2 FEM spaces.")
+        
+        # Get the number of DoFs in P2 and P1 subfields if present
+        p2SubFieldIndex            = degrees.index(2) if 2 in degrees else None    # Keep only the first occurrence
+        p1SubFieldIndex            = degrees.index(1) if 1 in degrees else None    # Keep only the first occurrence
+        numDofsForP2               = subFields[p2SubFieldIndex].info['nDofsSpace'] if p2SubFieldIndex is not None else 0
+        numDofsForP1               = subFields[p1SubFieldIndex].info['nDofsSpace'] if p1SubFieldIndex is not None else 0
+
+        # If we are dealing with a new space/mesh, clear cached properties
+        if numDofsForP2 != self._numDoFsCalcMeshP2 or numDofsForP1 != self._numDoFsCalcMeshP1:
+            logger.debug("New calculation mesh / FEM space type, updating cache.")
+
+            # Clear cached properties that depend on calculation meshes
+            propertiesToClear       = [
+                "mappingImportToCalcP2",
+                "fullAxisNames",
+                "meshAxisNames",
+            ]
+            if numDofsForP1 != self._numDoFsCalcMeshP1:
+                propertiesToClear.append("calcMeshP1Coords")
+            if numDofsForP2 != self._numDoFsCalcMeshP2:
+                propertiesToClear.append("calcMeshP2Coords")
+            self.clear_cached_properties(cachedProps=propertiesToClear)
+
+            # Update the number of DoFs in calculation mesh and space degrees
+            self._numDoFsCalcMeshP2 = numDofsForP2
+            self._numDoFsCalcMeshP1 = numDofsForP1
+            self._spacesDegrees     = degrees
+
+            # Set the names in cached properties
+            felicsMesh              = field.mesh
+            self._meshAxisNames     = felicsMesh.meshAxisNames
+            self._fullAxisNames     = felicsMesh.axisNames
+            
+            # If we have sub-spaces, get the indices of the sub-space DoFs
+            if fieldType == "mixed":
+                # TODO: check that this does not mess up with the DoF indices
+                if numDofsForP2 > 0:
+                    if field.getListOfSubFields()[p2SubFieldIndex].info['type'] == 'vector':
+                        self._calcMeshP2Coords  = field.space.sub(p2SubFieldIndex).sub(0).collapse()[0].tabulate_dof_coordinates()[:, :len(self._meshAxisNames)]
+                    else:
+                        self._calcMeshP2Coords  = field.space.sub(p2SubFieldIndex).collapse()[0].tabulate_dof_coordinates()[:, :len(self._meshAxisNames)]
+                if numDofsForP1 > 0:
+                    if field.getListOfSubFields()[p1SubFieldIndex].info['type'] == 'vector':
+                        self._calcMeshP1Coords  = field.space.sub(p1SubFieldIndex).sub(0).collapse()[0].tabulate_dof_coordinates()[:, :len(self._meshAxisNames)]
+                    else:
+                        self._calcMeshP1Coords  = field.space.sub(p1SubFieldIndex).collapse()[0].tabulate_dof_coordinates()[:, :len(self._meshAxisNames)]
+            else:
+                # Single space
+                dofsArray                       = field.space.tabulate_dof_coordinates()[:, :len(self._meshAxisNames)]
+                if numDofsForP2 > 0:
+                    self._calcMeshP2Coords      = dofsArray
+                if numDofsForP1 > 0:
+                    self._calcMeshP1Coords      = dofsArray
+                    
+            # Compute the mapping (only to P2 mesh) if needed
+            if not self._needInterpolation:
+                numMeshDimensions               = len(self._meshAxisNames)
+                self._mappingImportToCalc       = Mapping.calculateMappingFromDofs(
+                    self.importMeshCoords[:, :numMeshDimensions],
+                    self.calcMeshP2Coords
+                )
+
+    def _ensure_source_set(self) -> None:
         """
         Ensure that a data source is set.
 
@@ -340,21 +466,30 @@ class Reader:
         if self._sourceKey is None:
             raise RuntimeError("No data source set. Call importInField(..., filePath, groupName) first.")
 
-    def clear_cached_properties(self):
+    def clear_cached_properties(
+        self, 
+        cachedProps: List[str] = []
+    ) -> None:
         """
         Remove all cached @cached_property values from this Reader instance.
 
         They will be recomputed on the next access.
-        
-        TODO: Complete the method with all cached properties.
+
+        Parameters
+        ----------
+        cachedProps : list of str, optional
+            List of property names to clear. If empty, clears default properties.
         """
-        cachedProps = [
-            "fullDim",
-            "meshDim",
-            "calcMeshCoords",
-            "importMeshCoords",
-            "import_to_P2calc",
-        ]
+        
+        if not cachedProps:
+            # TODO: complete the list if there are some missing
+            cachedProps = [
+                "fullAxisNames",
+                "meshAxisNames",
+                "calcMeshP2Coords",
+                "importMeshCoords",
+                "mappingImportToCalcP2",
+            ]
         cleared = []
         for propName in cachedProps:
             if propName in self.__dict__:
@@ -368,7 +503,7 @@ class Reader:
     # --------------------------
     # HDF5 file handling
     # --------------------------
-    def _get_list_available_vars(self):
+    def _get_list_available_vars(self) -> None:
         """
         List variable names available in the current group.
 
@@ -387,7 +522,10 @@ class Reader:
                 logger.warning(f"Group '{groupName}' not found in file '{filePath}'.")
                 self._availableVars = []
 
-    def _load_from_h5(self, varNames):
+    def _load_from_h5(
+        self, 
+        varNames: List[str]
+    ) -> None:
         """
         Load selected variables from HDF5 file into _rawDataDict.
 
@@ -424,7 +562,11 @@ class Reader:
     # --------------------------
     # Interpolation / mapping
     # --------------------------
-    def _interpolate_to_calc_mesh(self, varNames):
+    def _interpolate_to_calc_mesh(
+        self, 
+        varNames:   List[str], 
+        toP1:       bool = False
+    ) -> Dict[str, Any]:
         """
         Interpolate given variables from import mesh to calculation mesh.
 
@@ -432,6 +574,9 @@ class Reader:
         ----------
         varNames : list of str
             List of variable names to interpolate.
+        toP1 : bool, optional
+            Whether to interpolate to P1 calculation mesh, by default False.
+            NOTE: not very elegant
 
         Returns
         -------
@@ -443,13 +588,22 @@ class Reader:
         ValueError
             If variable lengths do not match the import mesh.
         """
-        nMeshDim                    = len(self.meshDim)
-        importCoords                = self.importMeshCoords[:, :nMeshDim]
-        calcCoords                  = self.calcMeshCoords
+        numMeshDimensions                    = len(self.meshAxisNames)
+        importCoords                = self.importMeshCoords[:, :numMeshDimensions]
+        calcCoords                  = self.calcMeshP1Coords if toP1 else self.calcMeshP2Coords
         numImportPoints             = importCoords.shape[0]
+        
+        # If we have complex data, we have _real and _imag in _rawDataDict
+        if self._isComplex:
+            varNamesComplex        = []
+            for varName in varNames:
+                varNamesComplex.append(varName + "_real")
+                varNamesComplex.append(varName + "_imag")
+        else:
+            varNamesComplex        = varNames
 
         # Sanity check: all variables have same length as import mesh
-        for varName in varNames:
+        for varName in varNamesComplex:
             if self._rawDataDict[varName].shape[0] != numImportPoints:
                 raise ValueError(
                     f"Variable '{varName}' has length {len(self._rawDataDict[varName])}, "
@@ -457,7 +611,7 @@ class Reader:
                 )
 
         # Stack data columns (N, K)
-        values                      = np.column_stack([self._rawDataDict[varName] for varName in varNames])
+        values                      = np.column_stack([self._rawDataDict[varName] for varName in varNamesComplex])
 
         # Use cached triangulation
         linearInterp                = LinearNDInterpolator(self._triangulationImportMesh, values)
@@ -469,11 +623,24 @@ class Reader:
             nearestValues           = nearestInterp(calcCoords)
             nanMask                 = np.isnan(interpolated)
             interpolated[nanMask]   = nearestValues[nanMask]
+            
+        # Output dict
+        output                      = {varName: interpolated[:, i] for i, varName in enumerate(varNamesComplex)}
+            
+        # If we had complex data, reconstruct complex arrays
+        if self._isComplex:
+            for varName in varNames:
+                output[varName] = output[varName + "_real"] + 1j * output[varName + "_imag"]
+                del output[varName + "_real"]
+                del output[varName + "_imag"]
 
         # Return a dict {var_name: array}
-        return {varName: interpolated[:, i] for i, varName in enumerate(varNames)}
+        return output
 
-    def _map_to_calc_mesh(self, varNames):
+    def _map_to_calc_mesh(
+        self, 
+        varNames: List[str]
+    ) -> Dict[str, Any]:
         """
         Map given variables using precomputed index mapping.
 
@@ -488,7 +655,7 @@ class Reader:
             Dictionary mapping variable names to mapped arrays.
         """
         
-        indices = self.import_to_P2calc
+        indices                         = self.mappingImportToCalcP2
         
         # If we have complex data, we have _real and _imag in _rawDataDict
         # In which case we reconstruct the complex array here
@@ -510,13 +677,16 @@ class Reader:
     # --------------------------
     # Field helpers
     # --------------------------
-    def _names_for_field(self, field):
+    def _names_for_field(
+        self, 
+        field: Any
+    ) -> List[str]:
         """
-        Determine variable names to load from file for this Field.
+        Determine variable names to load from file for this field.
 
         Parameters
         ----------
-        Field : object
+        field : object
             The FELiCS field object.
 
         Returns
@@ -545,7 +715,11 @@ class Reader:
             
         return names
 
-    def _set_arrays_to_field(self, arrays, field):
+    def _set_arrays_to_field(
+        self, 
+        arrays:  Dict[str, Any],
+        field: Any
+    ) -> Any:
         """
         Assign interpolated/mapped arrays to a given field.
 
@@ -567,7 +741,7 @@ class Reader:
             For mixed function spaces.
         """
         # Field info
-        info        = field.describeFunctionSpace()
+        info        = field.info
             
         # Set the arrays in FEM depending on field type
         if info["type"] == "mixed":
@@ -605,20 +779,27 @@ class Reader:
             varName                                 = field.getName()
             if varName in arrays:
                 field.function.x.array[:]           = arrays[varName]
+            else:
+                logger.warning(f"Variable '{varName}' not found in loaded arrays for scalar field. Leaving unchanged.")
         return field
 
     # --------------------------
     # Main API
     # --------------------------
-    def importInField(self, Field, filePath, groupName):
+    def importInField(
+        self, 
+        field: Any, 
+        filePath:   str, 
+        groupName:  str
+    ) -> Tuple[Any, List[str]]:
         """
-        Import data from the specified file/group into the given Field.
+        Import data from the specified file/group into the given field.
 
         Automatically clears per-file caches when file/group changes.
 
         Parameters
         ----------
-        Field : object
+        field : object
             The FELiCS field to import data into.
         filePath : str
             Path to the HDF5 file.
@@ -628,42 +809,65 @@ class Reader:
         Returns
         -------
         tuple
-            (updated_Field, list_of_missing_variables)
+            (updated field, list of missing variables)
 
         Raises
         ------
-        RuntimeError
-            If environment is not bound.
+        FileNotFoundError
+            If the file does not exist.
+        NotImplementedError
+            If the field type is not supported.
         """
-        if self._param is None or self._FEMSpaces is None:
-            raise RuntimeError("Call bind_env(param, FEMSpaces) before importInField().")
-
+        # Update the calculation mesh and purge cached properties if source changed 
+        self._update_calc_mesh(field)
         self._update_data_source(filePath, groupName)
+        
+        # List of FEM spaces degrees in the field
+        subFields               = field.getListOfSubFields() if field.info["type"] == "mixed" else [field]
+        degrees                 = [subField.info.get("degree", None) for subField in subFields]
+        
+        # Check variable availability
         self._get_list_available_vars()
-
-        wantedVars  = self._names_for_field(Field)
-        missingVars = [var for var in wantedVars if var not in self._availableVars]
-        presentVars = [var for var in wantedVars if var in self._availableVars]
+        wantedVars              = self._names_for_field(field)
+        missingVars             = [var for var in wantedVars if var not in self._availableVars]
+        presentVars             = [var for var in wantedVars if var in self._availableVars]
         if not presentVars:
-            logger.warning(f"No variables for Field '{Field.getName()}' found in file '{filePath}'. Set to default values.")
-            return Field, missingVars
+            logger.warning(f"No variables for field '{field.getName()}' found in file '{filePath}'. Set all to default values.")
+            return field, missingVars
 
         # Load and process data
         if self._cacheData:
             if not self._dataForField:
-                logger.debug("Cache empty, loading and interpolating/mapping all available data.")
-                # Load and interpolate/map all non-coordinate variables for this file
-                coordsSet       = set(self.fullDim)
-                allVars         = [var for var in self._availableVars if var not in coordsSet]
+                logger.debug(f"Cache empty, loading and interpolating/mapping all available data: {self._availableVars}")
+                
+                # Load all non-coordinate variables for this file
+                coordsSet           = set(self.fullAxisNames)
+                allVars             = [var for var in self._availableVars if var not in coordsSet]
                 self._load_from_h5(allVars)
-                processedData   = (self._interpolate_to_calc_mesh(allVars)
-                                    if self._needInterpolation else
-                                    self._map_to_calc_mesh(allVars)
-                                )
+
+                # If a mixed space has a P1 variable, we need to interpolate the variables to P1
+                # NOTE: This is not optimal if all subfields are P1, but this is a rare case?
+                if field.info["type"] == "mixed" and 1 in degrees and not self._needInterpolation:
+                    logger.debug("Mixed field with P1 subfield detected.")
+                    variablesP1     = [name for name, deg in zip(field.getNamesOfSubFields(), degrees) if deg == 1]
+                    # Dict of only P1 variables
+                    logger.debug(f"Interpolating P1 variable(s): {variablesP1}")
+                    processedP1Data = self._interpolate_to_calc_mesh(variablesP1, toP1=True)
+                    
+                    # Dict of other variables mapped to calc mesh
+                    otherVars       = [var for var in allVars if var not in variablesP1]
+                    processedOther  = self._map_to_calc_mesh(otherVars)
+                    # Combine both
+                    processedData   = {**processedP1Data, **processedOther}
+
+                else:
+                    processedData   = (
+                        self._interpolate_to_calc_mesh(allVars) if self._needInterpolation else
+                        self._map_to_calc_mesh(allVars)
+                    )
+                    
                 # Update cached data
                 self._dataForField.update(processedData)
-            else:
-                logger.debug("Using cached data.")
 
             # Check if there are any new variables to load, missing from cached data
             extraVars           = [var for var in presentVars if var not in self._dataForField]
@@ -675,6 +879,8 @@ class Reader:
                                     self._map_to_calc_mesh(extraVars)
                                 )
                 self._dataForField.update(updatedData)
+                
+            logger.debug(f"Getting {presentVars} from cached data.")
             arrays              = {var: self._dataForField[var] for var in presentVars}
 
         else:
@@ -686,5 +892,5 @@ class Reader:
                                     self._map_to_calc_mesh(presentVars)
                                 )
 
-        self._set_arrays_to_field(arrays, Field)
-        return Field, missingVars
+        self._set_arrays_to_field(arrays, field)
+        return field, missingVars

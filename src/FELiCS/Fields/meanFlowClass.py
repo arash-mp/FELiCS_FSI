@@ -1,4 +1,5 @@
 # Third party libraries
+import os
 import h5py
 import numpy as np
 
@@ -10,7 +11,6 @@ from FELiCS.Equation.dependentVariables.equationOfStateHandler  import equationO
 from FELiCS.Equation.dependentVariables.reactionHandler         import reactionHandler
 from FELiCS.Misc.logging                                        import Logger
 from FELiCS.IO.Reader                                           import Reader
-from FELiCS.IO.Mapping                                          import Mapping
 from FELiCS.Fields.Field                                        import Field
 
 # Get the logger
@@ -73,14 +73,13 @@ class meanFlowClass(
             groupName               = "meanflow"
 
         # Initialize the reader
-        reader          = Reader(
-            needInterpolation   = self._param.Case.needInterpolation,
-            originalMeshFile    = None,
-            isComplex           = False, # NOTE: Should be an attribute of the field, not the reader?
-            cacheData           = True,
+        reader                      = Reader(
+            sourceDir               = os.path.dirname(self._param.FlowInput.MeanFlowFilePath),
+            needInterpolation       = self._param.Case.needInterpolation,
+            felicsMeshFilePath      = None if self._param.Case.needInterpolation else f'{self._param.Export.ExportFolder}/mesh.h5',
+            isComplex               = False,
+            cacheData               = True,
         )
-        # TEMPORARY: Bind the params and FEM spaces to the reader
-        reader.bind_env(self._param, self._FEMSpaces)
 
         # Create empty fields for each variable 
         # TODO: Create new type of Field collection for mean flow? (Similar to mode collection.)
