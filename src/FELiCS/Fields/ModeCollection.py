@@ -133,10 +133,10 @@ class ModeCollection():
                 analysisType = 'Modal'
                 )
             mode.isAdjoint = adjoint
-            mode.setError(error[i])
-            mode.setGuess(guess)
-            mode.setEigenValue(eigVals[i])
-            mode.setCoefficientArray(eigVecs[i,:])
+            mode.error = error[i]
+            mode.guess = guess
+            mode.eigenValue = eigVals[i]
+            mode.coefficientArray = eigVecs[i,:]
             self.modeList.append(mode)
             
 
@@ -254,7 +254,7 @@ class ModeCollection():
         import numpy as np
         error = []
         for mode in self.modeList:
-            error.append(mode.getError())
+            error.append(mode.error)
         if len(self.modeList)==0:
             pass #TODO: throw error
         else:
@@ -273,7 +273,7 @@ class ModeCollection():
         spectrum = []
         for mode in self.modeList:
             if not mode.isAdjoint:
-                spectrum.append(mode.getEigenValue())
+                spectrum.append(mode.eigenValue)
         return spectrum
     
     def getSpectrum(self):
@@ -311,18 +311,18 @@ class ModeCollection():
             ctr_line_adjoint    = 0
             for i, mode in enumerate(modeList):
                 if not mode.isAdjoint:
-                    spectrum[ctr_line_direct,0] = mode.getEigenValue().real
-                    spectrum[ctr_line_direct,1] = mode.getEigenValue().imag
+                    spectrum[ctr_line_direct,0] = mode.eigenValue.real
+                    spectrum[ctr_line_direct,1] = mode.eigenValue.imag
                     ctr_line_direct += 1
                 else:
-                    spectrum[ctr_line_adjoint,2] = mode.getEigenValue().real
-                    spectrum[ctr_line_adjoint,3] = mode.getEigenValue().imag
+                    spectrum[ctr_line_adjoint,2] = mode.eigenValue.real
+                    spectrum[ctr_line_adjoint,3] = mode.eigenValue.imag
                     ctr_line_adjoint += 1
             
         # Resolvent or IO case (consider only the response modes)
         elif self.analysisType in ['Resolvent', 'Input-Output']:
-            Ncols           = 2 + max(mode.getGainNumber() for mode in modeList) # Mode numbers start at 0
-            frequencyList   = np.unique([mode.getFrequency() for mode in modeList])
+            Ncols           = 2 + max(mode.gainNumber for mode in modeList) # Mode numbers start at 0
+            frequencyList   = np.unique([mode.frequency for mode in modeList])
             NLines          = len(frequencyList)
 
             # Define the header
@@ -336,10 +336,10 @@ class ModeCollection():
             modeTypeToLoop = 'Response' if hasResponse else 'Forcing'
             for i, mode in enumerate(modeList):
                 if (modeTypeToLoop == 'Response' and mode.isResponse) or (modeTypeToLoop == 'Forcing' and not mode.isResponse):
-                    currentFrequency    = mode.getFrequency()
+                    currentFrequency    = mode.frequency
                     LineIndex           = np.where(frequencyList == currentFrequency)[0]
                     spectrum[LineIndex[0], 0] = currentFrequency
-                    spectrum[LineIndex[0], 1 + mode.getGainNumber()] = mode.getGain()
+                    spectrum[LineIndex[0], 1 + mode.gainNumber] = mode.gain
 
         return spectrum, header
 
@@ -421,7 +421,7 @@ class ModeCollection():
             growthRateMax = -9990.
             for mode in self.modeList:
                 if mode.isAdjoint == adjoint:
-                    eigenValue = mode.getEigenValue()
+                    eigenValue = mode.eigenValue
                     if np.imag(eigenValue) > growthRateMax:
                         growthRateMax = np.imag(eigenValue)
                         leadingMode = mode
@@ -429,7 +429,7 @@ class ModeCollection():
             growthRateMin = 9990.
             for mode in self.modeList:
                 if mode.isAdjoint == adjoint:
-                    eigenValue = mode.getEigenValue()
+                    eigenValue = mode.eigenValue
                     if np.imag(eigenValue) < growthRateMin:
                         growthRateMin = np.imag(eigenValue)
                         leadingMode = mode
@@ -468,7 +468,7 @@ class ModeCollection():
                                         param,
                                         meanFlow,
                                         FEMSpaces,
-                                        mode.getEigenValue(),
+                                        mode.eigenValue,
                                         mode.function.x.array[:],
                                         mode.isAdjoint==False,
                                          )
@@ -479,11 +479,11 @@ class ModeCollection():
                                         param,
                                         meanFlow,
                                         FEMSpaces,
-                                        mode.getFrequency(),
+                                        mode.frequency,
                                         mode.function.x.array[:],
                                         mode.isAdjoint==False,
                                         0,
-                                        mode.getGain()
+                                        mode.gain
                                          )
                 )
         elif param.Case.AnalysisMode == "Resolvent":
@@ -492,11 +492,11 @@ class ModeCollection():
                     param,                                 
                     meanFlow,                                 
                     FEMSpaces,                                 
-                    mode.getFrequency(),                                 
+                    mode.frequency,                                 
                     mode.function.x.array[:],                                
                     False if not mode.isResponse else True,                                 
-                    mode.getGainNumber(),                                 
-                    mode.getGain(),                                 
+                    mode.gainNumber,                                 
+                    mode.gain,                                 
                 ))
             
         else:
@@ -641,7 +641,7 @@ class ModeCollection():
                 else:
                     fileName += "_Direct"
                 fileName += "_Lambda_"
-                fileName += "{:.3f}".format(mode.getEigenValue())
+                fileName += "{:.3f}".format(mode.eigenValue)
             elif self.analysisType == "Resolvent":
                 if mode.isResponse:
                     fileName += "_Response"

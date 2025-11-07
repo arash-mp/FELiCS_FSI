@@ -59,10 +59,10 @@ class Mode(Field):
             The mesh on which the FEM space is defined.
         """
         super().__init__(FEMSpace, mesh, name, isStateVector, m)
-        # NOTE: why are these hardcoded here?
         
         # Set values
         self.analysisType      = AnalysisType[analysisType.upper()]
+        # TODO Sophie: write error if analysisType is not given
     
         # Define name of the subfields (variables of the mode)
         self.namesOfSubFields   = self.getNamesOfSubFields()
@@ -102,77 +102,8 @@ class Mode(Field):
 
 
 
-    def setGainNumber(self,gainNumber):
-        """
-        Set the gain number for the mode.
-
-        Parameters
-        ----------
-        gainNumber : int
-            Gain number of the mode.
-        """
-        self._gainNumber = gainNumber
-
-    def setFrequency(self,frequency):
-        """
-        Set the frequency for the mode.
-
-        Parameters
-        ----------
-        frequency : float
-            Frequency associated with the mode.
-        """
-        self._frequency = frequency
-
-    def setEigenValue(self,eigenValue):
-        """
-        Set the eigenvalue for the mode.
-
-        Parameters
-        ----------
-        eigenValue : float
-            Eigenvalue associated with the mode.
-        """
-        self._eigenValue = eigenValue
-
-
-    def setWaveNumber(self,waveNumber):
-        """
-        Set the wave number for the mode.
-        # NOTE: Why do we have this AND self.m?
-
-        Parameters
-        ----------
-        waveNumber : float
-            Wave number corresponding to the mode.
-        """
-        self._waveNumber = waveNumber
-
-
-    def setGuess(self,guess):
-        """
-        Set the initial guess for the mode.
-
-        Parameters
-        ----------
-        guess : float
-            Initial guess used in the mode computation.
-        """
-        self._guess = guess
-        
-    def setError(self,error):
-        """
-        Set the error value for the mode.
-
-        Parameters
-        ----------
-        error : float
-            Error associated with the mode solution.
-        """
-        self._error = error
-
-
-    def getGainNumber(self):
+    @property
+    def gainNumber(self):
         """
         Get the gain number of the mode.
 
@@ -187,8 +118,20 @@ class Mode(Field):
             logger.error('For this mode object no gain number was defined. Returning "-1"...')
             return -1
 
+    @gainNumber.setter
+    def gainNumber(self, gainNumber):
+        """
+        Set the gain number for the mode.
 
-    def getFrequency(self):
+        Parameters
+        ----------
+        gainNumber : int
+            Gain number of the mode.
+        """
+        self._gainNumber = gainNumber
+
+    @property
+    def frequency(self):
         """
         Get the frequency of the mode.
 
@@ -203,8 +146,21 @@ class Mode(Field):
             logger.error('For this mode object no frequency was defined. Returning "-9999."...')
             return -9999.
 
+    @frequency.setter
+    def frequency(self,frequency):
+        """
+        Set the frequency for the mode.
 
-    def getEigenValue(self):
+        Parameters
+        ----------
+        frequency : float
+            Frequency associated with the mode.
+        """
+        self._frequency = frequency
+
+
+    @property
+    def eigenValue(self):
         """
         Get the eigenvalue of the mode.
 
@@ -219,8 +175,20 @@ class Mode(Field):
             logger.error('For this mode object no eigen value was defined. Returning "-9999."...')
             return -9999.
 
+    @eigenValue.setter
+    def eigenValue(self,eigenValue):
+        """
+        Set the eigenvalue for the mode.
 
-    def getWaveNumber(self):
+        Parameters
+        ----------
+        eigenValue : float
+            Eigenvalue associated with the mode.
+        """
+        self._eigenValue = eigenValue
+
+    @property
+    def waveNumber(self):
         """
         Get the wave number of the mode.
 
@@ -234,9 +202,22 @@ class Mode(Field):
         except: 
             logger.error('For this mode object no waveNumber was defined. Returning "-9999."...')
             return -9999.
+ 
+    @waveNumber.setter
+    def waveNumber(self,waveNumber):
+        """
+        Set the wave number for the mode.
+        # NOTE: Why do we have this AND self.m?
 
+        Parameters
+        ----------
+        waveNumber : float
+            Wave number corresponding to the mode.
+        """
+        self._waveNumber = waveNumber
 
-    def getGuess(self):
+    @property
+    def guess(self):
         """
         Get the initial guess of the mode.
 
@@ -251,7 +232,20 @@ class Mode(Field):
             logger.error('For this mode object no guess was defined. Returning "-9999."...')
             return -9999.
 
-    def getError(self):
+    @guess.setter
+    def guess(self,guess):
+        """
+        Set the initial guess for the mode.
+
+        Parameters
+        ----------
+        guess : float
+            Initial guess used in the mode computation.
+        """
+        self._guess = guess
+
+    @property 
+    def error(self):
         """
         Get the error associated with the mode.
 
@@ -265,7 +259,19 @@ class Mode(Field):
         except: 
             logger.error('For this mode object no error was defined. Returning "-9999."...')
             return -9999.
-        
+
+    @error.setter
+    def error(self,error):
+        """
+        Set the error value for the mode.
+
+        Parameters
+        ----------
+        error : float
+            Error associated with the mode solution.
+        """
+        self._error = error
+      
     def importData(
             self,
             reader,
