@@ -17,78 +17,132 @@ def runModal(param):
     from    FELiCS.Solvers.LinearSolver         import LinearSolver 
     from    FELiCS.Fields.ModeCollection        import ModeCollection
     from    FELiCS.Fields.Mode                  import Mode
-    from    FELiCS.IO.reader                    import Reader
+    from    FELiCS.IO.Reader                    import Reader
 
-    logger.warning("Running Modal analysis with Reader testing")
-    
-    # Get FELiCS objects required for analysis
+    logger.info("Running Modal analysis")
+    #-----------------------------------------------------------------------
+    ## INITIALIZATION
+    #-----------------------------------------------------------------------
+    # Mesh
     mesh            = param.getMesh()
-    FEMSpaces       = FEMSpaces(param, mesh)
-    meanFlow        = meanFlowClass(param, FEMSpaces, mesh)
+    mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
+    
+    # FEMSpaces
+    FEMSpaces       = FEMSpaces(
+        param,
+        mesh,
+    )
+     
+    # read in mean flow and export to h5-file
+    meanFlow        = meanFlowClass(
+        param, 
+        FEMSpaces, 
+        mesh
+    )
     meanFlow.importDataFromFileAndExportToH5()
-    equation        = EquationCollectionClass(param,FEMSpaces,meanFlow,mesh)
+
+    # equation
+    equation        = EquationCollectionClass(
+        param,
+        FEMSpaces,
+        meanFlow,
+        mesh
+    )
+
+    #-----------------------------------------------------------------------
+    ## MAIN PART
+    #-----------------------------------------------------------------------
+    # Get matrices for eigenproblem
     A               = equation.getLinearOperator(meanFlow)
     B               = equation.getWeightMatrix(meanFlow)
 
-    # Parameters for eigenproblem
+    # Get parameters for eigenproblem
     guesses         = param.Numerics.EigenValueGuess
     nSol            = param.Numerics.nSolut
     adjoint         = param.Case.CalculateAdjoint
 
-    # Solve eigenproblem for each guess
-    solution        = ModeCollection(FEMSpaces.VMixed, mesh)
+    # track time
+    start           = time.time()
+
+    # solve eigenproblem for each guess
+    solution       = ModeCollection(FEMSpaces.VMixed, mesh)
     for guess in guesses:
+        
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))
-        tmp         = LinearSolver.solveGeneralEigenproblem(A,B,guess,nSol)
+        tmp         = LinearSolver.solveGeneralEigenproblem(
+            A,
+            B,
+            guess,
+            nSol,
+        )
         solution.appendSolutionOfEigenProblem(tmp, guess)
+
         if adjoint:
             logger.info("Solving adjoint GEVP for guess: omega = " + str(guess))
-            tmp     = LinearSolver.solveGeneralEigenproblem(A,B,guess,nSol,adjoint=True)
-            solution.appendSolutionOfEigenProblem(tmp,guess,adjoint=True)
+            tmp     = LinearSolver.solveGeneralEigenproblem(
+                A,
+                B,
+                guess,
+                nSol,
+                adjoint = True
+            )
+            solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
 
-    # Export solutions to file
+    # Exporting the eigenvalue spectrum to a file
+    spectrumFile    = param.Export.ExportFolder + "/spectrum.csv"
+    solution.exportSpectrumToCSV(spectrumFile)
+
+    # end tracking time
+    end             = time.time() - start
+    logger.info('Solving the general eigenproblem took %4g s' % end)
+    residuum_max    = solution.getMaximumError()
+    logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
+    
+    #-----------------------------------------------------------------------
+    ## EXPORT SOLUTION
+    #-----------------------------------------------------------------------
     fluctSolutList  = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
     ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
     
-    # Get a mode to check structure
-    # exampleMode     = solution.modeList[0]
-    
-    # Get the spectrum from the solution
-    spectrum, header = solution.getSpectrum()
-    
-    # Export the spectrum to a file
-    spectrumFile    = param.Export.ExportFolder + "/spectrum.csv"
-    solution.exportSpectrumToCSV(spectrumFile)
-    
-    # ======= TEST IMPORTING A MODE COLLECTION =======
-    # Create empty mode collection to import into
+    #-----------------------------------------------------------------------
+    ## TEST IMPORTING A MODE COLLECTION
+    #-----------------------------------------------------------------------
     logger.info("Testing importing a mode collection from directory")
-    # importSolution     = ModeCollection(FEMSpaces.VMixed, mesh)
     
-    # # Instantiate a reader and use to load mode collection
-    # r               = Reader(
-    #     needInterpolation   = False,
-    #     originalMeshFile    = None, 
-    #     isComplex           = True,
-    #     cacheData           = True,
-    # )
-    # # TEMPORARY: Bind the params and FEM spaces to the reader
-    # r.bind_env(param, FEMSpaces)
-    # # Import test for collection
-    # importSolution.importData(
-    #     r,
-    #     param.Export.ExportFolder,
-    #     modeType='Direct'
-    # )
-    # # Adding +100 to eigenvalues to distinguish imported modes
-    # for mode in importSolution.modeList:
-    #     mode.setEigenValue(mode.getEigenValue()+100.0)
-    # # Export again the mode collection so we can check the imported modes
-    # fluctSolutList_new      = importSolution.getOldSolutionObject(meanFlow, param, FEMSpaces)
-    # ExportFromFile(param,FEMSpaces,fluctSolutList_new,meanFlow)
+    # Create empty mode collection to import into
+    importSolution  = ModeCollection(
+        FEMSpaces.VMixed, 
+        mesh
+    )
     
-    # ======= TEST IMPORTING A MODE FROM FILE =======
-    # logger.info("Testing importing a mode from file")
+    # Instantiate a reader and use to load mode collection
+    reader          = Reader(
+        sourceDir           = param.Export.ExportFolder,
+        needInterpolation   = False,
+        felicsMeshFilePath  = None, 
+        isComplex           = True,
+        cacheData           = True,
+    )
+
+    # Import test for collection
+    importSolution.importData(
+        reader,
+        param.Export.ExportFolder,
+        modeType            = 'Direct'
+    )
+    
+    # Adding +100 to eigenvalues to distinguish imported modes
+    for mode in importSolution.modeList:
+        mode.setEigenValue(mode.getEigenValue()+100.0)
+        
+    # Export again the mode collection so we can check the imported modes
+    fluctSolutList_new      = importSolution.getOldSolutionObject(meanFlow, param, FEMSpaces)
+    ExportFromFile(param,FEMSpaces,fluctSolutList_new,meanFlow)
+    
+    #-----------------------------------------------------------------------
+    ## TEST IMPORTING A SINGLE MODE
+    #-----------------------------------------------------------------------
+    # logger.info("Testing importing a single mode from file")
     
     # # Create an empty mode to import into 
     # # NOTE set isStateVector to False to test setting subnames manually
@@ -102,12 +156,13 @@ def runModal(param):
     # importMode.setNamesOfSubFields(['u', 'p'])
     
     # # Set the eigenvalue of the mode we want to import
-    # importMode.setEigenValue(exampleMode.getEigenValue())
+    # importMode.setEigenValue(999.)
 
     # # Instantiate a reader and use to load mode
     # r               = Reader(
+    #     sourceDir           = param.Export.ExportFolder,
     #     needInterpolation   = False,
-    #     originalMeshFile    = None,
+    #     felicsMeshFilePath  = None,
     #     isComplex           = True,
     #     cacheData           = True,
     # )
