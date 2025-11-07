@@ -86,12 +86,12 @@ where
 ## Mesh file
 Your mesh file needs the format **.msh**. 
 This can be generated for instance with GMSH. Make sure the .msh file is saved in *Version 2 ASCII*.
-An example for the mesh generation is provided in [Tutorial 1](../Tutorials/modal_analysis.html).
+An example for the mesh generation is provided in [Tutorial 2](../Tutorials/modal_analysis.md).
 
 ## Mean flow file
 The base flow can be obtained from numerical simulations, experimental results or analytical models. A RANS mean field can also be computed using the finite element Newton solver `FlowSolver.py` integrateed in FELiCS.
 The relevant mean flow information (velocities, pressure, viscosity, forcing and response domains, ...) are encapsulated in a **.fel** file. 
-The construction of such a file is presented in [fel file in FELiCS](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/documentation/DOCUMENTATION/_build/Running_FELiCS/fel_file).
+The construction of such a file is presented in [fel file in FELiCS](fel_file.md).
 
 ## Configuration files
 All the input parameters are loaded from the following **.json** files:

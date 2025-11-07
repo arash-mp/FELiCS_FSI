@@ -1,5 +1,5 @@
 # Mean flow file
-FELiCS prcesses the mean flow information with a .fel file using the .h5 format. It contains the mesh, mean flow field as well as the forcing and response domains.
+FELiCS processes the mean flow information with a .fel file using the .h5 format. It contains the mesh, mean flow field as well as the forcing and response domains.
 
 Here is a python script example of how the mean flow file can be written: 
 ``` python

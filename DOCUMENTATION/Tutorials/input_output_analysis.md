@@ -37,7 +37,7 @@ The mesh should include proper boundary identification for:
 - Symmetry axis (for axisymmetric cases)
 
 ### Base Flow
-This tutorial case folder is located in ```felics2.0/TUTORIALS/TURB_FLAME```.
+This tutorial case folder is located in ```felics2.0/TUTORIALS/input_ouput_tutorial```.
 
 Our base flow is a time-averaged reacting flow field that includes:
 - Velocity components ($u_x, u_r, u_\theta$)
@@ -54,7 +54,7 @@ Figure 1. Mean flow velocity $\bar{u}_x$
 ## Input/Output Analysis Parameters
 
 ### Boundary conditions
-Here we set the axisymmetric boundary conditions in the [```boundaries.json```](../../TUTORIALS/TURB_FLAME/boundaries.json) file.
+Here we set the axisymmetric boundary conditions in the [```boundaries.json```](../../TUTORIALS/input_ouput_tutorial/boundaries.json) file.
 
 The boundary conditions for reacting flows include additional considerations for species transport (here the progress $c'$):
 | Boundary Type | ID | $u'_x$ | $u'_r$ | $u'_\theta$ | $p'$ | $c'$ |
@@ -67,7 +67,7 @@ The boundary conditions for reacting flows include additional considerations for
 ```{note}
 The forcing boundary (Boundary 1) is where external perturbations are applied to study the system's response. The progress variable boundary conditions ensure proper species transport at each boundary.
 ```
-Note that we set the name to `custom` in [```boundaries.json```](../../TUTORIALS/TURB_FLAME/boundaries.json) to manually design each component of the BC.
+Note that we set the name to `custom` in [```boundaries.json```](../../TUTORIALS/input_ouput_tutorial/boundaries.json) to manually design each component of the BC.
 ```json
 {
     "1": {
@@ -104,7 +104,7 @@ Note that we set the name to `custom` in [```boundaries.json```](../../TUTORIALS
 ```
 
 ### Reaction Mechanism
-The reaction mechanism is defined in the [```Mixture.json```](../../TUTORIALS/TURB_FLAME/Mixture.json) file. 
+The reaction mechanism is defined in the [```mixture.json```](../../TUTORIALS/input_ouput_tutorial/mixture.json) file. 
 For this tutorial, we use a Schmidt number
 ```json
 {"Sc":0.9}
@@ -115,7 +115,7 @@ and use the implemented flame model
 ```
 
 ### Settings
-The setting file [```turb_flame.json```](../../TUTORIALS/TURB_FLAME/turb_flame.json) encapsulates the analysis information. The explanation of each field is provided in [Setting files](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+The setting file [```input_output.json```](../../TUTORIALS/input_ouput_tutorial/input_ouput_tutorial.json) encapsulates the analysis information. The explanation of each field is provided in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
 
 Here are some key settings for input/output analysis with reacting flows:
 
@@ -171,13 +171,13 @@ Here are some key settings for input/output analysis with reacting flows:
 ```
 - The mixture file provides the reaction mechanism
 ```json
-"MixtureFilePath": "Mixture.json"
+"MixtureFilePath": "mixture.json"
 ```
 
 ## Running the analysis
 Run the analysis with the command:
 ```bash
-FELiCS -f turb_flame.json
+FELiCS -f input_output.json
 ```
 
 ## Postprocessing

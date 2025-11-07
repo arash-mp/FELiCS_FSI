@@ -59,7 +59,7 @@ $PhysicalNames
 ```
 the IDs of "centerline", "inlet", "outlet", "walls" are respectively 2,3,4,5.
 
-Define the boundaries in the file [boundaries.json](../../TUTORIALS/resolvent_tutorial/boundaries.json) using the corresponding IDs. The file structure is detailed in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+Define the boundaries in the file [boundaries.json](../../TUTORIALS/resolvent_tutorial/boundaries.json) using the corresponding IDs. The file structure is detailed in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
 In our case, we set:
 | Boundary | $u'_x$ | $u'_r$ | $u'_\theta$ | $p'$ |
 |:----------|:-----------|:-----------|:-----------|:-----------|
@@ -69,7 +69,7 @@ In our case, we set:
 | <code style="color : Darkorange">Wall</code> | Dirichlet | Dirichlet | Dirichlet | Neumann |
 
 ### Settings
-The setting file [```resolvent_settings.json```](../../TUTORIALS/resolvent_tutorial/resolvent_settings.json) contains all the analysis information. The explanation of each field is provided in [Setting files](hhttps://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/Running_FELiCS/FELiCS_settings.md?ref_type=heads).
+The setting file [```resolvent_settings.json```](../../TUTORIALS/resolvent_tutorial/resolvent_settings.json) contains all the analysis information. The explanation of each field is provided in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
 
 Here are some key settings for our resolvent analysis:
 
@@ -149,7 +149,7 @@ Note that in this case, only the leading and first subleading resolvent modes we
 
 The script also include functions to read the mesh, load and plot the mode in matplotlib.
 The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are plotted in [Figure3](#Forcingdomain) and [Figure4](#Responsedomain), respectively:
-![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
+![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/pic/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
 
 Figure 3. Forcing mode shape
 
