@@ -105,6 +105,10 @@ class meanFlowClass(
                 self._param.FlowInput.MeanFlowFilePath,
                 groupName
             )
+
+            # correct value of rho, if not given, to 1
+            if name == "rho" and np.linalg.norm(field.getCoefficientArray()) == 0:
+                self._fieldDict[name].setConstantValue(1.)
             
             # Variables not found in the file are stored in a list
             if notInFile:
@@ -119,12 +123,12 @@ class meanFlowClass(
         self.initLamDiff()
         self.initThermodynamicQuantities()
 
+        # export a list of all mean fields and export them in a "MeanFlow" file
         exportFields = []
         for key, value in self._fieldDict.items():
             exportFields.append(value)
-            print(key, type(value))
 
-        self.xmfHeader = writer.exportListOfFieldsToH5(exportFields, "meanFlow")
+        self.xmfHeader = writer.exportListOfFieldsToH5(exportFields, "MeanFlow")
 
 
 

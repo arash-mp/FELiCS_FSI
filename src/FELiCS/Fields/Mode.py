@@ -39,15 +39,9 @@ class Mode(Field):
     mesh : object
         The mesh on which the FEM space is defined.
 
-    Attributes
-    ----------
-    isAdjoint : bool
-        Indicates if the mode is an adjoint mode.
-    isResponse : bool
-        Indicates if the mode is a response mode.
     """
 
-    def __init__(self, FEMSpace, mesh, name="q_hat", isStateVector=True, m=0, analysisType='Modal'):
+    def __init__(self, FEMSpace, mesh, name="q_hat", isStateVector=True, m=0, analysisType='Modal', modeType = None):
         """
         Initializes the Mode instance.
 
@@ -67,18 +61,17 @@ class Mode(Field):
         # Define name of the subfields (variables of the mode)
         self.namesOfSubFields   = self.getNamesOfSubFields()
 
-        # Set some defaults in not a good way .> TODO: fix this as a property
-        if self.analysisType == AnalysisType.MODAL:
-            self.modeType = ModeType.DIRECT
-        elif self.analysisType == AnalysisType.RESOLVENT:
-            self.modeType = ModeType.FORCING
-        elif self.analysisType == AnalysisType.INPUT_OUTPUT:
-            self.modeType = ModeType.RESPONSE
-         
-        self.isAdjoint          = False
-        self.isResponse         = False
+        if modeType == None:
+            # Set some defaults in not a good way .> TODO: fix this as a property
+            if self.analysisType == AnalysisType.MODAL:
+                self.modeType = ModeType.DIRECT
+            elif self.analysisType == AnalysisType.RESOLVENT:
+                self.modeType = ModeType.FORCING
+            elif self.analysisType == AnalysisType.INPUT_OUTPUT:
+                self.modeType = ModeType.RESPONSE
+        else:
+            self.modeType = ModeType[modeType.upper()]
 
-    # TODO: fix the setter/getter methods with properties
 
     @property
     def name(self):
@@ -87,6 +80,13 @@ class Mode(Field):
         else:
             return super().name
 
+
+    @property
+    def omega(self):
+        if self.analysisType == AnalysisType.MODAL:
+            return self.eigenValue
+        elif self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT] :
+            return self.frequency
 
     @property
     def gain(self):
@@ -271,7 +271,20 @@ class Mode(Field):
             Error associated with the mode solution.
         """
         self._error = error
-      
+     
+
+    def exportToH5(self, writer, fileName=None):
+        if fileName == None:
+            fileName = "Mode_" \
+                       + self.analysisType.name.capitalize() + "_" \
+                       + self.modeType.name.capitalize() + "_" \
+                       + "Omega_" \
+                       + "{:.3f}".format(self.omega)
+            if self.analysisType == AnalysisType.RESOLVENT:
+                fileName += "_GainNb_" + str(self.gainNumber)
+        writer.exportFieldToH5(self, fileName)
+
+
     def importData(
             self,
             reader,

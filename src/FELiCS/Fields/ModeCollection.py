@@ -1,6 +1,6 @@
 import  os
 import  numpy                   as np
-from    .Mode                   import Mode
+from    .Mode                   import Mode, AnalysisType, ModeType
 from    .fluctuationClass       import fluctuationSolutions
 from 	FELiCS.Misc.logging     import Logger
 
@@ -52,7 +52,7 @@ class ModeCollection():
         self.femSpace       = femSpace
         self.mesh           = mesh
         self.isStateVector  = isStateVector
-        self.analysisType   = analysisType
+        self.analysisType   = AnalysisType[analysisType.upper()]
 
 
     def appendMode(self, mode):
@@ -117,12 +117,17 @@ class ModeCollection():
         """
         
         # Check that we are in Modal analysis
-        if self.analysisType != 'Modal':
+        if self.analysisType != AnalysisType.MODAL:
             logger.error('appendSolutionOfEigenProblem called for non-Modal analysis in ModeCollection.')
             return
 
         [eigVals, eigVecs, error] = solution
         numberOfModes = len(eigVals)
+
+        if not adjoint:
+            modeType = 'direct'
+        else:
+            modeType = 'adjoint'
 
         for i in range(numberOfModes):
             mode = Mode(
@@ -130,13 +135,14 @@ class ModeCollection():
                 self.mesh, 
                 name = name, 
                 isStateVector = True,   # NOTE: always True?
-                analysisType = 'Modal'
+                analysisType = 'Modal',
+                modeType = modeType
                 )
             mode.isAdjoint = adjoint
             mode.error = error[i]
             mode.guess = guess
             mode.eigenValue = eigVals[i]
-            mode.coefficientArray = eigVecs[i,:]
+            mode.setCoefficientArray(eigVecs[i,:])
             self.modeList.append(mode)
             
 
@@ -162,7 +168,7 @@ class ModeCollection():
         """
 
         # Check that we are in Resolvent analysis
-        if self.analysisType != 'Resolvent':
+        if self.analysisType != AnalysisType.MODAL:
             logger.error('appendSolutionOfSVDProblem called for non-Resolvent analysis in ModeCollection.')
             return
         
@@ -209,7 +215,8 @@ class ModeCollection():
                 self.mesh, 
                 name                        = name, 
                 isStateVector               = True, # NOTE: always True?
-                analysisType                = 'Resolvent'
+                analysisType                = 'Resolvent',
+                modeType                    = 'forcing'
                 )
             modeForcing.gain = np.real(gains[i])  # NOTE: These are gains squared
             modeForcing.setGainNumber(i)
@@ -231,13 +238,13 @@ class ModeCollection():
                 self.mesh, 
                 name                        = name, 
                 isStateVector               = True,
-                analysisType                = 'Resolvent'
+                analysisType                = 'Resolvent',
+                modeType                    = 'Forcing'
                 )
             modeForcing.gain = np.real(gains[i])  # NOTE: These are gains squared
             modeForcing.setGainNumber(i)
             modeForcing.setFrequency(omega)
             modeForcing.function.x.array[:] = responses
-            modeForcing.isResponse          = True
             self.modeList.append(modeForcing)
 
 
@@ -294,7 +301,7 @@ class ModeCollection():
         modeList        = self.modeList
         
         # For modal analysis
-        if self.analysisType == 'Modal':
+        if self.analysisType == AnalysisType.MODAL:
             hasAdjoint  = any(mode.isAdjoint for mode in modeList)
             nLines      = len(modeList)//2 if hasAdjoint else len(modeList)
             nCols       = 4 if hasAdjoint else 2
@@ -320,7 +327,7 @@ class ModeCollection():
                     ctr_line_adjoint += 1
             
         # Resolvent or IO case (consider only the response modes)
-        elif self.analysisType in ['Resolvent', 'Input-Output']:
+        elif self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
             Ncols           = 2 + max(mode.gainNumber for mode in modeList) # Mode numbers start at 0
             frequencyList   = np.unique([mode.frequency for mode in modeList])
             NLines          = len(frequencyList)
@@ -343,15 +350,19 @@ class ModeCollection():
 
         return spectrum, header
 
-    def exportSpectrumToCSV(self, filePath):
+    def exportSpectrumToCSV(self, writer):
         """
         Export the spectrum to a CSV file.
 
         Parameters
         ----------
-        filePath : str
-            Path to the output CSV file.
+        writer: FELiCS.IO.Writer object
         """
+
+        if self.analysisType == AnalysisType.MODAL:
+            filePath = os.path.join(writer.exportFolder, "spectrum.csv")
+        else:
+            filePath = os.path.join(writer.exportFolder, "gains.csv")
 
         spectrum, header = self.getSpectrum()
         np.savetxt(
@@ -361,7 +372,7 @@ class ModeCollection():
             header=','.join(header), 
             comments=''
         )
-        if self.analysisType == 'Modal':
+        if self.analysisType == AnalysisType.MODAL:
             logger.info(f'Eigenvalue spectrum exported to {filePath}.')
         else:
             logger.info(f'Gains spectrum exported to {filePath}.')
@@ -553,15 +564,15 @@ class ModeCollection():
         h5Files             = [f for f in os.listdir(importFolder) if f.endswith('.h5')]
         
         # File patterns based on analysis type
-        if self.analysisType == 'Modal':
+        if self.analysisType == AnalysisType.MODAL:
             filePrefix      = 'ModalSolution_Omega_'
             directPattern   = 'Direct'
             adjointPattern  = 'Adjoint'
-        elif self.analysisType == 'Resolvent':
+        elif self.analysisType == AnalysisType.RESOLVENT:
             filePrefix      = 'Resolvent_Omega'
             responsePattern = 'Response'
             forcingPattern  = 'Forcing'
-        elif self.analysisType == 'Input-Output':
+        elif self.analysisType == AnalysisType.INPUT_OUTPUT:
             filePrefix      = 'Input-Output_Omega'
             responsePattern = 'Response'
         else:
@@ -578,7 +589,7 @@ class ModeCollection():
         for i, f in enumerate(modeFiles):
             
             # First we get the type
-            if self.analysisType == 'Modal':
+            if self.analysisType == AnalysisType.MODAL:
                 if directPattern in f:
                     typesModeFiles.append('Direct')
                 elif adjointPattern in f:
@@ -586,7 +597,7 @@ class ModeCollection():
                 else:
                     logger.error(f'Could not determine mode type from filename "{f}".')
                     raise RuntimeError(f'Could not determine mode type from filename "{f}".')
-            elif self.analysisType == 'Resolvent':
+            elif self.analysisType == AnalysisType.RESOLVENT:
                 if responsePattern in f:
                     typesModeFiles.append('Response')
                 elif forcingPattern in f:
@@ -598,7 +609,7 @@ class ModeCollection():
                 gainNumberStr       = f.split('gain')[1].split('.h5')[0]
                 gainNumbersModeFiles.append(int(gainNumberStr))
 
-            elif self.analysisType == 'Input-Output':
+            elif self.analysisType == AnalysisType.INPUT_OUTPUT:
                 gainNumbersModeFiles.append(0)  # Always 0 for IO modes
                 if responsePattern in f:
                     typesModeFiles.append('Response')
@@ -608,7 +619,7 @@ class ModeCollection():
             
             # Extract omega from filename
             # NOTE: different structure of name for Modal and Resolvent TODO: unify?
-            if self.analysisType == 'Modal':
+            if self.analysisType == AnalysisType.MODAL:
                 omegaStr            = f.split(filePrefix+typesModeFiles[i]+'_')[1].split('.h5')[0]
             else:
                 omegaStr            = f.split(filePrefix)[1].split('_')[0]
@@ -632,25 +643,7 @@ class ModeCollection():
 
     def exportModes(self, writer):
         for mode in self.modeList:
-            # determine file name
-            fileName = self.analysisType 
-            
-            if self.analysisType == "Modal":
-                if mode.isAdjoint:
-                    fileName += "_Adjoint"
-                else:
-                    fileName += "_Direct"
-                fileName += "_Lambda_"
-                fileName += "{:.3f}".format(mode.eigenValue)
-            elif self.analysisType == "Resolvent":
-                if mode.isResponse:
-                    fileName += "_Response"
-                else:
-                    fileName += "_Forcing"
-            elif self.analysisType == "Input-Output":
-                fileName += "_Response"
-
-            mode.exportToH5(writer, fileName)
+            mode.exportToH5(writer)
 
 
 
@@ -694,7 +687,7 @@ class ModeCollection():
             logger.info(f'Importing only modes with type: {modeType}')
             
         # If a gain number was given as input, filter files accordingly (for Resolvent analysis)
-        if gainNumber is not None and self.analysisType == 'Resolvent':
+        if gainNumber is not None and self.analysisType == AnalysisType.RESOLVENT:
             matchingGainIndices         = [i for i, gNum in enumerate(gainNb) if gNum == gainNumber]
             if len(matchingGainIndices) == 0:
                 logger.error(f'No matching gain numbers found in the import folder for the specified gain number "{gainNumber}".')
@@ -711,21 +704,21 @@ class ModeCollection():
                 self.mesh, 
                 isStateVector=self.isStateVector, 
                 m=self.m, 
-                analysis=self.analysisType
+                analysisType = self.analysisType.name
             )
             
             # For resolvent an IO, set gainNumber before importing
-            if self.analysisType in ['Resolvent', 'Input-Output']:
+            if self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
                 mode.setGainNumber(gainNb[i])
                 
             # For resolvent, set isResponse based on filename
             # TODO: use a more general "modeType" attribute in Mode?
-            if self.analysisType == 'Resolvent':
+            if self.analysisType == AnalysisType.RESOLVENT:
                 if 'Response' in h5Files[i]:
                     mode.isResponse = True
                 else:
                     mode.isResponse = False
-            elif self.analysisType == 'Input-Output':
+            elif self.analysisType == ANALYSISTYPE.INPUT_OUTPUT:
                 mode.isResponse = True  # Always response for IO modes
             
             mode.importData(
