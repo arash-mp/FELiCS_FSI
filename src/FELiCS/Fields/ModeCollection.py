@@ -168,7 +168,7 @@ class ModeCollection():
         """
 
         # Check that we are in Resolvent analysis
-        if self.analysisType != AnalysisType.MODAL:
+        if self.analysisType != AnalysisType.RESOLVENT:
             logger.error('appendSolutionOfSVDProblem called for non-Resolvent analysis in ModeCollection.')
             return
         
@@ -218,10 +218,10 @@ class ModeCollection():
                 analysisType                = 'Resolvent',
                 modeType                    = 'forcing'
                 )
-            modeForcing.gain = np.real(gains[i])  # NOTE: These are gains squared
-            modeForcing.setGainNumber(i)
-            modeForcing.setFrequency(omega)
-            modeForcing.function.x.array[:] = forcings
+            modeForcing.gain       = np.real(gains[i])  # NOTE: These are gains squared
+            modeForcing.gainNumber = i
+            modeForcing.frequency  = omega
+            modeForcing.setCoefficientArray(forcings)
             self.modeList.append(modeForcing)
             
             # Compute response
@@ -233,19 +233,19 @@ class ModeCollection():
             responses                       = Y1.getValues(range(0, Y1.getSize()))
             
             # Setting response into mode object
-            modeForcing                     = Mode(
+            modeResponse                    = Mode(
                 self.femSpace, 
                 self.mesh, 
                 name                        = name, 
                 isStateVector               = True,
                 analysisType                = 'Resolvent',
-                modeType                    = 'Forcing'
+                modeType                    = 'response'
                 )
-            modeForcing.gain = np.real(gains[i])  # NOTE: These are gains squared
-            modeForcing.setGainNumber(i)
-            modeForcing.setFrequency(omega)
-            modeForcing.function.x.array[:] = responses
-            self.modeList.append(modeForcing)
+            modeResponse.gain       = np.real(gains[i])  # NOTE: These are gains squared
+            modeResponse.gainNumber = i
+            modeResponse.frequency  = omega
+            modeResponse.setCoefficientArray(responses)
+            self.modeList.append(modeResponse)
 
 
     def getMaximumError(self):
@@ -257,7 +257,6 @@ class ModeCollection():
         float
             The maximum error value.
         """
-
         import numpy as np
         error = []
         for mode in self.modeList:
@@ -338,11 +337,11 @@ class ModeCollection():
 
             # Define the spectrum array
             spectrum    = np.zeros((NLines, Ncols), dtype=float)
-            hasResponse = any(mode.isResponse for mode in modeList)
+            hasResponse = any(mode.modeType == ModeType.RESPONSE for mode in modeList)
             # Only loop on one type of modes to avoid duplicates
             modeTypeToLoop = 'Response' if hasResponse else 'Forcing'
             for i, mode in enumerate(modeList):
-                if (modeTypeToLoop == 'Response' and mode.isResponse) or (modeTypeToLoop == 'Forcing' and not mode.isResponse):
+                if (modeTypeToLoop == 'Response' and mode.modeType == ModeType.RESPONSE) or (modeTypeToLoop == 'Forcing' and mode.modeType == ModeType.FORCING):
                     currentFrequency    = mode.frequency
                     LineIndex           = np.where(frequencyList == currentFrequency)[0]
                     spectrum[LineIndex[0], 0] = currentFrequency
@@ -641,10 +640,15 @@ class ModeCollection():
         return modeFiles, omegasModeFiles, typesModeFiles, gainNumbersModeFiles
 
 
-    def exportModes(self, writer):
-        for mode in self.modeList:
-            mode.exportToH5(writer)
+    def exportModes(self, writer, onlyNewN = 0):
+        if onlyNewN == 0:  # export all modes
+            start = 0  
+        else:              # export only the newest modes, number given by 'onlyNewN'
+            start = len(self.modeList) - onlyNewN 
 
+        for i in range(start, len(self.modeList)):
+            print("call export")
+            self.modeList[i].exportToH5(writer)
 
 
     def importData(self, reader, importFolder, omegas=None, modeType=None, gainNumber=None):

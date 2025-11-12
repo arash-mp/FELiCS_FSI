@@ -45,7 +45,7 @@ class Writer:
         self.mesh.saveInFELiCSFormat(meshFileName)    
 
 
-    def exportListOfFieldsToH5(self, listOfFields, fileName):
+    def exportListOfFieldsToH5(self, listOfFields, fileName, attributes = None):
         """
         Function arguments:
         - listOfFields: list of Field (or child class) objects
@@ -63,10 +63,10 @@ class Writer:
         for field in listOfFields:
             listOfSubFields.extend(self._getListOfScalarFields(field))
 
-        return self._export(listOfSubFields, fileName) 
+        return self._export(listOfSubFields, fileName, attributes) 
 
 
-    def exportFieldToH5(self, field, fileName):
+    def exportFieldToH5(self, field, fileName, attributes = None):
         """
         Function arguments:
         - fields: Field (or child class) objects
@@ -81,10 +81,10 @@ class Writer:
         # (which could be a scalar/vector/mixed field)
         listOfSubFields = self._getListOfScalarFields(field)
 
-        return self._export(listOfSubFields, fileName)
+        return self._export(listOfSubFields, fileName, attributes)
 
 
-    def _export(self, listOfScalarFields, fileName):
+    def _export(self, listOfScalarFields, fileName, attributes):
 
         #-----------------------------------------------------------------------
         ## conversions to export fields
@@ -118,6 +118,10 @@ class Writer:
                     h5.create_dataset(imagName, data = exportField.getImagCoefficientArray(),  dtype = np.float64)
                     xmfText += self._createXMFForScalarField(h5FilePath.name, realName, exportField.getSize())
                     xmfText += self._createXMFForScalarField(h5FilePath.name, imagName, exportField.getSize())
+            if attributes !=None:
+                for attr in attributes:
+                    h5.create_dataset(attr.name, data = attr.value)
+
 
 
         #-----------------------------------------------------------------------

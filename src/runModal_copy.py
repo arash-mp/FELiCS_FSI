@@ -10,7 +10,6 @@ def runModal(param):
         param: Parameter objects (see parameters.py), defining the case
     '''
     # import  FELiCS.IO.Import as Import
-    from    FELiCS.IO.ExportSolution            import ExportFromFile 
     from    FELiCS.IO.Writer                    import Writer
     from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
@@ -95,8 +94,5 @@ def runModal(param):
     #-----------------------------------------------------------------------
     # Exporting the spectrum to a file
     solution.exportSpectrumToCSV(writer)
+    # Exporting the modes to files
     solution.exportModes(writer)
-
-    ## Exporting the modes into files
-    #fluctSolutList  = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
-    #ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)

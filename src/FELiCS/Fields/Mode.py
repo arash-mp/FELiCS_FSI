@@ -274,6 +274,7 @@ class Mode(Field):
      
 
     def exportToH5(self, writer, fileName=None):
+        # create standard fileName if none is given
         if fileName == None:
             fileName = "Mode_" \
                        + self.analysisType.name.capitalize() + "_" \
@@ -282,7 +283,25 @@ class Mode(Field):
                        + "{:.3f}".format(self.omega)
             if self.analysisType == AnalysisType.RESOLVENT:
                 fileName += "_GainNb_" + str(self.gainNumber)
-        writer.exportFieldToH5(self, fileName)
+
+        # give a list of attributes to store in the file
+        attr = lambda : None
+        attr.name  = "omega"
+        attr.value = self.omega
+        attrList = [attr]
+        if self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
+            attrGain  = lambda : None
+            attrGain.name = "gain"
+            attrGain.value = self.gain
+            attrList.append(attrGain)
+
+            attrGainNumber  = lambda : None
+            attrGainNumber.name = "number"
+            attrGainNumber.value = self.gainNumber
+            attrList.append(attrGainNumber)
+
+        # export mode        
+        writer.exportFieldToH5(self, fileName, attrList)
 
 
     def importData(
