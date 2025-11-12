@@ -21,6 +21,7 @@ def runModal(param):
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
+    # Get FELiCS objects required for analysis
     # mesh
     mesh      = param.getMesh()
 
@@ -58,7 +59,7 @@ def runModal(param):
     start= time.time()
 
     # solve eigenproblem for each guess
-    solution = ModeCollection(FEMSpaces.VMixed, mesh)
+    solution = ModeCollection(FEMSpaces.VMixed, mesh, analysisType = "modal")
     for guess in guesses:
         
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))
@@ -69,6 +70,8 @@ def runModal(param):
                                                         )
 
         solution.appendSolutionOfEigenProblem(tmp, guess)
+
+        n_calculated = nSol
 
         if adjoint:
             
@@ -81,6 +84,13 @@ def runModal(param):
 
             solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
 
+            n_calculated += nSol
+
+        # Exporting the (temporary) spectrum to a file
+        solution.exportSpectrumToCSV(writer)
+        # Exporting only the newly calculated modes to files (for this guess)
+        solution.exportModes(writer, onlyNewN = n_calculated)
+
 
     # end tracking time
     end             = time.time() - start
@@ -89,10 +99,3 @@ def runModal(param):
     logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
    
 
-    #-----------------------------------------------------------------------
-    ## EXPORT SOLUTION
-    #-----------------------------------------------------------------------
-    # Exporting the spectrum to a file
-    solution.exportSpectrumToCSV(writer)
-    # Exporting the modes to files
-    solution.exportModes(writer)

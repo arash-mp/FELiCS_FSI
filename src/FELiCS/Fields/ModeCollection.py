@@ -67,7 +67,7 @@ class ModeCollection():
 
         self.modeList.append(mode)
 
-    def appendModeFromVector(self, vector, gain=None, eigenValue=None, guess=None, waveNumber=None, frequency=None, isAdjoint=False, name = None, m=None):
+    def appendModeFromVector(self, vector, gain=None, eigenValue=None, guess=None, waveNumber=None, frequency=None, modeType = None):
         """
         Create a Mode from a coefficient vector and properties, and append it to the collection.
 
@@ -89,15 +89,14 @@ class ModeCollection():
             Whether the mode is an adjoint mode (default is False).
         """
 
-        mode = Mode(self.femSpace, self.mesh, name, isStateVector = True)
+        mode = Mode(self.femSpace, self.mesh, isStateVector = True, analysisType = self.analysisType.name, modeType = modeType)
         mode.setCoefficientArray(vector)
 
-        mode.setGain(gain)
-        mode.setEigenValue(eigenValue)
-        mode.setGuess(guess)
-        mode.setWaveNumber(waveNumber)
-        mode.setFrequency(frequency)
-        mode.isAdjoint = isAdjoint
+        mode.gain        = gain
+        mode.eigenValue  = eigenValue
+        mode.guess       = guess
+        mode.waveNumber  = waveNumber
+        mode.frequency   = frequency
 
         self.appendMode(mode)
 
@@ -295,13 +294,16 @@ class ModeCollection():
         header: list
             List of headers corresponding to the spectrum values.
         """
-        
+
+        spectrum = []
+        header   = []
+
         # Mode list
-        modeList        = self.modeList
-        
+        modeList = self.modeList
+
         # For modal analysis
         if self.analysisType == AnalysisType.MODAL:
-            hasAdjoint  = any(mode.isAdjoint for mode in modeList)
+            hasAdjoint  = any(mode.modeType == ModeType.ADJOINT for mode in modeList)
             nLines      = len(modeList)//2 if hasAdjoint else len(modeList)
             nCols       = 4 if hasAdjoint else 2
             
@@ -326,7 +328,7 @@ class ModeCollection():
                     ctr_line_adjoint += 1
             
         # Resolvent or IO case (consider only the response modes)
-        elif self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
+        elif self.analysisType in [AnalysisType.RESOLVENT]:
             Ncols           = 2 + max(mode.gainNumber for mode in modeList) # Mode numbers start at 0
             frequencyList   = np.unique([mode.frequency for mode in modeList])
             NLines          = len(frequencyList)
@@ -647,7 +649,6 @@ class ModeCollection():
             start = len(self.modeList) - onlyNewN 
 
         for i in range(start, len(self.modeList)):
-            print("call export")
             self.modeList[i].exportToH5(writer)
 
 

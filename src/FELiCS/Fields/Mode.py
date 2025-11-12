@@ -295,6 +295,7 @@ class Mode(Field):
             attrGain.value = self.gain
             attrList.append(attrGain)
 
+        if self.analysisType in [AnalysisType.RESOLVENT]:
             attrGainNumber  = lambda : None
             attrGainNumber.name = "number"
             attrGainNumber.value = self.gainNumber

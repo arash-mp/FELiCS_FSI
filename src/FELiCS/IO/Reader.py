@@ -773,7 +773,7 @@ class Reader:
                     indices                         = field.space.sub(i).collapse()[1]
                     field.function.x.array[indices] = arrays[subFieldName]
                 else:
-                    logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{field.getName()}'. Leaving unchanged.")
+                    logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{field.name}'. Leaving unchanged.")
         else:
             # Then it's a scalar
             varName                                 = field.name
@@ -832,7 +832,7 @@ class Reader:
         missingVars             = [var for var in wantedVars if var not in self._availableVars]
         presentVars             = [var for var in wantedVars if var in self._availableVars]
         if not presentVars:
-            logger.warning(f"No variables for field '{field.getName()}' found in file '{filePath}'. Set all to default values.")
+            logger.warning(f"No variables for field '{field.name}' found in file '{filePath}'. Set all to default values.")
             return field, missingVars
 
         # Load and process data
