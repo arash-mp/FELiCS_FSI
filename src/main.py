@@ -1,13 +1,3 @@
-#/* FELICS, Finite Element Linearized Combustion Solver Copyright (C) 
-# *2019 FLOW group TU Berlin - All Rights Reserved
-# *
-# * You may NOT use, distribute or modify this code without explicit
-# * permission of the copyright owner, the FLOW group at TU Berlin!
-# * However, permissions to use and modify the code are generally 
-# * granted when asked for.
-# * 
-# * To ask for permission please contact t.kaiser@tu-berlin.de.
-# */
 import 	argparse
 from 	runModal       				import  runModal      
 from 	runResolvent   				import  runResolvent  

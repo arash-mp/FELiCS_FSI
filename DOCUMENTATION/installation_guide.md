@@ -154,7 +154,7 @@ If you do not plan to use FELiCS as a Python package within your own scripts, yo
 To install FELiCS as a python package, run the following commands:
 
 ```bash
-cd /path/to/felics
+cd </path/to/felics>/INSTALLATION
 conda activate <felics-environemnt>
 pip install -e .
 ```
