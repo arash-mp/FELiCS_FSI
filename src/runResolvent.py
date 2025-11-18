@@ -10,7 +10,7 @@ def runResolvent(param):
         param: Parameter objects (see parameters.py), defining the case
     '''
 
-    from    FELiCS.IO.ExportSolution            import ExportFromFile 
+    from    FELiCS.IO.Writer                    import Writer
     from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
@@ -22,15 +22,26 @@ def runResolvent(param):
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
-    # Get FELiCS objects required for analysis
-    mesh                        = param.getMesh()
-    mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
+    # mesh
+    mesh      = param.getMesh()
 
-    FEMSpaces                   = FEMSpaces(param, mesh)
-    meanFlow                    = meanFlowClass(param, FEMSpaces, mesh)
-    meanFlow.importDataFromFileAndExportToH5()
-    equation                    = EquationCollectionClass(param,FEMSpaces,meanFlow, mesh)
+    # FEMSpaces
+    FEMSpaces = FEMSpaces(param, mesh)
+     
+    # writer to export the results in files
+    writer    = Writer(mesh, param.Export.ExportFolder)
 
+    # read in mean flow and export to h5-file
+    meanFlow = meanFlowClass(param, FEMSpaces, mesh)
+    meanFlow.importDataFromFileAndExportToH5(writer)
+
+    # equation
+    equation = EquationCollectionClass(
+                                      param,
+                                      FEMSpaces,
+                                      meanFlow,
+                                      mesh
+                                      )
 
     #-----------------------------------------------------------------------
     ## MAIN PART
@@ -60,17 +71,18 @@ def runResolvent(param):
     start                       = time.time()
     
     # Run analysis at each frequency
-    solution                    = ModeCollection(
-        FEMSpaces.VMixed, 
-        mesh, 
-        analysis='Resolvent'
-    )
     for i, omega in enumerate(omegas):
 
         logger.info("Solving resolvent SVD for omega = " + str(omega))
-        # R = A-omega*B         
+
+        # initialize a new solution object
+        solution                    = ModeCollection(FEMSpaces.VMixed, mesh, analysisType  ='Resolvent')
+
+
+        # initialize the resolvent operator, which is a class that imitates 
+        # a matrix to use matrix-free methods
         R                       = A.copy()         
-        R.axpy(-omega, B)            
+        R.axpy(-omega, B)       # R = A-omega*B      
         resolventOperator       = ResolventOperator(
             R,                                         
             W_FEM,                                         
@@ -88,33 +100,19 @@ def runResolvent(param):
                 tol             = 1.e-16,
                 max_it          = 200,
                 )
-        solution.appendSolutionOfSVDProblem( # NOTE: this also compute the response modes
+
+        solution.appendSolutionOfSVDProblem( # NOTE: this also computes the response modes
             eigenvectors_c, 
             omega, 
             gains, 
             resolventOperator, 
-        )
+            )
+
+        # export spectrum and newly calculated modes
+        solution.exportSpectrumToCSV(writer)
+        solution.exportModes(writer, onlyNewN = nSol*2)
         
     # End tracking time
     logger.info(f"Solving the SVD(s) took {time.time()-start:.4g} s")
 
 
-    #-----------------------------------------------------------------------
-    ## EXPORT SOLUTION
-    #-----------------------------------------------------------------------
-    # Exporting the gains to a file
-    spectrumFile        = param.Export.ExportFolder + "/gains.csv"
-    solution.exportSpectrumToCSV(spectrumFile)
-
-    # Convert solution to fluctuationSolution objects for export
-    fluctSolutList              = solution.getOldSolutionObject(
-        meanFlow, 
-        param, 
-        FEMSpaces
-    )
-    ExportFromFile(
-        param, 
-        FEMSpaces, 
-        fluctSolutList, 
-        meanFlow
-    )

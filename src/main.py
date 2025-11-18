@@ -1,8 +1,7 @@
 import 	argparse
-from 	runModal_copy  				import  runModal      
-from 	runResolvent_copy 			import  runResolvent  
-# from 	runResolvent_testReader		import  runResolvent    # NOTE: for testing the reader on a mode
-from 	runInputOutput_copy			import  runInputOutput
+from 	runModal     				import  runModal      
+from 	runResolvent    			import  runResolvent  
+from 	runInputOutput  			import  runInputOutput
 from 	FELiCS.Parameters.config	import 	config
 from 	FELiCS.Misc.logging			import  Logger
 

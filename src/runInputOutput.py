@@ -9,7 +9,7 @@ def runInputOutput(param):
     Input:
         param: Parameter objects (see parameters.py), defining the case
     '''
-    from    FELiCS.IO.ExportSolution            import ExportFromFile 
+    from    FELiCS.IO.Writer                    import Writer
     from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
@@ -22,14 +22,26 @@ def runInputOutput(param):
     ## INITIALIZATION
     #-----------------------------------------------------------------------
     # Get FELiCS objects required for analysis
-    mesh                    = param.getMesh()
-    mesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/mesh.h5')
+    # mesh
+    mesh      = param.getMesh()
 
-    FEMSpaces               = FEMSpaces(param, mesh)
-    meanFlow                = meanFlowClass(param, FEMSpaces, mesh)
-    meanFlow.importDataFromFileAndExportToH5()
-    equation                = EquationCollectionClass(param,FEMSpaces,meanFlow,mesh)
+    # FEMSpaces
+    FEMSpaces = FEMSpaces(param, mesh)
+     
+    # writer to export the results in files
+    writer    = Writer(mesh, param.Export.ExportFolder)
 
+    # read in mean flow and export to h5-file
+    meanFlow = meanFlowClass(param, FEMSpaces, mesh)
+    meanFlow.importDataFromFileAndExportToH5(writer)
+
+    # equation
+    equation = EquationCollectionClass(
+                                      param,
+                                      FEMSpaces,
+                                      meanFlow,
+                                      mesh
+                                      )
 
     #-----------------------------------------------------------------------
     ## MAIN PART
@@ -46,7 +58,7 @@ def runInputOutput(param):
     start                   = time.time()
 
     # Solve equation system for each frequency 
-    solution                = ModeCollection(FEMSpaces.VMixed, mesh)
+    solution                = ModeCollection(FEMSpaces.VMixed, mesh, analysisType = "input_output")
     for omega in omegas:
         # define operator
         operator            = A.copy()
@@ -54,22 +66,10 @@ def runInputOutput(param):
         solutionVector      = LinearSolver.solveEquationSystem(operator, forcing)
         solution.appendModeFromVector(solutionVector, frequency = omega, gain = 1) 
 
+        # export newest mode
+        # TODO: there is no need for a ModeCollection, export modes directly
+        solution.exportModes(writer, onlyNewN = 1)
+
     # End tracking time
     logger.info(f"Solving the input/output problem took {time.time()-start:.4g} s")
 
-
-    #-----------------------------------------------------------------------
-    ## EXPORT SOLUTION
-    #-----------------------------------------------------------------------
-    # Exporting the solution to file
-    fluctSolutList          = solution.getOldSolutionObject(
-        meanFlow, 
-        param, 
-        FEMSpaces
-    )
-    ExportFromFile(
-        param,
-        FEMSpaces,
-        fluctSolutList,
-        meanFlow
-    )
