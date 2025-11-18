@@ -43,7 +43,7 @@ test:
         conda activate felics2025_dolfin9_v2
       fi
   script:
-    - cd TESTS
+    - cd tests
     - python3 -m pytest 
   only:
     - development
@@ -71,7 +71,7 @@ pages:
       fi
 
   script:
-  - cd DOCUMENTATION
+  - cd documentation
   - mkdir ../public
   - python3 --version
   - pip list
