@@ -8,6 +8,8 @@
 [![Documentation Status](https://img.shields.io/badge/docs-latest-blue.svg)](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/)
 [![Website](https://img.shields.io/badge/website-felics2.0-blue?logo=firefox-browser)](https://www.tu.berlin/flow/forschung/projekte/felics-projekt)
 [![Wiki](https://img.shields.io/badge/wiki-developer%20guide-green?logo=gitbook)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/)
+[![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/LICENSE.txt)
+[![Release](https://img.shields.io/gitlab/v/release/laboratory-for-flow-instabilities-and-dynamics/felics2.0?gitlab_url=https://git.tu-berlin.de&color=yellow&include_prereleases)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/releases)
 
 [![unit tests](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/badges/main/pipeline.svg?job=test)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/pipelines)
 FELiCS (*Finite Element Linearized Combustion Solver*) is a Python-based CFD tool for linearized flow analysis, developed at the Laboratory for Flow Instabilities and Dynamics at TU Berlin. It is designed for both academic research and real-world engineering applications, supporting turbulence, heat/mass transport, chemical reactions, acoustics, and more.
