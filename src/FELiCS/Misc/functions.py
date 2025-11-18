@@ -1,20 +1,3 @@
-#/* Copyright (C) 2019 FLOW group TU Berlin - All Rights Reserved
-# * You may NOT use, distribute or modify this code without explicit
-# * permission of the copyright owner, the FLOW group at TU Berlin!
-# * However, permissions to use and modify the code are generally
-# * granted when asked for.
-# * To ask for permission please contact t.kaiser@tu-berlin.de.
-# */
-# **********************************************************************
-# * This file provides various small dunctions which are needed
-# * throughout the program
-# * This file was created by Thomas L. Kaiser. Significant contributions
-# * were made by
-# * -
-# *
-# *
-# ********************
-
 from dolfinx.fem import Function
 import numpy as np
 import time

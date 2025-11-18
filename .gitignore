@@ -14,4 +14,7 @@ public
 *.egg-info
 logs
 *.vscode/
+.DS_Store
 .github
+.github/*
+.github/*/*
