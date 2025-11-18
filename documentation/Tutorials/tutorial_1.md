@@ -48,7 +48,7 @@ same directory:
 
 
 ```bash
-cp -r FELiCSDir/TUTORIALS/SPHERE_WAKE workDir/
+cp -r FELiCSDir/tutorials/SPHERE_WAKE workDir/
 cd workDir/SPHERE_WAKE
 ```
 
@@ -333,7 +333,7 @@ Transfer tasks for the user:
 2.  What changes in comparison to a cylinder wake flow? Perform the
     equivalent analysis on a cylinder wake flow (bifurcation point
     $\mathrm{Re}\approx47$). The necessary files can be found in
-    FELiCSDir/TUTORIALS/CYLINDER_WAKE.
+    FELiCSDir/tutorials/CYLINDER_WAKE.
 
 
 ## References

@@ -23,19 +23,19 @@ In this tutorial, we will perform incompressible resolvent analysis about the 2D
 
 ### Mesh generation
 We generate the 2D mesh on GMSH. 
-To do so, we write a **.geo** file readable by GMSH using the python script [```geoMesh.py```](../../TUTORIALS/resolvent_tutorial/geoMesh.py).
+To do so, we write a **.geo** file readable by GMSH using the python script [```geoMesh.py```](../../tutorials/resolvent_tutorial/geoMesh.py).
 
 Feel free to play with the `CellsFineness` factor to see the influence of finer meshes.
 
 Open the .geo file with GMSH an click on 'Mesh -> 2D'. You should obtain this mesh:
-![Figure1](../../TUTORIALS/resolvent_tutorial/pic/GMSH.png)
+![Figure1](../../tutorials/resolvent_tutorial/pic/GMSH.png)
 Figure 1. Stenosis mesh
 Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FELiCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
-This tutorial case folder is located in ```felics2.0/TUTORIALS/resolvent_tutorial```.
+This tutorial case folder is located in ```felics2.0/tutorials/resolvent_tutorial```.
 Our base flow is obtained by time-azimuthal-averaging the snapshots of a 3D LES. Alternatively this could be a RANS solution, experimental data, or any other relevant flow field.
-Run the python script [```meanFlow.py```](../../TUTORIALS/resolvent_tutorial/meanFlow.py) to load the mean flow data and write a **.fel** file. 
+Run the python script [```meanFlow.py```](../../tutorials/resolvent_tutorial/meanFlow.py) to load the mean flow data and write a **.fel** file. 
 Change the `fold_path` to your data folder and run the script.
 This script also allows to define response and forcing domains, a sponge function and an eddy viscosity field.
 In our case, the response and forcing domains are the same, but we could restrict it to different regions. The sponge function is used to dampen the fluctuations near the inlet/outlet.
@@ -45,7 +45,7 @@ Place the ```meanFlow.fel``` file in your case folder.
 ## Resolvent parameters
 
 ### Boundary conditions
-Here, we set the axisymmetric boundary conditions in the [```boundaries.json```](../../TUTORIALS/resolvent_tutorial/boundaries.json) file.
+Here, we set the axisymmetric boundary conditions in the [```boundaries.json```](../../tutorials/resolvent_tutorial/boundaries.json) file.
 First check in your readable .msh file the boundary ids.
 For instance in this file: 
 ```bash
@@ -59,7 +59,7 @@ $PhysicalNames
 ```
 the IDs of "centerline", "inlet", "outlet", "walls" are respectively 2,3,4,5.
 
-Define the boundaries in the file [boundaries.json](../../TUTORIALS/resolvent_tutorial/boundaries.json) using the corresponding IDs. The file structure is detailed in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
+Define the boundaries in the file [boundaries.json](../../tutorials/resolvent_tutorial/boundaries.json) using the corresponding IDs. The file structure is detailed in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
 In our case, we set:
 | Boundary | $u'_x$ | $u'_r$ | $u'_\theta$ | $p'$ |
 |:----------|:-----------|:-----------|:-----------|:-----------|
@@ -69,7 +69,7 @@ In our case, we set:
 | <code style="color : Darkorange">Wall</code> | Dirichlet | Dirichlet | Dirichlet | Neumann |
 
 ### Settings
-The setting file [```resolvent_settings.json```](../../TUTORIALS/resolvent_tutorial/resolvent_settings.json) contains all the analysis information. The explanation of each field is provided in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
+The setting file [```resolvent_settings.json```](../../tutorials/resolvent_tutorial/resolvent_settings.json) contains all the analysis information. The explanation of each field is provided in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
 
 Here are some key settings for our resolvent analysis:
 
@@ -137,23 +137,23 @@ After the computation, the `output_dir/` has been created. You will find there t
     ├ Resolvent_Omega3.1_Response_gain0.h5
     └ ...
 ```
-We postprocess the outputed files using the python script [```PlotMode.py```](../../TUTORIALS/resolvent_tutorial/PlotMode.py).
+We postprocess the outputed files using the python script [```PlotMode.py```](../../tutorials/resolvent_tutorial/PlotMode.py).
 
 Modify the defined path to your folder and run the script. 
 
 The resolvent gains are plotted against the Strouhal number $St = \omega/2\pi$ in [Figure 2](#Resolvent_gains).
-![Figure2](../../TUTORIALS/resolvent_tutorial/pic/gains.png) <a id="fig:Resolvent_gains"></a>
+![Figure2](../../tutorials/resolvent_tutorial/pic/gains.png) <a id="fig:Resolvent_gains"></a>
 
 Figure 2. Resolvent gains
 Note that in this case, only the leading and first subleading resolvent modes were computed.
 
 The script also include functions to read the mesh, load and plot the mode in matplotlib.
 The forcing and response mode shapes for $p', u_x', u_r'$ at $\omega = 3.1$ are plotted in [Figure3](#Forcingdomain) and [Figure4](#Responsedomain), respectively:
-![Figure3: Forcing mode shape](../../TUTORIALS/resolvent_tutorial/pic/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
+![Figure3: Forcing mode shape](../../tutorials/resolvent_tutorial/pic/ForcingMode_dark.png) <a id="fig:Forcingdomain"></a>
 
 Figure 3. Forcing mode shape
 
-![Figure4: Response mode shape](../../TUTORIALS/resolvent_tutorial/pic/ResponseMode_dark.png) <a id="fig:Responsedomain"></a>
+![Figure4: Response mode shape](../../tutorials/resolvent_tutorial/pic/ResponseMode_dark.png) <a id="fig:Responsedomain"></a>
 
 Figure 4. Response mode shape
 

@@ -13,30 +13,30 @@ This first tutorial gives an introduction for setting up a FELiCS case. By the e
 
 ## Case Definition
 We want to study the linear stability of a 2D base flow around a cylinder at Reynolds number, $\mathrm{Re} = 50$.
-In general it is recommended to create a folder for every case, where the input and output files will be located. Here, the case folder can be found in ```felics2.0/TUTORIALS/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
+In general it is recommended to create a folder for every case, where the input and output files will be located. Here, the case folder can be found in ```felics2.0/tutorials/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
 ```sh
-cp -r felics2.0/TUTORIALS/cylinder_wake_tutorial workDir/
+cp -r felics2.0/tutorials/cylinder_wake_tutorial workDir/
 cd workDir/cylinder_wake_tutorial/ 
 ```
 
 ## Mesh generation
-Since the code uses the Finite Element Continuous Galerkin approach, a computational grid needs to be created. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file [cylinder_wake.msh](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format.
+Since the code uses the Finite Element Continuous Galerkin approach, a computational grid needs to be created. In order to create the mesh, the package ```python-gmsh``` is used. An input file for this program called [```cylinder_wake_mesh.py```](./../../tutorials/cylinder_wake_tutorial/cylinder_wake_mesh.py) is already prepared in the folder. Upon exceuting it in ```python``` it generates the mesh file [cylinder_wake.msh](./../../tutorials/cylinder_wake_tutorial/cylinder_wake.msh) in Version 2 *ASCII* format.
 
 ```sh
 python cylinder_wake_mesh.py
 ```
 If you open the mesh in GMSH, click on `Mesh -> 2D`. It should look like:
 
-![Image1](../../TUTORIALS/cylinder_wake_tutorial/pic/CylinderWakeMesh.png) <a id="fig:Mesh"></a>
+![Image1](../../tutorials/cylinder_wake_tutorial/pic/CylinderWakeMesh.png) <a id="fig:Mesh"></a>
 Figure 1. 2D Mesh.
 
-![Image2](../../TUTORIALS/cylinder_wake_tutorial/pic/magCylinderWake.png) <a id="fig:MagMesh"></a>
+![Image2](../../tutorials/cylinder_wake_tutorial/pic/magCylinderWake.png) <a id="fig:MagMesh"></a>
 Figure 2. Magnified version of [Figure 1](#fig:Mesh)
 
 ```{note}
 For 2D computations, only triangular elements can be handeled. 
 ```
-The file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh) includes the domains:
+The file [```cylinder_wake.msh```](./../../tutorials/cylinder_wake_tutorial/cylinder_wake.msh) includes the domains:
 ```sh
 $PhysicalNames
 6
@@ -52,7 +52,7 @@ In [Figure 1](#fig:Mesh), <code style="color : Darkorange">Inlet</code> is the l
 Detailed explanations about the boundary conditions format is provided in the next tutorial. 
 
 ## Obtaining the base flow
-The base flow for FELiCS can be obtained through various methods: numerical simulations, (RANS, LES, DNS, ...), experimental results or analytical models. In this case, we calculate the base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py) can be found in the working directory. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
+The base flow for FELiCS can be obtained through various methods: numerical simulations, (RANS, LES, DNS, ...), experimental results or analytical models. In this case, we calculate the base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called [```solveBaseFlow.py```](./../../tutorials/cylinder_wake_tutorial/solveBaseFlow.py) can be found in the working directory. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
 ```sh
 conda activate felics2025_dolfin9
 ```
@@ -65,7 +65,7 @@ In the file ```Re50.json``` we set the molecular viscostiy, $\nu = 0.02$:
 based on the Reynolds number $\mathrm{Re} = 50$, the cylinder diameter $d = 1$ and the bulk velocity $U_\infty = 1$.
 We only solve the continuity and the momentum equation. Therefore we set everything to <code style="color : Darkorange">None</code> in the <code style="color : Blue">"SetofEquations"</code>, except for <code style="color : Blue">"Momentum"</code> and <code style="color : Blue">"Mass"</code>. 
 
-Additionally we import the boundary conditions from [```bc.json```](./../../TUTORIALS/cylinder_wake_tutorial/bc.json). They are summarized in the following tab: 
+Additionally we import the boundary conditions from [```bc.json```](./../../tutorials/cylinder_wake_tutorial/bc.json). They are summarized in the following tab: 
 
 | Boundary | ID | $u_x$     | $u_y$      | $p$       |
 |:----------|:--:|:-----------|:-----------|:-----------|
@@ -75,11 +75,11 @@ Additionally we import the boundary conditions from [```bc.json```](./../../TUTO
 | <code style="color : Darkorange">Top</code>      | 4 | Neumann   | Dirichlet | Neumann   |
 | <code style="color : Darkorange">Wall</code>     | 5 | Dirichlet | Dirichlet | Neumann   |
 
-We obtain the base flow via running the python script [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py):
+We obtain the base flow via running the python script [```solveBaseFlow.py```](./../../tutorials/cylinder_wake_tutorial/solveBaseFlow.py):
 ```sh
 python solveBaseFlow.py
 ```
-After executing [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutorial/solveBaseFlow.py), these files are be added to the working directory
+After executing [```solveBaseFlow.py```](./../../tutorials/cylinder_wake_tutorial/solveBaseFlow.py), these files are be added to the working directory
 ```bash
 .
 └── logs
@@ -98,7 +98,7 @@ After executing [```solveBaseFlow.py```](./../../TUTORIALS/cylinder_wake_tutoria
 
 The file ```base_flow.xdmf``` can be opened in Paraview to visualize the base flow: 
 
-![Image3](../../TUTORIALS/cylinder_wake_tutorial/pic/BaseFlow.png)
+![Image3](../../tutorials/cylinder_wake_tutorial/pic/BaseFlow.png)
 Figure 3. Magnitude of the flow-field. 
 
 

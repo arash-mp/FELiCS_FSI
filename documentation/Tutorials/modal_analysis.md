@@ -18,7 +18,7 @@ The modal analysis will:
 ## Requirements
 Before you begin this tutorial make sure to:
 * have completed the [base flow tutorial](./cylinder_wake.md).
-* access the case folder ```felics2.0/TUTORIALS/modal_analysis_tutorial``` and copy it into your working directory.
+* access the case folder ```felics2.0/tutorials/modal_analysis_tutorial``` and copy it into your working directory.
 
 ## Modal analysis settings
 
@@ -37,7 +37,7 @@ The boundary conditions for the fluctuations are:
 The BCs for the base flow variables ($\bar{u}_x, \bar{u}_y, \bar{p}$) in [base flow tutorial](./cylinder_wake.md) and for the perturbations ($u_x', u_y', p'$) current modal analysis are different.
 '''
 
-These BCs are implemented in [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) using different names.
+These BCs are implemented in [```bc_modal.json```](./../../tutorials/modal_analysis_tutorial/bc_modal.json) using different names.
 
 When all BCs are set to Dirichlet with a value 0 (always the case for fluctuations), we set: 
 ```json
@@ -78,7 +78,7 @@ The wall BC is imposed with:
 The complete structure of this file is detailed in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
 
 ### Settings
-The setting file, [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../TUTORIALS/modal_analysis_tutorial/modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
+The setting file, [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
 
 Here are some key settings for our resolvent analysis:
 
@@ -95,7 +95,7 @@ Here are some key settings for our resolvent analysis:
 {"CoordinateSystem": "Cartesian"}
 ```
 
-- We include the mesh file [```cylinder_wake.msh```](./../../TUTORIALS/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS.fel```](./../../TUTORIALS/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_modal.json```](./../../TUTORIALS/modal_analysis_tutorial/bc_modal.json) with these references:
+- We include the mesh file [```cylinder_wake.msh```](./../../tutorials/cylinder_wake_tutorial/cylinder_wake.msh), the base flow file [```base_flow_for_FELiCS.fel```](./../../tutorials/modal_analysis_tutorial/base_flow_for_FELiCS.fel) generated in the [base flow tutorial](./cylinder_wake.md) and the BCs file [```bc_modal.json```](./../../tutorials/modal_analysis_tutorial/bc_modal.json) with these references:
 ```json
 {"MeshFilePath":"cylinder_wake.msh"}
 {"MeanFlowFilePath": "base_flow_for_FELiCS.fel"}
@@ -128,17 +128,17 @@ After running the modal analysis, the working directory should look like:
 └ ...
 ```
 Inside the ```output_dir``` directory, all the eigenmodes in ```.h5``` and ```.xmf``` format can be found, along with the eigenvalues in ```spectrum.csv``` file. 
-Run the pyhton script [PlotScatter.py](./../../TUTORIALS/modal_analysis_tutorial/PlotScatter.py) to plot the computed eigenvalue spectrum:
-![](./../../TUTORIALS/modal_analysis_tutorial/pic/eigenspectrum.png) <a id="fig:EigSpec"></a>
+Run the pyhton script [PlotScatter.py](./../../tutorials/modal_analysis_tutorial/PlotScatter.py) to plot the computed eigenvalue spectrum:
+![](./../../tutorials/modal_analysis_tutorial/pic/eigenspectrum.png) <a id="fig:EigSpec"></a>
 Figure 1. Eigenspectrum
 
 In [Figure 1](#EigSpec), an eigenvalue with a positive imaginary part stands out. We use paraview to visualize the corresponding real part of the eigenmode stored in `ModalSolution_Omega_Direct_(0.745+0.013j).xmf`. 
 
-![](./../../TUTORIALS/modal_analysis_tutorial/pic/ux_real.png) <a id="fig:RealUx"></a>
+![](./../../tutorials/modal_analysis_tutorial/pic/ux_real.png) <a id="fig:RealUx"></a>
 Figure 2. Real eigenmode, $u'_x$
 
-![](./../../TUTORIALS/modal_analysis_tutorial/pic/uy_real.png) <a id="fig:RealUy"></a>
+![](./../../tutorials/modal_analysis_tutorial/pic/uy_real.png) <a id="fig:RealUy"></a>
 Figure 3. Real eigenmode, $u'_y$
 
-![](./../../TUTORIALS/modal_analysis_tutorial/pic/p_real.png) <a id="fig:Realp"></a>
+![](./../../tutorials/modal_analysis_tutorial/pic/p_real.png) <a id="fig:Realp"></a>
 Figure 4. Real eigenmode, $p'$
