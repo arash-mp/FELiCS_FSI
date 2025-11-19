@@ -27,7 +27,6 @@ from    FELiCS.Equation.dependentVariables.equationOfStateHandler   import equat
 from    FELiCS.Equation.dependentVariables.heatReleaseHandler       import heatReleaseHandler
 from    FELiCS.Equation.dependentVariables.momentumHandler          import momentumHandler
 from    FELiCS.Equation.dependentVariables.reactionHandler          import reactionHandler
-from    FELiCS.IO.export                                            import export
 from    FELiCS.Misc.tensorUtils                                     import Tensor
 from 	FELiCS.Misc.logging                                         import Logger
 
@@ -196,14 +195,12 @@ class fluctuationSolutions(
     momentumHandler,
     energyHandler,
     reactionHandler,
-    export,
 ):
     """
-    Stores and manages linearized fluctuation solutions and their export.
+    Stores and manages linearized fluctuation solutions.
 
     This class contains the computed fluctuation solutions in the mixed
-    function space. It supports exporting to and importing from HDF5/XDMF
-    formats for postprocessing and visualization in tools like ParaView.
+    function space. 
 
     **Initialize the fluctuationSolutions object**
 
@@ -316,10 +313,6 @@ class fluctuationSolutions(
         # self._fieldDict = mean.fieldDict
         self._transportedQuantities = param.getTransportedQuantityList()
         self._param = param
-        export.__init__(
-            self,
-            param,
-            FEMSpaces)
 
     def _flucExportWrapper(self, group):
         """
@@ -429,147 +422,6 @@ class fluctuationSolutions(
 
         return fieldMagnitude * np.exp(1j * fieldAngle)
 
-    def exportSolution(self, filename, flag):
-        """
-        Export fluctuation solution to HDF5/XMF format.
-
-        Parameters
-        ----------
-        filename : str
-            Base filename for the exported HDF5 file.
-        flag : str
-            Export mode. Options are:
-            - 'o': overwrite
-            - 'a': append
-            - 'a+': write with new index suffix
-            - 'c': compact, raw vector only
-
-        Raises
-        ------
-        ValueError
-            If the provided flag is unknown.
-        """
-
-        filenameWithoutExtension = filename.split('.h5')[0]
-        # filenameWithoutFolder = filename
-        filename = f'{self._param.Export.ExportFolder}/' + filename
-
-        # appendFlag = False
-
-        if flag == 'o':
-
-            if exists(filename):
-                remove(filename)
-            hf = File(filename, 'w')
-            pointGroup = self._createH5GroupStructure(hf)
-
-            self._flucExportWrapper(pointGroup)
-
-            self.writeXMFFile(
-                f'{self._param.Export.ExportFolder}/mesh.h5',
-                self._mean.meanflowFilename, 
-                hf
-            )
-
-            # export the param-object to the h5-file as string:
-            self._param.export(f'{hf.filename}')
-
-            hf.close()
-
-        elif flag == 'a':
-
-            # open the file in append mode:
-            hf = File(filename, 'a')
-            pointGroup = self._createH5GroupStructure(hf)
-
-            # appendFlag = True
-
-            self._flucExportWrapper(pointGroup)
-
-            self.writeXMFFile(
-                f'{self._param.Export.ExportFolder}/mesh.h5',
-                self._mean.meanflowFilename, 
-                hf
-            )
-
-            # export the param-object to the h5-file as string:
-            self._param.export(f'{hf.filename}')
-
-            hf.close()
-        elif flag == 'a+':
-            i = 0
-            fileNameWithNumb = filenameWithoutExtension + '_0' + '.h5'
-            fileNameListing = listdir(self._param.Export.ExportFolder)
-
-            while fileNameWithNumb in fileNameListing:
-                i += 1
-                fileNameWithNumb = filenameWithoutExtension + '_' + f'{i}' \
-                                   + '.h5'
-
-            # nextFileindex = i
-            hf = File(f'{self._param.Export.ExportFolder}/'
-                      + filenameWithoutExtension + '_' + f'{i}' + '.h5', 'w')
-
-            pointGroup = self._createH5GroupStructure(hf)
-
-            self._flucExportWrapper(pointGroup)
-
-            self.writeXMFFile(
-                f'{self._param.Export.ExportFolder}/mesh.h5',
-                self._mean.meanflowFilename, 
-                hf
-            )
-
-            # export the param-object to the h5-file as string:
-            self._param.export(f'{hf.filename}')
-
-            hf.close()
-        elif flag == 'c':
-            # writes out the VMixed-Vector to File:
-
-            # add suffix 'sol' to filename:
-            filenameForCExport = filenameWithoutExtension + '_sol.h5'
-
-            # if the file already exists, overwrite it:
-            hf = File(f'{self._param.Export.ExportFolder}/{filenameForCExport}',
-                      'w')
-
-            pointGroup = self._createH5GroupStructure(hf)
-            frequency = pointGroup.parent.attrs.get('frequency')
-            frequencyGroup = pointGroup.parent[frequency]
-
-            frequencyGroup.create_dataset('magnitude',
-                                          data=np.abs(self._vmixedVector))
-            frequencyGroup.create_dataset('angle',
-                                          data=np.angle(self._vmixedVector))
-            frequencyGroup.file.close()
-
-            # export the param-object to the h5-file as string:
-            self._param.export(f'{self._param.Export.ExportFolder}\
-            /{filenameForCExport}')
-
-        else:
-            print('The given flag is not known!')
-
-    def importSolution(self, filename):
-        """
-        Import a previously exported VMixed fluctuation solution.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of the HDF5 file to import from.
-        """
-
-        # if the filename has the suffix "_sol", its the raw VMixed-Vector and
-        # the import is easy:
-        if '_sol.h5' in filename:
-            importedSolVector = self._importSolVector(
-                f'{self._param.Export.ExportFolder}/{filename}')
-            self._param.importFromFile(
-                f'{self._param.Export.ExportFolder}/{filename}')
-            assert np.allclose(importedSolVector, self._vmixedVector)
-            self._vmixedVector = importedSolVector
 
     @property
     def solutVector(self):

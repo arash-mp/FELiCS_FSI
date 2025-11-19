@@ -4,7 +4,6 @@ import h5py
 import numpy as np
 
 # Local libraries and methods
-from FELiCS.IO.export                                           import export
 from FELiCS.Fields.fieldProperties                              import fieldProperties
 from FELiCS.Equation.dependentVariables.energyHandler           import energyHandler
 from FELiCS.Equation.dependentVariables.equationOfStateHandler  import equationOfStateHandler
@@ -22,7 +21,6 @@ class meanFlowClass(
     energyHandler,
     reactionHandler,
     equationOfStateHandler,
-    export,
 ):
     """
     Parent classes:
@@ -155,22 +153,6 @@ class meanFlowClass(
         self._fieldDict['Pr']            = Field(self._FEMSpaces.P2, self._mesh, name="Pr")
         self._fieldDict['Pr'].setConstantValue(self._param.Case.PrandtlNumber)
 
-    def mapToExportMeshAndExport(self, FEMSpaces, filename):
-        logger.info("Mapping mean flow to export mesh and exporting.")
-        self._meanflowFilename  = filename
-        filehandler             = h5py.File(f'{self._param.Export.ExportFolder}/{filename}', 'w')
-        group                   = filehandler.create_group('meanflow')
-        export.__init__(self, self._param, self._FEMSpaces)
-        #self._meanfieldDict, dictImag = self._mapCalcToExport(self._fieldDict)
-        self._meanfieldDict     = self._mapCalcToExport(self._fieldDict)
-        #exportDict = self._calculateVertexValuesFromDict(self._meanfieldDict,
-        #                                                 dictImag)
-        #self._writeDictToH5(exportDict, group)
-        self._writeDictToH5(
-            self.getVertexValues()._fieldDict,
-            group,
-        )
-        filehandler.close()
 
     def calculateSpeciesEnthalpy(self):
         from fenics import project
