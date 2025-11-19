@@ -3,7 +3,7 @@
 </p>
 
 
-## Welcome to FELiCS 2.0
+## Welcome to FELiCS
 
 [![Documentation Status](https://img.shields.io/badge/docs-latest-blue.svg)](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/)
 [![Website](https://img.shields.io/badge/website-felics2.0-blue?logo=firefox-browser)](https://www.tu.berlin/flow/forschung/projekte/felics-projekt)
