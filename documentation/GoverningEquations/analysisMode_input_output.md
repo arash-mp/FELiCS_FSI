@@ -55,6 +55,29 @@ $\mathbf{R}$ acts as a transfer function that maps a given forcing $\hat{\mathbf
 
 ## FELiCS implementation (to be done)
 
+The resolvent operator maps a mass-weighted forcing field $\hat{f}^*$ to the corresponding linear response  $\hat{q}$ of the flow via
+
+$$
+\hat{q} = R \hat{f}^*\ .
+$$
+
+The mass weighted forcing, $\hat{f}^*$, represents either a volume force or 
+a boundary forcing. For a **volume (body) force**, the user-specified forcing $\hat{f}$ is 
+projected onto the finite-element space by multiplication with the mass matrix,
+
+$$
+\hat{f}^* =W_{\text{FEM}} \hat{f}\ .
+$$
+
+For a **boundary forcing**, the weighted forcing is obtained directly through the weak 
+imposition of the forced boundary values using Nitsche’s method. In practice, this is 
+equivalent to supplying the specified forcing as a boundary condition to the 
+linearized equations. **Note: To allow for the weak imposition, the boundary conditions for the forced quantities need to be set to "None" at the respective boundaries.**
+
+In both cases—volume forcing or boundary forcing—the forcing field is interpreted 
+through the mean (base) flow, as discussed for example in [Tutorial 4](../Tutorials/input_output_analysis.md). 
+
+
 
 
 
