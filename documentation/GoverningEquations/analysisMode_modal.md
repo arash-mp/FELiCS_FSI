@@ -46,7 +46,7 @@ $$
 \mathbf{q}'=\hat{\mathbf{q}}\mathrm{e^{-\mathrm{j}\omega t}}+c.c., 
 $$
 where $\hat{\mathbf{q}}$ denotes the complex amplitude, and the complex frequency is given by $\omega = \omega_r + \mathrm{j}\omega_i$.
-Inserting this in the linearized perturbation equation leads to the eigenvalue problem,
+Inserting this in the linearized perturbation equation leads to the generalized eigenvalue problem,
 
 $$
 \mathbf{A} \hat{\mathbf{q}} = -\mathrm{j} \omega \mathbf{B} \hat{\mathbf{q}},
@@ -64,7 +64,15 @@ Solving the eigenvalue problem yields complex eigenvalues, whose components have
 
 - $\hat{\mathbf{q}}$: spatial structure (mode shape)
 
+Additionally to the direct generalized eigenvalue problem above, one can formulate its 
 
+$$
+\mathbf{A}^\dagger\,\hat{\mathbf{q}}^{\dagger}
+= -\,\mathrm{j}\,\omega^\dagger\,\mathbf{B}\,\hat{\mathbf{q}}^{\dagger},
+$$
+Here, the dagger superscript denotes the Hermitian transpose for matrices and the complex conjugate for scalar quantities.
+The spectrum of the adjoint generalized eigenvalue problem is the complex-conjugate transpose of the direct spectrum, so that for each direct eigenmode, $\hat{\mathbf{q}}_i$, there exists a corresponding adjoint eigenmode, $\hat{\mathbf{q}}^\dagger_i$.
+The adjoint mode provides the spatial distribution of the flow’s receptivity, indicating where the corresponding direct mode is most sensitive to external forcing in a linear sense.
 ## FELiCS implementation 
 
 The discretized eigenvalue problem is solved using a SLEPc-based solver implemented in FELiCS. The solver computes a set of eigenvalues $\omega_k$ ($k=1,2,...,n$) located nearest to a defined guess value $\omega_{\text{guess}}$. For each eigenvalue $\omega_k$, the corresponding eigenvector $\hat{\mathbf{q}}_k$ is obtained.

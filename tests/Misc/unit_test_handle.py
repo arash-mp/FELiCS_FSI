@@ -19,7 +19,7 @@ class UnitTestHandle():
         pass
     
     @staticmethod
-    def checkVectorExpressionAlignment(tensor_expr, valid_expr):
+    def checkVectorExpressionAlignment(tensor_expr, valid_expr, tol=1.e-14):
         res1 = petsc.assemble_vector(form(tensor_expr))
         res2 = petsc.assemble_vector(form(valid_expr))
         res1.assemble()
@@ -30,7 +30,7 @@ class UnitTestHandle():
         print("   - Difference norm              : ", np.linalg.norm(res1.getArray()-res2.getArray()))
         assert np.linalg.norm(res1.getArray())> 0
         assert np.linalg.norm(res2.getArray())> 0
-        assert np.linalg.norm(res1.getArray()-res2.getArray()) < 1.e-14
+        assert np.linalg.norm(res1.getArray()-res2.getArray()) < tol
         pass
     
     @staticmethod
@@ -49,7 +49,7 @@ class UnitTestHandle():
             t13 = 1j*m*func_vector[0]/r
             t23 = 1j*m*func_vector[1]/r - func_vector[2]/r
             t33 = 1j*m*func_vector[2]/r + func_vector[1]/r
-        return [t11, t12, t13, t21, t22, t23, t31, t32, t33]
+        return [[t11, t12, t13], [t21, t22, t23], [t31, t32, t33]]
     
     @staticmethod
     def getScalarGrad(func_scalar: Function, coordinateSystemName, m, r):
