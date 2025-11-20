@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./documentation/_static/logo.png" alt="FELiCS Logo" width="250"/>
+  <img src="./documentation/_static/logo_v2_full.png" alt="FELiCS Logo" width="250"/>
 </p>
 
 
@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/LICENSE.txt)
 [![Release](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/badges/release.svg?order_by=release_at)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/releases)
 
-[![unit tests](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/badges/main/pipeline.svg?job=test)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/pipelines)
+[![unit tests](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/badges/main/pipeline.svg?job=test&key_text=unit+tests)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/pipelines)
 
 
 
@@ -33,7 +33,8 @@ FELiCS (*Finite Element Linearized Combustion Solver*) is a Python-based CFD too
 
 FELiCS is under active development and contributors are welcome. If you are contributing to FELiCS, please start by reading the documentation to understand the overall structure and usage of the codebase. For coding standards and documentation guidelines, refer to the [Wiki](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/).
 
-Before submitting new code, ensure it is tested using the available validation cases. The validation cases can be downloaded from [this gitlab repository](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests).
+Before submitting new code, ensure it is tested using the available validation cases (downloadable from [this GitLab repository](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests)) and that all unit tests pass locally. Unit tests are automatically run in the CI pipeline, and details on running them are available in the [unit tests README](tests/README.md).
+
 
 ## Citation
 

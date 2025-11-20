@@ -5,9 +5,9 @@ ParameterFiles/
 __pycache__/
 .nfs*
 .idea/
-DOCUMENTATION/_build
-DOCUMENTATION/build
-DOCUMENTATION/autoapi
+documentation/_build
+documentation/build
+documentation/autoapi
 .ipynb_checkpoints
 public
 *env
