@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./documentation/_static/logo.png" alt="FELiCS Logo" width="250"/>
+  <img src="./documentation/_static/logo_v2_full.png" alt="FELiCS Logo" width="250"/>
 </p>
 
 

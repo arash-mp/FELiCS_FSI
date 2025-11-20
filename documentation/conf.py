@@ -15,7 +15,7 @@ autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inher
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
 
-html_logo = "_static/logo.png"
+html_logo = "_static/logo_v2_full.png"
 
 # Napoleon settings
 napoleon_google_docstring = True
@@ -36,4 +36,4 @@ napoleon_attr_annotations = True
 # Myst Parser settings
 myst_enable_extensions = ["dollarmath", "amsmath", "colon_fence"]
 myst_dmath_double_inline = True
-
+html_favicon = '_static/favicon.ico'
