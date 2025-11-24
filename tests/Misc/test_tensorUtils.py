@@ -541,8 +541,7 @@ def test_grad_scalar_conj():
             valid_expr  += (conj(fd_field.grad_scalar1[2]) * conj(fd_field.test_vector[2]))*fd_field.r*dx
         return tensor_expr, valid_expr
     # 2. check alignment
-    randomField.checkExpressionInAllCoordinateSystems(expression, tol=1e-10)
-    # NOTE: This case needs a higher tolerance, possibly due to the multiple gradients involved and the functions are not smoothed.
+    randomField.checkExpressionInAllCoordinateSystems(expression)
     print("... passed")
     
 def test_div_vector():
