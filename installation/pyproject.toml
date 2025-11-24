@@ -9,5 +9,5 @@ description = "Finite Element Linearized Combustion Solver"
 dependencies = []
 
 [tool.setuptools]
-packages = ["FELiCS","SCRIPTS"]
-package-dir = {"" = "../src", "SCRIPTS" = "../SCRIPTS"}
+packages = ["FELiCS","scripts","tests"]
+package-dir = {"" = "../src", "scripts" = "../scripts", "tests" = "../tests"}

@@ -19,7 +19,7 @@ from dolfinx             import mesh
 from FELiCS.Fields.Field import Field
 from FELiCS.Fields.Mode  import Mode
 
-class RandomFieldsHandle():
+class RandomCaseHandler():
     # TODO: write docstrings
     def __init__(self,dim_vector, ):
         # 1. Define mesh 

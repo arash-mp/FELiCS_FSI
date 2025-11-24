@@ -14,7 +14,7 @@ from dolfinx.fem         import (
     petsc
 )
 
-class UnitTestHandle():
+class UnitTestHelper():
     def __init__(self):
         pass
     

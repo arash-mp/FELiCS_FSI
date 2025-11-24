@@ -3,6 +3,8 @@
 # - implement logging and replace print statements => ? 
 # - create bigger test architecture, at best object oriented, to conduct all tests most efficiently => Sophie
 
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from FELiCS.Misc.tensorUtils import*
 
@@ -24,14 +26,16 @@ from dolfinx.fem         import (
 from dolfinx             import mesh
 from FELiCS.Fields.Field import Field
 from FELiCS.Fields.Mode  import Mode
-from random_fields_handle import RandomFieldsHandle
-from unit_test_handle import UnitTestHandle
+from tests.RandomCaseHandler import RandomCaseHandler
+from tests.UnitTestHelper    import UnitTestHelper
+
+
 
 #################################################################
 ##### define necessary functions ################################
 #################################################################
 
-class TensorUtilsTestHandle(RandomFieldsHandle):
+class TensorUtilsTestHandle(RandomCaseHandler):
     def __init__(self,dim_vector):
         super().__init__(dim_vector)
         self.func_scalar1 = self.createDolfinxFunction(dim=1)
@@ -66,10 +70,10 @@ class TensorUtilsTestHandle(RandomFieldsHandle):
         self.tens_scalar1 = Tensor(self.func_scalar1, testCoordinateSystem, mayHaveSpectralDimension = True)
         self.tens_scalar2 = Tensor(self.func_scalar2, testCoordinateSystem, mayHaveSpectralDimension = True)
         # 4. create spatial gradients
-        self.grad_vector1 = UnitTestHandle.getVecGrad(self.func_vector1, coordinateSystemName, m, self.r)
-        self.grad_vector2 = UnitTestHandle.getVecGrad(self.func_vector2, coordinateSystemName, m, self.r)
-        self.grad_scalar1 = UnitTestHandle.getScalarGrad(self.func_scalar1, coordinateSystemName, m, self.r)
-        self.grad_scalar2 = UnitTestHandle.getScalarGrad(self.func_scalar2, coordinateSystemName, m, self.r)
+        self.grad_vector1 = UnitTestHelper.getVecGrad(self.func_vector1, coordinateSystemName, m, self.r)
+        self.grad_vector2 = UnitTestHelper.getVecGrad(self.func_vector2, coordinateSystemName, m, self.r)
+        self.grad_scalar1 = UnitTestHelper.getScalarGrad(self.func_scalar1, coordinateSystemName, m, self.r)
+        self.grad_scalar2 = UnitTestHelper.getScalarGrad(self.func_scalar2, coordinateSystemName, m, self.r)
         pass
     
     def checkExpressionInAllCoordinateSystems(self, expressionFunction, tol=1.e-14):
@@ -80,7 +84,7 @@ class TensorUtilsTestHandle(RandomFieldsHandle):
                 print(f"\n\n Checking alignment for coordinate system {coordinateSystemName} and m={m}")
                 self.updateTensorCoordinate(coordinateSystemName, m)
                 tensor_expr, valid_expr = expressionFunction(self)
-                UnitTestHandle.checkVectorExpressionAlignment(tensor_expr, valid_expr, tol)
+                UnitTestHelper.checkVectorExpressionAlignment(tensor_expr, valid_expr, tol)
         pass
 
 #################################################################
