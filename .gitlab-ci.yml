@@ -43,9 +43,6 @@ test:
         export PATH="$VENV_DIR/anaconda3/bin:$PATH"
         source activate base
         conda activate felics2025_dolfin9_v2
-        cd installation
-        pip install -e .
-        cd ..
       fi
   script:
     - cd tests
