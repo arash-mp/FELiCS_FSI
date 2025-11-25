@@ -6,8 +6,8 @@ from    scipy.interpolate   import griddata
 from    FELiCS.Fields.Field import Field
 from    FELiCS.Misc.logging import Logger
 from    FELiCS.IO.Mapping   import Mapping
+from    FELiCS.SpaceDisc.FEMSpaces import createFunctionSpace
 
-from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -34,7 +34,7 @@ class Writer:
         self.mesh         = mesh
         self.exportFolder = exportFolder
         self.exportMesh   = mesh.exportMesh
-        self.exportSpace  = getFELiCSSpace(self.exportMesh, order = 1, dim = 1)  
+        self.exportSpace  = createFunctionSpace(self.exportMesh, order = 1, dim = 1)  
 
         # create the export folder, if it does not already exist
         os.makedirs(exportFolder, exist_ok=True)
@@ -144,7 +144,7 @@ class Writer:
         elif field.info['type'] == 'vector':
             names        = field.getNamesOfSubFields()
             degree       = field.space.ufl_element().degree
-            space_scalar = getFELiCSSpace(field.mesh, order = degree, dim=1)
+            space_scalar = createFunctionSpace(field.mesh, order = degree, dim=1)
             for i in range(field.info['num_subspaces']):
                 indices_mapping = field.space.sub(i).collapse()[1]
                 field_scalar    = Field(space_scalar, field.mesh, name=names[i])
@@ -156,7 +156,7 @@ class Writer:
             for i in range(field.info['num_subspaces']):
                 degree          = field.space.sub(i).ufl_element().degree
                 num_subspaces   = field.space.sub(i).num_sub_spaces
-                space_scalar    = getFELiCSSpace(field.mesh, order = degree, dim=1)
+                space_scalar    = createFunctionSpace(field.mesh, order = degree, dim=1)
                 if num_subspaces == 0: # mapping of scalar field
                     indices_mapping = field.space.sub(i).collapse()[1]
                     field_scalar    = Field(space_scalar, field.mesh, name=names[i])
