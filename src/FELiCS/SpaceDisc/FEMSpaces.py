@@ -1,10 +1,7 @@
 from    dolfinx.fem                 import functionspace
-from    dolfinx.mesh                import refine
 from    basix.ufl                   import element, mixed_element
 #from    ufl                         import finiteelement, MixedElement, triangle, VectorElement, tetrahedron
 from    ufl                         import triangle, tetrahedron
-from    FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
-from    FELiCS.IO.Mapping           import Mapping
 from 	FELiCS.Misc.logging         import Logger
 
 # Get the logger
@@ -111,8 +108,6 @@ class FEMSpaces():
         Type of finite element ('CG' for continuous Galerkin).
     _nVelocityComponents : int
         Number of velocity components defined by the case.
-    exportMesh : FELiCSMesh
-        Refined mesh used for exporting solution fields.
     FunctionSpaceVectorVelocity : dolfinx.fem.FunctionSpace
         Velocity vector space on the main mesh.
     FunctionSpaceVectorVelocityExport : dolfinx.fem.FunctionSpace
@@ -136,22 +131,10 @@ class FEMSpaces():
         self.element_shape  = getElementShape(mesh.gdim)
         self.elementTypeStr = getElementType()
 
+        # get names for state vector (to put in the mixed space)
+        self.stateVectorNames = param.Case.StateVectorVariables
 
-        ## create export mesh
-        # Refine the mesh 
-        logger.debug('Defining refined P1 export mesh.')
-        refine_tuple        = refine(mesh.dolfinxMesh)
-        exportMesh_dolfinx  = refine_tuple[0]
-        # create new FELiCSMesh
-        exportMesh          = FELiCSMesh(param.Case.CoordinateSystem,inputMesh=exportMesh_dolfinx)
-        exportMesh.gdim     = param.Case.nDim
-        # save mesh
-        meshfileName        = f'{param.Case.AnalysisMode}_mesh.h5'
-        exportMesh.saveInFELiCSFormat(f'{param.Export.ExportFolder}/{meshfileName}')
-        self.exportMesh     = exportMesh
-        
-
-        ## create vector spaces
+        ## Create vector spaces
         self._nVelocityComponents   = param.BoundaryCondition.nVelocityComponents # dim of velocity vector
         # Get the order of polynomials for velocity components
         if 'u' in param.getTransportedQuantityList():
@@ -159,18 +142,17 @@ class FEMSpaces():
         else:
             velocityOrder   = 2
         # Define FEM spaces for the velocity vector
-        self.FunctionSpaceVectorVelocity       = createFunctionSpace(mesh, order = velocityOrder, dim = self._nVelocityComponents)
-        self.FunctionSpaceVectorVelocityExport = createFunctionSpace(exportMesh, order = 1, dim = self._nVelocityComponents)
-        self.FunctionSpaceVectorVelocityP1     = createFunctionSpace(mesh, order = 1, dim = self._nVelocityComponents)
-
+        self.FunctionSpaceVectorVelocity       = getFELiCSSpace(mesh, order = velocityOrder, dim = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocityExport = getFELiCSSpace(mesh.exportMesh, order = 1, dim = self._nVelocityComponents)
+        self.FunctionSpaceVectorVelocityP1     = getFELiCSSpace(mesh, order = 1, dim = self._nVelocityComponents)
 
         ## create scalar spaces
         # Get function spaces for first order and second order elements.
         self.P1 = createFunctionSpace(mesh, order = 1)
         self.P2 = createFunctionSpace(mesh, order = 2)
         # Get function spaces for first order and second order elements on the export mesh.
-        self.P1Export = createFunctionSpace(exportMesh, order = 1)
-        self.P2Export = createFunctionSpace(exportMesh, order = 2)
+        self.P1Export = getFELiCSSpace(mesh.exportMesh, order = 1)
+        self.P2Export = getFELiCSSpace(mesh.exportMesh, order = 2)
 
 
         ### create VMixed Space
@@ -202,10 +184,12 @@ class FEMSpaces():
         # Create a function space containing of mixed elements on the FEM mesh
         self.VMixed = functionspace(mesh.dolfinxMesh,MixedFE)
         # Create a function space containing of mixed elements on the export mesh
-        self.VMixedExport = functionspace(exportMesh.dolfinxMesh, MixedFE)
+        self.VMixedExport = functionspace(mesh.exportMesh.dolfinxMesh, MixedFE)
 
-        # create mapping
-        self.mappingObj = Mapping(self)
+        # Set state vector names to the VMixed space
+        self.VMixed.stateVectorNames = self.stateVectorNames
+        self.VMixedExport.stateVectorNames = self.stateVectorNames
+
 
     def addCustomScalarSpaceToMixedSpace(self, mesh, order):
         """

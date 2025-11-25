@@ -39,7 +39,7 @@ class fieldProperties:
         Default fallback field for missing scalar quantities.
     _oneField : object
         Default fallback field with all coefficients set to one.
-    _zeroVelocityField : object
+    _zeroVectorField : object
         Default fallback field for missing velocity quantities.
     _mean : object
         Reference to the mean flow object, if available.
@@ -338,8 +338,25 @@ class fieldProperties:
         object
             Imaginary part of the forcing field.
         """
-        return self._fieldDict[solution + '_forcing_i']
-
+        name = solution + '_forcing_i'
+        if self.isMeanFlowClass():
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name].getTensor()
+            else:
+                return self._zeroField.getTensor()
+            
+        elif self.isMeanFlowVertexValuesClass():
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name]
+            else:
+                return self._zeroField
+        
+        else:
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name]
+            else:
+                return self._zeroField
+        
     def forcing_r(self, solution):
         """
         Get the real part of the forcing field for a given solution variable.
@@ -354,7 +371,24 @@ class fieldProperties:
         object
             Real part of the forcing field.
         """
-        return self._fieldDict[solution + '_forcing_r']
+        name = solution + '_forcing_r'
+        if self.isMeanFlowClass():
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name].getTensor()
+            else:
+                return self._zeroField.getTensor()
+            
+        elif self.isMeanFlowVertexValuesClass():
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name]
+            else:
+                return self._zeroField
+        
+        else:
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name]
+            else:
+                return self._zeroField
 
     def forcing(self,solution):
         """
@@ -370,8 +404,7 @@ class fieldProperties:
         object
             Complex forcing field as a tensor.
         """
-        result = self.forcing_r(solution)+self.forcing_i(solution)*1j
-        return result.getTensor()
+        return self.forcing_r(solution)+self.forcing_i(solution)*1j
 
     @property
     def forcingDomain(self):
@@ -656,6 +689,7 @@ class fieldProperties:
                 return self._fieldDict['rho'].getTensor()
             else:
                 return self._oneField.getTensor()
+            
         elif self.isMeanFlowVertexValuesClass():
             if 'rho' in list(self._fieldDict.keys()):
                 return self._fieldDict['rho']
@@ -832,12 +866,12 @@ class fieldProperties:
             if 'u' in list(self._fieldDict.keys()):
                 return self._fieldDict['u'].getTensor()
             else:
-                return self._zeroVelocityField.getTensor()
+                return self._zeroVectorField.getTensor()
         else:
             if 'u' in self._transportedQuantities:
                 return  self._fieldDict['u']
             else:
-                return self._zeroVelocityField
+                return self._zeroVectorField
 
     @property
     def u_forcing_i(self):
@@ -849,7 +883,24 @@ class fieldProperties:
         object
             Field variable for imaginary part of velocity forcing.
         """
-        return self._fieldDict['u_forcing_i']
+        name = 'u_forcing_i'
+        if self.isMeanFlowClass():
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name].getTensor()
+            else:
+                return self._zeroVectorField.getTensor()
+            
+        elif self.isMeanFlowVertexValuesClass():
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name]
+            else:
+                return self._zeroField
+        
+        else:
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name]
+            else:
+                return self._zeroField
 
     @property
     def u_forcing_r(self):
@@ -861,7 +912,24 @@ class fieldProperties:
         object
             Field variable for real part of velocity forcing.
         """
-        return self._fieldDict['u_forcing_r']
+        name = 'u_forcing_r'
+        if self.isMeanFlowClass():
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name].getTensor()
+            else:
+                return self._zeroVectorField.getTensor()
+            
+        elif self.isMeanFlowVertexValuesClass():
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name]
+            else:
+                return self._zeroField
+        
+        else:
+            if name in list(self._fieldDict.keys()):
+                return self._fieldDict[name]
+            else:
+                return self._zeroField
 
     @property
     def u_forcing(self):
@@ -874,11 +942,12 @@ class fieldProperties:
             Field variable for complex velocity forcing.
         """
         forcing = self.u_forcing_r + self.u_forcing_i * 1j
-        return forcing.getTensor()
+        return forcing
 
     @property
     def ut(self):
         """
+        TODO: Deprecated variable must be deleted
         Get the transverse velocity component field variable.
 
         Returns
@@ -913,8 +982,21 @@ class fieldProperties:
         object
             Field variable for species mass fraction.
         """
-        if self.isMeanFlowClass() or self.isMeanFlowVertexValuesClass():
-            return self._fieldDict[specie].getTensor()
+        if self.isMeanFlowClass():
+            if specie in list(self._fieldDict.keys()):
+                return self._fieldDict[specie].getTensor()
+            else:
+                return self._zeroField.getTensor()
+            
+        elif self.isMeanFlowVertexValuesClass():
+            if specie in list(self._fieldDict.keys()):
+                return self._fieldDict[specie]
+            else:
+                return self._zeroField
+        
         else:
-            return self._fieldDict[specie]
+            if specie in list(self._fieldDict.keys()):
+                return self._fieldDict[specie]
+            else:
+                return self._zeroField
                         

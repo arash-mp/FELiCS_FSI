@@ -11,8 +11,6 @@ from 	FELiCS.Misc.logging			    import Logger
 # Get the logger
 logger = Logger.get_logger("felics")
 
-#from FELiCS.Equation.Reactions.reactionMechanism import reactionMechanismClass
-
 class dotdict(dict):
     """
     Adds possibility to use dot notation to access entries of dictionary dict
@@ -72,6 +70,7 @@ class config(ABC):
                 'CoordinateSystem':         {'datatype':str,    'default':'Cartesian'},
                 # 'HeatCapacityConstPressure':{'datatype':int,    'default':1005},
                 # 'HeatCapacityRatio':        {'datatype':int,    'default':1.4},
+                'needInterpolation':        {'datatype':bool,   'default':True},
                 'm':                        {'datatype':int,    'default':0},
                 'MeshFilePath':             {'datatype':str,    'default':''},
                 'MixtureFilePath':          {'datatype':str,    'default':''},
@@ -159,6 +158,7 @@ class config(ABC):
         self.BoundaryCondition.nVelocityComponents  = len(self.getVelocityComponents())
         self.Case.SolutionList                      = self.getTransportedQuantityList()
         self.BoundaryCondition.VelocityComponents   = self.getVelocityComponents()
+        self.__mesh__.setTrueDimension(self.BoundaryCondition.nVelocityComponents)
 
     def check_for_mandatory_files(self,config_dict,mandatory_files):
         """
@@ -630,10 +630,6 @@ class config(ABC):
             MeanList.append('nuturb')
         if self.Case.MolViscModel in ['File'] or self.Case.MolViscPerturbModel in ['Sutherland mean']:
             MeanList.append('nulam')
-        if self.Case.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.Case["CoordinateSystem"] == 'Cylindrical':
-            MeanList.extend(['rstxx', 'rstrr', 'rsttt', 'rstxr', 'rstxt', 'rstrt','rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
-        elif self.Case.TurbulenceModel in ['Boussinesq', 'TKE-based', 'Boussinesq(xr)'] and self.Case["CoordinateSystem"] == 'Cartesian':
-            MeanList.extend(['rstxx', 'rstyy', 'rstzz', 'rstxy', 'rstxz', 'rstyz'])
         if self.Case.Reaction:
             MeanList.append('dQ')
         return MeanList

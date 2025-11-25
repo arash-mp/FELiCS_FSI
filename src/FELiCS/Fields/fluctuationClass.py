@@ -27,7 +27,6 @@ from    FELiCS.Equation.dependentVariables.equationOfStateHandler   import equat
 from    FELiCS.Equation.dependentVariables.heatReleaseHandler       import heatReleaseHandler
 from    FELiCS.Equation.dependentVariables.momentumHandler          import momentumHandler
 from    FELiCS.Equation.dependentVariables.reactionHandler          import reactionHandler
-from    FELiCS.IO.export                                            import export
 from    FELiCS.Misc.tensorUtils                                     import Tensor
 from 	FELiCS.Misc.logging                                         import Logger
 
@@ -73,7 +72,7 @@ class fluctuationClass(
         Temporal mean flow object.
     _transportedQuantities : list of str
         Names of the transported quantities.
-    _zeroVelocityField : dolfinx.Function
+    _zeroVectorField : dolfinx.Function
         Zero-valued vector function in the velocity space.
     _fieldDict : dict
         Dictionary of calculated fields (both transported and dependent).
@@ -103,22 +102,31 @@ class fluctuationClass(
             Coordinate system used in the domain.
         """
 
-        self._param = param
-        self._FEMSpaces = FEMSpaces
-        self._coordinateSystem = coordinateSystem
-        fieldProperties.__init__(
-            self
-        )
-        self._isFluctuation = True
-        self._isMean = False
-        self._isSolution = False
-        self._zeroField = Function(FEMSpaces.P2)
-        # TODO Sophie: set correct name
-        self._zeroVelocityField \
-            = Field(FEMSpaces.FunctionSpaceVectorVelocity, self._param.getMesh(), name=[]).getTensor()
-        self._zeroField = Field(FEMSpaces.P2, self._param.getMesh(), name="zero").getTensor()
-        self._fieldDict = {}
-        self._mean = mean
+        # Useful objects
+        self._param                 = param
+        self._FEMSpaces             = FEMSpaces
+        self._coordinateSystem      = coordinateSystem
+        fieldProperties.__init__(self)
+        
+        # Default flags
+        self._isFluctuation         = True
+        self._isMean                = False
+        self._isSolution            = False
+        
+        # Zero-value tensors
+        self._zeroVectorField       = Field(
+            FEMSpaces.FunctionSpaceVectorVelocity, 
+            self._param.getMesh(), 
+            name="zeroVector"
+            ).getTensor()
+        self._zeroField             = Function(FEMSpaces.P2)
+        self._zeroField             = Field(
+            FEMSpaces.P2, 
+            self._param.getMesh(), 
+            name="zeroScalar"
+            ).getTensor()
+        self._fieldDict             = {}
+        self._mean                  = mean
         self._transportedQuantities = param.getTransportedQuantityList()
 
         # _fluc is constructed. 
@@ -128,7 +136,7 @@ class fluctuationClass(
             self._fieldDict[field] = Tensor(
                                             self._fluc[indexOfFieldInList],
                                             self._coordinateSystem,
-                                            hasSpectralDimension = True,
+                                            mayHaveSpectralDimension = True,
                                             )
 
         # Get all the variables, which need to be present
@@ -187,14 +195,12 @@ class fluctuationSolutions(
     momentumHandler,
     energyHandler,
     reactionHandler,
-    export,
 ):
     """
-    Stores and manages linearized fluctuation solutions and their export.
+    Stores and manages linearized fluctuation solutions.
 
     This class contains the computed fluctuation solutions in the mixed
-    function space. It supports exporting to and importing from HDF5/XDMF
-    formats for postprocessing and visualization in tools like ParaView.
+    function space. 
 
     **Initialize the fluctuationSolutions object**
 
@@ -220,7 +226,7 @@ class fluctuationSolutions(
 
     Attributes
     ----------
-    _zeroVelocityField : dolfinx.Function
+    _zeroVectorField : dolfinx.Function
         Vector-valued zero field used for initialization (not stored).
     _FEMSpaces : FEMSpaceHandler
         High-order FEM spaces for simulation.
@@ -291,8 +297,8 @@ class fluctuationSolutions(
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroField.x.array[:] = 0.0
         self._zeroField = self._zeroField.x.array[:]
-        #self._zeroVelocityField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
-        #self._zeroVelocityField.x.array[:] = 0.0
+        #self._zeroVectorField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
+        #self._zeroVectorField.x.array[:] = 0.0
 
         # if np.imag(gainValue) > 1e-10 * np.real(gainValue):
         #     printWarning('The gain is a complex number, while it should be \
@@ -307,10 +313,6 @@ class fluctuationSolutions(
         # self._fieldDict = mean.fieldDict
         self._transportedQuantities = param.getTransportedQuantityList()
         self._param = param
-        export.__init__(
-            self,
-            param,
-            FEMSpaces)
 
     def _flucExportWrapper(self, group):
         """
@@ -420,141 +422,6 @@ class fluctuationSolutions(
 
         return fieldMagnitude * np.exp(1j * fieldAngle)
 
-    def exportSolution(self, filename, flag):
-        """
-        Export fluctuation solution to HDF5/XMF format.
-
-        Parameters
-        ----------
-        filename : str
-            Base filename for the exported HDF5 file.
-        flag : str
-            Export mode. Options are:
-            - 'o': overwrite
-            - 'a': append
-            - 'a+': write with new index suffix
-            - 'c': compact, raw vector only
-
-        Raises
-        ------
-        ValueError
-            If the provided flag is unknown.
-        """
-
-        filenameWithoutExtension = filename.split('.h5')[0]
-        # filenameWithoutFolder = filename
-        filename = f'{self._param.Export.ExportFolder}/' + filename
-
-        # appendFlag = False
-
-        if flag == 'o':
-
-            if exists(filename):
-                remove(filename)
-            hf = File(filename, 'w')
-            pointGroup = self._createH5GroupStructure(hf)
-
-            self._flucExportWrapper(pointGroup)
-
-            self.writeXMFFile(f'{self._param.Export.ExportFolder}/'
-                              + f'{self._param.Case.AnalysisMode}_mesh.h5',
-                              self._mean.meanflowFilename, hf)
-
-            # export the param-object to the h5-file as string:
-            self._param.export(f'{hf.filename}')
-
-            hf.close()
-
-        elif flag == 'a':
-
-            # open the file in append mode:
-            hf = File(filename, 'a')
-            pointGroup = self._createH5GroupStructure(hf)
-
-            # appendFlag = True
-
-            self._flucExportWrapper(pointGroup)
-
-            self.writeXMFFile(f'{self._param.Export.ExportFolder}/'
-                              + f'{self._param.Case.AnalysisMode}_mesh.h5',
-                              self._mean.meanflowFilename, hf)
-
-            # export the param-object to the h5-file as string:
-            self._param.export(f'{hf.filename}')
-
-            hf.close()
-        elif flag == 'a+':
-            i = 0
-            fileNameWithNumb = filenameWithoutExtension + '_0' + '.h5'
-            fileNameListing = listdir(self._param.Export.ExportFolder)
-
-            while fileNameWithNumb in fileNameListing:
-                i += 1
-                fileNameWithNumb = filenameWithoutExtension + '_' + f'{i}' \
-                                   + '.h5'
-
-            # nextFileindex = i
-            hf = File(f'{self._param.Export.ExportFolder}/'
-                      + filenameWithoutExtension + '_' + f'{i}' + '.h5', 'w')
-
-            pointGroup = self._createH5GroupStructure(hf)
-
-            self._flucExportWrapper(pointGroup)
-
-            self.writeXMFFile(f'{self._param.Export.ExportFolder}/'
-                              + f'{self._param.Case.AnalysisMode}_mesh.h5',
-                              self._mean.meanflowFilename, hf)
-
-            # export the param-object to the h5-file as string:
-            self._param.export(f'{hf.filename}')
-
-            hf.close()
-        elif flag == 'c':
-            # writes out the VMixed-Vector to File:
-
-            # add suffix 'sol' to filename:
-            filenameForCExport = filenameWithoutExtension + '_sol.h5'
-
-            # if the file already exists, overwrite it:
-            hf = File(f'{self._param.Export.ExportFolder}/{filenameForCExport}',
-                      'w')
-
-            pointGroup = self._createH5GroupStructure(hf)
-            frequency = pointGroup.parent.attrs.get('frequency')
-            frequencyGroup = pointGroup.parent[frequency]
-
-            frequencyGroup.create_dataset('magnitude',
-                                          data=np.abs(self._vmixedVector))
-            frequencyGroup.create_dataset('angle',
-                                          data=np.angle(self._vmixedVector))
-            frequencyGroup.file.close()
-
-            # export the param-object to the h5-file as string:
-            self._param.export(f'{self._param.Export.ExportFolder}\
-            /{filenameForCExport}')
-
-        else:
-            print('The given flag is not known!')
-
-    def importSolution(self, filename):
-        """
-        Import a previously exported VMixed fluctuation solution.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of the HDF5 file to import from.
-        """
-
-        # if the filename has the suffix "_sol", its the raw VMixed-Vector and
-        # the import is easy:
-        if '_sol.h5' in filename:
-            importedSolVector = self._importSolVector(
-                f'{self._param.Export.ExportFolder}/{filename}')
-            self._param.importFromFile(
-                f'{self._param.Export.ExportFolder}/{filename}')
-            assert np.allclose(importedSolVector, self._vmixedVector)
-            self._vmixedVector = importedSolVector
 
     @property
     def solutVector(self):

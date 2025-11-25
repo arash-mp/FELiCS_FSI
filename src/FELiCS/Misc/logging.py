@@ -148,7 +148,7 @@ class Logger:
         Configures the logger to output to both the console (with colored output)
         and a log file. Creates the logs directory if it does not exist.
         """
-        now = datetime.now().strftime("%d.%m.%Y-%H.%M.%S")
+        now = datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
         
         logfilename = f"logs{os.sep}{self.logger_name}_{now}.log"
         #logfilename_errors = f"logs{os.sep}{self.logger_name}_{now}.ERRORS.log"

@@ -10,32 +10,31 @@ def runModal(param):
         param: Parameter objects (see parameters.py), defining the case
     '''
     # import  FELiCS.IO.Import as Import
-    from    FELiCS.IO.ExportSolution            import ExportFromFile 
+    from    FELiCS.IO.Writer                    import Writer
     from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
     from    FELiCS.Fields.meanFlowClass         import meanFlowClass
     from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
-    from    FELiCS.Misc.functions               import printDebug
     from    FELiCS.Solvers.LinearSolver         import LinearSolver 
     from    FELiCS.Fields.ModeCollection        import ModeCollection
-    # from    FELiCS.Fields.fluctuationClass import fluctuationSolutions
 
     logger.info("Running Modal analysis")
     #-----------------------------------------------------------------------
     ## INITIALIZATION
     #-----------------------------------------------------------------------
+    # Get FELiCS objects required for analysis
     # mesh
-    mesh = param.getMesh()
-    
+    mesh      = param.getMesh()
+
     # FEMSpaces
-    FEMSpaces = FEMSpaces(
-                param,
-                mesh,
-                )
+    FEMSpaces = FEMSpaces(param, mesh)
      
+    # writer to export the results in files
+    writer    = Writer(mesh, param.Export.ExportFolder)
+
     # read in mean flow and export to h5-file
     meanFlow = meanFlowClass(param, FEMSpaces, mesh)
-    meanFlow.importDataFromFileAndExportToH5()
-    
+    meanFlow.importDataFromFileAndExportToH5(writer)
+
     # equation
     equation = EquationCollectionClass(
                                       param,
@@ -52,15 +51,15 @@ def runModal(param):
     B = equation.getWeightMatrix  (meanFlow)
 
     # get parameters for eigenproblem
-    guesses  = param.Numerics.EigenValueGuess
-    nSol     = param.Numerics.nSolut
-    adjoint  = param.Case.CalculateAdjoint
+    guesses          = param.Numerics.EigenValueGuess
+    nSol             = param.Numerics.nSolut
+    adjoint          = param.Case.CalculateAdjoint
 
     # track time
     start= time.time()
 
     # solve eigenproblem for each guess
-    solution = ModeCollection(FEMSpaces.VMixed, mesh)
+    solution = ModeCollection(FEMSpaces.VMixed, mesh, analysisType = "modal")
     for guess in guesses:
         
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))
@@ -71,6 +70,8 @@ def runModal(param):
                                                         )
 
         solution.appendSolutionOfEigenProblem(tmp, guess)
+
+        n_calculated = nSol
 
         if adjoint:
             
@@ -83,14 +84,18 @@ def runModal(param):
 
             solution.appendSolutionOfEigenProblem(tmp, guess, adjoint=True)
 
-    # end tracking time
-    end = time.time() - start
-    logger.info('Solving the general eigenproblem took %4g s' % end)
-    residuum_max = solution.getMaximumError()
-    logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
+            n_calculated += nSol
 
-    #-----------------------------------------------------------------------
-    ## EXPORT SOLUTION
-    #-----------------------------------------------------------------------
-    fluctSolutList = solution.getOldSolutionObject(meanFlow, param, FEMSpaces)
-    ExportFromFile(param,FEMSpaces,fluctSolutList,meanFlow)
+        # Exporting the (temporary) spectrum to a file
+        solution.exportSpectrumToCSV(writer)
+        # Exporting only the newly calculated modes to files (for this guess)
+        solution.exportModes(writer, onlyNewN = n_calculated)
+
+
+    # end tracking time
+    end             = time.time() - start
+    logger.info('Solving the general eigenproblem took %4g s' % end)
+    residuum_max    = solution.getMaximumError()
+    logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))
+   
+

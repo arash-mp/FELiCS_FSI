@@ -1,5 +1,5 @@
 # The Docker image that will be used to build your app
-image: continuumio/anaconda3 #continuumio/miniconda3:latest #python:3.10-slim-bullseye
+image:  continuumio/anaconda3 #python:3.10-slim-bullseye  continuumio/miniconda3:latest
 variables:
   GIT_STRATEGY: clone  
 # Functions that should be executed before the build script is run
@@ -7,33 +7,46 @@ variables:
 cache:
   key: venv-cache
   paths:
-    - local-runner-env/
-    - local-runner-env_tests/
+    - ../../local-runner-env3
+    - ../../local-runner-envTests/
 
 test:
   stage: test
   before_script:
     - git --version
+    - pwd
     - ls -all
     - |
-      if [ ! -d "local-runner-env-tests" ] || [ ! -f "local-runner-env-tests/bin/activate" ]; then
-        echo "\nCreating new virtual environment...\n"	
-        python3 -m venv local-runner-env-tests
+      VENV_DIR="../../local-runner-envTests"
+      if [ ! -d "$VENV_DIR" ]; then
+        echo "Creating new virtual environment..."
+        python3 -m venv "$VENV_DIR"
       fi
-      echo "Activating virtual environment..."	
-    - source local-runner-env-tests/bin/activate    
-      #- export PATH="$PATH:/opt/anaconda3/bin"
-      #- conda init
-      #- conda env create -f INSTALLATION/felics_v2.4_env.yml -p .env/ || true
-      #- conda activate felics2025_dolfin9
-      #- conda install pytest
-    - pip install -U pip
-    - pip install -U pytest
-      #- shopt -s expand_aliases
-      #- alias envrun="conda run -p .env/"
+      echo "Activating virtual environment..."
+      source "$VENV_DIR/bin/activate"
+      
+      if [ ! -d "$VENV_DIR/anaconda3/bin" ]; then
+        echo "Installing conda..."
+        wget -O "$VENV_DIR/anaconda3_install.sh" https://repo.anaconda.com/archive/Anaconda3-2025.06-1-Linux-x86_64.sh
+        chmod +x "$VENV_DIR/anaconda3_install.sh"
+        "$VENV_DIR/anaconda3_install.sh" -b -p "$VENV_DIR/anaconda3"
+        echo "Creating conda environment for FELiCS..."
+        conda env create -f INSTALLATION/felics_v2.41_env.yml -y
+        export PATH="$VENV_DIR/anaconda3/bin:$PATH"
+        source activate base
+        conda activate felics2025_dolfin9_v2
+        cd installation
+        pip install -e .
+        cd ..
+      else
+        echo "Activating conda environment..."
+        export PATH="$VENV_DIR/anaconda3/bin:$PATH"
+        source activate base
+        conda activate felics2025_dolfin9_v2
+      fi
   script:
-    - cd TESTS
-    #- python3 -m pytest 
+    - cd tests
+    - python3 -m pytest 
   only:
     - development
     #- main
@@ -43,22 +56,24 @@ pages:
     - git --version
     - ls -all
     - |
-      if [ ! -d "local-runner-env2" ] || [ ! -f "local-runner-env2/bin/activate" ]; then
-        echo "\nCreating new virtual environment...\n"	
-        python3 -m venv local-runner-env2
+      VENV_DIR="../../local-runner-env3"
+      if [ ! -d "$VENV_DIR" ]; then
+        echo "Creating new virtual environment..."	
+        python3 -m venv "$VENV_DIR"
       fi
       echo "Activating virtual environment..."	
-      source local-runner-env2/bin/activate
+      source "$VENV_DIR/bin/activate"
       
-      if ! python -c "import sphinx" 2>/dev/null; then
+      if ! sphinx-build --version 2>/dev/null; then
         echo "installing sphinx and dependencies..."	
         pip install -U pip
-        pip install -U sphinx myst-parser sphinx-book-theme sphinx-autoapi
+        pip install -U sphinx myst-parser sphinx-book-theme
+        pip install -U sphinx-autoapi==3.0.0
         pip install sphinxcontrib-mermaid
       fi
 
   script:
-  - cd DOCUMENTATION
+  - cd documentation
   - mkdir ../public
   - python3 --version
   - pip list

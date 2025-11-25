@@ -2,11 +2,9 @@ import  gmsh
 import  h5py
 import  numpy                   as np
 from    FELiCS.Misc.tensorUtils import CoordinateSystem
-from    FELiCS.Misc.functions   import printDeprecatedWarning, printError
 from    mpi4py                  import MPI
 from    ufl                     import SpatialCoordinate
-from    dolfinx                 import __version__
-from    dolfinx.mesh            import Mesh 
+from    dolfinx.mesh            import Mesh, refine 
 from    FELiCS.Misc.logging     import Logger
 
 
@@ -68,7 +66,6 @@ class FELiCSMesh:
         inputMesh : dolfinx.mesh.Mesh, optional
             An existing DOLFINx mesh object.
         """
-
         if inputMesh is None:
             # Initialize gmsh and suppress its output
             gmsh.initialize()
@@ -107,6 +104,7 @@ class FELiCSMesh:
             self.gdim        = inputMesh.topology.dim
             self._cpp_object = self.dolfinxMesh._cpp_object
         x = SpatialCoordinate(self.dolfinxMesh)
+        
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
         self.coordinateSystemName = coordinateSystemName
         if coordinateSystemName =='Cartesian':
@@ -114,22 +112,52 @@ class FELiCSMesh:
                                     x, 
                                     coordinateSystemName.lower(), 
                                     m = m,
-                                    mesh_dims = (1, 1, 0),
+                                    gdim = self.gdim,
                                     )
         elif coordinateSystemName =='Cylindrical':
             self.__coordinateSystem = CoordinateSystem(
                                     x,
                                     "cylindricalfelics", 
                                     m = m,
-                                    mesh_dims = (1, 1, 0),
+                                    gdim = self.gdim,
                                     )
         else:
-            printError('Coord. syst not yet implemented in tensor framework.')
+            logger.error('Coord. syst not yet implemented in tensor framework.')
+            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
         self._coordinates = self.coordinates()
+
+    @property
+    def exportMesh(self):
+        """
+        Lazy-loaded refined export mesh for exporting simulation results.
+
+        Returns
+        -------
+        ExportMesh
+            An instance of ExportMesh, created on first access if not already initialized.
+        """
+        if not hasattr(self, '_exportMesh') or self._exportMesh is None:
+            self._exportMesh = ExportMesh(self)
+        return self._exportMesh
+
+    def setTrueDimension(self, dim):
+        """
+        Corrects the true dimension of the system. This has to be called if a spectral dimension is included,
+        in which case the true dimension is higher than the geometrical dimension of the mesh.
+         
+        Parameters
+        ----------
+        dim: int 
+            True dimension of the system, including a possible spectral dimension. 
+
+        """
+
+        self.dim = dim
+        self.__coordinateSystem.setTrueDimension(dim)
 
     def saveInFELiCSFormat(self, filename):
         """
-        Saves the computational mesh in the FELiCS HDF5-based format.
+        Saves the refined ("export") mesh in the FELiCS HDF5-based format.
 
         Parameters
         ----------
@@ -143,11 +171,12 @@ class FELiCSMesh:
         """
         
         # TODO: save the DoFs corresponding to the different BCs
-        
-        coordinates = self.coordinates()
-        self.calcConnectivity()
-        meshCells = self.meshCells
-        nDim = coordinates.shape[1]
+
+        # Compute additional export mesh properties
+        coordinates     = self.exportMesh.coordinates()
+        self.exportMesh.calcConnectivity()
+        meshCells       = self.exportMesh.meshCells
+        nDim            = coordinates.shape[1]
         coordinateNames = ['x']
         if nDim > 1:
             coordinateNames.append('y')
@@ -228,3 +257,93 @@ class FELiCSMesh:
         """
 
         return self.__coordinateSystem
+    
+    @property
+    def axisNames(self):
+        """
+        Names of the axes in the coordinate system.
+        These include both spectral and mesh dimensions.
+        Currently implemented systems are:
+            - Cartesian:    ['x', 'y', 'z']
+            - Cylindrical:  ['x', 'r', 't']
+
+        Returns
+        -------
+        list of str
+            List of coordinate names (e.g., ['x', 'y', 'z']).
+        """
+        if self.coordinateSystemName =='Cartesian':
+            coordinateNames = ['x']
+            if self.dim > 1:
+                coordinateNames.append('y')
+            if self.dim > 2:
+                coordinateNames.append('z')
+        
+        elif self.coordinateSystemName =='Cylindrical':
+            coordinateNames = ['x']
+            if self.dim > 1:
+                coordinateNames.append('r')
+            if self.dim > 2:
+                coordinateNames.append('t')
+                
+        else:
+            logger.error('Coord. syst not yet implemented in tensor framework.')
+            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
+
+        return coordinateNames
+    
+    @property
+    def meshAxisNames(self):
+        """
+        Names of the axes in the mesh's coordinate system.
+        Currently implemented systems are:
+            - Cartesian:    ['x', 'y', 'z']
+            - Cylindrical:  ['x', 'r', 't']
+
+        Returns
+        -------
+        list of str
+            List of coordinate names (e.g., ['x', 'y', 'z']).
+        """
+        if self.coordinateSystemName =='Cartesian':
+            coordinateNames = ['x']
+            if self.gdim > 1:
+                coordinateNames.append('y')
+            if self.gdim > 2:
+                coordinateNames.append('z')
+        
+        elif self.coordinateSystemName =='Cylindrical':
+            coordinateNames = ['x']
+            if self.gdim > 1:
+                coordinateNames.append('r')
+            if self.gdim > 2:
+                coordinateNames.append('t')
+                
+        else:
+            logger.error('Coord. syst not yet implemented in tensor framework.')
+            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
+
+        return coordinateNames
+
+
+class ExportMesh(FELiCSMesh):
+    """
+    Subclass of FELiCSMesh for refined export meshes.
+
+    This class is intended for creating refined meshes suitable for exporting simulation results.
+    """
+    
+    def __init__(self, base_mesh: FELiCSMesh):
+        logger.debug("Initializing refined P1 export mesh.")
+        
+        # Refine the mesh
+        base_mesh.dolfinxMesh.topology.create_entities(1)
+        refine_tuple        = refine(base_mesh.dolfinxMesh)
+        exportMesh_dolfinx  = refine_tuple[0]
+
+        # Create the new ExportMesh instance
+        super().__init__(
+            coordinateSystemName    = base_mesh.coordinateSystemName,
+            inputMesh               = exportMesh_dolfinx,
+            gdim                    = base_mesh.gdim,
+        )
