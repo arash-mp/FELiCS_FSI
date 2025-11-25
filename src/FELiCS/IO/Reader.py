@@ -70,6 +70,7 @@ class Reader:
     -----
     - Caching is per-file and cleared when switching sources.
     - Interpolation uses Delaunay triangulation for efficiency.
+    - Retro-compatibility with previous FELiCS files with groupNames is ensured (for now).
 
     Raises
     ------
@@ -515,13 +516,25 @@ class Reader:
         if self._availableVars is not None:
             return
         filePath, groupName         = self._sourceKey
+        
+        # Open file and get variable names
         with h5py.File(filePath, "r") as fileHandle:
-            if groupName in fileHandle:
+            if groupName is None:
+                self._availableVars = list(fileHandle.keys())
+            elif groupName in fileHandle:
                 self._availableVars = list(fileHandle[groupName].keys())
             else:
                 logger.warning(f"Group '{groupName}' not found in file '{filePath}'.")
                 self._availableVars = []
-
+                
+        # Remove variables that should not be there (frequency, gains, etc.)
+        if "omega" in self._availableVars:
+            self._availableVars.remove("omega")
+        if "gain" in self._availableVars:
+            self._availableVars.remove("gain")
+        if "number" in self._availableVars:
+            self._availableVars.remove("number")
+            
     def _load_from_h5(
         self, 
         varNames: List[str]
@@ -544,20 +557,18 @@ class Reader:
             for varName in varNames:
                 if varName in self._rawDataDict:
                     continue
-                basePath            = f"{groupName}/{varName}"
-                if self._isComplex:  # NOTE: not tested yet
-                    # TODO: make _real and _imag in file
-                    magnitude       = fileHandle[basePath + "/magnitude"][:].squeeze()
-                    angle           = fileHandle[basePath + "/angle"][:].squeeze()
-                    self._rawDataDict[varName + "_real"] = magnitude * np.cos(angle)
-                    self._rawDataDict[varName + "_imag"] = magnitude * np.sin(angle)
+                
+                # Retro-compatibility with old FELiCS files
+                if groupName is None:
+                    basePath            = varName
                 else:
-                    if not self._needInterpolation and (basePath + "/magnitude") in fileHandle:
-                        # If we don't interpolate, we load a FELiCS file with magnitude only
-                        self._rawDataDict[varName] = fileHandle[basePath + "/magnitude"][:].squeeze()
-                    else:
-                        # Otherwise we load the full variable
-                        self._rawDataDict[varName] = fileHandle[basePath][:].squeeze()
+                    basePath            = f"{groupName}/{varName}"
+                
+                # Check if variable value is in further "magnitude" group (retro-compatibility with old FELiCS files)
+                if (basePath + "/magnitude") in fileHandle:
+                    self._rawDataDict[varName] = fileHandle[basePath + "/magnitude"][:].squeeze()
+                else:
+                    self._rawDataDict[varName] = fileHandle[basePath][:].squeeze()
 
     # --------------------------
     # Interpolation / mapping
@@ -642,7 +653,7 @@ class Reader:
         varNames: List[str]
     ) -> Dict[str, Any]:
         """
-        Map given variables using precomputed index mapping.
+        Applies precomputed mapping.
 
         Parameters
         ----------
@@ -656,23 +667,7 @@ class Reader:
         """
         
         indices                         = self.mappingImportToCalcP2
-        
-        # If we have complex data, we have _real and _imag in _rawDataDict
-        # In which case we reconstruct the complex array here
-        if self._isComplex:
-            output = {}
-            for varName in varNames:
-                realPart                = self._rawDataDict.get(varName + "_real", None)
-                imagPart                = self._rawDataDict.get(varName + "_imag", None)
-                if realPart is not None and imagPart is not None:
-                    complexArray        = realPart + 1j * imagPart
-                    output[varName]     = complexArray[indices]
-                else:
-                    logger.warning(f"Variable '{varName}' not found as complex in raw data. Skipping.")
-            return output
-        
-        else:
-            return {varName: self._rawDataDict[varName][indices] for varName in varNames}
+        return {varName: self._rawDataDict[varName][indices] for varName in varNames}
 
     # --------------------------
     # Field helpers
@@ -704,10 +699,20 @@ class Reader:
             
             if subInfo["type"] == "vector":
                 for component in subField.getNamesOfSubFields():
-                    names.append(component)
+                    
+                    # Append "_real" and "_imag" if complex
+                    if self._isComplex:
+                        names.append(component + "_real")
+                        names.append(component + "_imag")
+                    else:
+                        names.append(component)
                     
             elif subInfo["type"] == "scalar":
-                names.append(subField.name)
+                if self._isComplex:
+                    names.append(subField.name + "_real")
+                    names.append(subField.name + "_imag")
+                else:
+                    names.append(subField.name)
                 
             else:
                 logger.error(f"Field type '{subInfo['type']}' not supported in Reader yet.")
@@ -742,6 +747,21 @@ class Reader:
         """
         # Field info
         info        = field.info
+        
+        def _assembleComplexArrays(varName: str, arrays: Dict[str, Any]):
+            """Helper to assemble complex arrays from real and imaginary parts. 
+            Or just return real array."""
+            if self._isComplex:
+                assembledArray = arrays[varName + "_real"] + 1j * arrays[varName + "_imag"]
+            else:
+                assembledArray = arrays[varName]
+            return assembledArray
+        
+        # If we load complex data, get list of names without _real/_imag
+        if self._isComplex:
+            baseNames = [name[:-5] for name in arrays.keys() if name.endswith("_real")]
+        else:
+            baseNames = list(arrays.keys())
             
         # Set the arrays in FEM depending on field type
         if info["type"] == "mixed":
@@ -751,36 +771,36 @@ class Reader:
                 if info['subspaces'][iField]['type'] == 'vector':
                     subFields                               = field.getListOfSubFields()
                     for jComp, compName in enumerate(subFields[iField].getNamesOfSubFields()):
-                        if compName in arrays:
+                        if compName in baseNames:
                             indices                         = field.space.sub(iField).sub(jComp).collapse()[1]
-                            field.function.x.array[indices] = arrays[compName]
+                            field.function.x.array[indices] = _assembleComplexArrays(compName, arrays)
                         else:
-                            logger.warning(f"Component '{compName}' not found in loaded arrays for vector subfield '{subFieldName}'. Leaving unchanged.")
+                            logger.warning(f"Component '{compName}' not found in loaded arrays for vector subfield '{subFieldName}'. Set to default values.")
                 # For a scalar subfield, just set the array
                 elif info['subspaces'][iField]['type'] == 'scalar':
-                    if subFieldName in arrays:
+                    if subFieldName in baseNames:
                         indices                             = field.space.sub(iField).collapse()[1]
-                        field.function.x.array[indices]     = arrays[subFieldName]
+                        field.function.x.array[indices]     = _assembleComplexArrays(subFieldName, arrays)
                     else:
-                        logger.warning(f"Subfield '{subFieldName}' not found in loaded arrays for scalar subfield. Leaving unchanged.")
+                        logger.warning(f"Subfield '{subFieldName}' not found in loaded arrays for scalar subfield. Set to default values.")
                 else:
                     logger.error(f"Subfield type '{info['subspaces'][iField]['type']}' not supported in Reader yet.")
                     raise NotImplementedError("Subfield type not supported in Reader yet.")
                 
         elif info["type"] == "vector":
             for i, subFieldName in enumerate(field.getNamesOfSubFields()):
-                if subFieldName in arrays:
+                if subFieldName in baseNames:
                     indices                         = field.space.sub(i).collapse()[1]
-                    field.function.x.array[indices] = arrays[subFieldName]
+                    field.function.x.array[indices] = _assembleComplexArrays(subFieldName, arrays)
                 else:
-                    logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{field.name}'. Leaving unchanged.")
+                    logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{field.name}'. Set to default values.")
         else:
             # Then it's a scalar
             varName                                 = field.name
-            if varName in arrays:
-                field.function.x.array[:]           = arrays[varName]
+            if varName in baseNames:
+                field.function.x.array[:]           = _assembleComplexArrays(varName, arrays)
             else:
-                logger.warning(f"Variable '{varName}' not found in loaded arrays for scalar field. Leaving unchanged.")
+                logger.warning(f"Variable '{varName}' not found in loaded arrays for scalar field. Set to default values.")
         return field
 
     # --------------------------
@@ -832,7 +852,7 @@ class Reader:
         missingVars             = [var for var in wantedVars if var not in self._availableVars]
         presentVars             = [var for var in wantedVars if var in self._availableVars]
         if not presentVars:
-            logger.warning(f"No variables for field '{field.name}' found in file '{filePath}'. Set all to default values.")
+            logger.warning(f"No variables for field '{field.name}' found in file '{filePath}'. Set to default values.")
             return field, missingVars
 
         # Load and process data
