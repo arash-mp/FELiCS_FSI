@@ -112,17 +112,17 @@ In FELiCS, the resolvent implementation contains some additional utilities. They
 
 Applying a discretization scheme and considering a finite element method weighting:  
 $$
-\hat{\mathbf{q}} = R \mathbf{W}_{\text{FEM}} \hat{\mathbf{f}}\ .
+\hat{\mathbf{q}} = \mathbf{R} \mathbf{W}_{\text{FEM}} \hat{\mathbf{f}}\ .
 $$
 We make the framework more flexible by introducing limiter operators ([see Towne et al. 2018](https://doi.org/10.1017/jfm.2018.283)), defining the projections:
 $$ 
-\hat{\mathbf{y}} = \mathbf{P}_r \hat{\mathbf{q}}, \quad \hat{\mathbf{f}} = \mathbf{P}_f \hat{\mathbf{\eta}},
+\hat{\mathbf{y}} = \mathbf{P}_r \hat{\mathbf{q}}, \quad \hat{\mathbf{f}} = \mathbf{P}_f \hat{\bm{\eta}},
 $$
-where $\hat{\mathbf{y}}$ and $\hat{\mathbf{\eta}}$ are the response and input of the reduced system, respectively. 
+where $\hat{\mathbf{y}}$ and $\hat{\bm{\eta}}$ are the response and input of the reduced system, respectively. 
 The operators $\mathbf{P}_r$ and $\mathbf{P}_f$ allow to select and weight the spatial regions and variables involved in the response and inputs, respectively.
 The resolvent operator for the new system becomes: 
 $$
-\hat{\mathbf{y}}=\mathbf{P}_r \hat{\mathbf{q}} = \tilde{\mathbf{R}}\hat{\mathbf{\eta}},\quad\text{with}\quad \mathbf{\tilde{\mathbf{R}}=\mathbf{P}_r R \mathbf{W}_{\text{FEM}}\mathbf{P}_f}$$
+\hat{\mathbf{y}}=\mathbf{P}_r \hat{\mathbf{q}} = \tilde{\mathbf{R}}\hat{\bm{\eta}},\quad\text{with}\quad \mathbf{\tilde{\mathbf{R}}=\mathbf{P}_r R \mathbf{W}_{\text{FEM}}\mathbf{P}_f}$$
 
 
 
@@ -134,12 +134,12 @@ $$
 \langle \hat{\mathbf{a}}, \hat{\mathbf{b}} \rangle = \hat{\mathbf{a}}^H \mathbf{W} \hat{\mathbf{b}},
 $$
 where $"\cdot^H"$ indicates the Hermitian transpose (transpose + complex conjugate).
-The energy norm for the output term is then defined as $\|\hat{\mathbf{y}}\|^2=\hat{\mathbf{y}}^H\mathbf{W}_r\hat{\mathbf{y}}$ and the energy of the input term as $\|\hat{\mathbf{\eta}}\|^2=\hat{\mathbf{\eta}}^H\mathbf{W}_f\hat{\mathbf{\eta}}$. 
+The energy norm for the output term is then defined as $\|\hat{\mathbf{y}}\|^2=\hat{\mathbf{y}}^H\mathbf{W}_r\hat{\mathbf{y}}$ and the energy of the input term as $\|\hat{\bm{\eta}}\|^2=\hat{\bm{\eta}}^H\mathbf{W}_f\hat{\bm{\eta}}$. 
 
 
 The gain squared is defined using this energy norm: 
 $$
-\sigma^2 = \frac{\|\hat{\mathbf{y}}\|^2}{\| \hat{\mathbf{\eta}}\|^2} = \frac{\hat{\mathbf{y}}^H \mathbf{W}_r \hat{\mathbf{y}}}{\hat{\mathbf{\eta}}^H \mathbf{W}_f \hat{\mathbf{\eta}}}.
+\sigma^2 = \frac{\|\hat{\mathbf{y}}\|^2}{\| \hat{\bm{\eta}}\|^2} = \frac{\hat{\mathbf{y}}^H \mathbf{W}_r \hat{\mathbf{y}}}{\hat{\bm{\eta}}^H \mathbf{W}_f \hat{\bm{\eta}}}.
 $$
 
 Currently, two norms are available by default in FELiCS:
@@ -155,9 +155,9 @@ The current version of the Chu norm implemented in FELiCS is only compatible wit
 ### Equivalent eigenvalue problem
 We introduce the resolvent in the expression for the gains
 $$
-\sigma^2=\frac{\hat{\mathbf{\eta}}^H \tilde{\mathbf{R}}^H \mathbf{W}_r \tilde{\mathbf{R}} \hat{\mathbf{\eta}}}{\hat{\mathbf{\eta}}^H \mathbf{W}_f \hat{\mathbf{\eta}}}.
+\sigma^2=\frac{\hat{\bm{\eta}}^H \tilde{\mathbf{R}}^H \mathbf{W}_r \tilde{\mathbf{R}} \hat{\bm{\eta}}}{\hat{\bm{\eta}}^H \mathbf{W}_f \hat{\bm{\eta}}}.
 $$
-Using the Cholesky decomposition for the forcing weighting matrix,  $\mathbf{W}_f =  \mathbf{M}_f^H \mathbf{M}_f$, and introducing a new function $\hat{\mathbf{g}}=\mathbf{M}_f\hat{\mathbf{\eta}}$, we can re-write the definition of the gain as 
+Using the Cholesky decomposition for the forcing weighting matrix,  $\mathbf{W}_f =  \mathbf{M}_f^H \mathbf{M}_f$, and introducing a new function $\hat{\mathbf{g}}=\mathbf{M}_f\hat{\bm{\eta}}$, we can re-write the definition of the gain as 
 $$\sigma^2 = \frac{\hat{\mathbf{g}}^H (\mathbf{M}_f^H)^{-1} \tilde{\mathbf{R}}^H \mathbf{W}_r \tilde{\mathbf{R}} (\mathbf{M}_f)^{-1} \hat{\mathbf{g}}}{\hat{\mathbf{g}}^H\hat{\mathbf{g}}}.$$
 It takes on the form of a Rayleigh quotient: $\max \sigma^2$ is the solution of the following HEVP (Hermitian Eigenvalue Problem):
 $$
@@ -165,9 +165,9 @@ $$
 $$
 or in the original variables:
 $$
-\mathbf{W}_f^{-1} \tilde{\mathbf{R}}^H \mathbf{W}_r \tilde{\mathbf{R}} \hat{\mathbf{\eta}}=\lambda\hat{\mathbf{\eta}}$$
+\mathbf{W}_f^{-1} \tilde{\mathbf{R}}^H \mathbf{W}_r \tilde{\mathbf{R}} \hat{\bm{\eta}}=\lambda\hat{\bm{\eta}}$$
 or:
-$$\mathbf{W}_f^{-1} \mathbf{P}_f^H \mathbf{W}_{\text{FEM}}^H R^H \mathbf{P}_r^H \mathbf{W}_r\mathbf{P}_r R \mathbf{W}_{\text{FEM}}\mathbf{P}_f \hat{\mathbf{\eta}}=\lambda\hat{\mathbf{\eta}}.$$
+$$\mathbf{W}_f^{-1} \mathbf{P}_f^H \mathbf{W}_{\text{FEM}}^H \mathbf{R}^H \mathbf{P}_r^H \mathbf{W}_r\mathbf{P}_r \mathbf{R} \mathbf{W}_{\text{FEM}}\mathbf{P}_f \hat{\bm{\eta}}=\lambda\hat{\bm{\eta}}.$$
 
 ```{note}
 For real operators, such as $\mathbf{P}_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
@@ -175,11 +175,11 @@ For real operators, such as $\mathbf{P}_f,\, W_{FEM}, \,...$ the Hermitian trans
 
 Finally, we can also re-write the HEVP in terms of the linear operator:
 $$
-\mathbf{W}_f^{-1}~\mathbf{P}_f^H~ \mathbf{W}_{\text{FEM}}^H~(\left(-\mathrm{j} \omega \mathbf{B}-\mathbf{A}\right)^{-1})^H~\mathbf{P}_r^H~\mathbf{W}_r~\mathbf{P}_r~\left(-\mathrm{j} \omega \mathbf{B}-\mathbf{A}\right)^{-1}~\mathbf{W}_{\text{FEM}}~\mathbf{P}_f~\hat{\mathbf{\eta}}=\lambda~\hat{\mathbf{\eta}}.
+\mathbf{W}_f^{-1}~\mathbf{P}_f^H~ \mathbf{W}_{\text{FEM}}^H~(\left(-\mathrm{j} \omega \mathbf{B}-\mathbf{A}\right)^{-1})^H~\mathbf{P}_r^H~\mathbf{W}_r~\mathbf{P}_r~\left(-\mathrm{j} \omega \mathbf{B}-\mathbf{A}\right)^{-1}~\mathbf{W}_{\text{FEM}}~\mathbf{P}_f~\hat{\bm{\eta}}=\lambda~\hat{\bm{\eta}}.
 $$
 This is the expression implemented in FELiCS.
 
-After solving the HEVP, the full forcing vectors are obtained from $\hat{\mathbf{f}}=\mathbf{P}_f\hat{\mathbf{\eta}}$ and the response vectors are re-computed by applying $\hat{\mathbf{q}} = R \hat{\mathbf{f}}$.
+After solving the HEVP, the full forcing vectors are obtained from $\hat{\mathbf{f}}=\mathbf{P}_f\hat{\bm{\eta}}$ and the response vectors are re-computed by applying $\hat{\mathbf{q}} = \mathbf{R} \hat{\mathbf{f}}$.
 
 ```{note}
 Based on the above, the forcing vectors $\hat{\mathbf{f}}$ obtained from FELiCS have a unit norm over the (forcing) domain, while the response vectors $\hat{\mathbf{q}}$ have a norm equal to $\sigma$.

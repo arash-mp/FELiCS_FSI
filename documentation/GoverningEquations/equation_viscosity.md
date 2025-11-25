@@ -18,10 +18,10 @@ References:
 - [Demange et al. 2024](https://doi.org/10.2514/6.2024-3170)
 
 Nomenclature:
-- $T$: Temperature
-- $T_0$: Reference temperature
+- $T$: temperature
+- $T_0$: reference temperature
 - $\mu$: molecular dynamic viscosity at temperature $T$
-- $\mu_0$: Reference dynamic viscosity at reference temperature $T_0$
+- $\mu_0$: reference dynamic viscosity at reference temperature $T_0$
 - $C$: Sutherland's constant
 
 
@@ -29,7 +29,7 @@ The Sutherland model is
 $$
 \mu = \mu_0 \frac{T_0 +C}{T+C}(\frac{T}{T_0})^{3/2}
 $$
-It is used for calculating dynamic molecular viscosity of the mean flow.
+It is used for calculating the dynamic molecular viscosity of the mean flow.
 
 ```{note}
 The linearized form of the Sutherland model is not implemented in FELiCS yet.
