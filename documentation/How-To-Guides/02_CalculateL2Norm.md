@@ -1,4 +1,4 @@
-# Calculate the L2-norm of a field
+# How to calculate the L2-norm of a field
 
 **Step 1: Create FELiCSMesh, FELiCSSpace and Field**
 
@@ -6,6 +6,9 @@
 
 ```python
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
+from FELiCS.SpaceDisc.FEMSpaces  import createFunctionSpace
+from FELiCS.Fields.Field         import Field
+from FELiCS.IO.Reader            import Reader
 
 meshFileName = "./square_mesh.msh"
 coordinateSystemName = "Cartesian"
@@ -13,16 +16,23 @@ coordinateSystemName = "Cartesian"
 # Create a FELiCS mesh from the gmsh file
 mesh = FELiCSMesh(coordinateSystemName=coordinateSystemName, meshFileName=meshFileName)
 
-from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
+scalarSpace = createFunctionSpace(mesh, degree=2, dim=1)
 
-scalarSpace = getFELiCSSpace(mesh, order=2, dim=1)
-
-from FELiCS.Fields.Field import Field
-
-phi = Field(scalarSpace, mesh=mesh)
-phi.importH5("function_values_sine")
+phi = Field(scalarSpace, mesh=mesh, name="function_sine")
+phi.importData(Reader(),"input.h5")
+phi.plot()
 
 ```
+
+    Info     | FELiCSMesh.py          | __init__                   (line 75  ) : Opening mesh file: ./square_mesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 83  ) : Mesh contains 513 nodes and 1024 elements
+
+
+
+    
+![png](output_2_1.png)
+    
+
 
 **Step 2: Calculate the L2-norm of a field**
 
@@ -39,4 +49,12 @@ For this, the `Field` class has the method `calculateL2Norm()` which computes th
 u_norm = phi.calculateL2Norm()
 
 print(f"L2-norm of the field: {u_norm}")
+```
+
+    L2-norm of the field: (0.49952523537468385+0j)
+
+
+
+```python
+
 ```
