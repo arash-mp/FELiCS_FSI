@@ -839,8 +839,11 @@ class Reader:
         NotImplementedError
             If the field type is not supported.
         """
+
+        # Add ".h5" to the file path it not specified
+        # TODO Sophie: ask Simon
         fullFilePath = Path(filePath)
-        if fullFilePath.suffix != ".h5" or fullFilePath.suffix != "fel":
+        if fullFilePath.suffix != ".h5" and fullFilePath.suffix != ".fel":
             fullFilePath = str(fullFilePath.with_name(fullFilePath.stem + ".h5"))
 
         # Update the calculation mesh and purge cached properties if source changed 

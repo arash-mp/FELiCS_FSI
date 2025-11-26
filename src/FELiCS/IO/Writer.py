@@ -37,7 +37,7 @@ class Writer:
         self.exportSpace  = createFunctionSpace(self.exportMesh, degree = 1, dim = 1)  
 
         # create the export folder, if it does not already exist
-        os.makedirs(exportFolder, exist_ok=True)
+        os.makedirs(exportDir, exist_ok=True)
 
         # export the mesh into the export folder
         meshFileName = self.exportFolder + "/mesh.h5"
