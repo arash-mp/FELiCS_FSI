@@ -339,10 +339,11 @@ class Reader:
         currentSourceDir         = os.path.dirname(filePath)
         if os.path.abspath(currentSourceDir) != os.path.abspath(self._sourceDir):
             # NOTE: maybe we do something specific in that case?
-            logger.warning(
-                f"Reader source directory '{currentSourceDir}' does not match "
-                f"the Reader instance sourceDir '{self._sourceDir}': expected behavior issues."
-            )
+            #logger.warning(
+            #    f"Reader source directory '{currentSourceDir}' does not match "
+            #    f"the Reader instance sourceDir '{self._sourceDir}': expected behavior issues."
+            #)
+            pass
 
         # Set new source if different
         key = (os.path.abspath(filePath), groupName)

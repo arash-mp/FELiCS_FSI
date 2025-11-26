@@ -46,19 +46,19 @@ from FELiCS.IO.Reader    import Reader
 from FELiCS.IO.Writer    import Writer
 from FELiCS.Fields.Field import Field
 
-# the Reader object can be initialized with a source directory, default is the current directory
-reader = Reader(sourceDir="Input")
+# create Reader object
+reader = Reader()
 # for the Writer object, the default export directory is "Output"
 writer = Writer()
 
 # create Field object
 Field1 = Field(space, mesh=mesh, name="function_sine")
 # import data: the name of the field should be the same as the name of the data set to import
-Field1.importData(reader, importFilePath="Input/input.h5") 
+Field1.importData(reader, importFilePath="Input/input") 
 
+Field2 = Field(space, mesh=mesh, name="function_square")
+Field2.importData(reader, importFilePath="Input/input") 
 
-Field2 = Field(space, mesh=mesh)
-#Field2.importH5("function_values_sine")
 
 Field3 = Field1 + Field2
 
@@ -72,12 +72,26 @@ The resulting "xmf" file, which has been exported to the default export director
 
 
 ```python
+Field1.plot()
+Field2.plot()
 Field3.plot()
 ```
 
 
     
 ![png](output_11_0.png)
+    
+
+
+
+    
+![png](output_11_1.png)
+    
+
+
+
+    
+![png](output_11_2.png)
     
 
 

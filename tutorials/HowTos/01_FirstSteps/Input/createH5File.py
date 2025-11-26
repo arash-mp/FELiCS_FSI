@@ -8,7 +8,8 @@ x = (X.flatten())
 y = (Y.flatten())
 
 
-function_sine = np.sin(2.*np.pi*x) * np.sin(2.*np.pi*y)
+function_sine   = np.sin(2.*np.pi*x) * np.sin(2.*np.pi*y)
+function_square = x**2 + y**2
 
 file = "input.h5"
 
@@ -16,3 +17,4 @@ with h5py.File(file, 'w') as f:
     f.create_dataset('x',   data=x)
     f.create_dataset('y',   data=y)
     f.create_dataset('function_sine', data = function_sine)
+    f.create_dataset('function_square', data = function_square)
