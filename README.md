@@ -6,7 +6,7 @@
 ## Welcome to FELiCS
 
 [![Documentation Status](https://img.shields.io/badge/docs-latest-blue.svg)](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/)
-[![Website](https://img.shields.io/badge/website-felics2.0-blue?logo=firefox-browser)](https://www.tu.berlin/flow/forschung/projekte/felics-projekt)
+[![Website](https://img.shields.io/badge/website-felics2.0-blue?logo=firefox-browser)](https://www.felics.eu)
 [![Wiki](https://img.shields.io/badge/wiki-developer%20guide-green?logo=gitbook)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/)
 [![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/LICENSE.txt)
 [![Release](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/badges/release.svg?order_by=release_at)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/releases)
