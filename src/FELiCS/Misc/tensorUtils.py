@@ -90,8 +90,10 @@ class CoordinateSystem():
         
         self._m   = m
         self.gdim = gdim
-        if trueDim == None:
+        if trueDim == None and m==0:
             self.dim  = gdim #should be updated later by using "setTrueDim" if there are any spectral dimensions
+        elif trueDim == None and m!=0:
+            self.dim  = gdim + 1
         else:
             self.dim  = trueDim
         self.x    = x

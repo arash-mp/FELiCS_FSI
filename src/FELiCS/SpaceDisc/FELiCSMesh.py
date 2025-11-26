@@ -124,8 +124,14 @@ class FELiCSMesh:
         else:
             logger.error('Coord. syst not yet implemented in tensor framework.')
             raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
+
+        # update dimension if m!=0, i.e. if there is a spectral dimension
+        if m!=0:
+            self.dim = gdim + 1
+        else:
+            self.dim = self.gdim
+
         self._coordinates = self.coordinates()
-        self.dim = self.gdim
 
     @property
     def exportMesh(self):
