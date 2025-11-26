@@ -132,7 +132,7 @@ Run the pyhton script [PlotScatter.py](./../../tutorials/modal_analysis_tutorial
 ![](./../../tutorials/modal_analysis_tutorial/pic/eigenspectrum.png) <a id="fig:EigSpec"></a>
 Figure 1. Eigenspectrum
 
-In [Figure 1](#EigSpec), an eigenvalue with a positive imaginary part stands out. We use paraview to visualize the corresponding real part of the eigenmode stored in `ModalSolution_Omega_Direct_(0.745+0.013j).xmf`. 
+In [Figure 1](#EigSpec), an eigenvalue with a positive imaginary part stands out. We use paraview to visualize the corresponding real part of the eigenmode stored in `Mode_Modal_Direct_Omega_0.745+0.013j.xmf`. 
 
 ![](./../../tutorials/modal_analysis_tutorial/pic/ux_real.png) <a id="fig:RealUx"></a>
 Figure 2. Real eigenmode, $u'_x$

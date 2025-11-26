@@ -129,12 +129,13 @@ After the computation, the `output_dir/` has been created. You will find there t
 .
 └── output_dir
     ├ gains.csv
-    ├ meanflow.h5
-    ├ Resolvent_mesh.h5
-    ├ Resolvent_Omega3.1_Forcing_gain0.xmf
-    ├ Resolvent_Omega3.1_Forcing_gain0.h5
-    ├ Resolvent_Omega3.1_Response_gain0.xmf
-    ├ Resolvent_Omega3.1_Response_gain0.h5
+    ├ MeanFlow.h5
+    ├ MeanFlow.xmf
+    ├ mesh.h5
+    ├ Mode_Resolvent_Forcing_Omega_3.1_GainNb_0.xmf
+    ├ Mode_Resolvent_Forcing_Omega_3.1_GainNb_0.h5
+    ├ Mode_Resolvent_Response_Omega_3.1_GainNb_0.xmf
+    ├ Mode_Resolvent_Response_Omega_3.1_GainNb_0.h5
     └ ...
 ```
 We postprocess the outputed files using the python script [```PlotMode.py```](../../tutorials/resolvent_tutorial/PlotMode.py).

@@ -110,19 +110,20 @@ After running an analysis the output directory will contain the following file t
 .
 └── output_dir
     ├── solution.h5
-    ├── solution.xdmf
-    ├── meanflow.h5
-    ├── Modal_mesh.h5
+    ├── solution.xmf
+    ├── MeanFlow.h5
+    ├── MeanFlow.xmf
+    ├── mesh.h5
     ├── spectrum.csv
     └── log
-        ├── felics_06.03.2025-10.44.56.log
-        └── felics_06.03.2025-10.45.01.log
+        ├── felics_29.11.2025-10.44.56.log
+        └── felics_29.11.2025-10.45.01.log
 ```
 where
 * `solution.h5` - Contains the FELiCS solutions, the file names will change depending on the type of analysis and frequencies.
-* `meanflow.h5` - Contains the mean flow fields interpolated onto the export FEM mesh.
+* `MeanFlow.h5` - Contains the mean flow fields interpolated onto the export FEM mesh.
 * `Modal_mesh.h5` - The export FEM mesh. Note that the name will change with the type of analysis.
-* `solution.xdmf` - Paraview metadata files which refers to the data from the three files above.
+* `solution.xmf, MeanFlow.xmf` - Paraview metadata files.
 * `spectrum.csv` - File containing the eigenvalues or gains from the modal and resolvent analysis. Again, the file name changes based on the type of analysis.
 * `log/` - Directory containing the verbose output from the different runs.
 
