@@ -1,7 +1,10 @@
 import 	argparse
-from 	runModal     				import  runModal      
-from 	runResolvent    			import  runResolvent  
+from 	runModal     				import  runModal  
+from 	runResolvent    			import  runResolvent
 from 	runInputOutput  			import  runInputOutput
+# from 	runModal_testReader     	import  runModal      
+# from 	runResolvent_testReader    	import  runResolvent  
+# from 	runInputOutput_testReader  	import  runInputOutput
 from 	FELiCS.Parameters.config	import 	config
 from 	FELiCS.Misc.logging			import  Logger
 

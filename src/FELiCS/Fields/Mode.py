@@ -61,7 +61,7 @@ class Mode(Field):
         # Define name of the subfields (variables of the mode)
         self.namesOfSubFields   = self.getNamesOfSubFields()
 
-        if modeType == None:
+        if modeType is None:
             # Set some defaults in not a good way .> TODO: fix this as a property
             if self.analysisType == AnalysisType.MODAL:
                 self.modeType = ModeType.DIRECT
@@ -93,7 +93,7 @@ class Mode(Field):
         try:
             return self._gain
         except: 
-            logger.error('For this mode object no gain was defined. Returning "-9999."...')
+            logger.warning('For this mode object no gain was defined. Returning "-9999."...')
             return -9999.
 
     @gain.setter
@@ -115,7 +115,7 @@ class Mode(Field):
         try:
             return self._gainNumber
         except: 
-            logger.error('For this mode object no gain number was defined. Returning "-1"...')
+            logger.warning('For this mode object no gain number was defined. Returning "-1"...')
             return -1
 
     @gainNumber.setter
@@ -143,7 +143,7 @@ class Mode(Field):
         try:
             return self._frequency
         except: 
-            logger.error('For this mode object no frequency was defined. Returning "-9999."...')
+            logger.warning('For this mode object no frequency was defined. Returning "-9999."...')
             return -9999.
 
     @frequency.setter
@@ -172,7 +172,7 @@ class Mode(Field):
         try:
             return self._eigenValue
         except: 
-            logger.error('For this mode object no eigen value was defined. Returning "-9999."...')
+            logger.warning('For this mode object no eigen value was defined. Returning "-9999."...')
             return -9999.
 
     @eigenValue.setter
@@ -200,7 +200,7 @@ class Mode(Field):
         try:
             return self._waveNumber
         except: 
-            logger.error('For this mode object no waveNumber was defined. Returning "-9999."...')
+            logger.warning('For this mode object no waveNumber was defined. Returning "-9999."...')
             return -9999.
  
     @waveNumber.setter
@@ -229,7 +229,7 @@ class Mode(Field):
         try:
             return self._guess
         except: 
-            logger.error('For this mode object no guess was defined. Returning "-9999."...')
+            logger.warning('For this mode object no guess was defined. Returning "-9999."...')
             return -9999.
 
     @guess.setter
@@ -257,7 +257,7 @@ class Mode(Field):
         try:
             return self._error
         except: 
-            logger.error('For this mode object no error was defined. Returning "-9999."...')
+            logger.warning('For this mode object no error was defined. Returning "-9999."...')
             return -9999.
 
     @error.setter
@@ -275,7 +275,7 @@ class Mode(Field):
 
     def exportToH5(self, writer, fileName=None):
         # create standard fileName if none is given
-        if fileName == None:
+        if fileName is None:
             fileName = "Mode_" \
                        + self.analysisType.name.capitalize() + "_" \
                        + self.modeType.name.capitalize() + "_" \
@@ -318,43 +318,36 @@ class Mode(Field):
         else:
             # Check that analysis type is set to set a default name
             if self.analysisType == AnalysisType.MODAL:
-                eigval      = self.getEigenValue()
-                modeType    = 'Direct' if not self.isAdjoint else 'Adjoint'
-                fileName    = f'ModalSolution_Omega_{modeType}_{np.round(eigval, 3)}.h5'
+                modeType    = 'Direct' if self.modeType is ModeType.DIRECT else 'Adjoint'
+                fileName    = f'Mode_Modal_{modeType}_Omega_{"{:.3f}".format(self.omega)}.h5'
             elif self.analysisType == AnalysisType.RESOLVENT:
-                frequency   = self.getFrequency()   
-                modeType    = 'Response' if self.isResponse else 'Forcing'
-                fileName    = f'Resolvent_Omega{np.round(frequency, 3)}_{modeType}_gain{self.getGainNumber()}.h5'
+                modeType    = 'Response' if self.modeType is ModeType.RESPONSE else 'Forcing'
+                fileName    = f'Mode_Resolvent_{modeType}_Omega_{"{:.3f}".format(self.frequency)}_GainNb_{self.gainNumber}.h5'
             elif self.analysisType == AnalysisType.INPUT_OUTPUT:
-                frequency   = self.getFrequency()
-                fileName    = f'Input-Output_Omega{np.round(frequency, 3)}_Response_gain0.h5'   # NOTE: Always gain 0 for IO modes
+                fileName    = f'Mode_Input_output_Response_Omega_{"{:.3f}".format(self.frequency)}.h5'
         
-        # File name and group name
+        # File name
         importFilePath      = os.path.join(importDirPath, fileName)
-        groupName           = "fluctuation/0/pointData/"  # TODO: remove all group names in FELiCS files
         
         # Call the reader from Field parent class
         self, notInFile     = super().importData(
             reader,
             importFilePath,
-            groupName
         )
         
         # Read eignvalue or gain from file
         if self.analysisType == AnalysisType.MODAL:
             with h5py.File(importFilePath, 'r') as f:
-                eigval = complex(f["fluctuation/0"].attrs['frequency']) # TODO: save the eigenvalue not as a string in files!
-                self.setEigenValue(eigval)
-        
-        elif self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
+                self.eigenValue = f["omega"][()]
+                
+        elif self.analysisType == AnalysisType.RESOLVENT:
             with h5py.File(importFilePath, 'r') as f:
-                freq_string = f["fluctuation/0"].attrs['frequency']
-                if 'j' in freq_string:
-                    frequency = complex(freq_string)
-                else:
-                    frequency = float(freq_string)
-                self.setFrequency(frequency)
-        
-        # TODO: Save the gain and eigenvalues in files and set them here
+                self.frequency  = f["omega"][()]     # NOTE: slight inconsistency in naming
+                self.gain       = f["gain"][()]
+                self.gainNumber = f["number"][()]
+                
+        elif self.analysisType == AnalysisType.INPUT_OUTPUT:
+            with h5py.File(importFilePath, 'r') as f:
+                self.frequency  = f["omega"][()]    # NOTE: slight inconsistency in naming
         
         return self, notInFile

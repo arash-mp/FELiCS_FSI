@@ -38,10 +38,9 @@ equation_reaction.md
 
 ##### 4. Miscellaneous
 
-We elaborate on additional components currently implemented in FELiCS, such as the sponge layer and the tensor framework, providing an overview of their functionality and integration.
+We elaborate on additional components currently implemented in FELiCS, such as the sponge layer, providing an overview of their functionality and integration.
 
 ```{toctree}
 :maxdepth: 1
 equation_sponge.md
-misc_tensor_formalism.md
 ```
