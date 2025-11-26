@@ -14,10 +14,11 @@ logger = Logger.get_logger("felics")
 
 class Writer:
     
-    def __init__(self, mesh, exportDir = "Output"):
+    def __init__(self, mesh = None, exportDir = "Output"):
         """
         Function arguments:
-        - mesh: FELiCSMesh object 
+        - mesh: FELiCSMesh object, optional
+               mesh 
         - exportDir: str, optional 
                directory in which the files will be saved
 
@@ -25,24 +26,30 @@ class Writer:
 
         """
 
-        # Notes:
+        # Notes for docstring:
         # - the writer is specified for a mesh and an export directory
-        # - when initialized, the writer creates the export directory and exports the mesh
+        # - when initialized, the writer creates the export directory and exports the mesh, if given
+        # - if no mesh is given, the writer exports the mesh from the first field that is exported
+        # - there can be as many exports in one export folder as is needed
+        # - CAUTION: if any of the exported fields are defined on a different mesh, a separate Writer object
+        #            has to be created, which has a different export directory, else reading the xmf files will 
+        #            not work
 
         import os
 
         self.mesh         = mesh
         self.exportFolder = exportDir
-        self.exportMesh   = mesh.exportMesh
-        self.exportSpace  = createFunctionSpace(self.exportMesh, degree = 1, dim = 1)  
 
         # create the export folder, if it does not already exist
         os.makedirs(exportDir, exist_ok=True)
 
         # export the mesh into the export folder
-        meshFileName = self.exportFolder + "/mesh.h5"
-        meshPath     = Path(meshFileName)
-        self.mesh.saveInFELiCSFormat(meshFileName)    
+        self.meshFileName = self.exportFolder + "/mesh.h5"
+        if self.mesh != None:
+            self.exportMesh   = mesh.exportMesh
+            self.exportSpace  = createFunctionSpace(self.exportMesh, degree = 1, dim = 1)  
+            self.mesh.saveInFELiCSFormat(self.meshFileName)    
+
 
 
     def exportListOfFieldsToH5(self, listOfFields, fileName, attributes = None):
@@ -85,6 +92,15 @@ class Writer:
 
 
     def _export(self, listOfScalarFields, fileName, attributes):
+
+        #-----------------------------------------------------------------------
+        ## save the mesh of the first field if no mesh has been given at initialization 
+        #-----------------------------------------------------------------------
+        if self.mesh == None:
+            self.mesh         = listOfScalarFields[0].mesh
+            self.exportMesh   = self.mesh.exportMesh
+            self.exportSpace  = createFunctionSpace(self.exportMesh, degree = 1, dim = 1)  
+            self.mesh.saveInFELiCSFormat(self.meshFileName)    
 
         #-----------------------------------------------------------------------
         ## conversions to export fields

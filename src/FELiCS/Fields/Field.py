@@ -807,7 +807,7 @@ class Field:
         if self.space.num_sub_spaces > 1:
             raise NotImplementedError("Plotting is only implemented for scalar fields. Use getListOfSingleFields() to get subfields. These can then be plotted individually with the same method.")
         
-        FieldsList = self.getListOfSingleFields()
+        FieldsList = self.getListOfSubFields()
 
         # Create figure outside the loop
         fig, axes = plt.subplots(1, 1, figsize=(6, 6))
@@ -825,13 +825,13 @@ class Field:
         # contour_lines = axes.tricontour(triang_scalar, phi, levels=10, colors='black', alpha=0.5, linewidths=0.5)
 
         # Add colorbar for phi
-        cbar = plt.colorbar(contour, ax=axes, label=r'$\phi$ '+ self.getName())
+        cbar = plt.colorbar(contour, ax=axes, label=r'$\phi$ '+ self.name)
 
         # Set labels and title
         axes.set_xlabel('x')
         axes.set_ylabel('y')
-        if self.getName() != "":
-            axes.set_title(self.getName())
+        if self.name != "":
+            axes.set_title(self.name)
         else:
             axes.set_title('Scalar Field ')
         axes.set_aspect('equal')

@@ -14,26 +14,26 @@ The FELiCSMesh is a wrapper for a dolfinx mesh, that contains additional attribu
 ```python
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 
-meshFileName = "./square_mesh.msh"
+meshFileName         = "Input/square_mesh.msh"
 coordinateSystemName = "Cartesian"
 
 # Create a FELiCS mesh from the gmsh file
-mesh = FELiCSMesh(coordinateSystemName=coordinateSystemName, meshFileName=meshFileName)
+mesh = FELiCSMesh(coordinateSystemName, meshFileName)
 ```
 
-    [38;20mInfo     | FELiCSMesh.py          | __init__                   (line 78  ) : Opening mesh file: ./square_mesh.msh[0m
-    [38;20mInfo     | FELiCSMesh.py          | __init__                   (line 86  ) : Mesh contains 513 nodes and 1024 elements[0m
+    Info     | FELiCSMesh.py          | __init__                   (line 75  ) : Opening mesh file: Input/square_mesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 83  ) : Mesh contains 513 nodes and 1024 elements
 
 
 **Step 2: Create a scalar function space**
 
-Next we create a dolfinx function space from our FELiCSMesh object with the polynomial order and the dimension of the space. In FELiCS, only continuous Lagrange elements are used. Because our space should be scalar, we choose dim=1.
+Next we create a dolfinx function space from our FELiCSMesh object with the polynomial degree and the dimension of the space. In FELiCS, only continuous Lagrange elements are used. Because our space should be scalar, we choose dim=1.
 
 
 ```python
-from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
+from FELiCS.SpaceDisc.FEMSpaces import createFunctionSpace
 
-space = getFELiCSSpace(mesh, order=2, dim=1)
+space = createFunctionSpace(mesh, degree=2, dim=1)
 ```
 
 **Step 3: Create fields and import from H5 files**
@@ -42,19 +42,46 @@ Now things are getting interesting. The Field object can store fields on our fun
 
 
 ```python
+from FELiCS.IO.Reader    import Reader
+from FELiCS.IO.Writer    import Writer
 from FELiCS.Fields.Field import Field
 
-Field1 = Field(space, mesh=mesh)
-Field1.importH5("function_values_quadratic")
+# the Reader object can be initialized with a source directory, default is the current directory
+reader = Reader(sourceDir="Input")
+# for the Writer object, the default export directory is "Output"
+writer = Writer()
+
+# create Field object
+Field1 = Field(space, mesh=mesh, name="function_sine")
+# import data: the name of the field should be the same as the name of the data set to import
+Field1.importData(reader, importFilePath="Input/input.h5") 
+
+
 Field2 = Field(space, mesh=mesh)
-Field2.importH5("function_values_sine")
+#Field2.importH5("function_values_sine")
 
 Field3 = Field1 + Field2
 
-Field3.exportH5("field_sum")
+Field3.exportToH5(writer, "field_sum")
 
 ```
 
 **Visualize the results**
 
-The resulting "xdmf" file can be load e.g. into Paraview. Our field now looks like this: (TODO: get plot from Field)
+The resulting "xmf" file, which has been exported to the default export directory "Output", can be loaded e.g. into Paraview. For small meshes, the plot functionality of "Field" can be used:
+
+
+```python
+Field3.plot()
+```
+
+
+    
+![png](output_11_0.png)
+    
+
+
+
+```python
+
+```
