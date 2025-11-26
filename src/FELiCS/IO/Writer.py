@@ -14,25 +14,25 @@ logger = Logger.get_logger("felics")
 
 class Writer:
     
-    def __init__(self, mesh, exportFolder = "Output"):
+    def __init__(self, mesh, exportDir = "Output"):
         """
         Function arguments:
         - mesh: FELiCSMesh object 
-        - exportFolder: str, optional 
-               folder in which the files will be saved
+        - exportDir: str, optional 
+               directory in which the files will be saved
 
         Function returns:
 
         """
 
         # Notes:
-        # - the writer is specified for a mesh and an export folder
-        # - when initialized, the writer creates the export folder and exports the mesh
+        # - the writer is specified for a mesh and an export directory
+        # - when initialized, the writer creates the export directory and exports the mesh
 
         import os
 
         self.mesh         = mesh
-        self.exportFolder = exportFolder
+        self.exportFolder = exportDir
         self.exportMesh   = mesh.exportMesh
         self.exportSpace  = createFunctionSpace(self.exportMesh, degree = 1, dim = 1)  
 

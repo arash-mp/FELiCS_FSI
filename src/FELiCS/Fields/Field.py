@@ -553,50 +553,6 @@ class Field:
         return self, notInFile
 
 
-    def exportH5(self, fileName, mesh = None):
-        # for now this is a dummy method that we use for the scripting part of the retreat.
-        # fileName: WITHOUT SUFFIX, but WITH PATH
-        # mesh: FELiCSMesh
-        # What it should be: export the field in h5 format, using the fileName (which should contain the whole path)
-        # There should also be an optional possibility to give the mesh, for scripting (or use it inside FELiCS as such?)
-        from dolfinx.io import XDMFFile
-        from mpi4py import MPI
-        import numpy as np
-
-        if mesh != None:
-            with XDMFFile(MPI.COMM_WORLD, fileName+".xdmf", "w") as xdmf:
-                xdmf.write_mesh(mesh.dolfinxMesh)
-                xdmf.write_function(self._function)
-
-        # this is only a dummy for the scripting
-        np.save(fileName+".npy", self.getCoefficientArray())
-
-
-    def importH5(self, fileName, meshFileName = None):
-        # for now this is a dummy method that we use for the scripting part of the retreat.
-        # fileName: WITHOUT SUFFIX, but WITH PATH
-        # mesh: FELiCSMesh
-        # What it should be: import the field in h5 format, using the fileName (which should contain the whole path)
-        # There should also be an optional possibility to give the mesh, for scripting (or use it inside FELiCS as such?)
-        from dolfinx.io import XDMFFile
-        from mpi4py import MPI
-        import numpy as np
-
-        #if meshFileName != None:
-        #    with XDMFFile(MPI.COMM_WORLD, fileName+".xdmf", "r") as xdmf:
-        #        mesh          = xdmf.read_mesh(meshFileName)
-
-        # # this is only a dummy for the scripting
-        if fileName == "function_values_2d":
-            data = np.load(fileName+".npy").reshape(2,-1).T
-            field1, field2 = self.getListOfSubFields()
-            field1.setCoefficientArray(data[:,0])  
-            field2.setCoefficientArray(data[:,1])
-            self.setListOfSubFields([field1, field2])
-        else:
-            self.setCoefficientArray(np.load(fileName+".npy"))
-
-
     def evaluateUflExpression(self, ufl_expression, bcs=[], restartSolver=False):
         """
         Evaluate a UFL expression and update the field accordingly.

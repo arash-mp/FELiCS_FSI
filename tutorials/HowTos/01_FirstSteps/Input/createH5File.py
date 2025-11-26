@@ -10,7 +10,7 @@ y = (Y.flatten())
 
 function_sine = np.sin(2.*np.pi*x) * np.sin(2.*np.pi*y)
 
-file = "function_sine.h5"
+file = "input.h5"
 
 with h5py.File(file, 'w') as f:
     f.create_dataset('x',   data=x)
