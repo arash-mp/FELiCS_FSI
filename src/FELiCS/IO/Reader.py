@@ -3,6 +3,7 @@ import  os
 import  h5py
 from    functools           import cached_property
 from    typing              import Optional, List, Dict, Any, Tuple
+from    pathlib             import Path
 
 # Third party libraries
 import  numpy               as np
@@ -83,7 +84,7 @@ class Reader:
 
     def __init__(
         self,
-        sourceDir:          str,
+        sourceDir:          str  = "",
         needInterpolation:  bool = True,
         felicsMeshFilePath: Optional[str] = None,
         isComplex:          bool = False,
@@ -818,9 +819,13 @@ class Reader:
         NotImplementedError
             If the field type is not supported.
         """
+        fullFilePath = Path(filePath)
+        if fullFilePath.suffix != ".h5" or fullFilePath.suffix != "fel":
+            fullFilePath = str(fullFilePath.with_name(fullFilePath.stem + ".h5"))
+
         # Update the calculation mesh and purge cached properties if source changed 
         self._update_calc_mesh(field)
-        self._update_data_source(filePath, groupName)
+        self._update_data_source(fullFilePath, groupName)
         
         # List of FEM spaces degrees in the field
         subFields               = field.getListOfSubFields() if field.info["type"] == "mixed" else [field]

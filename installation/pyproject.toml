@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "FELiCS"
-version = "2.0"
+version = "3.0.0"
 description = "Finite Element Linearized Combustion Solver"
 dependencies = []
 

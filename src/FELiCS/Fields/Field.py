@@ -449,11 +449,11 @@ class Field:
         # Create  a Field for the gradient
         # The space must be a vector vor a scalar field
         # TODO Sophie: handle order (get it from function?)
-        order = self.space.element.basix_element.degree
+        degree = self.space.element.basix_element.degree
         dim = self.mesh.gdim 
         if self.hasSpectralDimension:
             dim += 1
-        gradientSpace = createFunctionSpace(self.mesh, order=order, dim=dim)
+        gradientSpace = createFunctionSpace(self.mesh, degree=degree, dim=dim)
         gradientField = Field(gradientSpace, self.mesh)
 
         coordSystem = self.mesh.coordinateSystem
@@ -551,8 +551,6 @@ class Field:
         )
         
         return self, notInFile
-
-
 
 
     def exportH5(self, fileName, mesh = None):

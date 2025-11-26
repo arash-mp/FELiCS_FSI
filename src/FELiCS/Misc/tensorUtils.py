@@ -101,10 +101,8 @@ class CoordinateSystem():
             self.J_hat = 1.
         
         elif name == "cylindricalfelics":
-            """
-            Given for {x,y,z} = {r\cos\phi, r\sin\phi, z}, where ordering is
-            {z, r, \phi}.
-            """
+            #Given for {x,y,z} = {r\cos\phi, r\sin\phi, z}, where ordering is
+            #{z, r, \phi}.
             self.J_hat = self.x[1]
 
         else:
