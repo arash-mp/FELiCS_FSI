@@ -445,15 +445,15 @@ class Field:
         # TODO Sophie: throw error if Field is not scalar    
         from ufl import TestFunction, dx
         from FELiCS.Misc.tensorUtils import iGrad, iConj, iDot, Tensor
-        from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
+        from FELiCS.SpaceDisc.FEMSpaces import createFunctionSpace
         # Create  a Field for the gradient
         # The space must be a vector vor a scalar field
         # TODO Sophie: handle order (get it from function?)
-        order = self.space.element.basix_element.degree
+        degree = self.space.element.basix_element.degree
         dim = self.mesh.gdim 
         if self.hasSpectralDimension:
             dim += 1
-        gradientSpace = getFELiCSSpace(self.mesh, order=order, dim=dim)
+        gradientSpace = createFunctionSpace(self.mesh, degree=degree, dim=dim)
         gradientField = Field(gradientSpace, self.mesh)
 
         coordSystem = self.mesh.coordinateSystem
@@ -551,52 +551,6 @@ class Field:
         )
         
         return self, notInFile
-
-
-
-
-    def exportH5(self, fileName, mesh = None):
-        # for now this is a dummy method that we use for the scripting part of the retreat.
-        # fileName: WITHOUT SUFFIX, but WITH PATH
-        # mesh: FELiCSMesh
-        # What it should be: export the field in h5 format, using the fileName (which should contain the whole path)
-        # There should also be an optional possibility to give the mesh, for scripting (or use it inside FELiCS as such?)
-        from dolfinx.io import XDMFFile
-        from mpi4py import MPI
-        import numpy as np
-
-        if mesh != None:
-            with XDMFFile(MPI.COMM_WORLD, fileName+".xdmf", "w") as xdmf:
-                xdmf.write_mesh(mesh.dolfinxMesh)
-                xdmf.write_function(self._function)
-
-        # this is only a dummy for the scripting
-        np.save(fileName+".npy", self.getCoefficientArray())
-
-
-    def importH5(self, fileName, meshFileName = None):
-        # for now this is a dummy method that we use for the scripting part of the retreat.
-        # fileName: WITHOUT SUFFIX, but WITH PATH
-        # mesh: FELiCSMesh
-        # What it should be: import the field in h5 format, using the fileName (which should contain the whole path)
-        # There should also be an optional possibility to give the mesh, for scripting (or use it inside FELiCS as such?)
-        from dolfinx.io import XDMFFile
-        from mpi4py import MPI
-        import numpy as np
-
-        #if meshFileName != None:
-        #    with XDMFFile(MPI.COMM_WORLD, fileName+".xdmf", "r") as xdmf:
-        #        mesh          = xdmf.read_mesh(meshFileName)
-
-        # # this is only a dummy for the scripting
-        if fileName == "function_values_2d":
-            data = np.load(fileName+".npy").reshape(2,-1).T
-            field1, field2 = self.getListOfSubFields()
-            field1.setCoefficientArray(data[:,0])  
-            field2.setCoefficientArray(data[:,1])
-            self.setListOfSubFields([field1, field2])
-        else:
-            self.setCoefficientArray(np.load(fileName+".npy"))
 
 
     def evaluateUflExpression(self, ufl_expression, bcs=[], restartSolver=False):
@@ -837,7 +791,55 @@ class Field:
         petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
 
+    def plot(self):
+        """
+        Plotting function for debugging purposes. This function can be used, to check if a
+        field looks as expected and rule out e.g. import problems.
 
+        Notes
+        -----
+        - This method provides a simple visualization of the field.
+        """
+        import matplotlib.pyplot as plt
+        from matplotlib.tri import Triangulation
+        import numpy as np
+
+        if self.space.num_sub_spaces > 1:
+            raise NotImplementedError("Plotting is only implemented for scalar fields. Use getListOfSingleFields() to get subfields. These can then be plotted individually with the same method.")
+        
+        FieldsList = self.getListOfSubFields()
+
+        # Create figure outside the loop
+        fig, axes = plt.subplots(1, 1, figsize=(6, 6))
+
+        # Create the plot
+        phi = self.getCoefficientArray()
+        dof_coordinates = self.space.tabulate_dof_coordinates()
+
+        x = dof_coordinates[:, 0]
+        y = dof_coordinates[:, 1]
+        triang_scalar = Triangulation(x, y)
+
+        # Create contour plot of phi
+        contour = axes.tricontourf(triang_scalar, phi, levels=20, cmap='RdBu_r', alpha=0.7)
+        # contour_lines = axes.tricontour(triang_scalar, phi, levels=10, colors='black', alpha=0.5, linewidths=0.5)
+
+        # Add colorbar for phi
+        cbar = plt.colorbar(contour, ax=axes, label=r'$\phi$ '+ self.name)
+
+        # Set labels and title
+        axes.set_xlabel('x')
+        axes.set_ylabel('y')
+        if self.name != "":
+            axes.set_title(self.name)
+        else:
+            axes.set_title('Scalar Field ')
+        axes.set_aspect('equal')
+        axes.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.show()
+        
 
     ### dunder methods for overloading arithmetic operators ###
     def __add__(self, other):

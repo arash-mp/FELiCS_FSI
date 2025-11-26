@@ -125,6 +125,7 @@ class FELiCSMesh:
             logger.error('Coord. syst not yet implemented in tensor framework.')
             raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
         self._coordinates = self.coordinates()
+        self.dim = self.gdim
 
     @property
     def exportMesh(self):

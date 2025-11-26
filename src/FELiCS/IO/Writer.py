@@ -6,43 +6,50 @@ from    scipy.interpolate   import griddata
 from    FELiCS.Fields.Field import Field
 from    FELiCS.Misc.logging import Logger
 from    FELiCS.IO.Mapping   import Mapping
+from    FELiCS.SpaceDisc.FEMSpaces import createFunctionSpace
 
-from FELiCS.SpaceDisc.FEMSpaces import getFELiCSSpace
 
 # Get the logger
 logger = Logger.get_logger("felics")
 
 class Writer:
     
-    def __init__(self, mesh, exportFolder = "Output"):
+    def __init__(self, mesh = None, exportDir = "Output"):
         """
         Function arguments:
-        - mesh: FELiCSMesh object 
-        - exportFolder: str, optional 
-               folder in which the files will be saved
+        - mesh: FELiCSMesh object, optional
+               mesh 
+        - exportDir: str, optional 
+               directory in which the files will be saved
 
         Function returns:
 
         """
 
-        # Notes:
-        # - the writer is specified for a mesh and an export folder
-        # - when initialized, the writer creates the export folder and exports the mesh
+        # Notes for docstring:
+        # - the writer is specified for a mesh and an export directory
+        # - when initialized, the writer creates the export directory and exports the mesh, if given
+        # - if no mesh is given, the writer exports the mesh from the first field that is exported
+        # - there can be as many exports in one export folder as is needed
+        # - CAUTION: if any of the exported fields are defined on a different mesh, a separate Writer object
+        #            has to be created, which has a different export directory, else reading the xmf files will 
+        #            not work
 
         import os
 
         self.mesh         = mesh
-        self.exportFolder = exportFolder
-        self.exportMesh   = mesh.exportMesh
-        self.exportSpace  = getFELiCSSpace(self.exportMesh, order = 1, dim = 1)  
+        self.exportFolder = exportDir
 
         # create the export folder, if it does not already exist
-        os.makedirs(exportFolder, exist_ok=True)
+        os.makedirs(exportDir, exist_ok=True)
 
         # export the mesh into the export folder
-        meshFileName = self.exportFolder + "/mesh.h5"
-        meshPath     = Path(meshFileName)
-        self.mesh.saveInFELiCSFormat(meshFileName)    
+        self.meshFileName = self.exportFolder + "/mesh.h5"
+        if self.mesh != None:
+            self.exportMesh   = mesh.exportMesh
+            self.exportSpace  = createFunctionSpace(self.exportMesh, degree = 1, dim = 1)  
+            self.mesh.saveInFELiCSFormat(self.meshFileName)    
+
 
 
     def exportListOfFieldsToH5(self, listOfFields, fileName, attributes = None):
@@ -85,6 +92,15 @@ class Writer:
 
 
     def _export(self, listOfScalarFields, fileName, attributes):
+
+        #-----------------------------------------------------------------------
+        ## save the mesh of the first field if no mesh has been given at initialization 
+        #-----------------------------------------------------------------------
+        if self.mesh == None:
+            self.mesh         = listOfScalarFields[0].mesh
+            self.exportMesh   = self.mesh.exportMesh
+            self.exportSpace  = createFunctionSpace(self.exportMesh, degree = 1, dim = 1)  
+            self.mesh.saveInFELiCSFormat(self.meshFileName)    
 
         #-----------------------------------------------------------------------
         ## conversions to export fields
@@ -144,7 +160,7 @@ class Writer:
         elif field.info['type'] == 'vector':
             names        = field.getNamesOfSubFields()
             degree       = field.space.ufl_element().degree
-            space_scalar = getFELiCSSpace(field.mesh, order = degree, dim=1)
+            space_scalar = createFunctionSpace(field.mesh, degree = degree, dim=1)
             for i in range(field.info['num_subspaces']):
                 indices_mapping = field.space.sub(i).collapse()[1]
                 field_scalar    = Field(space_scalar, field.mesh, name=names[i])
@@ -156,7 +172,7 @@ class Writer:
             for i in range(field.info['num_subspaces']):
                 degree          = field.space.sub(i).ufl_element().degree
                 num_subspaces   = field.space.sub(i).num_sub_spaces
-                space_scalar    = getFELiCSSpace(field.mesh, order = degree, dim=1)
+                space_scalar    = createFunctionSpace(field.mesh, degree = degree, dim=1)
                 if num_subspaces == 0: # mapping of scalar field
                     indices_mapping = field.space.sub(i).collapse()[1]
                     field_scalar    = Field(space_scalar, field.mesh, name=names[i])
