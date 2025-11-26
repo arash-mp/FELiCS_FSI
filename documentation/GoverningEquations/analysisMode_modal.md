@@ -16,7 +16,7 @@ $$
 \mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q}),
 $$
 
-where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a limiter operator; zero if the time derivative is not considered, else one.
+where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a restriction operator; zero if the time derivative is not considered, else one.
 
 We decompose the flow field into a time-invariant base flow, $\overline{\mathbf{q}} \in \mathbb{R}^N$, representing either a time-averaged state or a fixed-point solution, and a perturbation, $\mathbf{q}' \in \mathbb{R}^N$, such that 
 
@@ -25,7 +25,7 @@ $$
 $$
 
 In contrast to the resolvent analysis, we assume the  perturbation to be small, $\epsilon \ll 1$. 
-Upon inserting this ansatz into the governing equations and linearisation, we arrive at the homogeneous equation for a Linear Time-Invariant (LTI) dynamical system describing the  perturbation:
+Upon inserting this ansatz into the governing equations and linearisation, we arrive at the homogeneous equation for a linear time-invariant dynamical system describing the perturbation:
 
 $$
 \frac{\mathrm{d}\mathbf{q}'}{\mathrm{d}t}=\mathcal{L}(\mathbf{q}'),
@@ -39,7 +39,7 @@ $$
 represents the Jacobian evaluated at the base state $\overline{\mathbf{q}}$. 
 
 
-## Spectral analysis of the linear operator
+## Eigenvalue analysis of the linear operator
 
 We assume the perturbation takes the form of normal modes,
 $$
@@ -64,14 +64,14 @@ Solving the eigenvalue problem yields complex eigenvalues, whose components have
 
 - $\hat{\mathbf{q}}$: spatial structure (mode shape)
 
-Additionally to the direct generalized eigenvalue problem above, one can formulate its 
+Additionally to the direct generalized eigenvalue problem above, one can formulate its adjoint problem with
 
 $$
 \mathbf{A}^\dagger\,\hat{\mathbf{q}}^{\dagger}
 = -\,\mathrm{j}\,\omega^\dagger\,\mathbf{B}\,\hat{\mathbf{q}}^{\dagger},
 $$
 Here, the dagger superscript denotes the Hermitian transpose for matrices and the complex conjugate for scalar quantities.
-The spectrum of the adjoint generalized eigenvalue problem is the complex-conjugate transpose of the direct spectrum, so that for each direct eigenmode, $\hat{\mathbf{q}}_i$, there exists a corresponding adjoint eigenmode, $\hat{\mathbf{q}}^\dagger_i$.
+The spectrum of the generalized adjoint eigenvalue problem is the complex-conjugate transpose of the direct spectrum, so that for each direct eigenmode, $\hat{\mathbf{q}}_i$, there exists a corresponding adjoint eigenmode, $\hat{\mathbf{q}}^\dagger_i$.
 The adjoint mode provides the spatial distribution of the flow’s receptivity, indicating where the corresponding direct mode is most sensitive to external forcing in a linear sense.
 ## FELiCS implementation 
 

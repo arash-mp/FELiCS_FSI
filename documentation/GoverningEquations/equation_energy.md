@@ -17,7 +17,7 @@ Nomenclature:
 - $\kappa$: thermal conductivity
 - $\mathbf{\tau}$: viscous stress tensor
 - $\mu$: dynamic viscosity
-- $c$: Progress variable
+- $c$: progress variable
 - $\mathbf{I}$: identity tensor
 - $X_h$: test function for energy equation
 
