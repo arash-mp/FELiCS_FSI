@@ -10,116 +10,48 @@ from   mpi4py import MPI
 
 from   FELiCS.Parameters.config import config
 
-import FELiCS.IO.Import as Import
-from   FELiCS.IO.ExportSolution import ExportGUI,ExportFromFile
-
-import FELiCS.SpaceDisc.DefineFEMSpaces as DefineFEMSpaces
-from   FELiCS.Fields.meanFlowClass import meanFlowClass
-from   FELiCS.Fields.fluctuationClass import fluctuationSolutions
+from   FELiCS.IO.Writer                   import Writer
+from   FELiCS.SpaceDisc.FEMSpaces         import FEMSpaces
+from   FELiCS.Fields.meanFlowClass        import meanFlowClass
 from   FELiCS.Equation.EquationCollection import EquationCollectionClass
-from   FELiCS.Misc.functions import printDebug
 
-from   FELiCS.Solvers.LinearSolver import LinearSolver 
-from   FELiCS.Fields.ModeCollection import ModeCollection
-from   FELiCS.Fields.Field import Field
-from   FELiCS.Fields.Mode import Mode
-from   FELiCS.Misc.tensorUtils import Tensor
+from   FELiCS.Solvers.LinearSolver  import LinearSolver 
+from   FELiCS.Fields.Field          import Field
 
-from ufl import VectorElement, SpatialCoordinate, exp, FiniteElement
-from dolfinx.fem import Function, FunctionSpace, Expression
-from dolfinx.mesh import  locate_entities
-from scipy.interpolate import griddata
-# from   CaseHandler import CaseHandler
 
-def saveScalarField(mesh, p_original, paraname, fieldname):
-    # Interpolate on P1 elements
-    P1_first = FiniteElement('CG', mesh.ufl_cell(), 1)
-    Sol      = FunctionSpace(mesh, P1_first)
-    p        = Function(Sol)
-    try:
-        p.interpolate(p_original.function)
-    except AttributeError:
-        p.interpolate(p_original)
-    p.name = paraname
-
-    # Write solution
-    xdmf = dolfinx.io.XDMFFile(MPI.COMM_WORLD, fieldname, "w")
-    xdmf.write_mesh(mesh)
-    xdmf.write_function(p)
-    xdmf.close()
-
-def saveToFelFile(mesh,FEMSpaces, u_original, p_original, nu_original, sponge):
-    #Define functions for source of interpolation in first order
-    x_source = Function(FEMSpaces.P1,dtype=float)
-    y_source = Function(FEMSpaces.P1,dtype=float)
+def createInitialSolutionAsFelFile():
+    xx = np.linspace(-101, 201, 400)
+    yy = np.linspace(-26, 26, 100)
+    X, Y = np.meshgrid(xx, yy, indexing='ij')
+    x = (X.flatten())
+    y = (Y.flatten())
     
-    #Define functions for the target of the interpolation in P2
-    x_target = Function(FEMSpaces.P2,dtype=float)
-    y_target = Function(FEMSpaces.P2,dtype=float)
-    ux_target = Function(FEMSpaces.P2)
-    uy_target = Function(FEMSpaces.P2)
-    p_target = Function(FEMSpaces.P2)
-    nu_target = Function(FEMSpaces.P2)
+    r = np.sqrt(x**2+y**2)
+    ux = 1. - np.exp(-(r-0.5))
     
-    # Get coordinates in P1 FEM spaces
-    x_source.x.array[:] = mesh.geometry.x[:,0]
-    y_source.x.array[:] = mesh.geometry.x[:,1]
-    # Interpolate coordinates on P2 FEM space
-    x_target.interpolate(x_source)
-    y_target.interpolate(y_source)
-  
-    # Interpolate from P2 vector FEM space to P2 FEM space
-    ux_target.interpolate(u_original.function.sub(0))
-    uy_target.interpolate(u_original.function.sub(1))
-    p_target.interpolate(p_original.function)
-    try:
-        nu_target.interpolate(nu_original.function)
-    except(AttributeError):
-        nu_target.interpolate(nu_original)
-        
-    print(f'Maximum visicosity is {max(nu_target.x.array)}')
-
-    # write base flow file
-    with h5py.File("base_flow_for_FELiCS.fel", 'w') as f:
-        f.create_dataset('/MeanFlow/x', data=x_target.x.array)
-        f.create_dataset('/MeanFlow/y', data=y_target.x.array)
-        f.create_dataset('/MeanFlow/ux', data=ux_target.x.array)
-        f.create_dataset('/MeanFlow/uy', data=uy_target.x.array)
-        f.create_dataset('/MeanFlow/p', data=p_target.x.array)
-        f.create_dataset('/MeanFlow/nulam', data=nu_target.x.array)
-        # f.create_dataset('/MeanFlow/spg', data=sponge.x.array)
+    file = "initial_solution.fel"
+    
+    with h5py.File(file, 'w') as f:
+        f.create_dataset('/MeanFlow/x',   data=x)
+        f.create_dataset('/MeanFlow/y',   data=y)
+        f.create_dataset('/MeanFlow/ux',  data = ux)
 
 
-def saveBaseflow(mesh, u_original,param):
-    # Read coordinate system and define dimension
-    if param.Case.CoordinateSystem == 'Cartesian':
-        dimSet = 2
-    elif param.Case.CoordinateSystem == 'Cylindrical':
-        dimSet = 3
-    # Interpolate on P1 elements
-    P1_first = VectorElement('CG', mesh.ufl_cell(), 1, dim=dimSet)
-    Sol      = FunctionSpace(mesh, P1_first)
-    u        = Function(Sol)
-    u.interpolate(u_original.function)
+def createFelFileFromH5(felFileName, h5FileName, meshFileName):
+    with h5py.File(h5FileName, 'r') as f:
+        ux = f['ux'][()]
+        uy = f['uy'][()]
+        p  = f['p'][()]
+    with h5py.File(meshFileName, 'r') as f:
+        x = f['/coordinates/x'][()]
+        y = f['/coordinates/y'][()]
+    with h5py.File(felFileName, 'w') as f:
+        f.create_dataset('/MeanFlow/x',   data=x)
+        f.create_dataset('/MeanFlow/y',   data=y)
+        f.create_dataset('/MeanFlow/ux',  data = ux)
+        f.create_dataset('/MeanFlow/uy',  data = uy)
+        f.create_dataset('/MeanFlow/p',   data = p)
 
-    # Write felics baseflow file
-    with h5py.File("base_flow_4_plot.fel", 'w') as f:
-        f.create_dataset('/MeanFlow/x', data=mesh.geometry.x[:,0])
-        f.create_dataset('/MeanFlow/y', data=mesh.geometry.x[:,1])
-        f.create_dataset('/MeanFlow/ux', data=u.sub(0).collapse().x.array)
-        f.create_dataset('/MeanFlow/uy', data=u.sub(1).collapse().x.array)
-
-    # Write solution
-    xdmf = dolfinx.io.XDMFFile(MPI.COMM_WORLD, "base_flow.xdmf", "w")
-    xdmf.write_mesh(mesh)
-    xdmf.write_function(u)
-    xdmf.close()
-
-def save_as_a_h5File(param, meanFlow):
-        # export mean flow in "h5" file
-    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-        meanFlow.exportBaseFlowAsHDF5()
-    meanflowFilename = 'meanflow.h5'
 
 def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = False):
 
@@ -129,42 +61,24 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
     # read parameters
     param=config()
     param.importFromFile(settingsFileName)
-    # param.getOldParameters()
 
     # mesh
-    mesh=param.__mesh__
+    mesh      = param.getMesh()
     
     # FEMSpaces
-    FEMSpaces = DefineFEMSpaces.FEMSpacesClass(
-                param,
-                mesh,
-                )
+    femSpaces = FEMSpaces(param, mesh)
     
-    
-    # initialize mean flow class
-    meanFlow = meanFlowClass(param, FEMSpaces, mesh)
-    
-    #import mean flow data from file
-    meanFlow.importDataFromFile()
+    # writer to export the results in files
+    writer    = Writer(mesh, param.Export.ExportFolder)
 
-    # export mean flow in "h5" file
-    if not param.FlowInput.MeanFlowFilePath.split('.')[-1] == 'hdf5':
-        meanFlow.exportBaseFlowAsHDF5()
-    meanflowFilename = 'meanflow.h5'
-    meanFlow.mapToExportMeshAndExport(FEMSpaces, meanflowFilename)
+    # initialize mean flow class 
+    meanFlow = meanFlowClass(param, femSpaces, mesh)
+    meanFlow.importDataFromFileAndExportToH5(writer)
     
-    # Read mean flow field from file if doing optimization
-    if not optimizerParameters == None:
-        print(f'Base flow solver: Optimization mode. Perform on {optimizerParameters}')
-        tempField = Field(FEMSpaces.VMixed, mesh).getListOfSingleFields()[0].getListOfSingleFields()[0]
-        nulamField = Field(tempField.function.function_space, mesh)
-        nulamField.function.x.array[:] = np.load(optimizerParameters + '_field.npy')
-        meanFlow._fieldDict[optimizerParameters].interpolate(nulamField.function)
-
     # equation
     equation = EquationCollectionClass(
                                       param,
-                                      FEMSpaces,
+                                      femSpaces,
                                       meanFlow,
                                       mesh
                                       )
@@ -174,23 +88,23 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
     #-----------------------------------------------------------------------
     
     # Define a Field class to save calculating results
-    baseFlow   = Field(FEMSpaces.VMixed, mesh)
-    # Initialize fields in baseFlow with meanFlow fields
-    baseFlow.interpolateFieldsFromMeanfield(meanFlow)
+    baseFlow     = Field(femSpaces.VMixed, mesh, isStateVector=True)
+    # Initialize fields in baseFlow
+    mapping_ux_b = baseFlow.space.sub(0).sub(0).collapse()[1]
+    mapping_ux_m = meanFlow._fieldDict["u"].space.sub(0).collapse()[1]
+    baseFlow.function.x.array[mapping_ux_b] = meanFlow._fieldDict["u"].function.x.array[mapping_ux_m]
 
     # ---------------- START LOOP ---------------------------------------------- 
     ## start Newton solver
     target_residuum = 1.e-11
     # track time
     start= time.time()
-    # calculate the base flow
-    i=0
-    residuum=1.
-    [u,p] = baseFlow.getListOfSingleFields()
-    meanFlow._fieldDict['u'] = u.function
-    meanFlow._fieldDict['p'] = p.function
+    # calculate initial residuum
     N = equation.getNonlinearExpression(meanFlow)
-    while(residuum > target_residuum and i<10):
+    residuum = np.linalg.norm(N.getArray())
+    # calulate the base flow
+    i=0
+    while(residuum > target_residuum and i<100):
         i+=1
     
         # solve equation system
@@ -200,40 +114,38 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
         N.destroy()
     
         # update baseFlow
-        baseFlow_array = baseFlow.getCoefficientArray() + newtonSummand_array
+        baseFlow_array = baseFlow.getCoefficientArray() - newtonSummand_array
         baseFlow.setCoefficientArray(baseFlow_array)
         
         # calculate nonlinear expression & residuum
-        [u,p] = baseFlow.getListOfSingleFields()
-        meanFlow._fieldDict['u'] = u.function
-        meanFlow._fieldDict['p'] = p.function
+        [u,p] = baseFlow.getListOfSubFields()
+        meanFlow._fieldDict['u'] = u
+        meanFlow._fieldDict['p'] = p
         N = equation.getNonlinearExpression(meanFlow)
         residuum = np.linalg.norm(N.getArray())
-        printDebug(True, "-------------------------------------------------------------" )
-        printDebug(True, "-- Base flow iteration: "+str(i)+"; Residuum: %4g " % residuum)
-        printDebug(True, "-------------------------------------------------------------" )
-
+        print("-------------------------------------------------------------" )
+        print("-- Base flow iteration: "+str(i)+"; Residuum: %4g " % residuum)
+        print("-------------------------------------------------------------" )
 
     
     # end tracking time
     end = time.time() - start
-    printDebug(True, '-- Solving the base flow problem took %4g s' % end)
-    printDebug(True, '-- Residuum:  %12g' % (residuum))
-    
-    # save base flow as numpy file, to accelerate future base flow calculations
-    np.save("baseFlow.npy",  baseFlow.getCoefficientArray())
+    print('-- Solving the base flow problem took %4g s' % end)
+    print('-- Residuum:  %12g' % (residuum))
+
+    baseFlow.exportToH5(writer, "baseFlow")
+ 
 
 
-    # Interpolate solution on first order Lagrange Functionspace for XDMF export
-    saveBaseflow(mesh.dolfinxMesh, u, param)
-    saveToFelFile(mesh,FEMSpaces,u, p, meanFlow._fieldDict['nulam'], meanFlow._fieldDict['spg'])
-    
-    # Save scalarFields as xdmf file
-    saveScalarField(mesh.dolfinxMesh, p, 'p', 'BaseFlow_p.xdmf')
-    saveScalarField(mesh.dolfinxMesh, meanFlow._fieldDict['nulam'], 'nu', 'BaseFlow_nu.xdmf')
+##################################################################################################
+# MAIN SRIPT
 
-    return baseFlow
+# 1. create an initial solution for the base flow computation
+createInitialSolutionAsFelFile()
 
-# if __name__ == "__main__":
+# 2. calculate the base flow
 configFilename       = 'Re50.json'
 calculateBaseFlow(configFilename)
+
+# 3. create a fel file from the result, which can be used as input again
+createFelFileFromH5("base_flow_for_FELiCS.fel", "out/baseFlow.h5", "out/mesh.h5")
