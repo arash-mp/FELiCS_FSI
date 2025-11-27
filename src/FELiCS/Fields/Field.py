@@ -754,6 +754,7 @@ class Field:
             iDot,
             iConj,
             iGrad,
+            iInner,
         )
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
         if not hasattr(self.space, 'FEMSmoothSolver') or restartSolver:
