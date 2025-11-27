@@ -48,13 +48,17 @@ def getElementType():
 
 def createFunctionSpace(mesh, degree = 2, dim = 1):
     """
-    Create a finite element function space for the given mesh, order, and dimension. 
-    ElementType is "CG".
+    Create a finite element function space for the given mesh, order, and dimension.
+
+    For scalar fields (``dim == 1``), a standard Basix element is constructed via
+    ``element(elementType, elementShape, degree)``.  
+    For vector fields, a tuple-based element description
+    ``(elementType, degree, (dim,))`` is used to create a vector-valued function space.
 
     Parameters
     ----------
     mesh : FELiCSMesh
-        The mesh object.
+        The mesh object containing ``dolfinxMesh``.
     degree : int, optional
         Polynomial degree of the element (default is 2).
     dim : int, optional
@@ -65,7 +69,6 @@ def createFunctionSpace(mesh, degree = 2, dim = 1):
     dolfinx.fem.FunctionSpace
         The created function space.
     """
-
     elementShape = getElementShape(mesh.gdim)
     elementType  = getElementType()
 
@@ -193,23 +196,23 @@ class FEMSpaces():
 
     def addCustomScalarSpaceToMixedSpace(self, mesh, order):
         """
-        Add a scalar finite element of a specified polynomial order to the mixed function space.
+        Deprecated method for adding a scalar element to the mixed function space.
 
-        This method appends a new scalar finite element to the internal list of elements that make up the mixed
-        function space and rebuilds both the primary and export mixed spaces.
+        Notes
+        -----
+        This method no longer functions as originally intended:
+        it does not modify ``self.MixedList`` and uses outdated API calls
+        (``MixedElement`` and ``FunctionSpace``). It is kept only for legacy
+        reference and is not used anywhere in the current codebase.
 
         Parameters
         ----------
         mesh : FELiCSMesh
-            The mesh on which the new mixed function space is defined.
+            Mesh on which the mixed function space would be defined.
         order : int
-            Polynomial order of the scalar finite element to be added.
+            Intended polynomial order of the added scalar element (unused).
 
-        Notes
-        -----
-        This method is most likely deprecated and is not used in the codebase.
-        """
-        # Create a element of the mixed function space
+        """        # Create a element of the mixed function space
         MixedFE = MixedElement(self.MixedList)
         # Create a function space containing of mixed elements on the given mesh
         self.VMixed = FunctionSpace(mesh.dolfinxMesh,MixedFE)
@@ -220,32 +223,27 @@ class FEMSpaces():
 
     def _projectField2allFEMSpaces(self, field, nfluctvar, nDim):
         """
-        Project a given FEM field to all components of the mixed function space.
+        Deprecated helper for interpolating a field into each subspace of the mixed space.
 
-        This method is primarily used in fluctuation analyses, where a forcing
-        or limiter field must be projected to each component of the mixed space,
-        including both scalar and vector subspaces.
+        The function loops over all subspaces of ``VMixed`` and interpolates the same input
+        field into each one. The parameters ``nfluctvar`` and ``nDim`` are unused.
+        This method is retained only for historical reasons and is not used in the
+        current codebase. It will be removed in future versions.
 
         Parameters
         ----------
         field : dolfinx.fem.Function
-            The finite element function to be projected.
+            Field to be interpolated into every subspace.
         nfluctvar : int
-            Number of fluctuation variables in the system.
+            Unused legacy parameter.
         nDim : int
-            Number of spatial dims, usually equal to the number of velocity components.
+            Unused legacy parameter.
 
         Returns
         -------
-        fieldVMixed : dolfinx.fem.Function
-            A function in the mixed space with the input field projected into all subspaces.
-
-        Notes
-        -----
-        Originally used for projecting forcing/response fields in resolvent analyses.
-        Supports fields of arbitrary polynomial order. This method is most likely deprecated, it is not used in the codebase.
-        """
-        
+        dolfinx.fem.Function
+            A function in ``VMixed`` where each subspace contains the interpolated field.
+        """        
         # NOTE: (Simon) I think that this function is not required anymore
 
         from dolfinx.fem import Function
