@@ -37,15 +37,20 @@ class ModeCollection():
 
     def __init__(self, femSpace, mesh, isStateVector=True, analysisType='Modal'):
         """
-        Initializes the ModeCollection instance.
+        Initialize a ModeCollection instance.
 
         Parameters
         ----------
-        femSpace : object
-            The finite element space associated with the modes.
-        mesh : object
-            The mesh associated with the modes.
-        TODO: complete docstring
+        femSpace : dolfinx.fem.FunctionSpace
+            Finite element space associated with the modes.
+        mesh : FELiCS.SpaceDisc.FELiCSMesh
+            Mesh on which the modes are defined.
+        isStateVector : bool, optional
+            If True, modes in this collection are treated as state vectors in a
+            mixed space. Default is True.
+        analysisType : {'Modal', 'Resolvent', 'Input_Output'}, optional
+            Type of analysis this collection belongs to. The string is mapped
+            (case-insensitively) to :class:`AnalysisType`. Default is ``'Modal'``.
         """
 
         self.modeList       = []
@@ -82,24 +87,28 @@ class ModeCollection():
 
     def appendModeFromVector(self, vector, gain=None, eigenValue=None, guess=None, waveNumber=None, frequency=None, modeType = None):
         """
-        Create a Mode from a coefficient vector and properties, and append it to the collection.
+        Create a Mode from a coefficient vector and properties, and append it
+        to the collection.
 
         Parameters
         ----------
         vector : array-like
             Coefficient vector for the mode.
         gain : float, optional
-            Gain associated with the mode.
+            Gain associated with the mode (mainly for resolvent analysis).
         eigenValue : complex, optional
-            Eigenvalue associated with the mode.
+            Eigenvalue associated with the mode (for modal analysis).
         guess : any, optional
-            Initial guess or parameter for the mode.
+            Initial guess or parameter used to obtain this mode.
         waveNumber : float, optional
             Wave number associated with the mode.
         frequency : float, optional
-            Frequency associated with the mode.
-        isAdjoint : bool, optional
-            Whether the mode is an adjoint mode (default is False).
+            Frequency associated with the mode (for resolvent / input–output).
+        modeType : str or None, optional
+            Mode role within the chosen analysis type, mapped to
+            :class:`ModeType` (e.g. ``'direct'``, ``'adjoint'``,
+            ``'response'``, ``'forcing'``). If ``None``, a default is chosen
+            inside :class:`Mode` based on the analysis type.
         """
 
         mode = Mode(self.femSpace, self.mesh, isStateVector = True, analysisType = self.analysisType.name, modeType = modeType)
@@ -406,11 +415,6 @@ class ModeCollection():
         frequency : float, optional
             Frequency to match.
 
-        Returns
-        -------
-        Mode or None
-            The nearest matching Mode object, or None if not found.
-
         Notes
         -----
         This method is not yet implemented.
@@ -479,8 +483,10 @@ class ModeCollection():
         -------
         list
             List of fluctuationSolutions objects.
-
-        TODO: Delete this old method!
+        
+        Notes
+        -------
+        In future relases, this method will be deleted
         """
 
         fluctSolutObjList    = []
@@ -559,7 +565,7 @@ class ModeCollection():
 
     def _getAndSortModeFilesInDir(self, importFolder):
         """
-        Get and sort mode files in a specified directory.
+        Get and classify mode files in a specified directory.
 
         Parameters
         ----------
@@ -568,10 +574,23 @@ class ModeCollection():
 
         Returns
         -------
-        list
-            Sorted list of mode file names.
+        modeFiles : list of str
+            List of HDF5 file names that match the expected naming pattern for
+            the current analysis type.
+        omegasModeFiles : list of float or complex
+            List of omega values parsed from the corresponding file names.
+        typesModeFiles : list of str
+            List of mode type strings (e.g. 'Direct', 'Adjoint',
+            'Response', 'Forcing') inferred from the file names.
+        gainNumbersModeFiles : list of int
+            List of gain numbers parsed from the file names (0 for modal and
+            input–output cases, or the gain index for resolvent modes).
 
-        TODO: return the gainNumber for resolvent case (for IO it's always 0)
+        Notes
+        -----
+        For resolvent and input–output cases, the filename convention is used
+        to extract both omega and gain numbers. Errors in parsing result in
+        logged messages and skipping the affected files.
         """
 
         # List of all h5 files in the folder
@@ -656,6 +675,17 @@ class ModeCollection():
 
 
     def exportModes(self, writer, onlyNewN = 0):
+        """
+        Export modes in the collection to HDF5 files.
+
+        Parameters
+        ----------
+        writer : FELiCS.IO.Writer
+            Writer object providing ``exportFieldToH5``.
+        onlyNewN : int, optional
+            If 0 (default), export all modes in the collection. If positive,
+            export only the last ``onlyNewN`` modes that were added.
+        """
         if onlyNewN == 0:  # export all modes
             start = 0  
         else:              # export only the newest modes, number given by 'onlyNewN'
@@ -676,11 +706,14 @@ class ModeCollection():
         importFolder : str
             Path to the folder containing the mode files.
         omegas : list of float, optional
-            List of frequencies to import. If None, all frequencies are imported.
+            List of frequencies to import. If None, all frequencies found in
+            the folder are considered (matching is done on rounded values).
         modeType : str, optional
-            Type of mode to import (e.g., 'Direct', 'Adjoint', 'Response', 'Forcing'). If None, all types are imported.
+            Type of mode to import (e.g. 'Direct', 'Adjoint', 'Response',
+            'Forcing'). If None, all detected types are imported.
         gainNumber : int, optional
-            Gain number to import (for Resolvent analysis). If None, all gain numbers are imported
+            Gain number to import (for Resolvent analysis). If None, all gain
+            numbers are imported.
         """
         
         # Get the list of mode files in the directory, omegas values, and mode types
