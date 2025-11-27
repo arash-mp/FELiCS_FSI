@@ -85,18 +85,12 @@ After executing [```solveBaseFlow.py```](./../../tutorials/cylinder_wake_tutoria
 └── logs
 └── out 
 ├ base_flow_for_FELiCS.fel
-├ base_flow_4_plot.fel
-├ baseFlow.npy
-├ BaseFlow_p.xdmf
-├ BaseFlow_nu.xdmf
-├ base_flow.xdmf
-├ BaseFlow_p.h5
-├ base_flow.h5
-├ BaseFlow_nu.h5
+├ cylinder_wake.msh
+├ initial_solution.fel
 └ ...
 ```
 
-The file ```base_flow.xdmf``` can be opened in Paraview to visualize the base flow: 
+The file ```out/baseFlow.xmf``` can be opened in Paraview to visualize the base flow: 
 
 ![Image3](../../tutorials/cylinder_wake_tutorial/pic/BaseFlow.png)
 Figure 3. Magnitude of the flow-field. 
