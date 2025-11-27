@@ -23,6 +23,25 @@ from dolfinx.fem import (
 from enum import Enum
 
 class SpectralIndicator(Enum):
+    """
+    Enumeration describing the role of each dimension in a tensor or coordinate system.
+
+    This enum is used to mark whether a given axis corresponds to a geometric,
+    spectral, or inactive (zero) dimension. It is primarily used internally by
+    the :class:`Tensor` class to determine how derivatives and spectral terms
+    should be handled.
+
+    Members
+    -------
+    SPECTRAL : int
+        Marks a dimension as a spectral dimension. Derivatives along this axis
+        are replaced by ``i * m / r`` terms.
+    NOTSPECTRAL : int
+        Marks a dimension as a regular geometric dimension.
+    ZERO : int
+        Marks a dimension that is neither geometric nor spectral (e.g. padding
+        dimensions for tensors whose true dimension exceeds the geometric one).
+    """
     # for handling spectral dimensions
     SPECTRAL     = 1 # this is a spectral dimension
     NOTSPECTRAL  = 2 # this is not a spectral dimension but still a geometric dimension
@@ -74,11 +93,19 @@ class CoordinateSystem():
         SpatialCoordinateObj : ufl.SpatialCoordinate
             Coordinate vector of the mesh.
         name : str
-            Name of the coordinate system.
+            Name of the coordinate system
+            (currently ``"cartesian"`` or ``"cylindricalfelics"``).
         gdim : int
-            Geometric dimension of the coordinate system (without spectral dimensions).
+            Geometric dimension of the mesh (excluding any spectral
+            dimensions).
+        trueDim : int, optional
+            Total dimension of the system, including a possible spectral
+            dimension. If ``None`` and ``m == 0``, the true dimension is
+            initially set to ``gdim`` and can be corrected later using
+            :meth:`setTrueDimension`. If ``None`` and ``m != 0``, the
+            true dimension is set to ``gdim + 1``.
         m : int, optional
-            Wave number for spectral direction.
+            Wave number for the spectral direction. Default is 0.
 
         Raises
         ------
@@ -140,10 +167,10 @@ class CoordinateSystem():
 
 class Tensor():
     """
-    Tensor object that extends the UFL tensors. 
+    Tensor object that extends UFL tensors.
 
     Supports scalar, vector, and matrix-valued tensors in both physical
-    and tangent bases.
+    and spectral settings, including an optional spectral dimension.
 
     Attributes
     ----------
@@ -151,17 +178,25 @@ class Tensor():
         The underlying UFL tensor expression.
     CoordSys : CoordinateSystem
         Coordinate system in which this tensor is defined.
-    mayHaveSpectralDimension : bool
-        Whether this tensor has spectral dimension sdim, i.e. tensor = tensor_coefficients * exp(i*m*sdim) with wave number m
-    m : int 
-        wave number in spectral dimension
-        
+    hasSpectralDimension : bool
+        Whether this tensor actually carries a spectral dependence
+        (i.e. a factor of ``exp(i * m * sdim)``), as determined from
+        ``mayHaveSpectralDimension`` and the coordinate system.
+    isSpectralDimension : list of SpectralIndicator
+        Per-dimension indicator specifying whether each axis is spectral,
+        geometric, or zero (non-geometric, non-spectral).
+    m : int
+        Wave number associated with the spectral dimension (if present).
+    dim : int
+        Total dimension of the system (geometric + spectral).
+    order : int
+        Tensor order, inferred from ``ufl_tens.ufl_shape`` (0, 1, or 2).
 
     Example
     -------
     >>> T = Tensor(u, CoordSys)
     >>> grad_T = iGrad(T)
-    """ 
+    """
 
     def __init__(
         self, 
@@ -311,12 +346,16 @@ class Tensor():
     # division, 
     def __rtruediv__(self, other): # Tensor object to the left
         """
-        Divide this tensor by another tensor or scalar.
+        Divide a scalar or tensor by this tensor.
+
+        This implements the reflected division operator ``other / self``,
+        i.e. it is called when the left-hand operand does not know how to
+        divide by a :class:`Tensor`.
 
         Parameters
         ----------
         other : Tensor or scalar
-            The denominator.
+            The numerator in the division ``other / self``.
 
         Returns
         -------
@@ -326,11 +365,13 @@ class Tensor():
         Raises
         ------
         ValueError
-            If division is not defined for the operand types.
+            If division is not defined for the operand types or if both
+            operands are non-scalar tensors.
 
         Example
         -------
-        >>> A / 2.0
+        >>> 2.0 / A
+        >>> B / A  # where A and B are Tensor objects and one is scalar.
         """
         if type(other) == Tensor:
             if other.order == 0 or self.order == 0:
@@ -590,12 +631,12 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
     Returns
     -------
     Tensor
-        Scalar-valued (zero order) tensor representing the inner product.
+        Scalar-valued (order-0) tensor representing the inner product.
 
     Raises
     ------
     ValueError
-        If the tensors are not of order 2 or contain invalid combinations of test functions or fluctuations.
+        If the tensors are not both of order 2.
     """
     if tensorA.order != tensorB.order or tensorA.order != 2:
         raise ValueError("The order of both tensors must be two.")
@@ -844,6 +885,9 @@ def iConj(tensor: Tensor):
     """
     Computes the complex conjugate of a tensor.
 
+    The underlying UFL expression is conjugated and the sign of the
+    spectral wave number ``m`` is flipped.
+
     Parameters
     ----------
     tensor : Tensor
@@ -852,7 +896,8 @@ def iConj(tensor: Tensor):
     Returns
     -------
     Tensor
-        Conjugated tensor with identical metadata.
+        Conjugated tensor, with the same coordinate system and spectral
+        flags but with ``m`` replaced by ``-m``.
     """
     return Tensor(
             conj(tensor.ufl_tens),
