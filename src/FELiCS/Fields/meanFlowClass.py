@@ -141,8 +141,7 @@ class meanFlowClass(
         -----
         The set of fields to be read is assembled from:
         - the mean-flow field names defined in ``param``,
-        - additional fields required by the energy, equation-of-state, and
-          reaction handlers,
+        - additional fields required by the energy, equation-of-state, and reaction handlers and 
         - any custom mean-flow quantities added by the user.
 
         If the density field ``rho`` is requested but not present in the file,
