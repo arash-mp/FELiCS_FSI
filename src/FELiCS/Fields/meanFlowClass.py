@@ -175,7 +175,6 @@ class meanFlowClass(
             sourceDir               = os.path.dirname(self._param.FlowInput.MeanFlowFilePath),
             needInterpolation       = self._param.Case.needInterpolation,
             felicsMeshFilePath      = None if self._param.Case.needInterpolation else f'{self._param.Export.ExportFolder}/mesh.h5',
-            isComplex               = False,
             cacheData               = True,
         )
 
