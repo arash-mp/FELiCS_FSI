@@ -14,5 +14,3 @@ After importing the python-gmsh package the following methods become accessible:
 - ```gmsh.option.setNumber(name, value)```:                                           Sets gmsh options
 - ```gmsh.write(filename)```:                                                         Writes the mesh to a file
 - ```gmsh.finalize()```:                                                              Finalizes and cleans up the gmsh API
-
-Output: sphere_wake.msh - A 2D mesh file for FELiCS, in msh VERSION 2.0 ASCII format
