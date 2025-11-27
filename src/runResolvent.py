@@ -70,14 +70,17 @@ def runResolvent(param):
     # Start tracking time
     start                       = time.time()
     
+    # Prepare solution object
+    solution                    = ModeCollection(
+        FEMSpaces.VMixed, 
+        mesh, 
+        analysisType='Resolvent'
+    )
+    
     # Run analysis at each frequency
     for i, omega in enumerate(omegas):
 
         logger.info("Solving resolvent SVD for omega = " + str(omega))
-
-        # initialize a new solution object
-        solution                    = ModeCollection(FEMSpaces.VMixed, mesh, analysisType  ='Resolvent')
-
 
         # initialize the resolvent operator, which is a class that imitates 
         # a matrix to use matrix-free methods

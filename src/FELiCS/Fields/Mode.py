@@ -271,7 +271,22 @@ class Mode(Field):
             Error associated with the mode solution.
         """
         self._error = error
-     
+        
+    def describe(self):
+        """
+        Print a description of the mode, including its properties.
+        """
+        logger.info(f"  Mode Type:     {self.modeType.name}")
+        if self.analysisType == AnalysisType.MODAL:
+            logger.info(f"  Guess:         {self.guess}")
+            logger.info(f"  Eigenvalue:    {self.eigenValue}")
+        elif self.analysisType == AnalysisType.RESOLVENT:
+            logger.info(f"  Frequency:     {self.frequency}")
+            logger.info(f"  Gain:          {self.gain}")
+            logger.info(f"  Gain Number:   {self.gainNumber}")
+        elif self.analysisType == AnalysisType.INPUT_OUTPUT:
+            logger.info(f"  Frequency:     {self.frequency}")
+        logger.info(f"  Wave Number:   {self.waveNumber}") 
 
     def exportToH5(self, writer, fileName=None):
         # create standard fileName if none is given

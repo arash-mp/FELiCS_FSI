@@ -6,10 +6,21 @@ logger = Logger.get_logger("felics")
 
 class Mapping:
     """
-    A class for calculating mappings between finite element spaces or DOF coordinates.
+    Utility class for constructing index mappings between FEM spaces or DOF coordinates.
 
-    This class provides static methods to compute index mappings between input and output
-    spaces or DOF arrays, useful for data transfer in FEM simulations.
+    This class contains static methods that compute permutation arrays used to transfer
+    values between meshes or finite element spaces with identical layouts but differing
+    internal DOF orderings.
+
+    **Initialize the Mapping object**
+
+    This class is not intended to be instantiated; all functionality is provided through
+    static methods.
+
+    Notes
+    -----
+    - The mapping assumes that input and output meshes have identical geometric DOF locations, possibly in different order.
+    - Coordinates are rounded to 11 decimal places before comparison to avoid small floating-point inconsistencies.
     """
 
     @staticmethod
@@ -17,19 +28,29 @@ class Mapping:
             inputSpace,
             outputSpace):
         """
-        Calculate the mapping indices from input space to output space.
+        Compute a DOF index mapping between two finite element spaces.
+
+        This method extracts the coordinates of DOFs from both spaces and delegates the
+        mapping computation to :meth:`calculateMappingFromDofs`.
 
         Parameters
         ----------
         inputSpace : object
-            The input finite element space.
+            Finite element space providing the input DOF coordinates. Must implement
+            ``tabulate_dof_coordinates()``.
         outputSpace : object
-            The output finite element space.
+            Finite element space providing the output DOF coordinates. Must implement
+            ``tabulate_dof_coordinates()``.
 
         Returns
         -------
         numpy.ndarray
-            Array of indices mapping input DOFs to output DOFs.
+            One-dimensional array of indices such that ``output[index] = input[mapping[index]]``.
+
+        Raises
+        ------
+        ValueError
+            If the DOF coordinate arrays from the two spaces are incompatible in dimension.
         """
 
         # Get numpy arrays of dof coordinates
@@ -43,19 +64,38 @@ class Mapping:
             inputDofs,
             outputDofs):
         """
-        Calculate the mapping indices from input DOF coordinates to output DOF coordinates.
+        Compute a DOF index mapping from coordinate arrays.
+
+        The algorithm constructs a bijection between two sets of DOF coordinates by:
+        1. Copying the coordinate arrays,
+        2. Appending the original DOF indices,
+        3. Sorting by spatial coordinates,
+        4. Aligning sorted entries,
+        5. Extracting the permutation that maps input DOFs to output DOFs.
 
         Parameters
         ----------
         inputDofs : numpy.ndarray
-            Array of input DOF coordinates.
+            Array of shape ``(n_dofs, dim)`` containing input DOF coordinates.
         outputDofs : numpy.ndarray
-            Array of output DOF coordinates.
+            Array of shape ``(n_dofs, dim)`` containing output DOF coordinates.
 
         Returns
         -------
         numpy.ndarray
-            Array of indices mapping input DOFs to output DOFs.
+            One-dimensional integer array representing the mapping from input DOF indices
+            to output DOF indices.
+
+        Raises
+        ------
+        ValueError
+            If the coordinate arrays have different lengths or incompatible shapes.
+
+        Notes
+        -----
+        - Coordinates are rounded to 11 decimal places before matching.
+        - The mapping requires exact geometric correspondence of DOFs between input and
+          output meshes.
         """
 
         # Get numpy arrays of dof coordinates
