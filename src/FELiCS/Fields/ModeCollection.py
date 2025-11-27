@@ -55,6 +55,19 @@ class ModeCollection():
         self.analysisType   = AnalysisType[analysisType.upper()]
 
 
+    def describe(self):
+        """
+        Print a description of the ModeCollection.
+        """
+
+        logger.info(f'ModeCollection for {self.analysisType} analysis.')
+        logger.info(f'Contains {len(self.modeList)} modes. Contents:')
+        
+        # Loop over modes and print their description
+        for i, mode in enumerate(self.modeList):
+            logger.info(f'  Mode {i}:')
+            mode.describe()
+
     def appendMode(self, mode):
         """
         Append an existing Mode object to the collection.
@@ -143,8 +156,6 @@ class ModeCollection():
             mode.eigenValue = eigVals[i]
             mode.setCoefficientArray(eigVecs[i,:])
             self.modeList.append(mode)
-            
-
 
     def appendSolutionOfSVDProblem(self, forcingArray, omega, gains, resolventOperator, name=None):
         """
@@ -468,6 +479,8 @@ class ModeCollection():
         -------
         list
             List of fluctuationSolutions objects.
+
+        TODO: Delete this old method!
         """
 
         fluctSolutObjList    = []
@@ -723,7 +736,7 @@ class ModeCollection():
                     mode.isResponse = True
                 else:
                     mode.isResponse = False
-            elif self.analysisType == ANALYSISTYPE.INPUT_OUTPUT:
+            elif self.analysisType == AnalysisType.INPUT_OUTPUT:
                 mode.isResponse = True  # Always response for IO modes
             
             mode.importData(
