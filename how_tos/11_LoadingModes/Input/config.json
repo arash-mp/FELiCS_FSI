@@ -1,0 +1,64 @@
+{
+"BoundaryCondition":{
+    "BCsFilePath":"Input/boundaries.json"
+},
+"Case":{
+    "AnalysisMode":"Modal",
+    "CalculateAdjoint":true,
+    "CoordinateSystem":"Cartesian",
+    "needInterpolation":false,
+    "m":0.0,
+    "MeshFilePath":"Input/CylinderWakeMesh.msh",
+    "MixtureFilePath":"Mixture.json",
+    "MolVisc":0.02127659574468085,
+    "MolViscModel":"Constant",
+    "nDim":2,
+    "Reaction":false,
+    "SetOfEquations":{
+        "Momentum":{
+            "Equation":"NSPrimitive",
+            "Variable":"u"
+        },
+        "Mass":{
+            "Equation":"Continuity",
+            "Variable":"p"
+        },
+        "Energy":{
+            "Equation":"None",
+            "Variable":"None"
+        },
+        "Species":{
+            "Equation":"None",
+            "Variable":"None"
+        },
+        "EquationOfState":{
+            "Equation":"None",
+            "Variable":"None"
+        }
+    },
+    "SpeciesFilePath":"",
+    "TransVelFluc":false,
+    "TurbulenceModel":"None"
+},
+"Export":{
+    "ExportFolder":"OutModal",
+    "Video":false
+},
+"FlowInput":{
+    "AveragingDirection":"None",
+    "MeanFlowFilePath":"meanFlow/meanflow.h5"
+},
+"IOResolvent":{
+    "ForcingBoundaryIndices":[],
+    "ForcingCoeff":[],
+    "ForcingMode":"Body",
+    "Omegas":[]
+},
+"Numerics":{
+    "EigenValueGuess":[0.7],
+    "nSolut":1,
+    "PolynomialOrder":{
+        "u":2,
+        "p":2
+    }
+}}
