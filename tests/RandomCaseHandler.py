@@ -4,8 +4,9 @@ import numpy as np
 from mpi4py              import MPI
 from petsc4py.PETSc      import ScalarType
 from ufl                 import (
-    dx,TestFunction,TrialFunction,conj,SpatialCoordinate, Dx,dot, inner, grad
+    dx,TestFunction,TrialFunction,conj,SpatialCoordinate, Dx,dot, inner, grad,
 )
+from basix.ufl import element, mixed_element
 from dolfinx.fem         import (
     Function,
     functionspace,
@@ -18,6 +19,7 @@ from dolfinx.fem         import (
 from dolfinx             import mesh
 from FELiCS.Fields.Field import Field
 from FELiCS.Fields.Mode  import Mode
+from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 
 class RandomCaseHandler():
     # TODO: write docstrings
@@ -27,10 +29,18 @@ class RandomCaseHandler():
                             points=((0.0, 0.0), (1.0, 1.0)), n=(10, 10),
                             cell_type=mesh.CellType.triangle,
                             ghost_mode=mesh.GhostMode.none)
+        # 1.b create FELiCSMesh, which is necessary for Field defination
+        # NOTE: The default coordinate system is Cylindrical, whith non-zero wave number
+        self.felics_mesh = FELiCSMesh("Cylindrical", gdim=2, m=np.random.randint(20),inputMesh=self.mesh)
         # 2. create function spaces & test/trial functions
         self.dim_vector = dim_vector
+        scalar_element = element("CG", 'triangle',2)
+        vector_element = element("CG", "triangle", 2, shape=(dim_vector,))
+        Vmixed = mixed_element([scalar_element, vector_element])
+        
         self.space_scalar = functionspace(self.mesh, ("CG", 2))
         self.space_vector = functionspace(self.mesh, ("CG", 2,(dim_vector,)))
+        self.space_mixed  = functionspace(self.mesh, Vmixed)
 
         self.test_scalar  = TestFunction(self.space_scalar)
         self.test_vector  = TestFunction(self.space_vector)
@@ -56,9 +66,19 @@ class RandomCaseHandler():
             raise ValueError("Dimension is not consistent with the class definition.")
     pass
     
-    def createFELiCSField(self):
-        # TODO: Add implementation
-        pass
+    def createFELiCSField(self, type):
+        if type == "scalar":
+            field = Field(self.space_scalar, self.felics_mesh)
+        elif type == "vector":
+            field = Field(self.space_vector, self.felics_mesh)
+        elif type == "mixed":
+            field = Field(self.space_mixed, self.felics_mesh)
+        else:
+            raise ValueError("Field type not recognized.")
+        # assign random values to the field's function's value
+        length = len(field.function.x.array)
+        field.function.x.array[:] = np.random.rand(length) + 1j*np.random.rand(length)
+        return field
     
     def smoothing(self, func, smoothFactor):
         if func.function_space == self.space_scalar:
