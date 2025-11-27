@@ -14,57 +14,76 @@ logger = Logger.get_logger("felics")
 
 class FELiCSMesh:
     """
-    Wrapper class for the DOLFINx mesh, with support for custom coordinate systems and FELiCS-specific utilities.
+    Wrapper class for the DOLFINx mesh, with support for custom coordinate systems
+    and FELiCS-specific utilities.
 
-    This class allows loading and saving of mesh data, extraction of cell and coordinate information, 
-    and computation of connectivity for use in FEM simulations. It supports both Cartesian and Cylindrical 
-    coordinate systems and includes functionality to convert and export mesh data in FELiCS format.
+    This class allows loading and saving of mesh data, extraction of cell and
+    coordinate information, and computation of connectivity for use in FEM
+    simulations. It supports both Cartesian and Cylindrical coordinate systems
+    and provides functionality to convert and export mesh data in a FELiCS
+    HDF5-based format.
 
     **Initialize the FELiCSMesh object**
 
     Parameters
     ----------
-    coordinateSystem : str
-        Name of the coordinate system ('Cartesian' or 'Cylindrical').
+    coordinateSystemName : str
+        Name of the coordinate system (``"Cartesian"`` or ``"Cylindrical"``).
     meshFileName : str, optional
-        Path to the mesh file to load.
+        Path to the Gmsh mesh file to load. Ignored if ``inputMesh`` is given.
     gdim : int, optional
-        Geometric dimension of the mesh. If None, it is inferred from the Gmsh model.
+        Geometric dimension of the mesh. If ``None`` and a mesh file is read,
+        it is inferred from the Gmsh model.
     m : int, optional
-        Parameter used in the coordinate system configuration.
+        Spectral wave number used in the associated :class:`CoordinateSystem`.
+        If nonzero, the logical dimension ``dim`` is set to ``gdim + 1``.
     inputMesh : dolfinx.mesh.Mesh, optional
         Existing DOLFINx mesh object to wrap instead of reading from a file.
+        In this case, ``meshFileName`` and Gmsh are not used.
 
     Attributes
     ----------
     dolfinxMesh : dolfinx.mesh.Mesh
         The wrapped DOLFINx mesh object.
-    facet_tags : dolfinx.mesh.MeshTags
-        Boundary facet tags parsed from the mesh.
+    facet_tags : dolfinx.mesh.MeshTags or None
+        Boundary facet tags parsed from the Gmsh model when a mesh file is
+        read. Not set when the mesh is provided via ``inputMesh``.
     gdim : int
         Geometric dimension of the mesh.
+    dim : int
+        Logical dimension of the system, including a possible spectral
+        dimension (``dim == gdim`` if ``m == 0``).
     coordinateSystemName : str
         Name of the selected coordinate system.
+    coordinateSystem : CoordinateSystem
+        Tensor-based coordinate system initialized for the mesh.
     _coordinates : numpy.ndarray
-        Cached array of mesh vertex coordinates.
+        Cached array of mesh vertex coordinates in geometric dimensions.
+    meshCells : numpy.ndarray
+        Array containing the cell connectivity in FELiCS ordering; populated
+        by :meth:`calcConnectivity`.
     """
-
     def __init__(self, coordinateSystemName, meshFileName=None, gdim = None, m=0, inputMesh=None):
         """
-        Initializes the FELiCSMesh object, loading a mesh from file or using an existing mesh.
+        Initialize the FELiCSMesh object, loading a mesh from file or using an
+        existing DOLFINx mesh.
 
         Parameters
         ----------
-        coordinateSystem : str
-            Coordinate system type ('Cartesian' or 'Cylindrical').
+        coordinateSystemName : str
+            Name of the coordinate system (``"Cartesian"`` or ``"Cylindrical"``).
         meshFileName : str, optional
-            Path to the mesh file.
+            Path to the Gmsh mesh file. Used only if ``inputMesh`` is ``None``.
         gdim : int, optional
-            Geometric dimension of the mesh.
+            Geometric dimension of the mesh. If ``None`` when reading from a
+            file, the dimension is obtained from the Gmsh model.
         m : int, optional
-            A parameter used when constructing the coordinate system.
+            Spectral wave number passed to the associated
+            :class:`CoordinateSystem`. If nonzero, a spectral dimension is
+            assumed and ``self.dim`` is set to ``gdim + 1``.
         inputMesh : dolfinx.mesh.Mesh, optional
-            An existing DOLFINx mesh object.
+            Existing DOLFINx mesh object. If provided, Gmsh is not used and
+            the mesh is wrapped directly.
         """
         if inputMesh is None:
             # Initialize gmsh and suppress its output
@@ -138,10 +157,14 @@ class FELiCSMesh:
         """
         Lazy-loaded refined export mesh for exporting simulation results.
 
+        On first access, a uniformly refined P1 mesh is created from this
+        instance and wrapped in an :class:`ExportMesh`. Subsequent accesses
+        return the cached export mesh.
+
         Returns
         -------
         ExportMesh
-            An instance of ExportMesh, created on first access if not already initialized.
+            An :class:`ExportMesh` instance associated with this base mesh.
         """
         if not hasattr(self, '_exportMesh') or self._exportMesh is None:
             self._exportMesh = ExportMesh(self)
@@ -164,17 +187,17 @@ class FELiCSMesh:
 
     def saveInFELiCSFormat(self, filename):
         """
-        Saves the refined ("export") mesh in the FELiCS HDF5-based format.
+        Save the refined (export) mesh in the FELiCS HDF5-based format.
+
+        The method uses the lazily constructed :attr:`exportMesh` to obtain a
+        refined P1 mesh, then writes its vertex coordinates and triangular cell
+        connectivity to an HDF5 file.
 
         Parameters
         ----------
         filename : str
             Path to the output HDF5 file where the mesh will be saved.
 
-        Notes
-        -----
-        - Only vertex coordinates and triangular cell connectivity are saved.
-        - Currently, degrees of freedom (DoFs) for boundary conditions are not included.
         """
         
         # TODO: save the DoFs corresponding to the different BCs
@@ -199,12 +222,11 @@ class FELiCSMesh:
 
     def calcConnectivity(self):
         """
-        Calculates and updates the internal mesh cell connectivity array.
+        Compute and update the internal mesh cell connectivity array.
 
-        Notes
-        -----
-        The meshCells attribute is reshaped from the mesh's topology connectivity.
-        This is essential for writing mesh data or querying cell connectivity.
+        The connectivity is extracted from the DOLFINx topology and stored in
+        :attr:`meshCells` as an ``(n_cells, n_vertices_per_cell)`` array.
+
         """
 
         connectivityCells = self.dolfinxMesh.topology.connectivity(2, 0)
@@ -335,12 +357,27 @@ class FELiCSMesh:
 
 class ExportMesh(FELiCSMesh):
     """
-    Subclass of FELiCSMesh for refined export meshes.
+    Refined export mesh built from a base :class:`FELiCSMesh`.
 
-    This class is intended for creating refined meshes suitable for exporting simulation results.
+    This subclass creates a uniformly refined P1 mesh from an existing
+    :class:`FELiCSMesh` instance. It is primarily used for exporting
+    simulation results on a finer mesh than the one used for computation.
     """
     
     def __init__(self, base_mesh: FELiCSMesh):
+        """
+        Construct an ExportMesh by refining a base FELiCSMesh.
+
+        The underlying DOLFINx mesh of ``base_mesh`` is uniformly refined using
+        :func:`dolfinx.mesh.refine`, and the resulting mesh is wrapped as a new
+        :class:`FELiCSMesh` instance with the same coordinate system and
+        geometric dimension.
+
+        Parameters
+        ----------
+        base_mesh : FELiCSMesh
+            The base mesh from which the refined export mesh is created.
+        """
         logger.debug("Initializing refined P1 export mesh.")
         
         # Refine the mesh
