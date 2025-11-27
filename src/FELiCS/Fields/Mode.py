@@ -9,6 +9,22 @@ from 	FELiCS.Misc.logging import Logger
 logger = Logger.get_logger("felics")
 
 class ModeType(Enum):
+    """
+    Enumeration of mode roles in the analysis.
+
+    Members
+    -------
+    NONE : 0
+        No specific mode type.
+    DIRECT : 1
+        Direct eigenmode.
+    ADJOINT : 2
+        Adjoint eigenmode.
+    RESPONSE : 3
+        Response mode in resolvent or input–output analysis.
+    FORCING : 4
+        Forcing mode in resolvent or input–output analysis.
+    """
     NONE     = 0
     DIRECT   = 1
     ADJOINT  = 2
@@ -16,6 +32,20 @@ class ModeType(Enum):
     FORCING  = 4
 
 class AnalysisType(Enum):
+    """
+    Enumeration of analysis types supported for modes.
+
+    Members
+    -------
+    NONE : 0
+        No analysis type.
+    MODAL : 1
+        Modal (eigenvalue) analysis.
+    RESOLVENT : 2
+        Resolvent analysis.
+    INPUT_OUTPUT : 3
+        Input–output analysis.
+    """
     NONE         = 0
     MODAL        = 1
     RESOLVENT    = 2
@@ -26,31 +56,63 @@ class Mode(Field):
     """
     Field-based representation of a computational mode.
 
-    This class extends the Field object to represent modes in a FEM-based
-    analysis, such as eigenmodes or response modes. It includes properties
-    like gain, frequency, eigenvalue, wave number, and error metrics.
+    This class extends :class:`Field` to represent modes in a FEM-based
+    analysis, such as eigenmodes, forcing modes or response modes. It
+    stores additional metadata such as gain, frequency, eigenvalue, wave
+    number, and error metrics, together with an analysis type and a mode
+    type.
 
     **Initialize the Mode object**
 
     Parameters
     ----------
-    FEMSpace : object
+    FEMSpace : dolfinx.fem.FunctionSpace
         The finite element space defining the discretization.
-    mesh : object
-        The mesh on which the FEM space is defined.
-
+    mesh : FELiCS.SpaceDisc.FELiCSMesh
+        Mesh on which the FEM space is defined.
+    name : str, optional
+        Name of the field. Default is ``"q_hat"``.
+    isStateVector : bool, optional
+        If True, the mode is interpreted as a state vector in a mixed space.
+        Default is True.
+    m : int, optional
+        Wave number associated with a spectral spatial dimension. Default is 0.
+    analysisType : {'Modal', 'Resolvent', 'Input_Output'}, optional
+        Type of analysis for which this mode is defined. The string is mapped
+        (case-insensitively) to :class:`AnalysisType`. Default is ``'Modal'``.
+    modeType : str or None, optional
+        Type of mode within the chosen analysis type, mapped to
+        :class:`ModeType` (e.g. ``'direct'``, ``'adjoint'``, ``'response'``,
+        ``'forcing'``). If ``None``, a sensible default is chosen based on
+        ``analysisType``.
     """
 
     def __init__(self, FEMSpace, mesh, name="q_hat", isStateVector=True, m=0, analysisType='Modal', modeType = None):
         """
-        Initializes the Mode instance.
+        Initialize a Mode instance.
 
         Parameters
         ----------
-        FEMSpace : object
+        FEMSpace : dolfinx.fem.FunctionSpace
             The finite element space defining the discretization.
-        mesh : object
-            The mesh on which the FEM space is defined.
+        mesh : FELiCS.SpaceDisc.FELiCSMesh
+            Mesh on which the FEM space is defined.
+        name : str, optional
+            Name of the underlying field. Default is ``"q_hat"``.
+        isStateVector : bool, optional
+            If True, this mode is treated as a state vector in a mixed
+            formulation. Default is True.
+        m : int, optional
+            Wave number associated with a spectral spatial dimension.
+            Default is 0.
+        analysisType : {'Modal', 'Resolvent', 'Input_Output'}, optional
+            Analysis type. The string is converted to an
+            :class:`AnalysisType` enum. Default is ``'Modal'``.
+        modeType : str or None, optional
+            Mode role within the chosen analysis type, mapped to
+            :class:`ModeType`. If ``None``, a default is selected based on
+            ``analysisType`` (e.g. DIRECT for MODAL, FORCING for RESOLVENT,
+            RESPONSE for INPUT_OUTPUT).
         """
         super().__init__(FEMSpace, mesh, name, isStateVector, m)
         
@@ -75,6 +137,13 @@ class Mode(Field):
 
     @property
     def name(self):
+        """
+        Name of the mode.
+
+        For state-vector modes (``isStateVector`` is True), this is always
+        returned as ``"q_hat"``, irrespective of the underlying field name.
+        Otherwise, the name from the base :class:`Field` class is used.
+        """
         if self.isStateVector:
             return "q_hat"
         else:
@@ -83,6 +152,17 @@ class Mode(Field):
 
     @property
     def omega(self):
+        """
+        Angular frequency associated with the mode.
+
+        For modal analysis, this is the eigenvalue. For resolvent and
+        input–output analysis, this is the real frequency.
+
+        Returns
+        -------
+        float
+            Eigenvalue (modal) or frequency (resolvent / input–output).
+        """
         if self.analysisType == AnalysisType.MODAL:
             return self.eigenValue
         elif self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT] :
@@ -90,6 +170,14 @@ class Mode(Field):
 
     @property
     def gain(self):
+        """
+        Gain associated with the mode.
+
+        Returns
+        -------
+        float
+            The mode gain. If undefined, returns ``-9999.`` and issues a warning.
+        """
         try:
             return self._gain
         except: 
@@ -98,6 +186,14 @@ class Mode(Field):
 
     @gain.setter
     def gain(self, gain):
+        """
+        Set the gain of the mode.
+
+        Parameters
+        ----------
+        gain : float
+            Gain value associated with the mode.
+        """
         self._gain = gain
 
 
@@ -289,6 +385,23 @@ class Mode(Field):
         logger.info(f"  Wave Number:   {self.waveNumber}") 
 
     def exportToH5(self, writer, fileName=None):
+        """
+        Export the mode to an HDF5 file.
+
+        If no file name is provided, a default name is constructed from the
+        analysis type, mode type, and frequency/eigenvalue (and gain number
+        for resolvent modes). Mode metadata such as omega and, where
+        applicable, gain and gain number are written as attributes.
+
+        Parameters
+        ----------
+        writer : object
+            Writer object providing an
+            ``exportFieldToH5(field, fileName, attrList)`` method.
+        fileName : str, optional
+            Base file name (without directory). If ``None``, a default is
+            generated based on analysis type and mode properties.
+        """
         # create standard fileName if none is given
         if fileName is None:
             fileName = "Mode_" \
@@ -326,7 +439,34 @@ class Mode(Field):
             importDirPath,
             importFileName = None,
         ):
-        
+        """
+        Import mode data from an HDF5 file.
+
+        If no explicit file name is provided, a default name is constructed
+        from the analysis type, mode type, and frequency/eigenvalue (and
+        gain number for resolvent modes). After importing the field
+        coefficients via the parent :class:`Field` method, the eigenvalue,
+        frequency, gain and gain number are read back from file attributes,
+        depending on the analysis type.
+
+        Parameters
+        ----------
+        reader : object
+            Reader object providing an ``importInField(field, filePath, groupName)``
+            method.
+        importDirPath : str
+            Directory from which the mode file is read.
+        importFileName : str, optional
+            Explicit file name to import from. If ``None``, a default name
+            is constructed from the mode metadata.
+
+        Returns
+        -------
+        Mode
+            The updated mode (self) with imported coefficients and metadata.
+        list of str
+            List of variable names that were not found in the file.
+        """
         # In case we want to import from a specific file
         if importFileName is not None:
             fileName        = importFileName
