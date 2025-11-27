@@ -27,7 +27,7 @@ We use the Python package **pytest**.
 To run the tests on your local machine:
 
 1. Install the `pytest` package (e.g., via `conda install pytest` or `pip install pytest`).
-2. Install FELiCS as a Python package (see the installation guide).
+2. Install FELiCS as a Python package (see the [installation guide](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html)).
 3. Navigate into the `tests` directory.
 4. Execute:
 
