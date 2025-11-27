@@ -24,65 +24,96 @@ logger = Logger.get_logger("felics")
 
 class Reader:
     """
-    A class for reading and interpolating data from HDF5 files onto FELiCS meshes.
+    Reader for importing and interpolating data from HDF5 files onto FELiCS meshes.
 
-    This class manages the loading of data from HDF5 files, handles interpolation or direct mapping
-    to the calculation mesh, and assigns the data to FELiCS fields. It supports caching for performance
-    and can handle complex-valued data.
+    This class manages loading of data from HDF5 files, interpolation or direct mapping
+    to a calculation mesh, and assignment of the resulting arrays to FELiCS fields.
+    It supports optional caching for performance and can handle complex-valued data.
+
+    **Initialize the Reader object**
+
+    Parameters
+    ----------
+    sourceDir : str, optional
+        Base directory where the data files are located. This is used as the
+        default directory when resolving relative HDF5 file paths.
+    needInterpolation : bool, optional
+        If True, data are interpolated from the import mesh onto the calculation
+        mesh using a Delaunay-based interpolator. If False, a precomputed
+        mapping between mesh DoFs is used instead. Default is True.
+    felicsMeshFilePath : str or None, optional
+        Path to the FELiCS mesh file when the mesh is stored in a different
+        directory than the source data. If None, a default ``mesh.h5`` in
+        ``sourceDir`` is assumed when interpolation is not needed.
+    isComplex : bool, optional
+        If True, the Reader expects complex-valued data stored as separate
+        ``_real`` and ``_imag`` datasets and reconstructs complex arrays.
+        Default is False.
+    cacheData : bool, optional
+        If True, processed data (after interpolation or mapping) are cached
+        per file/group to speed up repeated imports into different fields.
+        Default is True.
 
     Attributes
     ----------
     _sourceDir : str
-        The source directory for data files.
+        Source directory for data files.
     _needInterpolation : bool
-        Whether to interpolate data onto the FELiCS mesh.
+        Flag indicating whether interpolation onto the FELiCS mesh is required.
     _felicsMeshFilePath : str or None
-        Path to the FELiCS mesh file.
+        Path to the FELiCS mesh file, if explicitly provided.
     _isComplex : bool
-        Whether the data is complex-valued.
+        Flag indicating whether data are treated as complex-valued.
     _cacheData : bool
-        Whether to cache loaded data for reuse.
-    _sourceKey : tuple or None
-        Current source key (filePath, groupName).
-    _availableVars : list or None
-        List of available variables in the current source.
+        Flag indicating whether processed data are cached per file/group.
+    _sourceKey : tuple of (str, str) or None
+        Current data source identifier as ``(filePath, groupName)``.
+    _availableVars : list of str or None
+        List of variable names available in the current HDF5 group.
     _rawDataDict : dict
-        Raw data dictionary from HDF5 files.
+        Raw data loaded from HDF5 datasets, keyed by variable name.
     _dataForField : dict
-        Processed data for fields.
+        Processed (interpolated or mapped) data ready to be assigned to fields.
     _calcMeshCoords : numpy.ndarray or None
-        Coordinates of the calculation mesh.
+        Coordinates of the current calculation mesh DoFs (if available).
     _calcMeshP1Coords : numpy.ndarray or None
-        Coordinates of the P1 calculation mesh.
+        Coordinates of the P1 calculation mesh DoFs (if available).
     _mappingImportToCalc : numpy.ndarray or None
-        Mapping from import to calculation mesh.
-    _fullAxisNames : list or None
-        Full axis names.
-    _meshAxisNames : list or None
-        Mesh axis names.
+        Precomputed mapping from import mesh indices to calculation mesh DoFs,
+        used when interpolation is disabled.
+    _fullAxisNames : list of str or None
+        Names of all axes (mesh + spectral) for the current FELiCS mesh.
+    _meshAxisNames : list of str or None
+        Names of the spatial mesh axes for the current FELiCS mesh.
     _numDoFsCalcMeshP2 : int
-        Number of DoFs for P2 calculation mesh.
+        Number of DoFs in the P2 calculation mesh for the current field.
     _numDoFsCalcMeshP1 : int
-        Number of DoFs for P1 calculation mesh.
-    _spacesDegrees : list or None
-        Degrees of spaces.
+        Number of DoFs in the P1 calculation mesh for the current field.
+    _spacesDegrees : list of int or None
+        Polynomial degrees of the FEM spaces of all subfields for the current field.
 
     Notes
     -----
-    - Caching is per-file and cleared when switching sources.
-    - Interpolation uses Delaunay triangulation for efficiency.
-    - Retro-compatibility with previous FELiCS files with groupNames is ensured (for now).
+    - Caching is maintained per file/group and is cleared whenever the data
+      source changes.
+    - Interpolation uses a Delaunay triangulation of the import mesh and
+      performs a nearest-neighbour fill where linear interpolation produces
+      NaN values.
+    - The implementation is retro-compatible with older FELiCS HDF5 layouts,
+      including optional grouping and magnitude datasets.
+    - Currently only P1 and P2 Lagrange FEM spaces are supported.
 
     Raises
     ------
     FileNotFoundError
-        If the specified file does not exist.
+        If a specified mesh or data file does not exist.
     RuntimeError
-        If environment is not bound or source is not set.
+        If methods that require a bound source are called before any source
+        is set.
     NotImplementedError
-        For unsupported field types like mixed function spaces.
+        If unsupported field or subfield types (e.g., mixed spaces beyond
+        the supported structure) are encountered.
     """
-
     def __init__(
         self,
         sourceDir:          str  = "",
@@ -96,16 +127,29 @@ class Reader:
 
         Parameters
         ----------
+        sourceDir : str, optional
+            Base directory where the HDF5 data files are located.
+            Relative file paths passed to :meth:`importInField` are
+            resolved with respect to this directory. Default is ``""``.
         needInterpolation : bool, optional
-            Whether to interpolate data onto the FELiCS mesh, by default True.
+            If True, variables are interpolated from the import mesh to
+            the calculation mesh using a Delaunay-based interpolator.
+            If False, a mapping between mesh DoFs is used instead.
+            Default is True.
         felicsMeshFilePath : str or None, optional
-            Path to the FELiCS mesh file WHEN it is in a different directory than the source data.
+            Path to a FELiCS mesh file to be used as the import mesh when
+            it is not located in the same directory as the HDF5 data.
+            If None, a default ``mesh.h5`` is assumed in ``sourceDir``
+            when interpolation is disabled. Default is None.
         isComplex : bool, optional
-            Whether the data is complex-valued, by default False.
+            If True, the Reader expects complex-valued variables stored as
+            ``<name>_real`` and ``<name>_imag`` datasets and reconstructs
+            complex arrays from them. Default is False.
         cacheData : bool, optional
-            Whether to cache loaded data for reuse, by default True.
-        """
-        # Configuration (fixed for this Reader instance)
+            If True, processed data (after interpolation or mapping) are
+            cached per file/group and reused across subsequent calls to
+            :meth:`importInField`. Default is True.
+        """        # Configuration (fixed for this Reader instance)
         self._sourceDir             = sourceDir
         self._needInterpolation     = needInterpolation
         self._felicsMeshFilePath    = felicsMeshFilePath
@@ -134,46 +178,56 @@ class Reader:
     @cached_property
     def meshAxisNames(self):
         """
-        Names of the full spatial dimensions: mesh + spectral.
+        Names of the spatial mesh dimensions.
 
         Returns
         -------
         list of str
-            The full dimension names (e.g., ['x', 'y', 'z']).
+            Names of the mesh axes, e.g. ``['x', 'y', 'z']`` for a 3D mesh.
 
         Raises
         ------
         RuntimeError
-            If accessed before bind_env is called.
+            If accessed before any field is bound and the mesh environment
+            has not been initialized.
         """
         return self._meshAxisNames
     
     @cached_property
     def fullAxisNames(self):
         """
-        Get the names of all spatial dimensions: mesh + spectral.
+        Names of all spatial dimensions (mesh + spectral).
+
+        This includes both the mesh coordinates and any additional
+        spectral or parametric axes associated with the FELiCS mesh.
 
         Returns
         -------
         list of str
-            The full dimension names (e.g., ['x', 'y', 'z']).
+            The full list of axis names, e.g. ``['x', 'y', 'z']`` or
+            ``['x', 'y', 'z', 'k']``.
 
         Raises
         ------
         RuntimeError
-            If accessed before bind_env is called.
+            If accessed before any field is bound and the mesh environment
+            has not been initialized.
         """
         return self._fullAxisNames
 
     @cached_property
     def _triangulationImportMesh(self):
         """
-        Cached Delaunay triangulation of the import mesh for interpolation.
+        Cached Delaunay triangulation of the import mesh.
+
+        The triangulation is built in the space of mesh coordinates
+        (excluding spectral axes) and reused for interpolation of multiple
+        variables.
 
         Returns
         -------
         scipy.spatial.Delaunay
-            The triangulation object for the import mesh.
+            Delaunay triangulation of the import mesh coordinates.
         """
         nDimMesh        = len(self.meshAxisNames)
         importCoords    = self.importMeshCoords[:, :nDimMesh]
@@ -182,39 +236,49 @@ class Reader:
     @cached_property
     def calcMeshP2Coords(self):
         """
-        Get the coordinates of the calculation mesh.
+        Coordinates of the P2 calculation mesh.
+
+        These coordinates correspond to the DoFs of the highest-degree
+        (P2) scalar or vector subspace present in the field.
 
         Returns
         -------
         numpy.ndarray
-            Array of shape (nPoints, nDimMesh) with the coordinates of the calculation mesh.
+            Array of shape ``(n_points, n_dim_mesh)`` containing the
+            coordinates of the P2 calculation mesh DoFs.
         """
         return self._calcMeshP2Coords
     
     @cached_property
     def calcMeshP1Coords(self):
         """
-        Get the coordinates of the P1 calculation mesh.
+        Coordinates of the P1 calculation mesh.
+
+        These coordinates correspond to the DoFs of the P1 scalar or
+        vector subspace present in the field.
 
         Returns
         -------
         numpy.ndarray
-            Array of shape (nPoints, nDimMesh) with the coordinates of the P1 calculation mesh.
+            Array of shape ``(n_points, n_dim_mesh)`` containing the
+            coordinates of the P1 calculation mesh DoFs.
         """
         return self._calcMeshP1Coords
 
     @cached_property
     def mappingImportToCalcP2(self):
         """
-        Get the mapping from import mesh to calculation mesh (P2).
+        Mapping from import mesh indices to P2 calculation mesh DoFs.
+
+        When interpolation is disabled, this mapping is used to transfer
+        variables defined on the import mesh directly to the P2 calculation
+        mesh. When interpolation is enabled, no mapping is used.
 
         Returns
         -------
         numpy.ndarray or None
-            The mapping array if no interpolation is needed, otherwise None.
-
-        Notes
-        -----
+            One-dimensional array of indices mapping each P2 DoF to a
+            point in the import mesh, or None if interpolation is enabled.
         """
         if self._needInterpolation:
             return None
@@ -224,17 +288,30 @@ class Reader:
     @cached_property
     def importMeshCoords(self):
         """
-        Get the coordinates of the import mesh based on the configuration.
+        Coordinates of the import mesh.
 
-        Three scenarios:
-        1. Interpolation needed, original mesh file provided: load from original mesh file.
-        2. Interpolation needed, no original mesh file: load from main file under group name.
-        3. No interpolation needed: load from FELiCS exported mesh file.
+        Depending on the configuration, the import mesh is obtained in one
+        of the following ways:
+
+        1. If interpolation is needed and ``felicsMeshFilePath`` is set,
+           coordinates are loaded from the external FELiCS mesh file.
+        2. If interpolation is needed and no external mesh file is given,
+           coordinates are loaded from datasets co-located with the
+           variables in the main HDF5 file.
+        3. If interpolation is not needed, coordinates are loaded from a
+           FELiCS mesh file (either the explicit path or a default
+           ``mesh.h5`` in ``sourceDir``).
 
         Returns
         -------
         numpy.ndarray
-            Array of shape (nPoints, nDimMesh) with the coordinates of the import mesh.
+            Array of shape ``(n_points, n_dim_mesh)`` containing the
+            coordinates of the import mesh.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the expected FELiCS mesh file does not exist.
         """
 
         logger.debug("Associating import mesh to Reader instance.")
@@ -316,19 +393,24 @@ class Reader:
         groupName: str
     ) -> None:
         """
-        Switch to a new file/group if different, clearing per-file caches.
+        Switch to a new HDF5 file/group and clear per-file caches if needed.
+
+        If the requested ``(filePath, groupName)`` differs from the current
+        source, the internal caches of available variables, raw data, and
+        processed data are reset.
 
         Parameters
         ----------
         filePath : str
-            Path to the HDF5 file.
+            Absolute or relative path to the HDF5 file containing the data.
         groupName : str
-            Name of the group in the HDF5 file.
+            Name of the HDF5 group in which the variables are stored.
+            Use ``None`` to access datasets at the root level.
 
         Raises
         ------
         FileNotFoundError
-            If the file does not exist.
+            If the specified file does not exist.
         """
 
         # Check that the file exists
@@ -459,12 +541,15 @@ class Reader:
 
     def _ensure_source_set(self) -> None:
         """
-        Ensure that a data source is set.
+        Ensure that a data source has been configured.
+
+        This checks whether ``_sourceKey`` has been set by a previous call
+        to :meth:`importInField` or a related method.
 
         Raises
         ------
         RuntimeError
-            If no data source is set.
+            If no data source is currently set.
         """
         if self._sourceKey is None:
             raise RuntimeError("No data source set. Call importInField(..., filePath, groupName) first.")
@@ -474,14 +559,19 @@ class Reader:
         cachedProps: List[str] = []
     ) -> None:
         """
-        Remove all cached @cached_property values from this Reader instance.
+        Clear cached properties from this Reader instance.
 
-        They will be recomputed on the next access.
+        Any attributes corresponding to ``@cached_property`` results are
+        removed from ``__dict__`` so that they are recomputed upon the next
+        access.
 
         Parameters
         ----------
         cachedProps : list of str, optional
-            List of property names to clear. If empty, clears default properties.
+            Names of cached properties to clear explicitly. If an empty
+            list is given, a default set of mesh-related properties
+            (``fullAxisNames``, ``meshAxisNames``, ``calcMeshP2Coords``,
+            ``importMeshCoords``, ``mappingImportToCalcP2``) is cleared.
         """
         
         if not cachedProps:
@@ -508,12 +598,16 @@ class Reader:
     # --------------------------
     def _get_list_available_vars(self) -> None:
         """
-        List variable names available in the current group.
+        Discover available variable names in the current HDF5 group.
+
+        The method populates ``_availableVars`` based on the current
+        ``_sourceKey``. Some known non-field datasets (e.g. 'omega',
+        'gain', 'number') are removed from the list.
 
         Raises
         ------
         RuntimeError
-            If source is not set.
+            If no data source has been set prior to calling this method.
         """
         if self._availableVars is not None:
             return
@@ -542,16 +636,24 @@ class Reader:
         varNames: List[str]
     ) -> None:
         """
-        Load selected variables from HDF5 file into _rawDataDict.
+        Load selected variables from the current HDF5 source.
+
+        For each requested variable name, the corresponding dataset is read
+        from the HDF5 file and stored in ``_rawDataDict``. Some legacy
+        layouts store the data inside an additional ``magnitude`` subgroup,
+        which is handled transparently.
 
         Parameters
         ----------
         varNames : list of str
-            List of variable names to load.
+            Names of the variables to load from the HDF5 file. Variables
+            already present in ``_rawDataDict`` are skipped.
 
         Notes
         -----
-        NOTE: Maybe we just check if the groups exist instead of relying on _isComplex?
+        The interpretation of complex data (``_real`` and ``_imag`` suffixes)
+        is handled at a later stage; here only the raw real-valued datasets
+        are loaded.
         """
         # NOTE: maybe we just check if the groups exist instead of relying on _isComplex?
         filePath, groupName         = self._sourceKey
@@ -581,25 +683,34 @@ class Reader:
         toP1:       bool = False
     ) -> Dict[str, Any]:
         """
-        Interpolate given variables from import mesh to calculation mesh.
+        Interpolate variables from the import mesh to the calculation mesh.
+
+        The interpolation is performed using a linear interpolator based on
+        the Delaunay triangulation of the import mesh. Where linear
+        interpolation yields NaN values, a nearest-neighbour interpolator is
+        used to fill in missing values. Complex-valued variables are
+        reconstructed from their ``_real`` and ``_imag`` components.
 
         Parameters
         ----------
         varNames : list of str
-            List of variable names to interpolate.
+            Names of the variables to interpolate. For complex data, the
+            corresponding ``_real`` and ``_imag`` datasets are used.
         toP1 : bool, optional
-            Whether to interpolate to P1 calculation mesh, by default False.
-            NOTE: not very elegant
+            If True, variables are interpolated to the P1 calculation mesh
+            coordinates; otherwise to the P2 calculation mesh. Default is False.
 
         Returns
         -------
         dict
-            Dictionary mapping variable names to interpolated arrays.
+            Dictionary mapping each requested variable name to its
+            interpolated array on the chosen calculation mesh.
 
         Raises
         ------
         ValueError
-            If variable lengths do not match the import mesh.
+            If any variable length does not match the number of points in
+            the import mesh.
         """
         numMeshDimensions                    = len(self.meshAxisNames)
         importCoords                = self.importMeshCoords[:, :numMeshDimensions]
@@ -655,17 +766,23 @@ class Reader:
         varNames: List[str]
     ) -> Dict[str, Any]:
         """
-        Applies precomputed mapping.
+        Map variables from the import mesh to the P2 calculation mesh.
+
+        This method uses a precomputed index mapping between the import
+        mesh and the P2 calculation mesh (see
+        :attr:`mappingImportToCalcP2`) to transfer variables without
+        interpolation.
 
         Parameters
         ----------
         varNames : list of str
-            List of variable names to map.
+            Names of the variables to map using the precomputed indices.
 
         Returns
         -------
         dict
-            Dictionary mapping variable names to mapped arrays.
+            Dictionary mapping each variable name to its mapped array on
+            the P2 calculation mesh.
         """
         
         indices                         = self.mappingImportToCalcP2
@@ -679,17 +796,28 @@ class Reader:
         field: Any
     ) -> List[str]:
         """
-        Determine variable names to load from file for this field.
+        Determine the HDF5 variable names corresponding to a given field.
+
+        For mixed and vector fields, this method expands the field into its
+        scalar components and returns the corresponding dataset names. For
+        complex-valued data, ``_real`` and ``_imag`` suffixes are appended
+        as needed.
 
         Parameters
         ----------
         field : object
-            The FELiCS field object.
+            FELiCS field whose components should be mapped to variable
+            names in the HDF5 file.
 
         Returns
         -------
         list of str
-            List of variable names.
+            List of variable names that should be loaded for this field.
+
+        Raises
+        ------
+        NotImplementedError
+            If the field or subfield type is not supported by the Reader.
         """
         names           = []
         info            = field.info
@@ -728,24 +856,32 @@ class Reader:
         field: Any
     ) -> Any:
         """
-        Assign interpolated/mapped arrays to a given field.
+        Assign processed arrays to a FELiCS field.
+
+        The arrays are written into the underlying FEM function associated
+        with the field, taking into account mixed spaces, vector components
+        and scalar subfields. For complex-valued data, real and imaginary
+        parts are combined before assignment.
 
         Parameters
         ----------
         arrays : dict
-            Dictionary of arrays to assign.
+            Dictionary mapping variable names to numpy arrays on the
+            calculation mesh. For complex data, arrays may be provided as
+            ``<name>_real`` and ``<name>_imag`` entries.
         field : object
-            The FELiCS field object.
+            FELiCS field to be populated with the provided data.
 
         Returns
         -------
         object
-            The updated field.
+            The same field instance, with its underlying FEM function
+            updated in-place.
 
         Raises
         ------
         NotImplementedError
-            For mixed function spaces.
+            If the field or subfield type is not supported by the Reader.
         """
         # Field info
         info        = field.info
@@ -815,30 +951,45 @@ class Reader:
         groupName:  str
     ) -> Tuple[Any, List[str]]:
         """
-        Import data from the specified file/group into the given field.
+        Import data from an HDF5 file/group into a FELiCS field.
 
-        Automatically clears per-file caches when file/group changes.
+        This is the main public entry point of the Reader. It performs the
+        following steps:
+
+        1. Normalizes the file path (adding ``.h5`` extension if needed).
+        2. Updates the cached calculation mesh for the given field.
+        3. Switches the internal data source and clears per-file caches
+           if the file/group has changed.
+        4. Determines which variables are required for the field and checks
+           their availability in the file.
+        5. Loads variables from HDF5 and either interpolates them or maps
+           them to the calculation mesh, optionally using per-file caching.
+        6. Assigns the processed arrays to the field.
 
         Parameters
         ----------
         field : object
-            The FELiCS field to import data into.
+            FELiCS field object to which the imported data will be written.
         filePath : str
-            Path to the HDF5 file.
+            Path to the HDF5 file (with or without ``.h5``/``.fel`` extension).
         groupName : str
-            Name of the group in the HDF5 file.
+            Name of the group within the HDF5 file containing the variables.
+            Use ``None`` for root-level datasets.
 
         Returns
         -------
         tuple
-            (updated field, list of missing variables)
+            A tuple ``(field, missingVars)`` where:
+            - ``field`` is the updated FELiCS field object,
+            - ``missingVars`` is a list of variable names that were expected
+              for the field but not found in the file.
 
         Raises
         ------
         FileNotFoundError
-            If the file does not exist.
+            If the specified file does not exist.
         NotImplementedError
-            If the field type is not supported.
+            If the field type or its subspaces are not supported.
         """
 
         # Add ".h5" to the file path it not specified

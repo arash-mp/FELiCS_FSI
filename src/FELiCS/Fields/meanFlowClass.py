@@ -23,14 +23,84 @@ class meanFlowClass(
     equationOfStateHandler,
 ):
     """
-    Parent classes:
-    - export
-    - fieldProperties
+    Container and handler for mean-flow fields on a given mesh.
 
-    Child classes:
+    This class manages reading, storing, and post-processing of mean-flow
+    quantities from external files and provides auxiliary fields and
+    thermodynamic/transport properties required by FELiCS solvers.
 
+    **Initialize the meanFlowClass object**
+
+    Parameters
+    ----------
+    param : object
+        Global parameter object providing case, mixture and I/O configuration,
+        e.g. `param.FlowInput`, `param.Case`, and `param.Mixture`.
+    FEMSpaces : object
+        Collection of finite element function spaces, expected to provide
+        attributes such as ``P2`` and ``FunctionSpaceVectorVelocity``.
+    mesh : object
+        Mesh object used to define the function spaces, expected to provide
+        attributes such as ``coordinateSystem`` and ``exportMesh``.
+
+    Attributes
+    ----------
+    _isMean : bool
+        Flag indicating that this instance represents a mean flow (always True).
+    _isFluctuation : bool
+        Flag indicating that this instance represents a fluctuation field
+        (always False for mean flow).
+    _param : object
+        Reference to the global parameter object used for configuration.
+    _FEMSpaces : object
+        Reference to the FEM spaces used for field definitions.
+    _mesh : object
+        Reference to the mesh used for the fields.
+    _coordinateSystem : str or object
+        Coordinate system information taken from the mesh.
+    _meanflowFilename : str or None
+        Optional path to the processed mean-flow file (set when exporting).
+    _mixture : object
+        Mixture model taken from ``param.Mixture``.
+    _zeroVectorField : Field
+        Vector field initialized to zero on the velocity space.
+    _zeroField : Field
+        Scalar field initialized to zero on the scalar space.
+    _oneField : Field
+        Scalar field initialized to one on the scalar space.
+    _customMeanFlowQuantities : list of str
+        List of additional mean-flow quantity names requested by the user.
+    _fieldDict : dict of {str: Field}
+        Dictionary of all mean-flow fields after import.
+    _notInFileList : list of str
+        Names of requested fields that were not found in the input file.
+    _ScalarFunctionSpace : object
+        Scalar function space used for viscosity and diffusion fields.
+    _VectorFunctionSpace : object
+        Vector function space used for velocity-related fields.
+    xmfHeader : object
+        Metadata returned by the writer when exporting mean fields.
+
+    Notes
+    -----
+    The class delegates the specification of additional required fields to the
+    handler base classes (`energyHandler`, `equationOfStateHandler`,
+    `reactionHandler`). These base classes provide lists of extra field names
+    needed for their respective models.
     """
     def __init__(self, param, FEMSpaces, mesh):
+        """
+        Initialize the meanFlowClass instance.
+
+        Parameters
+        ----------
+        param : object
+            Global parameter object providing case, mixture and I/O settings.
+        FEMSpaces : object
+            Object holding the finite element spaces used to construct fields.
+        mesh : object
+            Mesh object underlying all finite element spaces.
+        """
         
         # Initialization
         self._isMean            = True
@@ -53,6 +123,35 @@ class meanFlowClass(
         
 
     def importDataFromFileAndExportToH5(self, writer):
+        """
+        Import mean-flow fields from the configured input file and export them.
+
+        This method reads the mean-flow quantities from the file specified in
+        ``param.FlowInput.MeanFlowFilePath``, constructs `Field` instances for
+        all required variables, computes additional transport and thermodynamic
+        quantities, and exports the assembled set of fields to an HDF5 file.
+
+        Parameters
+        ----------
+        writer : object
+            Writer object providing an ``exportListOfFieldsToH5`` method used
+            to export the list of mean-flow fields.
+
+        Notes
+        -----
+        The set of fields to be read is assembled from:
+        - the mean-flow field names defined in ``param``,
+        - additional fields required by the energy, equation-of-state, and reaction handlers and 
+        - any custom mean-flow quantities added by the user.
+
+        If the density field ``rho`` is requested but not present in the file,
+        its values are initialized to a constant of 1.0. If a turbulent
+        velocity field ``ut`` exists, it is initialized to zero.
+
+        After import, transport coefficients and thermodynamic quantities are
+        initialized via :meth:`initLamDiff` and
+        :meth:`initThermodynamicQuantities`.
+        """
         logger.info(f"Reading input flow from: '{self._param.FlowInput.MeanFlowFilePath}'")
 
         # Initialization
@@ -131,6 +230,27 @@ class meanFlowClass(
 
 
     def initLamDiff(self):
+        """
+        Initialize molecular viscosity and species diffusion coefficients.
+
+        Based on the selected molecular viscosity model and the mixture data,
+        this method constructs the laminar viscosity field ``nulam`` (if a
+        constant model is used) and computes species diffusion coefficients
+        ``D_<specie>`` using the corresponding Schmidt numbers.
+
+        The effective kinematic viscosity for each species is assembled from
+        the available contributions:
+        ``nulam``, ``nuturb`` and ``nuSGS``, if present in ``_fieldDict``.
+
+        Notes
+        -----
+        This routine populates the following entries in ``_fieldDict``:
+
+        - ``'nulam'`` : Field
+            Constant laminar viscosity (for constant viscosity models).
+        - ``'D_<specie>'`` : Field
+            Species diffusion coefficients for transported species.
+        """
         if self._param.Case.MolViscModel == 'Constant':
             self._fieldDict['nulam']            = Field(self._FEMSpaces.P2, self._mesh, name = "nulam")
             self._fieldDict['nulam'].setCoefficientArray(self._param.Case.MolVisc)
@@ -150,11 +270,51 @@ class meanFlowClass(
             self._fieldDict['D_' + specie]  = nuTot / Sc
 
     def initThermodynamicQuantities(self):
+        """
+        Initialize thermodynamic mean-flow quantities.
+
+        Currently this method creates and initializes the Prandtl number field
+        ``'Pr'`` in ``_fieldDict`` using the value from
+        ``param.Case.PrandtlNumber``.
+
+        Notes
+        -----
+        The ``'Pr'`` field is defined on the scalar P2 function space.
+        """
         self._fieldDict['Pr']            = Field(self._FEMSpaces.P2, self._mesh, name="Pr")
         self._fieldDict['Pr'].setConstantValue(self._param.Case.PrandtlNumber)
 
 
     def calculateSpeciesEnthalpy(self):
+        """
+        Compute and store species sensible enthalpies.
+
+        This method constructs JANAF thermodynamic species for several common
+        gas components and evaluates their sensible enthalpy expressions at
+        the current temperature field ``T``. The resulting enthalpy fields are
+        projected onto the P2 space and stored in the ``_hSpec`` dictionary.
+
+        Notes
+        -----
+        The following species are currently supported:
+
+        - CH₄
+        - O₂
+        - CO
+        - CO₂
+        - H₂O (gaseous)
+
+        The resulting dictionary entries are:
+
+        - ``_hSpec['CH4']``
+        - ``_hSpec['O2']``
+        - ``_hSpec['CO']``
+        - ``_hSpec['CO2']``
+        - ``_hSpec['H2O']``
+
+        Each entry holds a finite element function representing the sensible
+        enthalpy of the corresponding species.
+        """
         from fenics import project
         # noinspection PyUnresolvedReferences
         import FELiCS.Equation.Reactions.janafspecie as janafspecie
@@ -231,30 +391,46 @@ class meanFlowClass(
 
     def getVertexValues(self):
         """
-        This function returns an instance of the class meanFlowVertexValues,
-        which contains the vertex values of the fenics-Functions in the
-        _fieldDict
+        Return vertex-based values of all mean-flow fields.
 
-        Function arguments:
+        The method converts the internal dictionary of finite element fields
+        to vertex-based arrays and wraps them into a
+        :class:`meanFlowVertexValues` instance.
 
-        Function returns:
-        instance of the class meanFlowVertexValues
+        Returns
+        -------
+        meanFlowVertexValues
+            Object containing vertex values for all fields in ``_fieldDict``,
+            based on the mesh exported by ``self._mesh.exportMesh``.
         """
         return meanFlowVertexValues(self._fieldDict, self._mesh.exportMesh)
 
     def _getMeanFieldsToBeRead(self):
         """
-        Generate a list of mean flow field names to be read from the data source.
-        This method combines field names from various sources:
-        - Basic mean flow fields from parameters
-        - Additional fields needed for energy calculations
-        - Additional fields needed for equation of state calculations
-        - Additional fields needed for reaction calculations
-        - Custom mean flow quantities defined by the user
-        It also removes any duplicate field names to ensure each field is only read once.
-        TODO: Include the tensor order in the field names
-        Returns:
-            list: A deduplicated list of field names to be read
+        Assemble the list of mean-flow field names to be read from file.
+
+        This method combines field names from several sources:
+
+        - basic mean-flow fields specified in ``param``,
+        - additional fields required by the energy handler,
+        - additional fields required by the equation-of-state handler,
+        - additional fields required by the reaction handler,
+        - custom mean-flow quantities registered via
+          :meth:`addCustomMeanFlowQuantity`.
+
+        Duplicate names are removed to ensure that each field is read only
+        once.
+
+        Returns
+        -------
+        list of str
+            Deduplicated list of field names to import from the mean-flow
+            input file.
+
+        Notes
+        -----
+        TODO: The tensor order is not currently encoded in the field names. This
+        may be improved in the future to avoid hard-coded assumptions.
         """
         listOfFieldsToBeRead = self._param.getMeanFlowFieldNames()
         listOfFieldsToBeRead.extend(self._additionalFieldsToBeReadEnergy())
@@ -270,29 +446,83 @@ class meanFlowClass(
         return listOfFieldsToBeRead
 
     def addCustomMeanFlowQuantity(self,key):
+        """
+        Register an additional mean-flow quantity to be read.
+
+        Parameters
+        ----------
+        key : str
+            Name of the additional mean-flow quantity that should be included
+            when assembling the list of fields to import.
+
+        Notes
+        -----
+        The key is appended to the internal list
+        ``_customMeanFlowQuantities`` and will be included by
+        :meth:`_getMeanFieldsToBeRead`. Duplicates are removed when the final
+        list of field names is constructed.
+        """
         self._customMeanFlowQuantities.append(key)
 
 class meanFlowVertexValues(fieldProperties):
     """
-    This class provides the vertex values of the mean flow
+    Vertex-based representation of mean-flow fields.
 
-    Parent classes:
-    - fieldProperties
+    This class converts `Field` objects storing finite element solutions
+    into arrays of vertex values, providing a convenient interface for
+    post-processing and exporting mean-flow quantities on the mesh vertices.
 
-    Child classes:
+    **Initialize the meanFlowVertexValues object**
 
-    Private attributes:
+    Parameters
+    ----------
+    fieldDict : dict of {str: Field}
+        Dictionary of mean-flow fields whose vertex values will be extracted.
+    mesh : object
+        Mesh object providing coordinates for the vertex arrays (typically
+        ``mesh.exportMesh`` from the mean-flow class).
 
-    Protected attributes:
+    Attributes
+    ----------
+    _fieldDict : dict
+        Dictionary mapping field names to vertex-value arrays. For scalar
+        fields, the values are stored as 1D arrays. For vector-valued fields,
+        the values are stored as 2D arrays with shape
+        ``(num_components, num_vertices)``.
+    _isMean : bool
+        Flag indicating that these values correspond to mean-flow quantities.
+    _zeroField : ndarray
+        Convenience array of zeros with length equal to the number of mesh
+        vertices.
+    _oneField : ndarray
+        Convenience array of ones with length equal to the number of mesh
+        vertices.
 
-    - _fieldDict: The dictionary containing all the vertex values
-    of the mean field
-
-    Public attributes
+    Notes
+    -----
+    Vector-valued fields are handled by extracting each component from the
+    corresponding subspace and assembling them into a single stacked array.
     """
 
     def __init__(self,fieldDict,mesh):
-        
+        """
+        Initialize the meanFlowVertexValues instance.
+
+        Parameters
+        ----------
+        fieldDict : dict of {str: Field}
+            Dictionary containing the original finite element fields.
+        mesh : object
+            Mesh used to compute vertex coordinates and thus the vertex arrays.
+
+        Notes
+        -----
+        For vector-valued fields (with more than one subspace), the method
+        extracts coefficients for each component and stacks them into a
+        two-dimensional array of shape
+        ``(num_components, num_vertices)``. Scalar fields are stored as
+        one-dimensional arrays of length ``num_vertices``.
+        """
         self._fieldDict     = {}
         self._isMean        = True
         
