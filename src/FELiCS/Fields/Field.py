@@ -9,12 +9,13 @@ class Field:
     Class representing a finite element field.
 
     This class provides methods for handling finite element fields, including 
-    coefficient manipulation, boundary conditions application, and expression 
-    evaluation. It supports complex-valued fields and operates within a 
-    tensorial framework.
+    coefficient manipulation, boundary condition application, and expression 
+    evaluation. It supports complex-valued fields and can optionally represent
+    a state vector in a mixed formulation. The class also supports an optional
+    spectral dimension via a wave number.
 
-    The class interacts with `dolfinx.fem.Function` for finite element operations 
-    and includes utilities for working with `PETSc` vectors and UFL expressions.
+    The class interacts with ``dolfinx.fem.Function`` for finite element operations 
+    and includes utilities for working with PETSc vectors and UFL expressions.
 
     **Initialize the Field object**
 
@@ -22,13 +23,20 @@ class Field:
     ----------
     FEMSpace : dolfinx.fem.FunctionSpace
         The finite element function space.
-    mesh:      FELiCS.SpaceDisc.FELiCSMesh
-        FEliCS mesh associated with the function space.
-    name:      optional, string
-    m:         optional, integer
-        Wave number. If this is set, the Field is assumed to have one spectral spatial dimension, regardless the value of m.
+    mesh : FELiCS.SpaceDisc.FELiCSMesh
+        FELiCS mesh associated with the function space.
+    name : str, optional
+        Name of the field. If not provided, a default name is chosen based on
+        the field type (scalar, vector, or mixed).
+    isStateVector : bool, optional
+        If True, the field is interpreted as a state vector in a mixed space,
+        and subfield names may be taken from ``space.stateVectorNames`` where
+        available. Default is False.
+    m : int, optional
+        Wave number associated with a spectral spatial dimension. If this is
+        set (even to zero), the field is assumed to have one spectral spatial
+        dimension, and ``hasSpectralDimension`` is set to True.
     """
-
     def __init__(self, FEMSpace, mesh, name=None, isStateVector=False, m=None):
         self.space    = FEMSpace
         self.mesh     = mesh
@@ -77,8 +85,21 @@ class Field:
         self._name = name
 
     def getNamesOfSubFields(self):
-        #TODO: docu
-        
+        """
+        Return the list of subfield names for vector or mixed spaces.
+
+        For scalar fields, an empty list is returned and a warning is logged.
+        For vector fields, names are generated from the base field name and
+        the mesh axis names (e.g. ``u_x``, ``u_y``). For mixed fields, names
+        are taken from previously set values, from ``stateVectorNames`` (when
+        ``isStateVector`` is True), or reasonable defaults such as
+        ``scalar1``, ``vector1``, etc.
+
+        Returns
+        -------
+        list of str
+            List of subfield names. Empty for pure scalar fields.
+        """
         # Default value
         subFieldNames           = []
         
@@ -132,7 +153,16 @@ class Field:
         return subFieldNames
 
     def setNamesOfSubFields(self, nameList):
-        # TODO docu
+        """
+        Assign explicit names to the subfields of a mixed or vector field.
+
+        Parameters
+        ----------
+        nameList : list of str
+            List of subfield names. The length must match the number of
+            subspaces in the underlying function space; otherwise, a warning
+            is logged and the names are not changed.
+        """
         if len(nameList) != self.info['num_subspaces']:
             logger.warning("setNamesOfSubFields() called with a list of names that does not match the number of subspaces. No names were set.")
             return
@@ -140,12 +170,35 @@ class Field:
 
 
     def getTensor(self):
-        # TODO docu
+        """
+        Wrap the field as a tensor-aware object.
+
+        Returns
+        -------
+        FELiCS.Misc.tensorUtils.Tensor
+            Tensor wrapper around the underlying finite element function,
+            constructed with the mesh coordinate system and the field's
+            spectral settings (``m`` and ``hasSpectralDimension``).
+
+        Notes
+        -----
+        - Mixed functions are not yet fully supported and are treated as a
+          single tensor object.
+        """
         from FELiCS.Misc.tensorUtils import Tensor
         # TODO Sophie: handle Tensors of mixed functions (later)
         return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, mayHaveSpectralDimension = self.hasSpectralDimension)
 
     def isReal(self):
+        """
+        Check whether the field is (numerically) real-valued.
+
+        Returns
+        -------
+        bool
+            True if the imaginary part of the coefficient array has zero
+            norm, False otherwise.
+        """
         import numpy as np
         return np.linalg.norm(np.imag(self.getCoefficientArray()))==0
 
@@ -442,6 +495,21 @@ class Field:
 
         
     def getGradientField(self):
+        """
+        Compute the gradient of a scalar field as a new Field.
+
+        The gradient is obtained in a vector-valued function space with
+        dimension equal to the geometric dimension of the mesh (plus an
+        additional spectral dimension if present). The result is computed
+        via a tensor-based weak form and projection.
+
+        Returns
+        -------
+        Field
+            A new Field instance representing the gradient of the original
+            field.
+
+        """
         # TODO Sophie: throw error if Field is not scalar    
         from ufl import TestFunction, dx
         from FELiCS.Misc.tensorUtils import iGrad, iConj, iDot, Tensor
@@ -472,6 +540,17 @@ class Field:
         return gradientField
 
     def calculateL2Norm(self):
+        """
+        Compute the L2 norm of the field (and its subfields, if mixed).
+
+        For mixed or vector-valued fields, the norm is computed by summing
+        the contributions of each scalar subfield in the mixed decomposition.
+
+        Returns
+        -------
+        float
+            The L2 norm of the field.
+        """
         import ufl
         import numpy as np
         from FELiCS.Misc.tensorUtils import iConj, iDot
@@ -488,6 +567,27 @@ class Field:
 
 
     def getVorticityField(self):
+        """
+        Compute the vorticity field associated with a velocity field.
+
+        For a 2D velocity field, this returns a scalar vorticity field
+        (ω_z = ∂v/∂x − ∂u/∂y). For a 3D velocity field, a vector-valued
+        vorticity field is constructed component-wise using the curl of
+        the velocity.
+
+        Returns
+        -------
+        Field or None
+            Vorticity field as a scalar (2D) or vector (3D) Field. Returns
+            None if the number of components is less than 2.
+
+        Notes
+        -----
+        - 3D behaviour is marked as experimental in the implementation and
+          may not be fully tested.
+        - No explicit error is raised if the field is not a velocity-type
+          vector; it is the caller's responsibility to ensure consistency.
+        """
         # TODO Sophie: throw error if Field is not vector
         # TODO: Add vorticity 3D field
 
@@ -530,6 +630,18 @@ class Field:
 
 
     def exportToH5(self, writer, fileName=None):
+        """
+        Export the field to an HDF5 file using a FELiCS writer.
+
+        Parameters
+        ----------
+        writer : object
+            Writer object providing an ``exportFieldToH5(field, fileName)``
+            method.
+        fileName : str, optional
+            Base name for the exported dataset or file. If None, the field's
+            ``name`` attribute is used.
+        """
         # Sophie: This will be the final method
         if fileName == None:
             fileName = self.name
@@ -542,7 +654,29 @@ class Field:
             importFilePath,
             groupName = None
         ):
-        
+        """
+        Import data into the field using a FELiCS reader.
+
+        This is a convenience wrapper around the reader's
+        :meth:`importInField` method.
+
+        Parameters
+        ----------
+        reader : object
+            Reader object providing an ``importInField(field, filePath, groupName)``
+            method.
+        importFilePath : str
+            Path to the file containing the data to be imported.
+        groupName : str or None, optional
+            Optional group name inside the file from which to read.
+
+        Returns
+        -------
+        Field
+            The updated field (self).
+        list of str
+            List of variable names that were not found in the file.
+        """
         # Just call the reader function
         self, notInFile = reader.importInField(
             self,
@@ -728,20 +862,24 @@ class Field:
         """
         Smooth the field using a diffusion-like approach.
 
+        This method constructs a smoothing operator that combines an
+        identity term with a gradient-based regularization term, and then
+        applies it to the current field by solving the corresponding weak
+        form.
+
         Parameters
         ----------
         smoothFactor : float
-            A smoothing factor controlling the influence of the gradient term.
+            Smoothing factor controlling the influence of the gradient term.
         bcs : list, optional
-            A list of boundary conditions to apply.
+            List of boundary conditions to apply.
         restartSolver : bool, optional
-            Whether to restart the solver instead of reusing an existing one.
+            If True, rebuild the smoothing solver even if one already exists.
 
         Notes
         -----
-        - This method applies a smoothing operation by adding a gradient-based 
-          regularization term to the weak form.
-        - It is particularly useful for regularizing noisy numerical solutions.
+        - Particularly useful for regularizing noisy numerical solutions.
+        - The same solver is reused between calls unless ``restartSolver`` is True.
         """
         # evaluates an ufl expression by 
         from FELiCS.Solvers.LinearSolver import LinearSolver
@@ -846,22 +984,20 @@ class Field:
     ### dunder methods for overloading arithmetic operators ###
     def __add__(self, other):
         """
-        Overload the `+` operator for adding two Field objects.
+        Overload the ``+`` operator for adding fields or scalars.
 
         Parameters
         ----------
-        other : Field
-            Another Field object.
+        other : Field or scalar
+            Another Field object defined on the same space, or a scalar
+            value to be added to all coefficients.
 
         Returns
         -------
         Field
-            A new Field object with the summed coefficient arrays.
+            A new Field object with the summed coefficient arrays, or the
+            original field shifted by a scalar.
 
-        Raises
-        ------
-        NotImplementedError
-            If `other` is not a Field object.
         """
         import numpy as np
         ## overrides '+'
@@ -907,6 +1043,20 @@ class Field:
         return NotImplemented
 
     def __mul__(self, other):
+        """
+        Overload the ``*`` operator for pointwise multiplication.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field defined on the same space, or a scalar value.
+
+        Returns
+        -------
+        Field
+            A new Field whose coefficient array is the pointwise product
+            of the two fields, or the field scaled by the scalar.
+        """
         import numpy as np
         ## overrides '*'
         ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
@@ -922,6 +1072,26 @@ class Field:
         return NotImplemented
 
     def __truediv__(self, other):
+        """
+        Overload the ``/`` operator for pointwise division.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field defined on the same space, or a scalar value.
+
+        Returns
+        -------
+        Field
+            A new Field whose coefficient array is the pointwise division
+            ``self / other``.
+
+        Notes
+        -----
+        - Division by a Field is performed coefficient-wise; it is the
+          caller's responsibility to avoid division by zero.
+
+        """
         import numpy as np
         ## overrides '/'
         ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
