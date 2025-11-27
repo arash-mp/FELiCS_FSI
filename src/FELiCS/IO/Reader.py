@@ -981,8 +981,7 @@ class Reader:
         tuple
             A tuple ``(field, missingVars)`` where:
             - ``field`` is the updated FELiCS field object,
-            - ``missingVars`` is a list of variable names that were expected
-              for the field but not found in the file.
+            - ``missingVars`` is a list of variable names that were expected for the field but not found in the file.
 
         Raises
         ------
