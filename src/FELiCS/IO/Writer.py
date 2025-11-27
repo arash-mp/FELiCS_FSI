@@ -13,17 +13,71 @@ from    FELiCS.SpaceDisc.FEMSpaces import createFunctionSpace
 logger = Logger.get_logger("felics")
 
 class Writer:
-    
+    """
+    Utility class for exporting FELiCS fields and meshes to HDF5/XDMF.
+
+    A writer instance is associated with a mesh and an export directory.
+    When initialized with a mesh, the mesh is immediately exported to
+    ``mesh.h5`` in the target directory. If no mesh is given at
+    initialization, the mesh from the first exported field is used and
+    written when data is exported.
+
+    Multiple HDF5/XDMF files can be created within the same export
+    directory. All fields written by a single writer are assumed to be
+    defined on the same mesh.
+
+    **Initialize the Writer object**
+
+    Parameters
+    ----------
+    mesh : FELiCSMesh or None, optional
+        Mesh associated with this writer. If provided, the mesh is exported
+        immediately to ``mesh.h5`` in the export directory.
+    exportDir : str, optional
+        Directory where all HDF5/XDMF output files and the mesh file are
+        written. The directory is created if it does not exist.
+
+    Attributes
+    ----------
+    mesh : FELiCSMesh or None
+        Mesh associated with the writer. If initially ``None``, it is set
+        from the first field passed to an export method.
+    exportFolder : str
+        Path to the directory used for all exported files.
+    meshFileName : str
+        Path to the exported mesh HDF5 file, typically
+        ``<exportFolder>/mesh.h5``.
+    exportMesh : object
+        Mesh object used specifically for export, usually
+        ``mesh.exportMesh`` of the associated FELiCS mesh.
+    exportSpace : object
+        Finite element function space associated with the export mesh, used
+        to represent exported scalar fields.
+    mappingP2ToExport : ndarray, optional
+        Mapping from P2 degrees of freedom of a source space to the export
+        space. Created on demand during the first P2 export.
+
+    Notes
+    -----
+    All fields exported by a given writer are assumed to be compatible with
+    the same mesh. If fields are defined on different meshes, a separate
+    :class:`Writer` instance with a different export directory must be used
+    for each mesh; otherwise the generated XMF files will not be readable
+    correctly.
+    """
     def __init__(self, mesh = None, exportDir = "Output"):
         """
-        Function arguments:
-        - mesh: FELiCSMesh object, optional
-               mesh 
-        - exportDir: str, optional 
-               directory in which the files will be saved
+        Initialize a Writer instance.
 
-        Function returns:
-
+        Parameters
+        ----------
+        mesh : FELiCSMesh or None, optional
+            Mesh to be exported and associated with this writer. If ``None``,
+            the mesh is taken from the first field provided to an export
+            method.
+        exportDir : str, optional
+            Directory where all exported files (mesh, HDF5, XMF) are stored.
+            The directory is created if it does not already exist.
         """
 
         # Notes for docstring:
@@ -54,14 +108,32 @@ class Writer:
 
     def exportListOfFieldsToH5(self, listOfFields, fileName, attributes = None):
         """
-        Function arguments:
-        - listOfFields: list of Field (or child class) objects
-               fields that are to be written into one H5 file
-        - fileName: str
-               filename of H5 file (and of corresponding xmf file)
+        Export a list of fields to a single HDF5 file and generate XMF content.
 
-        Function returns:
+        Each field in the list may be scalar, vector, or mixed. Internally,
+        the fields are decomposed into scalar subfields, mapped or
+        interpolated to the export space, written to `<fileName>.h5`, and
+        referenced in an associated XMF file `<fileName>.xmf`.
 
+        Parameters
+        ----------
+        listOfFields : list of Field
+            List of `Field` (or subclasses) to be written to a single HDF5
+            file.
+        fileName : str
+            Base name of the HDF5/XMF files (without path). The export
+            directory is automatically prefixed, and the ``.h5``/``.xmf``
+            extensions are added.
+        attributes : list of objects, optional
+            Additional attributes to store as datasets in the HDF5 file. Each
+            element is expected to provide ``name`` and ``value`` attributes.
+
+        Returns
+        -------
+        str
+            XMF header/body text corresponding to the exported fields but
+            without the final XMF footer. This can be reused to append
+            additional attributes before closing the XMF document.
         """
 
         # get a list of purely scalar fields from the field list
@@ -75,14 +147,31 @@ class Writer:
 
     def exportFieldToH5(self, field, fileName, attributes = None):
         """
-        Function arguments:
-        - fields: Field (or child class) objects
-               field that is to be written as H5 file
-        - fileName: str
-               filename of H5 file (and of corresponding xmf file)
+        Export a single field to an HDF5 file and generate XMF content.
 
-        Function returns:
+        The field may be scalar, vector, or mixed. It is internally
+        decomposed into scalar subfields, mapped or interpolated to the
+        export space, written to `<fileName>.h5`, and referenced in an
+        associated XMF file `<fileName>.xmf`.
 
+        Parameters
+        ----------
+        field : Field
+            Field (or subclass) to be written to an HDF5 file.
+        fileName : str
+            Base name of the HDF5/XMF files (without path). The export
+            directory is automatically prefixed, and the ``.h5``/``.xmf``
+            extensions are added.
+        attributes : list of objects, optional
+            Additional attributes to store as datasets in the HDF5 file. Each
+            element is expected to provide ``name`` and ``value`` attributes.
+
+        Returns
+        -------
+        str
+            XMF header/body text corresponding to the exported field but
+            without the final XMF footer. This can be reused to append
+            additional attributes before closing the XMF document.
         """
         # get a list of purely scalar fields from the field 
         # (which could be a scalar/vector/mixed field)
@@ -92,7 +181,40 @@ class Writer:
 
 
     def _export(self, listOfScalarFields, fileName, attributes):
+        """
+        Core export routine for scalar fields.
 
+        This internal method performs the following steps:
+
+        1. If no mesh is set on the writer, it is taken from the first
+           scalar field and exported to ``mesh.h5``.
+        2. Each scalar field is mapped or interpolated to the export space,
+           creating an export field.
+        3. All export fields are written as datasets into `<fileName>.h5`.
+           Complex-valued fields are split into real and imaginary datasets.
+        4. XMF content is constructed for each dataset and written to
+           `<fileName>.xmf`.
+
+        Parameters
+        ----------
+        listOfScalarFields : list of Field
+            Scalar fields to be exported. All fields are assumed to be
+            defined on a mesh compatible with the writer's export mesh.
+        fileName : str
+            Base name of the HDF5/XMF files (without path). The export
+            directory is automatically prefixed, and the ``.h5``/``.xmf``
+            extensions are added.
+        attributes : list of objects or None
+            Optional additional attributes to store in the HDF5 file as
+            datasets. Each attribute object should provide ``name`` and
+            ``value`` attributes.
+
+        Returns
+        -------
+        str
+            XMF header/body text corresponding to the exported fields but
+            without the final XMF footer, allowing further extension.
+        """
         #-----------------------------------------------------------------------
         ## save the mesh of the first field if no mesh has been given at initialization 
         #-----------------------------------------------------------------------
@@ -150,7 +272,38 @@ class Writer:
 
 
     def _getListOfScalarFields(self, field):
+        """
+        Decompose a field into a list of scalar subfields.
 
+        Depending on the field type, this method behaves as follows:
+
+        - **scalar**: returns a list containing the field itself.
+        - **vector**: creates one scalar field per component.
+        - **mixed**: iterates over all subspaces; subspaces with
+          ``num_sub_spaces == 0`` are treated as scalar, while subspaces
+          with multiple components (e.g. vector-valued) are split into
+          scalar component fields.
+
+        The scalar subfields reuse the original mesh but are defined on
+        newly created scalar function spaces.
+
+        Parameters
+        ----------
+        field : Field
+            Field to decompose. Its type is inferred from
+            ``field.info['type']``.
+
+        Returns
+        -------
+        list of Field
+            List of scalar `Field` objects representing all components of
+            the original field.
+
+        Raises
+        ------
+        Exception
+            If ``field.info['type']`` is unknown or not supported.
+        """
         # convert vector fields and mixed fields into a list of scalar fields
         listOfSubFields = []
 
@@ -193,6 +346,31 @@ class Writer:
 
 
     def _getExportField(self, field):
+        """
+        Map or interpolate a scalar field to the export mesh and space.
+
+        For P2 fields, a precomputed index mapping
+        (``mappingP2ToExport``) is used for an efficient transfer of
+        coefficients. For other polynomial degrees, the data is
+        interpolated using grid-based interpolation.
+
+        Parameters
+        ----------
+        field : Field
+            Scalar field defined on the original mesh and space.
+
+        Returns
+        -------
+        Field
+            New scalar field defined on the export mesh and export space,
+            containing the mapped or interpolated coefficients.
+
+        Notes
+        -----
+        This method assumes that the provided field is scalar. If the field
+        lives on a mesh that is not compatible with the export mesh,
+        interpolation is used and some loss of accuracy may occur.
+        """
         #only works for scalar fields
         # TODO: check real quick if the field mesh is the same as the export mesh and throw error?
         exportField = Field(self.exportSpace, field.mesh.exportMesh, name=field.name)
@@ -214,6 +392,28 @@ class Writer:
 
 
     def _interpolateWithGridData(self, field, exportField):
+        """
+        Interpolate a scalar field from its original mesh to the export mesh.
+
+        This method uses :func:`scipy.interpolate.griddata` to interpolate
+        the degrees of freedom of a scalar FELiCS field onto the degrees of
+        freedom of the export field.
+
+        Parameters
+        ----------
+        field : Field
+            Input scalar field defined on the source mesh and function space.
+        exportField : Field
+            Target scalar field defined on the export mesh and export space.
+            Its coefficient array is overwritten with the interpolated values.
+
+        Notes
+        -----
+        The interpolation is performed in physical coordinates using linear
+        interpolation. It may be slower and less accurate for higher-order
+        fields or strongly distorted meshes. A warning is advisable when
+        using this on fields with polynomial degree greater than 2.
+        """
         ## Interpolating a P1 FELiCS field to a P1 export field using griddata:
         # field: input field 
         # exportField: export field for writing in file
@@ -235,6 +435,26 @@ class Writer:
 
 
     def _createXMFHeader(self):
+        """
+        Create the XMF header and mesh description.
+
+        The header includes:
+
+        - XML prolog and XDMF root tags,
+        - a grid collection with topology referencing the cell connectivity
+          stored in ``mesh.h5:/cells/triangles``,
+        - geometry data items referencing the coordinate datasets in
+          ``mesh.h5:/coordinates/*``.
+
+        The cell type is automatically set to ``Triangle`` for 2D grids and
+        ``Tetrahedron`` otherwise.
+
+        Returns
+        -------
+        str
+            XMF header string including topology and geometry sections but
+            not the closing footer.
+        """
         from textwrap import dedent
         import h5py
 
@@ -273,6 +493,29 @@ class Writer:
         return xmf
 
     def _createXMFForScalarField(self, h5FileName, fieldName, size, fieldNameInFile=None):
+        """
+        Create an XMF attribute block for a scalar field.
+
+        Parameters
+        ----------
+        h5FileName : str
+            Name of the HDF5 file containing the scalar dataset (without
+            path).
+        fieldName : str
+            Logical name of the field as it should appear in the XMF
+            attribute.
+        size : int
+            Number of nodal values in the scalar dataset.
+        fieldNameInFile : str or None, optional
+            Name of the dataset inside the HDF5 file. If ``None``, the
+            value of ``fieldName`` is used.
+
+        Returns
+        -------
+        str
+            XMF snippet describing the scalar attribute and its link to the
+            HDF5 dataset.
+        """
         from textwrap import dedent
 
         if fieldNameInFile==None:
@@ -291,6 +534,17 @@ class Writer:
 
 
     def _createXMFFooter(self):
+        """
+        Create the XMF footer.
+
+        The footer closes the grid, domain, and XDMF tags started in the
+        header.
+
+        Returns
+        -------
+        str
+            XMF footer string that finalizes the XDMF document.
+        """
         from textwrap import dedent
         return dedent(f"""\
                     </Grid>
