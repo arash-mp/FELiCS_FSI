@@ -119,6 +119,7 @@ class Mode(Field):
         # Set values
         self.analysisType      = AnalysisType[analysisType.upper()]
         # TODO Sophie: write error if analysisType is not given
+        self.waveNumber        = m
     
         # Define name of the subfields (variables of the mode)
         self.namesOfSubFields   = self.getNamesOfSubFields()
