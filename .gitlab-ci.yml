@@ -90,5 +90,5 @@ pages:
     paths:
       - public
   only:
-    - development
-    #- main
+    #- development
+    - main
