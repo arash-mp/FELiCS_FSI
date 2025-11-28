@@ -11,7 +11,7 @@ Assumptions:
 - molecular viscosity is only a function of the gas composition and the temperature
 
 Example use case:
-- Compressible flow including acoustics: [Demange et al. 2024](https://doi.org/10.2514/6.2024-3170)
+- compressible flow including acoustics: [Demange et al. 2024](https://doi.org/10.2514/6.2024-3170)
 
 References:
 - [Sutherland et al. 1893](https://doi.org/10.1080/14786449308620508)

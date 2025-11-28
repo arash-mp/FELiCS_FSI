@@ -46,8 +46,8 @@ class ModeCollectionTestHandler(RandomCaseHandler):
                 mode2 = self.createFELiCSMode(name=f"fake_mode_response{i}", analysisType=analysisType, modeType="Response")
                 mode1.isAdjoint = False
                 mode2.isAdjoint = False
-                mode1.eigenValue = np.random.randint(9999) + 1j*np.random.randint(9999)
-                mode2.eigenValue = np.random.randint(9999) + 1j*np.random.randint(9999)
+                mode1.singularValue = np.random.randint(9999) #+ 1j*np.random.randint(9999)
+                mode2.singularValue = np.random.randint(9999) #+ 1j*np.random.randint(9999)
                 self.mode_collection.appendMode(mode1)
                 self.mode_collection.appendMode(mode2)            
         
@@ -83,3 +83,38 @@ def test_getDirectEigenValueSpectrum():
         print(" - Testing eigenvalue ", i, ": ", eigenvalue, " vs ", validation_eigenvalues[i])
         assert np.abs(eigenvalue - validation_eigenvalues[i]) < 1e-14
     pass
+
+
+def test_getLeadingMode():
+    analysisType = "Modal"
+    # Test 
+    leadingMode_test_direct = None
+    print("Validating the leading mode in the direct spectrum")
+    growthRateMax = -9990
+    randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
+    for mode in randomModeCollector.mode_collection.modeList:
+        if mode.isAdjoint == False:
+            eigenValue = mode.eigenValue
+            if np.imag(eigenValue) > growthRateMax:
+                growthRateMax = np.imag(eigenValue)
+                leadingMode_test_direct   = mode
+
+    leadingMode_valid_direct = randomModeCollector.mode_collection.getLeadingMode()
+    assert leadingMode_valid_direct == leadingMode_test_direct
+
+    print("Validating the leading mode in the adjoint spectrum")
+    leadingMode_test_adjoint = None
+    randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
+    growthRateMin = 9990
+    for mode in randomModeCollector.mode_collection.modeList:
+        if mode.isAdjoint == True:
+            eigenValue = mode.eigenValue
+            if np.imag(eigenValue) < growthRateMin:
+                growthRateMin = np.imag(eigenValue)
+                leadingMode_test_adjoint = mode
+
+    leadingMode_valid_adjoint = randomModeCollector.mode_collection.getLeadingMode(adjoint=True)
+    assert leadingMode_test_adjoint == leadingMode_valid_adjoint
+        
+
+     

@@ -2,7 +2,7 @@
 
 Resolvent analysis is a linear systems approach used to understand how a dynamical system responds to harmonic forcing. The method starts by linearizing the governing equations around a steady base state, then analyzing how the system amplifies input disturbances at different frequencies. By treating the linearized operator as a transfer function, one can identify which inputs (forcings) lead to the strongest outputs (responses). This is done using a singular value decomposition of the resolvent operator, which reveals the most amplified structures and quantifies the gain. The method captures both modal and nonmodal amplification, making it especially powerful for studying flows with strong non-normal behavior.
 
-**References:**
+References:
 - [Beneddine et al. 2016](https://doi.org/10.1017/jfm.2016.331)
 - [Towne et al. 2018](https://doi.org/10.1017/jfm.2018.675)
 - [von Saldern et al. 2024](https://doi.org/10.1017/jfm.2024.922)
@@ -159,7 +159,7 @@ $$
 $$
 Using the Cholesky decomposition for the forcing weighting matrix,  $\mathbf{W}_f =  \mathbf{M}_f^H \mathbf{M}_f$, and introducing a new function $\hat{\mathbf{g}}=\mathbf{M}_f\hat{\boldsymbol{\eta}}$, we can re-write the definition of the gain as 
 $$\sigma^2 = \frac{\hat{\mathbf{g}}^H (\mathbf{M}_f^H)^{-1} \tilde{\mathbf{R}}^H \mathbf{W}_r \tilde{\mathbf{R}} (\mathbf{M}_f)^{-1} \hat{\mathbf{g}}}{\hat{\mathbf{g}}^H\hat{\mathbf{g}}}.$$
-It takes on the form of a Rayleigh quotient: $\max \sigma^2$ is the solution of the following HEVP (Hermitian Eigenvalue Problem):
+It takes on the form of a Rayleigh quotient: $\max \sigma^2$ is the solution of the following HEVP (Hermitian eigenvalue problem):
 $$
 (\mathbf{M}_f^H)^{-1} \tilde{\mathbf{R}}^H \mathbf{W}_r \tilde{\mathbf{R}} (\mathbf{M}_f)^{-1} \hat{\mathbf{g}}=\lambda\hat{\mathbf{g}},
 $$
@@ -170,7 +170,7 @@ or:
 $$\mathbf{W}_f^{-1} \mathbf{P}_f^H \mathbf{W}_{\text{FEM}}^H \mathbf{R}^H \mathbf{P}_r^H \mathbf{W}_r\mathbf{P}_r \mathbf{R} \mathbf{W}_{\text{FEM}}\mathbf{P}_f \hat{\boldsymbol{\eta}}=\lambda\hat{\boldsymbol{\eta}}.$$
 
 ```{note}
-For real operators, such as $\mathbf{P}_f,\, W_{FEM}, \,...$ the Hermitian transpose is just the transpose.
+For real operators, such as $\mathbf{P}_f,\, \mathbf{W}_{FEM}, \,...$ the Hermitian transpose is just the transpose.
 ```
 
 Finally, we can also re-write the HEVP in terms of the linear operator:

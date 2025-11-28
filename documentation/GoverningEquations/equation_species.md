@@ -6,8 +6,8 @@ Assumptions:
 - Schmidt number, which relates mass diffusivity with eddy viscosity, is often assumed to be constant
 
 Example use case:
-- Passive scalar transport: [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
-- Reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
+- passive scalar transport: [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
+- reacting turbulent jet flame: [Input-output analysis](./../Tutorials/input_output_analysis.md)
 
 References:
 - [Kaiser et al. 2021](https://doi.org/10.1017/jfm.2021.151)
@@ -50,7 +50,7 @@ The density-premultiplied effective mass diffusivity is defined as $\breve{D}_\t
 ### Linearized species transport equation
 The linear species transport equation is
 $$
-\overline{\rho} \frac{\partial Y_k'}{\partial t} + \rho ' \overline{\mathbf{u}} \cdot \nabla \overline{Y}_k + \overline{\rho} \mathbf{u}' \cdot \nabla \overline{Y}_k + \overline{\rho} \, \overline{\mathbf{u}} \cdot \nabla Y_k' = \nabla \left(\cdot \breve{D}_\textrm{eff}' \nabla \overline{Y}_k\right) + \nabla \cdot \left(\overline{\breve{D}}_\textrm{eff} \nabla Y_k'\right) + f_{Y_k}'
+\overline{\rho} \frac{\partial Y_k'}{\partial t} + \rho ' \overline{\mathbf{u}} \cdot \nabla \overline{Y}_k + \overline{\rho} \mathbf{u}' \cdot \nabla \overline{Y}_k + \overline{\rho} \, \overline{\mathbf{u}} \cdot \nabla Y_k' = \nabla \cdot \left(\breve{D}_\textrm{eff}' \nabla \overline{Y}_k\right) + \nabla \cdot \left(\overline{\breve{D}}_\textrm{eff} \nabla Y_k'\right) + f_{Y_k}'
 $$
 
 
