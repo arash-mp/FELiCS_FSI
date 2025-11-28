@@ -441,7 +441,7 @@ class ModeCollection():
 
         Notes
         -----
-        This method is not yet implemented.
+        This method is not yet implemented and will be added in future releases.
         """
 
         #TODO: get nearest mode to one of the above. Change handling of parameters
