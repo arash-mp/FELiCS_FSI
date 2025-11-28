@@ -38,6 +38,9 @@ In the installation directory, we provide different _.yml_ files that contain al
 
 The older versions of yml files can be found in the folder [yml_old](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation/yml_old) with the corresponding version in the filename. 
 
+```{note}
+If a Windows user has troubles with the latest yml file, please try the second version.
+```
 
 ```{admonition} Optional
 In case you want to give the environment a different name, you can change the first line of the _.yml_ file accordingly. name: `felics  ->  name: new_name`
