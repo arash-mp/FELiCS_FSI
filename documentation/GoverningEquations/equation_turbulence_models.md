@@ -93,11 +93,7 @@ where
 - the isotropic parts can again be absorbed into $p'$.
 
 ```{note}
-If compressibility is considered, the stress form used in FELiCS mirrors the molecular one: 
-$$
-\boldsymbol{\tau}_\text{eff} = \mu_\text{eff}\big[(\nabla+\nabla^T)\mathbf{u} - \tfrac{2}{3}(\nabla\!\cdot\!\mathbf{u})\mathbf{I}\big],
-$$  
-with $\mu_\text{eff}=\mu+\mu_t$.
+If compressibility is considered, the stress form used in FELiCS mirrors the molecular one$\boldsymbol{\tau}_\text{eff} = \mu_\text{eff}\big[(\nabla+\nabla^T)\mathbf{u} - \tfrac{2}{3}(\nabla\!\cdot\!\mathbf{u})\mathbf{I}\big]$, with $\mu_\text{eff}=\mu+\mu_t$.
 ```
 
 ```{note}
@@ -113,7 +109,7 @@ There is currently no transport/closure equation for $\overline{\mu}_t$ being so
 
 ### Constant eddy viscosity $(\overline{\mu}_t= \textrm{const})$
 
-A single scalar applied uniformly in space. To use this option, directly set an effective viscosity value $\overline{\mu}_{eff}=\overline{\mu}_t + \overline{\mu}$ into the molecular viscosity field of the FELiCS [configuration file](./../Running_FELiCS/FELiCS_settings.md):
+A single scalar applied uniformly in space. To use this option, directly set an effective viscosity value $\overline{\mu}_\textrm{eff}=\overline{\mu}_t + \overline{\mu}$ into the molecular viscosity field of the FELiCS [configuration file](./../Running_FELiCS/FELiCS_settings.md):
 
 ```yaml
   "MolViscModel": "Constant"
@@ -122,7 +118,7 @@ A single scalar applied uniformly in space. To use this option, directly set an 
 
 For a laminar flow with a constant viscosity, simply set the molecular value to the `"MolVisc"` entry. 
 
-### Arbitrary eddy viscosity scalar field from file $(\overline{\mu}_t(x))$
+### Arbitrary eddy viscosity scalar field from file $(\overline{\mu}_t(\mathbf{x}))$
 
 Alternatively, an arbitrary field defined on the import mesh can be considered. This can be useful, for example, when importing the mean flow eddy viscosity from an outside RANS solver. 
 
@@ -132,7 +128,7 @@ In such case, the FELiCS [configuration file](./../Running_FELiCS/FELiCS_setting
   "TurbulenceModel": "File"
 ```
 
-and the [mean flow file](./../Running_FELiCS/fel_file.md) should contain an array called `nuturb`, defining $\overline{\mu}_t(x)$ over the mean flow mesh.
+and the [mean flow file](./../Running_FELiCS/fel_file.md) should contain an array called `nuturb`, defining $\overline{\mu}_t(\mathbf{x})$ over the mean flow mesh.
 
 ```{note}
 Small FELiCS quirk: Even though the eddy and molecular viscosity are called `nuturb` and `nulam` in the code, they actually refer to the dynamic viscosity $\mu$.
