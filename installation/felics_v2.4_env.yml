@@ -1,4 +1,4 @@
-name: felics
+name: felics2025_dolfin9
 channels:
 - conda-forge
 - defaults
