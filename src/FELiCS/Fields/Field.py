@@ -931,7 +931,7 @@ class Field:
         petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
 
-    def plot(self):
+    def plot(self, xlim=None, ylim=None, imaginaryPart=False):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
         field looks as expected and rule out e.g. import problems.
@@ -942,40 +942,79 @@ class Field:
         """
         import matplotlib.pyplot as plt
         from matplotlib.tri import Triangulation
+        from dolfinx import fem
         import numpy as np
+        from    basix.ufl                   import element
 
         if self.space.num_sub_spaces > 1:
             raise NotImplementedError("Plotting is only implemented for scalar fields. Use getListOfSingleFields() to get subfields. These can then be plotted individually with the same method.")
+
+        # ---- METHOD 1: Directly use dof coordinates and tricontourf ----
+        # NOTE: With this method we loose mesh connectivity information.
+        # phi_vertex      = self.getCoefficientArray()
+        # dof_coordinates = self.space.tabulate_dof_coordinates()
+        # x               = dof_coordinates[:, 0]
+        # y               = dof_coordinates[:, 1]
+        # triang          = Triangulation(x, y)
+        # ---- End of METHOD 1 ----
+
+        # ---- METHOD 2: Interpolate to P1 space and use tricontourf ----
+        mesh            = self.mesh.dolfinxMesh      # dolfinx.mesh.Mesh
+        u_h             = self.function              # fem.Function in Vh
+        tdim            = mesh.topology.dim
+
+        # Ensure cell->vertex connectivity
+        mesh.topology.create_connectivity(tdim, 0)
+
+        # --- 1) Interpolate to P1 space on same mesh ---
+        V1              = fem.functionspace(mesh, element("CG", "triangle", 1))
+        u1              = fem.Function(V1)
+        u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
+        if not imaginaryPart:
+            phi_vertex      = np.real(u1.x.array)  # already aligned with coords / triangles
+        else:
+            phi_vertex      = np.imag(u1.x.array)
+
+        # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
+
+        # --- 2) Build triangulation from the mesh ---
+        cells_to_vertices = mesh.topology.connectivity(tdim, 0).array
+        triangles       = cells_to_vertices.reshape(-1, 3)
+        coords          = mesh.geometry.x
+        x               = coords[:, 0]
+        y               = coords[:, 1]
+        triang          = Triangulation(x, y, triangles=triangles)
+        # ---- End of METHOD 2 ----
         
-        FieldsList = self.getListOfSubFields()
+        # ---- Plotting ----
+        fig, axes       = plt.subplots()
+        contour         = axes.tricontourf(triang, phi_vertex, levels=20, cmap="RdBu_r", alpha=0.7)
+        axes.tricontour(triang, phi_vertex, levels=10, colors='black', alpha=0.5, linewidths=0.5)
 
-        # Create figure outside the loop
-        fig, axes = plt.subplots(1, 1, figsize=(6, 6))
-
-        # Create the plot
-        phi = self.getCoefficientArray()
-        dof_coordinates = self.space.tabulate_dof_coordinates()
-
-        x = dof_coordinates[:, 0]
-        y = dof_coordinates[:, 1]
-        triang_scalar = Triangulation(x, y)
-
-        # Create contour plot of phi
-        contour = axes.tricontourf(triang_scalar, phi, levels=20, cmap='RdBu_r', alpha=0.7)
-        # contour_lines = axes.tricontour(triang_scalar, phi, levels=10, colors='black', alpha=0.5, linewidths=0.5)
-
-        # Add colorbar for phi
-        cbar = plt.colorbar(contour, ax=axes, label=r'$\phi$ '+ self.name)
 
         # Set labels and title
         axes.set_xlabel('x')
         axes.set_ylabel('y')
         if self.name != "":
-            axes.set_title(self.name)
+            title = self.name
         else:
-            axes.set_title('Scalar Field ')
+            title = "scalar_field"
+        if imaginaryPart:
+            title += "_imag"
+        elif not self.isReal:
+            title += "_real"
+
+        axes.set_title(title)
         axes.set_aspect('equal')
         axes.grid(True, alpha=0.3)
+        
+        # Add colorbar for phi
+        plt.colorbar(contour, ax=axes, label=title)
+
+        if xlim is not None:
+            axes.set_xlim(xlim)
+        if ylim is not None:
+            axes.set_ylim(ylim)
 
         plt.tight_layout()
         plt.show()
