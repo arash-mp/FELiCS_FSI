@@ -2,13 +2,12 @@
 
 Welcome to How-To-Guides!
 
-**TODO: re-format this index site and add some text**
-
-Describe the following:
+**TODO: put the following bullet points into text:**
 - these markdowns are based on jupyter notebooks
-- all the jupyter notebooks and the files that they need are in the folder "tutorials/HowTos" (link here!) (=> or should we do a separate folder?)
+- all the jupyter notebooks and the files that they need are in the folder "how_tos" (link here!) 
 - remember to install FELiCS as a package before use (link the intallation guide here)
-- they are by no means complete but a starting point for further scripting possibilities with FELiCS
+- these how-to guides are by no means complete but a starting point for exploring how to use FELiCS as a python package
+- further How-To Guides are planned
 
 
 ### First steps in scripting with FELiCS
@@ -44,20 +43,9 @@ In this section we will learn how to:
 ### Performing modal analysis in FELiCS
 
 In this section we will learn how to:
-- How to perform a modal analysis on a given baseflow
-- How to calculate the sensitivity of a eigenvalue with respect to a given baseflow
+- How to perform a modal analysis on a given baseflow with a FEliCS config file
 
 ```{toctree}
 :maxdepth: 1
 03_GeneralEigenValueProblem.md
 ```
-
-### In progress 
-- Sensitivity tutorials: how to calculate eigenvalue sensitivity w.r.t. baseflow; how to calculate structural sensitivity
-- tensorial framework tutorial
-
-
-### Ideas for the future
-- How to add custom equations
-- how to import SPOD mode into felicsfunction and compute alignment with resolvent mode
-- calculate pseudospectrum of a linear operator
