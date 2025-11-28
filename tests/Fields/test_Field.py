@@ -209,3 +209,49 @@ def test_smoothUflTensorExpression():
     test_array = randomField.scalar_field.function.x.array.copy()
     assert np.linalg.norm(validation_array-test_array) < 1e-14
     print("... passed")
+    
+def test_smooth():
+    print("testing smoothing functionality")
+    from FELiCS.Solvers.LinearSolver import LinearSolver
+    # NOTE: So far only scalar field is tested
+    # 0 Define a simple ufl expression and smooth factor
+    temp_scalar_field = randomField.createFELiCSField("scalar")
+    temp_scalar_field.function.x.array[:] = randomField.scalar_field.function.x.array.copy()
+    smoothFactor = 1e-2
+    # 1 Assemble validation array
+    testFunc_field = TestFunctions(temp_scalar_field.space)
+    trialFunc_field = TrialFunctions(temp_scalar_field.space)
+    matrix_ufl = UflDecorator()
+    coordinateSystem = temp_scalar_field.mesh.coordinateSystem
+    J_hat = coordinateSystem.J_hat
+    i=0
+    for test in testFunc_field:
+        iTest = Tensor(test, coordinateSystem, mayHaveSpectralDimension=True)
+        iFluc = Tensor(trialFunc_field[i], coordinateSystem, mayHaveSpectralDimension=True)
+        if iTest.order  == 1:
+            matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*dx)
+            matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iTest))).ufl_tens*J_hat*dx)
+        elif iTest.order == 0:
+            matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*dx)
+            matrix_ufl.add((smoothFactor* iDot(iGrad(iFluc),iGrad(iConj(iTest)) )).ufl_tens*J_hat*dx)
+        else:
+            print("Wrong order for test function")
+        i+=1
+    matrix = matrix_ufl.getAssembledMatrix(temp_scalar_field.mesh, bcs=[])
+    temp_scalar_field.space.FEMSmoothSolver = LinearSolver.createEquationSystemSolver(matrix)
+    expr_ufl = UflDecorator()
+    listOfFields = temp_scalar_field.getListOfSubFields()
+    test_FEM     = TestFunctions(temp_scalar_field.space)
+    coordinateSystem = temp_scalar_field.mesh.coordinateSystem
+    J_hat = coordinateSystem.J_hat
+    for i in range(len(listOfFields)):
+        iTest = Tensor(test_FEM[i], coordinateSystem, mayHaveSpectralDimension=True)
+        field     = listOfFields[i]
+        expr_ufl += (iDot(field.getTensor(), iConj(iTest))).ufl_tens*J_hat*dx
+    petscVec = expr_ufl.getAssembledVector(temp_scalar_field.mesh, bcs=[])
+    validation_array = LinearSolver.solveEquationSystemWithPredefinedSolver(temp_scalar_field.space.FEMSmoothSolver, petscVec)
+    # 2 Check alignment
+    randomField.scalar_field.smooth(smoothFactor)
+    test_array = randomField.scalar_field.function.x.array.copy()
+    assert np.linalg.norm(validation_array-test_array) < 1e-14
+    print("... passed")

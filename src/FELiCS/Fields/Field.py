@@ -922,7 +922,7 @@ class Field:
 
         ## assemble rhs and solve equation system
         expr_ufl     = UflDecorator()
-        listOfFields = self.getListOfSingleFields()
+        listOfFields = self.getListOfSubFields()
         test_FEM     = ufl.TestFunctions(self.space)
         coordinateSystem = self.mesh.coordinateSystem
         J_hat = coordinateSystem.J_hat
