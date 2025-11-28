@@ -1,4 +1,4 @@
-# How to solve a general eigenvalue problem
+# FELiCS scripts explained: Modal analysis
 
 **Step 1. Import of Python packages.**
 
@@ -18,6 +18,7 @@ from    FELiCS.Parameters.config            import config
 from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
 from    FELiCS.Solvers.LinearSolver         import LinearSolver
 from    FELiCS.Fields.ModeCollection        import ModeCollection
+from    FELiCS.IO.Writer                    import Writer
 ```
 
 **Step 3: Read the settings from the setting file**
@@ -34,6 +35,20 @@ param.importFromFile(settingsFileName)
 mesh             = param.getMesh()
 ```
 
+    Info     | config.py              | importFromFile             (line 205 ) : Loading configuration from modal.json
+    Warning  | config.py              | importFromFile             (line 224 ) : Field "needInterpolation" missing from file, setting default: True
+    Warning  | config.py              | importFromFile             (line 224 ) : Field "MolViscPerturbModel" missing from file, setting default: {'type': 'Constant', 'Constants': {'Viscosity': 1.0}}
+    Warning  | config.py              | importFromFile             (line 224 ) : Field "PrandtlNumber" missing from file, setting default: 0.72
+    Warning  | config.py              | importFromFile             (line 224 ) : Field "ForcingCoeff" missing from file, setting default: []
+    Warning  | config.py              | importFromFile             (line 224 ) : Field "ForcingNorm" missing from file, setting default: TKE
+    Warning  | config.py              | importFromFile             (line 224 ) : Field "ResponseNorm" missing from file, setting default: TKE
+    Info     | logging.py             | change_log_location        (line 286 ) : Log files moved to: output_dir/log
+    Info     | MixtureClass.py        | __init__                   (line 75  ) : No mixture file Mixture.mix, using defaults.
+    Info     | FELiCSMesh.py          | __init__                   (line 94  ) : Opening mesh file: cylinder_wake.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 102 ) : Mesh contains 3613 nodes and 7224 elements
+    Info     | config.py              | importFromFile             (line 267 ) : Configuration loaded successfully
+
+
 **Step 4: Define FEM spaces and read in the baseflow**
 
 We provide a baseflow file, that already contains all the necessary information of the flow field. This baseflow file gets imported and gets stored in the FELiCS meanFlowClass, which contains all the variables of the flow field. However, to import it we need to define the necassary finite element function space via the <code style="color : Cyan">FEMSpaces</code> class.
@@ -46,36 +61,27 @@ spaces   = FEMSpaces(
     mesh,
 )
 
+# Initialize the writer
+writer = Writer(mesh, param.Export.ExportFolder)
+
 # Initialize mean flow class & import from file
 meanFlow    = meanFlowClass(
     param, 
     spaces, 
     mesh
 )
-meanFlow.importDataFromFileAndExportToH5()
+meanFlow.importDataFromFileAndExportToH5(writer)
 ```
 
-**Step 5. Export of flow fields and mesh.**
+    Info     | FEMSpaces.py           | __init__                   (line 132 ) : Defining FEM-spaces.
+    Info     | meanFlowClass.py       | importDataFromFileAndExportToH5 (line 155 ) : Reading input flow from: 'base_flow_for_FELiCS.fel'
+    Warning  | Reader.py              | _check_variable_availability_and_type (line 818 ) : No variables for field 'rho' found in file. Set to default values.
+    Warning  | Reader.py              | _set_arrays_to_field       (line 769 ) : Variable 'rho' not found in loaded arrays for scalar field. Set to default values.
+    Warning  | Reader.py              | _check_variable_availability_and_type (line 818 ) : No variables for field 'spg' found in file. Set to default values.
+    Warning  | Reader.py              | _set_arrays_to_field       (line 769 ) : Variable 'spg' not found in loaded arrays for scalar field. Set to default values.
 
-The meanflow and the mesh need to be saved as <code style="color : Darkorange">.hdf5</code> so that the mesh can be utilized again while saving the eigenmodes in <code style="color : Darkorange">.xmf</code> and <code style="color : Darkorange">.hdf5</code> formats.
 
-
-```python
-baseFlow_array = meanFlow._fieldDict['u'].function.x.array[:]
-
-# Load base flow into meanFlow object
-if np.linalg.norm(meanFlow._fieldDict['u'].function.x.array[:]) < 1.e-8:
-    baseFlow    = Field(spaces.VMixed, mesh)
-    baseFlow.setCoefficientArray(baseFlow_array)
-    [u,p]       = baseFlow.getListOfSingleFields()
-    meanFlow._fieldDict['u'] = u.function
-
-# Export mean flow in "h5" file
-meanflowFilename = 'meanflow.h5'
-meanFlow.mapToExportMeshAndExport(spaces, meanflowFilename)
-```
-
-**Step 6: Define the Equations for the linear problem**
+**Step 5: Define the Equations for the linear problem**
 
 Setting up an equation is straightforward in FELiCS. The EquationCollectionClass contains a range of predefined equations like the Navier-Stokes-Equations, that we will solve today. You can find a detailed list and information about the equations [here](./)
 
@@ -89,6 +95,9 @@ equation    = EquationCollectionClass(
     mesh
 )
 ```
+
+    Info     | EquationCollection.py  | __init__                   (line 137 ) : Initializing the equation collection class.
+
 
 **Step 7: Define and solve the general Eigenproblem**
 
@@ -145,8 +154,11 @@ for guess in guesses:
     solution.appendSolutionOfEigenProblem(tmp, guess)
 
 # Get leading eigenvalue
-eigenValue  = solution.getLeadingMode().getEigenValue()
+eigenValue  = solution.getLeadingMode().eigenValue
 print(f"Leading eigenvalue: {str(eigenValue)}")
 ```
+
+    Leading eigenvalue: (0.744756877836706+0.013262932365236848j)
+
 
 After solving the problem we can get the leading mode and its respective eigenvalue from the <code style="color : Cyan">ModeCollection</code> class. The eigenvalue printed should be approximatley 0.74+0.013j.
