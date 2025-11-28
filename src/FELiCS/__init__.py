@@ -1,1 +1,1 @@
-# import FELiCS.Misc.PrintLogo
+import FELiCS.Misc.PrintLogo
