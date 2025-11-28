@@ -21,3 +21,5 @@ with h5py.File(file, 'w') as f:
     f.create_dataset('function_sine', data = function_sine)
     f.create_dataset('function_sine_cos', data = function_sine_cos)
     f.create_dataset('function_square', data = function_square)
+    f.create_dataset('function_2dx', data = function_sine)
+    f.create_dataset('function_2dy', data = function_sine_cos)
