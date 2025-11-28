@@ -1,3 +1,15 @@
+#  ___________________________________   _______________________________________________________
+# /-----------------------------------\ /-------------------------------------------------------\
+# |   (         (                (     |  This source code is part of FELiCS                     |
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
+# |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
+# |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
+# |  | _| | _| | |__ | | | (__ \__ \   |  Visit          www.felics.eu                           |
+# |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
+# \___________________________________/ \_______________________________________________________/
+#
 '''This code transforms su2 mesh files produced for example by the centaur software to .msh files, to be used with FELiCS'''
 '''Author: T.L.Kaiser'''
 import numpy as np

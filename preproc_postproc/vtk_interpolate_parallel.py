@@ -1,3 +1,15 @@
+#  ___________________________________   _______________________________________________________
+# /-----------------------------------\ /-------------------------------------------------------\
+# |   (         (                (     |  This source code is part of FELiCS                     |
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
+# |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
+# |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
+# |  | _| | _| | |__ | | | (__ \__ \   |  Visit          www.felics.eu                           |
+# |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
+# \___________________________________/ \_______________________________________________________/
+#
 import h5py
 import numpy as np
 import vtk
@@ -9,7 +21,7 @@ from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import ThreadPoolExecutor
 from scipy import interpolate
 
-# Interpolation of large 3D meshes in FELiCS takes way to long
+# Interpolation of large 3D meshes in FELiCS takes too long
 # In this script the interpolation is done using linearNDinterpolator instead of griddata
 # The mean fields are read from a vtk file but this can easily be changed to a hdf5 file
 # I tried accelerating the interpolation by blocking the domain and interpolate in parallel for each block. 
