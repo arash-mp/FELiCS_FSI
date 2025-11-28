@@ -120,14 +120,20 @@ def test_popList():
     analysisType = "Modal"
     print("Validating popping the last mode for Modal analysis")
     randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
-    list_test = randomModeCollector
-    # list_valid = list_test
     copy_list = randomModeCollector.mode_collection.modeList.copy()
     pop_valid = copy_list.pop()
-    # pop_test  = list_test.mode_collection.modeList.pop()
     pop_test = randomModeCollector.mode_collection.popList()
     assert pop_test == pop_valid
     assert randomModeCollector.mode_collection.modeList == copy_list
-# test_popList()
+
+    analysisType = "Resolvent"
+    print("Validating popping the last mode for Modal analysis")
+    randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
+    copy_list_res = randomModeCollector.mode_collection.modeList.copy()
+    pop_valid_res = copy_list_res.pop()
+    pop_test_res = randomModeCollector.mode_collection.popList()
+    assert pop_test_res == pop_valid_res
+    assert randomModeCollector.mode_collection.modeList == copy_list_res
+
     
      
