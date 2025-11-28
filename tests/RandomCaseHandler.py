@@ -31,7 +31,8 @@ class RandomCaseHandler():
                             ghost_mode=mesh.GhostMode.none)
         # 1.b create FELiCSMesh, which is necessary for Field defination
         # NOTE: The default coordinate system is Cylindrical, whith non-zero wave number
-        self.felics_mesh = FELiCSMesh("Cylindrical", gdim=2, m=np.random.randint(20),inputMesh=self.mesh)
+        self.fixed_m = np.random.randint(20)
+        self.felics_mesh = FELiCSMesh("Cylindrical", gdim=2, m=self.fixed_m,inputMesh=self.mesh)
         # 2. create function spaces & test/trial functions
         self.dim_vector = dim_vector
         scalar_element = element("CG", 'triangle',2)
@@ -68,17 +69,25 @@ class RandomCaseHandler():
     
     def createFELiCSField(self, type):
         if type == "scalar":
-            field = Field(self.space_scalar, self.felics_mesh)
+            field = Field(self.space_scalar, self.felics_mesh, m=self.fixed_m)
         elif type == "vector":
-            field = Field(self.space_vector, self.felics_mesh)
+            field = Field(self.space_vector, self.felics_mesh, m=self.fixed_m)
         elif type == "mixed":
-            field = Field(self.space_mixed, self.felics_mesh)
+            field = Field(self.space_mixed, self.felics_mesh, m=self.fixed_m)
         else:
             raise ValueError("Field type not recognized.")
         # assign random values to the field's function's value
         length = len(field.function.x.array)
         field.function.x.array[:] = np.random.rand(length) + 1j*np.random.rand(length)
         return field
+    
+    def createFELiCSMode(self, name, analysisType, modeType):
+        # NOTE: I assume all modes are scalar fields here
+        mode = Mode(self.space_scalar, self.felics_mesh, name=name, analysisType=analysisType, modeType=modeType)
+        # assign random values to the mode's function's value
+        length = len(mode.function.x.array)
+        mode.function.x.array[:] = np.random.rand(length) + 1j*np.random.rand(length)
+        return mode
     
     def smoothing(self, func, smoothFactor):
         if func.function_space == self.space_scalar:
