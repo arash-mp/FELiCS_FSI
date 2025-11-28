@@ -50,7 +50,7 @@ class Writer:
     exportMesh : object
         Mesh object used specifically for export, usually
         ``mesh.exportMesh`` of the associated FELiCS mesh.
-    exportSpace : object
+    exportSpace : dolfinx.fem.FunctionSpace
         Finite element function space associated with the export mesh, used
         to represent exported scalar fields.
     mappingP2ToExport : ndarray, optional
@@ -79,7 +79,6 @@ class Writer:
             Directory where all exported files (mesh, HDF5, XMF) are stored.
             The directory is created if it does not already exist.
         """
-
         # Notes for docstring:
         # - the writer is specified for a mesh and an export directory
         # - when initialized, the writer creates the export directory and exports the mesh, if given
@@ -121,9 +120,9 @@ class Writer:
             List of `Field` (or subclasses) to be written to a single HDF5
             file.
         fileName : str
-            Base name of the HDF5/XMF files (without path). The export
-            directory is automatically prefixed, and the ``.h5``/``.xmf``
-            extensions are added.
+            Base name of the HDF5/XMF files. The export directory is
+            automatically prefixed. If the name ends with ``.h5``, the
+            suffix is stripped before adding the correct extensions.
         attributes : list of objects, optional
             Additional attributes to store as datasets in the HDF5 file. Each
             element is expected to provide ``name`` and ``value`` attributes.
@@ -135,7 +134,6 @@ class Writer:
             without the final XMF footer. This can be reused to append
             additional attributes before closing the XMF document.
         """
-
         # get a list of purely scalar fields from the field list
         # (which could be scalar/vector/mixed fields)
         listOfSubFields = []
@@ -159,9 +157,9 @@ class Writer:
         field : Field
             Field (or subclass) to be written to an HDF5 file.
         fileName : str
-            Base name of the HDF5/XMF files (without path). The export
-            directory is automatically prefixed, and the ``.h5``/``.xmf``
-            extensions are added.
+            Base name of the HDF5/XMF files. The export directory is
+            automatically prefixed. If the name ends with ``.h5``, the
+            suffix is stripped before adding the correct extensions.
         attributes : list of objects, optional
             Additional attributes to store as datasets in the HDF5 file. Each
             element is expected to provide ``name`` and ``value`` attributes.
@@ -170,8 +168,7 @@ class Writer:
         -------
         str
             XMF header/body text corresponding to the exported field but
-            without the final XMF footer. This can be reused to append
-            additional attributes before closing the XMF document.
+            without the final XMF footer.
         """
         # get a list of purely scalar fields from the field 
         # (which could be a scalar/vector/mixed field)
@@ -201,9 +198,9 @@ class Writer:
             Scalar fields to be exported. All fields are assumed to be
             defined on a mesh compatible with the writer's export mesh.
         fileName : str
-            Base name of the HDF5/XMF files (without path). The export
-            directory is automatically prefixed, and the ``.h5``/``.xmf``
-            extensions are added.
+            Base name of the HDF5/XMF files. The export directory is
+            automatically prefixed. If the name ends with ``.h5``, the
+            suffix is stripped before adding the correct extensions.
         attributes : list of objects or None
             Optional additional attributes to store in the HDF5 file as
             datasets. Each attribute object should provide ``name`` and
@@ -277,9 +274,9 @@ class Writer:
 
         Depending on the field type, this method behaves as follows:
 
-        - **scalar**: returns a list containing the field itself.
-        - **vector**: creates one scalar field per component.
-        - **mixed**: iterates over all subspaces; subspaces with
+        * **scalar**: returns a list containing the field itself.
+        * **vector**: creates one scalar field per component.
+        * **mixed**: iterates over all subspaces; subspaces with
           ``num_sub_spaces == 0`` are treated as scalar, while subspaces
           with multiple components (e.g. vector-valued) are split into
           scalar component fields.
@@ -440,10 +437,10 @@ class Writer:
 
         The header includes:
 
-        - XML prolog and XDMF root tags,
-        - a grid collection with topology referencing the cell connectivity
-          stored in ``mesh.h5:/cells/triangles``,
-        - geometry data items referencing the coordinate datasets in
+        * XML prolog and XDMF root tags.
+        * A grid collection with topology referencing the cell connectivity
+          stored in ``mesh.h5:/cells/triangles``.
+        * Geometry data items referencing the coordinate datasets in
           ``mesh.h5:/coordinates/*``.
 
         The cell type is automatically set to ``Triangle`` for 2D grids and

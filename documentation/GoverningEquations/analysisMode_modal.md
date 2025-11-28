@@ -2,7 +2,7 @@
 Linear stability analysis is a method used to determine whether small disturbances to a steady base state grow or decay over time. The system is linearized around the base flow, and solutions are sought in the form of exponentially growing or decaying modes. By solving an eigenvalue problem, one identifies the growth rates and shapes of these modes. If any mode grows over time, the base flow is considered unstable. This approach provides insight into the natural tendencies of the system to amplify disturbances without external forcing, focusing purely on the system’s internal dynamics.
 
 
-**References:**
+References:
 - [Barkley et al. 2006](https://doi.org/10.1209/epl/i2006-10168-7)
 - [Sipp et al. 2010](https://doi.org/10.1115/1.4001478)
 - [Kaiser et al. 2017](https://doi.org/10.1115/GT2017-63649)
@@ -16,7 +16,7 @@ $$
 \mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q}),
 $$
 
-where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a restriction operator; zero if the time derivative is not considered, else one.
+where $\mathbf{q} = [\mathbf{u}, p, \rho, ...]^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a restriction operator; zero if the time derivative is not considered, else one.
 
 We decompose the flow field into a time-invariant base flow, $\overline{\mathbf{q}} \in \mathbb{R}^N$, representing either a time-averaged state or a fixed-point solution, and a perturbation, $\mathbf{q}' \in \mathbb{R}^N$, such that 
 
