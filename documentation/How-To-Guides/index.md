@@ -2,12 +2,21 @@
 
 Welcome to How-To-Guides!
 
-**TODO: put the following bullet points into text:**
-- these markdowns are based on jupyter notebooks
-- all the jupyter notebooks and the files that they need are in the folder "how_tos" (link here!) 
-- remember to install FELiCS as a package before use (link the intallation guide here)
-- these how-to guides are by no means complete but a starting point for exploring how to use FELiCS as a python package
-- further How-To Guides are planned
+The FELiCS How-To guides are designed as an entry point for exploring how to use FELiCS as a Python package. Each guide is based on Jupyter Notebooks,
+making them interactive and easy to follow. All notebooks, together with the files they require, are located 
+in the **`how_tos`** folder ([link here](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/development/how_tos)).
+
+Before working through the guides, it is essential to install FELiCS as a package. Detailed instructions for installation can be found in
+the [installation guide](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html). 
+Once FELiCS is installed, the notebooks can be executed directly, providing practical examples and workflows that demonstrate how FELiCS can be
+integrated into Python projects.
+
+These guides are not intended to be comprehensive manuals. Instead, they serve as a starting point for experimentation and learning.
+They highlight core functionality and provide illustrative examples, but they do not cover every possible use case or advanced feature.
+Users are encouraged to adapt the notebooks to their own projects and explore further.
+
+Additional How-To guides are planned and will be added over time, expanding the coverage of FELiCS and offering deeper insights into its capabilities.
+The current collection should be seen as a foundation upon which more detailed documentation will continue to grow.
 
 
 ### First steps in scripting with FELiCS
@@ -19,7 +28,7 @@ In this section we will learn how to:
 ```{toctree}
 :maxdepth: 1
 
-01_ImportExport.md
+01_ImportExport/01_ImportExport.md
 ```
 
 ### Derivatives and integral quantities
@@ -32,10 +41,10 @@ In this section we will learn how to:
 
 ```{toctree}
 :maxdepth: 1
-02_CalculateL2Norm.md
-02_CalculateGradient_cartesian.md
-02_CalculateGradient_cylindrical.md
-02_CalculateVorticity.md
+02_CalculateL2Norm/02_CalculateL2Norm.md
+02_CalculateGradient_cartesian/02_CalculateGradient_cartesian.md
+02_CalculateGradient_cylindrical/02_CalculateGradient_cylindrical.md
+02_CalculateVorticity/02_CalculateVorticity.md
 
 ```
 
@@ -43,9 +52,18 @@ In this section we will learn how to:
 ### Performing modal analysis in FELiCS
 
 In this section we will learn how to:
-- How to perform a modal analysis on a given baseflow with a FEliCS config file
+- Perform a modal analysis on a given baseflow with a FEliCS config file
 
 ```{toctree}
 :maxdepth: 1
-03_GeneralEigenValueProblem.md
+03_GeneralEigenValueProblem/03_GeneralEigenValueProblem.md
+```
+### Loading modes and structural sensitivity in FELiCS
+
+In this section we will learn how to:
+- Load previously computed resolvent or eigenmodes from disk using the FELiCS I/O module.
+
+```{toctree}
+:maxdepth: 1
+04_LoadingModesAndStructuralSensitivity/04_LoadingModesAndStructuralSensitivity.md
 ```
