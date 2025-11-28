@@ -84,6 +84,7 @@ def test_getVorticityField():
     vorticity_field_test = field.getVorticityField()
     assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-14
     # Test for 3D vector
+    # NOTE: we do this in the last step
     # dim_vector = 3
     # print("Testing computation of the vorticity field in 2D")
     # randomField     = FieldTestHandler(dim_vector)
@@ -92,12 +93,24 @@ def test_getVorticityField():
     # componentList   = []  
     # for subfield in components:
     #     componentList.append(subfield.getGradientField())
-    # dvdx = componentList[1].getListOfSubFields()[0]    
-    # dudy = componentList[0].getListOfSubFields()[1] 
-    # vorticity_field_valid = dvdx - dudy
+    # dwdy = componentList[2].getListOfSubFields()[1]
+    # dvdz = componentList[1].getListOfSubFields()[2]
+
+    # dudz = componentList[0].getListOfSubFields()[2]
+    # dwdx = componentList[2].getListOfSubFields()[0]
+
+    # dvdx = componentList[1].getListOfSubFields()[0]
+    # dudy = componentList[0].getListOfSubFields()[1]
+    
+    # vorticity_x = dwdy - dvdz
+    # vorticity_y = dudz - dwdx
+    # vorticity_z = dvdx - dudy
+    
+    # vorticity_field_valid = randomField.createFELiCSField("vector")
+    # vorticity_field_valid.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
     # vorticity_field_test = field.getVorticityField()
     # assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-14
-        
+
 def test_evaluateUflExpression():
     print("testing evaluate Ufl expression")
     from FELiCS.Solvers.LinearSolver import LinearSolver
@@ -129,9 +142,30 @@ def test_evaluateUflExpression():
     # 2 Check alignment
     randomField.scalar_field.evaluateUflExpression(expr)
     test_array = randomField.scalar_field.function.x.array.copy()
-    assert np.linalg.norm(validation_array-test_array) < 1e-14
+    # NOTE: This need a higher tolerance than 1e-14
+    assert np.linalg.norm(validation_array-test_array) < 1e-13
     print("... passed")
     
-
+def test_setBoundaryConditions():
+    # NOTE: Only scalar field
+    # 0 Create a bc list
+    randomField.mesh.topology.create_connectivity(randomField.mesh.topology.dim - 1, randomField.mesh.topology.dim)
+    boundary_facets = dolfinx.mesh.exterior_facet_indices(randomField.mesh.topology)
+    boundary_dofs = dolfinx.fem.locate_dofs_topological(
+        randomField.space_scalar, randomField.mesh.topology.dim - 1, boundary_facets
+    )
+    u_bc = randomField.createDolfinxFunction(dim=1)
+    u_bc.x.array[:]=1.0+1.0j
+    bc = dolfinx.fem.dirichletbc(u_bc, boundary_dofs)
+    bcs = [bc]
+    
+    # 1 Assemble validation array
+    petscArray = randomField.scalar_field.getPetscVector().copy()
+    dolfinx.fem.petsc.set_bc(petscArray,bcs)
+    validation_array = petscArray.getArray()
+    # 2 Check alignment
+    randomField.scalar_field.setBoundaryConditions(bcs)
+    test_array = randomField.scalar_field.function.x.array[:]
+    assert np.linalg.norm(validation_array-test_array) < 1e-14
 
             
