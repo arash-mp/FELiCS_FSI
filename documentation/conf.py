@@ -11,6 +11,7 @@ autoapi_dirs = ['../src/']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'special-members', 'no-imported-members']
+autoapi_ignore = ["main.py", "runInputOutput.py", "runModal.py", "runResolvent.py"]
 
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
