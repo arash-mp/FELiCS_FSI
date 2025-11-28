@@ -19,22 +19,32 @@ FELiCS (*Finite Element Linearized Combustion Solver*) is a Python-based CFD too
 
 <!-- <div align="center"> -->
 
-## **Get Started with FELiCS**
+## Features
+
+- Linearized flow analysis for stability studies
+- Multi-physics support: turbulence, combustion, acoustics
+- Built on finite element methods for numerical accuracy
+- Designed for both academic research and industrial applications
+- Comprehensive documentation and developer resources
+
+## Quick Start
 
 <a href="https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/">
-  <img src="https://img.shields.io/badge/📖%20Read%20the%20Documentation-blue?style=for-the-badge&logoColor=white" alt="Documentation" height="50"/>
+  <img src="https://img.shields.io/badge/📖%20Read%20the%20Documentation-blue?style=for-the-badge&logoColor=white" alt="Documentation" height="40"/>
 </a>
 
-</div>
+## Installation
 
----
+Detailed installation instructions are available in the [documentation](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/).
 
-## Contribute
+## Contributing
 
-FELiCS is under active development and contributors are welcome. If you are contributing to FELiCS, please start by reading the documentation to understand the overall structure and usage of the codebase. For coding standards and documentation guidelines, refer to the [Wiki](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/).
+We welcome contributions from the community! Please refer to our [Contribution Guide](CONTRIBUTE.md) for:
 
-Before submitting new code, ensure it is tested using the available validation cases (downloadable from [this GitLab repository](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests)) and that all unit tests pass locally. Unit tests are automatically run in the CI pipeline, and details on running them are available in the [unit tests README](tests/README.md).
-
+- Reporting bugs and requesting features
+- Development setup instructions
+- Code style guidelines
+- Pull request process
 
 ## Citation
 
@@ -56,7 +66,6 @@ If you use FELiCS in a scientific publication, we would appreciate citing [this 
 ```
 
 
-
 ## License
 
 FELiCS is free and open-source software released under the **GNU General Public License v3.0** (GPL-3.0), a strong copyleft license that ensures the software remains free and open.
@@ -67,3 +76,10 @@ FELiCS is free and open-source software released under the **GNU General Public 
 - Commercial use is permitted under the license terms
 
 For the complete license terms, see [LICENSE.txt](LICENSE.txt).
+
+## Contact
+
+We are always looking for new collaborators and feedback!
+
+- **Get in Touch**: Reach out to [info@felics.eu](mailto:info@felics.eu) for research collaborations, private inquiries, or specific questions about the solver.
+- **Updates**: Stay updated on the latest news by visiting our [website](https://www.felics.eu).
