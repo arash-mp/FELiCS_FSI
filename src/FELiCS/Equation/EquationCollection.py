@@ -583,10 +583,17 @@ class EquationCollectionClass():
         """
         Construct the resolvent response norm matrix.
 
+        Parameters
+        ----------
+        meanFlow : object
+            Mean flow field. Currently not used directly here, but kept for
+            interface consistency with other assembly routines.
+
         Returns
         -------
         petsc4py.PETSc.Mat
-            PETSc matrix representing the response norm.
+            PETSc matrix representing the response norm, assembled from the
+            UFL form stored in ``self.response_vf``.
         """
         # assemble petsc matrix
         return self.response_vf.getAssembledMatrix(self._mesh)
@@ -596,10 +603,17 @@ class EquationCollectionClass():
         """
         Construct the resolvent forcing norm matrix.
 
+        Parameters
+        ----------
+        meanFlow : object
+            Mean flow field. Currently not used directly here, but kept for
+            interface consistency with other assembly routines.
+
         Returns
         -------
         petsc4py.PETSc.Mat
-            PETSc matrix representing the forcing norm.
+            PETSc matrix representing the forcing norm, assembled from the
+            UFL form stored in ``self.forcing_vf``.
         """
 
         # assemble petsc matrix
@@ -608,12 +622,24 @@ class EquationCollectionClass():
 
     def getResolventWeighting_FEM(self, meanFlow):
         """
-        Construct FEM weighting matrix for resolvent analysis.
+        Assemble the FEM weighting matrix for resolvent analysis.
+
+        The underlying UFL form for the weighting is constructed beforehand
+        by :meth:`computeResolventFEMWeights` and stored in
+        :attr:`self.fem_weighting`. This method only assembles the
+        corresponding PETSc matrix.
+
+        Parameters
+        ----------
+        meanFlow : object
+            Mean flow field. Currently not used directly here, but included
+            for API compatibility with other assembly routines.
 
         Returns
         -------
         petsc4py.PETSc.Mat
-            PETSc matrix with FEM weights based on variable projections.
+            PETSc matrix with FEM weights based on the previously defined
+            variable projections.
         """
 
         # create ufl object with the linear equation system 
@@ -813,18 +839,24 @@ class EquationCollectionClass():
         """
         Construct the forcing restrictor matrix for the resolvent analysis.
 
-        This matrix is diagonal and applies spatial restriction (if defined) to the 
-        forcing vector based on the `forcingDomain` field in the mean flow.
+        This matrix is diagonal and applies spatial restriction (if defined)
+        to the forcing vector based on the ``forcingDomain`` field in the
+        mean flow. If the forcing domain is zero everywhere, the matrix
+        reduces to the identity.
 
         Returns
         -------
         petsc4py.PETSc.Mat
-            PETSc matrix with diagonal entries corresponding to the spatial restriction mask.
+            PETSc matrix with diagonal entries corresponding to the spatial
+            restriction mask.
 
         Notes
         -----
-        - Provides a quadratic matrix, with the size of the solution space (VMixed).
-        - Has the inverse of the forcing restrictor values, given with the mean field, on the diagonal.
+        - The matrix is quadratic with the size of the solution space
+          (``VMixed``).
+        - The diagonal entries are given by the forcing restrictor values
+          provided with the mean field (or ones everywhere if no spatial
+          restriction is prescribed).
         """
 
         from petsc4py import PETSc

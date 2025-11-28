@@ -43,7 +43,7 @@
     },
     "FlowInput": {
         "AveragingDirection": "None",
-        "MeanFlowFilePath": "meanflow.fel"
+        "MeanFlowFilePath": "initial_solution.fel"
     },
     "IOResolvent": {
         "ForcingBoundaryIndices": [],
@@ -58,7 +58,7 @@
         "nSolut": 20,
         "PolynomialOrder": {
             "u": 2,
-            "p": 2
+            "p": 1
         }
     }
 }

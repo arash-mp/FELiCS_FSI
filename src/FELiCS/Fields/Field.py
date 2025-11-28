@@ -608,6 +608,7 @@ class Field:
             dvdx = componentGradient[1].getListOfSubFields()[0]
             dudy = componentGradient[0].getListOfSubFields()[1]
             vorticityField = dvdx - dudy
+            vorticityField.name = "vorticity"
             
             return vorticityField
         # 3D field -> vector vorticity field
@@ -626,7 +627,7 @@ class Field:
             vorticity_y = dudz - dwdx
             vorticity_z = dvdx - dudy
 
-            vorticityField = Field(self.space, self.mesh)
+            vorticityField = Field(self.space, self.mesh, name="vorticity")
             vorticityField.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
 
 
