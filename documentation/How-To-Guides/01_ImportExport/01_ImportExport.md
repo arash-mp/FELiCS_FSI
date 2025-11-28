@@ -21,8 +21,8 @@ coordinateSystemName = "Cartesian"
 mesh = FELiCSMesh(coordinateSystemName, meshFileName)
 ```
 
-    Info     | FELiCSMesh.py          | __init__                   (line 75  ) : Opening mesh file: Input/square_mesh.msh
-    Info     | FELiCSMesh.py          | __init__                   (line 83  ) : Mesh contains 513 nodes and 1024 elements
+    Info     | FELiCSMesh.py          | __init__                   (line 94  ) : Opening mesh file: Input/square_mesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 102 ) : Mesh contains 513 nodes and 1024 elements
 
 
 **Step 2: Create a scalar function space**

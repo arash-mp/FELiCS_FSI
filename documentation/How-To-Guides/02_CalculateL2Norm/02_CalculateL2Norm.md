@@ -39,7 +39,7 @@ phi.plot()
 Now we will calculate an integral quantity of our field. We will calculate the L2-norm of our field over the whole domain.
 
 The L2-norm is defined as:
-$$||\phi||_{L^2} = \sqrt{\int_\Omega |\phi|^2 \, d\Omega}$$
+$$||\phi(\mathbf{x})||_{L^2} = \sqrt{\int_\Omega |\phi(\mathbf{x})|^2 \, d\Omega}$$
 
 For this, the `Field` class has the method `calculateL2Norm()` which computes this integral over the entire mesh domain.
 

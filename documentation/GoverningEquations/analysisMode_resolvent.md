@@ -17,7 +17,7 @@ $$
 \mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q}),
 $$
 
-where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector, $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a restriction operator.
+where $\mathbf{q} = [\mathbf{u}, p, \rho, ...]^{T} \in \mathbb{R}^N $ is the state vector, $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a restriction operator.
 
 
 We decompose the flow field into a time-invariant base flow, $\overline{\mathbf{q}} \in \mathbb{R}^N$, representing either a time-averaged state or a fixed-point solution, and a perturbation, $\mathbf{q}' \in \mathbb{R}^N$, such that
@@ -149,7 +149,7 @@ Currently, two norms are available by default in FELiCS:
 The discretized form of these expressions are contained in the $\mathbf{W}_f$ and $\mathbf{W}_r$ operators, defining the norm for the forcing and response terms, respectively.
 
 ```{note}
-The current version of the Chu norm implemented in FELiCS is only compatible with the state vector defined as $q=[\rho, u, T]$. 
+The current version of the Chu norm implemented in FELiCS is only compatible with the state vector defined as $\mathbf{q}=[\rho, u, T]^T$. 
 ```
 
 ### Equivalent eigenvalue problem

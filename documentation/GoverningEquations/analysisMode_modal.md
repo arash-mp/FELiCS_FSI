@@ -16,7 +16,7 @@ $$
 \mathcal{B}\frac{\mathrm{d}\mathbf{q}}{\mathrm{d}t}=\mathcal{N}(\mathbf{q}),
 $$
 
-where $\mathbf{q} = (\mathbf{u}, p, ρ, ...)^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a restriction operator; zero if the time derivative is not considered, else one.
+where $\mathbf{q} = [\mathbf{u}, p, \rho, ...]^{T} \in \mathbb{R}^N $ is the state vector (conservative variables), $\mathcal{N}$ denotes the nonlinear operator of the system (e.g. Navier-Stokes), $\mathcal{B}$ is a restriction operator; zero if the time derivative is not considered, else one.
 
 We decompose the flow field into a time-invariant base flow, $\overline{\mathbf{q}} \in \mathbb{R}^N$, representing either a time-averaged state or a fixed-point solution, and a perturbation, $\mathbf{q}' \in \mathbb{R}^N$, such that 
 

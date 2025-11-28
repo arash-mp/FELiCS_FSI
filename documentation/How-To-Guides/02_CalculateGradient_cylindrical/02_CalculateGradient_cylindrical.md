@@ -10,7 +10,6 @@ with this coordinate choice our square mesh is basically "rolled" into a cylinde
 **TODO** put equation of gradient with derivative w.r.t. spectral dimension (if any doubt, see https://en.wikipedia.org/wiki/Del_in_cylindrical_and_spherical_coordinates)
 
 
-
 ```python
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 from FELiCS.IO.Reader            import Reader
