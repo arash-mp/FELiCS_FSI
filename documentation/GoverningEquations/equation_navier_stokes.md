@@ -51,7 +51,7 @@ and where $\mu_\textrm{eff} = \mu + \mu_t$ is the effective dynamic viscosity co
 We consider the flow field to be comprised of a time-invariant base flow, which can be either a time-averaged solution or a fixed point solution of the Navier--Stokes equations, and the perturbation, such that 
 
 $$
-\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t), \qquad \mathbf{q}=(\mathbf u,p)^{T} \ .
+\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t), \qquad \mathbf{q}=[\mathbf u,p]^{T} \ .
 $$
 
 Inserting this into the Navier--Stokes equations and taking the time-average we get the base flow equations.
@@ -138,7 +138,7 @@ with $\mu_\textrm{eff}$ as the effective dynamic viscosity (see [Viscosity model
 We consider the flow field to be comprised of a time-invariant base flow, which can be either a time-averaged flow or fixed point solution, and the perturbation, such that 
 
 $$
-\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t), \qquad \mathbf{q}=(\mathbf{u},p,\rho)^{T}\ .
+\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t), \qquad \mathbf{q}=[\mathbf{u},p,\rho]^{T}\ .
 $$
 
 ```{note}
