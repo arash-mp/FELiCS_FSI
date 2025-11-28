@@ -1,7 +1,5 @@
 # How-To-Guides
 
-Welcome to How-To-Guides!
-
 The FELiCS How-To guides are designed as an entry point for exploring how to use FELiCS as a Python package. Each guide is based on Jupyter Notebooks,
 making them interactive and easy to follow. All notebooks, together with the files they require, are located 
 in the **`how_tos`** folder ([link here](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/development/how_tos)).
