@@ -1,3 +1,19 @@
+#  ___________________________________   _______________________________________________________
+# /-----------------------------------\ /-------------------------------------------------------\
+# |   (         (                (     |  This source code is part of FELiCS                     |
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
+# |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
+# |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
+# |  | _| | _| | |__ | | | (__ \__ \   |  Visit          www.felics.eu                           |
+# |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
+# \___________________________________/ \_______________________________________________________/
+#
+# TODO: 
+# - Create first test for Field class => Xiuyang
+# - do all other functions  => Anant
+
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -91,6 +107,8 @@ def test_lhsIsZero():
                 lhs_is_zero_valid = False
         print(f"Validating the expression: {expr}")
         assert lhs_is_zero_test == lhs_is_zero_valid
+<<<<<<< HEAD
+=======
     print("... passed.")
 
 def test_rhsIsZero():
@@ -110,3 +128,4 @@ def test_rhsIsZero():
         print(f"Validating the expression: {expr}")
         assert rhs_is_zero_test == rhs_is_zero_valid
     print("... passed.")
+>>>>>>> development
