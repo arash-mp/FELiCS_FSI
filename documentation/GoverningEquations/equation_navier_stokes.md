@@ -21,14 +21,12 @@ Nomenclature:
 - $X_p$: test function for mass equation
 - $\mathbf{X}_\mathbf{u}$: test function for momentum equations
 
-In the following, first the [incompressible](#1.-incompressible-equations) Navier--Stokes equations are described. 
-Then the details on mass and momentum equation of the [compressible](#2.-compressible-equations) 
-Navier--Stokes equations are given. For details on the energy equation, which is also needed for a compressible formulation, see [here](equation_energy.md).
+In the following, first the incompressible Navier--Stokes equations are described. Then, the details on mass and momentum equation of the compressible Navier--Stokes equations are given. For details on the energy equation, which is also needed for a compressible formulation, see the section on [Energy equations](equation_energy.md).
 
 ## 1. Incompressible equations
 Assumptions:
 - primitive variables
-- $\rho = \textrm{const}$, this is reasonable if the Mach number is low, no large temperature gradients, no acoustics, no combustion
+- $\rho = \textrm{const}$, this is reasonable if the Mach number is low, and if there are no large temperature gradients, no acoustics, no combustion
 - no additional source terms
 - no gravitational forces
 
@@ -47,16 +45,16 @@ where the viscous stress tensor $\mathbf{\tau}$ is
 $$
 \mathbf{\tau} = \mu_\textrm{eff}(\nabla + \nabla ^T)\mathbf{u}
 $$
-and where $\mu_\textrm{eff} = \mu + \mu_t$ is the effective dynamic viscosity composed of a molecular, $\mu$, and a turbulent, $\mu_t$, contribution. The former is defined according to the [Viscosity models](./equation_viscosity.md) selected by the user, while the latter models diffusion from unresolved turbulent fluctuations accordint to the **Boussinesq hypothesis**, detailed in the [Turbulence models](./equation_turbulence_models.md) section.
+and where $\mu_\textrm{eff} = \mu + \mu_t$ is the effective dynamic viscosity composed of a molecular, $\mu$, and a turbulent, $\mu_t$, contribution. The former is defined according to the [Viscosity models](./equation_viscosity.md) selected by the user, while the latter models diffusion from unresolved turbulent fluctuations accordint to the Boussinesq hypothesis, detailed in the [Turbulence models](./equation_turbulence_models.md) section.
 
-#### Mean flow equations (incompressible)
-We consider the flow field to be comprised of a  time-invariant base flow, which can be either a time-averaged flow or fixed point solution (base flow), and the perturbation, such that 
+#### Base flow equations (incompressible)
+We consider the flow field to be comprised of a time-invariant base flow, which can be either a time-averaged solution or a fixed point solution of the Navier--Stokes equations, and the perturbation, such that 
 
 $$
-\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t), \qquad \mathbf{q}=(\mathbf u,p)^{T}
+\mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t), \qquad \mathbf{q}=(\mathbf u,p)^{T} \ .
 $$
 
-Inserting this into the Navier--Stokes equations and taking the time-average we get the base  flow equations.
+Inserting this into the Navier--Stokes equations and taking the time-average we get the base flow equations.
 
 The mass equation is
 $$
@@ -73,7 +71,7 @@ $$
 \overline{\mathbf{\tau}} = \overline{\mu}_\textrm{eff}(\nabla + \nabla ^T)\overline{\mathbf{u}}\ .
 $$
 
-#### Weak form of the incompressible mean flow equations
+#### Weak form of the incompressible base flow equations
 ```{note}
 The weak form of the incompressible nonlinear base flow equations is only implicitly included in the generalized compressible form of the Navier--Stokes equations (see below) and is, therefore, not stated here.
 ```
@@ -93,7 +91,7 @@ where the fluctuating viscous stress tensor $\tau'$ is
 $$
 \mathbf{\tau}' = \mu_\textrm{eff}'[(\nabla + \nabla ^T)\overline{\mathbf{u}}]+ \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T) \mathbf{u}']
 $$
-and where $\mu_\textrm{eff}'$ is the fluctuating effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
+and where $\mu_\textrm{eff}'$ is the fluctuating effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) and [Turbulence models](./equation_turbulence_models.md) for details).
 
 #### Weak form of the linearized Navier--Stokes equations
 ```{note}
@@ -116,7 +114,7 @@ Assumptions:
 
 In the following, details on mass and momentum equations of the compressible 
 Navier--Stokes equations are given. For details on the energy equation, 
-which is also needed for a compressible formulation, see [here](equation_energy.md).
+which is also needed for a compressible formulation, see the section on [Energy equations](equation_energy.md).
 
 #### Nonlinear compressible Navier--Stokes equations
 The mass equation is
@@ -133,21 +131,21 @@ where the viscous stress tensor $\tau$ is
 $$
 \tau = \mu_\textrm{eff}[(\nabla + \nabla ^T)\mathbf{u} - \frac{2}{3} (\nabla \cdot \mathbf{u})\mathbf{I}]
 $$
-with $\mu_\textrm{eff}$ as the effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details) and $\mathbf{I}$ as the identity tensor.
+with $\mu_\textrm{eff}$ as the effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) and [Turbulence models](./equation_turbulence_models.md) for details) and $\mathbf{I}$ as the identity tensor.
 
-#### Mean flow equations (compressible)
+#### Base flow equations (compressible)
 
-We consider the flow field to be comprised of a  time-invariant base flow, which can be either a time-averaged flow or fixed point solution (base flow), and the perturbation, such that 
+We consider the flow field to be comprised of a time-invariant base flow, which can be either a time-averaged flow or fixed point solution, and the perturbation, such that 
 
 $$
 \mathbf{q}(\mathbf{x},t) = \overline{\mathbf{q}}(\mathbf{x})+\mathbf{q}'(\mathbf{x},t), \qquad \mathbf{q}=(\mathbf{u},p,\rho)^{T}\ .
 $$
 
 ```{note}
-For the compressible equtions, the overbar represents a favre-average for the velocity and a Reynolds average for pressure and density.  
+For the compressible equations, the overbar represents a Favre average for the velocity and a Reynolds average for pressure and density.  
 ```
 
-Inserting this into the Navier--Stokes equations and taking the average we get the base  flow equations
+Inserting this into the Navier--Stokes equations and taking the average we get the base flow equations.
 
 The mass equation is
 $$
@@ -169,8 +167,8 @@ $$
 
 
 
-#### Weak form of the compressible mean flow equations
-The weak form of the nonlinear mean flow equations, as implemented in FELiCS, is
+#### Weak form of the compressible base flow equations
+The weak form of the nonlinear base flow equations, as implemented in FELiCS, is
 $$
 \int_\Omega \mathrm{j} \nabla \cdot \left(\mathbf{X}_\mathbf{u}^* \otimes \overline{\rho}\overline{\mathbf{u}} \right) \cdot \overline{\mathbf{u}} \, \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \overline{\rho}\left( \left(\overline{\mathbf{u}} \otimes \mathbf{X}_\mathbf{u}^*\right) \cdot \overline{\mathbf{u}} \right)\cdot \mathbf{n} \, \mathrm{d}\mathbf{s}  + \int_\Omega \mathrm{j} \overline{p} \nabla \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} - \int_{\partial\Omega} \mathrm{j} \overline{p} \mathbf{X}_\mathbf{u}^* \cdot \mathbf{n} \, \mathrm{d}\mathbf{s} - \int_\Omega \mathrm{j} \overline{\mathbf{\tau}} : \nabla \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{x} + \int_{\partial\Omega} \mathrm{j} \overline{\mathbf{\tau}} \mathbf{n} \cdot \mathbf{X}_\mathbf{u}^* \mathrm{d}\mathbf{s} = 0
 $$
@@ -178,7 +176,7 @@ where the mean viscous stress tensor $\overline{\tau}$ is
 $$
 \mathbf{\overline{\tau}} = \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T)\overline{\mathbf{u}}]
 $$
-and where $\overline{\mu}_\textrm{eff}$ is the mean effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
+and where $\overline{\mu}_\textrm{eff}$ is the mean effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) and [Turbulence models](./equation_turbulence_models.md) for details).
 
 
 #### Linearized compressible Navier--Stokes equations
@@ -197,7 +195,7 @@ where the fluctuating viscous stress tensor $\tau'$ is
 $$
 \tau' = \mu_\textrm{eff}'[(\nabla + \nabla ^T)\overline{\mathbf{u}} - \frac{2}{3} \nabla \cdot \overline{\mathbf{u}} \mathbf{I}]+ \overline{\mu}_\textrm{eff}[(\nabla + \nabla ^T) \mathbf{u}' - \frac{2}{3}( \nabla \cdot \mathbf{u}' )\mathbf{I}]
 $$
-and where $\mu_\textrm{eff}'$ is the effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) for details).
+and where $\mu_\textrm{eff}'$ is the fluctuating effective dynamic viscosity (see [Viscosity models](./equation_viscosity.md) and [Turbulence models](./equation_turbulence_models.md) for details).
 
 #### Weak form of the linearized Navier--Stokes equations
 The weak form of the linearized Navier--Stokes equations with normal mode ansatz, as implemented in FELiCS, is
