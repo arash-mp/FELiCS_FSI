@@ -54,7 +54,7 @@ full_expr = lhs_expr - rhs_expr
 # Tests for UflDocorator methods
 # --------------------------------------------------------------
 def test_printExpression():
-    for expr in [None,lhs_expr, rhs_expr, full_expr]:
+    for expr in [None, lhs_expr, rhs_expr, full_expr]:
         # 1. define validation (no need here)
         
         # 2. check alignment
@@ -78,3 +78,20 @@ def test_printExpression():
             assert f"{len(expr.arguments())}" in testString
         
     print("... passed.")
+
+def test_lhsIsZero():
+    from ufl import lhs, rhs
+    for expr in [None, lhs_expr, rhs_expr, full_expr]:
+    # expr = rhs_expr
+        UflDeco = UflDecorator(expr)
+        lhs_is_zero_test    = UflDeco.lhsIsZero()
+        if UflDeco.isZero():
+            lhs_is_zero_valid = True
+        else: 
+            temp_expression     = lhs(UflDeco._expression)
+            if len(temp_expression.arguments())<2:
+                lhs_is_zero_valid = True
+            else:
+                lhs_is_zero_valid = False
+        print(f"Validating the expression: {expr}")
+        assert lhs_is_zero_test == lhs_is_zero_valid
