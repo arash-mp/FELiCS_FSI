@@ -34,7 +34,7 @@ The recommended way of installation uses [conda](https://conda.io/projects/conda
 
 ### Step 1: Install conda Environment
 In the installation directory, we provide different _.yml_ files that contain all required packages. The latest version that works on mutliple systems is 
-- [felics_v3.0.0_env_v2.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation)
+- [felics_v3.0.0_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation)
 
 The older versions of yml files can be found in the folder [yml_old](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation/yml_old) with the corresponding version in the filename. 
 
@@ -42,10 +42,10 @@ The older versions of yml files can be found in the folder [yml_old](https://git
 ```{admonition} Optional
 In case you want to give the environment a different name, you can change the first line of the _.yml_ file accordingly. name: `felics  ->  name: new_name`
 ```
-As an example, if the downloaded _.yml_ file "_felics_v2.4_env.yml_" is in the "_yml_" folder of the git repository (located in your home folder), the command would be 
+As an example, if the downloaded _.yml_ file "_felics_v3.0.0_env.yml_" is in the "_yml_" folder of the git repository (located in your home folder), the command would be 
 ```bash
-conda env create -f ~/felics2.0/installation/felics_v2.4_env.yml -y
-conda env create -f ~/felics2.0/installation/felics_v2.4_env.yml -y
+conda env create -f ~/felics2.0/installation/felics_v3.0.0_env.yml -y
+conda env create -f ~/felics2.0/installation/felics_v3.0.0_env.yml -y
 ```
 
 ```{admonition} Optional
@@ -54,7 +54,7 @@ if you want to review the packages being installed, omit the `-y`
 
 ```{attention} 
 if the installation fails due to "No space left on device", you can specify an alternative installation directory using the `--prefix` option:
-`conda env create --prefix <path_to_more_space> -f ~/felics2.0/installation/felics2.0_env.yml -y`
+`conda env create --prefix <path_to_more_space> -f ~/felics2.0/installation/felics_v3.0.0_env.yml -y`
 ```
 
 ### Step 2: Set FELiCS alias
