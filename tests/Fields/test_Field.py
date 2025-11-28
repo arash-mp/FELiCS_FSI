@@ -1,7 +1,3 @@
-# TODO: 
-# - Create first test for Field class => Xiuyang
-# - do all other functions  => Anant
-
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -45,6 +41,8 @@ dim_vector           = 3 #dimension of vector function space, 2 or 3 (at the mom
 
 # 1. create Test class
 randomField = FieldTestHandler(dim_vector)
+# TODO: So far the tests can affect the whole class, which is not expected,
+# This need to be solved in the future
 # --------------------------------------------------------------
 # Tests for Field methods
 # --------------------------------------------------------------
@@ -120,22 +118,21 @@ def test_evaluateUflExpression():
     expr = random_scalar_function * conj(randomField.test_scalar) * dx
     temp_scalar_field = randomField.createFELiCSField("scalar")
     # 1 Assemble validation array
-    if not hasattr(temp_scalar_field.space, 'FEMWeightSolver'):
-        testFunc_field = TestFunctions(temp_scalar_field.space)
-        trialFunc_field = TrialFunctions(temp_scalar_field.space)
-        matrix_ufl = UflDecorator()
-        i=0
-        for test in testFunc_field:
-            try:
-                j=0
-                for subTest in test:
-                    matrix_ufl.add(conj(subTest)*trialFunc_field[i][j]*dx)
-                    j+=1
-            except:
-                matrix_ufl.add(conj(test)*trialFunc_field[i]*dx)
-            i+=1
-        matrix = matrix_ufl.getAssembledMatrix(temp_scalar_field.mesh,bcs =[])
-        temp_scalar_field.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
+    testFunc_field = TestFunctions(temp_scalar_field.space)
+    trialFunc_field = TrialFunctions(temp_scalar_field.space)
+    matrix_ufl = UflDecorator()
+    i=0
+    for test in testFunc_field:
+        try:
+            j=0
+            for subTest in test:
+                matrix_ufl.add(conj(subTest)*trialFunc_field[i][j]*dx)
+                j+=1
+        except:
+            matrix_ufl.add(conj(test)*trialFunc_field[i]*dx)
+        i+=1
+    matrix = matrix_ufl.getAssembledMatrix(temp_scalar_field.mesh,bcs =[])
+    temp_scalar_field.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
     expr_ufl = UflDecorator(expr)
     petscVec = expr_ufl.getAssembledVector(temp_scalar_field.mesh, bcs=[])
     validation_array = LinearSolver.solveEquationSystemWithPredefinedSolver(temp_scalar_field.space.FEMWeightSolver, petscVec)
@@ -167,5 +164,48 @@ def test_setBoundaryConditions():
     randomField.scalar_field.setBoundaryConditions(bcs)
     test_array = randomField.scalar_field.function.x.array[:]
     assert np.linalg.norm(validation_array-test_array) < 1e-14
-
+    print("... passed.")
             
+def test_smoothUflTensorExpression():
+    print("testing evaluate Ufl expression with smooth")
+    from FELiCS.Solvers.LinearSolver import LinearSolver
+    # NOTE: So far only scalar field is tested
+    # 0 Define a simple ufl expression and smooth factor
+    random_scalar_function = randomField.createDolfinxFunction(dim=1)
+    expr = random_scalar_function * conj(randomField.test_scalar) * dx
+    temp_scalar_field = randomField.createFELiCSField("scalar")
+    smoothFactor = 1e-2
+    # 1 Assemble validation array
+    testFunc_field = TestFunctions(temp_scalar_field.space)
+    trialFunc_field = TrialFunctions(temp_scalar_field.space)
+    matrix_ufl = UflDecorator()
+    coordinateSystem = temp_scalar_field.mesh.coordinateSystem
+    J_hat = coordinateSystem.J_hat
+    i=0
+    for test in testFunc_field:
+        iTest = Tensor(test, coordinateSystem, mayHaveSpectralDimension=True)
+        iFluc = Tensor(trialFunc_field[i], coordinateSystem, mayHaveSpectralDimension=True)
+        if iTest.order  == 1:
+            matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*dx)
+            matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iTest))).ufl_tens*J_hat*dx)
+        elif iTest.order == 0:
+            matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*dx)
+            matrix_ufl.add((smoothFactor* iDot(iGrad(iFluc),iGrad(iConj(iTest)) )).ufl_tens*J_hat*dx)
+        else:
+            print("Wrong order for test function")
+        i+=1
+    try:
+        matrix_ufl.setCorrectMeshObject(temp_scalar_field.mesh)
+    except:
+        pass
+    matrix = dolfinx.fem.petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs),bcs = [])
+    matrix.assemble()
+    temp_scalar_field.space.FEMSmoothSolver = LinearSolver.createEquationSystemSolver(matrix)
+    expr_ufl = UflDecorator(expr)
+    petscVec = expr_ufl.getAssembledVector(temp_scalar_field.mesh, bcs=[])
+    validation_array = LinearSolver.solveEquationSystemWithPredefinedSolver(temp_scalar_field.space.FEMSmoothSolver, petscVec)
+    # 2 Check alignment
+    randomField.scalar_field.smoothUflTensorExpression(expr,smoothFactor)
+    test_array = randomField.scalar_field.function.x.array.copy()
+    assert np.linalg.norm(validation_array-test_array) < 1e-14
+    print("... passed")
