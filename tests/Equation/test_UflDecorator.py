@@ -1,3 +1,15 @@
+#  ___________________________________   _______________________________________________________
+# /-----------------------------------\ /-------------------------------------------------------\
+# |   (         (                (     |  This source code is part of FELiCS                     |
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
+# |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
+# |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
+# |  | _| | _| | |__ | | | (__ \__ \   |  Visit          www.felics.eu                           |
+# |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
+# \___________________________________/ \_______________________________________________________/
+#
 # TODO: 
 # - Create first test for Field class => Xiuyang
 # - do all other functions  => Anant
@@ -80,9 +92,9 @@ def test_printExpression():
     print("... passed.")
 
 def test_lhsIsZero():
+    print("Validating if the left hand side of the ufl expression equals zero")
     from ufl import lhs, rhs
     for expr in [None, lhs_expr, rhs_expr, full_expr]:
-    # expr = rhs_expr
         UflDeco = UflDecorator(expr)
         lhs_is_zero_test    = UflDeco.lhsIsZero()
         if UflDeco.isZero():
@@ -95,3 +107,22 @@ def test_lhsIsZero():
                 lhs_is_zero_valid = False
         print(f"Validating the expression: {expr}")
         assert lhs_is_zero_test == lhs_is_zero_valid
+    print("... passed.")
+
+def test_rhsIsZero():
+    print("Validating if the right hand side of the ufl expression equals zero")
+    from ufl import lhs, rhs
+    for expr in [None, lhs_expr, rhs_expr, full_expr]:
+        UflDeco = UflDecorator(expr)
+        rhs_is_zero_test    = UflDeco.rhsIsZero()
+        if UflDeco.isZero():
+            rhs_is_zero_valid = True
+        else: 
+            temp_expression     = rhs(UflDeco._expression)
+            if len(temp_expression.arguments())<1:
+                rhs_is_zero_valid = True
+            else:
+                rhs_is_zero_valid = False
+        print(f"Validating the expression: {expr}")
+        assert rhs_is_zero_test == rhs_is_zero_valid
+    print("... passed.")

@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#  ___________________________________   _______________________________________________________
+# /-----------------------------------\ /-------------------------------------------------------\
+# |   (         (                (     |  This source code is part of FELiCS                     |
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
+# |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
+# |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
+# |  | _| | _| | |__ | | | (__ \__ \   |  Visit          www.felics.eu                           |
+# |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
+# \___________________________________/ \_______________________________________________________/
+#
 
 # This is a new tensor utils file, which is using the method and class names from Kai Hildebrandt,
 # but has a very simple ("hands-on") handling of the two FELiCS coordinate systems.

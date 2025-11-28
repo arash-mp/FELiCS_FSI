@@ -1,3 +1,15 @@
+#  ___________________________________   _______________________________________________________
+# /-----------------------------------\ /-------------------------------------------------------\
+# |   (         (                (     |  This source code is part of FELiCS                     |
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
+# |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
+# |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
+# |  | _| | _| | |__ | | | (__ \__ \   |  Visit          www.felics.eu                           |
+# |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
+# \___________________________________/ \_______________________________________________________/
+#
 from    dolfinx.fem             import Function, petsc
 from    FELiCS.Misc.logging     import Logger
 from    mpl_toolkits.axes_grid1 import make_axes_locatable 
@@ -922,7 +934,7 @@ class Field:
 
         ## assemble rhs and solve equation system
         expr_ufl     = UflDecorator()
-        listOfFields = self.getListOfSingleFields()
+        listOfFields = self.getListOfSubFields()
         test_FEM     = ufl.TestFunctions(self.space)
         coordinateSystem = self.mesh.coordinateSystem
         J_hat = coordinateSystem.J_hat

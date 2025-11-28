@@ -210,13 +210,13 @@ uxFieldAdjoint.plot(xlim=(-20, 5), ylim=(0, 5))
 
 
     
-![png](Figs_04/output_28_0.png)
+![png](output_28_0.png)
     
 
 
 
     
-![png](Figs_04/output_28_1.png)
+![png](output_28_1.png)
     
 
 
@@ -309,6 +309,6 @@ sS.plot(xlim=(-2, 6), ylim=(0, 4))
 
 
     
-![png](Figs_04/output_39_0.png)
+![png](output_39_0.png)
     
 

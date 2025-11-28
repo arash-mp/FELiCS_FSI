@@ -1,3 +1,15 @@
+#  ___________________________________   _______________________________________________________
+# /-----------------------------------\ /-------------------------------------------------------\
+# |   (         (                (     |  This source code is part of FELiCS                     |
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
+# |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
+# |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
+# |  | _| | _| | |__ | | | (__ \__ \   |  Visit          www.felics.eu                           |
+# |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
+# \___________________________________/ \_______________________________________________________/
+#
 # TODO: 
 # - Create first test for Field class => Xiuyang
 # - do all other functions  => Anant
@@ -67,7 +79,7 @@ randomModeCollector = ModeCollectionTestHandler(dim_vector)
 # Tests for Field methods
 # --------------------------------------------------------------
 def test_getDirectEigenValueSpectrum():
-    print("Testing get direct eigenvalue spectrum")
+    print("Testing the direct eigenvalue spectrum")
     # NOTE: This test only makes sense for Modal analysis
     analysisType = "Modal"
     randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
@@ -83,6 +95,7 @@ def test_getDirectEigenValueSpectrum():
         print(" - Testing eigenvalue ", i, ": ", eigenvalue, " vs ", validation_eigenvalues[i])
         assert np.abs(eigenvalue - validation_eigenvalues[i]) < 1e-14
     pass
+    print("... passed.")
 
 
 def test_getLeadingMode():
@@ -101,6 +114,7 @@ def test_getLeadingMode():
 
     leadingMode_valid_direct = randomModeCollector.mode_collection.getLeadingMode()
     assert leadingMode_valid_direct == leadingMode_test_direct
+    print("... passed the validation for leading mode in the direct spectrum.")
 
     print("Validating the leading mode in the adjoint spectrum")
     leadingMode_test_adjoint = None
@@ -115,6 +129,7 @@ def test_getLeadingMode():
 
     leadingMode_valid_adjoint = randomModeCollector.mode_collection.getLeadingMode(adjoint=True)
     assert leadingMode_test_adjoint == leadingMode_valid_adjoint
+    print("... passed the validation for leading mode in the adjoint spectrum.")
         
 def test_popList():
     analysisType = "Modal"
@@ -125,6 +140,7 @@ def test_popList():
     pop_test = randomModeCollector.mode_collection.popList()
     assert pop_test == pop_valid
     assert randomModeCollector.mode_collection.modeList == copy_list
+    print("... passed the validation for Modal analysis.")
 
     analysisType = "Resolvent"
     print("Validating popping the last mode for Modal analysis")
@@ -134,6 +150,7 @@ def test_popList():
     pop_test_res = randomModeCollector.mode_collection.popList()
     assert pop_test_res == pop_valid_res
     assert randomModeCollector.mode_collection.modeList == copy_list_res
+    print("... passed the validation for resolvent analysis.")
 
     
      
