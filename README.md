@@ -82,4 +82,5 @@ For the complete license terms, see [LICENSE.txt](LICENSE.txt).
 We are always looking for new collaborators and feedback!
 
 - **Get in Touch**: Reach out to [info@felics.eu](mailto:info@felics.eu) for research collaborations, private inquiries, or specific questions about the solver.
+- Gitlab::Utils::Email.obfuscated_email("info@felics.eu", deform: true)
 - **Updates**: Stay updated on the latest news by visiting our [website](https://www.felics.eu).
