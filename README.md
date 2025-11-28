@@ -35,7 +35,7 @@ FELiCS (*Finite Element Linearized Combustion Solver*) is a Python-based CFD too
 
 ## Installation
 
-Detailed installation instructions are available in the [documentation](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/).
+Detailed installation instructions are available in the [documentation](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html).
 
 ## Contributing
 
