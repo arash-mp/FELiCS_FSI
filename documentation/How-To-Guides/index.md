@@ -26,7 +26,7 @@ In this section we will learn how to:
 ```{toctree}
 :maxdepth: 1
 
-01_ImportExport/01_ImportExport.md
+01_FirstSteps/01_HowToImportExportH5File.md
 ```
 
 ### Derivatives and integral quantities
@@ -54,7 +54,7 @@ In this section we will learn how to:
 
 ```{toctree}
 :maxdepth: 1
-03_GeneralEigenValueProblem/03_GeneralEigenValueProblem.md
+03_PerformingModalAnalysisFELiCS/03_PerformingModalAnalysisFELiCS.md
 ```
 ### Loading modes and structural sensitivity in FELiCS
 
