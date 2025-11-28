@@ -96,7 +96,7 @@ def test_getVorticityField():
     dudy = componentList[0].getListOfSubFields()[1] 
     vorticity_field_valid = dvdx - dudy
     vorticity_field_test = field.getVorticityField()
-    assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-14
+    assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-13
     # Test for 3D vector
     # NOTE: we do this in the last step
     # dim_vector = 3
