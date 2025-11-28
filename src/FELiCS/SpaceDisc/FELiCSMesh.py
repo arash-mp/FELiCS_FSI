@@ -294,8 +294,9 @@ class FELiCSMesh:
         Names of the axes in the coordinate system.
         These include both spectral and mesh dimensions.
         Currently implemented systems are:
-            - Cartesian:    ['x', 'y', 'z']
-            - Cylindrical:  ['x', 'r', 't']
+        
+        - Cartesian:    ['x', 'y', 'z']
+        - Cylindrical:  ['x', 'r', 't']
 
         Returns
         -------
@@ -327,6 +328,7 @@ class FELiCSMesh:
         """
         Names of the axes in the mesh's coordinate system.
         Currently implemented systems are:
+
         - Cartesian:    ['x', 'y', 'z']
         - Cylindrical:  ['x', 'r', 't']
 
