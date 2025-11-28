@@ -17,6 +17,7 @@ file = "input.h5"
 with h5py.File(file, 'w') as f:
     f.create_dataset('x',   data=x)
     f.create_dataset('y',   data=y)
+    f.create_dataset('r',   data=y)
     f.create_dataset('function_sine', data = function_sine)
     f.create_dataset('function_sine_cos', data = function_sine_cos)
     f.create_dataset('function_square', data = function_square)
