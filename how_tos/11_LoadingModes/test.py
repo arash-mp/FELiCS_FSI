@@ -2,10 +2,12 @@
 from 	FELiCS.Parameters.config	        import 	config
 from 	FELiCS.Misc.logging			        import  Logger
 from    FELiCS.IO.Reader                    import  Reader
-from    FELiCS.Fields.Mode                  import  Mode
+from    FELiCS.Fields.Field                 import  Field
 from    FELiCS.IO.Writer                    import  Writer
 from    FELiCS.SpaceDisc.FEMSpaces          import  FEMSpaces
 from    FELiCS.Fields.ModeCollection        import  ModeCollection
+import  ufl
+from    FELiCS.Misc.tensorUtils             import Tensor, iDot, iConj
 
 # Get the logger
 logger      = Logger(True, False, "felics")
@@ -73,3 +75,32 @@ uxFieldDirect.plot(xlim=(-5, 20), ylim=(0, 5))
 # Plot the streamwise velocity of the adjoint mode
 uxFieldAdjoint.plot(xlim=(-20, 5), ylim=(0, 5))
 
+
+#-----------------------------------------------------------------------
+## Computing the structural sensitivity
+#-----------------------------------------------------------------------
+# Get the velocity fluctuations
+uFieldDirect            = directMode.getListOfSubFields()[0]
+uFieldAdjoint           = adjointMode.getListOfSubFields()[0]
+
+# Test space for the structural sensitivity (scalar field) and a test function
+V_scalar                = FEMSpaces.P2
+v                       = ufl.TestFunction(V_scalar)
+
+# Create empty field for the structural sensitivity
+sS                      = Field(V_scalar, mesh)
+sS.name                 = "StructuralSensitivity"
+
+# Define the expression for the structural sensitivity
+J_hat                   = sS.mesh.coordinateSystem.J_hat
+v_tens                  = Tensor(v, CoordSys=sS.mesh.coordinateSystem, m = sS.m, mayHaveSpectralDimension=sS.hasSpectralDimension)
+exprSS                  = (
+        iDot(uFieldDirect.getTensor(), iConj(uFieldDirect.getTensor()))**0.5
+        *
+        iDot(uFieldAdjoint.getTensor(), iConj(uFieldAdjoint.getTensor()))**0.5
+        * iConj(v_tens)
+        ).ufl_tens * J_hat* ufl.dx
+sS.evaluateUflTensorExpression(exprSS)
+
+# Plot the structural sensitivity
+sS.plot(xlim=(-2, 6), ylim=(0, 4))
