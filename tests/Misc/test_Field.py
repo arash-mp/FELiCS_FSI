@@ -66,3 +66,22 @@ def test_calculateL2Norm():
         validL2Norm = np.sqrt(dolfinx.fem.assemble_scalar(dolfinx.fem.form(validExpr)))
         assert np.abs(computedL2Norm - validL2Norm) < 1.e-14
     print("... passed.")
+
+def test_getVorticityField():
+        dim_vector = 2
+        print("Testing computation of the vorticity field in 2D")
+        randomField     = FieldTestHandler(dim_vector)
+        field           = randomField.vector_field
+        components      = field.getListOfSubFields()
+        componentList   = []  
+        for subfield in components:
+            componentList.append(subfield.getGradientField())
+        dvdx = componentList[1].getListOfSubFields()[0]    
+        dudy = componentList[0].getListOfSubFields()[1] 
+        vorticity_field_valid = dvdx - dudy
+        vorticity_field_test = field.getVorticityField()
+        assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-14
+
+
+
+            
