@@ -1,17 +1,18 @@
 # How-To-Guides
 
-The FELiCS How-To guides are designed as an entry point for exploring how to use FELiCS as a Python package. Each guide is based on Jupyter Notebooks,
-making them interactive and easy to follow. All notebooks, together with the files they require, are located 
-in the **`how_tos`** folder ([link here](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/development/how_tos)).
+The FELiCS **How-To** guides are designed as an entry point for exploring **how to use FELiCS as a Python package**. Each guide is based on Jupyter Notebooks, making them interactive and easy to follow. These example also demonstrate how FELiCS can be integrated into Python projects.
 
-Before working through the guides, it is essential to install FELiCS as a package. Detailed instructions for installation can be found in
+All notebooks, together with the required files, are located in the ([`how-to` folder](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/development/how_tos)).
+
+Before working through the guides, **it is essential to install FELiCS as a package**. Detailed instructions for installation can be found in
 the [installation guide](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html). 
-Once FELiCS is installed, the notebooks can be executed directly, providing practical examples and workflows that demonstrate how FELiCS can be
-integrated into Python projects.
+Once FELiCS is installed, the notebooks can be executed directly.
 
+```{admonition} Disclaimer
 These guides are not intended to be comprehensive manuals. Instead, they serve as a starting point for experimentation and learning.
 They highlight core functionality and provide illustrative examples, but they do not cover every possible use case or advanced feature.
 Users are encouraged to adapt the notebooks to their own projects and explore further.
+```
 
 Additional How-To guides are planned and will be added over time, expanding the coverage of FELiCS and offering deeper insights into its capabilities.
 The current collection should be seen as a foundation upon which more detailed documentation will continue to grow.

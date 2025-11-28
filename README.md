@@ -38,7 +38,7 @@ Detailed installation instructions are available in the [documentation](https://
 
 ## Contributing
 
-We welcome contributions from the community! Please refer to our [Contribution Guide](CONTRIBUTE.md) for:
+We welcome contributions from the community! Please refer to our [Contribution Guide](CONTRIBUTING.md) for:
 
 - Reporting bugs and requesting features
 - Development setup instructions
