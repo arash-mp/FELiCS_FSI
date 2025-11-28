@@ -203,7 +203,7 @@ class FEMSpaces():
         This method no longer functions as originally intended:
         it does not modify ``self.MixedList`` and uses outdated API calls
         (``MixedElement`` and ``FunctionSpace``). It is kept only for legacy
-        reference and is not used anywhere in the current codebase.
+        reference and is not used anywhere in the current codebase. It will be removed in future releases. 
 
         Parameters
         ----------

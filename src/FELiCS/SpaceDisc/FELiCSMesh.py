@@ -57,8 +57,6 @@ class FELiCSMesh:
         Name of the selected coordinate system.
     coordinateSystem : CoordinateSystem
         Tensor-based coordinate system initialized for the mesh.
-    _coordinates : numpy.ndarray
-        Cached array of mesh vertex coordinates in geometric dimensions.
     meshCells : numpy.ndarray
         Array containing the cell connectivity in FELiCS ordering; populated
         by :meth:`calcConnectivity`.
@@ -172,14 +170,17 @@ class FELiCSMesh:
 
     def setTrueDimension(self, dim):
         """
-        Corrects the true dimension of the system. This has to be called if a spectral dimension is included,
-        in which case the true dimension is higher than the geometrical dimension of the mesh.
-         
+        Set the true dimension of the system, updating the coordinate system.
+
+        This must be called if a spectral dimension is included, in which case
+        the true dimension is higher than the geometrical dimension of the
+        mesh.
+
         Parameters
         ----------
-        dim: int 
-            True dimension of the system, including a possible spectral dimension. 
-
+        dim : int
+            True dimension of the system, including a possible spectral
+            dimension.
         """
 
         self.dim = dim
@@ -261,7 +262,7 @@ class FELiCSMesh:
     
     def getBCInfo(self):
         """
-        Retrieves boundary condition tags and corresponding boundary facets.
+        Retrieve boundary condition tags and corresponding boundary facets.
 
         Returns
         -------
@@ -326,8 +327,8 @@ class FELiCSMesh:
         """
         Names of the axes in the mesh's coordinate system.
         Currently implemented systems are:
-            - Cartesian:    ['x', 'y', 'z']
-            - Cylindrical:  ['x', 'r', 't']
+        - Cartesian:    ['x', 'y', 'z']
+        - Cylindrical:  ['x', 'r', 't']
 
         Returns
         -------
