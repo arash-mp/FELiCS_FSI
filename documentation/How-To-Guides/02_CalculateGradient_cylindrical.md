@@ -8,7 +8,7 @@ FELiCS is able to handle cartesian and cylindrical coordinates. The cylindrical 
 with this coordinate choice our square mesh is basically "rolled" into a cylinder.
 
 **TODO** put equation of gradient with derivative w.r.t. spectral dimension (if any doubt, see https://en.wikipedia.org/wiki/Del_in_cylindrical_and_spherical_coordinates)
-**TODO** load correct image; name all jupyter notebook images by hand?
+
 
 
 ```python
