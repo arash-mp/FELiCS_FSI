@@ -78,7 +78,7 @@ class TensorUtilsTestHandle(RandomCaseHandler):
     
     def checkExpressionInAllCoordinateSystems(self, expressionFunction, tol=1.e-14):
         coordinateSystemList = ["cartesian", "cylindricalfelics"]
-        m_list = [0,np.random.randint(20)]
+        m_list = [0,np.random.randint(20)+1]
         for coordinateSystemName in coordinateSystemList:
             for m in m_list:
                 print(f"\n\n Checking alignment for coordinate system {coordinateSystemName} and m={m}")

@@ -31,7 +31,7 @@ class RandomCaseHandler():
                             ghost_mode=mesh.GhostMode.none)
         # 1.b create FELiCSMesh, which is necessary for Field defination
         # NOTE: The default coordinate system is Cylindrical, whith non-zero wave number
-        self.fixed_m = np.random.randint(20)
+        self.fixed_m = np.random.randint(20) + 1
         self.felics_mesh = FELiCSMesh("Cylindrical", gdim=2, m=self.fixed_m,inputMesh=self.mesh)
         # 2. create function spaces & test/trial functions
         self.dim_vector = dim_vector
