@@ -13,7 +13,8 @@ import numpy as np
 from mpi4py              import MPI
 from petsc4py.PETSc      import ScalarType
 from ufl                 import (
-    dx,TestFunction,TrialFunction,conj,SpatialCoordinate, Dx,dot, inner, grad
+    dx,TestFunction,TrialFunction,conj,SpatialCoordinate, Dx,dot, inner, grad,
+    TestFunctions, TrialFunctions
 )
 import dolfinx
 from dolfinx             import mesh
@@ -68,20 +69,69 @@ def test_calculateL2Norm():
     print("... passed.")
 
 def test_getVorticityField():
-        dim_vector = 2
-        print("Testing computation of the vorticity field in 2D")
-        randomField     = FieldTestHandler(dim_vector)
-        field           = randomField.vector_field
-        components      = field.getListOfSubFields()
-        componentList   = []  
-        for subfield in components:
-            componentList.append(subfield.getGradientField())
-        dvdx = componentList[1].getListOfSubFields()[0]    
-        dudy = componentList[0].getListOfSubFields()[1] 
-        vorticity_field_valid = dvdx - dudy
-        vorticity_field_test = field.getVorticityField()
-        assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-14
-
+    # test for 2-D vector
+    dim_vector = 2
+    print("Testing computation of the vorticity field in 2D")
+    randomField     = FieldTestHandler(dim_vector)
+    field           = randomField.vector_field
+    components      = field.getListOfSubFields()
+    componentList   = []  
+    for subfield in components:
+        componentList.append(subfield.getGradientField())
+    dvdx = componentList[1].getListOfSubFields()[0]    
+    dudy = componentList[0].getListOfSubFields()[1] 
+    vorticity_field_valid = dvdx - dudy
+    vorticity_field_test = field.getVorticityField()
+    assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-14
+    # Test for 3D vector
+    # dim_vector = 3
+    # print("Testing computation of the vorticity field in 2D")
+    # randomField     = FieldTestHandler(dim_vector)
+    # field           = randomField.vector_field
+    # components      = field.getListOfSubFields()
+    # componentList   = []  
+    # for subfield in components:
+    #     componentList.append(subfield.getGradientField())
+    # dvdx = componentList[1].getListOfSubFields()[0]    
+    # dudy = componentList[0].getListOfSubFields()[1] 
+    # vorticity_field_valid = dvdx - dudy
+    # vorticity_field_test = field.getVorticityField()
+    # assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-14
+        
+def test_evaluateUflExpression():
+    print("testing evaluate Ufl expression")
+    from FELiCS.Solvers.LinearSolver import LinearSolver
+    # NOTE: So far only scalar field is tested
+    # 0 Define a simple ufl expression
+    random_scalar_function = randomField.createDolfinxFunction(dim=1)
+    expr = random_scalar_function * conj(randomField.test_scalar) * dx
+    temp_scalar_field = randomField.createFELiCSField("scalar")
+    # 1 Assemble validation array
+    if not hasattr(temp_scalar_field.space, 'FEMWeightSolver'):
+        testFunc_field = TestFunctions(temp_scalar_field.space)
+        trialFunc_field = TrialFunctions(temp_scalar_field.space)
+        matrix_ufl = UflDecorator()
+        i=0
+        for test in testFunc_field:
+            try:
+                j=0
+                for subTest in test:
+                    matrix_ufl.add(conj(subTest)*trialFunc_field[i][j]*dx)
+                    j+=1
+            except:
+                matrix_ufl.add(conj(test)*trialFunc_field[i]*dx)
+            i+=1
+        matrix = matrix_ufl.getAssembledMatrix(temp_scalar_field.mesh,bcs =[])
+        temp_scalar_field.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
+    expr_ufl = UflDecorator(expr)
+    petscVec = expr_ufl.getAssembledVector(temp_scalar_field.mesh, bcs=[])
+    validation_array = LinearSolver.solveEquationSystemWithPredefinedSolver(temp_scalar_field.space.FEMWeightSolver, petscVec)
+    # 2 Check alignment
+    randomField.scalar_field.evaluateUflExpression(expr)
+    test_array = randomField.scalar_field.function.x.array.copy()
+    assert np.linalg.norm(validation_array-test_array) < 1e-14
+    print("... passed")
+    
 
 
             

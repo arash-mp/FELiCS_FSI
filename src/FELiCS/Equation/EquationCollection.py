@@ -428,14 +428,11 @@ class EquationCollectionClass():
         -----
         - Handles both scalar and vector function spaces
         - Computes second-order derivatives in x and y directions
-        - Currently a quick implementation; a more comprehensive tensor 
-        framework is needed for future improvements
+        - Currently a quick implementation; a more comprehensive tensor framework is needed for future improvements
 
-        Warnings
-        --------
-        TODO: This implementation is considered a temporary solution and 
-        requires a more robust tensor framework in future iterations.
         """
+        # TODO: This implementation is considered a temporary solution and 
+        # requires a more robust tensor framework in future iterations.
         # Rest of the existing implementation remains unchanged
         D_ufl = UflDecorator()
         test_FEM = self.testFunctionsFEM
