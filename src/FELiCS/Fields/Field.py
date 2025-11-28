@@ -931,7 +931,7 @@ class Field:
         petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
 
-    def plot(self, xlim=None, ylim=None):
+    def plot(self, xlim=None, ylim=None, imaginaryPart=False):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
         field looks as expected and rule out e.g. import problems.
@@ -970,7 +970,10 @@ class Field:
         V1              = fem.functionspace(mesh, element("CG", "triangle", 1))
         u1              = fem.Function(V1)
         u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
-        phi_vertex      = u1.x.array  # already aligned with coords / triangles
+        if not imaginaryPart:
+            phi_vertex      = np.real(u1.x.array)  # already aligned with coords / triangles
+        else:
+            phi_vertex      = np.imag(u1.x.array)
 
         # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
 
@@ -988,19 +991,26 @@ class Field:
         contour         = axes.tricontourf(triang, phi_vertex, levels=20, cmap="RdBu_r", alpha=0.7)
         axes.tricontour(triang, phi_vertex, levels=10, colors='black', alpha=0.5, linewidths=0.5)
 
-        # Add colorbar for phi
-        plt.colorbar(contour, ax=axes, label=r'$\phi$ '+ self.name)
 
         # Set labels and title
         axes.set_xlabel('x')
         axes.set_ylabel('y')
         if self.name != "":
-            axes.set_title(self.name)
+            title = self.name
         else:
-            axes.set_title('Scalar Field ')
+            title = "scalar_field"
+        if imaginaryPart:
+            title += "_imag"
+        elif not self.isReal:
+            title += "_real"
+
+        axes.set_title(title)
         axes.set_aspect('equal')
         axes.grid(True, alpha=0.3)
         
+        # Add colorbar for phi
+        plt.colorbar(contour, ax=axes, label=title)
+
         if xlim is not None:
             axes.set_xlim(xlim)
         if ylim is not None:
