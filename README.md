@@ -22,8 +22,7 @@ FELiCS (*Finite Element Linearized Combustion Solver*) is a Python-based CFD too
 ## Features
 
 - Linearized flow analysis for stability studies
-- Multi-physics support: turbulence, combustion, acoustics
-- Built on finite element methods for numerical accuracy
+- Multi-physics support including combustion and acoustics
 - Designed for both academic research and industrial applications
 - Comprehensive documentation and developer resources
 
