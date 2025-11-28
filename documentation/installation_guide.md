@@ -34,7 +34,7 @@ The recommended way of installation uses [conda](https://conda.io/projects/conda
 
 ### Step 1: Install conda Environment
 In the installation directory, we provide different _.yml_ files that contain all required packages. The latest version that works on mutliple systems is 
-- [felics_v2.4_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation/felics_v2.4_env.yml)
+- [felics_v3.0.0_env_v2.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation)
 
 The older versions of yml files can be found in the folder [yml_old](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation/yml_old) with the corresponding version in the filename. 
 

@@ -16,20 +16,11 @@ be given. Neither the physics, nor the numerical methods will be
 elaborated on. The interested reader is referenced to Kaiser et
 al. [[1,2,3]](#1).
 
-If you haven't yet installed FELiCS, please do so according to the
-instructions given in the FELiCS Installation Guide. Furthermore, please
-make sure that you have a running gmsh version on your machine.
+If you haven't yet installed FELiCS, please do so according to the instructions given in the FELiCS Installation Guide. Furthermore, please make sure that you have a running gmsh version on your machine.
 
 ## Case definition
 
-In this tutorial, we will reproduce the results published by Meliga et
-al. [[4]](#4). In their study, they investigated the stability of
-the base flow around a sphere. They found that the non swirling base
-flow becomes unsteady at $\text{Re}=280.7$ with respect to a
-single-helical mode. The respective circular frequency of the mode at
-the critical Reynolds number (bifurcation point) is $\omega=0.699$. Due
-to the axisymmetric configuration, the problem will be treated in
-cylindrical coordinates. In doing so, we take advantage of the
+In this tutorial, we will reproduce the results published by Meliga et al. [[4]](#4). In their study, they investigated the stability of the base flow around a sphere. They found that the non swirling base flow becomes unsteady at $\text{Re}=280.7$ with respect to a single-helical mode. The respective circular frequency of the mode at the critical Reynolds number (bifurcation point) is $\omega=0.699$. Due to the axisymmetric configuration, the problem will be treated in cylindrical coordinates. In doing so, we take advantage of the
 inhomogeneity of the base flow in azimuthal direction and reduce the
 problem to two dimensions, which significantly reduces the number of
 degrees of freedom.
@@ -126,7 +117,7 @@ during the installation needs to be activated:
 
 
 ```bash
-conda activate FELiCS
+conda activate felics
 ```
 
 
