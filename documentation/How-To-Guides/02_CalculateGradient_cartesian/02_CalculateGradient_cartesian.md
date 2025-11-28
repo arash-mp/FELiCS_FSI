@@ -40,7 +40,7 @@ phi.importData(Reader(), "input.h5")
 
 
 
-    (<FELiCS.Fields.Field.Field at 0x73f261d1d7f0>, [])
+    (<FELiCS.Fields.Field.Field at 0x73f2542f9130>, [])
 
 
 
