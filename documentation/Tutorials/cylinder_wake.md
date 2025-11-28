@@ -54,7 +54,7 @@ Detailed explanations about the boundary conditions format is provided in the ne
 ## Obtaining the base flow
 The base flow for FELiCS can be obtained through various methods: numerical simulations, (RANS, LES, DNS, ...), experimental results or analytical models. In this case, we calculate the base flow ourselves. But don't worry, everything is prepared: a finite element Newton solver called [```solveBaseFlow.py```](./../../tutorials/cylinder_wake_tutorial/solveBaseFlow.py) can be found in the working directory. Before the solver can be started, the conda environment FELiCS created during the installation needs to be activated:
 ```sh
-conda activate felics2025_dolfin9
+conda activate felics
 ```
 
 The settings and the boundary conditions of the base flow can be found in ```Re50.json``` and ```bc.json```. 

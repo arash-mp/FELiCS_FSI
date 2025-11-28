@@ -40,7 +40,7 @@ The older versions of yml files can be found in the folder [yml_old](https://git
 
 
 ```{admonition} Optional
-In case you want to give the environment a different name, you can change the first line of the _.yml_ file accordingly. name: `felics2025_dolfin9  ->  name: new_name`
+In case you want to give the environment a different name, you can change the first line of the _.yml_ file accordingly. name: `felics  ->  name: new_name`
 ```
 As an example, if the downloaded _.yml_ file "_felics_v2.4_env.yml_" is in the "_yml_" folder of the git repository (located in your home folder), the command would be 
 ```bash
@@ -112,7 +112,7 @@ After adding content to your `~/.bashrc`, you need to run it. To do so, run ```s
 
 After completing the installation steps, open a new terminal and activate your conda environment:
 ```bash
-conda activate felics2025_dolfin9
+conda activate felics
 ```
 If you used a different environment name, activate it accordingly:
 ```bash
