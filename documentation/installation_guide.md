@@ -1,13 +1,13 @@
-# Installation of FELiCS2.0
+# Installation of FELiCS
 
 This installation guide provides step-by-step instructions for setting up the required software and dependencies for running FELiCS. It covers prerequisites, installation commands, and configuration steps to ensure a smooth setup process.
 
 ## Requirements
 
-FELiCS2.0 is designed to run on UNIX-based systems, including native Linux (recommended distributions: Ubuntu, CentOS, Fedora) and macOS. If you have linux or Mac System, you can jump to section [Setup](#setup).
+FELiCS is designed to run on UNIX-based systems, including native Linux (recommended distributions: Ubuntu, CentOS, Fedora) and macOS. If you have linux or Mac System, you can jump to section [Setup](#setup).
 
 ### For Windows Users
-For Windows users, FELiCS2.0 can be used via the Windows Subsystem for Linux (WSL).
+For Windows users, FELiCS can be used via the Windows Subsystem for Linux (WSL).
 
 #### Step 1: Install WSL on your system: 
 Follow the official [Microsoft WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install) to set up WSL. **We strongly recommend installing WSL version 2 for improved performance and compatibility.** 
@@ -22,7 +22,7 @@ After setting up WSL select and install a Linux distribution. This is also cover
 ## Setup
 
 ### Step 1: Clone FELiCS Code
-First, navigate to the location where you want to store the FELiCS folder and clone the git repository [FELiCS2.0](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0) by executing the following command line: 
+First, navigate to the location where you want to store the FELiCS folder and clone the git repository [FELiCS](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0) by executing the following command line: 
 ```bash
 git clone https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0
 ```
@@ -67,7 +67,7 @@ To create an alias, you have two options:
 
 **Option 1: Automatically add the FELiCS alias to your `.bashrc`**
 
-Now, go to the top level of the cloned git repository. The top level is the 'felics2.0' folder and it contains for example the 'src' folder and the 'REAMDE.md' file. 
+Now, go to the top level of the cloned git repository. The top level is the 'FELiCS' folder and it contains for example the 'src' folder and the 'REAMDE.md' file. 
 
 Run the following command block in your terminal to add a FELiCS alias to your _~/.bashrc_:
 ```bash
@@ -86,7 +86,7 @@ fi
 ```
 
 ```{caution}
-if you receive the error "`this does not seem to be a FELiCS directory`", please make sure that you are in the felics folder. The top level is the `felics2.0` folder and it contains for example the `src` folder and the `REAMDE.md` file. 
+if you receive the error "`this does not seem to be a FELiCS directory`", please make sure that you are in the felics folder. The top level is the `FELiCS` folder and it contains for example the `src` folder and the `REAMDE.md` file. 
 ```
 
 After adding content to your `~/.bashrc`, you need to run it. To do so, run ```source ~/.bashrc```
