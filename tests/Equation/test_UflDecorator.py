@@ -80,9 +80,9 @@ def test_printExpression():
     print("... passed.")
 
 def test_lhsIsZero():
+    print("Validating if the left hand side of the ufl expression equals zero")
     from ufl import lhs, rhs
     for expr in [None, lhs_expr, rhs_expr, full_expr]:
-    # expr = rhs_expr
         UflDeco = UflDecorator(expr)
         lhs_is_zero_test    = UflDeco.lhsIsZero()
         if UflDeco.isZero():
@@ -95,3 +95,22 @@ def test_lhsIsZero():
                 lhs_is_zero_valid = False
         print(f"Validating the expression: {expr}")
         assert lhs_is_zero_test == lhs_is_zero_valid
+    print("... passed.")
+
+def test_rhsIsZero():
+    print("Validating if the right hand side of the ufl expression equals zero")
+    from ufl import lhs, rhs
+    for expr in [None, lhs_expr, rhs_expr, full_expr]:
+        UflDeco = UflDecorator(expr)
+        rhs_is_zero_test    = UflDeco.rhsIsZero()
+        if UflDeco.isZero():
+            rhs_is_zero_valid = True
+        else: 
+            temp_expression     = rhs(UflDeco._expression)
+            if len(temp_expression.arguments())<1:
+                rhs_is_zero_valid = True
+            else:
+                rhs_is_zero_valid = False
+        print(f"Validating the expression: {expr}")
+        assert rhs_is_zero_test == rhs_is_zero_valid
+    print("... passed.")

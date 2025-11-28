@@ -144,7 +144,7 @@ def test_evaluateUflExpression():
     test_array = randomField.scalar_field.function.x.array.copy()
     # NOTE: This need a higher tolerance than 1e-14
     assert np.linalg.norm(validation_array-test_array) < 1e-13
-    print("... passed")
+    print("... passed.")
     
 def test_setBoundaryConditions():
     # NOTE: Only scalar field
