@@ -39,7 +39,7 @@ In the installation directory, we provide different _.yml_ files that contain al
 The older versions of yml files can be found in the folder [yml_old](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation/yml_old) with the corresponding version in the filename. 
 
 ```{note}
-If a Windows user has troubles with the latest yml file, please try the second version.
+Sometimes when using WSL, there might be troubles with the latest yml file. If so please try the second version.
 ```
 
 ```{admonition} Optional
@@ -47,12 +47,7 @@ In case you want to give the environment a different name, you can change the fi
 ```
 As an example, if the downloaded _.yml_ file "_felics_v3.0.0_env.yml_" is in the "_yml_" folder of the git repository (located in your home folder), the command would be 
 ```bash
-conda env create -f ~/felics2.0/installation/felics_v3.0.0_env.yml -y
-conda env create -f ~/felics2.0/installation/felics_v3.0.0_env.yml -y
-```
-
-```{admonition} Optional
-if you want to review the packages being installed, omit the `-y`
+conda env create -f ~/felics2.0/installation/felics_v3.0.0_env.yml
 ```
 
 ```{attention} 
