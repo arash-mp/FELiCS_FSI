@@ -379,8 +379,7 @@ class EquationCollectionClass():
         -----
         - Handles both scalar and vector function spaces
         - Uses conjugate of test functions for matrix construction
-        - Includes a workaround for mesh object compatibility with different 
-        versions of DOLFINx
+        - Includes a workaround for mesh object compatibility with different versions of DOLFINx
         """
         # create ufl object with the full FEM weight matrix expression
         W_ufl     = UflDecorator()

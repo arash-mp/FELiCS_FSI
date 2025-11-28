@@ -71,20 +71,39 @@ class Mode(Field):
     mesh : FELiCS.SpaceDisc.FELiCSMesh
         Mesh on which the FEM space is defined.
     name : str, optional
-        Name of the field. Default is ``"q_hat"``.
+        Name of the underlying field. Default is ``"q_hat"``.
     isStateVector : bool, optional
-        If True, the mode is interpreted as a state vector in a mixed space.
-        Default is True.
+        If True, this mode is treated as a state vector in a mixed
+        formulation. Default is True.
     m : int, optional
-        Wave number associated with a spectral spatial dimension. Default is 0.
-    analysisType : {'Modal', 'Resolvent', 'Input_Output'}, optional
+        Wave number associated with a spectral spatial dimension.
+        Default is 0.
+    analysisType : str, optional
         Type of analysis for which this mode is defined. The string is mapped
-        (case-insensitively) to :class:`AnalysisType`. Default is ``'Modal'``.
+        (case-insensitively) to :class:`AnalysisType` (e.g. ``'Modal'``,
+        ``'Resolvent'``). Default is ``'Modal'``.
     modeType : str or None, optional
-        Type of mode within the chosen analysis type, mapped to
+        Mode role within the chosen analysis type, mapped to
         :class:`ModeType` (e.g. ``'direct'``, ``'adjoint'``, ``'response'``,
         ``'forcing'``). If ``None``, a sensible default is chosen based on
         ``analysisType``.
+
+    Attributes
+    ----------
+    analysisType : AnalysisType
+        The specific analysis type enum associated with this mode.
+    modeType : ModeType
+        The specific role of the mode (e.g. DIRECT, ADJOINT, FORCING).
+    waveNumber : int
+        Wave number associated with the mode (initialized by `m`).
+    namesOfSubFields : list
+        List of names of the subfields (variables) constituting the mode.
+    omega : float
+        Property returning the eigenvalue (Modal) or frequency (Resolvent/IO).
+    gain : float
+        Property returning the mode gain (returns -9999. if undefined).
+    error : float
+        Property returning the error associated with the mode (returns -9999. if undefined).
     """
 
     def __init__(self, FEMSpace, mesh, name="q_hat", isStateVector=True, m=0, analysisType='Modal', modeType = None):
@@ -304,11 +323,10 @@ class Mode(Field):
     def waveNumber(self,waveNumber):
         """
         Set the wave number for the mode.
-        # NOTE: Why do we have this AND self.m?
 
         Parameters
         ----------
-        waveNumber : float
+        waveNumber : float or int
             Wave number corresponding to the mode.
         """
         self._waveNumber = waveNumber
@@ -371,7 +389,11 @@ class Mode(Field):
         
     def describe(self):
         """
-        Print a description of the mode, including its properties.
+        Log a summary of the mode's properties.
+
+        Prints the mode type, and depending on the analysis type, logs
+        relevant metrics such as guess and eigenvalue (Modal) or frequency,
+        gain, and gain number (Resolvent/Input-Output).
         """
         logger.info(f"  Mode Type:     {self.modeType.name}")
         if self.analysisType == AnalysisType.MODAL:
@@ -447,8 +469,7 @@ class Mode(Field):
         from the analysis type, mode type, and frequency/eigenvalue (and
         gain number for resolvent modes). After importing the field
         coefficients via the parent :class:`Field` method, the eigenvalue,
-        frequency, gain and gain number are read back from file attributes,
-        depending on the analysis type.
+        frequency, gain and gain number are read back from file attributes.
 
         Parameters
         ----------
@@ -467,6 +488,11 @@ class Mode(Field):
             The updated mode (self) with imported coefficients and metadata.
         list of str
             List of variable names that were not found in the file.
+
+        Notes
+        -----
+        For Resolvent and Input-Output analyses, the mode frequency is populated
+        from the 'omega' dataset in the HDF5 file.
         """
         # In case we want to import from a specific file
         if importFileName is not None:

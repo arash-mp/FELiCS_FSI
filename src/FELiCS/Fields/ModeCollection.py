@@ -20,20 +20,30 @@ class ModeCollection():
 
     Parameters
     ----------
-    femSpace : object
+    femSpace : dolfinx.fem.FunctionSpace
         The finite element space associated with the modes.
-    mesh : object
+    mesh : FELiCS.SpaceDisc.FELiCSMesh
         The mesh associated with the modes.
+    isStateVector : bool, optional
+        If True, modes in this collection are treated as state vectors in a
+        mixed space. Default is True.
+    analysisType : str, optional
+        Type of analysis this collection belongs to. The string is mapped
+        (case-insensitively) to :class:`AnalysisType` (e.g. 'Modal', 'Resolvent',
+        'Input_Output'). Default is ``'Modal'``.
 
     Attributes
     ----------
     modeList : list
         List of Mode objects in the collection.
-    femSpace : object
+    femSpace : dolfinx.fem.FunctionSpace
         The finite element space associated with the modes.
-    mesh : object
+    mesh : FELiCS.SpaceDisc.FELiCSMesh
         The mesh associated with the modes.
-
+    isStateVector : bool
+        Indicates if modes are treated as state vectors.
+    analysisType : AnalysisType
+        The specific analysis type enum associated with this collection.
     """
 
     def __init__(self, femSpace, mesh, isStateVector=True, analysisType='Modal'):
@@ -110,8 +120,9 @@ class ModeCollection():
             :class:`ModeType` (e.g. ``'direct'``, ``'adjoint'``,
             ``'response'``, ``'forcing'``). If ``None``, a default is chosen
             inside :class:`Mode` based on the analysis type.
+        m : int, optional
+            Azimuthal wavenumber associated with the mode. Default is 0.
         """
-
         mode = Mode(
             self.femSpace, 
             self.mesh, 
@@ -143,8 +154,11 @@ class ModeCollection():
             Initial guess or parameter for the modes.
         adjoint : bool, optional
             Whether the modes are adjoint modes (default is False).
-        """
-        
+        name : str, optional
+            A custom name for the mode.
+        m : int, optional
+            Azimuthal wavenumber associated with the mode. Default is 0.
+        """        
         # Check that we are in Modal analysis
         if self.analysisType != AnalysisType.MODAL:
             logger.error('appendSolutionOfEigenProblem called for non-Modal analysis in ModeCollection.')
@@ -193,8 +207,9 @@ class ModeCollection():
             The resolvent operator, instance of the ResolventOperator class.
         name : str, optional
             The name of the mode.
+        m : int, optional
+            Azimuthal wavenumber associated with the mode. Default is 0.
         """
-
         # Check that we are in Resolvent analysis
         if self.analysisType != AnalysisType.RESOLVENT:
             logger.error('appendSolutionOfSVDProblem called for non-Resolvent analysis in ModeCollection.')
@@ -586,7 +601,7 @@ class ModeCollection():
         modeFiles : list of str
             List of HDF5 file names that match the expected naming pattern for
             the current analysis type.
-        omegasModeFiles : list of float or complex
+        omegasModes : list of float or complex
             List of omega values parsed from the corresponding file names.
         typesModeFiles : list of str
             List of mode type strings (e.g. 'Direct', 'Adjoint',
@@ -601,7 +616,6 @@ class ModeCollection():
         to extract both omega and gain numbers. Errors in parsing result in
         logged messages and skipping the affected files.
         """
-
         # List of all h5 files in the folder
         h5Files             = [f for f in os.listdir(importFolder) if f.endswith('.h5')]
         

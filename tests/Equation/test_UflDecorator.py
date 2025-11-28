@@ -5,7 +5,8 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from FELiCS.Fields.Field import Field
+import io
+import contextlib
 from FELiCS.Misc.tensorUtils import *
 from FELiCS.Equation.UflDecorator import UflDecorator
 
@@ -25,12 +26,11 @@ from tests.UnitTestHelper    import UnitTestHelper
 #################################################################
 ##### define necessary functions ################################
 #################################################################
-class FieldTestHandler(RandomCaseHandler):
+class UflDecoratorTestHandler(RandomCaseHandler):
     def __init__(self, dim_vector):
         super().__init__(dim_vector)
-        self.scalar_field = self.createFELiCSField("scalar")
-        self.vector_field = self.createFELiCSField("vector")
-        self.mixed_field  = self.createFELiCSField("mixed")
+        # NOTE: So far only test expression using scalar field
+        self.scalar_field = self.createDolfinxFunction(dim=1)
         pass
     
     
@@ -43,26 +43,38 @@ class FieldTestHandler(RandomCaseHandler):
 dim_vector           = 3 #dimension of vector function space, 2 or 3 (at the moment: is fixed to 3; that should test the 2, too?) 
 
 # 1. create Test class
-randomField = FieldTestHandler(dim_vector)
-# --------------------------------------------------------------
-# Tests for Field methods
-# --------------------------------------------------------------
+randomField = UflDecoratorTestHandler(dim_vector)
 
-def test_calculateL2Norm():
-    print("Testing L2 norm calculation")
-    # 1. define expressions
-    for field in [randomField.scalar_field, randomField.vector_field, randomField.mixed_field]:
-        print(" - Testing field of type: ", field._name)
-        list = field.getListOfSubFields()
-        J_hat = field.mesh.coordinateSystem.J_hat
-        for i, subfield in enumerate(list):
-            fieldTens = subfield.getTensor()
-            if i == 0:
-                validExpr = (iDot(fieldTens, iConj(fieldTens))).ufl_tens*J_hat*dx
-            else:
-                validExpr += (iDot(fieldTens, iConj(fieldTens))).ufl_tens*J_hat*dx 
+# 2. create Ufl expression used for testing
+# NOTE: Test with Poisson problem
+lhs_expr = inner(grad(randomField.trial_scalar), grad(randomField.test_scalar)) * dx
+rhs_expr = randomField.scalar_field * randomField.test_scalar * dx
+full_expr = lhs_expr - rhs_expr
+# --------------------------------------------------------------
+# Tests for UflDocorator methods
+# --------------------------------------------------------------
+def test_printExpression():
+    for expr in [None,lhs_expr, rhs_expr, full_expr]:
+        # 1. define validation (no need here)
+        
         # 2. check alignment
-        computedL2Norm = field.calculateL2Norm()
-        validL2Norm = np.sqrt(dolfinx.fem.assemble_scalar(dolfinx.fem.form(validExpr)))
-        assert np.abs(computedL2Norm - validL2Norm) < 1.e-14
+        # create UflDecorator object with the expression
+        UflDeco = UflDecorator(expr)
+        # get output string
+        string_buffer = io.StringIO()
+        with contextlib.redirect_stdout(string_buffer):
+            UflDeco.printExpression()
+        testString = string_buffer.getvalue()
+        print(testString)
+        
+        if expr is None:
+            assert "Ufl expression is zero." in testString
+        else:
+            print(f"validating expression: {expr}")
+            assert f"{expr}" in testString
+            print(f"validating arguments: {expr.arguments()}")
+            assert f"{expr.arguments()}" in testString
+            print(f"validating number of arguments: {len(expr.arguments())}")
+            assert f"{len(expr.arguments())}" in testString
+        
     print("... passed.")

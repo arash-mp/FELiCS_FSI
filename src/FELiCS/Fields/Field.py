@@ -1,5 +1,6 @@
 from    dolfinx.fem             import Function, petsc
 from    FELiCS.Misc.logging     import Logger
+from    mpl_toolkits.axes_grid1 import make_axes_locatable 
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -1010,7 +1011,10 @@ class Field:
         axes.grid(True, alpha=0.3)
         
         # Add colorbar for phi
-        plt.colorbar(contour, ax=axes, label=title)
+        divider         = make_axes_locatable(axes)
+        colorbar_axes   = divider.append_axes("right", size="2%", pad=0.5) 
+        cbar            = plt.colorbar(contour, label=title, cax=colorbar_axes)
+        cbar.formatter.set_powerlimits((0, 0))
 
         if xlim is not None:
             axes.set_xlim(xlim)
