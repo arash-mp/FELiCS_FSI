@@ -107,8 +107,6 @@ def test_lhsIsZero():
                 lhs_is_zero_valid = False
         print(f"Validating the expression: {expr}")
         assert lhs_is_zero_test == lhs_is_zero_valid
-<<<<<<< HEAD
-=======
     print("... passed.")
 
 def test_rhsIsZero():
@@ -128,4 +126,3 @@ def test_rhsIsZero():
         print(f"Validating the expression: {expr}")
         assert rhs_is_zero_test == rhs_is_zero_valid
     print("... passed.")
->>>>>>> development
