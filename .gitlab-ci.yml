@@ -81,6 +81,7 @@ pages:
       pip install -U pip
       pip install -U sphinx myst-parser sphinx-book-theme
       pip install -U sphinx-autoapi==3.0.0
+      pip install -U astroid==3.3.11
       pip install sphinxcontrib-mermaid
       # fi
 
