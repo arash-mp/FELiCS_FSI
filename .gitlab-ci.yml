@@ -25,7 +25,13 @@ test:
       echo "Activating virtual environment..."
       source "$VENV_DIR/bin/activate"
   
-      conda env list
+      #TODO: check if felics environment exists and if NOT, then install
+      echo "Creating conda environment for FELiCS..."
+      conda env create -f installation/felics_v3.0.0_env.yml -y
+      conda activate felics
+      cd installation
+      pip install -e .
+      cd ..
 
       #if [ ! -d "$VENV_DIR/anaconda3/bin" ]; then
       #  echo "Installing conda..."
