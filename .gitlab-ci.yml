@@ -25,7 +25,7 @@ test:
     - cd ..
     - ls -all
     - |
-      VENV_DIR="../../local-runner-envTests"
+      VENV_DIR="/etc/gitlab-runner/local-runner-envTests"
       if [ ! -d "$VENV_DIR" ]; then
         echo "Creating new virtual environment..."
         python3 -m venv "$VENV_DIR"
