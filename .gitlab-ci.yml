@@ -67,22 +67,22 @@ pages:
   before_script:
     - git --version
     - ls -all
-    - |
-      VENV_DIR="../../local-runner-env3"
-      if [ ! -d "$VENV_DIR" ]; then
-        echo "Creating new virtual environment..."	
-        python3 -m venv "$VENV_DIR"
-      fi
-      echo "Activating virtual environment..."	
-      source "$VENV_DIR/bin/activate"
+    - |      
+      # VENV_DIR="../../local-runner-env3"
+      # if [ ! -d "$VENV_DIR" ]; then
+      #  echo "Creating new virtual environment..."	
+      #  python3 -m venv "$VENV_DIR"
+      # fi
+      # echo "Activating virtual environment..."	
+      # source "$VENV_DIR/bin/activate"
       
-      if ! sphinx-build --version 2>/dev/null; then
-        echo "installing sphinx and dependencies..."	
-        pip install -U pip
-        pip install -U sphinx myst-parser sphinx-book-theme
-        pip install -U sphinx-autoapi==3.0.0
-        pip install sphinxcontrib-mermaid
-      fi
+      # if ! sphinx-build --version 2>/dev/null; then
+      echo "installing sphinx and dependencies..."	
+      pip install -U pip
+      pip install -U sphinx myst-parser sphinx-book-theme
+      pip install -U sphinx-autoapi==3.0.0
+      pip install sphinxcontrib-mermaid
+      # fi
 
   script:
   - cd documentation
@@ -102,5 +102,5 @@ pages:
     paths:
       - public
   only:
-    #- development
-    - main
+    - development
+    #- main
