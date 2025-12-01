@@ -5,7 +5,7 @@ Thank you for your interest in contributing to FELiCS! We welcome contributions 
 ## 1. Getting Started
 FELiCS is under active development. Before you begin, please familiarize yourself with the project structure and guidelines:
 - **Read the Documentation**: Understand the overall architecture and usage in our [Documentation](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/).
-- **Developer Guidelines**: For coding standards, style guides, and documentation rules, please strictly refer to our [Developer Wiki](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/).
+- **Developer Guidelines**: For coding standards, style guides, and documentation rules, please strictly refer to our [Developer Wiki](https://gitlab.com/flow1631349/FELiCS/-/wikis/).
 
 ## 2. Reporting Issues & Feature Requests
 If you encounter a bug or have an idea for a new feature, please let us know:
