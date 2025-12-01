@@ -24,3 +24,4 @@ Ready to contribute your code?
 1. **Fork & Branch**: Create a new branch for your feature or bugfix.
 2. **Commit**: Write clear, concise commit messages.
 3. **Merge Request**: Submit a Merge Request (MR) to the `development` branch. Link your MR to any relevant issues.
+
