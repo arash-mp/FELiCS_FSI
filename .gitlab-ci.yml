@@ -28,6 +28,7 @@ test:
       #TODO: check if felics environment exists and if NOT, then install
       echo "Creating conda environment for FELiCS..."
       conda env create -f installation/felics_v3.0.0_env_v2.yml 
+      source /root/.bashrc
       conda init
       conda activate felics
       cd installation
