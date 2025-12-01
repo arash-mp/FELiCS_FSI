@@ -31,7 +31,7 @@ test:
         chmod +x "$VENV_DIR/anaconda3_install.sh"
         "$VENV_DIR/anaconda3_install.sh" -b -p "$VENV_DIR/anaconda3"
         echo "Creating conda environment for FELiCS..."
-        conda env create -f INSTALLATION/felics_v2.41_env.yml -y
+        conda env create -f installation/felics_v3.0.0_env.yml -y
         export PATH="$VENV_DIR/anaconda3/bin:$PATH"
         source activate base
         conda activate felics2025_dolfin9_v2
