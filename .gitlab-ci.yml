@@ -34,7 +34,7 @@ test:
         conda env create -f installation/felics_v3.0.0_env.yml -y
         export PATH="$VENV_DIR/anaconda3/bin:$PATH"
         source activate base
-        conda activate felics2025_dolfin9_v2
+        conda activate felics
         cd installation
         pip install -e .
         cd ..
@@ -42,7 +42,7 @@ test:
         echo "Activating conda environment..."
         export PATH="$VENV_DIR/anaconda3/bin:$PATH"
         source activate base
-        conda activate felics2025_dolfin9_v2
+        conda activate felics
       fi
   script:
     - cd tests
