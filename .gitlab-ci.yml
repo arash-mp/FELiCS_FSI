@@ -16,14 +16,6 @@ test:
     - git --version
     - pwd
     - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
-    - cd ..
-    - ls -all
     - |
       VENV_DIR="/etc/gitlab-runner/local-runner-envTests"
       if [ ! -d "$VENV_DIR" ]; then
@@ -32,9 +24,8 @@ test:
       fi
       echo "Activating virtual environment..."
       source "$VENV_DIR/bin/activate"
-      ls -all $VENV_DIR
-      ls -all $VENV_DIR/anaconda3
-      ls -all
+  
+      conda env list
 
       #if [ ! -d "$VENV_DIR/anaconda3/bin" ]; then
       #  echo "Installing conda..."
