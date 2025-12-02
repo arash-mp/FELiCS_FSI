@@ -17,15 +17,17 @@ test:
     - pwd
     - ls -all
     - |
-      VENV_DIR="/etc/gitlab-runner/local-runner-envTests"
-      if [ ! -d "$VENV_DIR" ]; then
-        echo "Creating new virtual environment..."
-        python3 -m venv "$VENV_DIR"
-      fi
-      echo "Activating virtual environment..."
-      source "$VENV_DIR/bin/activate"
+
+      #VENV_DIR="/etc/gitlab-runner/local-runner-envTests"
+      #if [ ! -d "$VENV_DIR" ]; then
+      #  echo "Creating new virtual environment..."
+      #  python3 -m venv "$VENV_DIR"
+      #fi
+      #echo "Activating virtual environment..."
+      #source "$VENV_DIR/bin/activate"
   
-      #TODO: check if felics environment exists and if NOT, then install
+      #TODO: activate virtual invironment; 
+      #       check if felics environment exists and if NOT, then install
       echo "Creating conda environment for FELiCS..."
       conda env create -f installation/felics_v3.0.0_env_v2.yml 
       source /root/.bashrc
@@ -80,8 +82,8 @@ pages:
       echo "installing sphinx and dependencies..."	
       pip install -U pip
       pip install -U sphinx myst-parser sphinx-book-theme
-      pip install -U sphinx-autoapi==3.0.0
-      pip install -U astroid==3.3.11
+      pip install -U sphinx-autoapi#==3.0.0
+      pip install -U astroid#==3.3.11
       pip install sphinxcontrib-mermaid
       # fi
 
