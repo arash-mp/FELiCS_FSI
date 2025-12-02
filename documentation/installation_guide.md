@@ -39,7 +39,7 @@ In the installation directory, we provide different _.yml_ files that contain al
 The older versions of yml files can be found in the folder [yml_old](https://gitlab.com/felics-group/FELiCS/-/blob/main/installation/) with the corresponding version in the filename.
 
 ```{note}
-Sometimes when using WSL, there might be troubles with the latest yml file. If so please try the second version. 
+Sometimes when using WSL, there might be troubles with the latest yml file. If so please try the second version.
 ```
 
 ```{admonition} Optional
