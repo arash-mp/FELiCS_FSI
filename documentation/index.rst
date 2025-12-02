@@ -8,7 +8,7 @@
    :no-undoc-members:
 
 ===============================
-Welcome to FELiCS 2.0
+Welcome to FELiCS 
 ===============================
 
 **FELiCS** (*Finite Element Linearized Combustion Solver*) is a Python-based CFD tool developed at the **Laboratory for Flow Instabilities and Dynamics**. It provides a powerful framework for analyzing and controlling fluid flows by solving the **linearized flow equations around a mean state**.
