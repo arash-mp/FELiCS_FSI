@@ -12,7 +12,8 @@
 [![Release](https://gitlab.com/felics-group/FELiCS/-/badges/release.svg?order_by=release_at)](https://gitlab.com/felics-group/FELiCS/-/releases)
 
 [![unit tests](https://gitlab.com/felics-group/FELiCS/-/badges/development/pipeline.svg?job=test&key_text=unit+tests)](https://gitlab.com/felics-group/FELiCS/-/pipelines)
-[![unit tests](https://gitlab.com/felics-group/FELiCS/badges/main/pipeline.svg?job=test)](https://gitlab.com/felics-group/FELiCS/-/commits/main) 
+
+[![unit tests](https://gitlab.com/felics-group/FELiCS/badges/main/pipeline.svg?job=test&key_text=unit+tests)](https://gitlab.com/felics-group/FELiCS/-/commits/main) 
 [![Test Cases](https://img.shields.io/badge/FELiCS--Tests-blue?logo=gitlab)](https://gitlab.com/felics-group/felics-tests)
 
 
