@@ -53,4 +53,4 @@ create documentation:
     paths:
       - public
   only:
-    - development
+    - main
