@@ -6,7 +6,7 @@
 ## Welcome to FELiCS
 
 [![Documentation Status](https://img.shields.io/badge/docs-latest-blue.svg)](https://felics-d43476.gitlab.io/index.html)
-[![Website](https://img.shields.io/badge/website-felics2.0-blue?logo=firefox-browser)](https://www.felics.eu)
+[![Website](https://img.shields.io/badge/website-felics-blue?logo=firefox-browser)](https://www.felics.eu)
 [![Wiki](https://img.shields.io/badge/wiki-developer%20guide-green?logo=gitbook)](https://gitlab.com/felics-group/FELiCS/-/wikis/home)
 [![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://gitlab.com/felics-group/FELiCS/-/blob/main/LICENSE.md?ref_type=heads)
 [![Release](https://gitlab.com/felics-group/FELiCS/-/badges/release.svg?order_by=release_at)](https://gitlab.com/felics-group/FELiCS/-/releases)

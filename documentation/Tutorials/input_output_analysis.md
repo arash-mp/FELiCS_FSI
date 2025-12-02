@@ -37,7 +37,7 @@ The mesh should include proper boundary identification for:
 - Symmetry axis (for axisymmetric cases)
 
 ### Base Flow
-This tutorial case folder is located in ```felics2.0/tutorials/input_ouput_tutorial```.
+This tutorial case folder is located in ```felics/tutorials/input_ouput_tutorial```.
 
 Our base flow is a time-averaged reacting flow field that includes:
 - Velocity components ($u_x, u_r, u_\theta$)

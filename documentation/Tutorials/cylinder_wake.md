@@ -7,15 +7,15 @@ This first tutorial gives an introduction for setting up a FELiCS case. By the e
 
 ## Requirements
 
-* FELiCS should be installed as per the [FELiCS installation guide](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/installation_guide.md?ref_type=heads) with an active conda environment.
+* FELiCS should be installed as per the [FELiCS installation guide](https://felics-d43476.gitlab.io/installation_guide.html) with an active conda environment.
 
 * Choose a branch of the FELiCS that contains the base flow solver.
 
 ## Case Definition
 We want to study the linear stability of a 2D base flow around a cylinder at Reynolds number, $\mathrm{Re} = 50$.
-In general it is recommended to create a folder for every case, where the input and output files will be located. Here, the case folder can be found in ```felics2.0/tutorials/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
+In general it is recommended to create a folder for every case, where the input and output files will be located. Here, the case folder can be found in ```felics/tutorials/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
 ```sh
-cp -r felics2.0/tutorials/cylinder_wake_tutorial workDir/
+cp -r felics/tutorials/cylinder_wake_tutorial workDir/
 cd workDir/cylinder_wake_tutorial/ 
 ```
 
