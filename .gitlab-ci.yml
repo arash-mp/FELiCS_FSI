@@ -2,7 +2,7 @@
 image: continuumio/anaconda3
 
 variables:
-  GIT_STRATEGY: clone
+  GIT_STRATEGY: fetch
 
 test:felics-pytest:
   stage: test
@@ -10,15 +10,14 @@ test:felics-pytest:
     - git --version
     - pwd
     - ls -all
-    - |
-      echo "Creating conda environment for FELiCS..."
-      conda env create -f installation/felics_v3.0.0_env_v2.yml 
-      source /root/.bashrc
-      conda init
-      conda activate felics
-      cd installation
-      pip install -e .
-      cd ..
+    - echo "Creating conda environment for FELiCS..."
+    - conda env create -f installation/felics_v3.0.0_env_v2.yml 
+    - source /root/.bashrc
+    - conda init
+    - conda activate felics
+    - cd installation
+    - pip install -e .
+    - cd ..
   script:
     - cd tests
     - python3 -m pytest 
@@ -30,13 +29,12 @@ deploy:documentation-pages:
   before_script:
     - git --version
     - ls -all
-    - |      
-      echo "Installing Sphinx and dependencies..."  
-      pip install -U pip
-      pip install -U sphinx myst-parser sphinx-book-theme
-      pip install -U sphinx-autoapi==3.0.0
-      pip install -U astroid==3.3.11
-      pip install sphinxcontrib-mermaid
+    - echo "Installing Sphinx and dependencies..."  
+    - pip install -U pip
+    - pip install -U sphinx myst-parser sphinx-book-theme
+    - pip install -U sphinx-autoapi==3.0.0
+    - pip install -U astroid==3.3.11
+    - pip install sphinxcontrib-mermaid
   script:
     - cd documentation
     - mkdir ../public
