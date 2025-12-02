@@ -10,7 +10,7 @@ extensions = ['sphinx.ext.coverage', 'sphinx.ext.napoleon', 'myst_parser', 'auto
 autoapi_dirs = ['../src/FELiCS']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'special-members', 'no-imported-members']
+autoapi_options = ['members', 'undoc-members', 'no-private-members', 'show-inheritance', 'show-module-summary', 'no-special-members', 'no-imported-members']
 
 html_theme = 'sphinx_book_theme'
 html_static_path = ['_static']
