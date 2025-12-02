@@ -18,7 +18,7 @@ The modal analysis will:
 ## Requirements
 Before you begin this tutorial make sure to:
 * have completed the [base flow tutorial](./cylinder_wake.md).
-* access the case folder ```felics2.0/tutorials/modal_analysis_tutorial``` and copy it into your working directory.
+* access the case folder ```felics/tutorials/modal_analysis_tutorial``` and copy it into your working directory.
 
 ## Modal analysis settings
 
