@@ -11,8 +11,9 @@
 [![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://gitlab.com/felics-group/FELiCS/-/blob/main/LICENSE.md?ref_type=heads)
 [![Release](https://gitlab.com/felics-group/FELiCS/-/badges/release.svg?order_by=release_at)](https://gitlab.com/felics-group/FELiCS/-/releases)
 
-[![unit tests](https://gitlab.com/felics-group/FELiCS/-/jobs?kind=BUILD)](https://gitlab.com/felics-group/FELiCS/-/commits/main) 
+[![unit tests](https://gitlab.com/felics-group/FELiCS/badges/main/pipeline.svg?job=test&key_text=unit+tests)](https://gitlab.com/felics-group/FELiCS/-/jobs?kind=BUILD) 
 [![Test Cases](https://img.shields.io/badge/FELiCS--Tests-blue?logo=gitlab)](https://gitlab.com/felics-group/felics-tests)
+
 
 
 FELiCS (*Finite Element Linearized Combustion Solver*) is a Python-based CFD tool for linearized flow analysis, developed at the Laboratory for Flow Instabilities and Dynamics at TU Berlin. It is designed for both academic research and real-world engineering applications, supporting turbulence, heat/mass transport, chemical reactions, acoustics, and more.
