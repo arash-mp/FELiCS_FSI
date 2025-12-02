@@ -13,7 +13,7 @@ For Windows users, FELiCS can be used via the Windows Subsystem for Linux (WSL).
 Follow the official [Microsoft WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install) to set up WSL. **We strongly recommend installing WSL version 2 for improved performance and compatibility.** 
 
 #### Step 2: Install a Linux distribution in your WSL
-After setting up WSL select and install a Linux distribution. This is also coverend in the [Microsoft WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install). Theoretically, FELiCS should work with every recent Ubuntu version. However we tested it with the following: 
+After setting up WSL select and install a Linux distribution. This is also covered in the [Microsoft WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install). Theoretically, FELiCS should work with every recent Ubuntu version. However we tested it with the following: 
 - Ubuntu 20.04
 - Ubuntu 22.04
 - Ubuntu 22.04.5 LTS
@@ -22,9 +22,9 @@ After setting up WSL select and install a Linux distribution. This is also cover
 ## Setup
 
 ### Step 1: Clone FELiCS Code
-First, navigate to the location where you want to store the FELiCS folder and clone the git repository [FELiCS](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0) by executing the following command line: 
+First, navigate to the location where you want to store the FELiCS folder and clone the git repository [FELiCS](https://gitlab.com/felics-group/FELiCS) by executing the following command line: 
 ```bash
-git clone https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0
+git clone https://gitlab.com/felics-group/FELiCS.git
 ```
 ### Step 2: Install conda
 The recommended way of installation uses [conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) for package management. Please make sure it is available on your machine or install it if not.
@@ -34,9 +34,9 @@ The recommended way of installation uses [conda](https://conda.io/projects/conda
 
 ### Step 1: Install conda Environment
 In the installation directory, we provide different _.yml_ files that contain all required packages. The latest version that works on mutliple systems is 
-- [felics_v3.0.0_env.yml](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation)
+- [felics_v3.0.0_env.yml](https://gitlab.com/felics-group/FELiCS/-/blob/development/installation/)
 
-The older versions of yml files can be found in the folder [yml_old](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/installation/yml_old) with the corresponding version in the filename. 
+The older versions of yml files can be found in the folder [yml_old](https://gitlab.com/felics-group/FELiCS/-/blob/development/installation/) with the corresponding version in the filename. 
 
 ```{note}
 Sometimes when using WSL, there might be troubles with the latest yml file. If so please try the second version.
@@ -47,7 +47,7 @@ In case you want to give the environment a different name, you can change the fi
 ```
 As an example, if the downloaded _.yml_ file "_felics_v3.0.0_env.yml_" is in the "_yml_" folder of the git repository (located in your home folder), the command would be 
 ```bash
-conda env create -f ~/felics2.0/installation/felics_v3.0.0_env.yml
+conda env create -f ~/FELiCS/installation/felics_v3.0.0_env.yml
 ```
 
 ```{attention} 
