@@ -24,8 +24,9 @@ test:felics-pytest:
   only:
     - development
 
-deploy:documentation-pages:
-  stage: deploy
+create documentation:
+  pages:  # specifies that this is a Pages job
+    publish: public
   before_script:
     - git --version
     - ls -all
