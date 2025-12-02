@@ -53,7 +53,7 @@ The typical `settings.json` file is divided into 6 main sections:
     "ForcingCoeff":     (list of int)   variables onto which forcing is applied ("InputOutput" analysis),
     "ForcingMode":      (str)   type of forcing "Body" or "Boundary" ("InputOutput" analysis)
     "ForcingNorm":      (str)   norm type for the forcing term ("Resolvent" analysis), one of: ("TKE" - default, "Chu")
-    "ResponseNorm":     (str)   norm type for the response term ("Resolvent" analysis), one of ("TKE" - default, "Chu)
+    "ResponseNorm":     (str)   norm type for the response term ("Resolvent" analysis), one of ("TKE" - default, "Chu")
     "Omegas":           (list)  angular frequency (see formatting in previous section),
 },
 "Numerics":{

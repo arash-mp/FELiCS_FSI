@@ -7,12 +7,12 @@
 
 [![Documentation Status](https://img.shields.io/badge/docs-latest-blue.svg)](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/)
 [![Website](https://img.shields.io/badge/website-felics2.0-blue?logo=firefox-browser)](https://www.felics.eu)
-[![Wiki](https://img.shields.io/badge/wiki-developer%20guide-green?logo=gitbook)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/)
+[![Wiki](https://img.shields.io/badge/wiki-developer%20guide-green?logo=gitbook)](https://gitlab.com/flow1631349/FELiCS/-/wikis/)
 [![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/LICENSE.txt)
 [![Release](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/badges/release.svg?order_by=release_at)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/releases)
 
 [![unit tests](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/badges/main/pipeline.svg?job=test&key_text=unit+tests)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/pipelines)
-
+[![Test Cases](https://img.shields.io/badge/FELiCS--Tests-blue?logo=gitlab)](https://gitlab.com/flow1631349/felics-tests)
 
 
 FELiCS (*Finite Element Linearized Combustion Solver*) is a Python-based CFD tool for linearized flow analysis, developed at the Laboratory for Flow Instabilities and Dynamics at TU Berlin. It is designed for both academic research and real-world engineering applications, supporting turbulence, heat/mass transport, chemical reactions, acoustics, and more.
@@ -38,7 +38,7 @@ Detailed installation instructions are available in the [documentation](https://
 
 ## Contributing
 
-We welcome contributions from the community! Please refer to our [Contribution Guide](CONTRIBUTE.md) for:
+We welcome contributions from the community! Please refer to our [Contribution Guide](CONTRIBUTING.md) for:
 
 - Reporting bugs and requesting features
 - Development setup instructions
@@ -82,4 +82,3 @@ We are always looking for new collaborators and feedback!
 
 - **Get in Touch**: Reach out to us via <a href="mailto:&#105;&#110;&#102;&#111;&#64;&#102;&#101;&#108;&#105;&#99;&#115;&#46;&#101;&#117;">email</a> for research collaborations, other inquiries, or specific questions about the solver.
 - **Updates**: Stay updated on the latest news by visiting our [website](https://www.felics.eu).
-
