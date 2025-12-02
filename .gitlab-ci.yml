@@ -4,7 +4,7 @@ image: continuumio/anaconda3
 variables:
   GIT_STRATEGY: fetch
 
-test:felics-pytest:
+felics-pytest:
   stage: test
   before_script:
     - git --version
@@ -27,6 +27,7 @@ test:felics-pytest:
 create documentation:
   pages:  # specifies that this is a Pages job
     publish: public
+  stage: deploy
   before_script:
     - git --version
     - ls -all
