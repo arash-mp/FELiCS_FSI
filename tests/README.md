@@ -13,7 +13,7 @@ All contributors to FELiCS must ensure that **every new feature can be tested ap
 
 You have two options:
 
-1. Create or update a test in the external [felics-tests](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics-tests) repository so that your new feature is fully covered, **or**
+1. Create or update a test in the external [felics-tests](https://gitlab.com/felics-group/felics-tests) repository so that your new feature is fully covered, **or**
 2. Add sufficient **unit tests in this directory**.
 
 No new feature should be merged without proper test coverage.
@@ -27,7 +27,7 @@ We use the Python package **pytest**.
 To run the tests on your local machine:
 
 1. Install the `pytest` package (e.g., via `conda install pytest` or `pip install pytest`).
-2. Install FELiCS as a Python package (see the [installation guide](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html)).
+2. Install FELiCS as a Python package (see the [installation guide](https://felics-d43476.gitlab.io/installation_guide.html)).
 3. Navigate into the `tests` directory.
 4. Execute:
 
@@ -43,5 +43,5 @@ All tests in this folder are automatically executed by the **GitLab runner** whe
 You can view the success status of these tests via the **badge** in the main FELiCS README.
 
 Before pushing to the `development` branch, always ensure that **all unit tests pass locally**.
-Refer to the Wiki for the [Guidelines on merging into development](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/Workflow-merging-into-development).
+Refer to the Wiki for the [Guidelines on merging into development](https://gitlab.com/felics-group/FELiCS/-/wikis/Workflow-merging-into-development).
 
