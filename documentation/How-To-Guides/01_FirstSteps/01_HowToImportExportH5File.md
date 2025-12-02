@@ -1,10 +1,10 @@
 # How to import and export a h5 file
 
-Before you start, you should install all necessary FELiCS packages, and install FELiCS as a package itself. The [installation guide](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html) explains those steps in detail.
+Before you start, you should install all necessary FELiCS packages, and install FELiCS as a package itself. The [installation guide](https://felics-d43476.gitlab.io/installation_guide.html) explains those steps in detail.
 
 After installing FELiCS you can start writing your first FELiCS script. 
 
-Here, we have used gmsh to create a square mesh, which we exported in ASCII format. If you need a more detailed explanation you can have a look [here](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/Tutorials/cylinder_wake.html).
+Here, we have used gmsh to create a square mesh, which we exported in ASCII format. If you need a more detailed explanation you can have a look [here](https://felics-d43476.gitlab.io/Tutorials/cylinder_wake.html).
 
 **Step 1: Create a FELiCSMesh**
 

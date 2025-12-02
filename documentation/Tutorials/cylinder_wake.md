@@ -7,7 +7,7 @@ This first tutorial gives an introduction for setting up a FELiCS case. By the e
 
 ## Requirements
 
-* FELiCS should be installed as per the [FELiCS installation guide](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/DOCUMENTATION/installation_guide.md?ref_type=heads) with an active conda environment.
+* FELiCS should be installed as per the [FELiCS installation guide](https://felics-d43476.gitlab.io/installation_guide.html) with an active conda environment.
 
 * Choose a branch of the FELiCS that contains the base flow solver.
 
