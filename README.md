@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://gitlab.com/felics-group/FELiCS/-/blob/main/LICENSE.md?ref_type=heads)
 [![Release](https://gitlab.com/felics-group/FELiCS/-/badges/release.svg?order_by=release_at)](https://gitlab.com/felics-group/FELiCS/-/releases)
 
-[![unit tests](https://gitlab.com/felics-group/FELiCS/badges/main/pipeline.svg?job=test&key_text=unit+tests)](https://gitlab.com/felics-group/FELiCS/-/jobs?kind=BUILD) 
+[![unit tests](https://gitlab.com/felics-group/FELiCS/badges/development/pipeline.svg?job=test&key_text=unit+tests)](https://gitlab.com/felics-group/FELiCS/-/jobs?kind=BUILD) 
 [![Test Cases](https://img.shields.io/badge/FELiCS--Tests-blue?logo=gitlab)](https://gitlab.com/felics-group/felics-tests)
 
 
