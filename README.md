@@ -75,7 +75,7 @@ FELiCS is free and open-source software released under the **GNU General Public 
 - Any derivative works must also be released under GPL-3.0
 - Commercial use is permitted under the license terms
 
-For the complete license terms, see [LICENSE.txt](LICENSE.txt).
+For the complete license terms, see [LICENSE.md](LICENSE.md).
 
 ## Contact
 
