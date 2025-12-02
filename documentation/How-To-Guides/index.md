@@ -1,23 +1,24 @@
 # How-To-Guides
 
-The FELiCS How-To guides are designed as an entry point for exploring how to use FELiCS as a Python package. Each guide is based on Jupyter Notebooks,
-making them interactive and easy to follow. All notebooks, together with the files they require, are located 
-in the **`how_tos`** folder ([link here](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/development/how_tos)).
+The FELiCS **How-To** guides are designed as an entry point for exploring **how to use FELiCS as a Python package**. Each guide is based on Jupyter Notebooks, making them interactive and easy to follow. These example also demonstrate how FELiCS can be integrated into Python projects.
 
-Before working through the guides, it is essential to install FELiCS as a package. Detailed instructions for installation can be found in
+All notebooks, together with the required files, are located in the [`how-to` folder](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/tree/development/how_tos).
+
+Before working through the guides, **it is essential to install FELiCS as a package**. Detailed instructions for installation can be found in
 the [installation guide](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html). 
-Once FELiCS is installed, the notebooks can be executed directly, providing practical examples and workflows that demonstrate how FELiCS can be
-integrated into Python projects.
+Once FELiCS is installed, the notebooks can be executed directly.
 
+```{admonition} Disclaimer
 These guides are not intended to be comprehensive manuals. Instead, they serve as a starting point for experimentation and learning.
 They highlight core functionality and provide illustrative examples, but they do not cover every possible use case or advanced feature.
 Users are encouraged to adapt the notebooks to their own projects and explore further.
+```
 
 Additional How-To guides are planned and will be added over time, expanding the coverage of FELiCS and offering deeper insights into its capabilities.
 The current collection should be seen as a foundation upon which more detailed documentation will continue to grow.
 
 
-### First steps in scripting with FELiCS
+### 1. First steps in scripting with FELiCS
 
 In this section we will learn how to:
 - import flow fields from h5 files into FELiCS objects and export them
@@ -29,7 +30,7 @@ In this section we will learn how to:
 01_FirstSteps/01_HowToImportExportH5File.md
 ```
 
-### Derivatives and integral quantities
+### 2. Derivatives and integral quantities
 
 In this section we will learn how to:
 - Calculate the L2-norm of a quantity over the whole domain
@@ -47,7 +48,7 @@ In this section we will learn how to:
 ```
 
 
-### Performing modal analysis in FELiCS
+### 3. Performing modal analysis in FELiCS
 
 In this section we will learn how to:
 - Perform a modal analysis on a given baseflow with a FEliCS config file
@@ -56,7 +57,7 @@ In this section we will learn how to:
 :maxdepth: 1
 03_PerformingModalAnalysisFELiCS/03_PerformingModalAnalysisFELiCS.md
 ```
-### Loading modes and structural sensitivity in FELiCS
+### 4. Loading modes and structural sensitivity in FELiCS
 
 In this section we will learn how to:
 - Load previously computed resolvent or eigenmodes from disk using the FELiCS I/O module.

@@ -1,10 +1,10 @@
 # How to load modes from a FELiCS run and compute structural sensitivity
 
-Before you start, you should install all necessary FELiCS packages, and install FELiCS as a package itself. The [installation guide](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html) explains those steps in detail.
+Before you start, you should install all necessary FELiCS packages, and install FELiCS as a package itself. The [installation guide](https://felics-d43476.gitlab.io/installation_guide.html) explains those steps in detail.
 
 After installing FELiCS you can start writing your first FELiCS script. 
 
-This tutorial explains how to load previously computed resolvent or eigenmodes from disk using the FELiCS I/O module. The results were saved in the `/Input` directory. For more information about the initial computation of modal results, see [how-to guide 3](03_GeneralEigenValueProblem.md).
+This tutorial explains how to load previously computed resolvent or eigenmodes from disk using the FELiCS I/O module. The results were saved in the `/Input` directory. For more information about the initial computation of modal results, see [how-to guide 3](../03_PerformingModalAnalysisFELiCS/03_PerformingModalAnalysisFELiCS.md).
 
 **1. Imports and configuration**
 

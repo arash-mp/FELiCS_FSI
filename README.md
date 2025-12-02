@@ -5,13 +5,14 @@
 
 ## Welcome to FELiCS
 
-[![Documentation Status](https://img.shields.io/badge/docs-latest-blue.svg)](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/)
+[![Documentation Status](https://img.shields.io/badge/docs-latest-blue.svg)](https://felics-d43476.gitlab.io/index.html)
 [![Website](https://img.shields.io/badge/website-felics2.0-blue?logo=firefox-browser)](https://www.felics.eu)
-[![Wiki](https://img.shields.io/badge/wiki-developer%20guide-green?logo=gitbook)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/wikis/)
-[![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/blob/development/LICENSE.txt)
-[![Release](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/badges/release.svg?order_by=release_at)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/releases)
+[![Wiki](https://img.shields.io/badge/wiki-developer%20guide-green?logo=gitbook)](https://gitlab.com/felics-group/FELiCS/-/wikis/home)
+[![License](https://img.shields.io/badge/License-GPLv3-green.svg)](https://gitlab.com/felics-group/FELiCS/-/blob/main/LICENSE.md?ref_type=heads)
+[![Release](https://gitlab.com/felics-group/FELiCS/-/badges/release.svg?order_by=release_at)](https://gitlab.com/felics-group/FELiCS/-/releases)
 
-[![unit tests](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/badges/main/pipeline.svg?job=test&key_text=unit+tests)](https://git.tu-berlin.de/laboratory-for-flow-instabilities-and-dynamics/felics2.0/-/pipelines)
+[![unit tests](https://gitlab.com/felics-group/FELiCS/badges/main/pipeline.svg?job=test&key_text=unit+tests)](https://gitlab.com/felics-group/FELiCS/-/jobs?kind=BUILD) 
+[![Test Cases](https://img.shields.io/badge/FELiCS--Tests-blue?logo=gitlab)](https://gitlab.com/felics-group/felics-tests)
 
 
 
@@ -28,17 +29,17 @@ FELiCS (*Finite Element Linearized Combustion Solver*) is a Python-based CFD too
 
 ## Quick Start
 
-<a href="https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/">
+<a href="https://felics-d43476.gitlab.io/index.html">
   <img src="https://img.shields.io/badge/📖%20Read%20the%20Documentation-blue?style=for-the-badge&logoColor=white" alt="Documentation" height="40"/>
 </a>
 
 ## Installation
 
-Detailed installation instructions are available in the [documentation](https://felics2-0-laboratory-for-flow-instabilities-and--112f91add91c56.gitlab-pages.tu-berlin.de/installation_guide.html).
+Detailed installation instructions are available in the [documentation](https://felics-d43476.gitlab.io/installation_guide.html).
 
 ## Contributing
 
-We welcome contributions from the community! Please refer to our [Contribution Guide](CONTRIBUTE.md) for:
+We welcome contributions from the community! Please refer to our [Contribution Guide](CONTRIBUTING.md) for:
 
 - Reporting bugs and requesting features
 - Development setup instructions
@@ -74,7 +75,7 @@ FELiCS is free and open-source software released under the **GNU General Public 
 - Any derivative works must also be released under GPL-3.0
 - Commercial use is permitted under the license terms
 
-For the complete license terms, see [LICENSE.txt](LICENSE.txt).
+For the complete license terms, see [LICENSE.md](LICENSE.md).
 
 ## Contact
 
