@@ -34,9 +34,9 @@ The recommended way of installation uses [conda](https://conda.io/projects/conda
 
 ### Step 1: Install conda Environment
 In the installation directory, we provide different _.yml_ files that contain all required packages. The latest version that works on mutliple systems is 
-- [felics_v3.0.0_env.yml](https://gitlab.com/felics-group/FELiCS/-/blob/development/installation/)
+- [felics_v3.0.0_env.yml](https://gitlab.com/felics-group/FELiCS/-/blob/main/installation/)
 
-The older versions of yml files can be found in the folder [yml_old](https://gitlab.com/felics-group/FELiCS/-/blob/development/installation/) with the corresponding version in the filename. 
+The older versions of yml files can be found in the folder [yml_old](https://gitlab.com/felics-group/FELiCS/-/blob/main/installation/) with the corresponding version in the filename.
 
 ```{note}
 Sometimes when using WSL, there might be troubles with the latest yml file. If so please try the second version.
