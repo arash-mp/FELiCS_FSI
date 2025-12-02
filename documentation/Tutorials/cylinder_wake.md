@@ -13,9 +13,9 @@ This first tutorial gives an introduction for setting up a FELiCS case. By the e
 
 ## Case Definition
 We want to study the linear stability of a 2D base flow around a cylinder at Reynolds number, $\mathrm{Re} = 50$.
-In general it is recommended to create a folder for every case, where the input and output files will be located. Here, the case folder can be found in ```felics2.0/tutorials/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
+In general it is recommended to create a folder for every case, where the input and output files will be located. Here, the case folder can be found in ```felics/tutorials/cylinder_wake_tutorial```. Copy this tutorial to your working directory ```workDir```
 ```sh
-cp -r felics2.0/tutorials/cylinder_wake_tutorial workDir/
+cp -r felics/tutorials/cylinder_wake_tutorial workDir/
 cd workDir/cylinder_wake_tutorial/ 
 ```
 

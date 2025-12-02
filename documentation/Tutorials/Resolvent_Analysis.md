@@ -33,7 +33,7 @@ Figure 1. Stenosis mesh
 Export the mesh in `File -> Export` in a **.msh** format with `Version 2 ASCII`. Place this `FELiCS_mesh.msh` file in your case folder. 
 
 ### Base Flow
-This tutorial case folder is located in ```felics2.0/tutorials/resolvent_tutorial```.
+This tutorial case folder is located in ```felics/tutorials/resolvent_tutorial```.
 Our base flow is obtained by time-azimuthal-averaging the snapshots of a 3D LES. Alternatively this could be a RANS solution, experimental data, or any other relevant flow field.
 Run the python script [```meanFlow.py```](../../tutorials/resolvent_tutorial/meanFlow.py) to load the mean flow data and write a **.fel** file. 
 Change the `fold_path` to your data folder and run the script.
