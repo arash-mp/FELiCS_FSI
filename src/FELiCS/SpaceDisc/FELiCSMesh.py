@@ -242,7 +242,7 @@ class FELiCSMesh:
 
         """
 
-        connectivityCells = self.dolfinxMesh.topology.connectivity(2, 0)
+        connectivityCells = self.dolfinxMesh.topology.connectivity(self.gdim, 0)
         topology          = self.dolfinxMesh.topology
         self.meshCells    = connectivityCells.array.reshape(
                             [topology.original_cell_index.shape[0], topology.cell_type.value])
