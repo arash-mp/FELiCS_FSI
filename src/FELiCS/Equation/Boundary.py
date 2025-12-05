@@ -135,8 +135,8 @@ class BoundaryHandler():
         This function supports mixed function spaces and variables with multiple components.
         Logs a debug message each time a boundary condition is added.
         """
-
         from dolfinx.fem      import dirichletbc, locate_dofs_topological
+        gdim = self.facet_tags.topology.dim # NOTE: THIS IS VERY PRELIMINARY AND HAS TO BE CHECKED
         BCs = []
         for boundary in self.boundaryList:
             for var in self.variables:
@@ -144,7 +144,7 @@ class BoundaryHandler():
                 if len(var[1])==0 and boundary.types[index][0] == BoundaryType.DIRICHLET:
                     value = boundary.values[index][0]
                     space = functionSpace.sub(index)
-                    dofs  = locate_dofs_topological(space, 1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
+                    dofs  = locate_dofs_topological(space, gdim-1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
                     BCs.append(dirichletbc(value, dofs, space))
                     logger.debug("Adding Dirichlet BC for "+var[0]+ " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
                 else: 
@@ -152,7 +152,7 @@ class BoundaryHandler():
                         if boundary.types[index][index2] == BoundaryType.DIRICHLET:
                             value = boundary.values[index][index2]
                             space = functionSpace.sub(index).sub(index2)
-                            dofs  = locate_dofs_topological(space, 1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
+                            dofs  = locate_dofs_topological(space, gdim-1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
                             BCs.append(dirichletbc(value, dofs, space))
                             logger.debug("Adding Dirichlet BC for "+var[0]+var[1][index2] + " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
 
