@@ -68,6 +68,28 @@ The `settings.json` is directly given to FELiCS when running from the command li
 FELiCS -file settings.json
 ```
 
+
+💡 **Note that FELiCS offers two approaches for importing the mean flow:**
+
+1. **With interpolation** (default): In general, the meanflow is given on a different grid than that of the linear computation (defined in .msh mesh file). The meanflow variables stored in a .fel file are then (linearly) interpolated onto the computational grid. For large meshes, particularly 3D cases, this can be **time-consuming**. The interpolated meanflow is then exported to `MeanFlow.h5`. Corresponding inputs are:
+    ```json
+    {
+        "needInterpolation": true,
+        "MeshFilePath": "your_mesh.msh",
+        "FlowInput": {"MeanFlowFilePath": "your_meanflow.fel"}
+    }
+    ```
+
+2. **Without interpolation**: if you already have an interpolated meanflow corresponding to your computational mesh (e.g. from a previous run), you may skip the interpolation alltogether by indicating the FELiCS exported `MeanFlow.h5` as input. This is particularly useful when running multiple linearized analyses with the same meanflow and mesh. Corresponding inputs are:
+    ```json
+    {
+        "needInterpolation": false,
+        "MeshFilePath": "your_mesh.msh",
+        "FlowInput": {"MeanFlowFilePath": "MeanFlow.h5"}
+    }
+    ```
+
+
 ## Structure of the `boundaries.json` file
 The structure of this file is:
 ```json
@@ -145,44 +167,6 @@ Below is the structure of the `mixture.json` file for a case using chemistry:
     }]
 }}
 ```
-
-## Importing a Mean Flow
-
-FELiCS offers two approaches for importing mean flow data, depending on whether interpolation is required.
-
-### Standard Approach
-
-This method imports mean flow data from an fel file and interpolates it onto your computational mesh. Supply the mean flow file containing coordinates and flow data (see [here](https://felics-d43476.gitlab.io/Running_FELiCS/fel_file.html) for fel file format details), along with your mesh file in MSH format via `MeshFilePath`.
-
-The coordinates in your mean flow file can differ from those in the mesh file — FELiCS will handle the interpolation automatically. Note that interpolation is always performed with this approach, even when coordinates match exactly. For large meshes, particularly 3D cases, this step can be **time-consuming**.
-
-```json
-{
-    "needInterpolation": true,
-    "MeshFilePath": "your_mesh.msh",
-    "FlowInput": {
-        "MeanFlowFilePath": "your_meanflow.fel"
-    }
-}
-```
-
-### Skip Interpolation
-
-Use this approach when you've already performed interpolation in a previous run and want to reuse the interpolated mean flow data. This is particularly useful when running multiple linearized analyses with the same mean flow.
-
-Set `needInterpolation` to false and point `MeanFlowFilePath` to the HDF5 file exported from your previous run (typically found in your export folder):
-
-```json
-{
-    "needInterpolation": false,
-    "MeshFilePath": "your_mesh.msh",
-    "FlowInput": {
-        "MeanFlowFilePath": "MeanFlow.h5"
-    }
-}
-```
-
-This bypass saves significant computation time by reusing previously interpolated data.
 
 
 ## Specific formatting for FELiCS settings and json
