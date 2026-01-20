@@ -247,7 +247,8 @@ class Field:
         for i in range(numberOfSubSpaces):
             # transfer content
             space, mapping            = self.space.sub(i).collapse()
-            field                     = Field(space, self.mesh, name=namesOfSubFields[i])
+            # NOTE: the sub-fields inherit the wave number from the field.
+            field                     = Field(space, self.mesh, name=namesOfSubFields[i], m=self.m)
             field.setCoefficientArray(self.getCoefficientArray()[mapping])
             listOfFields.append(field)
 
@@ -641,6 +642,8 @@ class Field:
 
             vorticityField = Field(self.space, self.mesh, name="vorticity")
             vorticityField.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
+            
+            return vorticityField
 
 
     def exportToH5(self, writer, fileName=None):

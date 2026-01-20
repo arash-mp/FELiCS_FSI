@@ -40,8 +40,11 @@ from FELiCS.Fields.Field import Field
 from FELiCS.Fields.Mode  import Mode
 from tests.RandomCaseHandler import RandomCaseHandler
 from tests.UnitTestHelper    import UnitTestHelper
+from FELiCS.Misc.logging import Logger
 
-
+# initialize the logger
+logger = Logger(logger_name="felics_unit_test")
+logger = Logger.get_logger("felics_unit_test")
 
 #################################################################
 ##### define necessary functions ################################
@@ -93,10 +96,11 @@ class TensorUtilsTestHandle(RandomCaseHandler):
         m_list = [0,np.random.randint(20)+1]
         for coordinateSystemName in coordinateSystemList:
             for m in m_list:
-                print(f"\n\n Checking alignment for coordinate system {coordinateSystemName} and m={m}")
+                logger.info(f"Checking alignment for coordinate system {coordinateSystemName} and m={m}")
                 self.updateTensorCoordinate(coordinateSystemName, m)
                 tensor_expr, valid_expr = expressionFunction(self)
                 UnitTestHelper.checkVectorExpressionAlignment(tensor_expr, valid_expr, tol)
+                logger.info("... passed")
         pass
 
 #################################################################
@@ -113,7 +117,7 @@ randomField = TensorUtilsTestHandle(dim_vector)
 # Tests for tensor algebra
 # --------------------------------------------------------------
 def test_scalar_minus_float():
-    print("Testing scalar minus float")
+    logger.info("Testing scalar minus float")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.tens_scalar1 - fd_field.random_float) * iConj(fd_field.test_scalar_T)).ufl_tens* fd_field.J_hat*dx
@@ -121,10 +125,10 @@ def test_scalar_minus_float():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_float_minus_scalar():
-    print("Testing float minus scalar")
+    logger.info("Testing float minus scalar")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((-1 * fd_field.tens_scalar1 + fd_field.random_float) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -132,10 +136,10 @@ def test_float_minus_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_minus_scalar():
-    print("Testing scalar minus scalar")
+    logger.info("Testing scalar minus scalar")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.tens_scalar1 - fd_field.tens_scalar2) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -143,10 +147,10 @@ def test_scalar_minus_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_plus_scalar():
-    print("Testing scalar plus scalar")
+    logger.info("Testing scalar plus scalar")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.tens_scalar1 + fd_field.tens_scalar2) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -154,10 +158,10 @@ def test_scalar_plus_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
 
 def test_float_times_scalar():
-    print("Testing float times scalar")
+    logger.info("Testing float times scalar")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.random_float * fd_field.tens_scalar1) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -165,10 +169,10 @@ def test_float_times_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_times_float():
-    print("Testing scalar times float.")
+    logger.info("Testing scalar times float.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.tens_scalar1 * fd_field.random_float) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -176,10 +180,10 @@ def test_scalar_times_float():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_times_scalar():
-    print("Testing scalar times scalar.")
+    logger.info("Testing scalar times scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.tens_scalar1 * fd_field.tens_scalar2) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -187,10 +191,10 @@ def test_scalar_times_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_divide_scalar():
-    print("Testing scalar divide scalar.")
+    logger.info("Testing scalar divide scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.tens_scalar1 / fd_field.tens_scalar2) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -198,10 +202,10 @@ def test_scalar_divide_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_exp_to_positive_float():
-    print("Testing scalar exponent to positive float.")
+    logger.info("Testing scalar exponent to positive float.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.tens_scalar1 ** fd_field.random_float) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -209,10 +213,10 @@ def test_scalar_exp_to_positive_float():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_exp_to_negetive_float():
-    print("Testing scalar exponent to negetive float.")
+    logger.info("Testing scalar exponent to negetive float.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((fd_field.tens_scalar1 ** (-1 * fd_field.random_float)) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -220,10 +224,10 @@ def test_scalar_exp_to_negetive_float():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_vector_dot_vector():
-    print("Testing vector dot vector.")
+    logger.info("Testing vector dot vector.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(fd_field.tens_vector1, fd_field.tens_vector2) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -231,10 +235,10 @@ def test_vector_dot_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_times_vector():
-    print("Testing scalar times vector.")
+    logger.info("Testing scalar times vector.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(fd_field.tens_scalar1 * fd_field.tens_vector1, iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -242,10 +246,10 @@ def test_scalar_times_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_vector_times_scalar():
-    print("Testing vector times scalar.")
+    logger.info("Testing vector times scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(fd_field.tens_vector1 * fd_field.tens_scalar1, iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -253,10 +257,10 @@ def test_vector_times_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_float_divide_scalar_times_vector():
-    print("Testing one divide by scalar times vector.")
+    logger.info("Testing one divide by scalar times vector.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot((fd_field.random_float) / fd_field.tens_scalar1 * fd_field.tens_vector1, iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -264,10 +268,10 @@ def test_float_divide_scalar_times_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_vector_divided_by_scalar():
-    print("Testing vector divided by scalar.")
+    logger.info("Testing vector divided by scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(fd_field.tens_vector1 / fd_field.tens_scalar1 , iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -275,10 +279,10 @@ def test_vector_divided_by_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_vector_dot_dyade():
-    print("Testing vector dot dyade.")
+    logger.info("Testing vector dot dyade.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iDot(fd_field.tens_vector1, iGrad(fd_field.tens_vector2)) , iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -289,10 +293,10 @@ def test_vector_dot_dyade():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_dyade_dot_vector():
-    print("Testing dyade dot vector.")
+    logger.info("Testing dyade dot vector.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iDot(iGrad(fd_field.tens_vector1), fd_field.tens_vector2) , iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -302,10 +306,10 @@ def test_dyade_dot_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_vector_dot_dyade_dot_vector():
-    print("Testing vector dot dyade dot vector.")
+    logger.info("Testing vector dot dyade dot vector.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((iDot(iDot(fd_field.tens_vector1,iGrad(fd_field.tens_vector1)), fd_field.tens_vector2)) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -316,10 +320,10 @@ def test_vector_dot_dyade_dot_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_dyade_dot_dyade():
-    print("Testing dyade dot dyade.")
+    logger.info("Testing dyade dot dyade.")
     # 1. define expressions
     def expression(fd_field):
         [[t11_1, t12_1, t13_1], [t21_1, t22_1, t23_1], [t31_1, t32_1, t33_1]] = fd_field.grad_vector1
@@ -337,10 +341,10 @@ def test_dyade_dot_dyade():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_dyade_inner_dyade():
-    print("Testing dyade inner dyade.")
+    logger.info("Testing dyade inner dyade.")
     # 1. define expressions
     def expression(fd_field):
         [[t11_1, t12_1, t13_1], [t21_1, t22_1, t23_1], [t31_1, t32_1, t33_1]] = fd_field.grad_vector1
@@ -350,10 +354,10 @@ def test_dyade_inner_dyade():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_dyade_transpose():
-    print("Testing dyade transpose.")
+    logger.info("Testing dyade transpose.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iDot(iT(iGrad(fd_field.tens_vector1)),fd_field.tens_vector2), iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -364,10 +368,10 @@ def test_dyade_transpose():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_dyade_trace():
-    print("Testing dyade trace.")
+    logger.info("Testing dyade trace.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iTr(iGrad(fd_field.tens_vector1)) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -375,10 +379,10 @@ def test_dyade_trace():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_conj():
-    print("Testing conjugate of scalar.")
+    logger.info("Testing conjugate of scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iConj(fd_field.tens_scalar1) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -386,10 +390,10 @@ def test_scalar_conj():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_vector_conj():
-    print("Testing conjugate of vector.")
+    logger.info("Testing conjugate of vector.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iConj(fd_field.tens_vector1), iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -397,10 +401,10 @@ def test_vector_conj():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_dyade_hermitian():
-    print("Testing hermitian transpose of dyade.")
+    logger.info("Testing hermitian transpose of dyade.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iDot(iT(iConj(iGrad(fd_field.tens_vector1))), fd_field.tens_vector2), iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -411,10 +415,10 @@ def test_dyade_hermitian():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_identity():
-    print("Testing identity functionality.")
+    logger.info("Testing identity functionality.")
     # 1. define expressions
     def expression(fd_field):
         test_tensor  = iGrad(fd_field.tens_vector1)
@@ -426,10 +430,10 @@ def test_identity():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_grad_scalar_dot_grad_scalar():
-    print("Testing grad of scalar dot grad of scalar.")
+    logger.info("Testing grad of scalar dot grad of scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iGrad(fd_field.tens_scalar1), iGrad(fd_field.tens_scalar2)) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -437,10 +441,10 @@ def test_grad_scalar_dot_grad_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_scalar_times_grad_scalar():
-    print("Testing scalar times grad of scalar.")
+    logger.info("Testing scalar times grad of scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(fd_field.tens_scalar1 * iGrad(fd_field.tens_scalar2) , iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -451,10 +455,10 @@ def test_scalar_times_grad_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_grad_scalar_times_scalar():
-    print("Testing grad of scalar times scalar.")
+    logger.info("Testing grad of scalar times scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iGrad(fd_field.tens_scalar1) * fd_field.tens_scalar2 , iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -465,10 +469,10 @@ def test_grad_scalar_times_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_float_divide_scalar_times_grad_scalar():
-    print("Testing one divide scalar times grad of scalar.")
+    logger.info("Testing one divide scalar times grad of scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot((fd_field.random_float) / fd_field.tens_scalar1 * iGrad(fd_field.tens_scalar2), iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -479,10 +483,10 @@ def test_float_divide_scalar_times_grad_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_grad_scalar_divided_by_scalar():
-    print("Testing grad of scalar divided by scalar.")
+    logger.info("Testing grad of scalar divided by scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iGrad(fd_field.tens_scalar1) / fd_field.tens_scalar2 , iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -493,10 +497,10 @@ def test_grad_scalar_divided_by_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_grad_scalar_dot_dyade():
-    print("Testing grad of scalar dot dyade")
+    logger.info("Testing grad of scalar dot dyade")
     # 1. define expressions
     def expression(fd_field):
         [[t11, t12, t13], [t21, t22, t23], [t31, t32, t33]] = fd_field.grad_vector1
@@ -509,10 +513,10 @@ def test_grad_scalar_dot_dyade():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_dyade_dot_grad_scalar():
-    print("Testing dyade dot grad of scalar.")
+    logger.info("Testing dyade dot grad of scalar.")
     # 1. define expressions
     def expression(fd_field):
         [[t11, t12, t13], [t21, t22, t23], [t31, t32, t33]] = fd_field.grad_vector1
@@ -524,10 +528,10 @@ def test_dyade_dot_grad_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_grad_scalar_dot_dyade_dot_grad_scalar():
-    print("Testing grad of scalar dot dyade dot grad of scalar.")
+    logger.info("Testing grad of scalar dot dyade dot grad of scalar.")
     # 1. define expressions
     def expression(fd_field):
         [[t11, t12, t13], [t21, t22, t23], [t31, t32, t33]] = fd_field.grad_vector1
@@ -538,16 +542,16 @@ def test_grad_scalar_dot_dyade_dot_grad_scalar():
         valid_expr += (t1_1 * t12 + t2_1 * t22 + t3_1 * t32) * t2_2 * conj(fd_field.test_scalar)*fd_field.r*dx
         # if not (coordinateSystemName == "cartesian" and m == 0):
         if not (fd_field.m == 0):
-            print("Including z-component in validation.")
+            logger.info("Including z-component in validation.")
             valid_expr += (t1_1 * t13 + t2_1 * t23 + t3_1* t33) * t3_2 * conj(fd_field.test_scalar)*fd_field.r*dx
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression, tol=1e-10)
     # NOTE: This case needs a higher tolerance, possibly due to the multiple gradients involved and the functions are not smoothed.
-    print("... passed")
+    
     
 def test_grad_scalar_conj():
-    print("Testing conjugate of grad of scalar.")
+    logger.info("Testing conjugate of grad of scalar.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDot(iConj(iGrad(fd_field.tens_scalar1)), iConj(fd_field.test_vector_T))).ufl_tens*fd_field.J_hat*dx
@@ -558,10 +562,10 @@ def test_grad_scalar_conj():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
     
 def test_div_vector():
-    print("Testing divergence of vector.")
+    logger.info("Testing divergence of vector.")
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = (iDiv(fd_field.tens_vector1) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
@@ -569,4 +573,9 @@ def test_div_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    print("... passed")
+    
+
+#################################################################
+##### moving log files to TESTS folder ##########################
+#################################################################
+Logger.change_log_location("./TESTS/Misc/logs")
