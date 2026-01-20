@@ -137,12 +137,22 @@ class FELiCSMesh:
         # Define tensor coordinate system, we always assume the third dimension to be homogenous
         self.coordinateSystemName = coordinateSystemName
         if coordinateSystemName =='Cartesian':
-            self.__coordinateSystem = CoordinateSystem(
-                                    x, 
-                                    coordinateSystemName.lower(), 
-                                    m = m,
-                                    gdim = self.gdim,
-                                    )
+            if self.gdim==3:
+                logger.debug("Because gdim==3, CoordinateSystem() is initilized with setting trueDim=3. This is not done for gdim<3.")
+                self.__coordinateSystem = CoordinateSystem(
+                        x, 
+                        coordinateSystemName.lower(), 
+                        m = m,
+                        gdim = self.gdim,
+                        trueDim = self.gdim
+                        )
+            else:
+                self.__coordinateSystem = CoordinateSystem(
+                                        x, 
+                                        coordinateSystemName.lower(), 
+                                        m = m,
+                                        gdim = self.gdim,
+                                        )
         elif coordinateSystemName =='Cylindrical':
             self.__coordinateSystem = CoordinateSystem(
                                     x,
@@ -155,9 +165,12 @@ class FELiCSMesh:
             raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
 
         # update dimension if m!=0, i.e. if there is a spectral dimension
-        if m!=0:
+        logger.debug(f"The spectral dimension is m={m} and the geometric dimension is gdim={gdim}.")
+        if m!=0 and gdim<3:
+            logger.debug(f"Setting true dimension to self.dim={gdim + 1} (geometric dimension + 1)")
             self.dim = gdim + 1
         else:
+            logger.debug(f"Setting true dimension to self.dim={gdim} (geometric dimension)")
             self.dim = self.gdim
 
         self._coordinates = self.coordinates()
@@ -242,7 +255,7 @@ class FELiCSMesh:
 
         """
 
-        connectivityCells = self.dolfinxMesh.topology.connectivity(2, 0)
+        connectivityCells = self.dolfinxMesh.topology.connectivity(self.gdim, 0)
         topology          = self.dolfinxMesh.topology
         self.meshCells    = connectivityCells.array.reshape(
                             [topology.original_cell_index.shape[0], topology.cell_type.value])

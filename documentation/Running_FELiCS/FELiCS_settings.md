@@ -17,6 +17,7 @@ The typical `settings.json` file is divided into 6 main sections:
     "AnalysisMode":     (str)   type of analysis, one of: ("Modal", "Resolvent", "InputOutput"),
     "CalculateAdjoint": (bool)  if we compute the adjoint spectrum in "Modal" analysis,
     "CoordinateSystem": (str)   coordinate system, one of: ("Cylindrical", "Cartesian"),
+    "needInterpolation":    (bool)  whether to interpolate data onto the FELiCS mesh, by default True (see below for more details)
     "m":                (float) wavenumber of fluctuations in the third, spectral dimension (for a 2D grid),
     "MeshFilePath":     (str)   path to the mesh file.
     "MixtureFilePath":  (str)   path to the "mixture.json" file.
@@ -66,6 +67,28 @@ The `settings.json` is directly given to FELiCS when running from the command li
 ```bash
 FELiCS -file settings.json
 ```
+
+
+💡 **Note that FELiCS offers two approaches for importing the mean flow:**
+
+1. **With interpolation** (default): In general, the meanflow is given on a different grid than that of the linear computation (defined in .msh mesh file). The meanflow variables stored in a .fel file are then (linearly) interpolated onto the computational grid. For large meshes, particularly 3D cases, this can be **time-consuming**. The interpolated meanflow is then exported to `MeanFlow.h5`. Corresponding inputs are:
+    ```json
+    {
+        "needInterpolation": true,
+        "MeshFilePath": "your_mesh.msh",
+        "FlowInput": {"MeanFlowFilePath": "your_meanflow.fel"}
+    }
+    ```
+
+2. **Without interpolation**: if you already have an interpolated meanflow corresponding to your computational mesh (e.g. from a previous run), you may skip the interpolation alltogether by indicating the FELiCS exported `MeanFlow.h5` as input. This is particularly useful when running multiple linearized analyses with the same meanflow and mesh. Corresponding inputs are:
+    ```json
+    {
+        "needInterpolation": false,
+        "MeshFilePath": "your_mesh.msh",
+        "FlowInput": {"MeanFlowFilePath": "MeanFlow.h5"}
+    }
+    ```
+
 
 ## Structure of the `boundaries.json` file
 The structure of this file is:
@@ -144,6 +167,7 @@ Below is the structure of the `mixture.json` file for a case using chemistry:
     }]
 }}
 ```
+
 
 ## Specific formatting for FELiCS settings and json
 * **booleans** are defined in lowercase (`true`, `false`)
