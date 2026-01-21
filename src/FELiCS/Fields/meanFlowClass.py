@@ -195,7 +195,7 @@ class meanFlowClass(
         # TODO: Create new type of Field collection for mean flow? (Similar to mode collection.)
         for name in nameListMean:
             # TODO: Include the tensor order in the field names to avoid hardcoding.
-            if name == 'u' or name == 'u_forcing_r' or name == 'u_forcing_i':
+            if name == 'u' or name == 'u_forcing_r' or name == 'u_forcing_i' or name == 'u_target':
                 field = Field(
                     self._FEMSpaces.FunctionSpaceVectorVelocity,
                     self._mesh,
