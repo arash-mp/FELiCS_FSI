@@ -126,15 +126,20 @@ class LinearSolver:
         B.assemble()
 
         if adjoint:
-            A.hermitianTranspose()
-            B.hermitianTranspose()
+            A_adj = A.copy()
+            B_adj = B.copy()
+            A_adj.hermitianTranspose()
+            B_adj.hermitianTranspose()
             guess = np.conj(sigma)
         else:
             guess = sigma
 
         # create eigenproblem solver 
         eps = SLEPc.EPS().create()
-        eps.setOperators(A,B)
+        if adjoint:
+            eps.setOperators(A_adj, B_adj)
+        else:
+            eps.setOperators(A, B)
         eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP)     # general non-Hermitian eigenproblem with semi-definite B
         
         eps.setTolerances(tol=tol,max_it=max_it)
