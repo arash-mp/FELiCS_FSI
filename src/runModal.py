@@ -1,4 +1,5 @@
 import  time
+import  numpy as np
 from 	FELiCS.Misc.logging import Logger
 
 # Get the logger
@@ -75,7 +76,7 @@ def runModal(param):
 
         if adjoint:
             
-            logger.info("Solving adjoint GEVP for guess: omega = " + str(guess))
+            logger.info("Solving adjoint GEVP for guess: omega = " + str(np.conj(guess)))
             tmp = LinearSolver.solveGeneralEigenproblem(A,
                                                         B,
                                                         guess,
