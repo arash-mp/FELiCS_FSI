@@ -948,7 +948,7 @@ class Field:
         petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
 
-    def plot(self, xlim=None, ylim=None, imaginaryPart=False):
+    def plot(self, xlim=None, ylim=None, plotType="real"):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
         field looks as expected and rule out e.g. import problems.
@@ -987,11 +987,17 @@ class Field:
         V1              = fem.functionspace(mesh, element("CG", "triangle", 1))
         u1              = fem.Function(V1)
         u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
-        if not imaginaryPart:
-            phi_vertex      = np.real(u1.x.array)  # already aligned with coords / triangles
-        else:
+        
+        # Get the values corresponding to plot type
+        if plotType == "imag":
             phi_vertex      = np.imag(u1.x.array)
-
+            cmap            = "RdBu_r"
+        elif plotType == "magnitude":
+            phi_vertex      = np.abs(u1.x.array)
+            cmap            = "viridis"
+        else:
+            phi_vertex      = np.real(u1.x.array)
+            cmap            = "RdBu_r"
         # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
 
         # --- 2) Build triangulation from the mesh ---
@@ -1005,9 +1011,8 @@ class Field:
         
         # ---- Plotting ----
         fig, axes       = plt.subplots()
-        contour         = axes.tricontourf(triang, phi_vertex, levels=20, cmap="RdBu_r", alpha=0.7)
+        contour         = axes.tricontourf(triang, phi_vertex, levels=20, cmap=cmap, alpha=0.7)
         axes.tricontour(triang, phi_vertex, levels=10, colors='black', alpha=0.5, linewidths=0.5)
-
 
         # Set labels and title
         axes.set_xlabel('x')
@@ -1016,9 +1021,11 @@ class Field:
             title = self.name
         else:
             title = "scalar_field"
-        if imaginaryPart:
+        if plotType == "imag":
             title += "_imag"
-        elif not self.isReal:
+        elif plotType == "magnitude":
+            title += "_magnitude"
+        else:
             title += "_real"
 
         axes.set_title(title)
