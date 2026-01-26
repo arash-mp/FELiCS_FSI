@@ -40,9 +40,11 @@ class UnitTestHelper():
         print("   - Tensor expression vector norm: ", np.linalg.norm(res1.getArray()))
         print("   - Valid expression vector norm : ", np.linalg.norm(res2.getArray()))
         print("   - Difference norm              : ", np.linalg.norm(res1.getArray()-res2.getArray()))
+        print("   - Relative difference norm     : ", np.linalg.norm((res1.getArray()-res2.getArray())/max(np.linalg.norm(res1.getArray()), np.linalg.norm(res2.getArray()))))
         assert np.linalg.norm(res1.getArray())> 0
         assert np.linalg.norm(res2.getArray())> 0
-        assert np.linalg.norm(res1.getArray()-res2.getArray()) < tol
+        # NOTE: Instead of using absolute tolerance, we use relative tolerance here
+        assert np.linalg.norm((res1.getArray()-res2.getArray())/max(np.linalg.norm(res1.getArray()), np.linalg.norm(res2.getArray()))) < tol
         pass
     
     @staticmethod

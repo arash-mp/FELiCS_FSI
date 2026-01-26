@@ -24,7 +24,7 @@ import numpy as np
 from mpi4py              import MPI
 from petsc4py.PETSc      import ScalarType
 from ufl                 import (
-    dx,TestFunction,TrialFunction,conj,SpatialCoordinate, Dx,dot, inner, grad
+    dx,TestFunction,TrialFunction,conj,SpatialCoordinate, Dx,dot, inner, grad, outer
 )
 from dolfinx.fem         import (
     Function,
@@ -93,7 +93,7 @@ class TensorUtilsTestHandle(RandomCaseHandler):
     
     def checkExpressionInAllCoordinateSystems(self, expressionFunction, tol=1.e-14):
         coordinateSystemList = ["cartesian", "cylindricalfelics"]
-        m_list = [0,np.random.randint(20)+1]
+        m_list = [0, np.random.randint(20)+1]
         for coordinateSystemName in coordinateSystemList:
             for m in m_list:
                 logger.info(f"Checking alignment for coordinate system {coordinateSystemName} and m={m}")
@@ -546,7 +546,9 @@ def test_grad_scalar_dot_dyade_dot_grad_scalar():
             valid_expr += (t1_1 * t13 + t2_1 * t23 + t3_1* t33) * t3_2 * conj(fd_field.test_scalar)*fd_field.r*dx
         return tensor_expr, valid_expr
     # 2. check alignment
-    randomField.checkExpressionInAllCoordinateSystems(expression, tol=1e-10)
+    # randomField.checkExpressionInAllCoordinateSystems(expression, tol=1e-10)
+    randomField.checkExpressionInAllCoordinateSystems(expression)
+
     # NOTE: This case needs a higher tolerance, possibly due to the multiple gradients involved and the functions are not smoothed.
     
     
@@ -574,6 +576,40 @@ def test_div_vector():
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
     
+def test_vector_outer_vector():
+    logger.info("Testing outer product of vectors.")
+    # 1. define expressions
+    def expression(fd_field):
+        t1_1, t2_1, t3_1 = fd_field.func_vector1
+        t1_2, t2_2, t3_2 = fd_field.func_vector2
+        tensor_expr = (iInner(iOuter(fd_field.tens_vector1, fd_field.tens_vector2), iOuter(fd_field.tens_vector1, fd_field.tens_vector2)) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
+        valid_expr  = (inner(outer(fd_field.func_vector1, fd_field.func_vector2), outer(fd_field.func_vector1, fd_field.func_vector2))) * conj(fd_field.test_scalar)*fd_field.r*dx
+        return tensor_expr, valid_expr
+    # 2. check alignment
+    randomField.checkExpressionInAllCoordinateSystems(expression)
+    
+def test_grad_scalar_outer_grad_scalar():
+    logger.info("Testing outer product of grad of two scalars.")
+    # 1. define expressions
+    def expression(fd_field):
+        t1_1, t2_1, t3_1 = fd_field.grad_scalar1
+        t1_2, t2_2, t3_2 = fd_field.grad_scalar2
+        tensor_expr = (iInner(iOuter(iGrad(fd_field.tens_scalar1), iGrad(fd_field.tens_scalar2)), iOuter(iGrad(fd_field.tens_scalar1), iGrad(fd_field.tens_scalar2))) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
+        valid_expr  = (t1_1 * conj(t1_1) * t1_2 * conj(t1_2) + \
+                        t1_1 * conj(t1_1) * t2_2 * conj(t2_2) + \
+                        t1_1 * conj(t1_1) * t3_2 * conj(t3_2) + \
+                        t2_1 * conj(t2_1) * t1_2 * conj(t1_2) + \
+                        t2_1 * conj(t2_1) * t2_2 * conj(t2_2) + \
+                        t2_1 * conj(t2_1) * t3_2 * conj(t3_2) + \
+                        t3_1 * conj(t3_1) * t1_2 * conj(t1_2) + \
+                        t3_1 * conj(t3_1) * t2_2 * conj(t2_2) + \
+                        t3_1 * conj(t3_1) * t3_2 * conj(t3_2) \
+                        )*conj(fd_field.test_scalar)*fd_field.r*dx
+        return tensor_expr, valid_expr
+    # 2. check alignment
+    # randomField.checkExpressionInAllCoordinateSystems(expression, tol=1e-11)
+    randomField.checkExpressionInAllCoordinateSystems(expression)
+
 
 #################################################################
 ##### moving log files to TESTS folder ##########################
