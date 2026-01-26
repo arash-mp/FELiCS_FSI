@@ -165,7 +165,7 @@ class FELiCSMesh:
             raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
 
         # update dimension if m!=0, i.e. if there is a spectral dimension
-        logger.debug(f"The spectral dimension is m={m} and the geometric dimension is gdim={gdim}.")
+        logger.debug(f"The transverse/azimuthal wavenumber is m={m} and the geometric dimension is gdim={gdim}.")
         if m!=0 and gdim<3:
             logger.debug(f"Setting true dimension to self.dim={gdim + 1} (geometric dimension + 1)")
             self.dim = gdim + 1
