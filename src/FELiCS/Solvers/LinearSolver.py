@@ -126,8 +126,6 @@ class LinearSolver:
         B.assemble()
 
         if adjoint:
-            # A.hermitianTranspose()
-            # B.hermitianTranspose()
             A_adj = A.copy()
             A_adj.hermitianTranspose()
             B_adj = B.copy()
@@ -174,10 +172,17 @@ class LinearSolver:
             except:
                 logger.warning("Could not access eigenpair nb ", nev+1, "!")
         
+        # Cleanup solver
         eps.getST().getKSP().getPC().destroy()
         eps.getST().getKSP().destroy()
         eps.getST().destroy()
         eps.destroy()
+        
+        # Cleanup adjoint matrices
+        if adjoint:
+            A_adj.destroy()
+            B_adj.destroy()
+            
         return eigVals, eigVecs, error
     
 
