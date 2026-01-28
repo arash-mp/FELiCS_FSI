@@ -10,6 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+import  numpy                   as     np
 from    dolfinx.fem             import Function, petsc
 from    FELiCS.Misc.logging     import Logger
 from    mpl_toolkits.axes_grid1 import make_axes_locatable 
@@ -668,7 +669,7 @@ class Field:
     def importData(
             self,
             reader,
-            importFilePath,
+            importFilePath = None,
             groupName = None
         ):
         """
@@ -694,6 +695,11 @@ class Field:
         list of str
             List of variable names that were not found in the file.
         """
+        import os
+        # determine filepath if not given
+        # TODO Sophie: these two lines should be in the reader
+        if importFilePath==None:
+            importFilePath = os.path.join(reader._sourceDir, self.name)
         # Just call the reader function
         self, notInFile = reader.importInField(
             self,
@@ -1078,11 +1084,70 @@ class Field:
             result.setCoefficientArray(self.getCoefficientArray() + other)
             return result
         return NotImplemented
-    
+
+    def __iadd__(self, other):
+        """
+        Overload the ``+=`` operator for adding fields or scalars.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field object defined on the same space, or a scalar
+            value to be added to all coefficients.
+
+        Returns
+        -------
+        self
+        """
+        import numpy as np
+        ## overrides '+'
+        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            self.setCoefficientArray(self.getCoefficientArray() + other.getCoefficientArray())
+            return self
+        elif np.isscalar(other):
+            self.setCoefficientArray(self.getCoefficientArray() + other)
+            return self
+        return NotImplemented
+ 
 
     def __sub__(self, other):
         """
         Overload the `-` operator for adding two Field objects.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field object defined on the same space, or a scalar
+            value to be added to all coefficients.
+
+        Returns
+        -------
+        Field
+            A new Field object with the substracted coefficient arrays.
+
+        Raises
+        ------
+        NotImplementedError
+            If `other` is not a Field object.
+        """
+        ## overrides '-'
+        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
+            return result 
+        elif np.isscalar(other):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray() - other)
+            return result 
+        return NotImplemented
+
+    def __isub__(self, other):
+        """
+        Overload the `-=` operator for adding two Field objects.
 
         Parameters
         ----------
@@ -1091,22 +1156,24 @@ class Field:
 
         Returns
         -------
-        Field
-            A new Field object with the summed coefficient arrays.
+        self
 
         Raises
         ------
         NotImplementedError
             If `other` is not a Field object.
         """
-        ## overrides '+'
+        ## overrides '-='
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(other, Field):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
-            return result 
+            self.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
+            return self
+        elif np.isscalar(other):
+            self.setCoefficientArray(self.getCoefficientArray() - other)
+            return self
         return NotImplemented
+
 
     def __mul__(self, other):
         """
@@ -1136,6 +1203,33 @@ class Field:
             result.setCoefficientArray(self.getCoefficientArray()*other)
             return result
         return NotImplemented
+
+
+    def __imul__(self, other):
+        """
+        Overload the ``*=`` operator for pointwise multiplication.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field defined on the same space, or a scalar value.
+
+        Returns
+        -------
+        self
+        """
+        import numpy as np
+        ## overrides '*='
+        ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            self.setCoefficientArray(self.getCoefficientArray()*other.getCoefficientArray())
+            return self
+        elif np.isscalar(other):
+            self.setCoefficientArray(self.getCoefficientArray()*other)
+            return self
+        return NotImplemented
+
 
     def __truediv__(self, other):
         """
@@ -1171,6 +1265,39 @@ class Field:
             result.setCoefficientArray(self.getCoefficientArray()/other)
             return result
         return NotImplemented
+
+
+    def __itruediv__(self, other):
+        """
+        Overload the ``/=`` operator for pointwise division.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field defined on the same space, or a scalar value.
+
+        Returns
+        -------
+        self
+
+        Notes
+        -----
+        - Division by a Field is performed coefficient-wise; it is the
+          caller's responsibility to avoid division by zero.
+
+        """
+        import numpy as np
+        ## overrides '/='
+        ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            self.setCoefficientArray(self.getCoefficientArray()/other.getCoefficientArray())
+            return self
+        elif np.isscalar(other):
+            self.setCoefficientArray(self.getCoefficientArray()/other)
+            return self
+        return NotImplemented
+
 
 
 
