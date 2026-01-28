@@ -410,6 +410,45 @@ class LinearSolver:
         return x 
 
 
+    @staticmethod
+    def solveTransposeEquationSystemWithPredefinedSolver(
+        solver,
+        b,
+        destroy=False):
+
+        """
+        Solve a linear equation system A^Tx=b using PETSc and a predefined solver (defined by matrix A).
+
+        Parameters
+        ----------
+        solver : PETSc.KSP
+            Preconfigured solver, can be created with the method "createEquationSystemSolver".
+        b : PETSc.Vec
+            Right-hand side of the equation.
+        destroy : bool, optional
+            Whether to destroy the vector after solving, by default False. Can be useful by repetitive computations to avoid memory leaks.
+        
+        Returns
+        -------
+        x : numpy.ndarray
+            Solution vector of the linear equation system.
+        """
+        from petsc4py import PETSc
+        solution = b.copy()
+        
+        solver.solveTranspose(b, solution)
+        
+        x = solution.getArray()
+
+        solution.destroy()
+
+        if destroy:
+            b.destroy()
+        
+        return x 
+
+
+
 class ResolventOperator(object):         
     """
     Matrix-free representation of the Resolvent operator multiplied with its conjugate transpose.
