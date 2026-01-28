@@ -954,7 +954,7 @@ class Field:
         petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
 
-    def plot(self, xlim=None, ylim=None, plotType="real"):
+    def plot(self, xlim=None, ylim=None, plotType="real", clim=None):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
         field looks as expected and rule out e.g. import problems.
@@ -963,10 +963,9 @@ class Field:
         -----
         - This method provides a simple visualization of the field.
         """
-        import matplotlib.pyplot as plt
-        from matplotlib.tri import Triangulation
-        from dolfinx import fem
-        import numpy as np
+        import  matplotlib.pyplot           as plt
+        from    matplotlib.tri              import Triangulation
+        from    dolfinx                     import fem
         from    basix.ufl                   import element
 
         if self.space.num_sub_spaces > 1:
@@ -997,28 +996,32 @@ class Field:
         # Get the values corresponding to plot type
         if plotType == "imag":
             phi_vertex      = np.imag(u1.x.array)
-            cmap            = "RdBu_r"
+            cmap            = "seismic"
         elif plotType == "magnitude":
             phi_vertex      = np.abs(u1.x.array)
-            cmap            = "viridis"
+            cmap            = "magma"
         else:
             phi_vertex      = np.real(u1.x.array)
-            cmap            = "RdBu_r"
+            cmap            = "seismic"
         # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
 
         # --- 2) Build triangulation from the mesh ---
-        cells_to_vertices = mesh.topology.connectivity(tdim, 0).array
-        triangles       = cells_to_vertices.reshape(-1, 3)
-        coords          = mesh.geometry.x
-        x               = coords[:, 0]
-        y               = coords[:, 1]
-        triang          = Triangulation(x, y, triangles=triangles)
+        cells_to_vertices   = mesh.topology.connectivity(tdim, 0).array
+        triangles           = cells_to_vertices.reshape(-1, 3)
+        coords              = mesh.geometry.x
+        x                   = coords[:, 0]
+        y                   = coords[:, 1]
+        triang              = Triangulation(x, y, triangles=triangles)
         # ---- End of METHOD 2 ----
         
         # ---- Plotting ----
         fig, axes       = plt.subplots()
-        contour         = axes.tricontourf(triang, phi_vertex, levels=20, cmap=cmap, alpha=0.7)
-        axes.tricontour(triang, phi_vertex, levels=10, colors='black', alpha=0.5, linewidths=0.5)
+        if clim is None:
+            if plotType == "magnitude":
+                clim = (0, np.max(phi_vertex))
+            else:
+                clim = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
+        contour = axes.tripcolor(triang, phi_vertex, shading='gouraud', cmap=cmap, vmin=clim[0], vmax=clim[1])
 
         # Set labels and title
         axes.set_xlabel('x')
@@ -1043,7 +1046,7 @@ class Field:
         colorbar_axes   = divider.append_axes("right", size="2%", pad=0.5) 
         cbar            = plt.colorbar(contour, label=title, cax=colorbar_axes)
         cbar.formatter.set_powerlimits((0, 0))
-
+        cbar.update_ticks()
         if xlim is not None:
             axes.set_xlim(xlim)
         if ylim is not None:
