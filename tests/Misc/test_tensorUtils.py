@@ -132,7 +132,7 @@ def test_float_minus_scalar():
     # 1. define expressions
     def expression(fd_field):
         tensor_expr = ((-1 * fd_field.tens_scalar1 + fd_field.random_float) * iConj(fd_field.test_scalar_T)).ufl_tens*fd_field.J_hat*dx
-        valid_expr  = (-1 * fd_field.func_scalar1 + fd_field.random_float) * conj(fd_field.test_scalar)*fd_field.r*dx
+        valid_expr  = (fd_field.random_float - fd_field.func_scalar1) * conj(fd_field.test_scalar)*fd_field.r*dx
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
