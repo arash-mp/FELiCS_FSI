@@ -23,7 +23,7 @@ from FELiCS.Misc.tensorUtils import (
     iOuter,
 )
 from .EquationTemplate      import EquationTemplate
-from FELiCS.Misc.logging    import Logger
+from FELiCS.Misc.logging    import Logger, log_and_raise
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -80,9 +80,9 @@ class MomentumEquation(EquationTemplate):
         If the numerical scheme is 'Discontinuous Galerkin', an error will be raised since it is not implemented in the tensorial framework.
         """
         # Disclaimer
+        param.Numerics.NumericalScheme = 'Discontinuous Galerkin'
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
-            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
+            log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
     
         # initialize variables in template class
         super().__init__(index, eqColl, fluc, X, param)
@@ -243,9 +243,7 @@ class MomentumEquation(EquationTemplate):
 
         else:
             # No integration by parts of the pressure term
-            logger.error(' -> Pressure term without IbP not implemented in tensor framework.')
-            raise Exception(' -> Pressure term without IbP not implemented in tensor framework.')
-
+            log_and_raise(logger, ' -> Pressure term without IbP not implemented in tensor framework.', Exception)
         # ------------------------ Diffusion term
         weakForm.add(( -1j*iInner(mean.tau,iGrad(X) )).ufl_tens*J_hat*dx)
 

@@ -23,7 +23,7 @@ from    scipy.spatial       import Delaunay
 from    scipy.interpolate   import LinearNDInterpolator, NearestNDInterpolator
 
 # Local libraries and methods
-from    FELiCS.Misc.logging import Logger
+from    FELiCS.Misc.logging import Logger, log_and_raise
 from    FELiCS.IO.Mapping   import Mapping
 
 # Debug
@@ -396,9 +396,7 @@ class Reader:
         subFields               = field.getListOfSubFields() if fieldType == "mixed" else [field]
         degrees                 = [subField.info.get("degree", None) for subField in subFields]
         if max(degrees) > 2:
-            logger.error("Reader currently only supports P1 and P2 FEM spaces.")
-            raise NotImplementedError("Reader currently only supports P1 and P2 FEM spaces.")
-        
+            log_and_raise(logger, "Reader currently only supports P1 and P2 FEM spaces.", NotImplementedError)
         # Get the number of DoFs in P2 and P1 subfields if present
         p2SubFieldIndex            = degrees.index(2) if 2 in degrees else None    # Keep only the first occurrence
         p1SubFieldIndex            = degrees.index(1) if 1 in degrees else None    # Keep only the first occurrence
@@ -689,9 +687,7 @@ class Reader:
                 names.append(subField.name)
                 
             else:
-                logger.error(f"Field type '{subInfo['type']}' not supported in Reader yet.")
-                raise NotImplementedError("Field type not supported in Reader yet.")
-            
+                log_and_raise(logger, f"Field type '{subInfo['type']}' not supported in Reader yet.", NotImplementedError)
         return names
 
     def _set_arrays_to_field(
@@ -762,9 +758,7 @@ class Reader:
                     else:
                         logger.warning(f"Subfield '{subFieldName}' not found in loaded arrays for scalar subfield. Set to default values.")
                 else:
-                    logger.error(f"Subfield type '{info['subspaces'][iField]['type']}' not supported in Reader yet.")
-                    raise NotImplementedError("Subfield type not supported in Reader yet.")
-                
+                    log_and_raise(logger, f"Subfield type '{info['subspaces'][iField]['type']}' not supported in Reader yet.", NotImplementedError)
         elif info["type"] == "vector":
             for i, subFieldName in enumerate(field.getNamesOfSubFields()):
                 if subFieldName in baseNames:

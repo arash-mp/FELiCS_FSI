@@ -10,7 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from 	FELiCS.Misc.logging                 import Logger
+from 	FELiCS.Misc.logging                 import Logger, log_and_raise
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -93,9 +93,7 @@ class equationOfStateHandler:
             # Type of equation of state
             EoSType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
             if EoSType not in ['Low-Mach', 'IdealGas']:
-                logger.error('Equation of State '+self._EoSType+' not defined.')
-                raise Exception('Equation of State '+self._EoSType+' not defined.')
-                
+                log_and_raise(logger, 'Equation of State '+self._EoSType+' not defined.', Exception)
             # Get the mean flow class     
             if mean == 'None':
                 mean = self._mean
@@ -124,8 +122,7 @@ class equationOfStateHandler:
             elif all(item in alreadyDefinedQuantities for item in ['rho','T']):
                 logger.debug('Linearized EoS with input variables: [rho, T] -> p')
                 if EoSType == 'Low-Mach':
-                    logger.error('Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.')
-                    raise Exception('Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.')
+                    log_and_raise(logger, 'Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.', Exception)
                 elif EoSType == 'IdealGas':
                     if self._isSolution:
                         mean_T = mean.fieldDict['T']

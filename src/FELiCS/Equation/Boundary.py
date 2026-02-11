@@ -14,7 +14,7 @@ import  json
 import  numpy as np
 from    enum                         import Enum
 from    petsc4py.PETSc               import ScalarType
-from 	FELiCS.Misc.logging          import Logger
+from 	FELiCS.Misc.logging          import Logger, log_and_raise
 # Get the logger
 logger = Logger.get_logger("felics")
 
@@ -80,8 +80,7 @@ class BoundaryHandler():
         for ID in BCsInfo:
             id_int = int(ID)
             if id_int not in self.IDs: # check if the boundary ID exists in mesh file
-                logger.error(f"The given boundary ID '{ID}' in your boundary file does not exist. The boundary IDs given from your mesh file are: '{self.IDs}'. ")
-                raise ValueError("One of the given boundary IDs does not exist. Please read the FELiCS error message for details.")
+                log_and_raise(logger, f"The given boundary ID '{ID}' in your boundary file does not exist. The boundary IDs given from your mesh file are: '{self.IDs}'. ", ValueError)
             info = BCsInfo[ID]
             name = info["name"].lower() # make the info in the bc file non-case sensitive
             if   name  == "custom":
@@ -95,8 +94,7 @@ class BoundaryHandler():
             elif name  == "none":
                 bc = BoundaryCondition(id_int, BCsInfo[ID], self) # this is the default boundary condition, nothing is done for any variable
             else:
-                logger.error(f"The boundary condition with name '{name}' does not exist. Please choose from the following list: [custom, zeroDirichlet, wall, symmetry, none]. The names are not case sensitive. ")
-                raise ValueError("One of the set boudary conditions does not exist. Please read the FELiCS error message for details.")
+                log_and_raise(logger, f"The boundary condition with name '{name}' does not exist. Please choose from the following list: [custom, zeroDirichlet, wall, symmetry, none]. The names are not case sensitive. ", ValueError)
             self.boundaryList.append(bc)
 
 

@@ -17,7 +17,7 @@ from    FELiCS.Misc.tensorUtils import CoordinateSystem
 from    mpi4py                  import MPI
 from    ufl                     import SpatialCoordinate
 from    dolfinx.mesh            import Mesh, refine 
-from    FELiCS.Misc.logging     import Logger
+from    FELiCS.Misc.logging     import Logger, log_and_raise
 
 
 comm = MPI.COMM_WORLD
@@ -151,9 +151,7 @@ class FELiCSMesh:
                                     gdim = self.gdim,
                                     )
         else:
-            logger.error('Coord. syst not yet implemented in tensor framework.')
-            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
-
+            log_and_raise(logger, 'Coord. syst not yet implemented in tensor framework.', NotImplementedError)
         # update dimension if m!=0, i.e. if there is a spectral dimension
         if m!=0:
             self.dim = gdim + 1
@@ -330,9 +328,7 @@ class FELiCSMesh:
                 coordinateNames.append('t')
                 
         else:
-            logger.error('Coord. syst not yet implemented in tensor framework.')
-            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
-
+            log_and_raise(logger, 'Coord. syst not yet implemented in tensor framework.', NotImplementedError)
         return coordinateNames
     
     @property
@@ -364,9 +360,7 @@ class FELiCSMesh:
                 coordinateNames.append('t')
                 
         else:
-            logger.error('Coord. syst not yet implemented in tensor framework.')
-            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
-
+            log_and_raise(logger, 'Coord. syst not yet implemented in tensor framework.', NotImplementedError)
         return coordinateNames
 
 
