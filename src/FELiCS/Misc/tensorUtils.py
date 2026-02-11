@@ -19,6 +19,7 @@
 # coordinate system.
 # Written by Sophie Knechtel
 
+import numpy as np
 from typing import Union
 from ufl import TrialFunction, TestFunction
 from ufl import dot, inner
@@ -90,13 +91,13 @@ class CoordinateSystem():
 
 
     def __init__(
-                self, 
-                SpatialCoordinateObj, 
-                name: str,
-                gdim: int,
-                trueDim = None,
-                m = 0, 
-                ):
+                self,
+    SpatialCoordinateObj,
+    name: str,
+    gdim: int,
+    trueDim = None,
+    m = 0,
+    ):
         """
         Initialize the CoordinateSystem object.
 
@@ -150,7 +151,9 @@ class CoordinateSystem():
             raise ValueError("The specified coordinate system isn't " \
                              "implemented.")
 
-    def setTrueDimension(self,dim):
+    def set_true_dimension(self,
+    dim,
+    ):
         """
         Corrects the true dimension of the system. This has to be called if a spectral dimension is included,
         in which case the true dimension is higher than the geometrical dimension of the mesh.
@@ -211,12 +214,12 @@ class Tensor():
     """
 
     def __init__(
-        self, 
-        ufl_tens, 
-        CoordSys: CoordinateSystem, 
-        mayHaveSpectralDimension = False, 
-        m = None,
-        ):
+        self,
+    ufl_tens,
+    CoordSys: CoordinateSystem,
+    mayHaveSpectralDimension = False,
+    m = None,
+    ):
         """
         Initialize a Tensor object.
 
@@ -271,7 +274,9 @@ class Tensor():
            
 
     # addition
-    def __add__(self, other):
+    def __add__(self,
+    other,
+    ):
         """
         Add two tensors or a tensor and a scalar.
 
@@ -303,14 +308,16 @@ class Tensor():
         else:
             ValueError("Tensor addition only defined for Tensors,Constant, float, complex and integers")
         return Tensor(
-                    added, 
-                    self.CoordSys, 
-                    mayHaveSpectralDimension = self.hasSpectralDimension,
-                    m = self.m
-                    )
+        added,
+        self.CoordSys,
+        mayHaveSpectralDimension = self.hasSpectralDimension,
+        m = self.m,
+        )
 
     # division, 
-    def __truediv__(self, other): # Tensor object to the left
+    def __truediv__(self,
+    other,
+    ): # Tensor object to the left
         """
         Divide this tensor by another tensor or scalar.
 
@@ -336,27 +343,29 @@ class Tensor():
         if type(other) == Tensor:
             if other.order == 0 or self.order == 0:
                 return Tensor(
-                            self.ufl_tens / other.ufl_tens,
-                            self.CoordSys, 
-                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                            m = self.m - other.m
-                            )
+                self.ufl_tens / other.ufl_tens,
+                self.CoordSys,
+                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                m = self.m - other.m,
+                )
             else:
                 raise ValueError("Division operation between Tensors only " \
                                  "defined, if one is a scalar.")
         elif type(other) in [float,complex,int,Constant]:
             return Tensor(
-                        self.ufl_tens / other,
-                        self.CoordSys,
-                        mayHaveSpectralDimension = self.hasSpectralDimension,
-                        m = self.m 
-                        )
+            self.ufl_tens / other,
+            self.CoordSys,
+            mayHaveSpectralDimension = self.hasSpectralDimension,
+            m = self.m,
+            )
         else:
             ValueError("Tensor division only defined for divisors of type Tensor, Constant, float, complex and integer")
 
 
     # division, 
-    def __rtruediv__(self, other): # Tensor object to the left
+    def __rtruediv__(self,
+    other,
+    ): # Tensor object to the left
         """
         Divide a scalar or tensor by this tensor.
 
@@ -388,21 +397,21 @@ class Tensor():
         if type(other) == Tensor:
             if other.order == 0 or self.order == 0:
                 return Tensor(
-                            other.ufl_tens / self.ufl_tens,
-                            self.CoordSys, 
-                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                            m = self.m - other.m
-                            )
+                other.ufl_tens / self.ufl_tens,
+                self.CoordSys,
+                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                m = self.m - other.m,
+                )
             else:
                 raise ValueError("Division operation between Tensors only " \
                                  "defined, if one is a scalar.")
         elif type(other) in [float,complex,int,Constant]:
             return Tensor(
-                        other / self.ufl_tens,
-                        self.CoordSys,
-                        mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                        m = -self.m 
-                        )
+            other / self.ufl_tens,
+            self.CoordSys,
+            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+            m = -self.m,
+            )
         else:
             ValueError("Tensor division only defined for divisors of type Tensor, Constant, float, complex and integer")
     
@@ -411,7 +420,9 @@ class Tensor():
 
 
     # subtraction: A - B is the same as A.__sub__(B)
-    def __sub__(self, other):
+    def __sub__(self,
+    other,
+    ):
         """
         Subtract one tensor from another or from a scalar.
 
@@ -445,15 +456,17 @@ class Tensor():
             ValueError("Tensor subtraction only defined for Tensors, float, complex and integer")
         
         return Tensor(
-                    subtracted, 
-                    self.CoordSys, 
-                    mayHaveSpectralDimension = self.hasSpectralDimension,
-                    m = self.m
-                    )
+        subtracted,
+        self.CoordSys,
+        mayHaveSpectralDimension = self.hasSpectralDimension,
+        m = self.m,
+        )
 
 
     # muliplication, both ways, because matrix mul not commutative
-    def __mul__(self, other): # Tensor object to the left
+    def __mul__(self,
+    other,
+    ): # Tensor object to the left
         """
         Multiply this tensor with another tensor or scalar.
 
@@ -480,32 +493,34 @@ class Tensor():
         if type(other) == Tensor:
             if other.order == 0:
                 return Tensor(
-                            self.ufl_tens * other.ufl_tens,
-                            self.CoordSys, 
-                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                            m = self.m + other.m 
-                            )
+                self.ufl_tens * other.ufl_tens,
+                self.CoordSys,
+                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                m = self.m + other.m,
+                )
             elif self.order == 0:
                 return Tensor(
-                            self.ufl_tens * other.ufl_tens,
-                            self.CoordSys,
-                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                            m = self.m + other.m 
-                            )
+                self.ufl_tens * other.ufl_tens,
+                self.CoordSys,
+                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                m = self.m + other.m,
+                )
             else:
                 raise ValueError("Multiplication between Tensors only " \
                                  "defined, if one is a scalar.")
         elif type(other) in [float,complex,int,Constant]:
             return Tensor(
-                        self.ufl_tens * other,
-                        self.CoordSys,
-                        mayHaveSpectralDimension = self.hasSpectralDimension,
-                        m = self.m
-                        )
+            self.ufl_tens * other,
+            self.CoordSys,
+            mayHaveSpectralDimension = self.hasSpectralDimension,
+            m = self.m,
+            )
         else:
             ValueError("Tensor multiplication only defined for Tensors, Constant, float, complex, and integer")
 
-    def __pow__(self, exponent): # Tensor object to the left
+    def __pow__(self,
+    exponent,
+    ): # Tensor object to the left
         """
         Returns this tensor to the power of the exponent.
 
@@ -528,14 +543,13 @@ class Tensor():
         -------
         >>> A ** 2
         """
-        import numpy as np
         if self.order ==0 and np.isscalar(exponent):
              return Tensor(
-                       self.ufl_tens ** exponent,
-                       self.CoordSys, 
-                       mayHaveSpectralDimension = self.hasSpectralDimension,
-                       m = self.m * exponent
-                       )
+             self.ufl_tens ** exponent,
+             self.CoordSys,
+             mayHaveSpectralDimension = self.hasSpectralDimension,
+             m = self.m * exponent,
+             )
         else:
             raise ValueError("Taking exponents is only defined if the exponent is a scalar number "\
                                  "and the tensor has order 0.")
@@ -543,7 +557,9 @@ class Tensor():
 
 
 
-    def __rmul__(self, other): # Tensor object to the right
+    def __rmul__(self,
+    other,
+    ): # Tensor object to the right
         """
         Multiply scalar or tensor from the left.
 
@@ -569,37 +585,37 @@ class Tensor():
         if type(other) == Tensor:
             if other.order == 0:
                 return Tensor(
-                            other.ufl_tens * self.ufl_tens, 
-                            self.CoordSys,
-                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                            m = self.m + other.m
-                            )
+                other.ufl_tens * self.ufl_tens,
+                self.CoordSys,
+                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                m = self.m + other.m,
+                )
             elif self.order == 0:
                 return Tensor(
-                            other.ufl_tens * self.ufl_tens, 
-                            self.CoordSys,
-                            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                            m = self.m + other.m
-                            )
+                other.ufl_tens * self.ufl_tens,
+                self.CoordSys,
+                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                m = self.m + other.m,
+                )
             else:
                 raise ValueError("Multiplication between Tensors only " \
                                  "defined, if one is a scalar.")
         elif type(other) in [float,complex,int,Constant]:
             return Tensor(
-                        other * self.ufl_tens,
-                        self.CoordSys,
-                        mayHaveSpectralDimension = self.hasSpectralDimension,
-                        m = self.m
-                        )
+            other * self.ufl_tens,
+            self.CoordSys,
+            mayHaveSpectralDimension = self.hasSpectralDimension,
+            m = self.m,
+            )
             ValueError("Tensor multiplication only defined for Tensors, Constant, float, complex and integerr")
     
 
 
 ### TENSOR OBJECT FUNCTIONS
-def iDot(
-         tensorA: Tensor, 
-         tensorB: Tensor,
-         ):
+def i_dot(
+         tensorA: Tensor,
+tensorB: Tensor,
+):
     """
     Performs a single contraction between two tensors.
 
@@ -618,18 +634,23 @@ def iDot(
         Result of the dot product, with updated metadata.
 
     """ 
-    dotted = dot(tensorA.ufl_tens,tensorB.ufl_tens) 
+    dotted = dot(
+    tensorA.ufl_tens,
+    tensorB.ufl_tens,
+    ) 
     
     return Tensor(
-            dotted, 
-            tensorA.CoordSys, 
-            mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension, 
-            m = tensorA.m + tensorB.m
-            )
+    dotted,
+    tensorA.CoordSys,
+    mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension,
+    m = tensorA.m + tensorB.m,
+    )
 
 
 
-def iInner(tensorA: Tensor, tensorB: Tensor):
+def i_inner(tensorA: Tensor,
+tensorB: Tensor,
+):
     """
     Computes the inner product between two second-order tensors.
 
@@ -654,17 +675,20 @@ def iInner(tensorA: Tensor, tensorB: Tensor):
         raise ValueError("The order of both tensors must be two.")
     
     
-    innered = inner(tensorA.ufl_tens, tensorB.ufl_tens) 
+    innered = inner(
+    tensorA.ufl_tens,
+    tensorB.ufl_tens,
+    ) 
     
     return Tensor(
-            innered,
-            tensorA.CoordSys, 
-            mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension, 
-            m = tensorA.m + tensorB.m
-            )
+    innered,
+    tensorA.CoordSys,
+    mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension,
+    m = tensorA.m + tensorB.m,
+    )
 
 
-def iGrad(T: Tensor):
+def i_grad(T: Tensor):
     """
     Computes the gradient of a tensor.
 
@@ -741,14 +765,14 @@ def iGrad(T: Tensor):
                          "implemented.")
         
     return Tensor(
-                  gradient, 
-                  T.CoordSys, 
-                  mayHaveSpectralDimension = T.hasSpectralDimension,
-                  m = T.m,
-                  )
+    gradient,
+    T.CoordSys,
+    mayHaveSpectralDimension = T.hasSpectralDimension,
+    m = T.m,
+    )
     
 
-def iDiv(tensor: Tensor):
+def i_div(tensor: Tensor):
     """
     Computes the divergence of a tensor.
 
@@ -773,24 +797,27 @@ def iDiv(tensor: Tensor):
         raise ValueError("Divergence of scalars not defined.")
         
     elif tensor.order == 1:
-        gradient = iGrad(tensor) # Added wavenumber on homogeneous direction
+        gradient = i_grad(tensor) # Added wavenumber on homogeneous direction
         i = indices(1)
         Div = tr(gradient.ufl_tens)
 
     elif tensor.order == 2:
-        gradient = iGrad(tensor) # Added wavenumber on homogeneous direction
+        gradient = i_grad(tensor) # Added wavenumber on homogeneous direction
         i,j = indices(2)
-        Div = as_tensor(gradient.ufl_tens[i,j,j], (i))
+        Div = as_tensor(
+        gradient.ufl_tens[i,j,j],
+        (i),
+        )
         
     return Tensor(
-                  Div, 
-                  tensor.CoordSys, 
-                  mayHaveSpectralDimension = tensor.hasSpectralDimension,
-                  m = tensor.m
-                  )
+    Div,
+    tensor.CoordSys,
+    mayHaveSpectralDimension = tensor.hasSpectralDimension,
+    m = tensor.m,
+    )
 
 
-def iT(tensor: Tensor):
+def i_t(tensor: Tensor):
     """
     Returns the transpose of a second-order tensor.
 
@@ -814,14 +841,14 @@ def iT(tensor: Tensor):
                          "order 2.")
     else:
         return Tensor(
-                      tensor.ufl_tens.T, 
-                      tensor.CoordSys, 
-                      mayHaveSpectralDimension = tensor.hasSpectralDimension,
-                      m = tensor.m
-                      )
+        tensor.ufl_tens.T,
+        tensor.CoordSys,
+        mayHaveSpectralDimension = tensor.hasSpectralDimension,
+        m = tensor.m,
+        )
 
 
-def iTr(tensor: Tensor):
+def i_tr(tensor: Tensor):
     """
     Computes the trace of a second-order tensor.
 
@@ -844,11 +871,11 @@ def iTr(tensor: Tensor):
         raise ValueError("Trace only working for tensors of order 2.")
     else:
         return Tensor(
-                      tr(tensor.ufl_tens),
-                      tensor.CoordSys, 
-                      mayHaveSpectralDimension = tensor.hasSpectralDimension,
-                      m = tensor.m
-                      )
+        tr(tensor.ufl_tens),
+        tensor.CoordSys,
+        mayHaveSpectralDimension = tensor.hasSpectralDimension,
+        m = tensor.m,
+        )
     
 
 # not implemented anymore
@@ -872,7 +899,7 @@ def iTr(tensor: Tensor):
 
 
 
-def iIdentity(tensor: Tensor):
+def i_identity(tensor: Tensor):
     """
     Returns the identity tensor corresponding to the tensor's dimension and coordinate system.
 
@@ -887,13 +914,13 @@ def iIdentity(tensor: Tensor):
         Identity tensor with the same coordinate system and dimension. 
     """
     return Tensor(
-                  Identity(tensor.dim), 
-                  tensor.CoordSys,
-                  mayHaveSpectralDimension = False,
-                  m = 0
-                  )
+    Identity(tensor.dim),
+    tensor.CoordSys,
+    mayHaveSpectralDimension = False,
+    m = 0,
+    )
 
-def iConj(tensor: Tensor):
+def i_conj(tensor: Tensor):
     """
     Computes the complex conjugate of a tensor.
 
@@ -912,14 +939,16 @@ def iConj(tensor: Tensor):
         flags but with ``m`` replaced by ``-m``.
     """
     return Tensor(
-            conj(tensor.ufl_tens),
-            tensor.CoordSys,
-            mayHaveSpectralDimension = tensor.hasSpectralDimension,
-            m = -tensor.m
-            )
+    conj(tensor.ufl_tens),
+    tensor.CoordSys,
+    mayHaveSpectralDimension = tensor.hasSpectralDimension,
+    m = -tensor.m,
+    )
 
 # TODO: implement unit test in TESTS folder 
-def iOuter(tensorA: Tensor, tensorB: Tensor):
+def i_outer(tensorA: Tensor,
+tensorB: Tensor,
+):
     """
     Computes the outer product of two tensors.
 
@@ -942,27 +971,39 @@ def iOuter(tensorA: Tensor, tensorB: Tensor):
     """
     if tensorA.order == 1 and tensorB.order == 1:
         i,j = indices(2)
-        outered = as_tensor(tensorA.ufl_tens[i]*tensorB.ufl_tens[j], (i,j))
+        outered = as_tensor(
+        tensorA.ufl_tens[i]*tensorB.ufl_tens[j],
+        (i,j),
+        )
 
     # the below should not be necessary
     elif tensorA.order == 2 and tensorB.order == 1:
         i,j,k = indices(3)
-        outered = as_tensor(tensorA.ufl_tens[i,j]*tensorB.ufl_tens[k], (i,j,k))
+        outered = as_tensor(
+        tensorA.ufl_tens[i,j]*tensorB.ufl_tens[k],
+        (i,j,k),
+        )
     elif tensorA.order == 1 and tensorB.order == 2:
         i,j,k = indices(3)
-        outered = as_tensor(tensorA.ufl_tens[i]*tensorB.ufl_tens[i,k], (i,j,k))
+        outered = as_tensor(
+        tensorA.ufl_tens[i]*tensorB.ufl_tens[i,k],
+        (i,j,k),
+        )
     elif tensorA.order == 1 and tensorB.order == 2:
         i,j,k,l = indices(4)
-        outered = as_tensor(tensorA.ufl_tens[i,j]*tensorB.ufl_tens[k,l], (i,j,k,l))
+        outered = as_tensor(
+        tensorA.ufl_tens[i,j]*tensorB.ufl_tens[k,l],
+        (i,j,k,l),
+        )
     
     elif tensorA.order == 0 or tensorB.order == 0:
         raise Exception('Use standard multiplication with the asterisk symbol *.')
        
 
     return Tensor(
-                  outered, 
-                  tensorA.CoordSys, 
-                  mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension,
-                  m = tensorA.m + tensorB.m
-                  ) 
+    outered,
+    tensorA.CoordSys,
+    mayHaveSpectralDimension = tensorA.hasSpectralDimension or tensorB.hasSpectralDimension,
+    m = tensorA.m + tensorB.m,
+    ) 
     

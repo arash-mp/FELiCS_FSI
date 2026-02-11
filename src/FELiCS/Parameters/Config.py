@@ -10,6 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+from inspect import isclass
 import  os
 import  pdb
 import  json
@@ -17,13 +18,13 @@ from    abc                             import ABC
 from    h5py                            import File
 from    FELiCS.Equation.MixtureClass    import MixtureClass
 from    FELiCS.SpaceDisc.FELiCSMesh     import FELiCSMesh
-from    FELiCS.Misc.functions           import getLastGitCommit
+from    FELiCS.Misc.functions           import get_last_git_commit
 from 	FELiCS.Misc.logging			    import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
 
-class dotdict(dict):
+class Dotdict(dict):
     """
     Adds possibility to use dot notation to access entries of dictionary dict
     also works for nested dictionaries
@@ -37,7 +38,7 @@ class dotdict(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
-class config(ABC):
+class Config(ABC):
     """
     Abstract base class for FELiCS configuration management.
 
@@ -58,12 +59,12 @@ class config(ABC):
         logger.debug("Initializing config class with defaults.")
         
         # Get an instance of the defaults settings
-        self.default_config = self.getAllSettingsDict()
+        self.default_config = self.get_all_settings_dict()
         
         # NOTE: deprecated?
         self.__BCIDs__      = []   # move to BC
 
-    def getAllSettingsDict(self):
+    def get_all_settings_dict(self):
         """
         Return the settings dictionary for the config object.
 
@@ -134,7 +135,9 @@ class config(ABC):
         }
         return SettingsDict
 
-    def parse_complex_list(self,data):
+    def parse_complex_list(self,
+    data,
+    ):
         """
         Convert a list of mixed strings and floats into complex numbers.
 
@@ -150,13 +153,19 @@ class config(ABC):
         """
         result = []
         for item in data:
-            if isinstance(item, str):
+            if isinstance(
+            item,
+            str,
+            ):
                 try:
                     result.append(complex(item))  # Convert string to complex
                 except ValueError:
                     logger.error(f"Invalid complex number string: {item}")
                     raise ValueError(f"Invalid complex number string: {item}")
-            elif isinstance(item, (int, float)):
+            elif isinstance(
+            item,
+            (int, float),
+            ):
                 result.append(item)  # Convert float/int to complex
             else:
                 logger.error(f"Unsupported type {type(item)} in list. Must be str or float.")
@@ -167,12 +176,15 @@ class config(ABC):
         """
         Calculate and set derived parameters based on current configuration.
         """
-        self.BoundaryCondition.nVelocityComponents  = len(self.getVelocityComponents())
-        self.Case.SolutionList                      = self.getTransportedQuantityList()
-        self.BoundaryCondition.VelocityComponents   = self.getVelocityComponents()
-        self.__mesh__.setTrueDimension(self.BoundaryCondition.nVelocityComponents)
+        self.BoundaryCondition.nVelocityComponents  = len(self.get_velocity_components())
+        self.Case.SolutionList                      = self.get_transported_quantity_list()
+        self.BoundaryCondition.VelocityComponents   = self.get_velocity_components()
+        self.__mesh__.set_true_dimension(self.BoundaryCondition.nVelocityComponents)
 
-    def check_for_mandatory_files(self,config_dict,mandatory_files):
+    def check_for_mandatory_files(self,
+    config_dict,
+    mandatory_files,
+    ):
         """
         Check that all mandatory files exist in the configuration.
 
@@ -194,7 +206,9 @@ class config(ABC):
                 logger.error(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
                 raise Exception(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
 
-    def importFromFile(self, configFilePath):
+    def import_from_file(self,
+    configFilePath,
+    ):
         """
         Import parameters from a .json file and update configuration.
 
@@ -223,7 +237,7 @@ class config(ABC):
 
         # Loop over fields and overwrite defaults by file values
         for category in default_config:
-            dict = dotdict()
+            dict = Dotdict()
             for parameter in default_config[category]:
                 if parameter in input_data[category]:
                     input_value         = input_data[category][parameter]
@@ -234,7 +248,11 @@ class config(ABC):
                 else:
                     dict[parameter]     = default_config[category][parameter]["default"]
                     logger.warning(f'Field "{parameter}" missing from file, setting default: {dict[parameter]}')
-            setattr(self,category,dict)
+            setattr(
+            self,
+            category,
+            dict,
+            )
         input_file.close()
 
         # Check if mandatory files are there [category_name]
@@ -243,7 +261,10 @@ class config(ABC):
         tmp, extension      = os.path.splitext(input_data['FlowInput']['MeanFlowFilePath'])
         if extension == ".fel":
             mandatory_files.append('FlowInput_MeanFlowFilePath')
-        self.check_for_mandatory_files(input_data,mandatory_files)
+        self.check_for_mandatory_files(
+        input_data,
+        mandatory_files,
+        )
 
         # Check if export folder exists
         if not os.path.isdir(input_data['Export']['ExportFolder']):
@@ -256,17 +277,17 @@ class config(ABC):
 
         logger.debug("Creating Mixture class")
         self.Mixture = MixtureClass(
-            self.Case["MixtureFilePath"],
-            self.Case["SpeciesFilePath"]
+        self.Case["MixtureFilePath"],
+        self.Case["SpeciesFilePath"],
         )
         
         # Get domain data and set BCs
-        self.readDomainData(
-            self.Case["MeshFilePath"],
-            self.Case["nDim"],
-            self.getExtendedTransportedQuantityList(),
-            self.Case["CoordinateSystem"],
-            self.Case["m"]
+        self.read_domain_data(
+        self.Case["MeshFilePath"],
+        self.Case["nDim"],
+        self.get_extended_transported_quantity_list(),
+        self.Case["CoordinateSystem"],
+        self.Case["m"],
         )
 
         # Hardcoded parameters
@@ -278,7 +299,9 @@ class config(ABC):
         self.calculate_parameters()
         logger.info("Configuration loaded successfully")
 
-    def importFromH5File(self, h5FileName):
+    def import_from_h5_file(self,
+    h5FileName,
+    ):
         """
         Import parameters from an HDF5 file.
 
@@ -300,10 +323,13 @@ class config(ABC):
         # TODO: load the parameters into a "data" dictionnary
         # similar to what we get from loading a .json
 
-        hf = File(h5FileName, 'r')
+        hf = File(
+        h5FileName,
+        'r',
+        )
         if 'param' not in hf.keys():
             return None
-        settingsDict = self.getAllSettingsDict()
+        settingsDict = self.get_all_settings_dict()
         if self._settingsKind in hf['param'].keys():
             for settingsParameter in list(settingsDict.keys()):
                 if settingsParameter in hf[f'param/{self._settingsKind}'].attrs.keys():
@@ -323,12 +349,14 @@ class config(ABC):
 
         # NOTE: This will not be needed anymore
         self.Mixture = MixtureClass(
-            self.Case.mixtureFilePath,
-            self.SpeciesFilePath,
-            )
+        self.Case.mixtureFilePath,
+        self.SpeciesFilePath,
+        )
 
 
-    def export(self, filestring):
+    def export(self,
+    filestring,
+    ):
         """
         Export the current configuration parameters to a file.
 
@@ -341,11 +369,13 @@ class config(ABC):
         -----
         This function is currently not fully working for all export types.
         """
-        from inspect import isclass
 
         # Writing the parameters to a file
         if '.h5' in filestring:
-            file = File(filestring, 'a')
+            file = File(
+            filestring,
+            'a',
+            )
 
             if 'parameters' not in file.keys():
                 paramGroup = file.create_group('parameters')
@@ -357,9 +387,15 @@ class config(ABC):
                 felicsVersion = paramGroup.create_group('FELiCSVersion')
             else:
                 felicsVersion = paramGroup['FELiCSVersion']
-            felicsVersion.attrs.create('FELiCSVersion', data=getLastGitCommit())
+            felicsVersion.attrs.create(
+            'FELiCSVersion',
+            data=get_last_git_commit(),
+            )
         else:
-            file = open(filestring,'w')
+            file = open(
+            filestring,
+            'w',
+            )
 
         # Iterate over all attributes of the object
         for group in dir(self):
@@ -372,32 +408,50 @@ class config(ABC):
 
                         # Check if the attributes are string, float, int, bool or list and export them
                         if type(eval('self.'+group+'.'+parameter)) == str:
-                            if isinstance(file, File):
+                            if isinstance(
+                            file,
+                            File,
+                            ):
                                 if group not in list(paramGroup.keys()):
                                     currentGroup = paramGroup.create_group(group)
                                     # stringInArray = np.array([eval(f'self.{group}.{parameter}')])
                                     #
 
-                                    currentGroup.attrs.create(parameter, data=eval(f'self.{group}.{parameter}'))
+                                    currentGroup.attrs.create(
+                                    parameter,
+                                    data=eval(f'self.{group}.{parameter}'),
+                                    )
                                 else:
 
                                     #tringInArray = np.array(str(eval(f'self.{group}.{parameter}')))
-                                    file[f'parameters/{group}'].attrs.create(parameter, data=eval(f'self.{group}.{parameter}'))
+                                    file[f'parameters/{group}'].attrs.create(
+                                    parameter,
+                                    data=eval(f'self.{group}.{parameter}'),
+                                    )
                             else:
                                 file.writelines(parameter+'='+'\''+str(eval('self.'+group+'.'+parameter))+'\''+'\n')
                         elif type(eval('self.'+group+'.'+parameter)) in [float,int,bool,list,dict]:
-                            if isinstance(file, File):
+                            if isinstance(
+                            file,
+                            File,
+                            ):
                                 if group not in list(paramGroup.keys()):
                                     currentGroup = paramGroup.create_group(group)
                                     #try:
-                                    currentGroup.attrs.create(parameter, data=str(eval(f'self.{group}.{parameter}')))
+                                    currentGroup.attrs.create(
+                                    parameter,
+                                    data=str(eval(f'self.{group}.{parameter}')),
+                                    )
                                     # except:
                                     #   # stringInArray = np.array(str(eval(f'self.{group}.{parameter}')))
                                     #
                                     #   currentGroup.attrs.create(parameter, data=str(eval(f'self.{group}.{parameter}')))
                                 else:
                                     #try:
-                                    file[f'parameters/{group}'].attrs.create(parameter, data=str(eval(f'self.{group}.{parameter}')))
+                                    file[f'parameters/{group}'].attrs.create(
+                                    parameter,
+                                    data=str(eval(f'self.{group}.{parameter}')),
+                                    )
                                     # except:
                                     #   stringInArray = np.array(str(eval(f'self.{group}.{parameter}')))
                                     #   file[f'param/{group}'].create_dataset(parameter, data=stringInArray)
@@ -406,7 +460,13 @@ class config(ABC):
         file.close()
 
 
-    def readDomainData(self,MeshFile,gDim,ExtendedTransportedQuantityList,coordinateSystem,m):
+    def read_domain_data(self,
+    MeshFile,
+    gDim,
+    ExtendedTransportedQuantityList,
+    coordinate_system,
+    m,
+    ):
         """
         Read all domain data from the mesh file and update mesh-related attributes.
 
@@ -426,14 +486,19 @@ class config(ABC):
         logger.debug(f"Reading domain data from '{MeshFile}'")
         # Read mesh and store it in self.__mesh__
         if not MeshFile == '' and os.path.isfile(MeshFile):
-            self.__mesh__ = FELiCSMesh(coordinateSystem,MeshFile,gDim,m)
+            self.__mesh__ = FELiCSMesh(
+            coordinate_system,
+            MeshFile,
+            gDim,
+            m,
+            )
             self.dim      = self.__mesh__.gdim
 
-        self.Case.Equations            = self.getEquationList()
-        self.Case.StateVectorVariables = self.getStateVectorVariables(self.Case.Equations)
+        self.Case.Equations            = self.get_equation_list()
+        self.Case.StateVectorVariables = self.get_state_vector_variables(self.Case.Equations)
         
 
-    def getMesh(self):
+    def get_mesh(self):
         """
         Return the mesh object associated with the configuration.
 
@@ -444,7 +509,7 @@ class config(ABC):
         """
         return self.__mesh__
 
-    def getInternalVelocityComponents(self):
+    def get_internal_velocity_components(self):
         """
         Get a list of velocity components directed within the mesh dimensions.
 
@@ -461,7 +526,7 @@ class config(ABC):
             VelCompList = ['x','r']
         return VelCompList
 
-    def getExternalVelocityComponents(self):
+    def get_external_velocity_components(self):
         """
         Get a list of velocity components directed outside the mesh dimensions.
 
@@ -480,7 +545,7 @@ class config(ABC):
 
         return VelCompList
 
-    def getVelocityComponents(self):
+    def get_velocity_components(self):
         """
         Get a list of all velocity components, both internal and external.
 
@@ -489,12 +554,12 @@ class config(ABC):
         list of str
             List of all velocity component labels.
         """
-        templist = self.getInternalVelocityComponents()
-        templist.extend(self.getExternalVelocityComponents())
+        templist = self.get_internal_velocity_components()
+        templist.extend(self.get_external_velocity_components())
 
         return templist
 
-    def getTransportedQuantityList(self):
+    def get_transported_quantity_list(self):
         """
         Get a list of all transported quantities for the current case settings.
 
@@ -518,12 +583,12 @@ class config(ABC):
                 SolutionList.append(self.Case["SetOfEquations"]['Custom2']['Variable'])
         if 'Species' in list(self.Case["SetOfEquations"].keys()):
             if self.Case["SetOfEquations"]['Species']['Variable'] != 'None':
-                for species in list(self.Mixture.getSpeciesList('transported')):
+                for species in list(self.Mixture.get_species_list('transported')):
                     SolutionList.append(species)
         return SolutionList
 
 
-    def getEquationList(self):
+    def get_equation_list(self):
         """
         Get the list of equations with both defined equation and variable.
 
@@ -541,7 +606,9 @@ class config(ABC):
         return EquationsList
 
 
-    def getStateVectorVariables(self, EquationList):
+    def get_state_vector_variables(self,
+    EquationList,
+    ):
         """
         Get the list of state vector variables and their components.
 
@@ -560,14 +627,14 @@ class config(ABC):
         for equation in EquationList:
             variable = equation[1]["Variable"]
             if variable in ["u", "rhou"]:
-                components = self.getVelocityComponents()
+                components = self.get_velocity_components()
             else:
                 components = []
             VariablesList.append((variable, components))
         return VariablesList 
 
 
-    def getExtendedTransportedQuantityList(self):
+    def get_extended_transported_quantity_list(self):
         """
         Get a list of all transported quantities, including all velocity components.
 
@@ -578,18 +645,18 @@ class config(ABC):
         """
         SolutionList = []
         # First add all velocity components
-        transportedQuantities = self.getTransportedQuantityList()
+        transportedQuantities = self.get_transported_quantity_list()
         if 'u' in transportedQuantities:
-            for component in self.getVelocityComponents():
+            for component in self.get_velocity_components():
                 SolutionList.append('u'+component)
         # Then extend the list by the transported quantity list
-        SolutionList.extend(self.getTransportedQuantityList())
+        SolutionList.extend(self.get_transported_quantity_list())
         # Finally, remove the component 'u' if present
         if 'u' in SolutionList:
             SolutionList.remove('u')
         return SolutionList
 
-    def getMeanFlowFieldNames(self):
+    def get_mean_flow_field_names(self):
         """
         Get the list of mean flow field names required for input.
 
@@ -606,12 +673,12 @@ class config(ABC):
         # Add density component (for cold flow)
         MeanList.append('rho')
         # If necessary, add density and enthalpy diffusion
-        if 'rho' in self.getTransportedQuantityList():
+        if 'rho' in self.get_transported_quantity_list():
             MeanList.append('rho')
             if self.Case.MolViscModel == 'File' or self.Case.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('alpha')
         # Add species which are transported
-        for specie in self.Mixture.getSpeciesList('transported'):
+        for specie in self.Mixture.get_species_list('transported'):
             MeanList.append(specie)
             if self.Case.MolViscModel == 'File' or self.Case.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('D_'+specie)
@@ -636,7 +703,7 @@ class config(ABC):
         # if not present it will be zero
         MeanList.append('spg')
         # Add species, which are not transported
-        for specie in self.Mixture.getSpeciesList('constraint'):
+        for specie in self.Mixture.get_species_list('constraint'):
             MeanList.append(specie)
         if self.Case.TurbulenceModel in ['File']:
             MeanList.append('nuturb')
@@ -646,7 +713,7 @@ class config(ABC):
             MeanList.append('dQ')
         return MeanList
 
-    def getNVelocityComponents(self):
+    def get_n_velocity_components(self):
         """
         Get the number of velocity components for the current configuration.
 
@@ -655,4 +722,4 @@ class config(ABC):
         int
             Number of velocity components.
         """
-        return len(self.getVelocityComponents())
+        return len(self.get_velocity_components())

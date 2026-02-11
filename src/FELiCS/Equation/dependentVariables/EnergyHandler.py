@@ -13,7 +13,7 @@
 import numpy as np
 from FELiCS.Equation.dependentVariables.viscosityModels import *
 
-class energyHandler:
+class EnergyHandler:
     """
     Handles the relationship between temperature and transported energy variables
     (e.g., enthalpy, sensible energy) for FELiCS simulations.
@@ -49,10 +49,10 @@ class energyHandler:
         """
         pass
 
-    def _relateConservativeToPrimitiveVariablesEnergy(
+    def _relate_conservative_to_primitive_variables_energy(
                                             self,
-                                            mean='None',
-                                            ):
+    mean='None',
+    ):
         """
         Relates conservative variables to primitive variables for energy calculation.
 
@@ -81,7 +81,7 @@ class energyHandler:
                 # so far cp is constant, which in reacting flows might be a strong assumption.
                 if 'T' in alreadyInitializedFields:
                     if self._isSolution:
-                        mean_cp = mean.fieldDict['cp']
+                        mean_cp = mean.field_dict['cp']
                     else:
                         mean_cp = mean.cp
                     self._fieldDict['h'] = mean_cp * self._fieldDict['T']
@@ -97,12 +97,12 @@ class energyHandler:
             if sum(el in ['progress', 'T'] for el in list(alreadyInitializedFields)) == 1:            
                     if 'progress' in alreadyInitializedFields:
                         if self._isSolution:
-                            mean_Tu  = mean.Tu
-                            mean_Tb  = mean.Tb
+                            mean_Tu  = mean.tu
+                            mean_Tb  = mean.tb
                         else:
-                            mean_Tu  = mean.Tu
-                            mean_Tb  = mean.Tb
-                        self._fieldDict['T'] = self.Y('progress') * (mean_Tb - mean_Tu)
+                            mean_Tu  = mean.tu
+                            mean_Tb  = mean.tb
+                        self._fieldDict['T'] = self.y('progress') * (mean_Tb - mean_Tu)
                     else:
                          raise Exception('ProgressVariableLinear is chosen, however, the progress variable is not available to calculate the temperature.')
         
@@ -117,7 +117,7 @@ class energyHandler:
         else: 
             raise Exception("Energy equation type " + energyEquationType + " not known.")
 
-    def _getNeededFieldsForLinearEnergy(self):
+    def _get_needed_fields_for_linear_energy(self):
         """
         Returns the list of fields needed for linear energy equation.
 
@@ -135,9 +135,10 @@ class energyHandler:
         elif energyEquationType == 'ProgressVariableLinear':
             return ['T', 'progress']
 
-    def _initializeMolecularHeatDiffusionFluctuation(
+    def _initialize_molecular_heat_diffusion_fluctuation(
                                     self,
-                                    mean='None'
+    mean='None',
+    
                                     ):
         """
         Initializes the molecular heat diffusion fluctuation.
@@ -157,14 +158,18 @@ class energyHandler:
                 if mean == 'None':
                     mean = self._mean
                 if self._isSolution:
-                    mean_alpha = mean.fieldDict['alpha']
+                    mean_alpha = mean.field_dict['alpha']
                 else:
                     mean_alpha = mean.alpha
                 Ts = viscosityModel['Constants']['Ts']
-                foobar, fluc = SutherlandFluctuationMean(mean, self.rho, Ts)
+                foobar, fluc = sutherland_fluctuation_mean(
+                mean,
+                self.rho,
+                Ts,
+                )
                 self._fieldDict['alpha'] = mean_alpha * fluc
 
-    def _additionalFieldsToBeReadEnergy(self):
+    def _additional_fields_to_be_read_energy(self):
         """
         Returns the list of additional fields to be read for energy equation.
 

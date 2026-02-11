@@ -10,6 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+from dolfinx.fem      import dirichletbc, locate_dofs_topological
 import  json
 import  numpy as np
 from    enum                         import Enum
@@ -56,7 +57,11 @@ class BoundaryHandler():
     `FileNotFoundError`: If the BCsFilePath does not exist, indicating the boundary file is missing.
     """
         
-    def __init__(self, variables, mesh, BCsFilePath):
+    def __init__(self,
+    variables,
+    mesh,
+    BCsFilePath,
+    ):
 
         ###### initialize list of boundaries ########
 
@@ -68,7 +73,10 @@ class BoundaryHandler():
         #2. read bc file 
         logger.debug(f"Reading boundary conditions from '{BCsFilePath}'")
         try:
-            with open(BCsFilePath, 'r') as file:
+            with open(
+            BCsFilePath,
+            'r',
+            ) as file:
                 # Attempt to load the JSON data. This will fail for empty or invalid files.
                 BCsInfo = json.load(file)
             logger.debug("Successfully loaded and parsed the boundary conditions file.")
@@ -90,22 +98,42 @@ class BoundaryHandler():
             info = BCsInfo[ID]
             name = info["name"].lower() # make the info in the bc file non-case sensitive
             if   name  == "custom":
-                bc = Custom(id_int, BCsInfo[ID], self)
+                bc = Custom(
+                id_int,
+                BCsInfo[ID],
+                self,
+                )
             elif name  == "zerodirichlet":
-                bc = ZeroDirichlet(id_int, BCsInfo[ID], self )
+                bc = ZeroDirichlet(
+                id_int,
+                BCsInfo[ID],
+                self,
+                )
             elif name  == "wall":
-                bc = Wall(id_int, BCsInfo[ID], self)
+                bc = Wall(
+                id_int,
+                BCsInfo[ID],
+                self,
+                )
             elif name  == "symmetry":
-                bc = Symmetry(id_int, BCsInfo[ID], self)
+                bc = Symmetry(
+                id_int,
+                BCsInfo[ID],
+                self,
+                )
             elif name  == "none":
-                bc = BoundaryCondition(id_int, BCsInfo[ID], self) # this is the default boundary condition, nothing is done for any variable
+                bc = BoundaryCondition(
+                id_int,
+                BCsInfo[ID],
+                self,
+                ) # this is the default boundary condition, nothing is done for any variable
             else:
                 logger.error(f"The boundary condition with name '{name}' does not exist. Please choose from the following list: [custom, zeroDirichlet, wall, symmetry, none]. The names are not case sensitive. ")
                 raise ValueError("One of the set boudary conditions does not exist. Please read the FELiCS error message for details.")
             self.boundaryList.append(bc)
 
 
-    def getListOfBoundaries(self):
+    def get_list_of_boundaries(self):
         """
         Return the list of all boundary condition objects.
 
@@ -118,7 +146,9 @@ class BoundaryHandler():
         return self.boundaryList
 
 
-    def getListOfDirichletBCsForDolfinx(self, functionSpace):
+    def get_list_of_dirichlet_b_cs_for_dolfinx(self,
+    functionSpace,
+    ):
         """
         Constructs the list of Dirichlet boundary conditions for Dolfinx.
 
@@ -140,7 +170,6 @@ class BoundaryHandler():
         This function supports mixed function spaces and variables with multiple components.
         Logs a debug message each time a boundary condition is added.
         """
-        from dolfinx.fem      import dirichletbc, locate_dofs_topological
         gdim = self.facet_tags.topology.dim # NOTE: THIS IS VERY PRELIMINARY AND HAS TO BE CHECKED
         BCs = []
         for boundary in self.boundaryList:
@@ -149,22 +178,38 @@ class BoundaryHandler():
                 if len(var[1])==0 and boundary.types[index][0] == BoundaryType.DIRICHLET:
                     value = boundary.values[index][0]
                     space = functionSpace.sub(index)
-                    dofs  = locate_dofs_topological(space, gdim-1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
-                    BCs.append(dirichletbc(value, dofs, space))
+                    dofs  = locate_dofs_topological(
+                    space,
+                    gdim-1,
+                    self.facet_tags.indices[self.facet_tags.values==boundary.ID],
+                    )
+                    BCs.append(dirichletbc(
+                    value,
+                    dofs,
+                    space,
+                    ))
                     logger.debug("Adding Dirichlet BC for "+var[0]+ " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
                 else: 
                     for index2 in range(len(var[1])):
                         if boundary.types[index][index2] == BoundaryType.DIRICHLET:
                             value = boundary.values[index][index2]
                             space = functionSpace.sub(index).sub(index2)
-                            dofs  = locate_dofs_topological(space, gdim-1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
-                            BCs.append(dirichletbc(value, dofs, space))
+                            dofs  = locate_dofs_topological(
+                            space,
+                            gdim-1,
+                            self.facet_tags.indices[self.facet_tags.values==boundary.ID],
+                            )
+                            BCs.append(dirichletbc(
+                            value,
+                            dofs,
+                            space,
+                            ))
                             logger.debug("Adding Dirichlet BC for "+var[0]+var[1][index2] + " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
 
         return BCs
     
 
-    def getListOfNonlinearBoundaries(self):
+    def get_list_of_nonlinear_boundaries(self):
         """
         Placeholder for returning nonlinear boundary condition objects.
 
@@ -176,7 +221,7 @@ class BoundaryHandler():
         pass
 
 
-    def getListOfNonlinearDirichletBCsForDolfinx(self):
+    def get_list_of_nonlinear_dirichlet_b_cs_for_dolfinx(self):
         """
         Placeholder for returning nonlinear DirichletBCs for Dolfinx.
 
@@ -246,7 +291,11 @@ class BoundaryCondition():
         Boundary values for each variable/component.
     """
 
-    def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
+    def __init__(self,
+    boundaryID,
+    boundaryInfo,
+    boundaryHandler,
+    ):
         self.ID   = boundaryID
         self.info = boundaryInfo
         self.bH   = boundaryHandler
@@ -296,8 +345,16 @@ class Custom(BoundaryCondition):
     """
 
     # TODO Sophie: add warnings and errors to docstrings ("notes") when implemented.
-    def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
-        super().__init__(boundaryID, boundaryInfo, boundaryHandler)
+    def __init__(self,
+    boundaryID,
+    boundaryInfo,
+    boundaryHandler,
+    ):
+        super().__init__(
+        boundaryID,
+        boundaryInfo,
+        boundaryHandler,
+        )
         self.name = "custom"
         # This boundary condition takes what is given under "specifics". 
 
@@ -348,8 +405,16 @@ class ZeroDirichlet(BoundaryCondition):
         Reference to the BoundaryHandler object by which it is created.
     """
 
-    def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
-        super().__init__(boundaryID, boundaryInfo, boundaryHandler)
+    def __init__(self,
+    boundaryID,
+    boundaryInfo,
+    boundaryHandler,
+    ):
+        super().__init__(
+        boundaryID,
+        boundaryInfo,
+        boundaryHandler,
+        )
         self.name = "zeroDirichlet"
         # This boundary condition sets a zero dirichlet condition for every variable.
 
@@ -383,8 +448,16 @@ class Wall(BoundaryCondition):
     Only handles velocity conditions for now.
     """
 
-    def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
-        super().__init__(boundaryID, boundaryInfo, boundaryHandler)
+    def __init__(self,
+    boundaryID,
+    boundaryInfo,
+    boundaryHandler,
+    ):
+        super().__init__(
+        boundaryID,
+        boundaryInfo,
+        boundaryHandler,
+        )
         self.name = "wall"
         # This boundary condition, at the moment, sets only the velocity components to zero, 
         # all other variables have no boundary condition ("none").
@@ -426,8 +499,16 @@ class Symmetry(BoundaryCondition):
     boundary conditions conform to symmetry constraints.
     """
 
-    def __init__(self, boundaryID, boundaryInfo, boundaryHandler):
-        super().__init__(boundaryID, boundaryInfo, boundaryHandler)
+    def __init__(self,
+    boundaryID,
+    boundaryInfo,
+    boundaryHandler,
+    ):
+        super().__init__(
+        boundaryID,
+        boundaryInfo,
+        boundaryHandler,
+        )
         self.name = "symmetry"
         # TODO Sophie: write error message if no "specifics" are there and stop FELiCS
         # TODO Sophie: also write error message if not all variables are specified

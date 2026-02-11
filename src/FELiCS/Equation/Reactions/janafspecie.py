@@ -50,7 +50,15 @@ class Janafspecie:
         Standard entropy at reference state per unit mass [J/kg K].
     """
     
-    def __init__(self, W, Tlow, Thigh, Tcommon, lowCpCoeffs, highCpCoeffs, P):
+    def __init__(self,
+    W,
+    Tlow,
+    Thigh,
+    Tcommon,
+    lowCpCoeffs,
+    highCpCoeffs,
+    P,
+    ):
         """
         Initializes the Janafspecie instance.
 
@@ -73,7 +81,15 @@ class Janafspecie:
         """
 
 
-    def __init__(self, W, Tlow, Thigh, Tcommon, lowCpCoeffs, highCpCoeffs, P):
+    def __init__(self,
+    W,
+    Tlow,
+    Thigh,
+    Tcommon,
+    lowCpCoeffs,
+    highCpCoeffs,
+    P,
+    ):
 
         janaf = janafopenfoam.Janafopenfoam(P)
 
@@ -86,4 +102,4 @@ class Janafspecie:
         self.lowCpCoeffs = lowCpCoeffs
 
         self.s0 = janaf.janaf_s0(self)  # J/kmol K
-        self.S0f = janaf.janaf_S0(self)  # J/kg K
+        self.S0f = janaf.janaf_s0(self)  # J/kg K

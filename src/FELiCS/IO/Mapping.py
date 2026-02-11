@@ -36,9 +36,10 @@ class Mapping:
     """
 
     @staticmethod
-    def calculateMappingFromSpaces(
+    def calculate_mapping_from_spaces(
             inputSpace,
-            outputSpace):
+    outputSpace,
+    ):
         """
         Compute a DOF index mapping between two finite element spaces.
 
@@ -69,12 +70,16 @@ class Mapping:
         inputDofs           = inputSpace.tabulate_dof_coordinates()
         outputDofs          = outputSpace.tabulate_dof_coordinates()
 
-        return Mapping.calculateMappingFromDofs(inputDofs, outputDofs)
+        return Mapping.calculate_mapping_from_dofs(
+        inputDofs,
+        outputDofs,
+        )
 
     @staticmethod
-    def calculateMappingFromDofs(
+    def calculate_mapping_from_dofs(
             inputDofs,
-            outputDofs):
+    outputDofs,
+    ):
         """
         Compute a DOF index mapping from coordinate arrays.
 
@@ -115,8 +120,16 @@ class Mapping:
         outputMesh          = np.copy(outputDofs)
 
         # Append indices as last column
-        inputMesh           = np.append(inputMesh, np.arange(len(inputMesh))[:, None], axis=1).round(11)
-        outputMesh          = np.append(outputMesh, np.arange(len(outputMesh))[:, None], axis=1).round(11)
+        inputMesh           = np.append(
+        inputMesh,
+        np.arange(len(inputMesh))[:, None],
+        axis=1,
+        ).round(11)
+        outputMesh          = np.append(
+        outputMesh,
+        np.arange(len(outputMesh))[:, None],
+        axis=1,
+        ).round(11)
 
         # Sort by x,y,z
         inputMeshSorted     = inputMesh[np.lexsort((inputMesh[:,2], inputMesh[:,1], inputMesh[:,0]))].astype(int)

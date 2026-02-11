@@ -10,6 +10,18 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+
+import pathlib
+from FELiCS.Misc.functions import loadCSV
+
+from dolfinx.fem import (
+                        Function
+                        )
+from ufl import (
+                dx,
+)
+from scipy import interpolate
+import numpy as np
 class NOx:
     """
     Class for computing NO and NO2 source terms based on pre-tabulated data.
@@ -27,7 +39,9 @@ class NOx:
     """
 
 
-    def __init__(self, P):
+    def __init__(self,
+    P,
+    ):
         """
         Initializes the NOx instance by loading tabulated NOx source term data.
 
@@ -36,15 +50,15 @@ class NOx:
         P : any
             Placeholder parameter (not currently used).
         """
-
-        import pathlib
-        from FELiCS.Misc.functions import loadCSV
         tablePath=str(pathlib.Path(__file__).parent.absolute())+'/NOxTable.csv'
         self.__Table=loadCSV(tablePath)
 
 
 
-    def add_source_to_weak_form(self, weakform, dQ_threshold=None):
+    def add_source_to_weak_form(self,
+    weakform,
+    dQ_threshold=None,
+    ):
         """
         Add NO and NO2 source terms to the weak form based on interpolated data.
 
@@ -66,17 +80,14 @@ class NOx:
         eq : ufl.Form
             The assembled weak form with NO and NO2 source terms included.
         """
-
-        from dolfinx.fem import (
-                                Function
-                                )
-        from ufl import (
-                        dx,
+        interpolationNO = interpolate.interp1d(
+        self.__Table['phi'],
+        self.__Table['omega_NO_pf'],
         )
-        from scipy import interpolate
-        import numpy as np
-        interpolationNO = interpolate.interp1d(self.__Table['phi'], self.__Table['omega_NO_pf'])
-        interpolationNO2 = interpolate.interp1d(self.__Table['phi'], self.__Table['omega_NO2_pf'])
+        interpolationNO2 = interpolate.interp1d(
+        self.__Table['phi'],
+        self.__Table['omega_NO2_pf'],
+        )
         omegaNO=Function(weakform.phi.function_space)
         print(np.max(weakform.phi.vector[:]))
         omegaNO.vector()[:]=interpolationNO(weakform.phi.vector[:])

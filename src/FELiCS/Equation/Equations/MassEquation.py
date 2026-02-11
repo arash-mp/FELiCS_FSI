@@ -12,9 +12,9 @@
 #
 from ufl import dx
 from FELiCS.Misc.tensorUtils import (
-    iGrad,
-    iDot,
-    iConj
+    i_grad,
+    i_dot,
+    i_conj
 )
 
 from .EquationTemplate      import EquationTemplate
@@ -69,7 +69,13 @@ class MassEquation(EquationTemplate):
     """
 
 
-    def __init__(self, index, eqColl, fluc, X, param):
+    def __init__(self,
+    index,
+    eqColl,
+    fluc,
+    X,
+    param,
+    ):
         """
         Initialize the MassEquation object.
 
@@ -90,9 +96,18 @@ class MassEquation(EquationTemplate):
             raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
 
         # initialize variables in template class
-        super().__init__(index, eqColl, fluc, X, param)
+        super().__init__(
+        index,
+        eqColl,
+        fluc,
+        X,
+        param,
+        )
 
-    def addWeightMatrixExpression(self, weakForm, mean):
+    def add_weight_matrix_expression(self,
+    weakForm,
+    mean,
+    ):
         """
         Add the weight matrix expression to the weak form.
 
@@ -110,10 +125,13 @@ class MassEquation(EquationTemplate):
         """
         # ------------------------ Time derivative term used
         # Only if density fluctuations are considered
-        if 'rho' in self.param.getTransportedQuantityList():
-            weakForm += (self.fluc.rho * iConj(self.X)).ufl_tens * self.J_hat * dx
+        if 'rho' in self.param.get_transported_quantity_list():
+            weakForm += (self.fluc.rho * i_conj(self.X)).ufl_tens * self.J_hat * dx
 
-    def addLinearExpression(self, weakForm, mean):
+    def add_linear_expression(self,
+    weakForm,
+    mean,
+    ):
         """
         Add the linear expression to the weak form.
 
@@ -133,21 +151,36 @@ class MassEquation(EquationTemplate):
         # ------------------------ Advection terms
         # The advection term is integrated by parts
         # Volume term from IbP
-        weakForm.add((1j * iDot(iGrad(iConj(self.X)), self.fluc.rhou)).ufl_tens * self.J_hat * dx)
+        weakForm.add((1j * i_dot(
+        i_grad(i_conj(self.X)),
+        self.fluc.rhou,
+        )).ufl_tens * self.J_hat * dx)
         # Boundary term from IbP
-        weakForm.add((-1j * iDot(self.n, self.fluc.rhou * iConj(self.X))).ufl_tens * self.J_hat * self.all_ds)
+        weakForm.add((-1j * i_dot(
+        self.n,
+        self.fluc.rhou * i_conj(self.X),
+        )).ufl_tens * self.J_hat * self.all_ds)
 
         # ------------------------ BC term for Input/Output analysis
         if self.param.Case.AnalysisMode in ['Input-Output']:
             # Iterate through all boundaries, at which forcing is applied
             for boundary_index in self.param.IOResolvent.ForcingBoundaryIndices:
                 # First subtract the boundary term from advection
-                weakForm.add((1j * iDot(self.n, self.fluc.u * mean.rho * iConj(self.X))).ufl_tens * self.J_hat * self.ds(boundary_index))
+                weakForm.add((1j * i_dot(
+                self.n,
+                self.fluc.u * mean.rho * i_conj(self.X),
+                )).ufl_tens * self.J_hat * self.ds(boundary_index))
                 # Then add the forcing at the boundary
-                weakForm.add((-1 * iDot(self.n, mean.u_forcing * mean.rho) * iConj(self.X)).ufl_tens * self.J_hat * self.ds(boundary_index))
+                weakForm.add((-1 * i_dot(
+                self.n,
+                mean.u_forcing * mean.rho,
+                ) * i_conj(self.X)).ufl_tens * self.J_hat * self.ds(boundary_index))
 
 
-    def addNonlinearExpression(self, weakForm, mean):
+    def add_nonlinear_expression(self,
+    weakForm,
+    mean,
+    ):
         """
         Add the nonlinear expression to the weak form.
 
@@ -167,9 +200,15 @@ class MassEquation(EquationTemplate):
         # ------------------------ Advection terms
         # The advection term is integrated by parts
         # Volume term from IbP
-        weakForm.add((  1j * iDot(iGrad(iConj(self.X)),mean.rho*mean.u)).ufl_tens * self.J_hat * dx)
+        weakForm.add((  1j * i_dot(
+        i_grad(i_conj(self.X)),
+        mean.rho*mean.u,
+        )).ufl_tens * self.J_hat * dx)
         # Boundary term from IbP
-        weakForm.add(( -1j * iDot(self.n,mean.rho*mean.u * iConj(self.X)) ).ufl_tens * self.J_hat * self.all_ds)
+        weakForm.add(( -1j * i_dot(
+        self.n,
+        mean.rho*mean.u * i_conj(self.X),
+        ) ).ufl_tens * self.J_hat * self.all_ds)
     
 
 

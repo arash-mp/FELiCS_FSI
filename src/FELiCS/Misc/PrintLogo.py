@@ -11,7 +11,7 @@
 # \___________________________________/ \_______________________________________________________/
 #
 from    colorama                import Fore,Style
-from    FELiCS.Misc.functions   import getLastGitCommit
+from    FELiCS.Misc.functions   import get_last_git_commit
 print(Fore.RED+"(     "+Style.RESET_ALL+"    "+Fore.RED+"(     "+Style.RESET_ALL+"          "+Fore.RED+"(     "+Style.RESET_ALL)
 print(Fore.RED+")"+Fore.YELLOW+"\\ "+Fore.RED+")      "+Fore.RED+")"+Fore.YELLOW+" "+Fore.RED+")       "+Fore.RED+"(    "+Fore.RED+")"+Fore.YELLOW+"\\ "+Fore.RED+")  "+Style.RESET_ALL)
 print(Fore.RED+"("+Fore.YELLOW+"("+Style.RESET_ALL+")"+Fore.YELLOW+"/"+Fore.RED+"(  (  "+Fore.RED+"("+Fore.YELLOW+"("+Style.RESET_ALL+")"+Fore.YELLOW+"/"+Fore.RED+"( (    "+Fore.RED+")\\   "+Fore.RED+"("+Fore.YELLOW+"("+Style.RESET_ALL+")"+Fore.YELLOW+"/"+Fore.RED+"(  "+Style.RESET_ALL)
@@ -28,7 +28,7 @@ print("|_|  |___||____||_|  \\___||___/  "+Style.RESET_ALL)
 #         "+Fore.CYAN+"
 #         "+Style.RESET_ALL+"
 
-label = getLastGitCommit()
+label = get_last_git_commit()
 # NOTE: The logger is not initialized at this point
 print('Git commit: '+str(label))
 

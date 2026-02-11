@@ -37,24 +37,60 @@ class UnitTestHelper():
         res1.assemble()
         res2.assemble()
         
-        print("   - Tensor expression vector norm: ", np.linalg.norm(res1.getArray()))
-        print("   - Valid expression vector norm : ", np.linalg.norm(res2.getArray()))
-        print("   - Difference norm              : ", np.linalg.norm(res1.getArray()-res2.getArray()))
-        print("   - Relative difference norm     : ", np.linalg.norm((res1.getArray()-res2.getArray())/max(np.linalg.norm(res1.getArray()), np.linalg.norm(res2.getArray()))))
+        print(
+        "   - Tensor expression vector norm: ",
+        np.linalg.norm(res1.getArray()),
+        )
+        print(
+        "   - Valid expression vector norm : ",
+        np.linalg.norm(res2.getArray()),
+        )
+        print(
+        "   - Difference norm              : ",
+        np.linalg.norm(res1.getArray()-res2.getArray()),
+        )
+        print(
+        "   - Relative difference norm     : ",
+        np.linalg.norm((res1.getArray()-res2.getArray())/max(
+        np.linalg.norm(res1.getArray()),
+        np.linalg.norm(res2.getArray()),
+        )),
+        )
         assert np.linalg.norm(res1.getArray())> 0
         assert np.linalg.norm(res2.getArray())> 0
         # NOTE: Instead of using absolute tolerance, we use relative tolerance here
-        assert np.linalg.norm((res1.getArray()-res2.getArray())/max(np.linalg.norm(res1.getArray()), np.linalg.norm(res2.getArray()))) < tol
+        assert np.linalg.norm((res1.getArray()-res2.getArray())/max(
+        np.linalg.norm(res1.getArray()),
+        np.linalg.norm(res2.getArray()),
+        )) < tol
         pass
     
     @staticmethod
     def getVecGrad(func_vector: Function, coordinateSystemName, m, r):
-        t11 = Dx(func_vector[0],0)
-        t12 = Dx(func_vector[0],1)
-        t21 = Dx(func_vector[1],0)
-        t22 = Dx(func_vector[1],1)
-        t31 = Dx(func_vector[2],0)
-        t32 = Dx(func_vector[2],1)
+        t11 = Dx(
+        func_vector[0],
+        0,
+        )
+        t12 = Dx(
+        func_vector[0],
+        1,
+        )
+        t21 = Dx(
+        func_vector[1],
+        0,
+        )
+        t22 = Dx(
+        func_vector[1],
+        1,
+        )
+        t31 = Dx(
+        func_vector[2],
+        0,
+        )
+        t32 = Dx(
+        func_vector[2],
+        1,
+        )
         if coordinateSystemName == "cartesian": 
             t13 = 1j*m*func_vector[0]
             t23 = 1j*m*func_vector[1]
@@ -67,8 +103,14 @@ class UnitTestHelper():
     
     @staticmethod
     def getScalarGrad(func_scalar: Function, coordinateSystemName, m, r):
-        s1 = Dx(func_scalar,0)
-        s2 = Dx(func_scalar,1)
+        s1 = Dx(
+        func_scalar,
+        0,
+        )
+        s2 = Dx(
+        func_scalar,
+        1,
+        )
         if coordinateSystemName == "cartesian": 
             s3 = 1j*m*func_scalar
         elif coordinateSystemName == "cylindricalfelics": 

@@ -10,7 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-class heatReleaseHandler:
+class HeatReleaseHandler:
     """
     Calculates the heat release for combustion simulations.
 
@@ -31,7 +31,9 @@ class heatReleaseHandler:
         Dictionary storing total and component heat release rates.
     """
 
-    def __init__(self, reaction):
+    def __init__(self,
+    reaction,
+    ):
         """
         Initialize the heatReleaseHandler instance and compute heat release rates.
 
@@ -40,7 +42,7 @@ class heatReleaseHandler:
         reaction : object
             FELiCS reaction object used to compute heat release rates.
         """
-        Qtot, QList = reaction.dQ(self)
+        Qtot, QList = reaction.d_q(self)
         self._fieldDict['Q'] = Qtot
-        for Q in QList:
-            self._fieldDict['Q' + str(QList.index(Q))] = Q
+        for q in QList:
+            self._fieldDict['Q' + str(QList.index(q))] = q

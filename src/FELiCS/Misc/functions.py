@@ -10,6 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+import subprocess,sys,os
 from dolfinx.fem import Function
 import numpy as np
 import time
@@ -18,7 +19,7 @@ import pickle
 from functools import partial
 from scipy.interpolate import griddata
 
-def getLastGitCommit():
+def get_last_git_commit():
     """
     Get the latest git commit hash of the repository.
 
@@ -27,10 +28,13 @@ def getLastGitCommit():
     str
         The most recent commit hash as a string.
     """
-    import subprocess,sys,os
     FELiCSPathname = os.path.dirname(sys.argv[0])
 
-    commit = subprocess.Popen(['git','--git-dir',FELiCSPathname+'/../.git', 'rev-parse', 'HEAD'], shell=False, stdout=subprocess.PIPE)
+    commit = subprocess.Popen(
+    ['git','--git-dir',FELiCSPathname+'/../.git', 'rev-parse', 'HEAD'],
+    shell=False,
+    stdout=subprocess.PIPE,
+    )
     commit = commit.communicate()[0].strip().decode('ascii')
     return commit
 

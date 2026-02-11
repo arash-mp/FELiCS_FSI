@@ -67,17 +67,26 @@ def test_calculateL2Norm():
     print("Testing L2 norm calculation")
     # 1. define expressions
     for field in [randomField.scalar_field, randomField.vector_field, randomField.mixed_field]:
-        print(" - Testing field of type: ", field._name)
-        list = field.getListOfSubFields()
-        J_hat = field.mesh.coordinateSystem.J_hat
+        print(
+        " - Testing field of type: ",
+        field._name,
+        )
+        list = field.get_list_of_sub_fields()
+        J_hat = field.mesh.coordinate_system.J_hat
         for i, subfield in enumerate(list):
-            fieldTens = subfield.getTensor()
+            fieldTens = subfield.get_tensor()
             if i == 0:
-                validExpr = (iDot(fieldTens, iConj(fieldTens))).ufl_tens*J_hat*dx
+                validExpr = (i_dot(
+                fieldTens,
+                i_conj(fieldTens),
+                )).ufl_tens*J_hat*dx
             else:
-                validExpr += (iDot(fieldTens, iConj(fieldTens))).ufl_tens*J_hat*dx 
+                validExpr += (i_dot(
+                fieldTens,
+                i_conj(fieldTens),
+                )).ufl_tens*J_hat*dx 
         # 2. check alignment
-        computedL2Norm = field.calculateL2Norm()
+        computedL2Norm = field.calculate_l2_norm()
         validL2Norm = np.sqrt(dolfinx.fem.assemble_scalar(dolfinx.fem.form(validExpr)))
         assert np.abs(computedL2Norm - validL2Norm) < 1.e-14
     print("... passed.")
@@ -88,14 +97,14 @@ def test_getVorticityField():
     print("Testing computation of the vorticity field in 2D")
     randomField     = FieldTestHandler(dim_vector)
     field           = randomField.vector_field
-    components      = field.getListOfSubFields()
+    components      = field.get_list_of_sub_fields()
     componentList   = []  
     for subfield in components:
-        componentList.append(subfield.getGradientField())
-    dvdx = componentList[1].getListOfSubFields()[0]    
-    dudy = componentList[0].getListOfSubFields()[1] 
+        componentList.append(subfield.get_gradient_field())
+    dvdx = componentList[1].get_list_of_sub_fields()[0]    
+    dudy = componentList[0].get_list_of_sub_fields()[1] 
     vorticity_field_valid = dvdx - dudy
-    vorticity_field_test = field.getVorticityField()
+    vorticity_field_test = field.get_vorticity_field()
     assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-13
     # Test for 3D vector
     # NOTE: we do this in the last step
@@ -103,26 +112,26 @@ def test_getVorticityField():
     print("Testing computation of the vorticity field in 3D")
     randomField     = FieldTestHandler(dim_vector)
     field           = randomField.vector_field
-    components      = field.getListOfSubFields()
+    components      = field.get_list_of_sub_fields()
     componentList   = []  
     for subfield in components:
-        componentList.append(subfield.getGradientField())
-    dwdy = componentList[2].getListOfSubFields()[1]
-    dvdz = componentList[1].getListOfSubFields()[2]
+        componentList.append(subfield.get_gradient_field())
+    dwdy = componentList[2].get_list_of_sub_fields()[1]
+    dvdz = componentList[1].get_list_of_sub_fields()[2]
 
-    dudz = componentList[0].getListOfSubFields()[2]
-    dwdx = componentList[2].getListOfSubFields()[0]
+    dudz = componentList[0].get_list_of_sub_fields()[2]
+    dwdx = componentList[2].get_list_of_sub_fields()[0]
 
-    dvdx = componentList[1].getListOfSubFields()[0]
-    dudy = componentList[0].getListOfSubFields()[1]
+    dvdx = componentList[1].get_list_of_sub_fields()[0]
+    dudy = componentList[0].get_list_of_sub_fields()[1]
     
     vorticity_x = dwdy - dvdz
     vorticity_y = dudz - dwdx
     vorticity_z = dvdx - dudy
     
     vorticity_field_valid = randomField.createFELiCSField("vector")
-    vorticity_field_valid.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
-    vorticity_field_test = field.getVorticityField()
+    vorticity_field_valid.set_list_of_sub_fields([vorticity_x, vorticity_y, vorticity_z])
+    vorticity_field_test = field.get_vorticity_field()
     assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-12
 
 def test_evaluateUflExpression():
@@ -147,13 +156,22 @@ def test_evaluateUflExpression():
         except:
             matrix_ufl.add(conj(test)*trialFunc_field[i]*dx)
         i+=1
-    matrix = matrix_ufl.getAssembledMatrix(temp_scalar_field.mesh,bcs =[])
-    temp_scalar_field.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
+    matrix = matrix_ufl.get_assembled_matrix(
+    temp_scalar_field.mesh,
+    bcs =[],
+    )
+    temp_scalar_field.space.FEMWeightSolver = LinearSolver.create_equation_system_solver(matrix)
     expr_ufl = UflDecorator(expr)
-    petscVec = expr_ufl.getAssembledVector(temp_scalar_field.mesh, bcs=[])
-    validation_array = LinearSolver.solveEquationSystemWithPredefinedSolver(temp_scalar_field.space.FEMWeightSolver, petscVec)
+    petscVec = expr_ufl.get_assembled_vector(
+    temp_scalar_field.mesh,
+    bcs=[],
+    )
+    validation_array = LinearSolver.solve_equation_system_with_predefined_solver(
+    temp_scalar_field.space.FEMWeightSolver,
+    petscVec,
+    )
     # 2 Check alignment
-    randomField.scalar_field.evaluateUflExpression(expr)
+    randomField.scalar_field.evaluate_ufl_expression(expr)
     test_array = randomField.scalar_field.function.x.array.copy()
     # NOTE: This need a higher tolerance than 1e-14
     assert np.linalg.norm(validation_array-test_array) < 1e-13
@@ -162,22 +180,34 @@ def test_evaluateUflExpression():
 def test_setBoundaryConditions():
     # NOTE: Only scalar field
     # 0 Create a bc list
-    randomField.mesh.topology.create_connectivity(randomField.mesh.topology.dim - 1, randomField.mesh.topology.dim)
+    randomField.mesh.topology.create_connectivity(
+    randomField.mesh.topology.dim - 1,
+    randomField.mesh.topology.dim,
+    )
     boundary_facets = dolfinx.mesh.exterior_facet_indices(randomField.mesh.topology)
     boundary_dofs = dolfinx.fem.locate_dofs_topological(
-        randomField.space_scalar, randomField.mesh.topology.dim - 1, boundary_facets
+    randomField.space_scalar,
+    randomField.mesh.topology.dim - 1,
+    boundary_facets,
+    
     )
     u_bc = randomField.createDolfinxFunction(dim=1)
     u_bc.x.array[:]=1.0+1.0j
-    bc = dolfinx.fem.dirichletbc(u_bc, boundary_dofs)
+    bc = dolfinx.fem.dirichletbc(
+    u_bc,
+    boundary_dofs,
+    )
     bcs = [bc]
     
     # 1 Assemble validation array
-    petscArray = randomField.scalar_field.getPetscVector().copy()
-    dolfinx.fem.petsc.set_bc(petscArray,bcs)
+    petscArray = randomField.scalar_field.get_petsc_vector().copy()
+    dolfinx.fem.petsc.set_bc(
+    petscArray,
+    bcs,
+    )
     validation_array = petscArray.getArray()
     # 2 Check alignment
-    randomField.scalar_field.setBoundaryConditions(bcs)
+    randomField.scalar_field.set_boundary_conditions(bcs)
     test_array = randomField.scalar_field.function.x.array[:]
     assert np.linalg.norm(validation_array-test_array) < 1e-14
     print("... passed.")
@@ -195,18 +225,35 @@ def test_smoothUflTensorExpression():
     testFunc_field = TestFunctions(temp_scalar_field.space)
     trialFunc_field = TrialFunctions(temp_scalar_field.space)
     matrix_ufl = UflDecorator()
-    coordinateSystem = temp_scalar_field.mesh.coordinateSystem
-    J_hat = coordinateSystem.J_hat
+    coordinate_system = temp_scalar_field.mesh.coordinate_system
+    J_hat = coordinate_system.J_hat
     i=0
     for test in testFunc_field:
-        iTest = Tensor(test, coordinateSystem, mayHaveSpectralDimension=True)
-        iFluc = Tensor(trialFunc_field[i], coordinateSystem, mayHaveSpectralDimension=True)
+        iTest = Tensor(
+        test,
+        coordinate_system,
+        mayHaveSpectralDimension=True,
+        )
+        iFluc = Tensor(
+        trialFunc_field[i],
+        coordinate_system,
+        mayHaveSpectralDimension=True,
+        )
         if iTest.order  == 1:
-            matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*dx)
-            matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iTest))).ufl_tens*J_hat*dx)
+            matrix_ufl.add( ( i_dot(
+            iFluc,
+            i_conj(iTest),
+            ) ).ufl_tens*J_hat*dx)
+            matrix_ufl.add((smoothFactor* i_inner(
+            i_grad(iFluc),
+            i_grad(iTest),
+            )).ufl_tens*J_hat*dx)
         elif iTest.order == 0:
-            matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*dx)
-            matrix_ufl.add((smoothFactor* iDot(iGrad(iFluc),iGrad(iConj(iTest)) )).ufl_tens*J_hat*dx)
+            matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*dx)
+            matrix_ufl.add((smoothFactor* i_dot(
+            i_grad(iFluc),
+            i_grad(i_conj(iTest)),
+             )).ufl_tens*J_hat*dx)
         else:
             print("Wrong order for test function")
         i+=1
@@ -214,14 +261,26 @@ def test_smoothUflTensorExpression():
         matrix_ufl.setCorrectMeshObject(temp_scalar_field.mesh)
     except:
         pass
-    matrix = dolfinx.fem.petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs),bcs = [])
+    matrix = dolfinx.fem.petsc.assemble_matrix(
+    dolfinx.fem.form(matrix_ufl.lhs),
+    bcs = [],
+    )
     matrix.assemble()
-    temp_scalar_field.space.FEMSmoothSolver = LinearSolver.createEquationSystemSolver(matrix)
+    temp_scalar_field.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
     expr_ufl = UflDecorator(expr)
-    petscVec = expr_ufl.getAssembledVector(temp_scalar_field.mesh, bcs=[])
-    validation_array = LinearSolver.solveEquationSystemWithPredefinedSolver(temp_scalar_field.space.FEMSmoothSolver, petscVec)
+    petscVec = expr_ufl.get_assembled_vector(
+    temp_scalar_field.mesh,
+    bcs=[],
+    )
+    validation_array = LinearSolver.solve_equation_system_with_predefined_solver(
+    temp_scalar_field.space.FEMSmoothSolver,
+    petscVec,
+    )
     # 2 Check alignment
-    randomField.scalar_field.smoothUflTensorExpression(expr,smoothFactor)
+    randomField.scalar_field.smooth_ufl_tensor_expression(
+    expr,
+    smoothFactor,
+    )
     test_array = randomField.scalar_field.function.x.array.copy()
     assert np.linalg.norm(validation_array-test_array) < 1e-14
     print("... passed")
@@ -238,34 +297,67 @@ def test_smooth():
     testFunc_field = TestFunctions(temp_scalar_field.space)
     trialFunc_field = TrialFunctions(temp_scalar_field.space)
     matrix_ufl = UflDecorator()
-    coordinateSystem = temp_scalar_field.mesh.coordinateSystem
-    J_hat = coordinateSystem.J_hat
+    coordinate_system = temp_scalar_field.mesh.coordinate_system
+    J_hat = coordinate_system.J_hat
     i=0
     for test in testFunc_field:
-        iTest = Tensor(test, coordinateSystem, mayHaveSpectralDimension=True)
-        iFluc = Tensor(trialFunc_field[i], coordinateSystem, mayHaveSpectralDimension=True)
+        iTest = Tensor(
+        test,
+        coordinate_system,
+        mayHaveSpectralDimension=True,
+        )
+        iFluc = Tensor(
+        trialFunc_field[i],
+        coordinate_system,
+        mayHaveSpectralDimension=True,
+        )
         if iTest.order  == 1:
-            matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*dx)
-            matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iTest))).ufl_tens*J_hat*dx)
+            matrix_ufl.add( ( i_dot(
+            iFluc,
+            i_conj(iTest),
+            ) ).ufl_tens*J_hat*dx)
+            matrix_ufl.add((smoothFactor* i_inner(
+            i_grad(iFluc),
+            i_grad(iTest),
+            )).ufl_tens*J_hat*dx)
         elif iTest.order == 0:
-            matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*dx)
-            matrix_ufl.add((smoothFactor* iDot(iGrad(iFluc),iGrad(iConj(iTest)) )).ufl_tens*J_hat*dx)
+            matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*dx)
+            matrix_ufl.add((smoothFactor* i_dot(
+            i_grad(iFluc),
+            i_grad(i_conj(iTest)),
+             )).ufl_tens*J_hat*dx)
         else:
             print("Wrong order for test function")
         i+=1
-    matrix = matrix_ufl.getAssembledMatrix(temp_scalar_field.mesh, bcs=[])
-    temp_scalar_field.space.FEMSmoothSolver = LinearSolver.createEquationSystemSolver(matrix)
+    matrix = matrix_ufl.get_assembled_matrix(
+    temp_scalar_field.mesh,
+    bcs=[],
+    )
+    temp_scalar_field.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
     expr_ufl = UflDecorator()
-    listOfFields = temp_scalar_field.getListOfSubFields()
+    listOfFields = temp_scalar_field.get_list_of_sub_fields()
     test_FEM     = TestFunctions(temp_scalar_field.space)
-    coordinateSystem = temp_scalar_field.mesh.coordinateSystem
-    J_hat = coordinateSystem.J_hat
+    coordinate_system = temp_scalar_field.mesh.coordinate_system
+    J_hat = coordinate_system.J_hat
     for i in range(len(listOfFields)):
-        iTest = Tensor(test_FEM[i], coordinateSystem, mayHaveSpectralDimension=True)
+        iTest = Tensor(
+        test_FEM[i],
+        coordinate_system,
+        mayHaveSpectralDimension=True,
+        )
         field     = listOfFields[i]
-        expr_ufl += (iDot(field.getTensor(), iConj(iTest))).ufl_tens*J_hat*dx
-    petscVec = expr_ufl.getAssembledVector(temp_scalar_field.mesh, bcs=[])
-    validation_array = LinearSolver.solveEquationSystemWithPredefinedSolver(temp_scalar_field.space.FEMSmoothSolver, petscVec)
+        expr_ufl += (i_dot(
+        field.get_tensor(),
+        i_conj(iTest),
+        )).ufl_tens*J_hat*dx
+    petscVec = expr_ufl.get_assembled_vector(
+    temp_scalar_field.mesh,
+    bcs=[],
+    )
+    validation_array = LinearSolver.solve_equation_system_with_predefined_solver(
+    temp_scalar_field.space.FEMSmoothSolver,
+    petscVec,
+    )
     # 2 Check alignment
     randomField.scalar_field.smooth(smoothFactor)
     test_array = randomField.scalar_field.function.x.array.copy()

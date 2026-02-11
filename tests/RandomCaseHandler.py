@@ -37,23 +37,49 @@ class RandomCaseHandler():
     # TODO: write docstrings
     def __init__(self,dim_vector, ):
         # 1. Define mesh 
-        self.mesh = mesh.create_rectangle(comm=MPI.COMM_WORLD,
-                            points=((0.0, 0.0), (1.0, 1.0)), n=(10, 10),
-                            cell_type=mesh.CellType.triangle,
-                            ghost_mode=mesh.GhostMode.none)
+        self.mesh = mesh.create_rectangle(
+        comm=MPI.COMM_WORLD,
+        points=((0.0, 0.0), (1.0, 1.0)),
+        n=(10, 10),
+        cell_type=mesh.CellType.triangle,
+        ghost_mode=mesh.GhostMode.none,
+        )
         # 1.b create FELiCSMesh, which is necessary for Field defination
         # NOTE: The default coordinate system is Cylindrical, whith non-zero wave number
         self.fixed_m = np.random.randint(20) + 1
-        self.felics_mesh = FELiCSMesh("Cylindrical", gdim=2, m=self.fixed_m,inputMesh=self.mesh)
+        self.felics_mesh = FELiCSMesh(
+        "Cylindrical",
+        gdim=2,
+        m=self.fixed_m,
+        inputMesh=self.mesh,
+        )
         # 2. create function spaces & test/trial functions
         self.dim_vector = dim_vector
-        scalar_element = element("CG", 'triangle',2)
-        vector_element = element("CG", "triangle", 2, shape=(dim_vector,))
+        scalar_element = element(
+        "CG",
+        'triangle',
+        2,
+        )
+        vector_element = element(
+        "CG",
+        "triangle",
+        2,
+        shape=(dim_vector,),
+        )
         Vmixed = mixed_element([scalar_element, vector_element])
         
-        self.space_scalar = functionspace(self.mesh, ("CG", 2))
-        self.space_vector = functionspace(self.mesh, ("CG", 2,(dim_vector,)))
-        self.space_mixed  = functionspace(self.mesh, Vmixed)
+        self.space_scalar = functionspace(
+        self.mesh,
+        ("CG", 2),
+        )
+        self.space_vector = functionspace(
+        self.mesh,
+        ("CG", 2,(dim_vector,)),
+        )
+        self.space_mixed  = functionspace(
+        self.mesh,
+        Vmixed,
+        )
 
         self.test_scalar  = TestFunction(self.space_scalar)
         self.test_vector  = TestFunction(self.space_vector)
@@ -81,11 +107,23 @@ class RandomCaseHandler():
     
     def createFELiCSField(self, type):
         if type == "scalar":
-            field = Field(self.space_scalar, self.felics_mesh, m=self.fixed_m)
+            field = Field(
+            self.space_scalar,
+            self.felics_mesh,
+            m=self.fixed_m,
+            )
         elif type == "vector":
-            field = Field(self.space_vector, self.felics_mesh, m=self.fixed_m)
+            field = Field(
+            self.space_vector,
+            self.felics_mesh,
+            m=self.fixed_m,
+            )
         elif type == "mixed":
-            field = Field(self.space_mixed, self.felics_mesh, m=self.fixed_m)
+            field = Field(
+            self.space_mixed,
+            self.felics_mesh,
+            m=self.fixed_m,
+            )
         else:
             raise ValueError("Field type not recognized.")
         # assign random values to the field's function's value
@@ -95,7 +133,13 @@ class RandomCaseHandler():
     
     def createFELiCSMode(self, name, analysisType, modeType):
         # NOTE: I assume all modes are scalar fields here
-        mode = Mode(self.space_scalar, self.felics_mesh, name=name, analysisType=analysisType, modeType=modeType)
+        mode = Mode(
+        self.space_scalar,
+        self.felics_mesh,
+        name=name,
+        analysisType=analysisType,
+        modeType=modeType,
+        )
         # assign random values to the mode's function's value
         length = len(mode.function.x.array)
         mode.function.x.array[:] = np.random.rand(length) + 1j*np.random.rand(length)
@@ -106,17 +150,38 @@ class RandomCaseHandler():
             # Smooth scalar functions
             rhs = func * conj(self.test_scalar)*dx
             lhs = conj(self.test_scalar)*self.trial_scalar * dx + \
-                smoothFactor * inner(grad(self.trial_scalar),grad(self.test_scalar))*dx
-            problem = petsc.LinearProblem(lhs, rhs, bcs=[],
-                                            petsc_options={"ksp_type": "preonly",
-                                                            "pc_type": "lu"})
+                smoothFactor * inner(
+            grad(self.trial_scalar),
+            grad(self.test_scalar),
+            )*dx
+            problem = petsc.LinearProblem(
+            lhs,
+            rhs,
+            bcs=[],
+            petsc_options={"ksp_type": "preonly",
+                                                            "pc_type": "lu"},
+            )
             temp_func = problem.solve()
             return temp_func
         elif func.function_space == self.space_vector:
             # Smooth vector functions
-            rhs = inner(func,  self.test_vector)*dx
-            lhs = inner(self.trial_vector, self.test_vector)*dx + smoothFactor*inner(grad(self.trial_vector),grad(self.test_vector))*dx
-            problem = petsc.LinearProblem(lhs, rhs, bcs=[], petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+            rhs = inner(
+            func,
+            self.test_vector,
+            )*dx
+            lhs = inner(
+            self.trial_vector,
+            self.test_vector,
+            )*dx + smoothFactor*inner(
+            grad(self.trial_vector),
+            grad(self.test_vector),
+            )*dx
+            problem = petsc.LinearProblem(
+            lhs,
+            rhs,
+            bcs=[],
+            petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+            )
             temp_func = problem.solve()
             return temp_func
         pass
