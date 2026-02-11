@@ -13,9 +13,9 @@
 # Standard libraries
 from os import (
     listdir,
-    remove,
-    exists
+    remove
 )
+from os.path import exists
 
 # Third party libraries
 import numpy as np
