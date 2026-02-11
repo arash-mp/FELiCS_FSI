@@ -80,7 +80,6 @@ class MomentumEquation(EquationTemplate):
         If the numerical scheme is 'Discontinuous Galerkin', an error will be raised since it is not implemented in the tensorial framework.
         """
         # Disclaimer
-        param.Numerics.NumericalScheme = 'Discontinuous Galerkin'
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
     
