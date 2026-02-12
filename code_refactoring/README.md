@@ -97,17 +97,26 @@ This step runs **Pipeline A (`defs`)** and performs the following actions on eve
 
 ## Step 2: Review and Clean `felics_renames.json`
 
-The `defs` step produces a file named **`felics_renames.json`**, which acts as the authoritative rename map.
+The `defs` step produces a file named **`felics_renames.json`**, which acts as the authoritative rename map. The current  **`felics_renames.json`** can be found in 
+`code_refactoring/arxiv/felics_renames.json`. 
+
+> **Important**
+>
+> - If you only want to use the names that have already been refactored, **use the old `.json` only** and **do not run the pipeline A**. Instead go directly to **pipeline B** .
+> - If you want to first align with the current naming in FELiCS *and* update your own script to match the coding standards:
+>   1. Use the old `.json` to convert all names currently used in FELiCS.
+>   2. Run `defs` again to convert your script according to the code standards.
+
 
 ### ⚠️ Manual Review Required
 
-Some entries may be **false positives** and must be removed before proceeding.
+Some entries must be removed before proceeding.
 
-### Common False Positives to Remove
+### Things to Remove
 
-Delete mappings such as:
+Delete the changes from the json files such as:
 
-- `t → T` (often represents time)
+- `t → T` (often represents transpose and temperature)
 - `get_ksp → getKSP` (PETSc solvers)
 - `Get_size → getSize` (external APIs)
 - `Get_vecs` and similar backend-specific functions
@@ -151,7 +160,7 @@ All filenames must follow **snake_case**.
 
 ### Runner Scripts
 
-Rename entry-point scripts:
+Rename entry-point scripts with git mv:
 
 - `run_input_output.py`
 - `run_modal.py`
@@ -182,7 +191,7 @@ Ensure all corresponding imports are updated.
 
 ### 3.2.1 Lazy Loading Heavy Dependencies
 
-Move heavy or optional imports inside the functions that use them.
+Move some specific imports inside the functions that use them.
 
 #### `FELiCS/Misc/logging.py`
 - Move `import IPython` inside `in_notebook()`
@@ -245,6 +254,4 @@ inside the functions
 
 - Refactor incrementally and test frequently
 - Commit automated and manual changes separately
-- Favor explicit imports and clarity over convenience
 
-Following this guide ensures the FELiCS codebase remains clean, consistent, and contributor-friendly.
