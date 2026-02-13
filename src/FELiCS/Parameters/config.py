@@ -18,7 +18,7 @@ from    h5py                            import File
 from    FELiCS.Equation.MixtureClass    import MixtureClass
 from    FELiCS.SpaceDisc.FELiCSMesh     import FELiCSMesh
 from    FELiCS.Misc.functions           import getLastGitCommit
-from 	FELiCS.Misc.logging			    import Logger
+from 	FELiCS.Misc.logging			    import Logger, log_and_raise
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -154,13 +154,11 @@ class config(ABC):
                 try:
                     result.append(complex(item))  # Convert string to complex
                 except ValueError:
-                    logger.error(f"Invalid complex number string: {item}")
-                    raise ValueError(f"Invalid complex number string: {item}")
+                    log_and_raise(logger, f"Invalid complex number string: {item}", ValueError)
             elif isinstance(item, (int, float)):
                 result.append(item)  # Convert float/int to complex
             else:
-                logger.error(f"Unsupported type {type(item)} in list. Must be str or float.")
-                raise TypeError(f"Unsupported type {type(item)} in list. Must be str or float.")
+                log_and_raise(logger, f"Unsupported type {type(item)} in list. Must be str or float.", TypeError)
         return result
     
     def calculate_parameters(self):
@@ -191,9 +189,7 @@ class config(ABC):
         for field in mandatory_files:
             filename = config_dict[field.split("_")[0]][field.split("_")[1]]
             if not os.path.isfile(filename):
-                logger.error(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
-                raise Exception(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
-
+                log_and_raise(logger, f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.", Exception)
     def importFromFile(self, configFilePath):
         """
         Import parameters from a .json file and update configuration.

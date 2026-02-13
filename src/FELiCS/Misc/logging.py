@@ -15,12 +15,17 @@ import logging, re
 import shutil
 from datetime import datetime
 
+def log_and_raise(logger, log_message, exc_type=RuntimeError, raise_message=None):
+    logger.error(log_message)
+    raise exc_type(raise_message if raise_message is not None else log_message)
+
 def in_notebook():
     try:
         from IPython import get_ipython
         return get_ipython() is not None
     except ImportError:
         return False
+
 class CustomFormatter(logging.Formatter):
     """
     Custom log formatter with colored output for different log levels.
@@ -310,4 +315,3 @@ class Logger:
         """
         if logger.hasHandlers():
             logger.handlers.clear()
-

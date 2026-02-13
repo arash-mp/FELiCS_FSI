@@ -12,7 +12,7 @@
 #
 import  numpy                   as     np
 from    dolfinx.fem             import Function, petsc
-from    FELiCS.Misc.logging     import Logger
+from    FELiCS.Misc.logging     import Logger, log_and_raise
 from    mpl_toolkits.axes_grid1 import make_axes_locatable 
 
 # Get the logger
@@ -127,9 +127,7 @@ class Field:
             
             # Check that the number of axis names is sufficient
             if len(axisNames) < numSubSpaces:
-                logger.error(f"Not enough axis names {axisNames} in the coordinate system for the vector field with {numSubSpaces} components.")
-                raise ValueError("Not enough axis names in the coordinate system for the vector field.")
-
+                log_and_raise(logger, f"Not enough axis names {axisNames} in the coordinate system for the vector field with {numSubSpaces} components.", ValueError)
             # If the vector was not given before, we set a default
             if self._name is None or not isinstance(self._name, str):
                 self._name       = 'vectorField'
@@ -161,9 +159,7 @@ class Field:
                         subFieldNames.append(f'vector{counter_vectors}')
                         counter_vectors += 1
                     else:
-                        logger.error("Subspace type neither scalar nor vector.")
-                        raise ValueError("Subspace type neither scalar nor vector.") 
-
+                        log_and_raise(logger, "Subspace type neither scalar nor vector.", ValueError)
         return subFieldNames
 
     def setNamesOfSubFields(self, nameList):

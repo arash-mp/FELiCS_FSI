@@ -20,7 +20,7 @@ from FELiCS.Misc.tensorUtils import (
     iConj,
 )
 from .EquationTemplate        import EquationTemplate
-from FELiCS.Misc.logging      import Logger
+from FELiCS.Misc.logging      import Logger, log_and_raise
 from FELiCS.Equation.Boundary import BoundaryType
 
 # Get the logger
@@ -94,9 +94,7 @@ class SpeciesEquation(EquationTemplate):
 
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
-            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
-    
+            log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
         # initialize variables in template class
         super().__init__(index, eqColl, fluc, X, param)
 

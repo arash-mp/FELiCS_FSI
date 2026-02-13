@@ -48,7 +48,7 @@ from FELiCS.Misc.tensorUtils import (
 from    petsc4py.PETSc               import ScalarType
 from    FELiCS.Equation.UflDecorator import UflDecorator
 from    FELiCS.Equation.Boundary     import BoundaryHandler
-from 	FELiCS.Misc.logging          import Logger
+from 	FELiCS.Misc.logging          import Logger, log_and_raise
 
 
 # Get the logger
@@ -269,8 +269,7 @@ class EquationCollectionClass():
                 #            raise Exception('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
 
             elif equation[0] not in  ["EquationOfState", "ProgressVariableLinear"] :
-                logger.error('Equation type ' + str(equation)  + ' unknown.' )
-                raise Exception('Equation type ' + str(equation)  + ' unknown.' )
+                log_and_raise(logger, 'Equation type ' + str(equation)  + ' unknown.', Exception)
 
             
         # Add sponge region to equation list only if the field was given in the mean flow file
@@ -298,9 +297,7 @@ class EquationCollectionClass():
                 # Variables used: u
                 self.resolventResponseIndices = self._FEMSpaces.VMixed.sub(index_u).collapse()[1]
             else:
-                logger.error(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
-                raise Exception(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
-                
+                log_and_raise(logger, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.", Exception, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
             # Same for the forcing norm
             if param.IOResolvent.ForcingNorm == 'Chu':
                 # Variables used: all
@@ -309,9 +306,7 @@ class EquationCollectionClass():
                 # u
                 self.resolventForcingIndices = self._FEMSpaces.VMixed.sub(index_u).collapse()[1]
             else:
-                logger.error(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
-                raise Exception(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
-
+                log_and_raise(logger, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.", Exception, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
     def getLinearOperator(self, meanFlow):
         """
         Construct the linear operator matrix for the equation system.
@@ -705,9 +700,7 @@ class EquationCollectionClass():
                 self.forcing_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
                 self.__forcing_coeff = self._param.IOResolvent.ForcingCoeff
             else:
-                logger.error(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
-                raise Exception(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
-                
+                log_and_raise(logger, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.", Exception, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
         # In boundary forcing, forcing is allowed only on the specific boundaries
         elif param.IOResolvent.ForcingMode=='Boundary':
             raise Exception("Boundary forcing not implemented for Resolvent analysis in Tensor notation")
@@ -726,9 +719,7 @@ class EquationCollectionClass():
             idu =  param.Case.SolutionList.index('u')
             self.response_vf += (barrho*iDot(fluc.u,iConj(X[idu]))).ufl_tens*self._coordinateSystem.J_hat*dx
         else:
-            logger.error(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
-            raise Exception(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
-
+            log_and_raise(logger, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.", Exception, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
     def computeResolventFEMWeights(self, X, param, mean, fluc):
         """
         Compute FEM weighting matrix for resolvent input/output scaling.

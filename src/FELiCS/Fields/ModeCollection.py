@@ -15,7 +15,7 @@ import  h5py
 import  numpy                   as np
 from    .Mode                   import Mode, AnalysisType, ModeType
 from    .fluctuationClass       import fluctuationSolutions
-from 	FELiCS.Misc.logging     import Logger
+from 	FELiCS.Misc.logging     import Logger, log_and_raise
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -568,11 +568,7 @@ class ModeCollection():
                 ))
             
         else:
-            logger.error("Analysis type not recognized in getOldSolutionObject of ModeCollection.")
-            raise RuntimeError("Analysis type not recognized in getOldSolutionObject of ModeCollection.")
-
-
-
+            log_and_raise(logger, "Analysis type not recognized in getOldSolutionObject of ModeCollection.", RuntimeError)
         return fluctSolutObjList
 
 
@@ -663,9 +659,7 @@ class ModeCollection():
                 elif adjointPattern in f:
                     typesModeFiles.append('Adjoint')
                 else:
-                    logger.error(f'Could not determine mode type from filename "{f}".')
-                    raise RuntimeError(f'Could not determine mode type from filename "{f}".')
-                
+                    log_and_raise(logger, f'Could not determine mode type from filename "{f}".', RuntimeError)
                 # Get the complex eigenvalue from file
                 with h5py.File(os.path.join(importFolder, f), 'r') as file:
                     omegasModes.append(file["omega"][()])
@@ -676,9 +670,7 @@ class ModeCollection():
                 elif forcingPattern in f:
                     typesModeFiles.append('Forcing')
                 else:
-                    logger.error(f'Could not determine mode type from filename "{f}". Skipping this file.')
-                    raise RuntimeError(f'Could not determine mode type from filename "{f}".')
-                
+                    log_and_raise(logger, f'Could not determine mode type from filename "{f}". Skipping this file.', RuntimeError)
                 # Get the gain number and frequency from file
                 with h5py.File(os.path.join(importFolder, f), 'r') as file:
                     omegasModes.append(file["omega"][()])
@@ -689,9 +681,7 @@ class ModeCollection():
                 if responsePattern in f:
                     typesModeFiles.append('Response')
                 else:
-                    logger.error(f'Could not determine mode type from filename "{f}". Skipping this file.')
-                    raise RuntimeError(f'Could not determine mode type from filename "{f}".')
-                
+                    log_and_raise(logger, f'Could not determine mode type from filename "{f}". Skipping this file.', RuntimeError)
                 # Get the gain number and frequency from file
                 with h5py.File(os.path.join(importFolder, f), 'r') as file:
                     omegasModes.append(file["omega"][()])
