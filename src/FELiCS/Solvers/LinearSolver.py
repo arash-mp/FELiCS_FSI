@@ -127,8 +127,8 @@ class LinearSolver:
 
         if adjoint:
             A_adj = A.copy()
-            B_adj = B.copy()
             A_adj.hermitianTranspose()
+            B_adj = B.copy()
             B_adj.hermitianTranspose()
             guess = np.conj(sigma)
         else:
@@ -137,9 +137,9 @@ class LinearSolver:
         # create eigenproblem solver 
         eps = SLEPc.EPS().create()
         if adjoint:
-            eps.setOperators(A_adj, B_adj)
+            eps.setOperators(A_adj,B_adj)
         else:
-            eps.setOperators(A, B)
+            eps.setOperators(A,B)
         eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP)     # general non-Hermitian eigenproblem with semi-definite B
         
         eps.setTolerances(tol=tol,max_it=max_it)
@@ -172,10 +172,17 @@ class LinearSolver:
             except:
                 logger.warning("Could not access eigenpair nb ", nev+1, "!")
         
+        # Cleanup solver
         eps.getST().getKSP().getPC().destroy()
         eps.getST().getKSP().destroy()
         eps.getST().destroy()
         eps.destroy()
+        
+        # Cleanup adjoint matrices
+        if adjoint:
+            A_adj.destroy()
+            B_adj.destroy()
+            
         return eigVals, eigVecs, error
     
 
@@ -406,6 +413,45 @@ class LinearSolver:
             b.destroy()
         
         return x 
+
+
+    @staticmethod
+    def solveTransposeEquationSystemWithPredefinedSolver(
+        solver,
+        b,
+        destroy=False):
+
+        """
+        Solve a linear equation system A^Tx=b using PETSc and a predefined solver (defined by matrix A).
+
+        Parameters
+        ----------
+        solver : PETSc.KSP
+            Preconfigured solver, can be created with the method "createEquationSystemSolver".
+        b : PETSc.Vec
+            Right-hand side of the equation.
+        destroy : bool, optional
+            Whether to destroy the vector after solving, by default False. Can be useful by repetitive computations to avoid memory leaks.
+        
+        Returns
+        -------
+        x : numpy.ndarray
+            Solution vector of the linear equation system.
+        """
+        from petsc4py import PETSc
+        solution = b.copy()
+        
+        solver.solveTranspose(b, solution)
+        
+        x = solution.getArray()
+
+        solution.destroy()
+
+        if destroy:
+            b.destroy()
+        
+        return x 
+
 
 
 class ResolventOperator(object):         

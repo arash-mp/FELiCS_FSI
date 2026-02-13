@@ -51,9 +51,9 @@ class BoundaryHandler():
 
     Notes
     -----
-    Raises a `ValueError` if:
-    - The boundary ID in the file does not exist in the mesh.
-    - The boundary condition name is invalid.
+    Raises
+    `ValueError`: If the boundary ID in the file does not exist in the mesh, if the boundary condition name is invalid or if the boundary conditions file is empty or not in a valid JSON format.
+    `FileNotFoundError`: If the BCsFilePath does not exist, indicating the boundary file is missing.
     """
         
     def __init__(self, variables, mesh, BCsFilePath):
@@ -66,14 +66,19 @@ class BoundaryHandler():
         self.variables              = variables
 
         #2. read bc file 
-        # TODO Sophie: 
-        # 1. throw error if file is not there
-        # 2. throw error if file is empty or not in the correct format
-        # also: put errors in docstring notes
         logger.debug(f"Reading boundary conditions from '{BCsFilePath}'")
-        file    = open(BCsFilePath) 
-        BCsInfo = json.load(file)
-        
+        try:
+            with open(BCsFilePath, 'r') as file:
+                # Attempt to load the JSON data. This will fail for empty or invalid files.
+                BCsInfo = json.load(file)
+            logger.debug("Successfully loaded and parsed the boundary conditions file.")
+        except FileNotFoundError:
+            logger.error(f"Error: The boundary condition file was not found at '{BCsFilePath}'")
+            raise FileNotFoundError(f"The boundary condition file was not found at '{BCsFilePath}'")
+        except json.JSONDecodeError:
+            logger.error(f"Error: The file '{BCsFilePath}' is empty or not in a valid JSON format.")
+            raise ValueError(f"The file '{BCsFilePath}' is empty or not in a valid JSON format.")
+               
 
         #3. create boundary object for each boundary
         self.boundaryList = []
@@ -133,8 +138,8 @@ class BoundaryHandler():
         This function supports mixed function spaces and variables with multiple components.
         Logs a debug message each time a boundary condition is added.
         """
-
         from dolfinx.fem      import dirichletbc, locate_dofs_topological
+        gdim = self.facet_tags.topology.dim # NOTE: THIS IS VERY PRELIMINARY AND HAS TO BE CHECKED
         BCs = []
         for boundary in self.boundaryList:
             for var in self.variables:
@@ -142,7 +147,7 @@ class BoundaryHandler():
                 if len(var[1])==0 and boundary.types[index][0] == BoundaryType.DIRICHLET:
                     value = boundary.values[index][0]
                     space = functionSpace.sub(index)
-                    dofs  = locate_dofs_topological(space, 1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
+                    dofs  = locate_dofs_topological(space, gdim-1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
                     BCs.append(dirichletbc(value, dofs, space))
                     logger.debug("Adding Dirichlet BC for "+var[0]+ " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
                 else: 
@@ -150,7 +155,7 @@ class BoundaryHandler():
                         if boundary.types[index][index2] == BoundaryType.DIRICHLET:
                             value = boundary.values[index][index2]
                             space = functionSpace.sub(index).sub(index2)
-                            dofs  = locate_dofs_topological(space, 1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
+                            dofs  = locate_dofs_topological(space, gdim-1, self.facet_tags.indices[self.facet_tags.values==boundary.ID])
                             BCs.append(dirichletbc(value, dofs, space))
                             logger.debug("Adding Dirichlet BC for "+var[0]+var[1][index2] + " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
 

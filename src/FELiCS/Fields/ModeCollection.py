@@ -177,12 +177,13 @@ class ModeCollection():
             return
 
         [eigVals, eigVecs, error] = solution
-        numberOfModes = len(eigVals)
+        numberOfModes   = len(eigVals)
 
         if not adjoint:
-            modeType = 'direct'
+            modeType    = 'direct'
         else:
-            modeType = 'adjoint'
+            modeType    = 'adjoint'
+            guess       = np.conj(guess)
 
         for i in range(numberOfModes):
             mode = Mode(
@@ -707,6 +708,7 @@ class ModeCollection():
             start = len(self.modeList) - onlyNewN 
 
         for i in range(start, len(self.modeList)):
+            logger.debug(f"Exporting mode {i+1}/{len(self.modeList)} to file.")
             self.modeList[i].exportToH5(writer)
 
 
@@ -736,13 +738,14 @@ class ModeCollection():
         
         # If omega was given as input, filter files accordingly
         if omegas is not None:
-            matchingOmegasIndices       = [i for i, omega in enumerate(fileOmegas) if omega in np.round(omegas, 3)]
-            if len(matchingOmegasIndices) == 0:
+            #matchingOmegasIndices       = [i for i, omega in enumerate(np.round(fileOmegas, 3)) if omega in np.round(omegas, 3)]
+            closestOmegasIndices        = [np.argmin(np.abs(np.array(fileOmegas) - omega)) for omega in omegas]
+            if len(closestOmegasIndices) == 0:
                 logger.error('No matching omegas found in the import folder for the specified omegas.')
                 return
-            h5Files                     = [h5Files[i] for i in matchingOmegasIndices]
-            logger.info(f'Importing only modes for omegas: {np.round([fileOmegas[i] for i in matchingOmegasIndices],3)}')
-
+            h5Files                     = [h5Files[i] for i in closestOmegasIndices]
+            logger.info(f'Importing modes for closest omegas: {np.round([fileOmegas[i] for i in closestOmegasIndices],3)}')
+        
         # If a mode type was given as input, filter files accordingly
         if modeType is not None:
             matchingTypeIndices         = [i for i, mType in enumerate(fileTypes) if mType == modeType]
@@ -763,8 +766,9 @@ class ModeCollection():
 
         # Import each mode file
         numberOfModes                   = len(h5Files)
-        logger.info(f'Importing {numberOfModes} modes into mode collection.')
+        logger.info(f'{numberOfModes} modes to import into mode collection.')
         for i in range(numberOfModes):
+            logger.info(f'Importing mode {i+1}/{numberOfModes} from file "{h5Files[i]}".')
             
             # Get the mode type
             if self.analysisType == AnalysisType.MODAL:

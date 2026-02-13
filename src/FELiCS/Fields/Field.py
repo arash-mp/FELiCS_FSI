@@ -10,6 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+import  numpy                   as     np
 from    dolfinx.fem             import Function, petsc
 from    FELiCS.Misc.logging     import Logger, log_and_raise
 from    mpl_toolkits.axes_grid1 import make_axes_locatable 
@@ -243,7 +244,8 @@ class Field:
         for i in range(numberOfSubSpaces):
             # transfer content
             space, mapping            = self.space.sub(i).collapse()
-            field                     = Field(space, self.mesh, name=namesOfSubFields[i])
+            # NOTE: the sub-fields inherit the wave number from the field.
+            field                     = Field(space, self.mesh, name=namesOfSubFields[i], m=self.m)
             field.setCoefficientArray(self.getCoefficientArray()[mapping])
             listOfFields.append(field)
 
@@ -637,6 +639,8 @@ class Field:
 
             vorticityField = Field(self.space, self.mesh, name="vorticity")
             vorticityField.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
+            
+            return vorticityField
 
 
     def exportToH5(self, writer, fileName=None):
@@ -661,7 +665,7 @@ class Field:
     def importData(
             self,
             reader,
-            importFilePath,
+            importFilePath = None,
             groupName = None
         ):
         """
@@ -687,6 +691,11 @@ class Field:
         list of str
             List of variable names that were not found in the file.
         """
+        import os
+        # determine filepath if not given
+        # TODO Sophie: these two lines should be in the reader
+        if importFilePath==None:
+            importFilePath = os.path.join(reader._sourceDir, self.name)
         # Just call the reader function
         self, notInFile = reader.importInField(
             self,
@@ -941,7 +950,7 @@ class Field:
         petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
         self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
 
-    def plot(self, xlim=None, ylim=None, imaginaryPart=False):
+    def plot(self, xlim=None, ylim=None, plotType="real", clim=None):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
         field looks as expected and rule out e.g. import problems.
@@ -950,10 +959,9 @@ class Field:
         -----
         - This method provides a simple visualization of the field.
         """
-        import matplotlib.pyplot as plt
-        from matplotlib.tri import Triangulation
-        from dolfinx import fem
-        import numpy as np
+        import  matplotlib.pyplot           as plt
+        from    matplotlib.tri              import Triangulation
+        from    dolfinx                     import fem
         from    basix.ufl                   import element
 
         if self.space.num_sub_spaces > 1:
@@ -980,27 +988,36 @@ class Field:
         V1              = fem.functionspace(mesh, element("CG", "triangle", 1))
         u1              = fem.Function(V1)
         u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
-        if not imaginaryPart:
-            phi_vertex      = np.real(u1.x.array)  # already aligned with coords / triangles
-        else:
+        
+        # Get the values corresponding to plot type
+        if plotType == "imag":
             phi_vertex      = np.imag(u1.x.array)
-
+            cmap            = "seismic"
+        elif plotType == "magnitude":
+            phi_vertex      = np.abs(u1.x.array)
+            cmap            = "magma"
+        else:
+            phi_vertex      = np.real(u1.x.array)
+            cmap            = "seismic"
         # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
 
         # --- 2) Build triangulation from the mesh ---
-        cells_to_vertices = mesh.topology.connectivity(tdim, 0).array
-        triangles       = cells_to_vertices.reshape(-1, 3)
-        coords          = mesh.geometry.x
-        x               = coords[:, 0]
-        y               = coords[:, 1]
-        triang          = Triangulation(x, y, triangles=triangles)
+        cells_to_vertices   = mesh.topology.connectivity(tdim, 0).array
+        triangles           = cells_to_vertices.reshape(-1, 3)
+        coords              = mesh.geometry.x
+        x                   = coords[:, 0]
+        y                   = coords[:, 1]
+        triang              = Triangulation(x, y, triangles=triangles)
         # ---- End of METHOD 2 ----
         
         # ---- Plotting ----
         fig, axes       = plt.subplots()
-        contour         = axes.tricontourf(triang, phi_vertex, levels=20, cmap="RdBu_r", alpha=0.7)
-        axes.tricontour(triang, phi_vertex, levels=10, colors='black', alpha=0.5, linewidths=0.5)
-
+        if clim is None:
+            if plotType == "magnitude":
+                clim = (0, np.max(phi_vertex))
+            else:
+                clim = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
+        contour = axes.tripcolor(triang, phi_vertex, shading='gouraud', cmap=cmap, vmin=clim[0], vmax=clim[1])
 
         # Set labels and title
         axes.set_xlabel('x')
@@ -1009,9 +1026,11 @@ class Field:
             title = self.name
         else:
             title = "scalar_field"
-        if imaginaryPart:
+        if plotType == "imag":
             title += "_imag"
-        elif not self.isReal:
+        elif plotType == "magnitude":
+            title += "_magnitude"
+        else:
             title += "_real"
 
         axes.set_title(title)
@@ -1023,7 +1042,7 @@ class Field:
         colorbar_axes   = divider.append_axes("right", size="2%", pad=0.5) 
         cbar            = plt.colorbar(contour, label=title, cax=colorbar_axes)
         cbar.formatter.set_powerlimits((0, 0))
-
+        cbar.update_ticks()
         if xlim is not None:
             axes.set_xlim(xlim)
         if ylim is not None:
@@ -1064,11 +1083,70 @@ class Field:
             result.setCoefficientArray(self.getCoefficientArray() + other)
             return result
         return NotImplemented
-    
+
+    def __iadd__(self, other):
+        """
+        Overload the ``+=`` operator for adding fields or scalars.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field object defined on the same space, or a scalar
+            value to be added to all coefficients.
+
+        Returns
+        -------
+        self
+        """
+        import numpy as np
+        ## overrides '+'
+        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            self.setCoefficientArray(self.getCoefficientArray() + other.getCoefficientArray())
+            return self
+        elif np.isscalar(other):
+            self.setCoefficientArray(self.getCoefficientArray() + other)
+            return self
+        return NotImplemented
+ 
 
     def __sub__(self, other):
         """
         Overload the `-` operator for adding two Field objects.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field object defined on the same space, or a scalar
+            value to be added to all coefficients.
+
+        Returns
+        -------
+        Field
+            A new Field object with the substracted coefficient arrays.
+
+        Raises
+        ------
+        NotImplementedError
+            If `other` is not a Field object.
+        """
+        ## overrides '-'
+        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
+            return result 
+        elif np.isscalar(other):
+            result = Field(self.space, self.mesh)
+            result.setCoefficientArray(self.getCoefficientArray() - other)
+            return result 
+        return NotImplemented
+
+    def __isub__(self, other):
+        """
+        Overload the `-=` operator for adding two Field objects.
 
         Parameters
         ----------
@@ -1077,22 +1155,24 @@ class Field:
 
         Returns
         -------
-        Field
-            A new Field object with the summed coefficient arrays.
+        self
 
         Raises
         ------
         NotImplementedError
             If `other` is not a Field object.
         """
-        ## overrides '+'
+        ## overrides '-='
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(other, Field):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
-            return result 
+            self.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
+            return self
+        elif np.isscalar(other):
+            self.setCoefficientArray(self.getCoefficientArray() - other)
+            return self
         return NotImplemented
+
 
     def __mul__(self, other):
         """
@@ -1122,6 +1202,33 @@ class Field:
             result.setCoefficientArray(self.getCoefficientArray()*other)
             return result
         return NotImplemented
+
+
+    def __imul__(self, other):
+        """
+        Overload the ``*=`` operator for pointwise multiplication.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field defined on the same space, or a scalar value.
+
+        Returns
+        -------
+        self
+        """
+        import numpy as np
+        ## overrides '*='
+        ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            self.setCoefficientArray(self.getCoefficientArray()*other.getCoefficientArray())
+            return self
+        elif np.isscalar(other):
+            self.setCoefficientArray(self.getCoefficientArray()*other)
+            return self
+        return NotImplemented
+
 
     def __truediv__(self, other):
         """
@@ -1157,6 +1264,39 @@ class Field:
             result.setCoefficientArray(self.getCoefficientArray()/other)
             return result
         return NotImplemented
+
+
+    def __itruediv__(self, other):
+        """
+        Overload the ``/=`` operator for pointwise division.
+
+        Parameters
+        ----------
+        other : Field or scalar
+            Another Field defined on the same space, or a scalar value.
+
+        Returns
+        -------
+        self
+
+        Notes
+        -----
+        - Division by a Field is performed coefficient-wise; it is the
+          caller's responsibility to avoid division by zero.
+
+        """
+        import numpy as np
+        ## overrides '/='
+        ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
+        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        if isinstance(other, Field):
+            self.setCoefficientArray(self.getCoefficientArray()/other.getCoefficientArray())
+            return self
+        elif np.isscalar(other):
+            self.setCoefficientArray(self.getCoefficientArray()/other)
+            return self
+        return NotImplemented
+
 
 
 

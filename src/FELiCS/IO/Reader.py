@@ -12,6 +12,7 @@
 #
 # Standard libraries
 import  os
+import  time
 import  h5py
 from    functools           import cached_property
 from    typing              import Optional, List, Dict, Any, Tuple
@@ -278,15 +279,16 @@ class Reader:
             return coords
         
         if self._needInterpolation:
-            
             if self._felicsMeshFilePath:
                 # Option 1: load from a given FELiCS mesh file
+                logger.debug(f"Executing Option 1: load from a given FELiCS mesh file. {self._felicsMeshFilePath}")
                 coordsArray = _load_coordinates_from_file(self._felicsMeshFilePath, "coordinates/", meshAxisNames)
                 return coordsArray
             
             else:
                 # Option 2: Coords into file containing the data. Load at first file access
                 # NOTE: assumes the coordinates are in the same group as the variables
+                logger.debug("Executing Option 2: loading from main file under group name.")
                 self._ensure_source_set()
                 self._get_list_available_vars()
                 missingCoords               = [coord for coord in meshAxisNames if coord not in self._rawDataDict.keys()]
@@ -299,12 +301,15 @@ class Reader:
                 return coordsArray
         
         else:
+            logger.debug("Executing Option 3: No interpolation needed: load from FELiCS exported mesh file.")
             # Option 3: Load the FELiCS mesh
             if self._felicsMeshFilePath is not None:
                 # For example when we load the mean flow, the FELiCS mesh is usually in another directory
+                logger.debug(f"Using {self._felicsMeshFilePath}")
                 meshFile                    = self._felicsMeshFilePath
             else:
                 # Default FELiCS mesh file in the source directory (e.g. when loading modes)
+                logger.debug(f"self._felicsMeshFilePath is None, therefore using {os.path.join(self._sourceDir, 'mesh.h5')}")
                 meshFile                    = os.path.join(self._sourceDir, "mesh.h5")
             
             # Check that the file exists
@@ -528,7 +533,16 @@ class Reader:
                 self._availableVars = list(fileHandle[groupName].keys())
             else:
                 logger.warning(f"Group '{groupName}' not found in file '{filePath}'.")
-                self._availableVars = []
+                logger.warning("Switching to root group for variable listing.")
+                logger.debug(f"fileHandle contains the following keys: {list(fileHandle.keys())}")
+                self._availableVars = list(fileHandle.keys())
+                logger.debug(f"now overwriting sourceKey: changing groupName to None")
+                self._sourceKey = (filePath, None)
+                if self._availableVars is []:
+                    logger.error(f"No variables found in file '{filePath}'.")
+                    raise RuntimeError(f"No variables found in file '{filePath}'.")
+                else:
+                    logger.debug(f"Found variables: {self._availableVars}")
                 
         # Remove variables that should not be there (frequency, gains, etc.)
         if "omega" in self._availableVars:
@@ -616,11 +630,21 @@ class Reader:
         values                      = np.column_stack([self._rawDataDict[varName] for varName in varNamesComplex])
 
         # Use cached triangulation
+        logger.debug("Now performing linear interpolation using chached Delaunay triangulation.")
+        # if len(self.meshAxisNames) == 3:
+        #     logger.warning("PRELIMINARY FIX: FOR 3D interpolation nearest-neighbour interpolation is used.")
+        #     nearestInterp           = NearestNDInterpolator(self._triangulationImportMesh, values)
+        #     interpolated           = nearestInterp(calcCoords)
+        # else:
+        start_inter = time.time()
         linearInterp                = LinearNDInterpolator(self._triangulationImportMesh, values)
         interpolated                = linearInterp(calcCoords)  # shape (M, K)
+        time_inter = time.time() - start_inter
+        logger.info(f"Linear interpolation took {time_inter:.1f} seconds. (Mesh size: {calcCoords.shape})")
 
         # Handle NaNs by nearest-neighbour fill (vectorized)
         if np.isnan(interpolated).any():
+            logger.debug("NaNs detected in interpolation result; applying nearest-neighbour fill.")
             nearestInterp           = NearestNDInterpolator(importCoords, values)
             nearestValues           = nearestInterp(calcCoords)
             nanMask                 = np.isnan(interpolated)

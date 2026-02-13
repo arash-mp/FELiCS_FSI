@@ -99,31 +99,31 @@ def test_getVorticityField():
     assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-13
     # Test for 3D vector
     # NOTE: we do this in the last step
-    # dim_vector = 3
-    # print("Testing computation of the vorticity field in 2D")
-    # randomField     = FieldTestHandler(dim_vector)
-    # field           = randomField.vector_field
-    # components      = field.getListOfSubFields()
-    # componentList   = []  
-    # for subfield in components:
-    #     componentList.append(subfield.getGradientField())
-    # dwdy = componentList[2].getListOfSubFields()[1]
-    # dvdz = componentList[1].getListOfSubFields()[2]
+    dim_vector = 3
+    print("Testing computation of the vorticity field in 3D")
+    randomField     = FieldTestHandler(dim_vector)
+    field           = randomField.vector_field
+    components      = field.getListOfSubFields()
+    componentList   = []  
+    for subfield in components:
+        componentList.append(subfield.getGradientField())
+    dwdy = componentList[2].getListOfSubFields()[1]
+    dvdz = componentList[1].getListOfSubFields()[2]
 
-    # dudz = componentList[0].getListOfSubFields()[2]
-    # dwdx = componentList[2].getListOfSubFields()[0]
+    dudz = componentList[0].getListOfSubFields()[2]
+    dwdx = componentList[2].getListOfSubFields()[0]
 
-    # dvdx = componentList[1].getListOfSubFields()[0]
-    # dudy = componentList[0].getListOfSubFields()[1]
+    dvdx = componentList[1].getListOfSubFields()[0]
+    dudy = componentList[0].getListOfSubFields()[1]
     
-    # vorticity_x = dwdy - dvdz
-    # vorticity_y = dudz - dwdx
-    # vorticity_z = dvdx - dudy
+    vorticity_x = dwdy - dvdz
+    vorticity_y = dudz - dwdx
+    vorticity_z = dvdx - dudy
     
-    # vorticity_field_valid = randomField.createFELiCSField("vector")
-    # vorticity_field_valid.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
-    # vorticity_field_test = field.getVorticityField()
-    # assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-14
+    vorticity_field_valid = randomField.createFELiCSField("vector")
+    vorticity_field_valid.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
+    vorticity_field_test = field.getVorticityField()
+    assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-12
 
 def test_evaluateUflExpression():
     print("testing evaluate Ufl expression")
