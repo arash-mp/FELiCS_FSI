@@ -21,6 +21,7 @@ from FELiCS.Misc.tensorUtils import (
     i_t,
     i_identity
 )
+from FELiCS.Equation.Equations.EquationTemplate import EquationTemplate
 from .EquationTemplate      import EquationTemplate
 from FELiCS.Misc.logging    import Logger
 
@@ -165,44 +166,62 @@ class EnergyPressureEquation(EquationTemplate):
         #   bc)     -j*(1+gamma)*[(conj(X)*u_f*p_m).n_bc + (conj(X)*u_m*p_f).n_bc]*ds
         
         # Add volume integral of pressure gradient term (1)
-        weakForm.add(( 1j*i_div(i_conj(X)*mean.u)*fluc.p ).ufl_tens*J_hat*dx)
-        weakForm.add(( 1j*i_div(i_conj(X)*fluc.u)*mean.p ).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( 1j*
+            i_div( i_conj(X)*mean.u )*fluc.p 
+            ).ufl_tens*J_hat*dx
+        )
+        weakForm.add(
+            ( 1j*
+            i_div( i_conj(X)*fluc.u )*mean.p 
+            ).ufl_tens*J_hat*dx
+        )
+        
         # Add volume integral of velocity divergence term (2)
-        weakForm.add(( 1j*mean.gamma*i_dot(
-        i_grad(i_conj(X)*mean.p),
-        fluc.u,
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( 1j*mean.gamma*i_dot(
-        i_grad(i_conj(X)*fluc.p),
-        mean.u,
-        ) ).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( 1j*mean.gamma*
+            i_dot( i_grad( i_conj(X)*mean.p ), fluc.u ) 
+            ).ufl_tens*J_hat*dx
+        )
+        weakForm.add(
+            ( 1j*mean.gamma*
+            i_dot( i_grad( i_conj(X)*fluc.p ), mean.u )
+            ).ufl_tens*J_hat*dx
+        )
+        
         # Add boundary integral of (1) and (2)
-        weakForm.add(( -1j*(mean.gamma+1)*i_dot(
-        mean.u*fluc.p*i_conj(X),
-        self.n,
-        ) ).ufl_tens*J_hat*self.all_ds)
-        weakForm.add(( -1j*(mean.gamma+1)*i_dot(
-        fluc.u*mean.p*i_conj(X),
-        self.n,
-        ) ).ufl_tens*J_hat*self.all_ds)
+        weakForm.add(
+            ( -1j*(mean.gamma + 1)*
+            i_dot( mean.u*fluc.p*i_conj(X), self.n )
+            ).ufl_tens*J_hat*self.all_ds
+        )
+        weakForm.add(
+            ( -1j*(mean.gamma + 1)*
+            i_dot( fluc.u*mean.p*i_conj(X), self.n )
+            ).ufl_tens*J_hat*self.all_ds
+        )
     
         # ------------------------  Thermal diffusion term (Fourier law)
         # NOTE: kappa is the thermal conductivity
         # The term is: -j*(gamma-1)*div(kappa_m*grad(T_f) + kappa_f*grad(T_m))
-        # which is integrated by parts,
+        # which is integrated by parts.
+        
         # TEMPORARY: use constant Pr definition (This should move to fieldProperty or a handler)
         kappa_m = mean.nu_tot*mean.cp/mean.pr            
         kappa_f = fluc.nulam*mean.cp/mean.pr
+        
         # Volume term:  
         #   j*(gamma-1)[(grad(conj(X)).(kappa_m*grad(T_f)) + (grad(conj(X)).(kappa_f*grad(T_m))]*dx
-        weakForm.add(( -1j*(mean.gamma-1)*i_dot(
-        i_grad(i_conj(X)),
-        kappa_m*i_grad(fluc.T),
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( -1j*(mean.gamma-1)*i_dot(
-        i_grad(i_conj(X)),
-        kappa_f*i_grad(mean.T),
-        ) ).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( -1j*(mean.gamma - 1)*
+            i_dot( i_grad( i_conj(X) ), kappa_m*i_grad( fluc.T ) )
+            ).ufl_tens*J_hat*dx
+        )
+        weakForm.add(
+            ( -1j*(mean.gamma - 1)*
+            i_dot( i_grad( i_conj(X) ), kappa_f*i_grad( mean.T ) )
+            ).ufl_tens*J_hat*dx
+        )
         # Boundary term:
         #   -j*(gamma-1)[(conj(X)*kappa_m*grad(T_f)).n_bc + (conj(X)*kappa_f*grad(T_m)).n_bc]*ds
         #   --> Neglected to impose the proper BC
@@ -216,14 +235,16 @@ class EnergyPressureEquation(EquationTemplate):
         # which is integrated by parts,
         # Volume term:
         #   -j*(gamma-1)*[div(Tau) . u*conj(X)]*dx IS it really a minus in front?!?!?!
-        weakForm.add(( -1j*(mean.gamma-1)*i_dot(
-        i_div(mean.tau),
-        fluc.u*i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( -1j*(mean.gamma-1)*i_dot(
-        i_div(fluc.tau),
-        mean.u*i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( -1j*(mean.gamma - 1)*
+            i_dot( i_div( mean.tau ), fluc.u*i_conj(X) )
+            ).ufl_tens*J_hat*dx
+        )
+        weakForm.add(
+            ( -1j*(mean.gamma - 1)*
+            i_dot( i_div( fluc.tau ), mean.u*i_conj(X) )
+            ).ufl_tens*J_hat*dx
+        )
         
         # Boundary term:
         #   +j*(gamma-1)*[u . T*conj(X)]*ds 
@@ -262,26 +283,40 @@ class EnergyPressureEquation(EquationTemplate):
 
         # ------------------------  Advection terms
         # Add volume integral of pressure gradient term (1)
-        weakForm.add(( 1j*i_div(i_conj(X)*u_bil)*fluc.p ).ufl_tens*J_hat*dx)
-        weakForm.add(( 1j*i_div(i_conj(X)*fluc.u)*p_bil ).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( 1j*
+            i_div( i_conj(X)*u_bil )*fluc.p 
+            ).ufl_tens*J_hat*dx
+        )
+        weakForm.add(
+            ( 1j*
+            i_div( i_conj(X)*fluc.u )*p_bil
+            ).ufl_tens*J_hat*dx
+        )
+        
         # Add volume integral of velocity divergence term (2)
-        weakForm.add(( 1j*mean.gamma*i_dot(
-        i_grad(i_conj(X)*p_bil),
-        fluc.u,
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( 1j*mean.gamma*i_dot(
-        i_grad(i_conj(X)*fluc.p),
-        u_bil,
-        ) ).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( 1j*mean.gamma*
+            i_dot( i_grad( i_conj(X)*p_bil ), fluc.u )
+            ).ufl_tens*J_hat*dx
+        )
+        weakForm.add(
+            ( 1j*mean.gamma*
+            i_dot( i_grad( i_conj(X)*fluc.p ), u_bil) 
+            ).ufl_tens*J_hat*dx
+        )
+        
         # Add boundary integral of (1) and (2)
-        weakForm.add(( -1j*(mean.gamma+1)*i_dot(
-        u_bil*fluc.p*i_conj(X),
-        self.n,
-        ) ).ufl_tens*J_hat*self.all_ds)
-        weakForm.add(( -1j*(mean.gamma+1)*i_dot(
-        fluc.u*p_bil*i_conj(X),
-        self.n,
-        ) ).ufl_tens*J_hat*self.all_ds)
+        weakForm.add(
+            ( -1j*(mean.gamma + 1)*
+            i_dot( u_bil*fluc.p*i_conj(X), self.n )
+            ).ufl_tens*J_hat*self.all_ds
+        )
+        weakForm.add(
+            ( -1j*(mean.gamma + 1)*
+            i_dot( fluc.u*p_bil*i_conj(X), self.n )
+            ).ufl_tens*J_hat*self.all_ds
+        )
    
         ## ------------------------  Thermal diffusion term (Fourier law) => ignored
         #kappa_m = mean.nuTot*mean.cp/mean.Pr            
@@ -296,14 +331,17 @@ class EnergyPressureEquation(EquationTemplate):
         tau_bil += i_t(tau_bil)
         tau_bil += -2.0/3.0 * mean.nu_tot * \
                         i_div(u_bil) * i_identity(i_grad(u_bil))
-        weakForm.add(( -1j*(mean.gamma-1)*i_dot(
-        i_div(tau_bil),
-        fluc.u*i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( -1j*(mean.gamma-1)*i_dot(
-        i_div(fluc.tau),
-        u_bil*i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
+        
+        weakForm.add(
+            ( -1j*(mean.gamma - 1)*
+            i_dot( i_div( tau_bil ), fluc.u*i_conj(X)) 
+            ).ufl_tens*J_hat*dx
+        )
+        weakForm.add(
+            ( -1j*(mean.gamma - 1)*
+            i_dot( i_div( fluc.tau ), u_bil*i_conj(X) )
+            ).ufl_tens*J_hat*dx
+        )
         
         
  
