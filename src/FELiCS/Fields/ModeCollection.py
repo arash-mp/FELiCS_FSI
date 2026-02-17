@@ -67,11 +67,12 @@ class ModeCollection():
         The specific analysis type enum associated with this collection.
     """
 
-    def __init__(self,
-    femSpace,
-    mesh,
-    isStateVector=True,
-    analysisType='Modal',
+    def __init__(
+        self,
+        femSpace,
+        mesh,
+        isStateVector=True,
+        analysisType='Modal',
     ):
         """
         Initialize a ModeCollection instance.
@@ -110,8 +111,9 @@ class ModeCollection():
             logger.info(f'  Mode {i}:')
             mode.describe()
 
-    def append_mode(self,
-    mode,
+    def append_mode(
+        self,
+        mode,
     ):
         """
         Append an existing Mode object to the collection.
@@ -124,15 +126,16 @@ class ModeCollection():
 
         self.modeList.append(mode)
 
-    def append_mode_from_vector(self,
-    vector,
-    gain=None,
-    eigen_value=None,
-    guess=None,
-    wave_number=None,
-    frequency=None,
-    modeType = None,
-    m=0,
+    def append_mode_from_vector(
+        self,
+        vector,
+        gain=None,
+        eigen_value=None,
+        guess=None,
+        wave_number=None,
+        frequency=None,
+        modeType = None,
+        m=0,
     ):
         """
         Create a Mode from a coefficient vector and properties, and append it
@@ -161,12 +164,12 @@ class ModeCollection():
             Azimuthal wavenumber associated with the mode. Default is 0.
         """
         mode = Mode(
-        self.femSpace,
-        self.mesh,
-        isStateVector = True,
-        analysisType = self.analysisType.name,
-        modeType = modeType,
-        m = m,
+            self.femSpace,
+            self.mesh,
+            isStateVector = True,
+            analysisType = self.analysisType.name,
+            modeType = modeType,
+            m = m,
         )
         mode.set_coefficient_array(vector)
 
@@ -178,12 +181,13 @@ class ModeCollection():
 
         self.append_mode(mode)
 
-    def append_solution_of_eigen_problem(self,
-    solution,
-    guess,
-    adjoint=False,
-    name=None,
-    m=0,
+    def append_solution_of_eigen_problem(
+        self,
+        solution,
+        guess,
+        adjoint=False,
+        name=None,
+        m=0,
     ):
         """
         Append all modes from an eigenproblem solution to the collection.
@@ -218,13 +222,13 @@ class ModeCollection():
 
         for i in range(numberOfModes):
             mode = Mode(
-            self.femSpace,
-            self.mesh,
-            name = name,
-            isStateVector = True,
-            analysisType = 'Modal',
-            modeType = modeType,
-            m = m,
+                self.femSpace,
+                self.mesh,
+                name = name,
+                isStateVector = True,
+                analysisType = 'Modal',
+                modeType = modeType,
+                m = m,
             )
             mode.isAdjoint = adjoint
             mode.error = error[i]
@@ -233,13 +237,14 @@ class ModeCollection():
             mode.set_coefficient_array(eigVecs[i,:])
             self.modeList.append(mode)
 
-    def append_solution_of_svd_problem(self,
-    forcingArray,
-    omega,
-    gains,
-    resolventOperator,
-    name=None,
-    m=0,
+    def append_solution_of_svd_problem(
+        self,
+        forcingArray,
+        omega,
+        gains,
+        resolventOperator,
+        name=None,
+        m=0,
     ):
         """
         Append all forcing modes from a SVD solution to the collection for one frequency.
@@ -268,24 +273,24 @@ class ModeCollection():
         
         # Fetch required operators from resolventOperator
         W_forcing                       = getattr(
-        resolventOperator,
-        '_W_forcing',
-        None,
+            resolventOperator,
+            '_W_forcing',
+            None,
         )
         W_FEM                           = getattr(
-        resolventOperator,
-        '_W_FEM',
-        None,
+            resolventOperator,
+            '_W_FEM',
+            None,
         )
         P_forcing                       = getattr(
-        resolventOperator,
-        '_P_forcing',
-        None,
+            resolventOperator,
+            '_P_forcing',
+            None,
         )
         getKSP                          = getattr(
-        resolventOperator,
-        'getKSP',
-        None,
+            resolventOperator,
+            'getKSP',
+            None,
         )
 
         if W_forcing is None or W_FEM is None or P_forcing is None or getKSP is None:
@@ -310,33 +315,33 @@ class ModeCollection():
             # Get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)             
             X1, X2                      = W_forcing.getVecs()             
             X1.setValues(
-            range(
-            0,
-            len(forcingArray),
-            ),
-            forcingArray[:,i],
+                range(
+                    0,
+                    len(forcingArray),
+                ),
+                forcingArray[:,i],
             )             
             Y1, Y2                      = W_FEM.getVecs()             
 
             # Solve forcings = Pu*eigenVectors             
             P_forcing.mult(
-            X1,
-            Y1,
+                X1,
+                Y1,
             )             
             forcings                    = Y1.getValues(range(
-            0,
-            Y1.getSize(),
+                0,
+                Y1.getSize(),
             ))
 
             # Setting forcing into mode object
             modeForcing                 = Mode(
-            self.femSpace,
-            self.mesh,
-            name                    = name,
-            isStateVector           = True,
-            analysisType            = 'Resolvent',
-            modeType                = 'forcing',
-            m                       = m,
+                self.femSpace,
+                self.mesh,
+                name                    = name,
+                isStateVector           = True,
+                analysisType            = 'Resolvent',
+                modeType                = 'forcing',
+                m                       = m,
             )
             modeForcing.gain            = np.real(gains[i])  # NOTE: These are gains squared
             modeForcing.gain_number      = i
@@ -347,29 +352,29 @@ class ModeCollection():
             # Compute response
             # Solve Y1 = -1j * B_femWeight * forcings
             W_FEM.mult(
-            Y1,
-            Y2,
+                Y1,
+                Y2,
             )             
             Y2.scale(-1j)             
             # Solve (A-omega*B)*responses = Y1
             resolventOperator.getKSP().solve(
-            Y2,
-            Y1,
+                Y2,
+                Y1,
             )
             responses                   = Y1.getValues(range(
-            0,
-            Y1.getSize(),
+                0,
+                Y1.getSize(),
             ))
             
             # Setting response into mode object
             modeResponse                = Mode(
-            self.femSpace,
-            self.mesh,
-            name                    = name,
-            isStateVector           = True,
-            analysisType            = 'Resolvent',
-            modeType                = 'response',
-            m                       = m,
+                self.femSpace,
+                self.mesh,
+                name                    = name,
+                isStateVector           = True,
+                analysisType            = 'Resolvent',
+                modeType                = 'response',
+                m                       = m,
             )
             modeResponse.gain           = np.real(gains[i])  # NOTE: These are gains squared
             modeResponse.gain_number     = i
@@ -445,8 +450,8 @@ class ModeCollection():
                 
             # Define the spectrum array
             spectrum    = np.zeros(
-            (nLines, nCols),
-            dtype=float,
+                (nLines, nCols),
+                dtype=float,
             )
             ctr_line_direct     = 0
             ctr_line_adjoint    = 0
@@ -472,8 +477,8 @@ class ModeCollection():
 
             # Define the spectrum array
             spectrum    = np.zeros(
-            (NLines, Ncols),
-            dtype=float,
+                (NLines, Ncols),
+                dtype=float,
             )
             hasResponse = any(mode.modeType == ModeType.RESPONSE for mode in modeList)
             
@@ -488,8 +493,9 @@ class ModeCollection():
 
         return spectrum, header
 
-    def export_spectrum_to_csv(self,
-    writer,
+    def export_spectrum_to_csv(
+        self,
+        writer,
     ):
         """
         Export the spectrum to a CSV file.
@@ -501,34 +507,35 @@ class ModeCollection():
 
         if self.analysisType == AnalysisType.MODAL:
             filePath = os.path.join(
-            writer.exportFolder,
-            "spectrum.csv",
+                writer.exportFolder,
+                "spectrum.csv",
             )
         else:
             filePath = os.path.join(
-            writer.exportFolder,
-            "gains.csv",
+                writer.exportFolder,
+                "gains.csv",
             )
 
         spectrum, header = self.get_spectrum()
         np.savetxt(
-        filePath,
-        spectrum,
-        delimiter=',',
-        header=','.join(header),
-        comments='',
+            filePath,
+            spectrum,
+            delimiter=',',
+            header=','.join(header),
+            comments='',
         )
         if self.analysisType == AnalysisType.MODAL:
             logger.info(f'Eigenvalue spectrum exported to {filePath}.')
         else:
             logger.info(f'Gains spectrum exported to {filePath}.')
 
-    def get_nearest_mode(self,
-    gain=None,
-    eigen_value=None,
-    guess=None,
-    wave_number=None,
-    frequency=None,
+    def get_nearest_mode(
+        self,
+        gain=None,
+        eigen_value=None,
+        guess=None,
+        wave_number=None,
+        frequency=None,
     ):
         """
         Find the nearest mode to the specified parameters.
@@ -556,8 +563,9 @@ class ModeCollection():
         pass
 
 
-    def get_leading_mode(self,
-    adjoint=False,
+    def get_leading_mode(
+        self,
+        adjoint=False,
     ):
         """
         Return the leading mode based on the imaginary part of the eigenvalue.
@@ -597,10 +605,11 @@ class ModeCollection():
         return leadingMode
 
 
-    def get_old_solution_object(self,
-    meanFlow,
-    param,
-    FEMSpaces,
+    def get_old_solution_object(
+        self,
+        meanFlow,
+        param,
+        FEMSpaces,
     ):
         """
         Create legacy fluctuation solution objects from the modes.
@@ -633,38 +642,36 @@ class ModeCollection():
             for mode in self.modeList:
                 # construct for each EVal and EVec a fluctuationSolution
                 fluctSolutObjList.append(FluctuationSolutions(
-                param,
-                meanFlow,
-                FEMSpaces,
-                mode.eigen_value,
-                mode.function.x.array[:],
-                mode.isAdjoint==False,
-                )
-                )
+                    param,
+                    meanFlow,
+                    FEMSpaces,
+                    mode.eigen_value,
+                    mode.function.x.array[:],
+                    mode.isAdjoint==False,
+                ))
         elif param.Case.AnalysisMode == "Input-Output":
             for mode in self.modeList:
                 fluctSolutObjList.append(FluctuationSolutions(
-                param,
-                meanFlow,
-                FEMSpaces,
-                mode.frequency,
-                mode.function.x.array[:],
-                mode.isAdjoint==False,
-                0,
-                mode.gain,
-                )
-                )
+                    param,
+                    meanFlow,
+                    FEMSpaces,
+                    mode.frequency,
+                    mode.function.x.array[:],
+                    mode.isAdjoint==False,
+                    0,
+                    mode.gain,
+                ))
         elif param.Case.AnalysisMode == "Resolvent":
             for mode in self.modeList:
                 fluctSolutObjList.append(FluctuationSolutions(
-                param,
-                meanFlow,
-                FEMSpaces,
-                mode.frequency,
-                mode.function.x.array[:],
-                False if not mode.isResponse else True,
-                mode.gain_number,
-                mode.gain,
+                    param,
+                    meanFlow,
+                    FEMSpaces,
+                    mode.frequency,
+                    mode.function.x.array[:],
+                    False if not mode.isResponse else True,
+                    mode.gain_number,
+                    mode.gain,
                 ))
             
         else:
@@ -700,8 +707,9 @@ class ModeCollection():
 
         return self.modeList.pop()
 
-    def _get_and_sort_mode_files_in_dir(self,
-    importFolder,
+    def _get_and_sort_mode_files_in_dir(
+        self,
+        importFolder,
     ):
         """
         Get and classify mode files in a specified directory.
@@ -770,11 +778,11 @@ class ModeCollection():
                 
                 # Get the complex eigenvalue from file
                 with h5py.File(
-                os.path.join(
-                importFolder,
-                f,
-                ),
-                'r',
+                    os.path.join(
+                        importFolder,
+                        f,
+                    ),
+                    'r',
                 ) as file:
                     omegasModes.append(file["omega"][()])
                 
@@ -789,11 +797,11 @@ class ModeCollection():
                 
                 # Get the gain number and frequency from file
                 with h5py.File(
-                os.path.join(
-                importFolder,
-                f,
-                ),
-                'r',
+                    os.path.join(
+                        importFolder,
+                        f,
+                    ),
+                    'r',
                 ) as file:
                     omegasModes.append(file["omega"][()])
                     gainNumbersModeFiles.append(int(file["number"][()]))
@@ -808,11 +816,11 @@ class ModeCollection():
                 
                 # Get the gain number and frequency from file
                 with h5py.File(
-                os.path.join(
-                importFolder,
-                f,
-                ),
-                'r',
+                    os.path.join(
+                        importFolder,
+                        f,
+                    ),
+                    'r',
                 ) as file:
                     omegasModes.append(file["omega"][()])
                     gainNumbersModeFiles.append(0) # Always 0 for IO modes
@@ -820,9 +828,10 @@ class ModeCollection():
         return modeFiles, omegasModes, typesModeFiles, gainNumbersModeFiles
 
 
-    def export_modes(self,
-    writer,
-    onlyNewN = 0,
+    def export_modes(
+        self,
+        writer,
+        onlyNewN = 0,
     ):
         """
         Export modes in the collection to HDF5 files.
@@ -841,19 +850,20 @@ class ModeCollection():
             start = len(self.modeList) - onlyNewN 
 
         for i in range(
-        start,
-        len(self.modeList),
+            start,
+            len(self.modeList),
         ):
             logger.debug(f"Exporting mode {i+1}/{len(self.modeList)} to file.")
             self.modeList[i].export_to_h5(writer)
 
 
-    def import_data(self,
-    reader,
-    importFolder,
-    omegas=None,
-    modeType=None,
-    gain_number=None,
+    def import_data(
+        self,
+        reader,
+        importFolder,
+        omegas=None,
+        modeType=None,
+        gain_number=None,
     ):
         """
         Import mode collection data from a specified folder using a reader.
@@ -886,10 +896,12 @@ class ModeCollection():
                 logger.error('No matching omegas found in the import folder for the specified omegas.')
                 return
             h5Files                     = [h5Files[i] for i in closestOmegasIndices]
-            logger.info(f'Importing modes for closest omegas: {np.round(
-            [fileOmegas[i] for i in closestOmegasIndices],
-            3,
-            )}')
+            logger.info(
+                f'Importing modes for closest omegas: {np.round(
+                [fileOmegas[i] for i in closestOmegasIndices],
+                3,
+                )}'
+            )
         
         # If a mode type was given as input, filter files accordingly
         if modeType is not None:
@@ -933,18 +945,18 @@ class ModeCollection():
             
             # TODO: find way to get the wavenumber "m", is always assumed to be zero otherwise
             mode                        = Mode(
-            self.femSpace,
-            self.mesh,
-            isStateVector           = self.isStateVector,
-            analysisType            = self.analysisType.name,
-            modeType                = modeSet,
+                self.femSpace,
+                self.mesh,
+                isStateVector           = self.isStateVector,
+                analysisType            = self.analysisType.name,
+                modeType                = modeSet,
             )
             
             # Import the mode data from file
             mode.import_data(
-            reader,
-            importFolder,
-            importFileName = h5Files[i],
+                reader,
+                importFolder,
+                importFileName = h5Files[i],
             )
             logger.info(f'Imported mode {i+1}/{numberOfModes} from "{h5Files[i]}".')
             self.modeList.append(mode)

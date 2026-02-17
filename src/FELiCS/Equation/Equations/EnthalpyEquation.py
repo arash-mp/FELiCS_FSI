@@ -11,9 +11,7 @@
 # \___________________________________/ \_______________________________________________________/
 #
 # Third party libraries
-from ufl import (
-    dx,
-)
+from ufl import dx
 
 # Local Libraries and methods
 from FELiCS.Equation.Equations.EquationTemplate     import EquationTemplate
@@ -71,12 +69,13 @@ class EnthalpyEquation(EquationTemplate):
     is not supported in the tensorial framework.
     """
 
-    def __init__(self,
-    index,
-    eqColl,
-    fluc,
-    X,
-    param,
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        param,
     ):
         """
         Initialize the EnthalpyEquation object.
@@ -106,17 +105,18 @@ class EnthalpyEquation(EquationTemplate):
     
         # initialize variables in template class
         super().__init__(
-        index,
-        eqColl,
-        fluc,
-        X,
-        param,
+            index,
+            eqColl,
+            fluc,
+            X,
+            param,
         )
 
 
-    def add_weight_matrix_expression(self,
-    weakForm,
-    mean,
+    def add_weight_matrix_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -134,8 +134,16 @@ class EnthalpyEquation(EquationTemplate):
         tensorial representation of fluctuating enthalpy and pressure.
         """
         #  Time derivative terms
-        weakForm.add((mean.rho * self.fluc.h * i_conj(self.X)).ufl_tens * self.J_hat * dx)
-        weakForm.add((-1 * self.fluc.p * i_conj(self.X)).ufl_tens * self.J_hat * dx)
+        weakForm.add(
+            (mean.rho * self.fluc.h * 
+             i_conj(self.X)).ufl_tens *
+            self.J_hat * dx
+        )
+        weakForm.add(
+            (-1 * self.fluc.p * 
+             i_conj(self.X)).ufl_tens * 
+            self.J_hat * dx
+        )
     
      
     def add_nonlinear_expression(self):
@@ -149,9 +157,10 @@ class EnthalpyEquation(EquationTemplate):
         """
         pass
 
-    def add_linear_expression(self,
-    weakForm,
-    mean,
+    def add_linear_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Construct the weak form of the linearized enthalpy conservation equation.
@@ -183,26 +192,37 @@ class EnthalpyEquation(EquationTemplate):
         weakForm.add((1j * i_div(i_conj(X) * mean.rho * mean.u) * fluc.h).ufl_tens * J_hat * dx)
         weakForm.add((1j * i_div(i_conj(X) * fluc.rho * mean.u) * mean.he).ufl_tens * J_hat * dx)
         weakForm.add((1j * i_div(i_conj(X) * mean.rho * fluc.u) * mean.he).ufl_tens * J_hat * dx)
+        
         # Add boundary integrals resulting from said partial integration:
-        weakForm.add((-1j * i_dot(
-        mean.rho * mean.u * fluc.h * i_conj(X),
-        self.n,
-        )).ufl_tens * J_hat * self.all_ds)
-        weakForm.add((-1j * i_dot(
-        fluc.rho * mean.u * mean.he * i_conj(X),
-        self.n,
-        )).ufl_tens * J_hat * self.all_ds)
-        weakForm.add((-1j * i_dot(
-        mean.rho * fluc.u * mean.he * i_conj(X),
-        self.n,
-        )).ufl_tens * J_hat * self.all_ds)
+        weakForm.add(
+            (-1j * i_dot(
+                mean.rho * mean.u * fluc.h * i_conj(X),
+                self.n,
+            )).ufl_tens * J_hat * self.all_ds
+        )
+        weakForm.add(
+            (-1j * i_dot(
+                fluc.rho * mean.u * mean.he * i_conj(X),
+                self.n,
+            )).ufl_tens * J_hat * self.all_ds
+        )
+        weakForm.add(
+            (-1j * i_dot(
+                mean.rho * fluc.u * mean.he * i_conj(X),
+                self.n,
+            )).ufl_tens * J_hat * self.all_ds
+        )
             
         # ------------------------  Diffusion terms
-        weakForm.add((-1j * i_dot(
-        mean.alpha * i_grad(fluc.h),
-        i_grad(i_conj(X)),
-        )).ufl_tens * J_hat * dx)
-        weakForm.add((-1j * i_dot(
-        fluc.alpha * i_grad(mean.he),
-        i_grad(i_conj(X)),
-        )).ufl_tens * J_hat * dx)
+        weakForm.add(
+            (-1j * i_dot(
+                mean.alpha * i_grad(fluc.h),
+                i_grad(i_conj(X)),
+            )).ufl_tens * J_hat * dx
+        )
+        weakForm.add(
+            (-1j * i_dot(
+                fluc.alpha * i_grad(mean.he),
+                i_grad(i_conj(X)),
+            )).ufl_tens * J_hat * dx
+        )

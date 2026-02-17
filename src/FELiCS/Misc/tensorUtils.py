@@ -100,12 +100,12 @@ class CoordinateSystem():
 
 
     def __init__(
-                self,
-    SpatialCoordinateObj,
-    name: str,
-    gdim: int,
-    trueDim = None,
-    m = 0,
+        self,
+        SpatialCoordinateObj,
+        name: str,
+        gdim: int,
+        trueDim = None,
+        m = 0,
     ):
         """
         Initialize the CoordinateSystem object.
@@ -160,8 +160,9 @@ class CoordinateSystem():
             raise ValueError("The specified coordinate system isn't " \
                              "implemented.")
 
-    def set_true_dimension(self,
-    dim,
+    def set_true_dimension(
+        self,
+        dim,
     ):
         """
         Corrects the true dimension of the system. This has to be called if a spectral dimension is included,
@@ -224,10 +225,10 @@ class Tensor():
 
     def __init__(
         self,
-    ufl_tens,
-    CoordSys: CoordinateSystem,
-    mayHaveSpectralDimension = False,
-    m = None,
+        ufl_tens,
+        CoordSys: CoordinateSystem,
+        mayHaveSpectralDimension = False,
+        m = None,
     ):
         """
         Initialize a Tensor object.
@@ -278,13 +279,13 @@ class Tensor():
         if self.order ==1:
             length = ufl_tens.ufl_shape[0]
             if length < self.dim:
-                self.ufl_tens = \
-                        as_vector((ufl_tens[0],ufl_tens[1],0.0))
+                self.ufl_tens = as_vector((ufl_tens[0],ufl_tens[1],0.0))
            
 
     # addition
-    def __add__(self,
-    other,
+    def __add__(
+        self,
+        other,
     ):
         """
         Add two tensors or a tensor and a scalar.
@@ -317,15 +318,16 @@ class Tensor():
         else:
             ValueError("Tensor addition only defined for Tensors,Constant, float, complex and integers")
         return Tensor(
-        added,
-        self.CoordSys,
-        mayHaveSpectralDimension = self.hasSpectralDimension,
-        m = self.m,
+            added,
+            self.CoordSys,
+            mayHaveSpectralDimension = self.hasSpectralDimension,
+            m = self.m,
         )
 
     # division, 
-    def __truediv__(self,
-    other,
+    def __truediv__(
+        self,
+        other,
     ): # Tensor object to the left
         """
         Divide this tensor by another tensor or scalar.
@@ -352,28 +354,29 @@ class Tensor():
         if type(other) == Tensor:
             if other.order == 0 or self.order == 0:
                 return Tensor(
-                self.ufl_tens / other.ufl_tens,
-                self.CoordSys,
-                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                m = self.m - other.m,
+                    self.ufl_tens / other.ufl_tens,
+                    self.CoordSys,
+                    mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                    m = self.m - other.m,
                 )
             else:
                 raise ValueError("Division operation between Tensors only " \
                                  "defined, if one is a scalar.")
         elif type(other) in [float,complex,int,Constant]:
             return Tensor(
-            self.ufl_tens / other,
-            self.CoordSys,
-            mayHaveSpectralDimension = self.hasSpectralDimension,
-            m = self.m,
+                self.ufl_tens / other,
+                self.CoordSys,
+                mayHaveSpectralDimension = self.hasSpectralDimension,
+                m = self.m,
             )
         else:
             ValueError("Tensor division only defined for divisors of type Tensor, Constant, float, complex and integer")
 
 
     # division, 
-    def __rtruediv__(self,
-    other,
+    def __rtruediv__(
+        self,
+        other,
     ): # Tensor object to the left
         """
         Divide a scalar or tensor by this tensor.
@@ -406,20 +409,20 @@ class Tensor():
         if type(other) == Tensor:
             if other.order == 0 or self.order == 0:
                 return Tensor(
-                other.ufl_tens / self.ufl_tens,
-                self.CoordSys,
-                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-                m = self.m - other.m,
+                    other.ufl_tens / self.ufl_tens,
+                    self.CoordSys,
+                    mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                    m = self.m - other.m,
                 )
             else:
                 raise ValueError("Division operation between Tensors only " \
                                  "defined, if one is a scalar.")
         elif type(other) in [float,complex,int,Constant]:
             return Tensor(
-            other / self.ufl_tens,
-            self.CoordSys,
-            mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
-            m = -self.m,
+                other / self.ufl_tens,
+                self.CoordSys,
+                mayHaveSpectralDimension = self.hasSpectralDimension or other.hasSpectralDimension,
+                m = -self.m,
             )
         else:
             ValueError("Tensor division only defined for divisors of type Tensor, Constant, float, complex and integer")

@@ -42,12 +42,13 @@ class EquationTemplate(ABC):
     """
 
 
-    def __init__(self,
-    index,
-    eqColl,
-    fluc,
-    X,
-    param,
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        param,
     ):
         """
         Initializes the EquationTemplate instance.
@@ -108,8 +109,9 @@ class EquationTemplate(ABC):
         """
         pass
 
-    def add_bilinear_expression(self,
-    *args,
+    def add_bilinear_expression(
+        self,
+        *args,
     ):
         """
         Optionally define a bilinear expression.

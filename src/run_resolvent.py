@@ -41,30 +41,30 @@ def run_resolvent(param):
 
     # FEMSpaces
     FEMSpaces = FEMSpaces(
-    param,
-    mesh,
+        param,
+        mesh,
     )
      
     # writer to export the results in files
     writer    = Writer(
-    mesh,
-    param.Export.ExportFolder,
+        mesh,
+        param.Export.ExportFolder,
     )
 
     # read in mean flow and export to h5-file
     meanFlow = MeanFlowClass(
-    param,
-    FEMSpaces,
-    mesh,
+        param,
+        FEMSpaces,
+        mesh,
     )
     meanFlow.import_data_from_file_and_export_to_h5(writer)
 
     # equation
     equation = EquationCollectionClass(
-    param,
-    FEMSpaces,
-    meanFlow,
-    mesh,
+        param,
+        FEMSpaces,
+        meanFlow,
+        mesh,
     )
 
     #-----------------------------------------------------------------------
@@ -96,9 +96,9 @@ def run_resolvent(param):
     
     # Prepare solution object
     solution                    = ModeCollection(
-    FEMSpaces.VMixed,
-    mesh,
-    analysisType='Resolvent',
+        FEMSpaces.VMixed,
+        mesh,
+        analysisType='Resolvent',
     )
     
     # Run analysis at each frequency
@@ -115,39 +115,39 @@ def run_resolvent(param):
         # a matrix to use matrix-free methods
         R                       = A.copy()         
         R.axpy(
-        -omega,
-        B,
+            -omega,
+            B,
         )       # R = A-omega*B      
         resolventOperator       = ResolventOperator(
-        R,
-        W_FEM,
-        W_forcing,
-        W_response,
-        P_forcing,
-        P_response,
+            R,
+            W_FEM,
+            W_forcing,
+            W_response,
+            P_forcing,
+            P_response,
         )
         
         # Perform eigenvalue decomposition of the linear operator defined in the class "ResolventOperator"         
         # via the matrix vector multiplation "mult"
         gains, eigenvectors_c   = LinearSolver.solve_svd_of_resolvent(
-        resolventOperator,
-        nev             = nSol,
-        tol             = 1.e-16,
-        max_it          = 200,
+            resolventOperator,
+            nev             = nSol,
+            tol             = 1.e-16,
+            max_it          = 200,
         )
 
         solution.append_solution_of_svd_problem(
-        eigenvectors_c,
-        omega,
-        gains,
-        resolventOperator,
+            eigenvectors_c,
+            omega,
+            gains,
+            resolventOperator,
         )
 
         # export spectrum and newly calculated modes
         solution.export_spectrum_to_csv(writer)
         solution.export_modes(
-        writer,
-        onlyNewN = nSol*2,
+            writer,
+            onlyNewN = nSol*2,
         )
         
     # End tracking time

@@ -62,8 +62,9 @@ class MomentumHandler:
             outList.append('nulam')
         return outList
 
-    def _relate_conservative_to_primitive_variables_momentum(self,
-    mean='None',
+    def _relate_conservative_to_primitive_variables_momentum(
+        self,
+        mean='None',
     ):
         """
         Relate conservative variables to primitive variables for momentum calculations.
@@ -91,8 +92,9 @@ class MomentumHandler:
             elif 'u' in alreadyDeterminedFields:
                 self._fieldDict['rhou'] = self.u * mean_rho + mean_u * self.rho
 
-    def _initialize_molecular_momentum_diffusion_fluctuation(self,
-    mean='None',
+    def _initialize_molecular_momentum_diffusion_fluctuation(
+        self,
+        mean='None',
     ):
         """
         Initialize molecular momentum diffusion fluctuations based on the viscosity model.

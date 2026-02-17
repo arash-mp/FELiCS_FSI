@@ -77,12 +77,13 @@ class Field:
         set (even to zero), the field is assumed to have one spectral spatial
         dimension, and ``hasSpectralDimension`` is set to True.
     """
-    def __init__(self,
-    FEMSpace,
-    mesh,
-    name=None,
-    isStateVector=False,
-    m=None,
+    def __init__(
+        self,
+        FEMSpace,
+        mesh,
+        name=None,
+        isStateVector=False,
+        m=None,
     ):
         self.space    = FEMSpace
         self.mesh     = mesh
@@ -91,8 +92,8 @@ class Field:
         self.info     = self.describe_function_space()
 
         if name is None or not isinstance(
-        name,
-        str,
+            name,
+            str,
         ):
             if self.info['type']=='scalar':
                 self._name = 'scalarField'
@@ -105,8 +106,8 @@ class Field:
                 logger.warning("Field type not recognized. Using default name 'field'.")
 
             if not isinstance(
-            name,
-            str,
+                name,
+                str,
             ) and name is not None:
                 logger.warning("Field initialized a 'name' not being a string. Using default names based on field type.")
                 
@@ -133,8 +134,9 @@ class Field:
         return self._name
   
     @name.setter
-    def name(self,
-    name,
+    def name(
+        self,
+        name,
     ):
         self._name = name
 
@@ -209,8 +211,9 @@ class Field:
 
         return subFieldNames
 
-    def set_names_of_sub_fields(self,
-    nameList,
+    def set_names_of_sub_fields(
+        self,
+        nameList,
     ):
         """
         Assign explicit names to the subfields of a mixed or vector field.
@@ -298,10 +301,10 @@ class Field:
             space, mapping            = self.space.sub(i).collapse()
             # NOTE: the sub-fields inherit the wave number from the field.
             field                     = Field(
-            space,
-            self.mesh,
-            name=namesOfSubFields[i],
-            m=self.m,
+                space,
+                self.mesh,
+                name=namesOfSubFields[i],
+                m=self.m,
             )
             field.set_coefficient_array(self.get_coefficient_array()[mapping])
             listOfFields.append(field)
@@ -310,9 +313,10 @@ class Field:
 
 
 
-    def set_list_of_sub_fields(self,
-    listOfFields,
-    name=[],
+    def set_list_of_sub_fields(
+        self,
+        listOfFields,
+        name=[],
     ):
         """
         Set the field coefficients from a list of single-component fields.
@@ -339,8 +343,8 @@ class Field:
             # TODO: check that the functionSpaces are the same!
             self.set_coefficient_array(listOfFields[0].get_coefficient_array())
             if not name or not isinstance(
-            name,
-            str,
+                name,
+                str,
             ):
                 self._name = listOfFields[0].name
             else:
@@ -355,8 +359,8 @@ class Field:
                 namesOfSubFields.append(listOfFields[i].name)
                 self.set_names_of_sub_fields(namesOfSubFields)
                 if isinstance(
-                name,
-                str,
+                    name,
+                    str,
                 ):
                     self._name = name
                 
@@ -477,8 +481,8 @@ class Field:
             A complex-valued array representing the field coefficients.
         """
         array = np.empty(
-        len(self.function.x.array[:]),
-        dtype=complex,
+            len(self.function.x.array[:]),
+            dtype=complex,
         )
         array[:] = self.function.x.array[:]
         return array
@@ -494,8 +498,8 @@ class Field:
             A float-valued array representing the field coefficients.
         """
         array = np.empty(
-        len(self.function.x.array[:]),
-        dtype=float,
+            len(self.function.x.array[:]),
+            dtype=float,
         )
         array[:] = np.real(self.function.x.array[:])
         return array
@@ -510,16 +514,17 @@ class Field:
             A float-valued array representing the field coefficients.
         """
         array = np.empty(
-        len(self.function.x.array[:]),
-        dtype=float,
+            len(self.function.x.array[:]),
+            dtype=float,
         )
         array[:] = np.imag(self.function.x.array[:])
         return array
 
 
 
-    def set_coefficient_array(self,
-    array,
+    def set_coefficient_array(
+        self,
+        array,
     ):
         """
         Set the coefficient array of the field.
@@ -534,8 +539,9 @@ class Field:
         else:
             self.function.x.array[:] = array[:]
 
-    def set_constant_value(self,
-    value,
+    def set_constant_value(
+        self,
+        value,
     ): 
         """
         Set all coefficients to a constant value.
@@ -564,8 +570,9 @@ class Field:
         """
         self.set_coefficient_array(np.conj(self.get_coefficient_array()))
 
-    def set_boundary_conditions(self,
-    bcs,
+    def set_boundary_conditions(
+        self,
+        bcs,
     ):
         """
         Apply boundary conditions to the field.
@@ -577,8 +584,8 @@ class Field:
         """
         petscArray = self.get_petsc_vector()
         petsc.set_bc(
-        petscArray,
-        bcs,
+            petscArray,
+            bcs,
         )
         self.set_coefficient_array(petscArray.getArray())
 
@@ -607,13 +614,13 @@ class Field:
         if self.hasSpectralDimension:
             dim += 1
         gradientSpace = create_function_space(
-        self.mesh,
-        degree=degree,
-        dim=dim,
+            self.mesh,
+            degree=degree,
+            dim=dim,
         )
         gradientField = Field(
-        gradientSpace,
-        self.mesh,
+            gradientSpace,
+            self.mesh,
         )
 
         coordSystem = self.mesh.coordinate_system
@@ -622,14 +629,14 @@ class Field:
         v = TestFunction(gradientSpace)
         # Sophie: m and hasSpectralDimension may not be needed for test function
         v_tens = Tensor(
-        v,
-        CoordSys=coordSystem,
-        m = self.m,
-        mayHaveSpectralDimension=self.hasSpectralDimension,
+            v,
+            CoordSys=coordSystem,
+            m = self.m,
+            mayHaveSpectralDimension=self.hasSpectralDimension,
         )
         expression = i_dot(
-        i_grad(self.get_tensor()),
-        i_conj(v_tens),
+            i_grad(self.get_tensor()),
+            i_conj(v_tens),
         ).ufl_tens * J_hat* dx
 
         gradientField.evaluate_ufl_tensor_expression(expression)    
@@ -658,8 +665,8 @@ class Field:
         for field in list1:
             fieldTens = field.get_tensor()
             norm_ufl += (i_dot(
-            fieldTens,
-            i_conj(fieldTens),
+                fieldTens,
+                i_conj(fieldTens),
             )).ufl_tens*J_hat*ufl.dx        
         norm_squared = norm_ufl.get_assembled_scalar(self.mesh)
         return np.sqrt(norm_squared)
@@ -726,9 +733,9 @@ class Field:
             vorticity_z = dvdx - dudy
 
             vorticityField = Field(
-            self.space,
-            self.mesh,
-            name="vorticity",
+                self.space,
+                self.mesh,
+                name="vorticity",
             )
             vorticityField.set_list_of_sub_fields([vorticity_x, vorticity_y, vorticity_z])
             
@@ -755,16 +762,16 @@ class Field:
         if fileName == None:
             fileName = self.name
         writer.export_field_to_h5(
-        self,
-        fileName,
+            self,
+            fileName,
         )
 
 
     def import_data(
-            self,
-    reader,
-    importFilePath = None,
-    groupName = None,
+        self,
+        reader,
+        importFilePath = None,
+        groupName = None,
     
         ):
         """
@@ -794,23 +801,24 @@ class Field:
         # TODO Sophie: these two lines should be in the reader
         if importFilePath==None:
             importFilePath = os.path.join(
-            reader._sourceDir,
-            self.name,
+                reader._sourceDir,
+                self.name,
             )
         # Just call the reader function
         self, notInFile = reader.import_in_field(
-        self,
-        importFilePath,
-        groupName,
+            self,
+            importFilePath,
+            groupName,
         )
         
         return self, notInFile
 
 
-    def evaluate_ufl_expression(self,
-    ufl_expression,
-    bcs=[],
-    restartSolver=False,
+    def evaluate_ufl_expression(
+        self,
+        ufl_expression,
+        bcs=[],
+        restartSolver=False,
     ):
         """
         Evaluate a UFL expression and update the field accordingly.
@@ -826,8 +834,8 @@ class Field:
         """
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
         if not hasattr(
-        self.space,
-        'FEMWeightSolver',
+            self.space,
+            'FEMWeightSolver',
         ) and not restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
@@ -846,27 +854,28 @@ class Field:
             # matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
             # matrix.assemble()
             matrix = matrix_ufl.get_assembled_matrix(
-            self.mesh,
-            bcs,
+                self.mesh,
+                bcs,
             )
             self.space.FEMWeightSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
         petscVec = expr_ufl.get_assembled_vector(
-        self.mesh,
-        bcs,
+            self.mesh,
+            bcs,
         )
         self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
-        self.space.FEMWeightSolver,
-        petscVec,
+            self.space.FEMWeightSolver,
+            petscVec,
         ))
 
 
-    def evaluate_ufl_tensor_expression(self,
-    ufl_expression,
-    bcs=[],
-    restartSolver=False,
+    def evaluate_ufl_tensor_expression(
+        self,
+        ufl_expression,
+        bcs=[],
+        restartSolver=False,
     ):
         """
         Evaluate a tensor-based UFL expression and update the field accordingly.
@@ -888,8 +897,8 @@ class Field:
         """
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
         if not hasattr(
-        self.space,
-        'FEMWeightSolver',
+            self.space,
+            'FEMWeightSolver',
         ) or restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
@@ -899,19 +908,19 @@ class Field:
             i=0
             for test in test_FEM:
                 iTest = Tensor(
-                test,
-                coordinate_system,
-                mayHaveSpectralDimension=True,
+                    test,
+                    coordinate_system,
+                    mayHaveSpectralDimension=True,
                 )
                 iFluc = Tensor(
-                trial_FEM[i],
-                coordinate_system,
-                mayHaveSpectralDimension=True,
+                    trial_FEM[i],
+                    coordinate_system,
+                    mayHaveSpectralDimension=True,
                 )
                 if iTest.order  == 1:
                     matrix_ufl.add( ( i_dot(
-                    iFluc,
-                    i_conj(iTest),
+                        iFluc,
+                        i_conj(iTest),
                     ) ).ufl_tens*J_hat*ufl.dx)
                 elif iTest.order == 0:
                     matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*ufl.dx)
@@ -920,28 +929,30 @@ class Field:
                     print("ERROR, in 'Field.evaluateUflExpression'")
                 i+=1
             matrix = matrix_ufl.get_assembled_matrix(
-            self.mesh,
-            bcs,
+                self.mesh,
+                bcs,
             ) 
             self.space.FEMWeightSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
         petscVec = expr_ufl.get_assembled_vector(
-        self.mesh,
-        bcs,
+            self.mesh,
+            bcs,
         )
-        self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
-        self.space.FEMWeightSolver,
-        petscVec,
+        self.set_coefficient_array(
+            LinearSolver.solve_equation_system_with_predefined_solver(
+            self.space.FEMWeightSolver,
+            petscVec,
         ))
 
 
-    def smooth_ufl_tensor_expression(self,
-    ufl_expression,
-    smoothFactor,
-    bcs=[],
-    restartSolver=False,
+    def smooth_ufl_tensor_expression(
+        self,
+        ufl_expression,
+        smoothFactor,
+        bcs=[],
+        restartSolver=False,
     ):
         """
         Smooth a tensor-based UFL expression using a diffusion-like approach.
@@ -965,8 +976,8 @@ class Field:
         """
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
         if not hasattr(
-        self.space,
-        'FEMSmoothSolver',
+            self.space,
+            'FEMSmoothSolver',
         ) or restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
@@ -976,29 +987,29 @@ class Field:
             i=0
             for test in test_FEM:
                 iTest = Tensor(
-                test,
-                coordinate_system,
-                mayHaveSpectralDimension=True,
+                    test,
+                    coordinate_system,
+                    mayHaveSpectralDimension=True,
                 )
                 iFluc = Tensor(
-                trial_FEM[i],
-                coordinate_system,
-                mayHaveSpectralDimension=True,
+                    trial_FEM[i],
+                    coordinate_system,
+                    mayHaveSpectralDimension=True,
                 )
                 if iTest.order  == 1:
                     matrix_ufl.add( ( i_dot(
-                    iFluc,
-                    i_conj(iTest),
-                    ) ).ufl_tens*J_hat*ufl.dx)
-                    matrix_ufl.add((smoothFactor* i_inner(
-                    i_grad(iFluc),
-                    i_grad(iTest),
+                        iFluc,
+                        i_conj(iTest),
+                    ) ).ufl_tens * J_hat * ufl.dx)
+                    matrix_ufl.add((smoothFactor * i_inner(
+                        i_grad(iFluc),
+                        i_grad(iTest),
                     )).ufl_tens*J_hat*ufl.dx)
                 elif iTest.order == 0:
                     matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*ufl.dx)
                     matrix_ufl.add((smoothFactor* i_dot(
-                    i_grad(iFluc),
-                    i_grad(i_conj(iTest)),
+                        i_grad(iFluc),
+                        i_grad(i_conj(iTest)),
                     )).ufl_tens*J_hat*ufl.dx)
                 else:
                     ##LOGGING TODO (Sophie): throw error 
@@ -1009,8 +1020,8 @@ class Field:
             except:
                 pass
             matrix = petsc.assemble_matrix(
-            dolfinx.fem.form(matrix_ufl.lhs),
-            bcs=bcs,
+                dolfinx.fem.form(matrix_ufl.lhs),
+                bcs=bcs,
             )
             matrix.assemble()
             self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
@@ -1018,19 +1029,20 @@ class Field:
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
         petscVec = expr_ufl.get_assembled_vector(
-        self.mesh,
-        bcs,
+            self.mesh,
+            bcs,
         )
         self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
-        self.space.FEMSmoothSolver,
-        petscVec,
+            self.space.FEMSmoothSolver,
+            petscVec,
         ))
 
 
-    def smooth(self,
-    smoothFactor,
-    bcs=[],
-    restartSolver=False,
+    def smooth(
+        self,
+        smoothFactor,
+        bcs=[],
+        restartSolver=False,
     ):
         """
         Smooth the field using a diffusion-like approach.
@@ -1056,8 +1068,8 @@ class Field:
         """
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
         if not hasattr(
-        self.space,
-        'FEMSmoothSolver',
+            self.space,
+            'FEMSmoothSolver',
         ) or restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
@@ -1067,37 +1079,37 @@ class Field:
             i=0
             for test in test_FEM:
                 iTest = Tensor(
-                test,
-                coordinate_system,
-                mayHaveSpectralDimension=True,
+                    test,
+                    coordinate_system,
+                    mayHaveSpectralDimension=True,
                 )
                 iFluc = Tensor(
-                trial_FEM[i],
-                coordinate_system,
-                mayHaveSpectralDimension=True,
+                    trial_FEM[i],
+                    coordinate_system,
+                    mayHaveSpectralDimension=True,
                 )
                 if iTest.order  == 1:
                     matrix_ufl.add( ( i_dot(
-                    iFluc,
-                    i_conj(iTest),
-                    ) ).ufl_tens*J_hat*ufl.dx)
+                        iFluc,
+                        i_conj(iTest),
+                    )).ufl_tens*J_hat*ufl.dx)
                     matrix_ufl.add((smoothFactor* i_inner(
-                    i_grad(iFluc),
-                    i_grad(iTest),
+                        i_grad(iFluc),
+                        i_grad(iTest),
                     )).ufl_tens*J_hat*ufl.dx)
                 elif iTest.order == 0:
                     matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*ufl.dx)
                     matrix_ufl.add((smoothFactor* i_dot(
-                    i_grad(iFluc),
-                    i_grad(i_conj(iTest)),
+                        i_grad(iFluc),
+                        i_grad(i_conj(iTest)),
                     )).ufl_tens*J_hat*ufl.dx)
                 else:
                     ##LOGGING TODO (Sophie): throw error 
                     print("ERROR, in 'Field.smoothTensorUflExpression'")
                 i+=1
             matrix = matrix_ufl.get_assembled_matrix(
-            self.mesh,
-            bcs=bcs,
+                self.mesh,
+                bcs=bcs,
             )
             self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
 
@@ -1109,29 +1121,30 @@ class Field:
         J_hat = coordinate_system.J_hat
         for i in range(len(listOfFields)):
             iTest = Tensor(
-            test_FEM[i],
-            coordinate_system,
-            mayHaveSpectralDimension=True,
+                test_FEM[i],
+                coordinate_system,
+                mayHaveSpectralDimension=True,
             )
             field     = listOfFields[i]
             expr_ufl += (i_dot(
-            field.get_tensor(),
-            i_conj(iTest),
+                field.get_tensor(),
+                i_conj(iTest),
             )).ufl_tens*J_hat*ufl.dx
         petscVec = expr_ufl.get_assembled_vector(
-        self.mesh,
-        bcs,
+            self.mesh,
+            bcs,
         )
         self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
-        self.space.FEMSmoothSolver,
-        petscVec,
+            self.space.FEMSmoothSolver,
+            petscVec,
         ))
 
-    def plot(self,
-    xlim=None,
-    ylim=None,
-    plotType="real",
-    clim=None,
+    def plot(
+        self,
+        xlim=None,
+        ylim=None,
+        plotType="real",
+        clim=None,
     ):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
@@ -1161,18 +1174,18 @@ class Field:
 
         # Ensure cell->vertex connectivity
         mesh.topology.create_connectivity(
-        tdim,
-        0,
+            tdim,
+            0,
         )
 
         # --- 1) Interpolate to P1 space on same mesh ---
         V1              = fem.functionspace(
-        mesh,
-        element(
-        "CG",
-        "triangle",
-        1,
-        ),
+            mesh,
+            element(
+                "CG",
+                "triangle",
+                1,
+            ),
         )
         u1              = fem.Function(V1)
         u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
@@ -1191,20 +1204,20 @@ class Field:
 
         # --- 2) Build triangulation from the mesh ---
         cells_to_vertices   = mesh.topology.connectivity(
-        tdim,
-        0,
+            tdim,
+            0,
         ).array
         triangles           = cells_to_vertices.reshape(
-        -1,
-        3,
+            -1,
+            3,
         )
         coords              = mesh.geometry.x
         x                   = coords[:, 0]
         y                   = coords[:, 1]
         triang              = Triangulation(
-        x,
-        y,
-        triangles=triangles,
+            x,
+            y,
+            triangles=triangles,
         )
         # ---- End of METHOD 2 ----
         
@@ -1216,12 +1229,12 @@ class Field:
             else:
                 clim = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
         contour = axes.tripcolor(
-        triang,
-        phi_vertex,
-        shading='gouraud',
-        cmap=cmap,
-        vmin=clim[0],
-        vmax=clim[1],
+            triang,
+            phi_vertex,
+            shading='gouraud',
+            cmap=cmap,
+            vmin=clim[0],
+            vmax=clim[1],
         )
 
         # Set labels and title
@@ -1241,21 +1254,21 @@ class Field:
         axes.set_title(title)
         axes.set_aspect('equal')
         axes.grid(
-        True,
-        alpha=0.3,
+            True,
+            alpha=0.3,
         )
         
         # Add colorbar for phi
         divider         = make_axes_locatable(axes)
         colorbar_axes   = divider.append_axes(
-        "right",
-        size="2%",
-        pad=0.5,
+            "right",
+            size="2%",
+            pad=0.5,
         ) 
         cbar            = plt.colorbar(
-        contour,
-        label=title,
-        cax=colorbar_axes,
+            contour,
+            label=title,
+            cax=colorbar_axes,
         )
         cbar.formatter.set_powerlimits((0, 0))
         cbar.update_ticks()
@@ -1269,8 +1282,9 @@ class Field:
         
 
     ### dunder methods for overloading arithmetic operators ###
-    def __add__(self,
-    other,
+    def __add__(
+        self,
+        other,
     ):
         """
         Overload the ``+`` operator for adding fields or scalars.
@@ -1292,26 +1306,27 @@ class Field:
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
-        other,
-        Field,
+            other,
+            Field,
         ):
             result = Field(
-            self.space,
-            self.mesh,
+                self.space,
+                self.mesh,
             )
             result.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
             return result 
         elif np.isscalar(other):
             result = Field(
-            self.space,
-            self.mesh,
+                self.space,
+                self.mesh,
             )
             result.set_coefficient_array(self.get_coefficient_array() + other)
             return result
         return NotImplemented
 
-    def __iadd__(self,
-    other,
+    def __iadd__(
+        self,
+        other,
     ):
         """
         Overload the ``+=`` operator for adding fields or scalars.
@@ -1330,8 +1345,8 @@ class Field:
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
-        other,
-        Field,
+            other,
+            Field,
         ):
             self.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
             return self
@@ -1341,8 +1356,9 @@ class Field:
         return NotImplemented
  
 
-    def __sub__(self,
-    other,
+    def __sub__(
+        self,
+        other,
     ):
         """
         Overload the `-` operator for adding two Field objects.
@@ -1367,26 +1383,27 @@ class Field:
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
-        other,
-        Field,
+            other,
+            Field,
         ):
             result = Field(
-            self.space,
-            self.mesh,
+                self.space,
+                self.mesh,
             )
             result.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
             return result 
         elif np.isscalar(other):
             result = Field(
-            self.space,
-            self.mesh,
+                self.space,
+                self.mesh,
             )
             result.set_coefficient_array(self.get_coefficient_array() - other)
             return result 
         return NotImplemented
 
-    def __isub__(self,
-    other,
+    def __isub__(
+        self,
+        other,
     ):
         """
         Overload the `-=` operator for adding two Field objects.
@@ -1409,8 +1426,8 @@ class Field:
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
-        other,
-        Field,
+            other,
+            Field,
         ):
             self.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
             return self
@@ -1420,8 +1437,9 @@ class Field:
         return NotImplemented
 
 
-    def __mul__(self,
-    other,
+    def __mul__(
+        self,
+        other,
     ):
         """
         Overload the ``*`` operator for pointwise multiplication.
@@ -1441,27 +1459,28 @@ class Field:
         ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
-        other,
-        Field,
+            other,
+            Field,
         ):
             result = Field(
-            self.space,
-            self.mesh,
+                self.space,
+                self.mesh,
             )
             result.set_coefficient_array(self.get_coefficient_array()*other.get_coefficient_array())
             return result
         elif np.isscalar(other):
             result = Field(
-            self.space,
-            self.mesh,
+                self.space,
+                self.mesh,
             )
             result.set_coefficient_array(self.get_coefficient_array()*other)
             return result
         return NotImplemented
 
 
-    def __imul__(self,
-    other,
+    def __imul__(
+        self,
+        other,
     ):
         """
         Overload the ``*=`` operator for pointwise multiplication.
@@ -1479,19 +1498,20 @@ class Field:
         ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
-        other,
-        Field,
+            other,
+            Field,
         ):
-            self.set_coefficient_array(self.get_coefficient_array()*other.get_coefficient_array())
+            self.set_coefficient_array(self.get_coefficient_array() * other.get_coefficient_array())
             return self
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array()*other)
+            self.set_coefficient_array(self.get_coefficient_array() * other)
             return self
         return NotImplemented
 
 
-    def __truediv__(self,
-    other,
+    def __truediv__(
+        self,
+        other,
     ):
         """
         Overload the ``/`` operator for pointwise division.
@@ -1517,27 +1537,28 @@ class Field:
         ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
-        other,
-        Field,
+            other,
+            Field,
         ):
             result = Field(
-            self.space,
-            self.mesh,
+                self.space,
+                self.mesh,
             )
             result.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
             return result
         elif np.isscalar(other):
             result = Field(
-            self.space,
-            self.mesh,
+                self.space,
+                self.mesh,
             )
             result.set_coefficient_array(self.get_coefficient_array()/other)
             return result
         return NotImplemented
 
 
-    def __itruediv__(self,
-    other,
+    def __itruediv__(
+        self,
+        other,
     ):
         """
         Overload the ``/=`` operator for pointwise division.
@@ -1561,8 +1582,8 @@ class Field:
         ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
-        other,
-        Field,
+            other,
+            Field,
         ):
             self.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
             return self

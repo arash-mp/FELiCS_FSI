@@ -104,10 +104,11 @@ class MeanFlowClass(
     `reactionHandler`). These base classes provide lists of extra field names
     needed for their respective models.
     """
-    def __init__(self,
-    param,
-    FEMSpaces,
-    mesh,
+    def __init__(
+        self,
+        param,
+        FEMSpaces,
+        mesh,
     ):
         """
         Initialize the meanFlowClass instance.
@@ -134,19 +135,19 @@ class MeanFlowClass(
         
         # Define some useful tensors
         self._zeroVectorField   = Field(
-        self._FEMSpaces.FunctionSpaceVectorVelocity,
-        self._mesh,
-        name="zero",
+            self._FEMSpaces.FunctionSpaceVectorVelocity,
+            self._mesh,
+            name="zero",
         )
         self._zeroField         = Field(
-        self._FEMSpaces.P2,
-        self._mesh,
-        name="zero",
+            self._FEMSpaces.P2,
+            self._mesh,
+            name="zero",
         )
         self._oneField          = Field(
-        self._FEMSpaces.P2,
-        self._mesh,
-        name="one",
+            self._FEMSpaces.P2,
+            self._mesh,
+            name="one",
         )
         self._oneField.set_constant_value(1.0)
 
@@ -154,8 +155,9 @@ class MeanFlowClass(
         self._customMeanFlowQuantities = []
         
 
-    def import_data_from_file_and_export_to_h5(self,
-    writer,
+    def import_data_from_file_and_export_to_h5(
+        self,
+        writer,
     ):
         """
         Import mean-flow fields from the configured input file and export them.
@@ -207,10 +209,10 @@ class MeanFlowClass(
 
         # Initialize the reader
         reader                      = Reader(
-        sourceDir               = os.path.dirname(self._param.FlowInput.MeanFlowFilePath),
-        needInterpolation       = self._param.Case.needInterpolation,
-        felicsMeshFilePath      = None if self._param.Case.needInterpolation else f'{self._param.Export.ExportFolder}/mesh.h5',
-        cacheData               = True,
+            sourceDir               = os.path.dirname(self._param.FlowInput.MeanFlowFilePath),
+            needInterpolation       = self._param.Case.needInterpolation,
+            felicsMeshFilePath      = None if self._param.Case.needInterpolation else f'{self._param.Export.ExportFolder}/mesh.h5',
+            cacheData               = True,
         )
 
         # Create empty fields for each variable 
@@ -219,22 +221,22 @@ class MeanFlowClass(
             # TODO: Include the tensor order in the field names to avoid hardcoding.
             if name == 'u' or name == 'u_forcing_r' or name == 'u_forcing_i' or name == 'u_target':
                 field = Field(
-                self._FEMSpaces.FunctionSpaceVectorVelocity,
-                self._mesh,
-                name,
+                    self._FEMSpaces.FunctionSpaceVectorVelocity,
+                    self._mesh,
+                    name,
                 )
             else:
                 field = Field(
-                self._FEMSpaces.P2,
-                self._mesh,
-                name,
+                    self._FEMSpaces.P2,
+                    self._mesh,
+                    name,
                 )
                 
             # Load the data from file into the field
             self._fieldDict[name], notInFile = field.import_data(
-            reader,
-            self._param.FlowInput.MeanFlowFilePath,
-            groupName,
+                reader,
+                self._param.FlowInput.MeanFlowFilePath,
+                groupName,
             )
 
             # correct value of rho, if not given, to 1
@@ -260,8 +262,8 @@ class MeanFlowClass(
             exportFields.append(value)
 
         self.xmfHeader = writer.export_list_of_fields_to_h5(
-        exportFields,
-        "MeanFlow",
+            exportFields,
+            "MeanFlow",
         )
 
 
@@ -290,18 +292,18 @@ class MeanFlowClass(
         """
         if self._param.Case.MolViscModel == 'Constant':
             self._fieldDict['nulam']            = Field(
-            self._FEMSpaces.P2,
-            self._mesh,
-            name = "nulam",
+                self._FEMSpaces.P2,
+                self._mesh,
+                name = "nulam",
             )
             self._fieldDict['nulam'].set_coefficient_array(self._param.Case.MolVisc)
 
         for specie in self._param.Mixture.get_species_list('transported'):
             sc      = self._param.Mixture.species[specie]['Sc']
             nu_tot   = Field(
-            self._ScalarFunctionSpace,
-            self._mesh,
-            name = "nuTot",
+                self._ScalarFunctionSpace,
+                self._mesh,
+                name = "nuTot",
             )
 
             if 'nulam' in list(self._fieldDict.keys()):
@@ -312,9 +314,9 @@ class MeanFlowClass(
                 nu_tot += self._fieldDict['nuSGS']
                 
             self._fieldDict['D_' + specie]  = Field(
-            self._FEMSpaces.P2,
-            self._mesh,
-            name= 'D_'+specie,
+                self._FEMSpaces.P2,
+                self._mesh,
+                name= 'D_'+specie,
             )
             self._fieldDict['D_' + specie]  = nu_tot / sc
 
@@ -330,10 +332,10 @@ class MeanFlowClass(
         -----
         The ``'Pr'`` field is defined on the scalar P2 function space.
         """
-        self._fieldDict['Pr']            = Field(
-        self._FEMSpaces.P2,
-        self._mesh,
-        name="Pr",
+        self._fieldDict['Pr'] = Field(
+            self._FEMSpaces.P2,
+            self._mesh,
+            name="Pr",
         )
         self._fieldDict['Pr'].set_constant_value(self._param.Case.PrandtlNumber)
 
@@ -372,125 +374,126 @@ class MeanFlowClass(
         janaf = janafopenfoam.Janafopenfoam(2)
 
         N2 = janafspecie.Janafspecie(
-        28.0134,
-        200,
-        5000,
-        1000,
-        [3.29868, 0.00140824, -3.96322e-06,
-                                      5.64152e-09, -2.44486e-12, -1020.9,
-                                      3.95037],
-        [2.92664, 0.00148798, -5.68476e-07,
-                                      1.0097e-10, -6.75335e-15, -922.798,
-                                      5.98053],
-        2,
+            28.0134,
+            200,
+            5000,
+            1000,
+            [3.29868, 0.00140824, -3.96322e-06,
+                                        5.64152e-09, -2.44486e-12, -1020.9,
+                                        3.95037],
+            [2.92664, 0.00148798, -5.68476e-07,
+                                        1.0097e-10, -6.75335e-15, -922.798,
+                                        5.98053],
+            2,
         )
 
         CO2 = janafspecie.Janafspecie(
-        44.01,
-        200,
-        5000,
-        1000,
-        [2.27572, 0.00992207, -1.04091e-05,
-                                       6.86669e-09, -2.11728e-12, -48373.1,
-                                       10.1885],
-        [4.45362, 0.00314017, -1.27841e-06,
-                                       2.394e-10, -1.66903e-14, -48967,
-                                       -0.955396],
-        2,
+            44.01,
+            200,
+            5000,
+            1000,
+            [2.27572, 0.00992207, -1.04091e-05,
+                                        6.86669e-09, -2.11728e-12, -48373.1,
+                                        10.1885],
+            [4.45362, 0.00314017, -1.27841e-06,
+                                        2.394e-10, -1.66903e-14, -48967,
+                                        -0.955396],
+            2,
         )
 
         O2 = janafspecie.Janafspecie(
-        31.9988,
-        200,
-        5000,
-        1000,
-        [3.21294, 0.00112749, -5.75615e-07,
-                                      1.31388e-09, -8.76855e-13, -1005.25,
-                                      6.03474],
-        [3.69758, 0.00061352, -1.25884e-07,
-                                      1.77528e-11, -1.13644e-15, -1233.93,
-                                      3.18917],
-        2,
+            31.9988,
+            200,
+            5000,
+            1000,
+            [3.21294, 0.00112749, -5.75615e-07,
+                                        1.31388e-09, -8.76855e-13, -1005.25,
+                                        6.03474],
+            [3.69758, 0.00061352, -1.25884e-07,
+                                        1.77528e-11, -1.13644e-15, -1233.93,
+                                        3.18917],
+            2,
         )
 
         CH4 = janafspecie.Janafspecie(
-        16.043,
-        200,
-        5000,
-        1000,
-        [0.778741, 0.0174767, -2.78341e-05,
-                                       3.04971e-08, -1.22393e-11, -9825.23,
-                                       13.7222],
-        [1.68348, 0.0102372, -3.87513e-06,
-                                       6.78559e-10, -4.50342e-14, -10080.8,
-                                       9.6234],
-        2,
+            16.043,
+            200,
+            5000,
+            1000,
+            [0.778741, 0.0174767, -2.78341e-05,
+                                        3.04971e-08, -1.22393e-11, -9825.23,
+                                        13.7222],
+            [1.68348, 0.0102372, -3.87513e-06,
+                                        6.78559e-10, -4.50342e-14, -10080.8,
+                                        9.6234],
+            2,
         )
 
         CO = janafspecie.Janafspecie(
-        28.0106,
-        200,
-        5000,
-        1000,
-        [3.26245, 0.00151194, -3.88176e-06,
-                                      5.58194e-09, -2.47495e-12, -14310.5,
-                                      4.8489],
-        [3.02508, 0.00144269, -5.63083e-07,
-                                      1.01858e-10, -6.91095e-15, -14268.4,
-                                      6.10822],
-        2,
+            28.0106,
+            200,
+            5000,
+            1000,
+            [3.26245, 0.00151194, -3.88176e-06,
+                                        5.58194e-09, -2.47495e-12, -14310.5,
+                                        4.8489],
+            [3.02508, 0.00144269, -5.63083e-07,
+                                        1.01858e-10, -6.91095e-15, -14268.4,
+                                        6.10822],
+            2,
         )
+
         # H2O gaseous
         H2O = janafspecie.Janafspecie(
-        18.0153,
-        200,
-        5000,
-        1000,
-        [3.38684, 0.00347498, -6.3547e-06,
-                                       6.96858e-09, -2.50659e-12, -30208.1,
-                                       2.59023],
-        [2.67215, 0.00305629, -8.73026e-07,
-                                       1.201e-10, -6.39162e-15, -29899.2,
-                                       6.86282],
-        2,
+            18.0153,
+            200,
+            5000,
+            1000,
+            [3.38684, 0.00347498, -6.3547e-06,
+                                        6.96858e-09, -2.50659e-12, -30208.1,
+                                        2.59023],
+            [2.67215, 0.00305629, -8.73026e-07,
+                                        1.201e-10, -6.39162e-15, -29899.2,
+                                        6.86282],
+            2,
         )
         from fenics import project
 
         self._hSpec = {}
         self._hSpec['CH4'] = project(
-        janaf.janaf__hs_expr(
-        CH4,
-        self.T,
-        ),
-        self._FEMSpaces.P2,
+            janaf.janaf__hs_expr(
+                CH4,
+                self.T,
+            ),
+            self._FEMSpaces.P2,
         )
         self._hSpec['O2'] = project(
-        janaf.janaf__hs_expr(
-        O2,
-        self.T,
-        ),
-        self._FEMSpaces.P2,
+            janaf.janaf__hs_expr(
+                O2,
+                self.T,
+            ),
+            self._FEMSpaces.P2,
         )
         self._hSpec['CO'] = project(
-        janaf.janaf__hs_expr(
-        CO,
-        self.T,
-        ),
-        self._FEMSpaces.P2,
+            janaf.janaf__hs_expr(
+                CO,
+                self.T,
+            ),
+            self._FEMSpaces.P2,
         )
         self._hSpec['CO2'] = project(
-        janaf.janaf__hs_expr(
-        CO2,
-        self.T,
-        ),
-        self._FEMSpaces.P2,
+            janaf.janaf__hs_expr(
+                CO2,
+                self.T,
+            ),
+            self._FEMSpaces.P2,
         )
         self._hSpec['H2O'] = project(
-        janaf.janaf__hs_expr(
-        H2O,
-        self.T,
-        ),
-        self._FEMSpaces.P2,
+            janaf.janaf__hs_expr(
+                H2O,
+                self.T,
+            ),
+            self._FEMSpaces.P2,
         )
 
     def get_vertex_values(self):
@@ -508,8 +511,8 @@ class MeanFlowClass(
             based on the mesh exported by ``self._mesh.exportMesh``.
         """
         return MeanFlowVertexValues(
-        self._fieldDict,
-        self._mesh.export_mesh,
+            self._fieldDict,
+            self._mesh.export_mesh,
         )
 
     def _get_mean_fields_to_be_read(self):
@@ -552,8 +555,9 @@ class MeanFlowClass(
         logger.debug("Mean flow fields to read: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
 
-    def add_custom_mean_flow_quantity(self,
-    key,
+    def add_custom_mean_flow_quantity(
+        self,
+        key,
     ):
         """
         Register an additional mean-flow quantity to be read.
@@ -613,9 +617,10 @@ class MeanFlowVertexValues(FieldProperties):
     corresponding subspace and assembling them into a single stacked array.
     """
 
-    def __init__(self,
-    field_dict,
-    mesh,
+    def __init__(
+        self,
+        field_dict,
+        mesh,
     ):
         """
         Initialize the meanFlowVertexValues instance.
@@ -647,8 +652,8 @@ class MeanFlowVertexValues(FieldProperties):
             # The vector components (velocity u) need to be reshaped
             if field_dict[key].space.num_sub_spaces > 1:
                 tempSolutionArray = np.zeros(
-                (field_dict[key].space.num_sub_spaces, mesh.coordinates().shape[0]),
-                dtype=complex,
+                    (field_dict[key].space.num_sub_spaces, mesh.coordinates().shape[0]),
+                    dtype=complex,
                 )
                 for subSpace in range(field_dict[key].space.num_sub_spaces):
                     indicesOfSubSpace = field_dict[key].space.sub(subSpace).collapse()[1]

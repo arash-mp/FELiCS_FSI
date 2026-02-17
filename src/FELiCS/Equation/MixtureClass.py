@@ -61,9 +61,10 @@ class MixtureClass():
         If the file is not found and defaults are used.
     """
 
-    def __init__(self,
-    mixFilePath,
-    speciesFilePath,
+    def __init__(
+        self,
+        mixFilePath,
+        speciesFilePath,
     ):
         """
         Initializing a mixture object based on a mixture.json file.
@@ -83,15 +84,15 @@ class MixtureClass():
         if path.isfile(mixFilePath):
             if mixFilePath.endswith(".json"):
                 mixFile = open(
-                mixFilePath,
-                'r',
+                    mixFilePath,
+                    'r',
                 )
                 data = json.load(mixFile)
                 for setting,value in data.items():
                     setattr(
-                    self,
-                    '__'+setting+'__',
-                    value,
+                        self,
+                        '__'+setting+'__',
+                        value,
                     )
                 mixFile.close()
             else:
@@ -111,8 +112,9 @@ class MixtureClass():
 
         return self.__Reaction_mechanism__
     
-    def get_species_list(self,
-    keyword='all',
+    def get_species_list(
+        self,
+        keyword='all',
     ):
         """
         Return a list of species based on a specified category.
@@ -141,8 +143,9 @@ class MixtureClass():
                     speciesList.append(sp)
         return speciesList
     
-    def read_species_dict(self,
-    filename,
+    def read_species_dict(
+        self,
+        filename,
     ):
         """
         Read species data from a dictionary file and store relevant transport properties.
@@ -160,8 +163,8 @@ class MixtureClass():
         """
 
         fileSpecies = open(
-        filename,
-        'r',
+            filename,
+            'r',
         )
         SpeciesDict = eval(fileSpecies.read())
         self.__M={}
@@ -173,8 +176,9 @@ class MixtureClass():
             self.__Sc_t[specie]=SpeciesDict[specie]['Sc_t']
         
     
-    def sc(self,
-    specie,
+    def sc(
+        self,
+        specie,
     ):
         """
         Return the Schmidt number for a specific species.

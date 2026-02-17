@@ -44,12 +44,12 @@ from    FELiCS.Misc.tensorUtils                                     import Tenso
 logger = Logger.get_logger("felics")
 
 class FluctuationClass(
-    FieldProperties,
-    ReactionHandler,
-    EquationOfStateHandler,
-    EnergyHandler,
-    MomentumHandler,
-    ):
+        FieldProperties,
+        ReactionHandler,
+        EquationOfStateHandler,
+        EnergyHandler,
+        MomentumHandler,
+):
     """
     Container for fluctuating variables and derived fields for postprocessing.
 
@@ -91,11 +91,11 @@ class FluctuationClass(
     """
 
     def __init__(
-            self,
-    param,
-    mean,
-    FEMSpaces,
-    coordinate_system,
+        self,
+        param,
+        mean,
+        FEMSpaces,
+        coordinate_system,
     ):
         """
         Initializes fluctuation fields and derives dependent variables.
@@ -125,15 +125,15 @@ class FluctuationClass(
         
         # Zero-value tensors
         self._zeroVectorField       = Field(
-        FEMSpaces.FunctionSpaceVectorVelocity,
-        self._param.get_mesh(),
-        name="zeroVector",
+            FEMSpaces.FunctionSpaceVectorVelocity,
+            self._param.get_mesh(),
+            name="zeroVector",
         ).get_tensor()
         self._zeroField             = Function(FEMSpaces.P2)
         self._zeroField             = Field(
-        FEMSpaces.P2,
-        self._param.get_mesh(),
-        name="zeroScalar",
+            FEMSpaces.P2,
+            self._param.get_mesh(),
+            name="zeroScalar",
         ).get_tensor()
         self._fieldDict             = {}
         self._mean                  = mean
@@ -144,9 +144,9 @@ class FluctuationClass(
         for field in self._transportedQuantities:
             indexOfFieldInList = self._transportedQuantities.index(field)
             self._fieldDict[field] = Tensor(
-            self._fluc[indexOfFieldInList],
-            self._coordinateSystem,
-            mayHaveSpectralDimension = True,
+                self._fluc[indexOfFieldInList],
+                self._coordinateSystem,
+                mayHaveSpectralDimension = True,
             )
 
         # Get all the variables, which need to be present
@@ -154,19 +154,19 @@ class FluctuationClass(
 
         if param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
             MomentumHandler.__init__(
-                self,
+                    self,
                 )
             neededVariables += self._get_needed_fields_for_linear_momentum()
 
         if param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
             EquationOfStateHandler.__init__(
-                self,
+                    self,
                 )
             neededVariables += self._get_needed_fields_for_linear_eo_s()
 
         if param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
             EnergyHandler.__init__(
-                                  self,
+                                    self,
                                   )
             neededVariables += self._get_needed_fields_for_linear_energy()
             
@@ -194,7 +194,7 @@ class FluctuationClass(
         # print(self._param.Mixture.getReactionMechanism()['type'])
         if not self._param.Mixture.get_reaction_mechanism()['type'] == 'None':
             ReactionHandler.__init__(
-                self,
+                    self,
                 )
             self._initialize_reactions()
             
@@ -269,16 +269,15 @@ class FluctuationSolutions(
     """
 
     def __init__(
-            self,
-    param,
-    mean,
-    FEMSpaces,
-    omega,
-    vmixedVector,
-    isResponseOrDirect,
-    gain_number=-1,
-    gain_value=-1,
-    
+        self,
+        param,
+        mean,
+        FEMSpaces,
+        omega,
+        vmixedVector,
+        isResponseOrDirect,
+        gain_number=-1,
+        gain_value=-1,
     ):
         """
         Initialize the fluctuationSolutions object.
@@ -325,8 +324,9 @@ class FluctuationSolutions(
         self._transportedQuantities = param.get_transported_quantity_list()
         self._param = param
 
-    def _fluc_export_wrapper(self,
-    group,
+    def _fluc_export_wrapper(
+        self,
+        group,
     ):
         """
         Internal method to compute and export all fluctuation fields.
@@ -347,25 +347,25 @@ class FluctuationSolutions(
         neededVariables = []
         if self._param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
             MomentumHandler.__init__(
-                self,
+                    self,
                 )
             neededVariables += self._get_needed_fields_for_linear_momentum()
 
         if self._param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
             EquationOfStateHandler.__init__(
-                self,
+                    self,
                 )
             neededVariables += self._get_needed_fields_for_linear_eo_s()
 
         if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
             EnergyHandler.__init__(
-                self,
+                    self,
                 )
             neededVariables += self._get_needed_fields_for_linear_energy()
     
         if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
             EnergyHandler.__init__(
-                self,
+                    self,
                 )
             neededVariables += self._get_needed_fields_for_linear_energy()
    
@@ -379,22 +379,22 @@ class FluctuationSolutions(
             meanVertexValues = self._mean.get_vertex_values()
             if self._param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
                 self._relate_conservative_to_primitive_variables_momentum(
-                                                    meanVertexValues,
-                                                    )
+                    meanVertexValues,
+                )
                 self._initialize_molecular_momentum_diffusion_fluctuation(meanVertexValues)
 
             if self._param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
                 self._initialize_eo_s_fluctuations(
-                                            meanVertexValues,
-                                                )
+                    meanVertexValues,
+                )
 
             if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
                 self._relate_conservative_to_primitive_variables_energy(
-                                            meanVertexValues,
-                                                )
+                    meanVertexValues,
+                )
                 self._initialize_molecular_heat_diffusion_fluctuation(
-                                            meanVertexValues,
-                                            )
+                    meanVertexValues,
+                )
             n_try += 1
             if n_try > 100:
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
@@ -403,18 +403,19 @@ class FluctuationSolutions(
         if not self._param.Mixture.get_reaction_mechanism()['type'] == 'None':
             ReactionHandler.__init__(
                 self,
-                )
+            )
             self._initialize_reactions(
                 meanVertexValues,
-                )
+            )
         self._writeDictToH5(
-        self._fieldDict,
-        group,
-        True,
+            self._fieldDict,
+            group,
+            True,
         )
 
-    def _import_sol_vector(self,
-    filename,
+    def _import_sol_vector(
+        self,
+        filename,
     ):
         """
         Import raw VMixed solution vector from HDF5 file.
@@ -431,8 +432,8 @@ class FluctuationSolutions(
         """
  
         hf = File(
-        filename,
-        'r',
+            filename,
+            'r',
         )
         frequency = hf['fluctuation/0/'].attrs.get('frequency')
         fieldMagnitude = np.array(hf[f'fluctuation/0/{frequency}/magnitude'][:])

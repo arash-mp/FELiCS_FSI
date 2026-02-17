@@ -61,12 +61,13 @@ class MomentumEquation(EquationTemplate):
     since it is not implemented in the tensorial framework.
     """
 
-    def __init__(self,
-    index,
-    eqColl,
-    fluc,
-    X,
-    param,
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        param,
     ):
         """
         Initialize the MomentumEquation instance.
@@ -95,17 +96,18 @@ class MomentumEquation(EquationTemplate):
     
         # initialize variables in template class
         super().__init__(
-        index,
-        eqColl,
-        fluc,
-        X,
-        param,
+            index,
+            eqColl,
+            fluc,
+            X,
+            param,
         )
 
 
-    def add_weight_matrix_expression(self,
-    weakForm,
-    mean,
+    def add_weight_matrix_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -123,14 +125,17 @@ class MomentumEquation(EquationTemplate):
         """
 
         # Time derivative term
-        weakForm += (i_dot(
-        mean.rho*self.fluc.u,
-        i_conj(self.X),
-        )).ufl_tens*self.J_hat*dx
+        weakForm += (
+            i_dot(
+                mean.rho*self.fluc.u,
+                i_conj(self.X),
+            )
+        ).ufl_tens*self.J_hat*dx
 
-    def add_linear_expression(self,
-    weakForm,
-    mean,
+    def add_linear_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Construct the weak form of the linearized momentum conservation equation.
@@ -159,59 +164,76 @@ class MomentumEquation(EquationTemplate):
         int_by_parts = False
         if int_by_parts and self.param.Case.CoordinateSystem=='Cartesian':
             logger.debug(" -> Using integration by parts for convection term.")
+
             # Volume term from integration by parts
-            weakForm += ( 1j*i_dot(
-            i_div(i_outer(
-            i_conj(X),
-            mean.rho*mean.u,
-            )),
-            fluc.u,
-            ) ).ufl_tens*J_hat*dx
-            weakForm += ( 1j*i_dot(
-            i_div(i_outer(
-            i_conj(X),
-            mean.rho*fluc.u,
-            )),
-            mean.u,
-            ) ).ufl_tens*J_hat*dx
-            weakForm += ( 1j*i_dot(
-            i_div(i_outer(
-            i_conj(X),
-            fluc.rho*mean.u,
-            )),
-            mean.u,
-            ) ).ufl_tens*J_hat*dx
+            weakForm += ( 
+                1j * i_dot(
+                    i_div(i_outer(
+                        i_conj(X),
+                        mean.rho * mean.u,
+                    )),
+                    fluc.u,
+                ) 
+            ).ufl_tens * J_hat * dx
+
+            weakForm += ( 
+                1j * i_dot(
+                    i_div(i_outer(
+                        i_conj(X),
+                        mean.rho * fluc.u,
+                    )),
+                    mean.u,
+                ) 
+            ).ufl_tens * J_hat * dx
+
+            weakForm += ( 
+                1j * i_dot(
+                    i_div(i_outer(
+                        i_conj(X),
+                        fluc.rho * mean.u,
+                    )),
+                    mean.u,
+                ) 
+            ).ufl_tens * J_hat * dx
+
             # Boundary term from integration by parts
-            weakForm += ( -1j*mean.rho*i_dot(
-            i_dot(
-            i_outer(
-            fluc.u,
-            i_conj(X),
-            ),
-            mean.u,
-            ),
-            self.n,
-            ) ).ufl_tens*J_hat*self.all_ds
-            weakForm += ( -1j*mean.rho*i_dot(
-            i_dot(
-            i_outer(
-            mean.u,
-            i_conj(X),
-            ),
-            fluc.u,
-            ),
-            self.n,
-            ) ).ufl_tens*J_hat*self.all_ds
-            weakForm += ( -1j*fluc.rho*i_dot(
-            i_dot(
-            i_outer(
-            mean.u,
-            i_conj(X),
-            ),
-            mean.u,
-            ),
-            self.n,
-            ) ).ufl_tens*J_hat*self.all_ds
+            weakForm += ( 
+                -1j * mean.rho * i_dot(
+                    i_dot(
+                        i_outer(
+                            fluc.u,
+                            i_conj(X),
+                        ),
+                        mean.u,
+                    ),
+                    self.n,
+                ) 
+            ).ufl_tens * J_hat * self.all_ds
+
+            weakForm += ( 
+                -1j * mean.rho * i_dot(
+                    i_dot(
+                        i_outer(
+                            mean.u,
+                            i_conj(X),
+                        ),
+                        fluc.u,
+                    ),
+                    self.n,
+                ) 
+            ).ufl_tens * J_hat * self.all_ds
+
+            weakForm += ( 
+                -1j * fluc.rho * i_dot(
+                i_dot(
+                i_outer(
+                mean.u,
+                i_conj(X),
+                ),
+                mean.u,
+                ),
+                self.n,) 
+            ).ufl_tens * J_hat * self.all_ds
             #elif self.param.Case.CoordinateSystem =='Cylindrical':
             #    # In cyl , a singular term error arise for the boundary term in the tensor framework
             #    # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
@@ -224,45 +246,59 @@ class MomentumEquation(EquationTemplate):
         else:
             ## ---- ALTERNATIVE: No integration by part, just one volume term
             logger.debug(" -> NOT using integration by parts for convection term.")
+
             # -- > Tensor implementation derived by hand
-            weakForm += (-1j*i_dot(
-            i_dot(
-            i_grad(fluc.u),
-            mean.rho*mean.u,
-            ),
-            i_conj(X),
-            )).ufl_tens*J_hat*dx
-            weakForm += (-1j*i_dot(
-            i_dot(
-            i_grad(mean.u),
-            mean.rho*fluc.u,
-            ),
-            i_conj(X),
-            )).ufl_tens*J_hat*dx
-            weakForm += (-1j*i_dot(
-            i_dot(
-            i_grad(mean.u),
-            fluc.rho*mean.u,
-            ),
-            i_conj(X),
-            )).ufl_tens*J_hat*dx
+            weakForm += (
+                -1j * i_dot(
+                    i_dot(
+                        i_grad(fluc.u),
+                        mean.rho * mean.u,
+                    ),
+                    i_conj(X),
+                )
+            ).ufl_tens * J_hat * dx
+
+            weakForm += (
+                -1j * i_dot(
+                    i_dot(
+                        i_grad(mean.u),
+                        mean.rho * fluc.u,
+                    ),
+                    i_conj(X),
+                )
+            ).ufl_tens * J_hat * dx
+
+            weakForm += (
+                -1j * i_dot(
+                    i_dot(
+                        i_grad(mean.u),
+                        fluc.rho * mean.u,
+                    ),
+                    i_conj(X),
+                )
+            ).ufl_tens * J_hat * dx
 
 
         # ------------------------ Pressure gradient terms
         int_by_parts = True
         if int_by_parts:
             # Integrate pressure gradient boundary terms (resulting from integration by parts)
-            weakForm += (1j*fluc.p*i_div(i_conj(X))).ufl_tens*J_hat*dx
-            weakForm += (-1j*i_dot(
-            fluc.p*i_conj(X),
-            self.n,
-            )).ufl_tens*J_hat*self.all_ds
+            weakForm += (
+                1j * fluc.p * i_div(i_conj(X))
+            ).ufl_tens * J_hat * dx
+
+            weakForm += (
+                -1j * i_dot(
+                fluc.p * i_conj(X),
+                self.n,)
+            ).ufl_tens * J_hat * self.all_ds
+
         else:
             # No integration by parts of the pressure term
-            weakForm += -(1j*i_dot(
-            i_grad(fluc.p),
-            i_conj(X),
-            ) ).ufl_tens*J_hat*dx
+            weakForm += -(1j * i_dot(
+                i_grad(fluc.p),
+                i_conj(X),) 
+            ).ufl_tens * J_hat * dx
 
         # ------------------------ Diffusion term
         # NOTE: In the current implementation of FELiCS, a mean.rhoean factor is missing
@@ -276,28 +312,35 @@ class MomentumEquation(EquationTemplate):
         #       BC equivalent to stress-free BC
         
 
-        weakForm += ( -1j*i_inner(
-        fluc.tau,
-        i_grad(X),
-        )).ufl_tens*J_hat*dx
+        weakForm += ( 
+            -1j * i_inner(
+                fluc.tau, 
+                i_grad(X),
+            )
+        ).ufl_tens * J_hat * dx#
+
         #weakForm.add(( 1j*iDot(iDot(fluc.tau,self.n ),iConj(X))).ufl_tens*J_hat*self.all_ds)
 
         ## ---- Visc. 3: viscous BC terms for input-output analysis
         if self.param.Case.AnalysisMode in ['Input-Output']:
             for boundary_index in self.param.IOResolvent.ForcingBoundaryIndices:
-                weakForm += ( 1j*i_dot(
-                i_dot(
-                fluc.tau,
-                self.n,
-                ),
-                i_conj(X),
-                ) ).ufl_tens*J_hat*self.ds(boundary_index)
+                weakForm += ( 
+                    1j * i_dot(
+                        i_dot(
+                            fluc.tau,
+                            self.n,
+                        ),
+                        i_conj(X),
+                    ) 
+                ).ufl_tens * J_hat * self.ds(boundary_index)
+
                 # Version with full viscous tensor (not assuming constant viscosity) --> Not working as expected for now
                 #self.A_vf.add((1j*mean.nuTot*iDot(iDot(iGrad(fluc.u, self.m)+iT(iGrad(fluc.u, self.m)),),iConj(X))).ufl_tens*J_hat*self.ds(boundary_index))
 
-    def add_nonlinear_expression(self,
-    weakForm,
-    mean,
+    def add_nonlinear_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the nonlinear expression to the weak form.
@@ -322,25 +365,30 @@ class MomentumEquation(EquationTemplate):
         int_by_parts = True
         if int_by_parts and self.param.Case.CoordinateSystem=='Cartesian':
             logger.debug(" -> Using integration by parts for convection term.")
+
             # Volume term from integration by parts
-            weakForm.add(( 1j*i_dot(
-            i_div(i_outer(
-            i_conj(X),
-            mean.rho*mean.u,
-            )),
-            mean.u,
-            ) ).ufl_tens*J_hat*dx)
+            weakForm.add(
+                1j * i_dot(
+                    i_div(i_outer(
+                        i_conj(X),
+                        mean.rho * mean.u,
+                    )),
+                    mean.u,
+                ).ufl_tens * J_hat * dx
+            )
+
             # Boundary term from integration by parts
-            weakForm.add(( -1j*mean.rho*i_dot(
-            i_dot(
-            i_outer(
-            mean.u,
-            i_conj(X),
-            ),
-            mean.u,
-            ),
-            self.n,
-            ) ).ufl_tens*J_hat*self.all_ds)
+            weakForm.add(( -1j * mean.rho * i_dot(
+                i_dot(
+                    i_outer(
+                        mean.u,
+                        i_conj(X),
+                    ),
+                    mean.u,
+                ),
+                self.n,
+            ) ).ufl_tens * J_hat * self.all_ds)
+
             #elif self.param.Case.CoordinateSystem =='Cylindrical':
             #    # In cyl , a singular term error arise for the boundary term in the tensor framework
             #    # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
@@ -351,24 +399,32 @@ class MomentumEquation(EquationTemplate):
         else:
             ## ---- ALTERNATIVE: No integration by part, just one volume term
             logger.debug(" -> NOT using integration by parts for convection term.")
+            
             # -- > Tensor implementation derived by hand
-            weakForm.add(( -1j*i_dot(
-            i_dot(
-            i_grad(mean.u),
-            mean.rho*mean.u,
-            ),
-            i_conj(X),
-            ) ).ufl_tens*J_hat*dx)
+            weakForm.add(
+                ( -1j * i_dot(
+                    i_dot(
+                        i_grad(mean.u),
+                        mean.rho * mean.u,
+                    ),
+                    i_conj(X),
+                )).ufl_tens * J_hat * dx
+            )
 
         # ------------------------ Pressure gradient terms
         int_by_parts = True  
         if int_by_parts:
             # Integrate pressure gradient boundary terms (resulting from integration by parts)
-            weakForm.add( (1j*mean.p*i_div(i_conj(X)) ).ufl_tens*J_hat*dx)
-            weakForm.add( (-1j*i_dot(
-            mean.p*i_conj(X),
-            self.n,
-            ) ).ufl_tens*J_hat*self.all_ds)
+            weakForm.add( 
+                (1j * mean.p * i_div(i_conj(X))).ufl_tens * J_hat * dx
+            )
+
+            weakForm.add(
+                (-1j * i_dot(
+                    mean.p * i_conj(X),
+                    self.n,
+                )).ufl_tens * J_hat * self.all_ds
+            )
 
         else:
             # No integration by parts of the pressure term
@@ -376,15 +432,18 @@ class MomentumEquation(EquationTemplate):
             raise Exception(' -> Pressure term without IbP not implemented in tensor framework.')
 
         # ------------------------ Diffusion term
-        weakForm.add(( -1j*i_inner(
-        mean.tau,
-        i_grad(X),
-        )).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( -1j * i_inner(
+                mean.tau,
+                i_grad(X),
+            )).ufl_tens * J_hat * dx
+        )
 
 
-    def add_bilinear_expression(self,
-    weakForm,
-    mean,
+    def add_bilinear_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the bilinear convection term for incompressible flows.
@@ -408,20 +467,25 @@ class MomentumEquation(EquationTemplate):
         X     = self.X
         J_hat = self.J_hat
 
-        weakForm.add(( -1j*i_dot(
-        i_dot(
-        i_grad(fluc.u),
-        mean.rho*u_bil,
-        ),
-        i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( -1j*i_dot(
-        i_dot(
-        i_grad(u_bil),
-        mean.rho*fluc.u,
-        ),
-        i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( -1j * i_dot(
+                i_dot(
+                    i_grad(fluc.u),
+                    mean.rho * u_bil,
+                ),
+                i_conj(X),) 
+            ).ufl_tens * J_hat * dx
+        )
+
+        weakForm.add(
+            ( -1j * i_dot(
+                i_dot(
+                    i_grad(u_bil),
+                    mean.rho*fluc.u,
+                ),
+                i_conj(X),
+            )).ufl_tens*J_hat*dx
+        )
 
 
         # Sophie: additional terms for compressible equation; treat with care, so far not "Taylor"-tested
@@ -430,31 +494,43 @@ class MomentumEquation(EquationTemplate):
         except:
             #TODO: throw warning if fluc.rho exists as variable 
             return
-        weakForm.add(( -1j*i_dot(
-        i_dot(
-        i_grad(mean.u),
-        fluc.rho*u_bil,
-        ),
-        i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( -1j*i_dot(
-        i_dot(
-        i_grad(u_bil),
-        fluc.rho*mean.u,
-        ),
-        i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( -1j*i_dot(
-        i_dot(
-        i_grad(fluc.u),
-        rho_bil*mean.u,
-        ),
-        i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
-        weakForm.add(( -1j*i_dot(
-        i_dot(
-        i_grad(mean.u),
-        rho_bil*fluc.u,
-        ),
-        i_conj(X),
-        ) ).ufl_tens*J_hat*dx)
+        
+        weakForm.add(
+            ( -1j * i_dot(
+                i_dot(
+                    i_grad(mean.u),
+                    fluc.rho * u_bil,
+                ),
+                i_conj(X),
+            )).ufl_tens * J_hat * dx
+        )
+
+        weakForm.add(
+            ( -1j * i_dot(
+                i_dot(
+                    i_grad(u_bil),
+                    fluc.rho * mean.u,
+                ),
+                i_conj(X),
+            ) ).ufl_tens * J_hat * dx
+        )
+
+        weakForm.add(
+            ( -1j * i_dot(
+                i_dot(
+                    i_grad(fluc.u),
+                    rho_bil*mean.u,
+                ),
+                i_conj(X),
+            ) ).ufl_tens * J_hat * dx
+        )
+
+        weakForm.add(
+            ( -1j * i_dot(
+                i_dot(
+                    i_grad(mean.u),
+                    rho_bil * fluc.u,
+                ),
+                i_conj(X),
+            ) ).ufl_tens * J_hat * dx
+        )

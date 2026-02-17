@@ -66,8 +66,9 @@ class CustomFormatter(logging.Formatter):
         logging.CRITICAL: bold_red + format_str + reset
     }
 
-    def format(self,
-    record,
+    def format(
+        self,
+        record,
     ):
         """
         Format the specified log record as text with color based on log level.
@@ -89,9 +90,9 @@ class CustomFormatter(logging.Formatter):
         if in_notebook():
             # Strip ANSI codes inside notebooks
             return re.sub(
-            r'\x1b\[[0-9;]*m',
-            '',
-            formatter.format(record),
+                r'\x1b\[[0-9;]*m',
+                '',
+                formatter.format(record),
             )
         else:
             return formatter.format(record)
@@ -140,10 +141,11 @@ class Logger:
 
     _instance = None
     
-    def __init__(self,
-    debug_mode=False,
-    test_mode=False,
-    logger_name="log",
+    def __init__(
+        self,
+        debug_mode=False,
+        test_mode=False,
+        logger_name="log",
     ):
         """
         Initialize the Logger instance.
@@ -188,8 +190,8 @@ class Logger:
 
         ch = logging.StreamHandler()
         fh = logging.FileHandler(
-        logfilename,
-        encoding='utf-8',
+            logfilename,
+            encoding='utf-8',
         )
         #fh_errors = logging.FileHandler(logfilename_errors, encoding='utf-8')
 
@@ -199,20 +201,20 @@ class Logger:
         #fh_errors.setLevel(logging.WARNING)
 
         logging.addLevelName(
-        logging.ERROR,
-        'Error',
+            logging.ERROR,
+            'Error',
         )
         logging.addLevelName(
-        logging.WARNING,
-        'Warning',
+            logging.WARNING,
+            'Warning',
         )
         logging.addLevelName(
-        logging.INFO,
-        'Info',
+            logging.INFO,
+            'Info',
         )
         logging.addLevelName(
-        logging.DEBUG,
-        'Debug',
+            logging.DEBUG,
+            'Debug',
         )
         formatter_log = logging.Formatter(
             '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
@@ -248,8 +250,9 @@ class Logger:
         return self._logger
 
     @classmethod
-    def get_logger(cls,
-    name=None,
+    def get_logger(
+        cls,
+        name=None,
     ):
         """
         Retrieve the singleton logger instance.
@@ -278,8 +281,9 @@ class Logger:
         return cls._instance
     
     @classmethod
-    def change_log_location(cls,
-    new_log_path,
+    def change_log_location(
+        cls,
+        new_log_path,
     ):
         """
         Move log files to a new directory and update file handlers.
@@ -302,13 +306,13 @@ class Logger:
         instance = cls.get_logger()
 
         os.makedirs(
-        os.path.dirname(new_log_path),
-        exist_ok=True,
+            os.path.dirname(new_log_path),
+            exist_ok=True,
         )
 
         file_handlers = [h for h in instance.handlers if isinstance(
-        h,
-        logging.FileHandler,
+            h,
+            logging.FileHandler,
         )]
 
         for handler in file_handlers:
@@ -324,17 +328,17 @@ class Logger:
             old_log_path = handler.baseFilename
             if os.path.exists(old_log_path):
                 shutil.move(
-                old_log_path,
-                new_log_path,
+                    old_log_path,
+                    new_log_path,
                 )
             new_log_file_path = os.path.join(
-            new_log_path,
-            os.path.basename(old_log_path),
+                new_log_path,
+                os.path.basename(old_log_path),
             )
 
             new_file_handler = logging.FileHandler(
-            new_log_file_path,
-            encoding='utf-8',
+                new_log_file_path,
+                encoding='utf-8',
             )
             new_file_handler.setLevel(log_level)
             new_file_handler.setFormatter(log_formatter)
@@ -343,8 +347,9 @@ class Logger:
 
         instance.info(f"Log files moved to: {new_log_path}")
 
-    def close_logger(self,
-    logger,
+    def close_logger(
+        self,
+        logger,
     ):
         """
         Remove all handlers from the given logger.

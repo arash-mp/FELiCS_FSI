@@ -53,8 +53,8 @@ class EnergyHandler:
         pass
 
     def _relate_conservative_to_primitive_variables_energy(
-                                            self,
-    mean='None',
+        self,
+        mean='None',
     ):
         """
         Relates conservative variables to primitive variables for energy calculation.
@@ -139,10 +139,9 @@ class EnergyHandler:
             return ['T', 'progress']
 
     def _initialize_molecular_heat_diffusion_fluctuation(
-                                    self,
-    mean='None',
-    
-                                    ):
+        self,
+        mean='None',
+    ):
         """
         Initializes the molecular heat diffusion fluctuation.
 

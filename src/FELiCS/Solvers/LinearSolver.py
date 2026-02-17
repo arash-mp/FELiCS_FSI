@@ -134,19 +134,19 @@ class LinearSolver:
         eps = SLEPc.EPS().create()
         if adjoint:
             eps.setOperators(
-            A_adj,
-            B_adj,
+                A_adj,
+                B_adj,
             )
         else:
             eps.setOperators(
-            A,
-            B,
+                A,
+                B,
             )
         eps.setProblemType(SLEPc.EPS.ProblemType.GNHEP)     # general non-Hermitian eigenproblem with semi-definite B
         
         eps.setTolerances(
-        tol=tol,
-        max_it=max_it,
+            tol=tol,
+            max_it=max_it,
         )
         
         #eps.setType(SLEPc.EPS.Type.KRYLOVSCHUR) # is standard, does not need to be set
@@ -165,33 +165,33 @@ class LinearSolver:
         
         dim = A.getSize()[0]
         eigVals,  eigVecs  = np.empty(
-        nev,
-        complex,
+            nev,
+            complex,
         ), np.empty(
-        [nev,dim],
-        complex,
+            [nev,dim],
+            complex,
         )
         vec_real, vec_imag = A.getVecs()
         error = np.empty(nev)
         for i in range(nev):
             try:
                 eigVals[i]   = eps.getEigenpair(
-                i,
-                vec_real,
-                vec_imag,
+                    i,
+                    vec_real,
+                    vec_imag,
                 )
                 eigVecs[i,:] = vec_real.getArray() + 1j * vec_imag.getArray()
                 error[i] = eps.computeError(
-                i,
-                SLEPc.EPS.ErrorType.RELATIVE,
+                    i,
+                    SLEPc.EPS.ErrorType.RELATIVE,
                 )
                 #printDebug(True,f"SLEPc error relative: {error[i]}")
             
             except:
                 logger.warning(
-                "Could not access eigenpair nb ",
-                nev+1,
-                "!",
+                    "Could not access eigenpair nb ",
+                    nev+1,
+                    "!",
                 )
         
         # Cleanup solver
@@ -210,10 +210,10 @@ class LinearSolver:
 
     @staticmethod
     def solve_svd_of_resolvent(
-                resolventOperator,
-    nev,
-    tol    = 1.e-16,
-    max_it = 200,
+        resolventOperator,
+        nev,
+        tol    = 1.e-16,
+        max_it = 200,
     ):
         """
         Solve the singular value decomposition (SVD) of a resolvent operator.
@@ -247,8 +247,8 @@ class LinearSolver:
         eps.setOperators(R)
         eps.setDimensions(nev=nev)
         eps.setTolerances(
-        tol=tol,
-        max_it=max_it,
+            tol=tol,
+            max_it=max_it,
         )
         eps.setWhichEigenpairs(SLEPc.EPS.Which.LARGEST_MAGNITUDE)
         eps.getST().getKSP().getPC().setType('none')
@@ -259,19 +259,19 @@ class LinearSolver:
         
         dim = resolventOperator.getSize()[0]
         eigVals,  eigVecs  = np.empty(
-        nev,
-        complex,
+            nev,
+            complex,
         ), np.empty(
-        [dim,nev],
-        complex,
+            [dim,nev],
+            complex,
         )
         vec_real, vec_imag = resolventOperator.getVecs()
         for i in range(nev):
             try:
                 eigVals[i] = eps.getEigenpair(
-                i,
-                vec_real,
-                vec_imag,
+                    i,
+                    vec_real,
+                    vec_imag,
                 )
                 eigVecs[:,i] = vec_real.getArray() + 1j * vec_imag.getArray()
                 logger.debug(f"SLEPc error relative: {eps.computeError( i, SLEPc.EPS.ErrorType.RELATIVE, )}")
@@ -285,8 +285,8 @@ class LinearSolver:
     @staticmethod
     def solve_equation_system(
         A,
-    b,
-    destroy=False,
+        b,
+        destroy=False,
     ):
 
         """
@@ -315,8 +315,8 @@ class LinearSolver:
         solver.getPC().setFactorSolverType('mumps')
         
         solver.solve(
-        b,
-        solution,
+            b,
+            solution,
         )
         
         x = solution.getArray()
@@ -336,8 +336,8 @@ class LinearSolver:
     @staticmethod
     def solve_transpose_equation_system(
         A,
-    b,
-    destroy=False,
+        b,
+        destroy=False,
     ):
 
         """
@@ -366,8 +366,8 @@ class LinearSolver:
         solver.getPC().setFactorSolverType('mumps')
         
         solver.solveTranspose(
-        b,
-        solution,
+            b,
+            solution,
         )
         
         x = solution.getArray()
@@ -386,7 +386,8 @@ class LinearSolver:
 
     @staticmethod
     def create_equation_system_solver(
-        A):
+        A
+    ):
 
         """
         Create a KSP PETSc solver to solve a linear equation system.
@@ -418,8 +419,8 @@ class LinearSolver:
     @staticmethod
     def solve_equation_system_with_predefined_solver(
         solver,
-    b,
-    destroy=False,
+        b,
+        destroy=False,
     ):
 
         """
@@ -442,8 +443,8 @@ class LinearSolver:
         solution = b.copy()
         
         solver.solve(
-        b,
-        solution,
+            b,
+            solution,
         )
         
         x = solution.getArray()
@@ -459,8 +460,8 @@ class LinearSolver:
     @staticmethod
     def solve_transpose_equation_system_with_predefined_solver(
         solver,
-    b,
-    destroy=False,
+        b,
+        destroy=False,
     ):
 
         """
@@ -483,8 +484,8 @@ class LinearSolver:
         solution = b.copy()
         
         solver.solveTranspose(
-        b,
-        solution,
+            b,
+            solution,
         )
         
         x = solution.getArray()
@@ -524,13 +525,14 @@ class ResolventOperator(object):
         Restrictor matrix for response. Rectangular matrix of appropriate size without FEM weights. Spatial restrictor values can be between 0 and 1.
     """
 
-    def __init__(self,
-    ResolventOperator,
-    FEMWeightMatrix_fullSystem,
-    FEMWeightMatrix_forcingNorm,
-    FEMWeightMatrix_responseNorm,
-    RestrictorMatrix_forcing,
-    RestrictorMatrix_response,
+    def __init__(
+        self,
+        ResolventOperator,
+        FEMWeightMatrix_fullSystem,
+        FEMWeightMatrix_forcingNorm,
+        FEMWeightMatrix_responseNorm,
+        RestrictorMatrix_forcing,
+        RestrictorMatrix_response,
     ):    
 
         """
@@ -615,10 +617,11 @@ class ResolventOperator(object):
         """                 
         return self._F1, self._F2         
 
-    def mult(self,
-    mat,
-    X,
-    y,
+    def mult(
+        self,
+        mat,
+        X,
+        y,
     ):
         """
         Compute the matrix-vector product Y = mat * X.
@@ -639,48 +642,48 @@ class ResolventOperator(object):
         """                 
         # returns Y=mat*X                 
         # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcing                 
-        self._P_forcing.mult            (
-        X,
-        self._O1,
+        self._P_forcing.mult(
+            X,
+            self._O1,
         )  #O1 = P_f * X                 
-        self._W_FEM.mult                (
-        self._O1,
-        self._O2,
+        self._W_FEM.mult(
+            self._O1,
+            self._O2,
         )  #O2 = W_FEM * O1                 
-        self._ksp1.solve                (
-        self._O2,
-        self._O1,
-        )  #O1 = OP^-1 * O2                    #
+        self._ksp1.solve(
+            self._O2,
+            self._O1,
+        )  #O1 = OP^-1 * O2
 
-        self._P_response.mult           (
-        self._O1,
-        self._R1,
+        self._P_response.mult(
+            self._O1,
+            self._R1,
         )  #R1 = P_r * O1                 
-        self._W_response.mult           (
-        self._R1,
-        self._R2,
+        self._W_response.mult(
+            self._R1,
+            self._R2,
         )  #R2 = W_r * R1                 
-        self._P_response.multTranspose  (
-        self._R2,
-        self._O1,
+        self._P_response.multTranspose(
+            self._R2,
+            self._O1,
         )  #O1 = P_r^T * R2                
-        self._ksp2.solveTranspose       (
-        self._O1,
-        self._O2,
+        self._ksp2.solveTranspose(
+            self._O1,
+            self._O2,
         )  #O2 = (OP^H)^-1 * O1                 
 
-        self._W_FEM.multTranspose       (
-        self._O2,
-        self._O1,
+        self._W_FEM.multTranspose(
+            self._O2,
+            self._O1,
         )  #O1 = W_FEM^T * O2                 
-        self._P_forcing.multTranspose   (
-        self._O1,
-        self._F1,
+        self._P_forcing.multTranspose(
+            self._O1,
+            self._F1,
         )  #F1  = P_f^T * O1                 
-        self._ksp3.solve                (
-        self._F1,
-        y,
-        )         #Y  = (W_f^T)^-1 * F1                 
+        self._ksp3.solve(
+            self._F1,
+            y,
+        )  #Y  = (W_f^T)^-1 * F1                 
 
         return y         
 

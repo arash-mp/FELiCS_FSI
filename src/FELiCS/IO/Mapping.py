@@ -40,8 +40,8 @@ class Mapping:
 
     @staticmethod
     def calculate_mapping_from_spaces(
-            inputSpace,
-    outputSpace,
+        inputSpace,
+        outputSpace,
     ):
         """
         Compute a DOF index mapping between two finite element spaces.
@@ -74,14 +74,14 @@ class Mapping:
         outputDofs          = outputSpace.tabulate_dof_coordinates()
 
         return Mapping.calculate_mapping_from_dofs(
-        inputDofs,
-        outputDofs,
+            inputDofs,
+            outputDofs,
         )
 
     @staticmethod
     def calculate_mapping_from_dofs(
-            inputDofs,
-    outputDofs,
+        inputDofs,
+        outputDofs,
     ):
         """
         Compute a DOF index mapping from coordinate arrays.
@@ -124,14 +124,14 @@ class Mapping:
 
         # Append indices as last column
         inputMesh           = np.append(
-        inputMesh,
-        np.arange(len(inputMesh))[:, None],
-        axis=1,
+            inputMesh,
+            np.arange(len(inputMesh))[:, None],
+            axis=1,
         ).round(11)
         outputMesh          = np.append(
-        outputMesh,
-        np.arange(len(outputMesh))[:, None],
-        axis=1,
+            outputMesh,
+            np.arange(len(outputMesh))[:, None],
+            axis=1,
         ).round(11)
 
         # Sort by x,y,z

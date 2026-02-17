@@ -41,8 +41,9 @@ class NOx:
     """
 
 
-    def __init__(self,
-    P,
+    def __init__(
+        self,
+        P,
     ):
         """
         Initializes the NOx instance by loading tabulated NOx source term data.
@@ -57,9 +58,10 @@ class NOx:
 
 
 
-    def add_source_to_weak_form(self,
-    weakform,
-    dQ_threshold=None,
+    def add_source_to_weak_form(
+        self,
+        weakform,
+        dQ_threshold=None,
     ):
         """
         Add NO and NO2 source terms to the weak form based on interpolated data.
@@ -83,24 +85,24 @@ class NOx:
             The assembled weak form with NO and NO2 source terms included.
         """
         interpolationNO = interpolate.interp1d(
-        self.__Table['phi'],
-        self.__Table['omega_NO_pf'],
+            self.__Table['phi'],
+            self.__Table['omega_NO_pf'],
         )
         interpolationNO2 = interpolate.interp1d(
-        self.__Table['phi'],
-        self.__Table['omega_NO2_pf'],
+            self.__Table['phi'],
+            self.__Table['omega_NO2_pf'],
         )
-        omegaNO=Function(weakform.phi.function_space)
+        omegaNO = Function(weakform.phi.function_space)
         print(np.max(weakform.phi.vector[:]))
-        omegaNO.vector()[:]=interpolationNO(weakform.phi.vector[:])
-        omegaNO2=Function(weakform.phi.function_space())
-        omegaNO2.vector()[:]=interpolationNO2(weakform.phi.vector[:])
+        omegaNO.vector()[:] = interpolationNO(weakform.phi.vector[:])
+        omegaNO2 = Function(weakform.phi.function_space())
+        omegaNO2.vector()[:] = interpolationNO2(weakform.phi.vector[:])
         print(len(omegaNO2.vector[:]))
         print(len(weakform.T.vector[:]))
         for i in range(len(omegaNO2.vector()[:])):
-            if weakform.T.vector[i]<1000:
-                omegaNO.vector[i]=0
-                omegaNO2.vector[i]=0
+            if weakform.T.vector[i] < 1000:
+                omegaNO.vector[i] = 0
+                omegaNO2.vector[i] = 0
 
         eq =  weakform.v_NO * omegaNO * dx
         eq += weakform.v_NO2 * omegaNO2 * dx

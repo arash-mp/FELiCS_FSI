@@ -45,12 +45,13 @@ class ReactionClass:
         Reaction rate (if discretized).
     """
 
-    def __init__(self,
-    educts,
-    products,
-    reaction_mechanism,
-    fluc,
-    mean,
+    def __init__(
+        self,
+        educts,
+        products,
+        reaction_mechanism,
+        fluc,
+        mean,
     ):
         """
         Initializes the reactionClass instance.
@@ -83,8 +84,9 @@ class ReactionClass:
         if not (fluc == None or mean == None):
             self.discretize_reaction()
 
-    def consumption(self,
-    specie,
+    def consumption(
+        self,
+        specie,
     ):
         """
         Returns the reaction rate for a consumed educt species.
@@ -108,9 +110,10 @@ class ReactionClass:
         else: 
             printError('Specie ' + specie + ' not a educt of reaction ' + self.__name + '.')
 
-    def discretize_reaction(self,
-    mean,
-    fluc,
+    def discretize_reaction(
+        self,
+        mean,
+        fluc,
     ):
         """
         Discretizes the reaction using the provided mean and fluctuation fields.
@@ -128,8 +131,10 @@ class ReactionClass:
         """
         self.__isDisretized == True
         if reaction_mechanism in ['EBU_CnF_Kaiser2023']:
-            self.__rr = mean.rr_prefactor * mean.rho * (fluc.y('progress') - 2 * fluc.y('progress') * mean.y('progress'))\
-                      + mean.rr_prefactor * fluc.rho * (mean.y('progress') -     mean.y('progress') * mean.y('progress'))
+            self.__rr = (
+                mean.rr_prefactor * mean.rho * (fluc.y('progress') - 2 * fluc.y('progress') * mean.y('progress'))
+                + mean.rr_prefactor * fluc.rho * (mean.y('progress') -     mean.y('progress') * mean.y('progress'))
+            )
             # self.__rr = 860 * mean.rho * (fluc.Y('progress') - 2 * fluc.Y('progress') * mean.Y('progress'))\
             #           + 860 * fluc.rho * (mean.Y('progress') -     mean.Y('progress') * mean.Y('progress'))
         else:
@@ -148,8 +153,9 @@ class ReactionClass:
         """
         return self.__educts
 
-    def production(self,
-    specie,
+    def production(
+        self,
+        specie,
     ):
         """
         Returns the reaction rate for a produced product species.
@@ -242,10 +248,11 @@ class ReactionMechanismClass:
         Name of the reaction mechanism.
     """
 
-    def __init__(self,
-    reaction_mechanism,
-    fluc=None,
-    mean=None,
+    def __init__(
+        self,
+        reaction_mechanism,
+        fluc=None,
+        mean=None,
     ):
         """
         Initializes the reactionMechanismClass instance.
@@ -268,11 +275,11 @@ class ReactionMechanismClass:
             self.__numberOfSpecies = 1
             self.__numberOfReactions = 1
             self.__reactionList.append(ReactionClass(
-            '',
-            'progress',
-            reaction_mechanism,
-            fluc,
-            mean,
+                '',
+                'progress',
+                reaction_mechanism,
+                fluc,
+                mean,
             ))
             self.__additionalMeanFieldQuantities.append('rr_prefactor')
             self.__additionalMeanFieldQuantities.append('T_u') # unburnt temperature

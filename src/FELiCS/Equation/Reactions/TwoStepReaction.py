@@ -138,8 +138,9 @@ class TwoStepReaction():
         Name of the reaction.
     """
 
-    def __init__(self,
-    ModelName,
+    def __init__(
+        self,
+        ModelName,
     ):
         """
         Initializes the TwoStepReaction instance.
@@ -208,41 +209,42 @@ class TwoStepReaction():
         self.Q2 = None #total reaction 2
 
         # reaction rate (only as function of temperature)
-        self.K2f=None
-        self.K2r=None
+        self.K2f = None
+        self.K2r = None
 
         # variables to be linearized step-by-step in equilibrium contant in reaction 2
-        self.lnexpInEqui_h=None
-        self.expInEqui=None
-        self.Equi=None
+        self.lnexpInEqui_h = None
+        self.expInEqui = None
+        self.Equi = None
 
 
-        self.i_rho=None
-        self.i_CH4=None
-        self.i_O2=None
-        self.i_CO2=None
-        self.i_CO=None
-        self.T=None
+        self.i_rho = None
+        self.i_CH4 = None
+        self.i_O2 = None
+        self.i_CO2 = None
+        self.i_CO = None
+        self.T = None
 
 #       #PEA fitting functions (homogeneously equal to 1 evaluated for lean premixed case.)
         #if required, formula and parameters given at the end of script)
-#       self.phi=None
-#       self.f1=None
-#       self.f2=None
+#       self.phi = None
+#       self.f1 = None
+#       self.f2 = None
 
 
-        self.Y_CH4_limited=None
+        self.Y_CH4_limited = None
 
-        self.epsilon=0.0002 #correction for base flow CH4
+        self.epsilon = 0.0002 #correction for base flow CH4
 
 
-        self.reactionName='TwoStep'
+        self.reactionName = 'TwoStep'
         print('Initializing reaction '+self.reactionName+' '+ModelName)
         self.read_reaction_dict(ModelName)
 
 
-    def read_reaction_dict(self,
-    ModelName,
+    def read_reaction_dict(
+        self,
+        ModelName,
     ):
         """
         Reads reaction parameters and species data from files and updates class attributes.
@@ -257,8 +259,8 @@ class TwoStepReaction():
         This method sets stoichiometric prefactors, kinematic exponents, reaction constants, and molar masses based on the provided model name.
         """
         fileMixture = open(
-        self.mixtureDirectory,
-        'r',
+            self.mixtureDirectory,
+            'r',
         )
         mixtureDictDict = eval(fileMixture.read())
         fileMixture.close()
@@ -296,8 +298,8 @@ class TwoStepReaction():
         self.h2 = MD['reac_h0_2']
 
         fileSpecies = open(
-        self.speciesDirectory,
-        'r',
+            self.speciesDirectory,
+            'r',
         )
         speciesDictDict = eval(fileSpecies.read())
         fileSpecies.close()
@@ -308,9 +310,10 @@ class TwoStepReaction():
         self.WH2O = speciesDictDict['H2O']['mol_weight']
         self.WN2 = speciesDictDict['N2']['mol_weight']
 
-    def compute_mean_field(self,
-    MF,
-    ele,
+    def compute_mean_field(
+        self,
+        MF,
+        ele,
     ):
         """
         Computes the mean field reaction rates and equilibrium constants.
@@ -336,54 +339,54 @@ class TwoStepReaction():
         This method also computes equilibrium constants and related fields for reaction 2.
         """
         self.Y_CH4_limited = Expression(
-        "Y_CH4_ + epsilon_",
-        Y_CH4_=MF['CH4'],
-        epsilon_=self.epsilon,
-        degree=2,
+            "Y_CH4_ + epsilon_",
+            Y_CH4_ = MF['CH4'],
+            epsilon_ = self.epsilon,
+            degree = 2,
         )
 
         ele.interpolate(Expression(
-        "A*exp(-Ta/T_) * pow(T_, beta)* pow(rho_, nu_CH4 + nu_O2) * pow(Y_CH4_ / W_CH4, nu_CH4) * pow(Y_O2_ / W_O2, nu_O2)",
-        A=self.A1,
-        T_=MF['T'],
-        Ta=self.Ta1,
-        beta=self.beta1,
-        rho_=MF['rho'],
-        nu_CH4=self.nu_CH4_1,
-        nu_O2=self.nu_O2_1,
-        Y_CH4_=self.Y_CH4_limited,
-        W_CH4=self.WCH4,
-        Y_O2_=MF['O2'],
-        W_O2=self.WO2,
-        degree=2,
+            "A*exp(-Ta/T_) * pow(T_, beta)* pow(rho_, nu_CH4 + nu_O2) * pow(Y_CH4_ / W_CH4, nu_CH4) * pow(Y_O2_ / W_O2, nu_O2)",
+            A = self.A1,
+            T_ = MF['T'],
+            Ta = self.Ta1,
+            beta = self.beta1,
+            rho_ = MF['rho'],
+            nu_CH4 = self.nu_CH4_1,
+            nu_O2 = self.nu_O2_1,
+            Y_CH4_ = self.Y_CH4_limited,
+            W_CH4 = self.WCH4,
+            Y_O2_ = MF['O2'],
+            W_O2 = self.WO2,
+            degree = 2,
         ))
 
         self.Q1 = ele
-        self.K2f=project(
-        Expression(
-        "A*exp(-Ta/T_) * pow(T_, beta)",
-        A=self.A2,
-        T_=MF['T'],
-        Ta=self.Ta2,
-        beta=self.beta2,
-        degree=2,
-        ),
-        ele,
+        self.K2f = project(
+            Expression(
+                "A*exp(-Ta/T_) * pow(T_, beta)",
+                A=self.A2,
+                T_=MF['T'],
+                Ta=self.Ta2,
+                beta=self.beta2,
+                degree=2,
+            ),
+            ele,
         )
         self.Q2f=project(
-        Expression(
-        "K2f_*pow(rho_, nu_CO + nu_O2) * pow(Y_CO_ / W_CO, nu_CO) * pow(Y_O2_ / W_O2, nu_O2)",
-        K2f_=self.K2f,
-        rho_=MF['rho'],
-        nu_CO=self.nu_CO_2,
-        nu_O2=self.nu_O2_2,
-        Y_CO_=MF['CO'],
-        W_CO=self.WCO,
-        Y_O2_=MF['O2'],
-        W_O2=self.WO2,
-        degree=2,
-        ),
-        ele,
+            Expression(
+                "K2f_*pow(rho_, nu_CO + nu_O2) * pow(Y_CO_ / W_CO, nu_CO) * pow(Y_O2_ / W_O2, nu_O2)",
+                K2f_=self.K2f,
+                rho_=MF['rho'],
+                nu_CO=self.nu_CO_2,
+                nu_O2=self.nu_O2_2,
+                Y_CO_=MF['CO'],
+                W_CO=self.WCO,
+                Y_O2_=MF['O2'],
+                W_O2=self.WO2,
+                degree=2,
+            ),
+            ele,
         )
 
         #choose the base flow of temperature imported from AVBP. This can reproduce more precisely the base flow reaction rates
@@ -391,81 +394,90 @@ class TwoStepReaction():
         Tfield=MF['T'].vector[:]
 
 
-        lnexpInEqui_h = ((-np.array(list(getEnthalpyPlusFormationJANAF1971(
-        'CO2',
-        Tfield,
-        )))/self.R/Tfield)*self.n_CO2_2\
-                -(-np.array(list(getEnthalpyPlusFormationJANAF1971(
-        'CO',
-        Tfield,
-        )))/self.R/Tfield)*self.n_CO_2\
-                -(-np.array(list(getEnthalpyPlusFormationJANAF1971(
-        'O2',
-        Tfield,
-        )))/self.R/Tfield)*self.n_O2_2)
-        lnexpInEqui = (np.array(list(getEntropyJANAF1971(
-        'CO2',
-        Tfield,
-        )))/self.R-np.array(list(getEnthalpyPlusFormationJANAF1971(
-        'CO2',
-        Tfield,
-        )))/self.R/Tfield)*self.n_CO2_2\
-                -(np.array(list(getEntropyJANAF1971(
-        'CO',
-        Tfield,
-        )))/self.R-np.array(list(getEnthalpyPlusFormationJANAF1971(
-        'CO',
-        Tfield,
-        )))/self.R/Tfield)*self.n_CO_2\
-                -(np.array(list(getEntropyJANAF1971(
-        'O2',
-        Tfield,
-        )))/self.R-np.array(list(getEnthalpyPlusFormationJANAF1971(
-        'O2',
-        Tfield,
-        )))/self.R/Tfield)*self.n_O2_2
+        lnexpInEqui_h = (
+            (
+                -np.array(list(getEnthalpyPlusFormationJANAF1971(
+                'CO2',
+                Tfield,
+                ))) / self.R/Tfield
+            ) * self.n_CO2_2-(
+                -np.array(list(getEnthalpyPlusFormationJANAF1971(
+                    'CO',
+                    Tfield,
+                ))) / self.R / Tfield
+            ) * self.n_CO_2-(
+                -np.array(list(getEnthalpyPlusFormationJANAF1971(
+                    'O2',
+                    Tfield,
+                ))) / self.R / Tfield
+            ) * self.n_O2_2
+        )
+        lnexpInEqui = (
+            np.array(list(getEntropyJANAF1971(
+                'CO2',
+                Tfield,
+            ))) / self.R-np.array(list(getEnthalpyPlusFormationJANAF1971(
+                'CO2',
+                Tfield,
+            ))) / self.R / Tfield
+        ) * self.n_CO2_2 - (
+            np.array(list(getEntropyJANAF1971(
+                'CO',
+                Tfield,
+            ))) / self.R - np.array(list(getEnthalpyPlusFormationJANAF1971(
+                'CO',
+                Tfield,
+            ))) / self.R / Tfield
+        ) * self.n_CO_2 - (
+            np.array(list(getEntropyJANAF1971(
+                'O2',
+                Tfield,
+            ))) / self.R - np.array(list(getEnthalpyPlusFormationJANAF1971(
+                'O2',
+                Tfield,
+            ))) / self.R / Tfield
+        ) * self.n_O2_2
 
-        nu_j=self.nu_CO2_2-self.nu_CO_2-self.nu_O2_2
-        self.lnexpInEqui_h=Function(ele)
-        self.lnexpInEqui_h.vector[:]=lnexpInEqui_h
-        self.expInEqui=Function(ele)
-        self.expInEqui.vector[:]=np.exp(lnexpInEqui)
-        self.Equi=Function(ele)
-        self.Equi.vector[:]=(self.p0/self.R/Tfield)**nu_j*np.exp(lnexpInEqui)
+        nu_j = self.nu_CO2_2-self.nu_CO_2-self.nu_O2_2
+        self.lnexpInEqui_h = Function(ele)
+        self.lnexpInEqui_h.vector[:] = lnexpInEqui_h
+        self.expInEqui = Function(ele)
+        self.expInEqui.vector[:] = np.exp(lnexpInEqui)
+        self.Equi = Function(ele)
+        self.Equi.vector[:] = (self.p0 / self.R / Tfield) ** nu_j * np.exp(lnexpInEqui)
 
-        self.K2r=project(
-        Expression(
-        "k2f_/Equi_",
-        k2f_=self.K2f,
-        Equi_=self.Equi,
-        degree=2,
-        ),
-        ele,
+        self.K2r = project(
+            Expression(
+                "k2f_/Equi_",
+                k2f_=self.K2f,
+                Equi_=self.Equi,
+                degree=2,
+            ),
+            ele,
         )
         self.Q2r=project(
-        Expression(
-        "K2r_*pow(rho_, nu_CO2) * pow(Y_CO2_ / W_CO2, nu_CO2) ",
-        K2r_=self.K2r,
-        rho_=MF['rho'],
-        nu_CO2=self.nu_CO2_2,
-        Y_CO2_=MF['CO2'],
-        W_CO2=self.WCO2,
-        degree=2,
-        ),
-        ele,
+            Expression(
+                "K2r_*pow(rho_, nu_CO2) * pow(Y_CO2_ / W_CO2, nu_CO2) ",
+                K2r_=self.K2r,
+                rho_=MF['rho'],
+                nu_CO2=self.nu_CO2_2,
+                Y_CO2_=MF['CO2'],
+                W_CO2=self.WCO2,
+                degree=2,
+            ),
+            ele,
         )
-
-
 
         return self.Q1, self.Q2f, self.Q2r
 
 
-    def add_reaction(self,
-    MF,
-    testf,
-    trialf,
-    solutionList,
-    ele,
+    def add_reaction(
+        self,
+        MF,
+        testf,
+        trialf,
+        solutionList,
+        ele,
     ):
         """
         Adds the reaction terms to the weak form for both reaction steps.
@@ -492,44 +504,48 @@ class TwoStepReaction():
         -----
         The method computes the indices for relevant variables and constructs the weak form using the reaction rates and heat release for both steps.
         """
-        self.i_rho=solutionList.index('rho')
-        self.i_CH4=solutionList.index('CH4')
-        self.i_O2=solutionList.index('O2')
-        self.i_CO2=solutionList.index('CO2')
-        self.i_CO=solutionList.index('CO')
+        self.i_rho  = solutionList.index('rho')
+        self.i_CH4  = solutionList.index('CH4')
+        self.i_O2   = solutionList.index('O2')
+        self.i_CO2  = solutionList.index('CO2')
+        self.i_CO   = solutionList.index('CO')
 
         #dQ1
         dQ1=self.d_q1_(
-        MF,
-        trialf,
+            MF,
+            trialf,
         )
-        form = -testf[self.i_rho]*dQ1*self.Q1*self.h1*dx\
-            -testf[self.i_CH4]*dQ1*self.Q1*self.n_CH4_1*self.WCH4*dx\
-            -testf[self.i_O2]*dQ1*self.Q1*self.n_O2_1*self.WO2*dx\
-            +testf[self.i_CO]*dQ1*self.Q1*self.n_CO_1*self.WCO*dx
+        form = (
+            - testf[self.i_rho] * dQ1 * self.Q1 * self.h1 * dx
+            - testf[self.i_CH4] * dQ1 * self.Q1 * self.n_CH4_1 * self.WCH4 * dx
+            - testf[self.i_O2] * dQ1 * self.Q1 * self.n_O2_1 * self.WO2 * dx
+            + testf[self.i_CO] * dQ1 * self.Q1 * self.n_CO_1 * self.WCO * dx
+        )
 
 
 #       #dQ2f
         dQ2f=self.d_q2f_(
-        MF,
-        trialf,
+            MF,
+            trialf,
         )
         dQ2r=self.d_q2r_(
-        MF,
-        trialf,
+            MF,
+            trialf,
         )
-        dQ2=dQ2f*self.Q2f-dQ2r*self.Q2r
+        dQ2 = dQ2f * self.Q2f - dQ2r * self.Q2r
 
-        form += \
-            -testf[self.i_O2]*dQ2*self.n_O2_2*self.WO2*dx\
-            -testf[self.i_CO]*dQ2*self.n_CO_2*self.WCO*dx\
-            +testf[self.i_CO2]*dQ2*self.n_CO2_2*self.WCO2*dx\
-            -testf[self.i_rho]*dQ2*self.h2*dx
+        form += (
+            - testf[self.i_O2] * dQ2 * self.n_O2_2 * self.WO2 * dx
+            - testf[self.i_CO] * dQ2 * self.n_CO_2 * self.WCO * dx
+            + testf[self.i_CO2] * dQ2 * self.n_CO2_2 * self.WCO2 * dx
+            - testf[self.i_rho] * dQ2 * self.h2 * dx
+        )
         return form
 
-    def d_q1_(self,
-    MF,
-    trialf,
+    def d_q1_(
+        self,
+        MF,
+        trialf,
     ):
         """
         Computes the fluctuation of the reaction rate for the first reaction step.
@@ -546,17 +562,20 @@ class TwoStepReaction():
         dQ1 : float
             Fluctuation of the reaction rate for reaction 1.
         """
-        dT = -trialf['rho']/MF['rho']*MF['T']
-        return ((self.nu_O2_1+self.nu_CH4_1)*trialf['rho']/MF['rho']\
-                +self.beta1*dT/MF['T']\
-                +self.Ta1*dT/MF['T']/MF['T']\
-                +self.nu_O2_1*trialf['O2']/MF['O2']\
-                +self.nu_CH4_1*trialf['CH4']/(MF['CH4']+self.epsilon))#((MF['O2']-0.0447)/1.78e-1*4.45e-2))#/MF['CH4'])#self.Y_CH4_limited)
+        dT = - trialf['rho'] / MF['rho'] * MF['T']
+        return ((self.nu_O2_1 + self.nu_CH4_1) * trialf['rho'] / MF['rho']
+            + self.beta1 * dT / MF['T']
+            + self.Ta1 * dT / MF['T'] / MF['T']
+            + self.nu_O2_1 * trialf['O2'] / MF['O2']
+            + self.nu_CH4_1 * trialf['CH4'] / (MF['CH4'] + self.epsilon)
+        )
+        #((MF['O2']-0.0447)/1.78e-1*4.45e-2))#/MF['CH4'])#self.Y_CH4_limited)
 
 
-    def d_q2f_(self,
-    MF,
-    trialf,
+    def d_q2f_(
+        self,
+        MF,
+        trialf,
     ):
         """
         Computes the fluctuation of the forward reaction rate for the second reaction step.
@@ -574,15 +593,18 @@ class TwoStepReaction():
             Fluctuation of the forward reaction rate for reaction 2.
         """
         dT = -trialf['rho']/MF['rho']*MF['T']
-        return ((self.nu_O2_2+self.nu_CO_2)*trialf['rho']/MF['rho']\
-                +self.beta2*dT/MF['T']\
-                +self.Ta2*dT/MF['T']/MF['T']\
-                +self.nu_CO_2*trialf['CO']/(MF['CO'])\
-                +self.nu_O2_2*trialf['O2']/MF['O2'])
+        return (
+            (self.nu_O2_2 + self.nu_CO_2) * trialf['rho']/MF['rho']
+            + self.beta2 * dT / MF['T']
+            + self.Ta2 * dT / MF['T'] / MF['T']
+            + self.nu_CO_2 * trialf['CO'] / (MF['CO'])
+            + self.nu_O2_2 * trialf['O2']/MF['O2']
+        )
 
-    def d_q2r_(self,
-    MF,
-    trialf,
+    def d_q2r_(
+        self,
+        MF,
+        trialf,
     ):
         """
         Computes the fluctuation of the reverse reaction rate for the second reaction step.
@@ -599,13 +621,13 @@ class TwoStepReaction():
         dQ2r : float
             Fluctuation of the reverse reaction rate for reaction 2.
         """
-        dK2rdT=self.d_k2rd_t_(self.T)
-        dT = -trialf['rho']/MF['rho']*MF['T']
-        return (\
-                +self.nu_CO2_2*trialf['CO2']/(MF['CO2'])\
-                +self.nu_CO2_2*trialf['rho']/MF['rho']\
-                +dT*dK2rdT\
-                )
+        dK2rdT  = self.d_k2rd_t_(self.T)
+        dT      = - trialf['rho'] / MF['rho'] * MF['T']
+        return (
+            + self.nu_CO2_2 * trialf['CO2']/(MF['CO2'])
+            + self.nu_CO2_2 * trialf['rho']/MF['rho']
+            + dT * dK2rdT
+        )
 #       #if we neglect dK2rdT
 #       return (\
 #               +self.nu_CO2_2*trialf['CO2']/(MF['CO2'])\
@@ -613,8 +635,9 @@ class TwoStepReaction():
 #               +dT*dK2rdT\
 #               )
 
-    def d_k2fd_t_(self,
-    T,
+    def d_k2fd_t_(
+        self,
+        T,
     ):
         """
         Computes the temperature derivative of the forward reaction rate constant for reaction 2.
@@ -630,15 +653,16 @@ class TwoStepReaction():
             Expression for the temperature derivative of the forward rate constant.
         """
         return Expression(
-        "(Ta2 / pow(T_, 2)+beta2/T_)",
-        Ta2=self.Ta2,
-        T_=T,
-        beta2=self.beta2,
-        degree=2,
+            "(Ta2 / pow(T_, 2)+beta2/T_)",
+            Ta2=self.Ta2,
+            T_=T,
+            beta2=self.beta2,
+            degree=2,
         )
 
-    def d_k2rd_t_(self,
-    T,
+    def d_k2rd_t_(
+        self,
+        T,
     ):
         """
         Computes the temperature derivative of the reverse reaction rate constant for reaction 2.
@@ -655,20 +679,21 @@ class TwoStepReaction():
         """
 
         return Expression(
-        "Kf2dT_ -KcdT_/Kc",
-        kf2d_t_=self.d_k2fd_t_(T),
-        Kc=self.Equi,
-        K2f_=self.K2f,
-        K2r_=self.K2r,
-        KcdT_=self.d_equid_t_(self.T),
-        degree=2,
+            "Kf2dT_ -KcdT_/Kc",
+            kf2d_t_=self.d_k2fd_t_(T),
+            Kc=self.Equi,
+            K2f_=self.K2f,
+            K2r_=self.K2r,
+            KcdT_=self.d_equid_t_(self.T),
+            degree=2,
         )
 #       #if we neglect KcdT
 #       return Expression("Kf2dT_ ",Kf2dT_=self.dK2fdT_(T), Kc=self.Equi, K2f_=self.K2f, K2r_=self.K2r,\
 #                   KcdT_=self.dEquidT_(self.T),  degree=2)
 
-    def d_equid_t_(self,
-    T,
+    def d_equid_t_(
+        self,
+        T,
     ):
         """
         Computes the temperature derivative of the equilibrium constant for reaction 2.
@@ -684,16 +709,16 @@ class TwoStepReaction():
             Expression for the temperature derivative of the equilibrium constant.
         """
         return Expression(
-        "(Kp2dT - Kp2/T_ * (n_CO2_2 - n_O2_2 - n_CO_2)) * pow(pa / (R * T_), n_CO2_2-n_O2_2-n_CO_2)",
-        Kp2dT=self.dexp_in_equid_t_(T),
-        Kp2=self.expInEqui,
-        pa=self.p0,
-        R=self.R,
-        T_=T,
-        n_O2_2=self.n_O2_2,
-        n_CO_2=self.n_CO_2,
-        n_CO2_2=self.n_CO2_2,
-        degree=2,
+            "(Kp2dT - Kp2/T_ * (n_CO2_2 - n_O2_2 - n_CO_2)) * pow(pa / (R * T_), n_CO2_2-n_O2_2-n_CO_2)",
+            Kp2dT = self.dexp_in_equid_t_(T),
+            Kp2 = self.expInEqui,
+            pa = self.p0,
+            R = self.R,
+            T_ = T,
+            n_O2_2 = self.n_O2_2,
+            n_CO_2 = self.n_CO_2,
+            n_CO2_2 = self.n_CO2_2,
+            degree = 2,
         )
 #       #if we neglect Kp2dT
 #       return Expression(
@@ -702,8 +727,9 @@ class TwoStepReaction():
 #       n_O2_2=self.n_O2_2, n_CO_2=self.n_CO_2, n_CO2_2=self.n_CO2_2,
 #       degree=2)
 
-    def dexp_in_equid_t_(self,
-    T,
+    def dexp_in_equid_t_(
+        self,
+        T,
     ):
         """
         Computes the temperature derivative of the exponential part of the equilibrium constant for reaction 2.
@@ -719,23 +745,24 @@ class TwoStepReaction():
             Expression for the temperature derivative of the exponential part of the equilibrium constant.
         """
         return Expression(
-        "- Kp2 /  T_ * H_",
-        Kp2=self.expInEqui,
-        R=self.R,
-        T_=T,
-        H_=self.lnexpInEqui_h,
-        degree=2,
+            "- Kp2 /  T_ * H_",
+            Kp2 = self.expInEqui,
+            R = self.R,
+            T_ = T,
+            H_ = self.lnexpInEqui_h,
+            degree = 2,
         )
 
 
-    def post_heat_relaese(self,
-    MF,
-    prho,
-    pCH4,
-    pO2,
-    pCO,
-    pCO2,
-    ele,
+    def post_heat_relaese(
+        self,
+        MF,
+        prho,
+        pCH4,
+        pO2,
+        pCO,
+        pCO2,
+        ele,
     ):
         """
         Evaluates the fluctuation of heat release in post-processing.
@@ -765,39 +792,40 @@ class TwoStepReaction():
         #evalute fluctuation HeatRelease in post-processing
         #dQ1
         dQ1=self.postd_q1_(
+            MF,
+            prho,
+            pO2,
+            pCH4,
+            ele,
+        )
+        form = dQ1 * self.Q1 * self.h1
+
+        #dQ2
+        dQ2f = self.postd_q2f_(
+            MF,
+            prho,
+            pCO,
+            pO2,
+        )
+        dQ2r=self.postd_q2r_(
+            MF,
+            prho,
+            pCO2,
+        )
+        form += (dQ2f * self.Q2f - dQ2r * self.Q2r) * self.h2
+
+        return project(
+            form,
+            ele,
+        )
+
+    def postd_q1_(
+        self,
         MF,
         prho,
         pO2,
         pCH4,
         ele,
-        )
-        form = dQ1*self.Q1*self.h1
-
-        #dQ2
-        dQ2f=self.postd_q2f_(
-        MF,
-        prho,
-        pCO,
-        pO2,
-        )
-        dQ2r=self.postd_q2r_(
-        MF,
-        prho,
-        pCO2,
-        )
-        form += (dQ2f*self.Q2f-dQ2r*self.Q2r)*self.h2
-
-        return project(
-        form,
-        ele,
-        )
-
-    def postd_q1_(self,
-    MF,
-    prho,
-    pO2,
-    pCH4,
-    ele,
     ):
         """
         Computes the fluctuation of the reaction rate for the first reaction step in post-processing.
@@ -823,17 +851,19 @@ class TwoStepReaction():
 
 
         dT = -prho/MF['rho']*MF['T']
-        return ((self.nu_O2_1+self.nu_CH4_1)*prho/MF['rho']\
-                +self.beta1*dT/MF['T']\
-                +self.Ta1*dT/MF['T']/MF['T']\
-                +self.nu_O2_1*pO2/MF['O2']\
-                +self.nu_CH4_1*pCH4/(MF['CH4']+self.epsilon))
+        return ((self.nu_O2_1 + self.nu_CH4_1) * prho / MF['rho']
+            + self.beta1 * dT / MF['T']
+            + self.Ta1 * dT / MF['T'] / MF['T']
+            + self.nu_O2_1 * pO2 / MF['O2']
+            + self.nu_CH4_1 * pCH4 / (MF['CH4'] + self.epsilon)
+        )
 
-    def postd_q2f_(self,
-    MF,
-    prho,
-    pCO,
-    pO2,
+    def postd_q2f_(
+        self,
+        MF,
+        prho,
+        pCO,
+        pO2,
     ):
         """
         Computes the fluctuation of the forward reaction rate for the second reaction step in post-processing.
@@ -854,17 +884,20 @@ class TwoStepReaction():
         dQ2f : float
             Fluctuation of the forward reaction rate for reaction 2.
         """
-        dT = -prho/MF['rho']*MF['T']
-        return ((self.nu_O2_2+self.nu_CO_2)*prho/MF['rho']\
-                +self.beta2*dT/MF['T']\
-                +self.Ta2*dT/MF['T']/MF['T']\
-                +self.nu_CO_2*pCO/(MF['CO'])\
-                +self.nu_O2_2*pO2/MF['O2'])
+        dT = - prho / MF['rho'] * MF['T']
+        return (
+            (self.nu_O2_2 + self.nu_CO_2) * prho / MF['rho']
+            + self.beta2 * dT / MF['T']
+            + self.Ta2 * dT / MF['T'] / MF['T']
+            + self.nu_CO_2 * pCO / (MF['CO'])
+            + self.nu_O2_2 * pO2 / MF['O2']
+        )
 
-    def postd_q2r_(self,
-    MF,
-    prho,
-    pCO2,
+    def postd_q2r_(
+        self,
+        MF,
+        prho,
+        pCO2,
     ):
         """
         Computes the fluctuation of the reverse reaction rate for the second reaction step in post-processing.
@@ -883,13 +916,13 @@ class TwoStepReaction():
         dQ2r : float
             Fluctuation of the reverse reaction rate for reaction 2.
         """
-        dK2rdT=self.d_k2rd_t_(self.T)
-        dT = -prho/MF['rho']*MF['T']
-        return (\
-                +self.nu_CO2_2*pCO2/(MF['CO2'])\
-                +(self.nu_CO2_2)*prho/MF['rho']\
-                +dT*dK2rdT\
-                )
+        dK2rdT = self.d_k2rd_t_(self.T)
+        dT = - prho / MF['rho'] * MF['T']
+        return (
+            + self.nu_CO2_2 * pCO2 / (MF['CO2'])
+            + (self.nu_CO2_2) * prho / MF['rho']
+            + dT * dK2rdT
+        )
 
 
     def test_m(self):

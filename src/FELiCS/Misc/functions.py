@@ -35,9 +35,9 @@ def get_last_git_commit():
     FELiCSPathname = os.path.dirname(sys.argv[0])
 
     commit = subprocess.Popen(
-    ['git','--git-dir',FELiCSPathname+'/../.git', 'rev-parse', 'HEAD'],
-    shell=False,
-    stdout=subprocess.PIPE,
+        ['git','--git-dir',FELiCSPathname+'/../.git', 'rev-parse', 'HEAD'],
+        shell=False,
+        stdout=subprocess.PIPE,
     )
     commit = commit.communicate()[0].strip().decode('ascii')
     return commit

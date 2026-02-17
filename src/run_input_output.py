@@ -42,30 +42,30 @@ def run_input_output(param):
 
     # FEMSpaces
     FEMSpaces = FEMSpaces(
-    param,
-    mesh,
+        param,
+        mesh,
     )
      
     # writer to export the results in files
     writer    = Writer(
-    mesh,
-    param.Export.ExportFolder,
+        mesh,
+        param.Export.ExportFolder,
     )
 
     # read in mean flow and export to h5-file
     meanFlow = MeanFlowClass(
-    param,
-    FEMSpaces,
-    mesh,
+        param,
+        FEMSpaces,
+        mesh,
     )
     meanFlow.import_data_from_file_and_export_to_h5(writer)
 
     # equation
     equation = EquationCollectionClass(
-    param,
-    FEMSpaces,
-    meanFlow,
-    mesh,
+        param,
+        FEMSpaces,
+        meanFlow,
+        mesh,
     )
 
     #-----------------------------------------------------------------------
@@ -84,32 +84,32 @@ def run_input_output(param):
 
     # Solve equation system for each frequency 
     solution                = ModeCollection(
-    FEMSpaces.VMixed,
-    mesh,
-    analysisType = "input_output",
+        FEMSpaces.VMixed,
+        mesh,
+        analysisType = "input_output",
     )
     for omega in omegas:
         # define operator
         operator            = A.copy()
         operator.axpy(
-        -omega,
-        B,
+            -omega,
+            B,
         ) #petsc command: operator = A - omega*B
         solutionVector      = LinearSolver.solve_equation_system(
-        operator,
-        forcing,
+            operator,
+            forcing,
         )
         solution.append_mode_from_vector(
-        solutionVector,
-        frequency = omega,
-        gain = 1,
+            solutionVector,
+            frequency = omega,
+            gain = 1,
         ) 
 
         # export newest mode
         # TODO: there is no need for a ModeCollection, export modes directly
         solution.export_modes(
-        writer,
-        onlyNewN = 1,
+            writer,
+            onlyNewN = 1,
         )
 
     # End tracking time

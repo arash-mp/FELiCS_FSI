@@ -11,9 +11,7 @@
 # \___________________________________/ \_______________________________________________________/
 #
 # Third party libraries
-from    ufl import (
-    dx
-)
+from    ufl import dx
 
 # Local Libraries and methods
 from FELiCS.Equation.Equations.EquationTemplate import EquationTemplate
@@ -56,12 +54,13 @@ class EnergyPressureEquation(EquationTemplate):
         If an unsupported numerical scheme like Discontinuous Galerkin is used.
     """
 
-    def __init__(self,
-    index,
-    eqColl,
-    fluc,
-    X,
-    param,
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        param,
     ):
         """
         Initialize the EnergyPressureEquation object.
@@ -89,17 +88,18 @@ class EnergyPressureEquation(EquationTemplate):
 
         # initialize variables in template class
         super().__init__(
-        index,
-        eqColl,
-        fluc,
-        X,
-        param,
+            index,
+            eqColl,
+            fluc,
+            X,
+            param,
         )
 
 
-    def add_weight_matrix_expression(self,
-    weakForm,
-    mean,
+    def add_weight_matrix_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -126,9 +126,10 @@ class EnergyPressureEquation(EquationTemplate):
         """
         pass
 
-    def add_linear_expression(self,
-    weakForm,
-    mean,
+    def add_linear_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the linear expression to the weak form.
@@ -253,9 +254,10 @@ class EnergyPressureEquation(EquationTemplate):
         #   --> Neglected to impose the proper BC
         
     
-    def add_bilinear_expression(self,
-    weakForm,
-    mean,
+    def add_bilinear_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the bilinear convection term. CAUTION: not tested yet, treat with care!

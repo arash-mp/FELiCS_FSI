@@ -51,11 +51,11 @@ class ReactionClass:
     """
 
     def __init__(
-                 self,
-    reactionData,
-    reactionType,
-    mean,
-    fluc,
+        self,
+        reactionData,
+        reactionType,
+        mean,
+        fluc,
     ):
         """
         Initializes the reactionClass instance.
@@ -141,8 +141,9 @@ class ReactionClass:
 
         return self._educts + self._products
         
-    def source_term(self,
-    specie,
+    def source_term(
+        self,
+        specie,
     ):
         """
         Computes the source term for a specific species based on its role in the reaction.
@@ -217,8 +218,9 @@ class ReactionHandler:
             raise Exception('Reaction mechanism ' + self._param.Mixture.reaction_mechanism['type'] + ' unknown!')
         return outList
     
-    def _initialize_reactions(self,
-    mean='None',
+    def _initialize_reactions(
+        self,
+        mean='None',
     ):
         """
         Creates and initializes reactionClass objects using the defined mechanism and mean fields.
@@ -248,8 +250,9 @@ class ReactionHandler:
             self._reactions.append(reaction)
             self._fieldDict['RR'+str(i_reaction)] = reaction.rr()
 
-    def omega(self,
-    specie,
+    def omega(
+        self,
+        specie,
     ):
         """
         Computes the net source term (omega) for a given species by aggregating contributions
@@ -287,8 +290,9 @@ class ReactionHandler:
                 input(omegaTotal.ufl_tens)
         return omegaTotal
         
-    def rr(self,
-    index,
+    def rr(
+        self,
+        index,
     ):
         """
         Retrieves the reaction rate for a specified reaction.

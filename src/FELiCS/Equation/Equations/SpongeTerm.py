@@ -67,12 +67,13 @@ class SpongeTerm(EquationTemplate):
     Discontinuous Galerkin schemes are not supported in this tensorial framework.
     """
 
-    def __init__(self,
-    index,
-    eqColl,
-    fluc,
-    X,
-    param,
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        param,
     ):
         """
         Initialize the SpongeTerm object.
@@ -95,17 +96,18 @@ class SpongeTerm(EquationTemplate):
 
         # initialize variables in template class
         super().__init__(
-        index,
-        eqColl,
-        fluc,
-        X,
-        param,
+            index,
+            eqColl,
+            fluc,
+            X,
+            param,
         )
 
 
-    def add_weight_matrix_expression(self,
-    weakForm,
-    mean,
+    def add_weight_matrix_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -124,9 +126,10 @@ class SpongeTerm(EquationTemplate):
         # nothing to add for the sponge term
         pass
 
-    def add_linear_expression(self,
-    weakForm,
-    mean,
+    def add_linear_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the linear expression to the weak form.
@@ -190,9 +193,10 @@ class SpongeTerm(EquationTemplate):
         #     id_rho = param.Case.SolutionList.index('rho')
         #     weakForm.add(( -1j*mean.spg*fluc.rho*iConj(X[id_rho]) ).ufl_tens*J_hat*dx)
 
-    def add_nonlinear_expression(self,
-    weakForm,
-    mean,
+    def add_nonlinear_expression(
+        self,
+        weakForm,
+        mean,
     ):
         """
         Add the nonlinear expression to the weak form.
@@ -228,20 +232,24 @@ class SpongeTerm(EquationTemplate):
                 
                 # Dynamically get the corresponding fluctuation field
                 mean_var = getattr(
-                mean,
-                '%s' % varID,
+                    mean,
+                    '%s' % varID,
                 )
 
                 # Apply the sponge
                 if varID == 'u': # For u we need the dot product with X
                     target_u = mean._fieldDict['u_target'].get_tensor()
-                    weakForm.add(( -1j*mean.spg*i_dot(
-                    mean_var-target_u,
-                    i_conj(X[varNum]),
-                    ) ).ufl_tens*J_hat*dx)
+                    weakForm.add(
+                        ( -1j * mean.spg * i_dot(
+                            mean_var-target_u,
+                            i_conj(X[varNum]),
+                        )).ufl_tens * J_hat * dx
+                    )
                 else: 
                     # for every other name there has to exist a field in the mean flow dictionary with the name and the suffix '_target'
                     # TODO: what to do if the field does not exist? Logging: throw error
                     target_name = varID+"_target"
                     target_tens = mean._fieldDict[target_name].get_tensor()
-                    weakForm.add(( -1j*mean.spg*(mean_var-target_tens)*i_conj(X[varNum]) ).ufl_tens*J_hat*dx)
+                    weakForm.add(
+                        ( -1j * mean.spg * (mean_var - target_tens) * i_conj(X[varNum])).ufl_tens * J_hat * dx
+                    )

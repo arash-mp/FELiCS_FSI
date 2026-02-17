@@ -123,14 +123,15 @@ class Mode(Field):
         Property returning the error associated with the mode (returns -9999. if undefined).
     """
 
-    def __init__(self,
-    FEMSpace,
-    mesh,
-    name="q_hat",
-    isStateVector=True,
-    m=0,
-    analysisType='Modal',
-    modeType = None,
+    def __init__(
+        self,
+        FEMSpace,
+        mesh,
+        name="q_hat",
+        isStateVector=True,
+        m=0,
+        analysisType='Modal',
+        modeType = None,
     ):
         """
         Initialize a Mode instance.
@@ -159,11 +160,11 @@ class Mode(Field):
             RESPONSE for INPUT_OUTPUT).
         """
         super().__init__(
-        FEMSpace,
-        mesh,
-        name,
-        isStateVector,
-        m,
+            FEMSpace,
+            mesh,
+            name,
+            isStateVector,
+            m,
         )
         
         # Set values
@@ -236,8 +237,9 @@ class Mode(Field):
             return -9999.
 
     @gain.setter
-    def gain(self,
-    gain,
+    def gain(
+        self,
+        gain,
     ):
         """
         Set the gain of the mode.
@@ -268,8 +270,9 @@ class Mode(Field):
             return -1
 
     @gain_number.setter
-    def gain_number(self,
-    gain_number,
+    def gain_number(
+        self,
+        gain_number,
     ):
         """
         Set the gain number for the mode.
@@ -298,8 +301,9 @@ class Mode(Field):
             return -9999.
 
     @frequency.setter
-    def frequency(self,
-    frequency,
+    def frequency(
+        self,
+        frequency,
     ):
         """
         Set the frequency for the mode.
@@ -329,8 +333,9 @@ class Mode(Field):
             return -9999.
 
     @eigen_value.setter
-    def eigen_value(self,
-    eigen_value,
+    def eigen_value(
+        self,
+        eigen_value,
     ):
         """
         Set the eigenvalue for the mode.
@@ -359,8 +364,9 @@ class Mode(Field):
             return -9999.
  
     @wave_number.setter
-    def wave_number(self,
-    wave_number,
+    def wave_number(
+        self,
+        wave_number,
     ):
         """
         Set the wave number for the mode.
@@ -389,8 +395,9 @@ class Mode(Field):
             return -9999.
 
     @guess.setter
-    def guess(self,
-    guess,
+    def guess(
+        self,
+        guess,
     ):
         """
         Set the initial guess for the mode.
@@ -419,8 +426,9 @@ class Mode(Field):
             return -9999.
 
     @error.setter
-    def error(self,
-    error,
+    def error(
+        self,
+        error,
     ):
         """
         Set the error value for the mode.
@@ -452,9 +460,10 @@ class Mode(Field):
             logger.info(f"  Frequency:     {self.frequency}")
         logger.info(f"  Wave Number:   {self.wave_number}") 
 
-    def export_to_h5(self,
-    writer,
-    fileName=None,
+    def export_to_h5(
+        self,
+        writer,
+        fileName=None,
     ):
         """
         Export the mode to an HDF5 file.
@@ -475,11 +484,12 @@ class Mode(Field):
         """
         # create standard fileName if none is given
         if fileName is None:
-            fileName = "Mode_" \
-                       + self.analysisType.name.capitalize() + "_" \
-                       + self.modeType.name.capitalize() + "_" \
-                       + "Omega_" \
-                       + "{:.3f}".format(self.omega)
+            fileName = ("Mode_" 
+                + self.analysisType.name.capitalize() + "_" 
+                + self.modeType.name.capitalize() + "_" 
+                + "Omega_" 
+                + "{:.3f}".format(self.omega)
+            )
             if self.analysisType == AnalysisType.RESOLVENT:
                 fileName += "_GainNb_" + str(self.gain_number)
 
@@ -502,17 +512,17 @@ class Mode(Field):
 
         # export mode        
         writer.export_field_to_h5(
-        self,
-        fileName,
-        attrList,
+            self,
+            fileName,
+            attrList,
         )
 
 
     def import_data(
-            self,
-    reader,
-    importDirPath,
-    importFileName = None,
+        self,
+        reader,
+        importDirPath,
+        importFileName = None,
     ):
         """
         Import mode data from an HDF5 file.
@@ -562,28 +572,28 @@ class Mode(Field):
         
         # File name
         importFilePath      = os.path.join(
-        importDirPath,
-        fileName,
+            importDirPath,
+            fileName,
         )
         
         # Call the reader from Field parent class
         self, notInFile     = super().import_data(
-        reader,
-        importFilePath,
+            reader,
+            importFilePath,
         )
         
         # Read eignvalue or gain from file
         if self.analysisType == AnalysisType.MODAL:
             with h5py.File(
-            importFilePath,
-            'r',
+                importFilePath,
+                'r',
             ) as f:
                 self.eigen_value = f["omega"][()]
                 
         elif self.analysisType == AnalysisType.RESOLVENT:
-            with h5py.File(
-            importFilePath,
-            'r',
+                with h5py.File(
+                importFilePath,
+                'r',
             ) as f:
                 self.frequency  = f["omega"][()]     # NOTE: slight inconsistency in naming
                 self.gain       = f["gain"][()]
@@ -591,8 +601,8 @@ class Mode(Field):
                 
         elif self.analysisType == AnalysisType.INPUT_OUTPUT:
             with h5py.File(
-            importFilePath,
-            'r',
+                importFilePath,
+                'r',
             ) as f:
                 self.frequency  = f["omega"][()]    # NOTE: slight inconsistency in naming
         

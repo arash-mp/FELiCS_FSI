@@ -77,12 +77,13 @@ class FELiCSMesh:
         Array containing the cell connectivity in FELiCS ordering; populated
         by :meth:`calcConnectivity`.
     """
-    def __init__(self,
-    coordinateSystemName,
-    meshFileName=None,
-    gdim = None,
-    m=0,
-    inputMesh=None,
+    def __init__(
+        self,
+        coordinateSystemName,
+        meshFileName=None,
+        gdim = None,
+        m=0,
+        inputMesh=None,
     ):
         """
         Initialize the FELiCSMesh object, loading a mesh from file or using an
@@ -109,12 +110,12 @@ class FELiCSMesh:
             # Initialize gmsh and suppress its output
             gmsh.initialize()
             gmsh.option.setNumber(
-            "General.Terminal",
-            0,
+                "General.Terminal",
+                0,
             )  # Disable console log
             gmsh.option.setNumber(
-            "General.Verbosity",
-            0,
+                "General.Verbosity",
+                0,
             ) # Disable all logging
             
             logger.info(f"Opening mesh file: {meshFileName}")
@@ -131,15 +132,15 @@ class FELiCSMesh:
             if gdim == None:
                 gdim = gmsh.model.getDimension()
             mesh, _, facet_tags = gmshio.model_to_mesh(
-            gmsh.model,
-            mesh_comm,
-            model_rank,
-            gdim=gdim,
+                gmsh.model,
+                mesh_comm,
+                model_rank,
+                gdim=gdim,
             )
                 
             self.dolfinxMesh = Mesh(
-            mesh,
-            mesh.ufl_domain(),
+                mesh,
+                mesh.ufl_domain(),
             )._cpp_object
             self._cpp_object = self.dolfinxMesh._cpp_object
 
@@ -162,25 +163,25 @@ class FELiCSMesh:
             if self.gdim==3:
                 logger.debug("Because gdim==3, CoordinateSystem() is initilized with setting trueDim=3. This is not done for gdim<3.")
                 self.__coordinateSystem = CoordinateSystem(
-                x,
-                coordinateSystemName.lower(),
-                m = m,
-                gdim = self.gdim,
-                trueDim = self.gdim,
+                    x,
+                    coordinateSystemName.lower(),
+                    m = m,
+                    gdim = self.gdim,
+                    trueDim = self.gdim,
                 )
             else:
                 self.__coordinateSystem = CoordinateSystem(
-                x,
-                coordinateSystemName.lower(),
-                m = m,
-                gdim = self.gdim,
+                    x,
+                    coordinateSystemName.lower(),
+                    m = m,
+                    gdim = self.gdim,
                 )
         elif coordinateSystemName =='Cylindrical':
             self.__coordinateSystem = CoordinateSystem(
-            x,
-            "cylindricalfelics",
-            m = m,
-            gdim = self.gdim,
+                x,
+                "cylindricalfelics",
+                m = m,
+                gdim = self.gdim,
             )
         else:
             logger.error('Coord. syst not yet implemented in tensor framework.')
@@ -212,14 +213,15 @@ class FELiCSMesh:
             An :class:`ExportMesh` instance associated with this base mesh.
         """
         if not hasattr(
-        self,
-        '_exportMesh',
+            self,
+            '_exportMesh',
         ) or self._exportMesh is None:
             self._exportMesh = ExportMesh(self)
         return self._exportMesh
 
-    def set_true_dimension(self,
-    dim,
+    def set_true_dimension(
+        self,
+        dim,
     ):
         """
         Set the true dimension of the system, updating the coordinate system.
@@ -238,8 +240,9 @@ class FELiCSMesh:
         self.dim = dim
         self.__coordinateSystem.set_true_dimension(dim)
 
-    def save_in_fe_li_cs_format(self,
-    filename,
+    def save_in_fe_li_cs_format(
+        self,
+        filename,
     ):
         """
         Save the refined (export) mesh in the FELiCS HDF5-based format.
@@ -268,19 +271,19 @@ class FELiCSMesh:
         if nDim > 2:
             coordinateNames.append('z')
         hf = h5py.File(
-        filename,
-        'w',
+            filename,
+            'w',
         )
         g1 = hf.create_group('coordinates')
         for i_coordinateName,coordinateName in enumerate(coordinateNames):
             g1.create_dataset(
-            coordinateName,
-            data=coordinates[:,i_coordinateName],
+                coordinateName,
+                data=coordinates[:,i_coordinateName],
             )
         g2 = hf.create_group('cells')
         g2.create_dataset(
-        'triangles',
-        data=np.array(meshCells),
+            'triangles',
+            data=np.array(meshCells),
         )
         hf.close()
 
@@ -294,8 +297,8 @@ class FELiCSMesh:
         """
 
         connectivityCells = self.dolfinxMesh.topology.connectivity(
-        self.gdim,
-        0,
+            self.gdim,
+            0,
         )
         topology          = self.dolfinxMesh.topology
         self.meshCells    = connectivityCells.array.reshape(
@@ -431,8 +434,9 @@ class ExportMesh(FELiCSMesh):
     simulation results on a finer mesh than the one used for computation.
     """
     
-    def __init__(self,
-    base_mesh: FELiCSMesh,
+    def __init__(
+        self,
+        base_mesh: FELiCSMesh,
     ):
         """
         Construct an ExportMesh by refining a base FELiCSMesh.
@@ -456,7 +460,7 @@ class ExportMesh(FELiCSMesh):
 
         # Create the new ExportMesh instance
         super().__init__(
-        coordinateSystemName    = base_mesh.coordinateSystemName,
-        inputMesh               = exportMesh_dolfinx,
-        gdim                    = base_mesh.gdim,
+            coordinateSystemName    = base_mesh.coordinateSystemName,
+            inputMesh               = exportMesh_dolfinx,
+            gdim                    = base_mesh.gdim,
         )

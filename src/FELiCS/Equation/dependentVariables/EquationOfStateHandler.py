@@ -61,10 +61,9 @@ class EquationOfStateHandler:
         pass
     
     def _initialize_eo_s_fluctuations(
-                            self,
-    mean = 'None',
-    
-                            ):
+        self,
+        mean = 'None',
+    ):
         """
         Initializes the linearized Equation of State for fluctuations.
 

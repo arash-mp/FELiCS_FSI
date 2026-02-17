@@ -167,8 +167,8 @@ class FieldProperties:
         from FELiCS.Fields.MeanFlowClass import MeanFlowClass
 
         return isinstance(
-        self,
-        MeanFlowClass,
+            self,
+            MeanFlowClass,
         )
 
     def is_mean_flow_vertex_values_class(self):
@@ -182,8 +182,8 @@ class FieldProperties:
         """
         from FELiCS.Fields.MeanFlowClass import MeanFlowVertexValues
         return isinstance(
-        self,
-        MeanFlowVertexValues,
+            self,
+            MeanFlowVertexValues,
         )
 
     @property
@@ -229,8 +229,9 @@ class FieldProperties:
         else:       
             return self._fieldDict['cp']
 
-    def d(self,
-    specie,
+    def d(
+        self,
+        specie,
     ):
         """
         Get the diffusion coefficient for a given species.
@@ -289,8 +290,8 @@ class FieldProperties:
             OutputDict = {}
             for key in list(self._fieldDict.keys()):
                 if not isinstance(
-                self._fieldDict[key],
-                Function,
+                    self._fieldDict[key],
+                    Function,
                 ):
                     if key == 'u':
                         FEMSpace = self._FEMSpaces.FunctionSpaceVectorVelocity
@@ -298,16 +299,17 @@ class FieldProperties:
                         FEMSpace = self._FEMSpaces.P2
                         from fenics import project
                     OutputDict[key] = project(
-                    self._fieldDict[key],
-                    FEMSpace,
+                        self._fieldDict[key],
+                        FEMSpace,
                     ) # NOTE: (Simon) not sure what this whould be
                 else:
                     OutputDict[key] = self._fieldDict[key]
             return OutputDict
 
     @field_dict.setter
-    def field_dict(self,
-    value,
+    def field_dict(
+        self,
+        value,
     ):
         """
         Prevent setting the fieldDict property after initialization.
@@ -332,8 +334,9 @@ class FieldProperties:
         return self.__FieldNames
 
     @field_names.setter
-    def field_names(self,
-    value,
+    def field_names(
+        self,
+        value,
     ):
         """
         Prevent setting the FieldNames property after initialization.
@@ -357,8 +360,9 @@ class FieldProperties:
         """
         return self._fluc
 
-    def forcing_i(self,
-    solution,
+    def forcing_i(
+        self,
+        solution,
     ):
         """
         Get the imaginary part of the forcing field for a given solution variable.
@@ -392,8 +396,9 @@ class FieldProperties:
             else:
                 return self._zeroField
         
-    def forcing_r(self,
-    solution,
+    def forcing_r(
+        self,
+        solution,
     ):
         """
         Get the real part of the forcing field for a given solution variable.
@@ -427,8 +432,9 @@ class FieldProperties:
             else:
                 return self._zeroField
 
-    def forcing(self,
-    solution,
+    def forcing(
+        self,
+        solution,
     ):
         """
         Get the complex forcing field for a given solution variable.
@@ -493,11 +499,11 @@ class FieldProperties:
         """
         mesh = self._fieldDict[list(self._fieldDict.keys())[0]].space.mesh
         return Tensor(
-        Constant(
-        mesh,
-        PETSc.ScalarType(1.0 + 0j),
-        ),
-        self._coordinateSystem,
+            Constant(
+                mesh,
+                PETSc.ScalarType(1.0 + 0j),
+            ),
+            self._coordinateSystem,
         )
 
     @property
@@ -522,10 +528,12 @@ class FieldProperties:
         object
             Field variable for total enthalpy.
         """
-        return self._fieldDict['he'].get_tensor() \
-               + 0.5 * i_dot(
-        self.u,
-        self.u,
+        return (
+            self._fieldDict['he'].get_tensor()
+            + 0.5 * i_dot(
+                self.u,
+                self.u,
+            )   
         )
 
     @property
@@ -602,8 +610,8 @@ class FieldProperties:
             Field variable for total viscosity.
         """
         nu_tot = Field(
-        self._ScalarFunctionSpace,
-        self._mesh,
+            self._ScalarFunctionSpace,
+            self._mesh,
         )
 
         if 'nulam' in list(self._fieldDict.keys()):
@@ -762,8 +770,9 @@ class FieldProperties:
         else:
             return self._mean.rho * self.u + self.rho * self._mean.u
 
-    def rho_y(self,
-    species,
+    def rho_y(
+        self,
+        species,
     ):
         """
         Get the product of density and species mass fraction.
@@ -825,8 +834,8 @@ class FieldProperties:
             tau_out += i_t(tau_out)
             # Sophie: this if-clause if not really necessary, in the incompressible case the term is just zero
             if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-                tau_out += -2.0/3.0 * mean_nu * \
-                            i_div(mean_u) * i_identity(i_grad(mean_u))
+                tau_out += ( - 2.0 / 3.0 * mean_nu * 
+                            i_div(mean_u) * i_identity(i_grad(mean_u)))
                 
         else:
             mean_nu = self._mean.nu_tot
@@ -1009,8 +1018,8 @@ class FieldProperties:
                 mesh = self._fieldDict[
                     list(self._fieldDict.keys())[0]].space.mesh
                 return Constant(
-                mesh,
-                0.0,
+                    mesh,
+                    0.0,
                 )
         else:
             if  self._param.Case.TransVelFluc:

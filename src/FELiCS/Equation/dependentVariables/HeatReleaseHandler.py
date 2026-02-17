@@ -31,8 +31,9 @@ class HeatReleaseHandler:
         Dictionary storing total and component heat release rates.
     """
 
-    def __init__(self,
-    reaction,
+    def __init__(
+        self,
+        reaction,
     ):
         """
         Initialize the heatReleaseHandler instance and compute heat release rates.

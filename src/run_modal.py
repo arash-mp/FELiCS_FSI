@@ -33,30 +33,30 @@ def run_modal(param):
 
     # FEMSpaces
     FEMSpaces = FEMSpaces(
-    param,
-    mesh,
+        param,
+        mesh,
     )
      
     # writer to export the results in files
     writer    = Writer(
-    mesh,
-    param.Export.ExportFolder,
+        mesh,
+        param.Export.ExportFolder,
     )
 
     # read in mean flow and export to h5-file
     meanFlow = MeanFlowClass(
-    param,
-    FEMSpaces,
-    mesh,
+        param,
+        FEMSpaces,
+        mesh,
     )
     meanFlow.import_data_from_file_and_export_to_h5(writer)
 
     # equation
     equation = EquationCollectionClass(
-    param,
-    FEMSpaces,
-    meanFlow,
-    mesh,
+        param,
+        FEMSpaces,
+        meanFlow,
+        mesh,
     )
 
     #-----------------------------------------------------------------------
@@ -76,23 +76,23 @@ def run_modal(param):
 
     # solve eigenproblem for each guess
     solution = ModeCollection(
-    FEMSpaces.VMixed,
-    mesh,
-    analysisType = "modal",
+        FEMSpaces.VMixed,
+        mesh,
+        analysisType = "modal",
     )
     for guess in guesses:
         
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))
         tmp     = LinearSolver.solve_general_eigenproblem(
-        A,
-        B,
-        guess,
-        nSol,
+            A,
+            B,
+            guess,
+            nSol,
         )
 
         solution.append_solution_of_eigen_problem(
-        tmp,
-        guess,
+            tmp,
+            guess,
         )
 
         n_calculated = nSol
@@ -101,17 +101,17 @@ def run_modal(param):
             
             logger.info("Solving adjoint GEVP for guess: omega = " + str(np.conj(guess)))
             tmp = LinearSolver.solve_general_eigenproblem(
-            A,
-            B,
-            guess,
-            nSol,
-            adjoint=True,
+                A,
+                B,
+                guess,
+                nSol,
+                adjoint=True,
             )
 
             solution.append_solution_of_eigen_problem(
-            tmp,
-            guess,
-            adjoint=True,
+                tmp,
+                guess,
+                adjoint=True,
             )
 
             n_calculated += nSol
@@ -120,13 +120,13 @@ def run_modal(param):
         solution.export_spectrum_to_csv(writer)
         # Exporting only the newly calculated modes to files (for this guess)
         solution.export_modes(
-        writer,
-        onlyNewN = n_calculated,
+            writer,
+            onlyNewN = n_calculated,
         )
 
 
     # end tracking time
-    end             = time.time() - start
+    end = time.time() - start
     logger.info('Solving the general eigenproblem took %4g s' % end)
     residuum_max    = solution.get_maximum_error()
     logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))

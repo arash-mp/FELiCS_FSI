@@ -102,10 +102,10 @@ class Reader:
 
     def __init__(
         self,
-    sourceDir:          str  = "",
-    needInterpolation:  bool = True,
-    felicsMeshFilePath: Optional[str] = None,
-    cacheData:          bool = True,
+        sourceDir:          str  = "",
+        needInterpolation:  bool = True,
+        felicsMeshFilePath: Optional[str] = None,
+        cacheData:          bool = True,
     ) -> None:
         """
         Initialize the Reader instance.
@@ -257,9 +257,10 @@ class Reader:
         numMeshAxis                         = len(mesh_axis_names)
         logger.debug(f"Getting the {numMeshAxis}D import mesh coordinates ({mesh_axis_names}).")
 
-        def _load_coordinates_from_file(file_path: str,
-        prefix: str,
-        coord_names: List[str],
+        def _load_coordinates_from_file(
+            file_path: str,
+            prefix: str,
+            coord_names: List[str],
         ) -> np.ndarray:
             """
             Helper to load coordinates from HDF5 file.
@@ -279,8 +280,8 @@ class Reader:
                 Array of coordinates.
             """
             with h5py.File(
-            file_path,
-            "r",
+                file_path,
+                "r",
             ) as fh:
                 first_shape         = fh[prefix + coord_names[0]][:].shape
                 coords              = np.zeros((max(first_shape), len(coord_names)))
@@ -293,9 +294,9 @@ class Reader:
                 # Option 1: load from a given FELiCS mesh file
                 logger.debug(f"Executing Option 1: load from a given FELiCS mesh file. {self._felicsMeshFilePath}")
                 coordsArray = _load_coordinates_from_file(
-                self._felicsMeshFilePath,
-                "coordinates/",
-                mesh_axis_names,
+                    self._felicsMeshFilePath,
+                    "coordinates/",
+                    mesh_axis_names,
                 )
                 return coordsArray
             
@@ -324,12 +325,12 @@ class Reader:
             else:
                 # Default FELiCS mesh file in the source directory (e.g. when loading modes)
                 logger.debug(f"self._felicsMeshFilePath is None, therefore using {os.path.join(
-                self._sourceDir,
-                'mesh.h5',
+                    self._sourceDir,
+                    'mesh.h5',
                 )}")
                 meshFile                    = os.path.join(
-                self._sourceDir,
-                "mesh.h5",
+                    self._sourceDir,
+                    "mesh.h5",
                 )
             
             # Check that the file exists
@@ -338,9 +339,9 @@ class Reader:
                 raise FileNotFoundError(meshFile)
 
             coordsArray = _load_coordinates_from_file(
-            meshFile,
-            "coordinates/",
-            ["x", "y", "z"][:numMeshAxis],
+                meshFile,
+                "coordinates/",
+                ["x", "y", "z"][:numMeshAxis],
             )
             return coordsArray
 
@@ -349,9 +350,8 @@ class Reader:
     # --------------------------
     def _update_data_source(
         self,
-    filePath: str,
-    groupName: str,
-    
+        filePath: str,
+        groupName: str,
     ) -> None:
         """
         Switch to a new file/group if different, clearing per-file caches.
@@ -390,8 +390,7 @@ class Reader:
             
     def _update_calc_mesh(
         self,
-    field: Any,
-    
+        field: Any,
     ) -> None:
         """
         Switch to a new calculation mesh if different from cached one.
@@ -426,8 +425,8 @@ class Reader:
         # Polynomial degrees of all subfields (not for vector subspaces)
         subFields               = field.get_list_of_sub_fields() if fieldType == "mixed" else [field]
         degrees                 = [subField.info.get(
-        "degree",
-        None,
+            "degree",
+            None,
         ) for subField in subFields]
         if max(degrees) > 2:
             logger.error("Reader currently only supports P1 and P2 FEM spaces.")
@@ -490,8 +489,8 @@ class Reader:
             if not self._needInterpolation:
                 numMeshDimensions               = len(self._meshAxisNames)
                 self._mappingImportToCalc       = Mapping.calculate_mapping_from_dofs(
-                self.import_mesh_coords[:, :numMeshDimensions],
-                self.calc_mesh_p2_coords,
+                    self.import_mesh_coords[:, :numMeshDimensions],
+                    self.calc_mesh_p2_coords,
                 )
 
     def _ensure_source_set(self) -> None:
@@ -508,8 +507,7 @@ class Reader:
 
     def clear_cached_properties(
         self,
-    cachedProps: List[str] = [],
-    
+        cachedProps: List[str] = [],
     ) -> None:
         """
         Remove all cached @cached_property values from this Reader instance.
@@ -559,8 +557,8 @@ class Reader:
         
         # Open file and get variable names
         with h5py.File(
-        filePath,
-        "r",
+            filePath,
+            "r",
         ) as fileHandle:
             if groupName is None:
                 self._availableVars = list(fileHandle.keys())
@@ -589,8 +587,7 @@ class Reader:
             
     def _load_from_h5(
         self,
-    varNames: List[str],
-    
+        varNames: List[str],
     ) -> None:
         """
         Load selected variables from HDF5 file into _rawDataDict.
@@ -602,8 +599,8 @@ class Reader:
         """
         filePath, groupName         = self._sourceKey
         with h5py.File(
-        filePath,
-        "r",
+            filePath,
+            "r",
         ) as fileHandle:
             for varName in varNames:
                 if varName in self._rawDataDict:
@@ -626,9 +623,8 @@ class Reader:
     # --------------------------
     def _interpolate_to_calc_mesh(
         self,
-    varNames:   List[str],
-    toP1:       bool = False,
-    
+        varNames:   List[str],
+        toP1:       bool = False,
     ) -> Dict[str, Any]:
         """
         Interpolate given variables from import mesh to calculation mesh.
@@ -678,8 +674,8 @@ class Reader:
         # else:
         start_inter = time.time()
         linearInterp                = LinearNDInterpolator(
-        self._triangulation_import_mesh,
-        values,
+            self._triangulation_import_mesh,
+            values,
         )
         interpolated                = linearInterp(calcCoords)  # shape (M, K)
         time_inter = time.time() - start_inter
@@ -689,8 +685,8 @@ class Reader:
         if np.isnan(interpolated).any():
             logger.debug("NaNs detected in interpolation result; applying nearest-neighbour fill.")
             nearestInterp           = NearestNDInterpolator(
-            importCoords,
-            values,
+                importCoords,
+                values,
             )
             nearestValues           = nearestInterp(calcCoords)
             nanMask                 = np.isnan(interpolated)
@@ -702,8 +698,7 @@ class Reader:
 
     def _map_to_calc_mesh(
         self,
-    varNames: List[str],
-    
+        varNames: List[str],
     ) -> Dict[str, Any]:
         """
         Applies precomputed mapping.
@@ -727,8 +722,7 @@ class Reader:
     # --------------------------
     def _names_for_field(
         self,
-    field: Any,
-    
+        field: Any,
     ) -> List[str]:
         """
         Determine variable names to load from file for this field.
@@ -766,10 +760,9 @@ class Reader:
 
     def _set_arrays_to_field(
         self,
-    arrays:  Dict[str, Any],
-    field: Any,
-    typeVars: List[Tuple[str, str]],
-    
+        arrays:  Dict[str, Any],
+        field: Any,
+        typeVars: List[Tuple[str, str]],
     ) -> Any:
         """
         Assign interpolated/mapped arrays to a given field.
@@ -796,9 +789,10 @@ class Reader:
         # Field info
         info        = field.info
         
-        def _assemble_complex_arrays(varName: str,
-        arrays: Dict[str, Any],
-        typeVars,
+        def _assemble_complex_arrays(
+            varName: str,
+            arrays: Dict[str, Any],
+            typeVars,
         ) -> Any:
             """Helper to assemble complex arrays from real and imaginary parts. 
             Or just return real array."""
@@ -826,9 +820,9 @@ class Reader:
                         if compName in baseNames:
                             indices                         = field.space.sub(iField).sub(jComp).collapse()[1]
                             field.function.x.array[indices] = _assemble_complex_arrays(
-                            compName,
-                            arrays,
-                            typeVars,
+                                compName,
+                                arrays,
+                                typeVars,
                             )
                         else:
                             logger.warning(f"Component '{compName}' not found in loaded arrays for vector subfield '{subFieldName}'. Set to default values.")
@@ -837,9 +831,9 @@ class Reader:
                     if subFieldName in baseNames:
                         indices                             = field.space.sub(iField).collapse()[1]
                         field.function.x.array[indices]     = _assemble_complex_arrays(
-                        subFieldName,
-                        arrays,
-                        typeVars,
+                            subFieldName,
+                            arrays,
+                            typeVars,
                         )
                     else:
                         logger.warning(f"Subfield '{subFieldName}' not found in loaded arrays for scalar subfield. Set to default values.")
@@ -852,9 +846,9 @@ class Reader:
                 if subFieldName in baseNames:
                     indices                         = field.space.sub(i).collapse()[1]
                     field.function.x.array[indices] = _assemble_complex_arrays(
-                    subFieldName,
-                    arrays,
-                    typeVars,
+                        subFieldName,
+                        arrays,
+                        typeVars,
                     )
                 else:
                     logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{field.name}'. Set to default values.")
@@ -863,9 +857,9 @@ class Reader:
             varName                                 = field.name
             if varName in baseNames:
                 field.function.x.array[:]           = _assemble_complex_arrays(
-                varName,
-                arrays,
-                typeVars,
+                    varName,
+                    arrays,
+                    typeVars,
                 )
             else:
                 logger.warning(f"Variable '{varName}' not found in loaded arrays for scalar field. Set to default values.")
@@ -874,8 +868,7 @@ class Reader:
     
     def _check_variable_availability_and_type(
         self,
-    field: Any,
-    
+        field: Any,
     ) -> Tuple[List[str], List[str]]:
         """
         Check which variables needed for the field are available in the data source.
@@ -928,10 +921,9 @@ class Reader:
     # --------------------------
     def import_in_field(
         self,
-    field: Any,
-    filePath:   str,
-    groupName:  str,
-    
+        field: Any,
+        filePath:   str,
+        groupName:  str,
     ) -> Tuple[Any, List[str]]:
         """
         Import data from the specified file/group into the given field.
@@ -968,16 +960,18 @@ class Reader:
         # Update the calculation mesh and purge cached properties if source changed 
         self._update_calc_mesh(field)
         self._update_data_source(
-        fullFilePath,
-        groupName,
+            fullFilePath,
+            groupName,
         )
         
         # List of FEM spaces degrees in the field
         subFields               = field.get_list_of_sub_fields() if field.info["type"] == "mixed" else [field]
-        degrees                 = [subField.info.get(
-        "degree",
-        None,
-        ) for subField in subFields]
+        degrees                 = [
+            subField.info.get(
+                "degree",
+                None,
+            ) for subField in subFields
+        ]
         
         # Check variable availability
         presentVars, typeVars, missingVars = self._check_variable_availability_and_type(
@@ -1010,8 +1004,8 @@ class Reader:
                     variablesP1     = [var for var in allVars if (var in variablesP1) or (var.endswith("_real") and var[:-5] in variablesP1) or (var.endswith("_imag") and var[:-5] in variablesP1)]
                     logger.debug(f"Interpolating P1 variable(s): {variablesP1}")
                     processedP1Data = self._interpolate_to_calc_mesh(
-                    variablesP1,
-                    toP1=True,
+                        variablesP1,
+                        toP1=True,
                     )
                     
                     # Dict of other variables mapped to calc mesh
@@ -1037,13 +1031,13 @@ class Reader:
             # Nothing in cache yet
             self._load_from_h5(presentVars)
             arrays                  = (self._interpolate_to_calc_mesh(presentVars)
-                                        if self._needInterpolation else
-                                        self._map_to_calc_mesh(presentVars)
-                                    )
+                if self._needInterpolation else
+                self._map_to_calc_mesh(presentVars)
+            )
 
         self._set_arrays_to_field(
-        arrays,
-        field,
-        typeVars,
+            arrays,
+            field,
+            typeVars,
         )
         return field, missingVars

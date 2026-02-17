@@ -13,7 +13,8 @@
 # Third party libraries
 import  numpy   as np
 
-def sutherland_fluctuation_mean(mean,
+def sutherland_fluctuation_mean(
+    mean,
     rho,
     Ts,
 ):
