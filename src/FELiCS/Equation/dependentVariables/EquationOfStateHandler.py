@@ -10,7 +10,8 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from 	FELiCS.Misc.logging                 import Logger
+# Local Libraries and methods
+from    FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

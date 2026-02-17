@@ -12,19 +12,20 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+# Standard libraries
+import  bisect   as bs
 
-
-
-from Tabs.JANAFTabulate1971 import getEnthalpyPlusFormationJANAF1971,getEntropyJANAF1971
-from dolfinx.fem import (
-                        Expression,
-                        Function,
-                        )
-from ufl import (
-                dx,
+# Third party libraries
+from    dolfinx.fem     import (
+    Expression,
+    Function,
 )
-import numpy as np
-import bisect as bs
+import  numpy           as np
+from    ufl             import dx
+
+# Local Libraries and methods
+from Tabs.JANAFTabulate1971 import getEnthalpyPlusFormationJANAF1971,getEntropyJANAF1971
+
 class TwoStepReaction():
     """
     Represents a two-step methane-air combustion reaction mechanism.

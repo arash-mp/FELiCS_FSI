@@ -11,17 +11,21 @@
 # \___________________________________/ \_______________________________________________________/
 #
 # Standard libraries
-import  os
-import  time
+from    functools   import cached_property
 import  h5py
-from    functools           import cached_property
-from    typing              import Optional, List, Dict, Any, Tuple
-from    pathlib             import Path
+import  os
+from    pathlib     import Path
+import  time
+from    typing      import Optional, List, Dict, Any, Tuple
+
 
 # Third party libraries
 import  numpy               as np
 from    scipy.spatial       import Delaunay
-from    scipy.interpolate   import LinearNDInterpolator, NearestNDInterpolator
+from    scipy.interpolate   import (
+    LinearNDInterpolator,
+    NearestNDInterpolator,
+)
 
 # Local libraries and methods
 from    FELiCS.Misc.logging import Logger

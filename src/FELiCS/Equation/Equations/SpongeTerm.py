@@ -10,10 +10,13 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from    ufl                     import dx
-from    .EquationTemplate       import EquationTemplate
-from    FELiCS.Misc.logging     import Logger
-from    FELiCS.Misc.tensorUtils import (
+# Third party libraries
+from ufl import dx
+
+# Local Libraries and methods
+from FELiCS.Equation.Equations.EquationTemplate import EquationTemplate
+from FELiCS.Misc.logging                        import Logger
+from FELiCS.Misc.tensorUtils                    import (
     Tensor,
     i_dot,
     i_conj

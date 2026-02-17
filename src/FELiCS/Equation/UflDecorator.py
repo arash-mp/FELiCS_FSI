@@ -10,21 +10,23 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from ufl import (
-                lhs,
-                rhs,
-                )
-from dolfinx.fem import (
-                form,
-                assemble_scalar,
-                                )
-from dolfinx.fem.petsc import (
-                assemble_matrix,
-                assemble_vector,
-                set_bc
-                )
+# Third party libraries
+from dolfinx.fem        import (
+    form,
+    assemble_scalar,
+)
+from dolfinx.fem.petsc  import (
+    assemble_matrix,
+    assemble_vector,
+    set_bc,
+)
+from ufl                import (
+    lhs,
+    rhs,
+)
 
-from 	FELiCS.Misc.logging          import Logger
+# Local Libraries and methods
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

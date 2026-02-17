@@ -10,15 +10,18 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+# Standard libraries
 import 	argparse
-from 	run_modal     				import  run_modal  
-from 	run_resolvent    			import  run_resolvent
-from 	run_input_output  			import  run_input_output
-# from 	runModal_testReader     	import  runModal      
-# from 	runResolvent_testReader    	import  runResolvent  
-# from 	runInputOutput_testReader  	import  runInputOutput
-from 	FELiCS.Parameters.Config	import 	Config
+
+# Local Libraries and methods
 from 	FELiCS.Misc.logging			import  Logger
+from 	FELiCS.Parameters.Config	import 	Config
+from 	run_input_output  			import  run_input_output
+# from 	runInputOutput_testReader  	import  runInputOutput
+from 	run_modal     				import  run_modal 
+# from 	runModal_testReader     	import  runModal       
+from 	run_resolvent    			import  run_resolvent
+# from 	runResolvent_testReader    	import  runResolvent  
 
 # Define the description and epilog for the help message
 desc_text = """

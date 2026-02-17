@@ -10,8 +10,6 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-
-
 class FieldDictionary:
     """
     Container for storing and managing field variables.

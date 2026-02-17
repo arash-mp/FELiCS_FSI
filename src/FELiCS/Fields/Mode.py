@@ -10,12 +10,17 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+# Standard libraries
+from    enum import Enum
 import  os
-import  h5py
-import  numpy               as np
-from    enum                import Enum
-from    .Field              import Field
-from 	FELiCS.Misc.logging import Logger
+
+# Third party libraries
+import h5py
+import numpy as np
+
+# Local Libraries and methods
+from FELiCS.Fields.Field import Field
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

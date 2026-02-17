@@ -10,8 +10,11 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import numpy as np
-from FELiCS.Equation.dependentVariables.viscosityModels import *
+# Third party libraries
+import  numpy   as np
+
+# Local Libraries and methods
+from    FELiCS.Equation.dependentVariables.viscosityModels  import *
 
 class EnergyHandler:
     """

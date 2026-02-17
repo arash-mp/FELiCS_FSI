@@ -20,17 +20,21 @@
 #            has to be created, which has a different export directory, else reading the xmf files will 
 #            not work
 
-import os
-from textwrap import dedent
-import h5py
-import  numpy as np
-from    pathlib             import Path
-from    scipy.interpolate   import griddata
-from    FELiCS.Fields.Field import Field
-from    FELiCS.Misc.logging import Logger
-from    FELiCS.IO.Mapping   import Mapping
-from    FELiCS.SpaceDisc.FEMSpaces import create_function_space
+# Standard libraries
+import  os
+from    pathlib     import Path
+from    textwrap    import dedent
 
+# Third party libraries
+import  h5py
+import  numpy as np
+from    scipy.interpolate   import griddata
+
+# Local Libraries and methods
+from    FELiCS.Fields.Field         import Field
+from    FELiCS.IO.Mapping           import Mapping
+from    FELiCS.Misc.logging         import Logger
+from    FELiCS.SpaceDisc.FEMSpaces  import create_function_space
 
 # Get the logger
 logger = Logger.get_logger("felics")

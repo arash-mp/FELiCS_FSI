@@ -10,18 +10,20 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-
+# Standard libraries
 import pathlib
+
+# Third party libraries
+from    dolfinx.fem     import (
+    Function
+)
+import  numpy           as np
+from    scipy           import interpolate
+from    ufl             import dx
+
+# Local Libraries and methods
 from FELiCS.Misc.functions import loadCSV
 
-from dolfinx.fem import (
-                        Function
-                        )
-from ufl import (
-                dx,
-)
-from scipy import interpolate
-import numpy as np
 class NOx:
     """
     Class for computing NO and NO2 source terms based on pre-tabulated data.

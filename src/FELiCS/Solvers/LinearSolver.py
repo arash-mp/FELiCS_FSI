@@ -17,27 +17,22 @@
 # import multiprocessing
 
 # Third party libraries
-
-from slepc4py import SLEPc
-from petsc4py import PETSc
-import numpy as np
-
+from    slepc4py    import  SLEPc
+from    petsc4py    import  PETSc
+import  numpy       as      np
 # from dolfinx.fem import (
 #         Function,
 #         dirichletbc,
 #         form,
 # )
-
 # from dolfinx.fem.petsc import (
 #     assemble_vector,
 # )
-
 # from ufl import (
 #     dx,
 #     TestFunctions,
 #     SpatialCoordinate,
 # )
-
 # from functools import partial
 
 #Local libraries and methods
@@ -81,14 +76,14 @@ class LinearSolver:
 
     @staticmethod
     def solve_general_eigenproblem(
-                A,
-    B,
-    sigma,
-    nev,
-    tol=1.e-12,
-    max_it=200,
-    adjoint=False,
-    isForEigenProblem=True,
+        A,
+        B,
+        sigma,
+        nev,
+        tol=1.e-12,
+        max_it=200,
+        adjoint=False,
+        isForEigenProblem=True,
     ):
         """
         Solve the generalized eigenvalue problem (GEVP) using SLEPc and PETSc.

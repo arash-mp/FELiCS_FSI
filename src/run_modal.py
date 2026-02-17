@@ -1,12 +1,17 @@
+# Standard libraries
+import  time
+
+# Third party libraries
+import  numpy as np
+
+# Local Libraries and methods
+from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
+from    FELiCS.Fields.MeanFlowClass         import MeanFlowClass
+from    FELiCS.Fields.ModeCollection        import ModeCollection
 # import  FELiCS.IO.Import as Import
 from    FELiCS.IO.Writer                    import Writer
-from    FELiCS.Fields.MeanFlowClass         import MeanFlowClass
-from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
+from 	FELiCS.Misc.logging                 import Logger
 from    FELiCS.Solvers.LinearSolver         import LinearSolver 
-from    FELiCS.Fields.ModeCollection        import ModeCollection
-import  time
-import  numpy as np
-from 	FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

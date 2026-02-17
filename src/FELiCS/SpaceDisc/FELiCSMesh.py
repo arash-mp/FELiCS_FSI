@@ -10,19 +10,19 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-
-from dolfinx.io import gmshio
-
-from numpy import unique
+# Third party libraries
+from    dolfinx.io      import gmshio
+from    dolfinx.mesh    import Mesh, refine 
 import  gmsh
 import  h5py
-import  numpy                   as np
-from    FELiCS.Misc.tensorUtils import CoordinateSystem
-from    mpi4py                  import MPI
-from    ufl                     import SpatialCoordinate
-from    dolfinx.mesh            import Mesh, refine 
-from    FELiCS.Misc.logging     import Logger
+from    mpi4py          import MPI
+from    numpy           import unique
+import  numpy           as np
+from    ufl             import SpatialCoordinate
 
+# Local Libraries and methods
+from    FELiCS.Misc.tensorUtils import CoordinateSystem
+from    FELiCS.Misc.logging     import Logger
 
 comm = MPI.COMM_WORLD
 # Get the logger

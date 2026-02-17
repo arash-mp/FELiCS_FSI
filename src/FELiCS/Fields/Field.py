@@ -10,27 +10,36 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-
-import numpy as np
-from petsc4py import PETSc
-# TODO Sophie: throw error if Field is not scalar    
-from ufl import TestFunction, dx
-from FELiCS.Misc.tensorUtils import i_grad, i_conj, i_dot,  i_inner, Tensor
-from FELiCS.SpaceDisc.FEMSpaces import create_function_space
-import ufl
-from FELiCS.Equation.UflDecorator import UflDecorator
+# TODO Sophie: throw error if Field is not scalar  
+# 
+# Standard libraries
 import os
-from FELiCS.Solvers.LinearSolver import LinearSolver
-import dolfinx
-# evaluates an ufl expression by 
 
+# Third party libraries
+from    basix.ufl                   import element
+import  dolfinx
+from    dolfinx                     import fem
+from    dolfinx.fem                 import Function, petsc
 import  matplotlib.pyplot           as plt
 from    matplotlib.tri              import Triangulation
-from    dolfinx                     import fem
-from    basix.ufl                   import element
-from    dolfinx.fem             import Function, petsc
-from    FELiCS.Misc.logging     import Logger
-from    mpl_toolkits.axes_grid1 import make_axes_locatable 
+from    mpl_toolkits.axes_grid1     import make_axes_locatable 
+import  numpy                       as np
+from    petsc4py                    import PETSc
+import  ufl
+from    ufl                         import TestFunction, dx
+
+# Local Libraries and methods
+from FELiCS.Equation.UflDecorator   import UflDecorator
+from FELiCS.Misc.logging            import Logger
+from FELiCS.Misc.tensorUtils        import (
+    i_grad, 
+    i_conj, 
+    i_dot,  
+    i_inner, 
+    Tensor,
+)
+from FELiCS.Solvers.LinearSolver    import LinearSolver
+from FELiCS.SpaceDisc.FEMSpaces     import create_function_space
 
 # Get the logger
 logger = Logger.get_logger("felics")

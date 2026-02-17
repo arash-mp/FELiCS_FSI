@@ -10,9 +10,8 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import numpy as np
-
-# Third party libraries
+# Local Libraries and methods
+import  numpy   as np
 
 class ReactionClass:
     """

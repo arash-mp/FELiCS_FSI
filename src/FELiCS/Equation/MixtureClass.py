@@ -10,9 +10,12 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from os import path
+# Standard libraries
 import  json
-from 	FELiCS.Misc.logging import Logger
+from    os      import path
+
+# Local Libraries and methods
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

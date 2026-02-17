@@ -10,8 +10,11 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import  numpy as np
-from 	FELiCS.Misc.logging         import Logger
+# Third party libraries
+import numpy as np
+
+# Local Libraries and methods
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

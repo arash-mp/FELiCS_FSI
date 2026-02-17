@@ -10,11 +10,12 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-
-import os
-import logging, re
-import shutil
+# Standard libraries
 from datetime import datetime
+import logging
+import os
+import re
+import shutil
 
 def in_notebook():
     try:

@@ -12,23 +12,23 @@
 #
 # Third party libraries
 import copy
-from petsc4py import PETSc
 from dolfinx.fem import (
     Constant,
     Function
 )
-# Local Libraries and methods
-from FELiCS.Misc.tensorUtils import (
-                    i_grad,
-                    i_div,
-                    i_dot,
-                    i_identity,
-                    i_t,
-                    Tensor,
-                    )
-from FELiCS.Fields.Field import Field
+from petsc4py import PETSc
 
-from FELiCS.Misc.logging import Logger
+# Local Libraries and methods
+from FELiCS.Fields.Field        import Field
+from FELiCS.Misc.logging        import Logger
+from FELiCS.Misc.tensorUtils    import (
+    i_div,
+    i_dot,
+    i_grad,
+    i_identity,
+    i_t,
+    Tensor,
+)
 
 # Get the logger
 logger = Logger.get_logger("felics")

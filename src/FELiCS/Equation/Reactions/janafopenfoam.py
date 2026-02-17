@@ -10,10 +10,10 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import numpy as np
-from dolfinx.fem import (
-                        Expression,
-                        )
+# Third party libraries
+from    dolfinx.fem import Expression
+import  numpy       as np
+
 class Janafopenfoam:
     """
     Thermodynamic property evaluator using JANAF polynomials for OpenFOAM species.

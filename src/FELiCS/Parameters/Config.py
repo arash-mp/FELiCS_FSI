@@ -10,16 +10,21 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from inspect import isclass
+# Standard libraries
+from    abc     import ABC
+from    inspect import isclass
+import  json
 import  os
 import  pdb
-import  json
-from    abc                             import ABC
-from    h5py                            import File
+
+# Third party libraries
+from    h5py    import File
+
+# Local Libraries and methods
 from    FELiCS.Equation.MixtureClass    import MixtureClass
-from    FELiCS.SpaceDisc.FELiCSMesh     import FELiCSMesh
 from    FELiCS.Misc.functions           import get_last_git_commit
 from 	FELiCS.Misc.logging			    import Logger
+from    FELiCS.SpaceDisc.FELiCSMesh     import FELiCSMesh
 
 # Get the logger
 logger = Logger.get_logger("felics")

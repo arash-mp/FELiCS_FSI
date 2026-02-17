@@ -10,17 +10,20 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+# Third party libraries
 from ufl import (
-    dx
+    dx,
 )
-from FELiCS.Misc.tensorUtils import (
-    i_dot,
+
+# Local Libraries and methods
+from FELiCS.Equation.Equations.EquationTemplate     import EquationTemplate
+from FELiCS.Misc.logging                            import Logger
+from FELiCS.Misc.tensorUtils                        import (
+    i_conj,
     i_div,
+    i_dot,
     i_grad,
-    i_conj
 )
-from    .EquationTemplate   import EquationTemplate
-from    FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

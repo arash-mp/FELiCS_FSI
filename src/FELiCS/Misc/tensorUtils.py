@@ -19,21 +19,30 @@
 # coordinate system.
 # Written by Sophie Knechtel
 
-import numpy as np
+# Standard libraries
+from enum   import Enum
 from typing import Union
-from ufl import TrialFunction, TestFunction
-from ufl import dot, inner
-from ufl import indices
-from ufl import Identity, as_vector, as_matrix, as_tensor
-from ufl import sin, cos, tan, sqrt
-from ufl import det, tr
-from ufl import conj
-from dolfinx.fem import (
+
+# Third party libraries
+from    dolfinx.fem import (
     Constant,
 )
-
-
-from enum import Enum
+import  numpy       as np
+from    ufl         import (
+    as_matrix, 
+    as_tensor,
+    as_vector,
+    det,
+    conj,
+    dot,
+    Identity,
+    indices,
+    inner, 
+    sin, cos, tan, sqrt,
+    tr,
+    TrialFunction,
+    TestFunction,
+) 
 
 class SpectralIndicator(Enum):
     """

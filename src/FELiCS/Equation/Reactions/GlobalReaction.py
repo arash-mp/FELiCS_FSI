@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#
 #  ___________________________________   _______________________________________________________
 # /-----------------------------------\ /-------------------------------------------------------\
 # |   (         (                (     |  This source code is part of FELiCS                     |
@@ -12,11 +11,12 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from dolfinx.fem import (
+# Third party libraries
+from dolfinx.fem    import (
     Function,
     Expression,
 )
-from ufl import (
+from ufl            import (
     dx,
     exp,
     conj,

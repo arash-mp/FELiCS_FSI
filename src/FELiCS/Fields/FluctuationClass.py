@@ -13,14 +13,14 @@
 # Standard libraries
 from os import (
     listdir,
-    remove
+    remove,
 )
 from os.path import exists
 
 # Third party libraries
 import numpy as np
 from h5py import (
-    File
+    File,
 )
 from dolfinx.fem import (
     Function,
@@ -37,8 +37,8 @@ from    FELiCS.Equation.dependentVariables.EquationOfStateHandler   import Equat
 from    FELiCS.Equation.dependentVariables.HeatReleaseHandler       import HeatReleaseHandler
 from    FELiCS.Equation.dependentVariables.MomentumHandler          import MomentumHandler
 from    FELiCS.Equation.dependentVariables.ReactionHandler          import ReactionHandler
-from    FELiCS.Misc.tensorUtils                                     import Tensor
 from 	FELiCS.Misc.logging                                         import Logger
+from    FELiCS.Misc.tensorUtils                                     import Tensor
 
 # Get the logger
 logger = Logger.get_logger("felics")

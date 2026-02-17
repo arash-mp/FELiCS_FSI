@@ -12,11 +12,24 @@
 #
 # NOTE: (Simon) I think that this function is not required anymore
 
-from dolfinx.fem import Function
-from    dolfinx.fem                 import functionspace
-from    basix.ufl                   import element, mixed_element
-#from    ufl                         import finiteelement, MixedElement, triangle, VectorElement, tetrahedron
-from    ufl                         import triangle, tetrahedron
+# Standard libraries
+
+
+# Third party libraries
+from    basix.ufl       import element, mixed_element
+from    dolfinx.fem     import (
+    Function,
+    functionspace,
+)
+from    ufl             import(
+    # finiteelement, 
+    # MixedElement,
+    tetrahedron,
+    triangle, 
+    # VectorElement, 
+) 
+
+# Local Libraries and methods
 from 	FELiCS.Misc.logging         import Logger
 
 # Get the logger

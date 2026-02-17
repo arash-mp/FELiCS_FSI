@@ -10,12 +10,13 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import numpy as np
+# Third party libraries
+import  numpy   as np
 
 def sutherland_fluctuation_mean(mean,
-                                rho,
-                                Ts,
-                                ):
+    rho,
+    Ts,
+):
     """
     Calculate fluctuation viscosity and fluctuation factor using the Sutherland model.
 

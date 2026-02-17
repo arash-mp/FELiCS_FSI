@@ -10,16 +10,20 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from dolfinx.fem      import dirichletbc, locate_dofs_topological
+# Standard libraries
+from    enum    import Enum
 import  json
-import  numpy as np
-from    enum                         import Enum
-from    petsc4py.PETSc               import ScalarType
-from 	FELiCS.Misc.logging          import Logger
+
+# Third party libraries
+from    dolfinx.fem     import dirichletbc, locate_dofs_topological
+import  numpy           as np
+from    petsc4py.PETSc  import ScalarType
+
+# Local Libraries and methods
+from 	FELiCS.Misc.logging import Logger
+
 # Get the logger
 logger = Logger.get_logger("felics")
-
-
 
 class BoundaryHandler():
     """

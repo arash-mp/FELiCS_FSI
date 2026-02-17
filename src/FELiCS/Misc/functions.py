@@ -9,14 +9,18 @@
 # |  | _| | _| | |__ | | | (__ \__ \   |  Visit          www.felics.eu                           |
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
-#
-import subprocess,sys,os
+# Standard libraries
+from functools import partial
+import multiprocessing
+import os
+import pickle
+import subprocess
+import sys
+import time
+
+# Third party libraries
 from dolfinx.fem import Function
 import numpy as np
-import time
-import multiprocessing
-import pickle
-from functools import partial
 from scipy.interpolate import griddata
 
 def get_last_git_commit():

@@ -10,12 +10,12 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+# Third party libraries
 import dolfin as do
 
-# noinspection PyUnresolvedReferences
-import FELiCS.Equation.Reactions.janafspecie as janafspecie
-# noinspection PyUnresolvedReferences
-import FELiCS.Equation.Reactions.janafopenfoam as janafopenfoam
+# Local Libraries and methods
+import FELiCS.Equation.Reactions.janafopenfoam  as janafopenfoam
+import FELiCS.Equation.Reactions.janafspecie    as janafspecie
 
 """
 The mechanism is actually called 2S-CM2, but we should avoid python modules

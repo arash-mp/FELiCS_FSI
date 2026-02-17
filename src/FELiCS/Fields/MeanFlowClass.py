@@ -10,25 +10,24 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-# Third party libraries
-
-# noinspection PyUnresolvedReferences
-import FELiCS.Equation.Reactions.janafspecie as janafspecie
-# noinspection PyUnresolvedReferences
-import FELiCS.Equation.Reactions.janafopenfoam as janafopenfoam
+# Standard libraries
 import os
+
+# Third party libraries
 import h5py
 import numpy as np
 
 # Local libraries and methods
-from FELiCS.Fields.FieldProperties                              import FieldProperties
-from FELiCS.Equation.dependentVariables.EnergyHandler           import EnergyHandler
-from FELiCS.Equation.dependentVariables.EquationOfStateHandler  import EquationOfStateHandler
-from FELiCS.Equation.dependentVariables.ReactionHandler         import ReactionHandler
-from FELiCS.Misc.logging                                        import Logger
-from FELiCS.IO.Reader                                           import Reader
-from FELiCS.IO.Mapping                                          import Mapping
-from FELiCS.Fields.Field                                        import Field
+from    FELiCS.Equation.dependentVariables.EnergyHandler            import  EnergyHandler
+from    FELiCS.Equation.dependentVariables.EquationOfStateHandler   import  EquationOfStateHandler
+from    FELiCS.Equation.dependentVariables.ReactionHandler          import  ReactionHandler
+import  FELiCS.Equation.Reactions.janafspecie                       as      janafspecie
+import  FELiCS.Equation.Reactions.janafopenfoam                     as      janafopenfoam
+from    FELiCS.Fields.FieldProperties                               import  FieldProperties
+from    FELiCS.Fields.Field                                         import  Field
+from    FELiCS.IO.Mapping                                           import  Mapping
+from    FELiCS.IO.Reader                                            import  Reader
+from    FELiCS.Misc.logging                                         import  Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

@@ -10,55 +10,55 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-
-from FELiCS.Fields.FluctuationClass import FluctuationClass
-from petsc4py import PETSc
-from FELiCS.Equation.Equations.MomentumEquation import MomentumEquation
-from FELiCS.Equation.Equations.MassEquation import MassEquation
-from FELiCS.Equation.Equations.EnthalpyEquation import EnthalpyEquation
-from FELiCS.Equation.Equations.EnergyPressureEquation import EnergyPressureEquation
-from FELiCS.Equation.Equations.SpeciesEquation import SpeciesEquation
-from FELiCS.Equation.Equations.SpongeTerm import SpongeTerm
-import  numpy as np
-from ufl import (
-    Dx,
-    TestFunctions,
-    TrialFunctions,
-    dx,
-    SpatialCoordinate,
-    FacetNormal,
-    Measure,
-    conj,
-    lhs,
-    rhs,
-    # as_tensor, i, j,
-)
-from dolfinx.fem import (
-    Function,
-    dirichletbc,
-    Constant,
-    form,
-    locate_dofs_topological,
+# Third party libraries
+from    dolfinx.fem         import (
     assemble_scalar,
+    Constant,
+    dirichletbc,
+    form,
+    Function,
+    locate_dofs_topological,
 )
-from dolfinx.fem.petsc import (
+from    dolfinx.fem.petsc   import (
     assemble_matrix,
     assemble_vector,
-    set_bc
-
+    set_bc,
 )
-from FELiCS.Misc.tensorUtils import (
-    Tensor,
+import  numpy               as np
+from    petsc4py            import PETSc
+from    petsc4py.PETSc      import ScalarType
+from    ufl                 import (
+    conj,
+    Dx,
+    dx,
+    FacetNormal,
+    lhs,
+    Measure,
+    rhs,
+    SpatialCoordinate,
+    TestFunctions,
+    TrialFunctions,
+    # as_tensor, i, j,
+)
+
+# Local Libraries and methods
+from    FELiCS.Equation.Boundary                           import BoundaryHandler
+from    FELiCS.Equation.Equations.EnergyPressureEquation   import EnergyPressureEquation
+from    FELiCS.Equation.Equations.EnthalpyEquation         import EnthalpyEquation
+from    FELiCS.Equation.Equations.MassEquation             import MassEquation
+from    FELiCS.Equation.Equations.MomentumEquation         import MomentumEquation
+from    FELiCS.Equation.Equations.SpeciesEquation          import SpeciesEquation
+from    FELiCS.Equation.Equations.SpongeTerm               import SpongeTerm
+from    FELiCS.Equation.UflDecorator                       import UflDecorator
+from    FELiCS.Fields.FluctuationClass                     import FluctuationClass
+from    FELiCS.Misc.logging                                import Logger
+from    FELiCS.Misc.tensorUtils                            import (
     as_vector,
     i_dot,
     i_conj,
     # iInner,
+    Tensor,
 )
-from    petsc4py.PETSc               import ScalarType
-from    FELiCS.Equation.UflDecorator import UflDecorator
-from    FELiCS.Equation.Boundary     import BoundaryHandler
-from 	FELiCS.Misc.logging          import Logger
-
 
 # Get the logger
 logger = Logger.get_logger("felics")

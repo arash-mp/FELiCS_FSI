@@ -10,13 +10,21 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import numpy as np
+# Standard libraries
 import  os
+
+# Third party libraries
 import  h5py
-import  numpy                   as np
-from    .Mode                   import Mode, AnalysisType, ModeType
-from    .FluctuationClass       import FluctuationSolutions
-from 	FELiCS.Misc.logging     import Logger
+import numpy as np
+
+# Local Libraries and methods
+from    FELiCS.Fields.FluctuationClass  import FluctuationSolutions
+from    FELiCS.Fields.Mode              import (
+    Mode,
+    AnalysisType,
+    ModeType,
+)
+from 	FELiCS.Misc.logging             import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")

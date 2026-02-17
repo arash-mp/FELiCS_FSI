@@ -10,14 +10,16 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-
-from    FELiCS.IO.Writer                    import Writer
-from    FELiCS.Fields.MeanFlowClass         import MeanFlowClass
-from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
-from    FELiCS.Solvers.LinearSolver         import LinearSolver, ResolventOperator
-from    FELiCS.Fields.ModeCollection        import ModeCollection
+# Standard libraries
 import  time
-from 	FELiCS.Misc.logging     import Logger
+
+# Local Libraries and methods
+from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
+from    FELiCS.Fields.MeanFlowClass         import MeanFlowClass
+from    FELiCS.Fields.ModeCollection        import ModeCollection
+from    FELiCS.IO.Writer                    import Writer
+from 	FELiCS.Misc.logging                 import Logger
+from    FELiCS.Solvers.LinearSolver         import LinearSolver, ResolventOperator
 
 # Get the logger
 logger                          = Logger.get_logger("felics")
