@@ -19,13 +19,13 @@ import  h5py
 import numpy as np
 
 # Local Libraries and methods
-from    FELiCS.Fields.FluctuationClass  import FluctuationSolutions,  log_and_raise
+from    FELiCS.Fields.FluctuationClass  import FluctuationSolutions
 from    FELiCS.Fields.Mode              import (
     Mode,
     AnalysisType,
     ModeType,
 )
-from 	FELiCS.Misc.logging             import Logger
+from 	FELiCS.Misc.logging             import Logger,  log_and_raise
 
 
 # Get the logger
