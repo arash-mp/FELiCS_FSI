@@ -484,7 +484,7 @@ class ModeCollection():
         if not adjoint:
             growthRateMax = -9990.
             for mode in self.modeList:
-                if mode.isAdjoint == adjoint:
+                if mode.modeType == ModeType.DIRECT:
                     eigenValue = mode.eigenValue
                     if np.imag(eigenValue) > growthRateMax:
                         growthRateMax = np.imag(eigenValue)
@@ -492,7 +492,7 @@ class ModeCollection():
         elif adjoint:
             growthRateMin = 9990.
             for mode in self.modeList:
-                if mode.isAdjoint == adjoint:
+                if mode.modeType == ModeType.ADJOINT:
                     eigenValue = mode.eigenValue
                     if np.imag(eigenValue) < growthRateMin:
                         growthRateMin = np.imag(eigenValue)
@@ -712,7 +712,7 @@ class ModeCollection():
             self.modeList[i].exportToH5(writer)
 
 
-    def importData(self, reader, importFolder, omegas=None, modeType=None, gainNumber=None):
+    def importData(self, reader, importFolder=None, omegas=None, modeType=None, gainNumber=None):
         """
         Import mode collection data from a specified folder using a reader.
 
@@ -732,6 +732,10 @@ class ModeCollection():
             Gain number to import (for Resolvent analysis). If None, all gain
             numbers are imported.
         """
+        
+        # If import folder is not specified, use the source directory of the reader as default
+        if importFolder is None:
+            importFolder = reader._sourceDir
         
         # Get the list of mode files in the directory, omegas values, and mode types
         h5Files, fileOmegas, fileTypes, gainNb  = self._getAndSortModeFilesInDir(importFolder)
