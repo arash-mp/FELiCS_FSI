@@ -591,7 +591,7 @@ class Mode(Field):
                 self.eigen_value = f["omega"][()]
                 
         elif self.analysisType == AnalysisType.RESOLVENT:
-                with h5py.File(
+            with h5py.File(
                 importFilePath,
                 'r',
             ) as f:

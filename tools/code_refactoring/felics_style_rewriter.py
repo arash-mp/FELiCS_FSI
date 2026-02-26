@@ -24,8 +24,19 @@ from typing import Dict, List, Tuple
 import libcst as cst
 from libcst import metadata
 
-SCRIPT_DIR = "/Users/marina/Documents/FELiCS-main/code_refactoring/"
+from pathlib import Path
 
+
+# --- Paths (portable; works in scripts and notebooks) ---
+try:
+    SCRIPT_PATH = Path(__file__).resolve()
+except NameError:
+    # Jupyter / IPython: __file__ is not defined
+    SCRIPT_PATH = Path.cwd().resolve()
+
+SCRIPT_DIR = SCRIPT_PATH.parent
+# REPO_ROOT = SCRIPT_DIR.parents[2]
+# SRC_DIR = REPO_ROOT / "src"
 # ----------------------------
 # Helpers
 # ----------------------------
@@ -59,70 +70,74 @@ def to_pascal(name: str) -> str:
     return prefix + name[0].upper() + name[1:]
 
 
-def _one_per_line_ws() -> cst.ParenthesizedWhitespace:
-    # newline then indent one level inside parentheses
-    return cst.ParenthesizedWhitespace(
-        first_line=cst.TrailingWhitespace(
-            whitespace=cst.SimpleWhitespace(""),
-            newline=cst.Newline(),
-        ),
-        indent=True,
-    )
+# def _one_per_line_ws() -> cst.ParenthesizedWhitespace:
+#     # newline then indent one level inside parentheses
+#     return cst.ParenthesizedWhitespace(
+#         first_line=cst.TrailingWhitespace(
+#             whitespace=cst.SimpleWhitespace(""),
+#             newline=cst.Newline(),
+#         ),
+#         indent=True,
+#     )
 
 
-def _split_call_args_one_per_line(call: cst.Call) -> cst.Call:
-    if len(call.args) <= 1:
-        return call
+# def _split_call_args_one_per_line(call: cst.Call) -> cst.Call:
+#     if len(call.args) <= 1:
+#         return call
 
-    ws = _one_per_line_ws()
+#     ws = _one_per_line_ws()
 
-    # 1) newline right after "(" for the first argument
-    # LibCST supports this via whitespace_before_args on many versions.
-    if hasattr(call, "whitespace_before_args"):
-        call = call.with_changes(whitespace_before_args=ws)
+#     # 1) newline right after "(" for the first argument
+#     # LibCST supports this via whitespace_before_args on many versions.
+#     if hasattr(call, "whitespace_before_args"):
+#         call = call.with_changes(whitespace_before_args=ws)
 
-    # 2) newline+indent after each comma, and force trailing comma
-    new_args = [arg.with_changes(comma=cst.Comma(whitespace_after=ws)) for arg in call.args]
-    return call.with_changes(args=new_args)
+#     # 2) newline+indent after each comma, and force trailing comma
+#     new_args = [arg.with_changes(comma=cst.Comma(
+#         whitespace_after=ws)) for arg in call.args]
+#     return call.with_changes(args=new_args)
 
 
-def _split_parameters_one_per_line(params: cst.Parameters) -> cst.Parameters:
-    # Count params including *args/**kwargs (ignore empty/None)
-    count = len(params.posonly_params) + len(params.params) + len(params.kwonly_params)
-    if isinstance(params.star_arg, cst.Param):
-        count += 1
-    if isinstance(params.star_kwarg, cst.Param):
-        count += 1
+# def _split_parameters_one_per_line(params: cst.Parameters) -> cst.Parameters:
+#     # Count params including *args/**kwargs (ignore empty/None)
+#     count = len(params.posonly_params) + \
+#         len(params.params) + len(params.kwonly_params)
+#     if isinstance(params.star_arg, cst.Param):
+#         count += 1
+#     if isinstance(params.star_kwarg, cst.Param):
+#         count += 1
 
-    if count <= 1:
-        return params
+#     if count <= 1:
+#         return params
 
-    ws = _one_per_line_ws()
+#     ws = _one_per_line_ws()
 
-    # newline right after "(" in defs if we can safely modify existing lpar
-    # (DO NOT create new lpar/rpar; that can change semantics)
-    if hasattr(params, "lpar") and isinstance(params.lpar, tuple) and len(params.lpar) > 0:
-        new_lpar0 = params.lpar[0].with_changes(whitespace_after=ws)
-        params = params.with_changes(lpar=(new_lpar0,) + params.lpar[1:])
+#     # newline right after "(" in defs if we can safely modify existing lpar
+#     # (DO NOT create new lpar/rpar; that can change semantics)
+#     if hasattr(params, "lpar") and isinstance(params.lpar, tuple) and len(params.lpar) > 0:
+#         new_lpar0 = params.lpar[0].with_changes(whitespace_after=ws)
+#         params = params.with_changes(lpar=(new_lpar0,) + params.lpar[1:])
 
-    def add_commas(seq):
-        return [item.with_changes(comma=cst.Comma(whitespace_after=ws)) for item in seq] if seq else seq
+#     def add_commas(seq):
+#         return [item.with_changes(comma=cst.Comma(whitespace_after=ws)) for item in seq] if seq else seq
 
-    new_star_arg = params.star_arg
-    if isinstance(new_star_arg, cst.Param):
-        new_star_arg = new_star_arg.with_changes(comma=cst.Comma(whitespace_after=ws))
+#     new_star_arg = params.star_arg
+#     if isinstance(new_star_arg, cst.Param):
+#         new_star_arg = new_star_arg.with_changes(
+#             comma=cst.Comma(whitespace_after=ws))
 
-    new_star_kwarg = params.star_kwarg
-    if isinstance(new_star_kwarg, cst.Param):
-        new_star_kwarg = new_star_kwarg.with_changes(comma=cst.Comma(whitespace_after=ws))
+#     new_star_kwarg = params.star_kwarg
+#     if isinstance(new_star_kwarg, cst.Param):
+#         new_star_kwarg = new_star_kwarg.with_changes(
+#             comma=cst.Comma(whitespace_after=ws))
 
-    return params.with_changes(
-        posonly_params=add_commas(params.posonly_params),
-        params=add_commas(params.params),
-        star_arg=new_star_arg,
-        kwonly_params=add_commas(params.kwonly_params),
-        star_kwarg=new_star_kwarg,
-    )
+#     return params.with_changes(
+#         posonly_params=add_commas(params.posonly_params),
+#         params=add_commas(params.params),
+#         star_arg=new_star_arg,
+#         kwonly_params=add_commas(params.kwonly_params),
+#         star_kwarg=new_star_kwarg,
+#     )
 
 
 def _dedupe_top_level_imports(module: cst.Module) -> cst.Module:
@@ -195,9 +210,15 @@ class DefinitionRenamer(cst.CSTTransformer):
     def __init__(
         self,
         file_path: pathlib.Path,
+        base_dir: pathlib.Path,
         renames_log: List[Tuple[str, str, str]],
     ) -> None:
-        self.file_path = str(file_path)
+        try:
+            self.file_path = file_path.resolve().relative_to(base_dir.resolve()).as_posix()
+        except Exception:
+            # Fallback (should rarely happen)
+            self.file_path = file_path.as_posix()
+
         self.renames_log = renames_log
 
     def leave_ClassDef(self, orig, updated):
@@ -214,18 +235,17 @@ class DefinitionRenamer(cst.CSTTransformer):
             self.renames_log.append((self.file_path, old, new))
         return updated.with_changes(name=cst.Name(new))
 
-    def leave_Call(self, orig, updated):
-        # Split call args one per line + trailing commas
-        return _split_call_args_one_per_line(updated)
+    # def leave_Call(self, orig, updated):
+    #     return _split_call_args_one_per_line(updated)
 
-    def leave_Parameters(self, orig, updated):
-        # Split parameters one per line + trailing commas
-        return _split_parameters_one_per_line(updated)
-
+    # def leave_Parameters(self, orig, updated):
+    #     return _split_parameters_one_per_line(updated)
 
 # ----------------------------
 # Pipeline B: Usage renamer
 # ----------------------------
+
+
 class UsageRenamer(cst.CSTTransformer):
     def __init__(self, rename_map: Dict[str, str]) -> None:
         self.rename_map = rename_map
@@ -280,9 +300,9 @@ class UsageRenamer(cst.CSTTransformer):
             return updated.with_changes(attr=cst.Name(new_attr))
         return updated
 
-    def leave_Call(self, orig, updated):
-        # Split call args one per line + trailing commas
-        return _split_call_args_one_per_line(updated)
+    # def leave_Call(self, orig, updated):
+    #     # Split call args one per line + trailing commas
+    #     return _split_call_args_one_per_line(updated)
 
 
 # ----------------------------
@@ -309,7 +329,8 @@ def pipeline_a(root: pathlib.Path) -> None:
         # Remove exact duplicate top-level import lines after lifting
         lifted_tree = _dedupe_top_level_imports(lifted_tree)
 
-        transformer = DefinitionRenamer(pyfile, renames_log)
+        repo_root = root.parent if root.name == "src" else root
+        transformer = DefinitionRenamer(pyfile, repo_root, renames_log)
         new_tree = lifted_tree.visit(transformer)
         pyfile.write_text(new_tree.code, encoding="utf-8")
 
