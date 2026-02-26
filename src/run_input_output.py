@@ -89,6 +89,7 @@ def run_input_output(param):
         analysisType = "input_output",
     )
     for omega in omegas:
+
         # define operator
         operator            = A.copy()
         operator.axpy(

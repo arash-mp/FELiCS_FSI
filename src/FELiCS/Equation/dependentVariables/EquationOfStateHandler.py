@@ -10,8 +10,10 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+
 # Local Libraries and methods
-from FELiCS.Misc.logging import Logger
+from FELiCS.Misc.logging import Logger, log_and_raise
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -96,12 +98,10 @@ class EquationOfStateHandler:
             # Type of equation of state
             EoSType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
             if EoSType not in ['Low-Mach', 'IdealGas']:
-                logger.error('Equation of State ' +
-                             self._EoSType+' not defined.')
-                raise Exception('Equation of State ' +
-                                self._EoSType+' not defined.')
 
-            # Get the mean flow class
+                log_and_raise(logger, 'Equation of State '+self._EoSType+' not defined.', Exception)
+            # Get the mean flow class     
+
             if mean == 'None':
                 mean = self._mean
 
@@ -131,10 +131,9 @@ class EquationOfStateHandler:
                 logger.debug(
                     'Linearized EoS with input variables: [rho, T] -> p')
                 if EoSType == 'Low-Mach':
-                    logger.error('Equation of State '+self._EoSModel() +
-                                 ' not defined to obtain p-fluctuations.')
-                    raise Exception(
-                        'Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.')
+
+                    log_and_raise(logger, 'Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.', Exception)
+
                 elif EoSType == 'IdealGas':
                     if self._isSolution:
                         mean_T = mean.field_dict['T']
@@ -170,7 +169,7 @@ class EquationOfStateHandler:
                         self.p - self.rho*mean_Rspe*mean_T)/(mean_Rspe*mean_rho)
 
     def _get_needed_fields_for_linear_eo_s(
-            self
+        self
     ):
         """
         Returns the list of thermodynamic fields needed for linearized EoS.
@@ -201,7 +200,7 @@ class EquationOfStateHandler:
                             EoSEquationType + ' not implemented.')
 
     def _additional_fields_to_be_read_eo_s(
-            self
+        self
     ):
         """
         Specifies the additional mean flow fields required for EoS evaluation.

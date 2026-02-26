@@ -10,6 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+
 # TODO Sophie: throw error if Field is not scalar  
 # 
 # Standard libraries
@@ -30,7 +31,7 @@ from    ufl                         import TestFunction, dx
 
 # Local Libraries and methods
 from FELiCS.Equation.UflDecorator   import UflDecorator
-from FELiCS.Misc.logging            import Logger
+from FELiCS.Misc.logging            import Logger, log_and_raise
 from FELiCS.Misc.tensorUtils        import (
     i_grad, 
     i_conj, 
@@ -40,6 +41,7 @@ from FELiCS.Misc.tensorUtils        import (
 )
 from FELiCS.Solvers.LinearSolver    import LinearSolver
 from FELiCS.SpaceDisc.FEMSpaces     import create_function_space
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -168,9 +170,9 @@ class Field:
             numSubSpaces        = self.info['num_subspaces']
             
             # Check that the number of axis names is sufficient
+
             if len(axis_names) < numSubSpaces:
-                logger.error(f"Not enough axis names {axis_names} in the coordinate system for the vector field with {numSubSpaces} components.")
-                raise ValueError("Not enough axis names in the coordinate system for the vector field.")
+                log_and_raise(logger, f"Not enough axis names {axis_names} in the coordinate system for the vector field with {numSubSpaces} components.", ValueError)
 
             # If the vector was not given before, we set a default
             if self._name is None or not isinstance(
@@ -206,9 +208,7 @@ class Field:
                         subFieldNames.append(f'vector{counter_vectors}')
                         counter_vectors += 1
                     else:
-                        logger.error("Subspace type neither scalar nor vector.")
-                        raise ValueError("Subspace type neither scalar nor vector.") 
-
+                        log_and_raise(logger, "Subspace type neither scalar nor vector.", ValueError)
         return subFieldNames
 
     def set_names_of_sub_fields(
@@ -1042,7 +1042,7 @@ class Field:
         self,
         smoothFactor,
         bcs=[],
-        restartSolver=False,
+        restartSolver=False
     ):
         """
         Smooth the field using a diffusion-like approach.
@@ -1144,7 +1144,7 @@ class Field:
         xlim=None,
         ylim=None,
         plotType="real",
-        clim=None,
+        clim=None
     ):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
@@ -1175,7 +1175,7 @@ class Field:
         # Ensure cell->vertex connectivity
         mesh.topology.create_connectivity(
             tdim,
-            0,
+            0
         )
 
         # --- 1) Interpolate to P1 space on same mesh ---
@@ -1184,8 +1184,8 @@ class Field:
             element(
                 "CG",
                 "triangle",
-                1,
-            ),
+                1
+            )
         )
         u1              = fem.Function(V1)
         u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
@@ -1205,11 +1205,11 @@ class Field:
         # --- 2) Build triangulation from the mesh ---
         cells_to_vertices   = mesh.topology.connectivity(
             tdim,
-            0,
+            0
         ).array
         triangles           = cells_to_vertices.reshape(
             -1,
-            3,
+            3
         )
         coords              = mesh.geometry.x
         x                   = coords[:, 0]
@@ -1234,7 +1234,7 @@ class Field:
             shading='gouraud',
             cmap=cmap,
             vmin=clim[0],
-            vmax=clim[1],
+            vmax=clim[1]
         )
 
         # Set labels and title
@@ -1284,7 +1284,7 @@ class Field:
     ### dunder methods for overloading arithmetic operators ###
     def __add__(
         self,
-        other,
+        other
     ):
         """
         Overload the ``+`` operator for adding fields or scalars.
@@ -1307,18 +1307,18 @@ class Field:
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
             other,
-            Field,
+            Field
         ):
             result = Field(
                 self.space,
-                self.mesh,
+                self.mesh
             )
             result.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
             return result 
         elif np.isscalar(other):
             result = Field(
                 self.space,
-                self.mesh,
+                self.mesh
             )
             result.set_coefficient_array(self.get_coefficient_array() + other)
             return result
@@ -1326,7 +1326,7 @@ class Field:
 
     def __iadd__(
         self,
-        other,
+        other
     ):
         """
         Overload the ``+=`` operator for adding fields or scalars.
@@ -1346,7 +1346,7 @@ class Field:
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
             other,
-            Field,
+            Field
         ):
             self.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
             return self
@@ -1358,7 +1358,7 @@ class Field:
 
     def __sub__(
         self,
-        other,
+        other
     ):
         """
         Overload the `-` operator for adding two Field objects.
@@ -1384,18 +1384,18 @@ class Field:
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
             other,
-            Field,
+            Field
         ):
             result = Field(
                 self.space,
-                self.mesh,
+                self.mesh
             )
             result.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
             return result 
         elif np.isscalar(other):
             result = Field(
                 self.space,
-                self.mesh,
+                self.mesh
             )
             result.set_coefficient_array(self.get_coefficient_array() - other)
             return result 
@@ -1403,7 +1403,7 @@ class Field:
 
     def __isub__(
         self,
-        other,
+        other
     ):
         """
         Overload the `-=` operator for adding two Field objects.
@@ -1427,7 +1427,7 @@ class Field:
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
             other,
-            Field,
+            Field
         ):
             self.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
             return self
@@ -1439,7 +1439,7 @@ class Field:
 
     def __mul__(
         self,
-        other,
+        other
     ):
         """
         Overload the ``*`` operator for pointwise multiplication.
@@ -1460,18 +1460,18 @@ class Field:
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
             other,
-            Field,
+            Field
         ):
             result = Field(
                 self.space,
-                self.mesh,
+                self.mesh
             )
             result.set_coefficient_array(self.get_coefficient_array()*other.get_coefficient_array())
             return result
         elif np.isscalar(other):
             result = Field(
                 self.space,
-                self.mesh,
+                self.mesh
             )
             result.set_coefficient_array(self.get_coefficient_array()*other)
             return result
@@ -1480,7 +1480,7 @@ class Field:
 
     def __imul__(
         self,
-        other,
+        other
     ):
         """
         Overload the ``*=`` operator for pointwise multiplication.
@@ -1499,7 +1499,7 @@ class Field:
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
             other,
-            Field,
+            Field
         ):
             self.set_coefficient_array(self.get_coefficient_array() * other.get_coefficient_array())
             return self
@@ -1511,7 +1511,7 @@ class Field:
 
     def __truediv__(
         self,
-        other,
+        other
     ):
         """
         Overload the ``/`` operator for pointwise division.
@@ -1538,18 +1538,18 @@ class Field:
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
             other,
-            Field,
+            Field
         ):
             result = Field(
                 self.space,
-                self.mesh,
+                self.mesh
             )
             result.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
             return result
         elif np.isscalar(other):
             result = Field(
                 self.space,
-                self.mesh,
+                self.mesh
             )
             result.set_coefficient_array(self.get_coefficient_array()/other)
             return result
@@ -1558,7 +1558,7 @@ class Field:
 
     def __itruediv__(
         self,
-        other,
+        other
     ):
         """
         Overload the ``/=`` operator for pointwise division.
@@ -1583,7 +1583,7 @@ class Field:
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
         if isinstance(
             other,
-            Field,
+            Field
         ):
             self.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
             return self

@@ -15,13 +15,14 @@ from ufl import dx
 
 # Local Libraries and methods
 from FELiCS.Equation.Equations.EquationTemplate     import EquationTemplate
-from FELiCS.Misc.logging                            import Logger
+from FELiCS.Misc.logging                            import Logger, log_and_raise
 from FELiCS.Misc.tensorUtils                        import (
     i_conj,
     i_div,
     i_dot,
     i_grad,
 )
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -100,9 +101,7 @@ class EnthalpyEquation(EquationTemplate):
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
-            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
-    
+            log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
         # initialize variables in template class
         super().__init__(
             index,

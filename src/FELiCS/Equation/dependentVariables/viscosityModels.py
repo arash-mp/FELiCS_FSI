@@ -16,7 +16,7 @@ import  numpy   as np
 def sutherland_fluctuation_mean(
     mean,
     rho,
-    Ts,
+    Ts
 ):
     """
     Calculate fluctuation viscosity and fluctuation factor using the Sutherland model.
@@ -39,13 +39,13 @@ def sutherland_fluctuation_mean(
     """
 
     if False:
-        mean_T = mean.field_dict['T']
-        mean_rho = mean.field_dict['rho']
-        mean_nulam = mean.field_dict['nulam']
+        mean_T      = mean.field_dict['T']
+        mean_rho    = mean.field_dict['rho']
+        mean_nulam  = mean.field_dict['nulam']
     else:
-        mean_T = mean.T
-        mean_rho = mean.rho
-        mean_nulam = mean.nulam
+        mean_T      = mean.T
+        mean_rho    = mean.rho
+        mean_nulam  = mean.nulam
 
     fluct = (mean_T + 3 * Ts) / (2 * (mean_T + Ts)) * (-1 * rho / mean_rho)
     nulam = mean_nulam * fluct

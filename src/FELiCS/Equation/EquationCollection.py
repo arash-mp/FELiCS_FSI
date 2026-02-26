@@ -41,6 +41,9 @@ from    ufl                 import (
     # as_tensor, i, j,
 )
 
+
+
+
 # Local Libraries and methods
 from    FELiCS.Equation.Boundary                           import BoundaryHandler
 from    FELiCS.Equation.Equations.EnergyPressureEquation   import EnergyPressureEquation
@@ -51,7 +54,7 @@ from    FELiCS.Equation.Equations.SpeciesEquation          import SpeciesEquatio
 from    FELiCS.Equation.Equations.SpongeTerm               import SpongeTerm
 from    FELiCS.Equation.UflDecorator                       import UflDecorator
 from    FELiCS.Fields.FluctuationClass                     import FluctuationClass
-from    FELiCS.Misc.logging                                import Logger
+from    FELiCS.Misc.logging                                import Logger, log_and_raise
 from    FELiCS.Misc.tensorUtils                            import (
                                                                     as_vector,
                                                                     i_dot,
@@ -320,8 +323,7 @@ class EquationCollectionClass():
                 #            raise Exception('Species transport equation type ' + self._param.Case.SetOfEquations['Species']['Equation'] + ' unknown.' )
 
             elif equation[0] not in  ["EquationOfState", "ProgressVariableLinear"] :
-                logger.error('Equation type ' + str(equation)  + ' unknown.' )
-                raise Exception('Equation type ' + str(equation)  + ' unknown.' )
+                log_and_raise(logger, 'Equation type ' + str(equation)  + ' unknown.', Exception)
 
             
         # Add sponge region to equation list only if the field was given in the mean flow file
@@ -364,9 +366,7 @@ class EquationCollectionClass():
                 # Variables used: u
                 self.resolventResponseIndices = self._FEMSpaces.VMixed.sub(index_u).collapse()[1]
             else:
-                logger.error(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
-                raise Exception(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
-                
+                log_and_raise(logger, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.", Exception, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
             # Same for the forcing norm
             if param.IOResolvent.ForcingNorm == 'Chu':
                 # Variables used: all
@@ -375,13 +375,13 @@ class EquationCollectionClass():
                 # u
                 self.resolventForcingIndices = self._FEMSpaces.VMixed.sub(index_u).collapse()[1]
             else:
-                logger.error(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
-                raise Exception(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
 
+                 log_and_raise(logger, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.", Exception, f"Forcing norm type      '{param.IOResolvent.ForcingNorm}' not implemented.")
     def get_linear_operator(
         self,
         meanFlow
     ):
+
         """
         Construct the linear operator matrix for the equation system.
 
@@ -881,9 +881,7 @@ class EquationCollectionClass():
                 )).ufl_tens * self._coordinateSystem.J_hat * dx
                 self.__forcing_coeff = self._param.IOResolvent.ForcingCoeff
             else:
-                logger.error(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
-                raise Exception(f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
-                
+                log_and_raise(logger, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.", Exception, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
         # In boundary forcing, forcing is allowed only on the specific boundaries
         elif param.IOResolvent.ForcingMode=='Boundary':
             raise Exception("Boundary forcing not implemented for Resolvent analysis in Tensor notation")
@@ -913,8 +911,8 @@ class EquationCollectionClass():
             i_conj(X[idu]),
             )).ufl_tens * self._coordinateSystem.J_hat * dx
         else:
-            logger.error(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
-            raise Exception(f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
+
+            log_and_raise(logger, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.", Exception, f"Response norm type        '{param.IOResolvent.ResponseNorm}' not implemented.")
 
     def compute_resolvent_fem_weights(
         self,
@@ -923,6 +921,7 @@ class EquationCollectionClass():
         mean,
         fluc
     ):
+
         """
         Compute FEM weighting matrix for resolvent input/output scaling.
 

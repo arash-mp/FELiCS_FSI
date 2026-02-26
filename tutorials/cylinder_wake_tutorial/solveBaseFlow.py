@@ -39,7 +39,9 @@ def createInitialSolutionAsFelFile():
     y = (Y.flatten())
     
     r = np.sqrt(x**2+y**2)
-    ux = 1. - np.exp(-(r-0.5))
+    ux = np.zeros_like(x)
+    ux[r>2] = 1 - np.exp(-((r[r>2]-1)**2)/0.1)
+    ux[r<=2] = 0
     
     file = "initial_solution.fel"
     

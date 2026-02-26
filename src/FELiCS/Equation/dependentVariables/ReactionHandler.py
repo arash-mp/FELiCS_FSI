@@ -72,11 +72,12 @@ class ReactionClass:
             The fluctuation object.
         """
 
-        self._educts = reactionData['educts']
-        self._stochiometricCoefficientsEducts = reactionData['stochiometricCoefficientsEducts']
-        self._products = reactionData['products']
+        self._educts                            = reactionData['educts']
+        self._stochiometricCoefficientsEducts   = reactionData['stochiometricCoefficientsEducts']
+        self._products                          = reactionData['products']
         self._stochiometricCoefficientsProducts = reactionData['stochiometricCoefficientsProducts']
-        self._reactionType = reactionType
+        self._reactionType                      = reactionType
+
         if reactionType == 'KaiserCnF2023':
             specie = self._products[0]
             if fluc._isSolution:
@@ -90,9 +91,9 @@ class ReactionClass:
                     mean_rho = mean.rho
             # else it is a tensor object and will be used to build a ufl formulation
             else:
-                mean_RR_prefactor = mean.rr_prefactor
-                mean_rho = mean.rho
-                mean_Yspecie = mean.y(specie)
+                mean_RR_prefactor   = mean.rr_prefactor
+                mean_rho            = mean.rho
+                mean_Yspecie        = mean.y(specie)
        
             self._RR = mean_RR_prefactor * mean_rho * (fluc.y(specie) - 2 * fluc.y(specie) * mean_Yspecie)\
                      + mean_RR_prefactor * fluc.rho * (mean_Yspecie - mean_Yspecie * mean_Yspecie)
@@ -102,23 +103,27 @@ class ReactionClass:
             raise Exception('Reaction mechanism ' + reaction['type'] + ' unknown!')
         self._determine_reaction_formula()
 
-    def _determine_reaction_formula(self):
+    def _determine_reaction_formula(
+            self
+    ):
         """
         Determines the reaction formula from educts and products.
         """
 
         self._reactionFormula = ''
-        for i_educt,educt in enumerate(self._educts):
+        for i_educt, educt in enumerate(self._educts):
             self._reactionFormula += str(self._stochiometricCoefficientsEducts) + educt + ' + '
         if not self._reactionFormula == '':
             self._reactionFormula = self._reactionFormula[:-3]
         self._reactionFormula += ' --> '
-        for i_product,product in enumerate(self._products):
+        for i_product, product in enumerate(self._products):
             self._reactionFormula += str(self._stochiometricCoefficientsEducts) + product + ' + '
         if not self._reactionFormula == '':
             self._reactionFormula = self._reactionFormula[:-3]
         
-    def rr(self):
+    def rr(
+        self
+    ):
         """
         Returns the computed reaction rate.
 
@@ -129,7 +134,9 @@ class ReactionClass:
         """
         return self._RR
 
-    def species(self):
+    def species(
+        self
+    ):
         """
         Returns the list of species involved in the reaction.
 
@@ -191,11 +198,13 @@ class ReactionHandler:
     """
 
     def __init__(
-                self,
-                ):
+        self
+    ):
         pass
 
-    def _additional_fields_to_be_read_reaction(self):
+    def _additional_fields_to_be_read_reaction(
+        self
+    ):
         """
         Determines which additional fields are needed for the reaction mechanism.
 
@@ -210,7 +219,7 @@ class ReactionHandler:
             If the reaction mechanism type is unknown.
         """
 
-        if self._param.Mixture.reaction_mechanism['type'] == 'KaiserCnF2023': 
+        if self._param.Mixture.reaction_mechanism['type']   == 'KaiserCnF2023':
             outList = ['RR_prefactor']
         elif self._param.Mixture.reaction_mechanism['type'] == 'None':
             outList = []
@@ -220,7 +229,7 @@ class ReactionHandler:
     
     def _initialize_reactions(
         self,
-        mean='None',
+        mean='None'
     ):
         """
         Creates and initializes reactionClass objects using the defined mechanism and mean fields.
@@ -252,7 +261,7 @@ class ReactionHandler:
 
     def omega(
         self,
-        specie,
+        specie
     ):
         """
         Computes the net source term (omega) for a given species by aggregating contributions

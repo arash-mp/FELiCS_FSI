@@ -17,7 +17,7 @@ from ufl import (
 
 # Local Libraries and methods
 from FELiCS.Equation.Equations.EquationTemplate import EquationTemplate
-from FELiCS.Misc.logging                        import Logger
+from FELiCS.Misc.logging                        import Logger, log_and_raise
 from FELiCS.Misc.tensorUtils                    import (
     Tensor,
     i_inner,
@@ -27,6 +27,7 @@ from FELiCS.Misc.tensorUtils                    import (
     i_conj,
     i_outer,
 )
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -91,8 +92,7 @@ class MomentumEquation(EquationTemplate):
         """
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
-            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
+            log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
     
         # initialize variables in template class
         super().__init__(
@@ -100,7 +100,7 @@ class MomentumEquation(EquationTemplate):
             eqColl,
             fluc,
             X,
-            param,
+            param
         )
 
 
@@ -135,7 +135,7 @@ class MomentumEquation(EquationTemplate):
     def add_linear_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Construct the weak form of the linearized momentum conservation equation.
@@ -172,7 +172,7 @@ class MomentumEquation(EquationTemplate):
                         i_conj(X),
                         mean.rho * mean.u,
                     )),
-                    fluc.u,
+                    fluc.u
                 ) 
             ).ufl_tens * J_hat * dx
 
@@ -182,7 +182,7 @@ class MomentumEquation(EquationTemplate):
                         i_conj(X),
                         mean.rho * fluc.u,
                     )),
-                    mean.u,
+                    mean.u
                 ) 
             ).ufl_tens * J_hat * dx
 
@@ -190,7 +190,7 @@ class MomentumEquation(EquationTemplate):
                 1j * i_dot(
                     i_div(i_outer(
                         i_conj(X),
-                        fluc.rho * mean.u,
+                        fluc.rho * mean.u
                     )),
                     mean.u,
                 ) 
@@ -202,7 +202,7 @@ class MomentumEquation(EquationTemplate):
                     i_dot(
                         i_outer(
                             fluc.u,
-                            i_conj(X),
+                            i_conj(X)
                         ),
                         mean.u,
                     ),
@@ -215,7 +215,7 @@ class MomentumEquation(EquationTemplate):
                     i_dot(
                         i_outer(
                             mean.u,
-                            i_conj(X),
+                            i_conj(X)
                         ),
                         fluc.u,
                     ),
@@ -230,9 +230,9 @@ class MomentumEquation(EquationTemplate):
                 mean.u,
                 i_conj(X),
                 ),
-                mean.u,
+                mean.u
                 ),
-                self.n,) 
+                self.n)
             ).ufl_tens * J_hat * self.all_ds
             #elif self.param.Case.CoordinateSystem =='Cylindrical':
             #    # In cyl , a singular term error arise for the boundary term in the tensor framework
@@ -252,9 +252,9 @@ class MomentumEquation(EquationTemplate):
                 -1j * i_dot(
                     i_dot(
                         i_grad(fluc.u),
-                        mean.rho * mean.u,
+                        mean.rho * mean.u
                     ),
-                    i_conj(X),
+                    i_conj(X)
                 )
             ).ufl_tens * J_hat * dx
 
@@ -340,7 +340,7 @@ class MomentumEquation(EquationTemplate):
     def add_nonlinear_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the nonlinear expression to the weak form.
@@ -373,7 +373,7 @@ class MomentumEquation(EquationTemplate):
                         i_conj(X),
                         mean.rho * mean.u,
                     )),
-                    mean.u,
+                    mean.u
                 ).ufl_tens * J_hat * dx
             )
 
@@ -382,9 +382,9 @@ class MomentumEquation(EquationTemplate):
                 i_dot(
                     i_outer(
                         mean.u,
-                        i_conj(X),
+                        i_conj(X)
                     ),
-                    mean.u,
+                    mean.u
                 ),
                 self.n,
             ) ).ufl_tens * J_hat * self.all_ds)
@@ -405,7 +405,7 @@ class MomentumEquation(EquationTemplate):
                 ( -1j * i_dot(
                     i_dot(
                         i_grad(mean.u),
-                        mean.rho * mean.u,
+                        mean.rho * mean.u
                     ),
                     i_conj(X),
                 )).ufl_tens * J_hat * dx
@@ -428,9 +428,7 @@ class MomentumEquation(EquationTemplate):
 
         else:
             # No integration by parts of the pressure term
-            logger.error(' -> Pressure term without IbP not implemented in tensor framework.')
-            raise Exception(' -> Pressure term without IbP not implemented in tensor framework.')
-
+            log_and_raise(logger, ' -> Pressure term without IbP not implemented in tensor framework.', Exception)
         # ------------------------ Diffusion term
         weakForm.add(
             ( -1j * i_inner(
@@ -443,7 +441,7 @@ class MomentumEquation(EquationTemplate):
     def add_bilinear_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the bilinear convection term for incompressible flows.
@@ -471,7 +469,7 @@ class MomentumEquation(EquationTemplate):
             ( -1j * i_dot(
                 i_dot(
                     i_grad(fluc.u),
-                    mean.rho * u_bil,
+                    mean.rho * u_bil
                 ),
                 i_conj(X),) 
             ).ufl_tens * J_hat * dx
@@ -481,7 +479,7 @@ class MomentumEquation(EquationTemplate):
             ( -1j * i_dot(
                 i_dot(
                     i_grad(u_bil),
-                    mean.rho*fluc.u,
+                    mean.rho*fluc.u
                 ),
                 i_conj(X),
             )).ufl_tens*J_hat*dx

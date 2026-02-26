@@ -28,7 +28,7 @@ from    scipy.interpolate   import (
 )
 
 # Local libraries and methods
-from    FELiCS.Misc.logging import Logger
+from    FELiCS.Misc.logging import Logger, log_and_raise
 from    FELiCS.IO.Mapping   import Mapping
 
 # Debug
@@ -105,7 +105,7 @@ class Reader:
         sourceDir:          str  = "",
         needInterpolation:  bool = True,
         felicsMeshFilePath: Optional[str] = None,
-        cacheData:          bool = True,
+        cacheData:          bool = True
     ) -> None:
         """
         Initialize the Reader instance.
@@ -145,7 +145,9 @@ class Reader:
     # Cached properties
     # --------------------------
     @cached_property
-    def mesh_axis_names(self):
+    def mesh_axis_names(
+        self
+    ):
         """
         Names of the full spatial dimensions: mesh + spectral.
 
@@ -162,7 +164,9 @@ class Reader:
         return self._meshAxisNames
     
     @cached_property
-    def full_axis_names(self):
+    def full_axis_names(
+        self
+    ):
         """
         Get the names of all spatial dimensions: mesh + spectral.
 
@@ -179,7 +183,9 @@ class Reader:
         return self._fullAxisNames
 
     @cached_property
-    def _triangulation_import_mesh(self):
+    def _triangulation_import_mesh(
+        self
+    ):
         """
         Cached Delaunay triangulation of the import mesh for interpolation.
 
@@ -193,7 +199,9 @@ class Reader:
         return Delaunay(importCoords)
 
     @cached_property
-    def calc_mesh_p2_coords(self):
+    def calc_mesh_p2_coords(
+        self
+    ):
         """
         Get the coordinates of the calculation mesh.
 
@@ -205,7 +213,9 @@ class Reader:
         return self._calcMeshP2Coords
     
     @cached_property
-    def calc_mesh_p1_coords(self):
+    def calc_mesh_p1_coords(
+        self
+    ):
         """
         Get the coordinates of the P1 calculation mesh.
 
@@ -217,7 +227,9 @@ class Reader:
         return self._calcMeshP1Coords
 
     @cached_property
-    def mapping_import_to_calc_p2(self):
+    def mapping_import_to_calc_p2(
+        self
+    ):
         """
         Get the mapping from import mesh to calculation mesh (P2).
 
@@ -235,7 +247,9 @@ class Reader:
             return self._mappingImportToCalc
 
     @cached_property
-    def import_mesh_coords(self):
+    def import_mesh_coords(
+        self
+    ):
         """
         Get the coordinates of the import mesh based on the configuration.
 
@@ -253,14 +267,14 @@ class Reader:
         logger.debug("Associating import mesh to Reader instance.")
 
         # Number and names of mesh axes
-        mesh_axis_names                       = self.mesh_axis_names
-        numMeshAxis                         = len(mesh_axis_names)
+        mesh_axis_names     = self.mesh_axis_names
+        numMeshAxis         = len(mesh_axis_names)
         logger.debug(f"Getting the {numMeshAxis}D import mesh coordinates ({mesh_axis_names}).")
 
         def _load_coordinates_from_file(
             file_path: str,
             prefix: str,
-            coord_names: List[str],
+            coord_names: List[str]
         ) -> np.ndarray:
             """
             Helper to load coordinates from HDF5 file.
@@ -324,10 +338,7 @@ class Reader:
                 meshFile                    = self._felicsMeshFilePath
             else:
                 # Default FELiCS mesh file in the source directory (e.g. when loading modes)
-                logger.debug(f"self._felicsMeshFilePath is None, therefore using {os.path.join(
-                    self._sourceDir,
-                    'mesh.h5',
-                )}")
+                logger.debug(f"self._felicsMeshFilePath is None, therefore using {os.path.join(self._sourceDir, 'mesh.h5')}")
                 meshFile                    = os.path.join(
                     self._sourceDir,
                     "mesh.h5",
@@ -351,7 +362,7 @@ class Reader:
     def _update_data_source(
         self,
         filePath: str,
-        groupName: str,
+        groupName: str
     ) -> None:
         """
         Switch to a new file/group if different, clearing per-file caches.
@@ -390,7 +401,7 @@ class Reader:
             
     def _update_calc_mesh(
         self,
-        field: Any,
+        field: Any
     ) -> None:
         """
         Switch to a new calculation mesh if different from cached one.
@@ -429,9 +440,7 @@ class Reader:
             None,
         ) for subField in subFields]
         if max(degrees) > 2:
-            logger.error("Reader currently only supports P1 and P2 FEM spaces.")
-            raise NotImplementedError("Reader currently only supports P1 and P2 FEM spaces.")
-        
+            log_and_raise(logger, "Reader currently only supports P1 and P2 FEM spaces.", NotImplementedError)
         # Get the number of DoFs in P2 and P1 subfields if present
         p2SubFieldIndex            = degrees.index(2) if 2 in degrees else None    # Keep only the first occurrence
         p1SubFieldIndex            = degrees.index(1) if 1 in degrees else None    # Keep only the first occurrence
@@ -493,7 +502,9 @@ class Reader:
                     self.calc_mesh_p2_coords,
                 )
 
-    def _ensure_source_set(self) -> None:
+    def _ensure_source_set(
+        self
+    ) -> None:
         """
         Ensure that a data source is set.
 
@@ -507,7 +518,7 @@ class Reader:
 
     def clear_cached_properties(
         self,
-        cachedProps: List[str] = [],
+        cachedProps: List[str] = []
     ) -> None:
         """
         Remove all cached @cached_property values from this Reader instance.
@@ -527,7 +538,7 @@ class Reader:
                 "meshAxisNames",
                 "calcMeshP2Coords",
                 "importMeshCoords",
-                "mappingImportToCalcP2",
+                "mappingImportToCalcP2"
             ]
         cleared = []
         for propName in cachedProps:
@@ -542,7 +553,9 @@ class Reader:
     # --------------------------
     # HDF5 file handling
     # --------------------------
-    def _get_list_available_vars(self) -> None:
+    def _get_list_available_vars(
+        self
+    ) -> None:
         """
         List variable names available in the current group.
 
@@ -587,7 +600,7 @@ class Reader:
             
     def _load_from_h5(
         self,
-        varNames: List[str],
+        varNames: List[str]
     ) -> None:
         """
         Load selected variables from HDF5 file into _rawDataDict.
@@ -624,7 +637,7 @@ class Reader:
     def _interpolate_to_calc_mesh(
         self,
         varNames:   List[str],
-        toP1:       bool = False,
+        toP1:       bool = False
     ) -> Dict[str, Any]:
         """
         Interpolate given variables from import mesh to calculation mesh.
@@ -647,12 +660,12 @@ class Reader:
         ValueError
             If variable lengths do not match the import mesh.
         """
-        numMeshDimensions                    = len(self.mesh_axis_names)
+        numMeshDimensions           = len(self.mesh_axis_names)
         importCoords                = self.import_mesh_coords[:, :numMeshDimensions]
         calcCoords                  = self.calc_mesh_p1_coords if toP1 else self.calc_mesh_p2_coords
         numImportPoints             = importCoords.shape[0]
         
-        varNamesComplex        = varNames
+        varNamesComplex             = varNames
 
         # Sanity check: all variables have same length as import mesh
         for varName in varNamesComplex:
@@ -698,7 +711,7 @@ class Reader:
 
     def _map_to_calc_mesh(
         self,
-        varNames: List[str],
+        varNames: List[str]
     ) -> Dict[str, Any]:
         """
         Applies precomputed mapping.
@@ -722,7 +735,7 @@ class Reader:
     # --------------------------
     def _names_for_field(
         self,
-        field: Any,
+        field: Any
     ) -> List[str]:
         """
         Determine variable names to load from file for this field.
@@ -753,16 +766,14 @@ class Reader:
                 names.append(subField.name)
                 
             else:
-                logger.error(f"Field type '{subInfo['type']}' not supported in Reader yet.")
-                raise NotImplementedError("Field type not supported in Reader yet.")
-            
+                log_and_raise(logger, f"Field type '{subInfo['type']}' not supported in Reader yet.", NotImplementedError)
         return names
 
     def _set_arrays_to_field(
         self,
         arrays:  Dict[str, Any],
         field: Any,
-        typeVars: List[Tuple[str, str]],
+        typeVars: List[Tuple[str, str]]
     ) -> Any:
         """
         Assign interpolated/mapped arrays to a given field.
@@ -838,9 +849,7 @@ class Reader:
                     else:
                         logger.warning(f"Subfield '{subFieldName}' not found in loaded arrays for scalar subfield. Set to default values.")
                 else:
-                    logger.error(f"Subfield type '{info['subspaces'][iField]['type']}' not supported in Reader yet.")
-                    raise NotImplementedError("Subfield type not supported in Reader yet.")
-                
+                    log_and_raise(logger, f"Subfield type '{info['subspaces'][iField]['type']}' not supported in Reader yet.", NotImplementedError)
         elif info["type"] == "vector":
             for i, subFieldName in enumerate(field.get_names_of_sub_fields()):
                 if subFieldName in baseNames:
@@ -868,7 +877,7 @@ class Reader:
     
     def _check_variable_availability_and_type(
         self,
-        field: Any,
+        field: Any
     ) -> Tuple[List[str], List[str]]:
         """
         Check which variables needed for the field are available in the data source.
@@ -923,7 +932,7 @@ class Reader:
         self,
         field: Any,
         filePath:   str,
-        groupName:  str,
+        groupName:  str
     ) -> Tuple[Any, List[str]]:
         """
         Import data from the specified file/group into the given field.

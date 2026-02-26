@@ -1,8 +1,8 @@
 #  ___________________________________   _______________________________________________________
 # /-----------------------------------\ /-------------------------------------------------------\
 # |   (         (                (     |  This source code is part of FELiCS                     |
-# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
-# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |
 # |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
 # |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
 # |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
@@ -33,7 +33,7 @@ class HeatReleaseHandler:
 
     def __init__(
         self,
-        reaction,
+        reaction
     ):
         """
         Initialize the heatReleaseHandler instance and compute heat release rates.

@@ -20,9 +20,10 @@ from    numpy           import unique
 import  numpy           as np
 from    ufl             import SpatialCoordinate
 
+
 # Local Libraries and methods
 from    FELiCS.Misc.tensorUtils import CoordinateSystem
-from    FELiCS.Misc.logging     import Logger
+from    FELiCS.Misc.logging     import Logger, log_and_raise
 
 comm = MPI.COMM_WORLD
 # Get the logger
@@ -83,7 +84,7 @@ class FELiCSMesh:
         meshFileName=None,
         gdim = None,
         m=0,
-        inputMesh=None,
+        inputMesh=None
     ):
         """
         Initialize the FELiCSMesh object, loading a mesh from file or using an
@@ -184,9 +185,7 @@ class FELiCSMesh:
                 gdim = self.gdim,
             )
         else:
-            logger.error('Coord. syst not yet implemented in tensor framework.')
-            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
-
+            log_and_raise(logger, 'Coord. syst not yet implemented in tensor framework.', NotImplementedError)
         # update dimension if m!=0, i.e. if there is a spectral dimension
         logger.debug(f"The transverse/azimuthal wavenumber is m={m} and the geometric dimension is gdim={gdim}.")
         if m!=0 and gdim<3:
@@ -199,7 +198,9 @@ class FELiCSMesh:
         self._coordinates = self.coordinates()
 
     @property
-    def export_mesh(self):
+    def export_mesh(
+        self
+    ):
         """
         Lazy-loaded refined export mesh for exporting simulation results.
 
@@ -221,7 +222,7 @@ class FELiCSMesh:
 
     def set_true_dimension(
         self,
-        dim,
+        dim
     ):
         """
         Set the true dimension of the system, updating the coordinate system.
@@ -242,7 +243,7 @@ class FELiCSMesh:
 
     def save_in_fe_li_cs_format(
         self,
-        filename,
+        filename
     ):
         """
         Save the refined (export) mesh in the FELiCS HDF5-based format.
@@ -287,7 +288,9 @@ class FELiCSMesh:
         )
         hf.close()
 
-    def calc_connectivity(self):
+    def calc_connectivity(
+        self
+    ):
         """
         Compute and update the internal mesh cell connectivity array.
 
@@ -304,7 +307,9 @@ class FELiCSMesh:
         self.meshCells    = connectivityCells.array.reshape(
                             [topology.original_cell_index.shape[0], topology.cell_type.value])
 
-    def cells(self):
+    def cells(
+        self
+    ):
         """
         Returns the cell connectivity array of the mesh.
 
@@ -317,7 +322,9 @@ class FELiCSMesh:
         self.calc_connectivity()
         return self.meshCells
 
-    def coordinates(self):
+    def coordinates(
+        self
+    ):
         """
         Retrieves the vertex coordinates of the mesh.
 
@@ -329,7 +336,9 @@ class FELiCSMesh:
 
         return self.dolfinxMesh.geometry.x[:, 0:self.gdim]
     
-    def get_bc_info(self):
+    def get_bc_info(
+        self
+    ):
         """
         Retrieve boundary condition tags and corresponding boundary facets.
 
@@ -343,7 +352,9 @@ class FELiCSMesh:
         return unique(self.facet_tags.values), self.facet_tags 
 
     @property
-    def coordinate_system(self):
+    def coordinate_system(
+        self
+    ):
         """
         Coordinate system object associated with the mesh.
 
@@ -356,7 +367,9 @@ class FELiCSMesh:
         return self.__coordinateSystem
     
     @property
-    def axis_names(self):
+    def axis_names(
+        self
+    ):
         """
         Names of the axes in the coordinate system.
         These include both spectral and mesh dimensions.
@@ -385,13 +398,13 @@ class FELiCSMesh:
                 coordinateNames.append('t')
                 
         else:
-            logger.error('Coord. syst not yet implemented in tensor framework.')
-            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
-
+            log_and_raise(logger, 'Coord. syst not yet implemented in tensor framework.', NotImplementedError)
         return coordinateNames
     
     @property
-    def mesh_axis_names(self):
+    def mesh_axis_names(
+        self
+    ):
         """
         Names of the axes in the mesh's coordinate system.
         Currently implemented systems are:
@@ -419,9 +432,7 @@ class FELiCSMesh:
                 coordinateNames.append('t')
                 
         else:
-            logger.error('Coord. syst not yet implemented in tensor framework.')
-            raise NotImplementedError('Coord. syst not yet implemented in tensor framework.')
-
+            log_and_raise(logger, 'Coord. syst not yet implemented in tensor framework.', NotImplementedError)
         return coordinateNames
 
 
@@ -436,7 +447,7 @@ class ExportMesh(FELiCSMesh):
     
     def __init__(
         self,
-        base_mesh: FELiCSMesh,
+        base_mesh: FELiCSMesh
     ):
         """
         Construct an ExportMesh by refining a base FELiCSMesh.

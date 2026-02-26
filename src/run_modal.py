@@ -118,6 +118,7 @@ def run_modal(param):
 
         # Exporting the (temporary) spectrum to a file
         solution.export_spectrum_to_csv(writer)
+
         # Exporting only the newly calculated modes to files (for this guess)
         solution.export_modes(
             writer,

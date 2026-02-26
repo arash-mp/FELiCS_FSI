@@ -22,9 +22,11 @@ from    h5py    import File
 
 # Local Libraries and methods
 from    FELiCS.Equation.MixtureClass    import MixtureClass
+
 from    FELiCS.Misc.functions           import get_last_git_commit
-from 	FELiCS.Misc.logging			    import Logger
+from 	FELiCS.Misc.logging			    import Logger, log_and_raise
 from    FELiCS.SpaceDisc.FELiCSMesh     import FELiCSMesh
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -57,7 +59,9 @@ class Config(ABC):
     None
     """
 
-    def __init__(self):
+    def __init__(
+        self
+    ):
         """
         Initialize the config object with default settings.
         """
@@ -69,7 +73,9 @@ class Config(ABC):
         # NOTE: deprecated?
         self.__BCIDs__      = []   # move to BC
 
-    def get_all_settings_dict(self):
+    def get_all_settings_dict(
+        self
+    ):
         """
         Return the settings dictionary for the config object.
 
@@ -140,8 +146,9 @@ class Config(ABC):
         }
         return SettingsDict
 
-    def parse_complex_list(self,
-    data,
+    def parse_complex_list(
+        self,
+        data,
     ):
         """
         Convert a list of mixed strings and floats into complex numbers.
@@ -165,19 +172,18 @@ class Config(ABC):
                 try:
                     result.append(complex(item))  # Convert string to complex
                 except ValueError:
-                    logger.error(f"Invalid complex number string: {item}")
-                    raise ValueError(f"Invalid complex number string: {item}")
-            elif isinstance(
-                item,
-                (int, float),
-            ):
+
+                    log_and_raise(logger, f"Invalid complex number string: {item}", ValueError)
+            elif isinstance(item, (int, float)):
+
                 result.append(item)  # Convert float/int to complex
             else:
-                logger.error(f"Unsupported type {type(item)} in list. Must be str or float.")
-                raise TypeError(f"Unsupported type {type(item)} in list. Must be str or float.")
+                log_and_raise(logger, f"Unsupported type {type(item)} in list. Must be str or float.", TypeError)
         return result
     
-    def calculate_parameters(self):
+    def calculate_parameters(
+        self
+    ):
         """
         Calculate and set derived parameters based on current configuration.
         """
@@ -189,7 +195,7 @@ class Config(ABC):
     def check_for_mandatory_files(
         self,
         config_dict,
-        mandatory_files,
+        mandatory_files
     ):
         """
         Check that all mandatory files exist in the configuration.
@@ -209,13 +215,13 @@ class Config(ABC):
         for field in mandatory_files:
             filename = config_dict[field.split("_")[0]][field.split("_")[1]]
             if not os.path.isfile(filename):
-                logger.error(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
-                raise Exception(f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.")
+                log_and_raise(logger, f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.", Exception)
 
     def import_from_file(
         self,
-        configFilePath,
+        configFilePath
     ):
+
         """
         Import parameters from a .json file and update configuration.
 
@@ -308,7 +314,7 @@ class Config(ABC):
 
     def import_from_h5_file(
         self,
-        h5FileName,
+        h5FileName
     ):
         """
         Import parameters from an HDF5 file.
@@ -364,7 +370,7 @@ class Config(ABC):
 
     def export(
         self,
-        filestring,
+        filestring
     ):
         """
         Export the current configuration parameters to a file.
@@ -475,7 +481,7 @@ class Config(ABC):
         gDim,
         ExtendedTransportedQuantityList,
         coordinate_system,
-        m,
+        m
     ):
         """
         Read all domain data from the mesh file and update mesh-related attributes.
@@ -508,7 +514,9 @@ class Config(ABC):
         self.Case.StateVectorVariables = self.get_state_vector_variables(self.Case.Equations)
         
 
-    def get_mesh(self):
+    def get_mesh(
+        self
+    ):
         """
         Return the mesh object associated with the configuration.
 
@@ -519,7 +527,9 @@ class Config(ABC):
         """
         return self.__mesh__
 
-    def get_internal_velocity_components(self):
+    def get_internal_velocity_components(
+        self
+    ):
         """
         Get a list of velocity components directed within the mesh dimensions.
 
@@ -536,7 +546,9 @@ class Config(ABC):
             VelCompList = ['x','r']
         return VelCompList
 
-    def get_external_velocity_components(self):
+    def get_external_velocity_components(
+        self
+    ):
         """
         Get a list of velocity components directed outside the mesh dimensions.
 
@@ -555,7 +567,9 @@ class Config(ABC):
 
         return VelCompList
 
-    def get_velocity_components(self):
+    def get_velocity_components(
+        self
+    ):
         """
         Get a list of all velocity components, both internal and external.
 
@@ -569,7 +583,9 @@ class Config(ABC):
 
         return templist
 
-    def get_transported_quantity_list(self):
+    def get_transported_quantity_list(
+        self
+    ):
         """
         Get a list of all transported quantities for the current case settings.
 
@@ -598,7 +614,9 @@ class Config(ABC):
         return SolutionList
 
 
-    def get_equation_list(self):
+    def get_equation_list(
+        self
+    ):
         """
         Get the list of equations with both defined equation and variable.
 
@@ -618,7 +636,7 @@ class Config(ABC):
 
     def get_state_vector_variables(
         self,
-        EquationList,
+        EquationList
     ):
         """
         Get the list of state vector variables and their components.
@@ -645,7 +663,9 @@ class Config(ABC):
         return VariablesList 
 
 
-    def get_extended_transported_quantity_list(self):
+    def get_extended_transported_quantity_list(
+        self
+    ):
         """
         Get a list of all transported quantities, including all velocity components.
 
@@ -667,7 +687,9 @@ class Config(ABC):
             SolutionList.remove('u')
         return SolutionList
 
-    def get_mean_flow_field_names(self):
+    def get_mean_flow_field_names(
+        self
+    ):
         """
         Get the list of mean flow field names required for input.
 
@@ -724,7 +746,9 @@ class Config(ABC):
             MeanList.append('dQ')
         return MeanList
 
-    def get_n_velocity_components(self):
+    def get_n_velocity_components(
+        self
+    ):
         """
         Get the number of velocity components for the current configuration.
 
