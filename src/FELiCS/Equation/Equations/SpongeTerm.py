@@ -90,9 +90,11 @@ class SpongeTerm(EquationTemplate):
         param : Parameters
             The parameters object.
         """
+
         # Disclaimers
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
+
         # initialize variables in template class
         super().__init__(
             index,
@@ -122,6 +124,7 @@ class SpongeTerm(EquationTemplate):
         -----
         This method does not apply any sponge term contributions.
         """
+
         # nothing to add for the sponge term
         pass
 

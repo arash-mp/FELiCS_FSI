@@ -183,6 +183,7 @@ class EquationCollectionClass():
                                     mesh,
                                     param.BoundaryCondition.BCsFilePath
                                 )
+
         # Initialize ds: Get all boundaries (So far hard coded)
         self.ds                 = Measure(
                                     "ds",
@@ -200,6 +201,7 @@ class EquationCollectionClass():
             as_vector((self.n_BC[0], self.n_BC[1])),
             self._coordinateSystem,
         )
+
         # Get Dirichlet boundary conditions
         self.BCs                = self.boundaryHandler.get_list_of_dirichlet_b_cs_for_dolfinx(FEMSpaces.VMixed)
 
@@ -367,11 +369,14 @@ class EquationCollectionClass():
                 self.resolventResponseIndices = self._FEMSpaces.VMixed.sub(index_u).collapse()[1]
             else:
                 log_and_raise(logger, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.", Exception, f"Response norm type '{param.IOResolvent.ResponseNorm}' not implemented.")
+
             # Same for the forcing norm
             if param.IOResolvent.ForcingNorm == 'Chu':
+
                 # Variables used: all
                 self.resolventForcingIndices = np.arange(self._FEMSpaces.VMixed.dofmap.index_map.local_range[1]) # whole size of VMixed
             elif param.IOResolvent.ForcingNorm == 'TKE':
+
                 # u
                 self.resolventForcingIndices = self._FEMSpaces.VMixed.sub(index_u).collapse()[1]
             else:
@@ -440,6 +445,7 @@ class EquationCollectionClass():
         - For other analysis modes, no boundary conditions are applied to 
           avoid computational issues during eigenvalue problem solving
         """
+
         # create ufl object with the weight matrix expression ("time derivative")
         B_ufl = UflDecorator()
         for equation in self.equationList:
@@ -482,6 +488,7 @@ class EquationCollectionClass():
         - Uses conjugate of test functions for matrix construction
         - Includes a workaround for mesh object compatibility with different versions of DOLFINx
         """
+
         # create ufl object with the full FEM weight matrix expression
         W_ufl     = UflDecorator()
         test_FEM  = self.testFunctionsFEM
@@ -535,7 +542,8 @@ class EquationCollectionClass():
         - Currently a quick implementation; a more comprehensive tensor framework is needed for future improvements
 
         """
-        # TODO: This implementation is considered a temporary solution and 
+
+        # TODO: This implementation is considered a temporary solution and
         # requires a more robust tensor framework in future iterations.
         # Rest of the existing implementation remains unchanged
         D_ufl = UflDecorator()
@@ -695,6 +703,7 @@ class EquationCollectionClass():
                 BL_ufl,
                 meanFlow
             )
+
         # assemble petsc matrix
         return BL_ufl.get_assembled_matrix(
             self._mesh,
@@ -727,6 +736,7 @@ class EquationCollectionClass():
                 f_ufl,
                 meanFlow
             )
+
         # assemble forcing vector
         forcing = f_ufl.get_assembled_vector(
             self._mesh,
@@ -755,6 +765,7 @@ class EquationCollectionClass():
             PETSc matrix representing the response norm, assembled from the
             UFL form stored in ``self.response_vf``.
         """
+
         # assemble petsc matrix
         return self.response_vf.get_assembled_matrix(self._mesh)
 
@@ -852,6 +863,7 @@ class EquationCollectionClass():
 
         #In body forcing, forcing is allowed in the entire domain (later restricted by P matrix)
         if param.IOResolvent.ForcingMode == 'Body':
+
             # Loop through forcing coefficients (The coefficients that are chosen by the user,
             # corresponding to the respective equations)
 
@@ -882,6 +894,7 @@ class EquationCollectionClass():
                 self.__forcing_coeff = self._param.IOResolvent.ForcingCoeff
             else:
                 log_and_raise(logger, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.", Exception, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
+
         # In boundary forcing, forcing is allowed only on the specific boundaries
         elif param.IOResolvent.ForcingMode=='Boundary':
             raise Exception("Boundary forcing not implemented for Resolvent analysis in Tensor notation")
@@ -1166,6 +1179,7 @@ class EquationCollectionClass():
 
         P_petsc             = PETSc.Mat().createAIJ([m,n])
         P_petsc.setUp()
+
         #P_petsc.setValues(indices_response, np.arange(n,dtype=np.int32), array)
         j                   = 0
         for i in indices_response:

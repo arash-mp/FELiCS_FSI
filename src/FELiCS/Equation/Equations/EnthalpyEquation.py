@@ -76,7 +76,7 @@ class EnthalpyEquation(EquationTemplate):
         eqColl,
         fluc,
         X,
-        param,
+        param
     ):
         """
         Initialize the EnthalpyEquation object.
@@ -99,9 +99,11 @@ class EnthalpyEquation(EquationTemplate):
         - If the numerical scheme is 'Discontinuous Galerkin', an error is raised
           because it is not implemented in the tensorial framework.
         """
+
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
+
         # initialize variables in template class
         super().__init__(
             index,
@@ -115,7 +117,7 @@ class EnthalpyEquation(EquationTemplate):
     def add_weight_matrix_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -132,6 +134,7 @@ class EnthalpyEquation(EquationTemplate):
         This method adds the time derivative terms to the weak form using the
         tensorial representation of fluctuating enthalpy and pressure.
         """
+
         #  Time derivative terms
         weakForm.add(
             (mean.rho * self.fluc.h * 
@@ -159,7 +162,7 @@ class EnthalpyEquation(EquationTemplate):
     def add_linear_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Construct the weak form of the linearized enthalpy conservation equation.

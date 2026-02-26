@@ -84,7 +84,7 @@ class SpeciesEquation(EquationTemplate):
         fluc,
         X,
         species,
-        param,
+        param
     ):
         """
         Initialize the SpeciesEquation class.
@@ -106,6 +106,7 @@ class SpeciesEquation(EquationTemplate):
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
+
         # initialize variables in template class
         super().__init__(
             index,
@@ -121,7 +122,7 @@ class SpeciesEquation(EquationTemplate):
     def add_weight_matrix_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -156,7 +157,7 @@ class SpeciesEquation(EquationTemplate):
     def add_linear_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Construct the weak form of the linearized species transport equation.

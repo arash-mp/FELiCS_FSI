@@ -92,6 +92,7 @@ class Config(ABC):
                 'AnalysisMode':             {'datatype':str,    'default':'Modal'},
                 'CalculateAdjoint':         {'datatype':bool,   'default':True},
                 'CoordinateSystem':         {'datatype':str,    'default':'Cartesian'},
+
                 # 'HeatCapacityConstPressure':{'datatype':int,    'default':1005},
                 # 'HeatCapacityRatio':        {'datatype':int,    'default':1.4},
                 'needInterpolation':        {'datatype':bool,   'default':True},
@@ -675,13 +676,16 @@ class Config(ABC):
             List of transported quantities with velocity components expanded.
         """
         SolutionList = []
+
         # First add all velocity components
         transportedQuantities = self.get_transported_quantity_list()
         if 'u' in transportedQuantities:
             for component in self.get_velocity_components():
                 SolutionList.append('u'+component)
+
         # Then extend the list by the transported quantity list
         SolutionList.extend(self.get_transported_quantity_list())
+
         # Finally, remove the component 'u' if present
         if 'u' in SolutionList:
             SolutionList.remove('u')
@@ -699,42 +703,53 @@ class Config(ABC):
             List of mean field variable names to be read from file.
         """
         MeanList=[]
+
         # Add velocity components
         MeanList.append('u')
+
         # Add pressure component
         MeanList.append('p')
+
         # Add density component (for cold flow)
         MeanList.append('rho')
+
         # If necessary, add density and enthalpy diffusion
         if 'rho' in self.get_transported_quantity_list():
             MeanList.append('rho')
             if self.Case.MolViscModel == 'File' or self.Case.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('alpha')
+
         # Add species which are transported
         for specie in self.Mixture.get_species_list('transported'):
             MeanList.append(specie)
             if self.Case.MolViscModel == 'File' or self.Case.MolViscPerturbModel == 'Sutherland mean':
                 MeanList.append('D_'+specie)
+
         # If Input-Output analysis is used, the forcing must be read in (at least curently) for
         # every conservative variable ()...
         if self.Case.AnalysisMode in ['Input-Output']:
             CurrentList=MeanList.copy()
             for entry in CurrentList:
+
                 # If the field is the velocity vector, all components must be considered
                 if entry == 'u':
+
                     #for component in self.VelocityComponents:
                     MeanList.append(entry+'_forcing_r')#jvs
                     MeanList.append(entry+'_forcing_i')
                 else:
                     MeanList.append(entry+'_forcing_r')
                     MeanList.append(entry+'_forcing_i')
+
         # If Resolvent analysis is used, we always read forcing and response domains
         if self.Case.AnalysisMode in ['Resolvent']:
             MeanList.append('responseDomain')
             MeanList.append('forcingDomain')
+
         # Always look for a sponge variable in the mean flow file
         # if not present it will be zero
         MeanList.append('spg')
+
         # Add species, which are not transported
         for specie in self.Mixture.get_species_list('constraint'):
             MeanList.append(specie)

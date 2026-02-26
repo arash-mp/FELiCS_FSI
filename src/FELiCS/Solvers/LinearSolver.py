@@ -10,30 +10,13 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-#Standard libraries
-# import time
-# import os
-# import sys
-# import multiprocessing
+
 
 # Third party libraries
 from    slepc4py    import  SLEPc
 from    petsc4py    import  PETSc
 import  numpy       as      np
-# from dolfinx.fem import (
-#         Function,
-#         dirichletbc,
-#         form,
-# )
-# from dolfinx.fem.petsc import (
-#     assemble_vector,
-# )
-# from ufl import (
-#     dx,
-#     TestFunctions,
-#     SpatialCoordinate,
-# )
-# from functools import partial
+
 
 #Local libraries and methods
 from FELiCS.Misc.logging import Logger
@@ -83,7 +66,7 @@ class LinearSolver:
         tol=1.e-12,
         max_it=200,
         adjoint=False,
-        isForEigenProblem=True,
+        isForEigenProblem=True
     ):
         """
         Solve the generalized eigenvalue problem (GEVP) using SLEPc and PETSc.
@@ -213,7 +196,7 @@ class LinearSolver:
         resolventOperator,
         nev,
         tol    = 1.e-16,
-        max_it = 200,
+        max_it = 200
     ):
         """
         Solve the singular value decomposition (SVD) of a resolvent operator.
@@ -286,7 +269,7 @@ class LinearSolver:
     def solve_equation_system(
         A,
         b,
-        destroy=False,
+        destroy=False
     ):
 
         """
@@ -337,7 +320,7 @@ class LinearSolver:
     def solve_transpose_equation_system(
         A,
         b,
-        destroy=False,
+        destroy=False
     ):
 
         """
@@ -357,9 +340,9 @@ class LinearSolver:
         x : numpy.ndarray
             Solution vector.
         """
-        solution,dummy = A.createVecs()
+        solution,dummy  = A.createVecs()
         
-        solver = PETSc.KSP().create()
+        solver          = PETSc.KSP().create()
         solver.setOperators(A)
         solver.setType(PETSc.KSP.Type.PREONLY)
         solver.getPC().setType(PETSc.PC.Type.LU)
@@ -420,7 +403,7 @@ class LinearSolver:
     def solve_equation_system_with_predefined_solver(
         solver,
         b,
-        destroy=False,
+        destroy=False
     ):
 
         """
@@ -444,7 +427,7 @@ class LinearSolver:
         
         solver.solve(
             b,
-            solution,
+            solution
         )
         
         x = solution.getArray()
@@ -461,7 +444,7 @@ class LinearSolver:
     def solve_transpose_equation_system_with_predefined_solver(
         solver,
         b,
-        destroy=False,
+        destroy=False
     ):
 
         """
@@ -532,7 +515,7 @@ class ResolventOperator(object):
         FEMWeightMatrix_forcingNorm,
         FEMWeightMatrix_responseNorm,
         RestrictorMatrix_forcing,
-        RestrictorMatrix_response,
+        RestrictorMatrix_response
     ):    
 
         """
@@ -572,7 +555,8 @@ class ResolventOperator(object):
         self._ksp1.setType(PETSc.KSP.Type.PREONLY)                 
         self._ksp1.getPC().setType(PETSc.PC.Type.LU)                 
         self._ksp1.getPC().setFactorSolverType('mumps')                 
-        self._ksp1.setUp()                 
+        self._ksp1.setUp()
+
         # create KSP2: This is a solver for the System conj(OP)*x=y. It will later be used to solve the transposed system, thus 
         #effectively solving OP^H *x=y, which is the Hermitian transpose of the system.                 
         # TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). 
@@ -585,8 +569,9 @@ class ResolventOperator(object):
         self._ksp2.setType(PETSc.KSP.Type.PREONLY)                 
         self._ksp2.getPC().setType(PETSc.PC.Type.LU)                 
         self._ksp2.getPC().setFactorSolverType('mumps')                 
-        self._ksp2.setUp()                 
-        ## create KSP3: This is a solver for the System Q_f*x=y (will later be used to solve the transposed system).                 
+        self._ksp2.setUp()
+
+        ## create KSP3: This is a solver for the System Q_f*x=y (will later be used to solve the transposed system).
         ##Qf.conjugate() #=> is this needed?                 
         self._ksp3 = PETSc.KSP().create()                 
         self._ksp3.setOperators(FEMWeightMatrix_forcingNorm)                 
@@ -595,7 +580,9 @@ class ResolventOperator(object):
         self._ksp3.getPC().setFactorSolverType('mumps')                 
         self._ksp3.setUp()         
 
-    def getSize(self):
+    def getSize(
+        self
+    ):
         """
         Get the size of the operator.
 
@@ -606,7 +593,9 @@ class ResolventOperator(object):
         """
         return self._size
 
-    def getVecs(self):
+    def getVecs(
+        self
+    ):
         """
         Get PETSc vectors for the operator.
 
@@ -621,7 +610,7 @@ class ResolventOperator(object):
         self,
         mat,
         X,
-        y,
+        y
     ):
         """
         Compute the matrix-vector product Y = mat * X.
@@ -639,7 +628,8 @@ class ResolventOperator(object):
         -------
         PETSc.Vec
             The result of the matrix-vector product.
-        """                 
+        """
+
         # returns Y=mat*X                 
         # mat = (W_forcing)^-1 * P_forcing^T * W_FEM^T * (R^H)^-1 * P_response^T * W_response * P_response * R^-1 * W_FEM * P_forcing                 
         self._P_forcing.mult(
@@ -687,7 +677,9 @@ class ResolventOperator(object):
 
         return y         
 
-    def getKSP(self):
+    def getKSP(
+        self
+    ):
         """
         Get the KSP solver for the operator.
 
@@ -698,7 +690,9 @@ class ResolventOperator(object):
         """
         return self._ksp1
 
-    def destroy_self(self):                 
+    def destroy_self(
+        self
+    ):                 
         """
         Clean up resources to avoid memory leaks.
 

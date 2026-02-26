@@ -87,6 +87,7 @@ class BoundaryHandler():
                 BCsFilePath,
                 'r',
             ) as file:
+
                 # Attempt to load the JSON data. This will fail for empty or invalid files.
                 BCsInfo = json.load(file)
             logger.debug(
@@ -111,6 +112,7 @@ class BoundaryHandler():
                 log_and_raise(logger, f"The given boundary ID '{ID}' in your boundary file does not exist. The boundary IDs given from your mesh file are: '{self.IDs}'. ", ValueError)
 
             info = BCsInfo[ID]
+
             # make the info in the bc file non-case sensitive
             name = info["name"].lower()
             if name == "custom":
@@ -165,7 +167,7 @@ class BoundaryHandler():
 
     def get_list_of_dirichlet_b_cs_for_dolfinx(
         self,
-        functionSpace,
+        functionSpace
     ):
         """
         Constructs the list of Dirichlet boundary conditions for Dolfinx.
@@ -240,6 +242,7 @@ class BoundaryHandler():
         -----
         This method is not implemented yet.
         """
+
         # TODO Sophie: fill out later for base flow computations
         pass
 
@@ -253,6 +256,7 @@ class BoundaryHandler():
         -----
         This method is not implemented yet.
         """
+
         # TODO Sophie: fill out later for base flow computations
         pass
 
@@ -278,6 +282,7 @@ class BoundaryType(Enum):
     NONE = 0
     DIRICHLET = 1
     NEUMANN = 2  # equal to "none" at the moment; this should be changed in the future, and also communicated really well
+
     # MIXED     = 3
 
 
@@ -381,12 +386,14 @@ class Custom(BoundaryCondition):
             boundaryHandler,
         )
         self.name = "custom"
+
         # This boundary condition takes what is given under "specifics".
 
         # TODO Sophie: write warning if no specifics are there, and say that everything has been set to "None" (which basically means no boundary conditions)
         specs = self.info["specifics"]
 
         for spec in specs:
+
             # 1. read specs: get variable name, type and value
             # TODO Sophie: catch "KeyError" if spec type or spec variable does not exist or if the value is not a number; give out easy to understand error message
             var = spec["variable"]
@@ -442,6 +449,7 @@ class ZeroDirichlet(BoundaryCondition):
             boundaryHandler,
         )
         self.name = "zeroDirichlet"
+
         # This boundary condition sets a zero dirichlet condition for every variable.
 
         for i in range(len(self.types)):
@@ -485,6 +493,7 @@ class Wall(BoundaryCondition):
             boundaryHandler,
         )
         self.name = "wall"
+
         # This boundary condition, at the moment, sets only the velocity components to zero,
         # all other variables have no boundary condition ("none").
         # TODO Sophie: add "attribute":  e.g. "adiabatic", "isothermal"
@@ -537,12 +546,14 @@ class Symmetry(BoundaryCondition):
             boundaryHandler,
         )
         self.name = "symmetry"
+
         # TODO Sophie: write error message if no "specifics" are there and stop FELiCS
         # TODO Sophie: also write error message if not all variables are specified
         # TODO Sophie: also write error message if not all types are "dirichlet" or "neumann" or if not all values are "0".
         specs = self.info["specifics"]
 
         for spec in specs:
+
             # 1. read specs: get variable name, type and value
             # TODO Sophie: catch "KeyError" if spec type does not exist and give out easy to understand error message
             var = spec["variable"]
@@ -555,6 +566,7 @@ class Symmetry(BoundaryCondition):
                     component = var[-1]
                 else:
                     component = ""
+
                 # TODO Sophie: catch if a component is given which should not exist
                 # var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked
                 if v[0]+component == var and (len(component) == 0 or component in v[1]):

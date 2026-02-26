@@ -36,7 +36,7 @@ class MeanFlowClass(
     FieldProperties,
     EnergyHandler,
     ReactionHandler,
-    EquationOfStateHandler,
+    EquationOfStateHandler
 ):
     """
     Container and handler for mean-flow fields on a given mesh.
@@ -108,7 +108,7 @@ class MeanFlowClass(
         self,
         param,
         FEMSpaces,
-        mesh,
+        mesh
     ):
         """
         Initialize the meanFlowClass instance.
@@ -157,7 +157,7 @@ class MeanFlowClass(
 
     def import_data_from_file_and_export_to_h5(
         self,
-        writer,
+        writer
     ):
         """
         Import mean-flow fields from the configured input file and export them.
@@ -268,7 +268,9 @@ class MeanFlowClass(
 
 
 
-    def init_lam_diff(self):
+    def init_lam_diff(
+        self
+    ):
         """
         Initialize molecular viscosity and species diffusion coefficients.
 
@@ -299,8 +301,8 @@ class MeanFlowClass(
             self._fieldDict['nulam'].set_coefficient_array(self._param.Case.MolVisc)
 
         for specie in self._param.Mixture.get_species_list('transported'):
-            sc      = self._param.Mixture.species[specie]['Sc']
-            nu_tot   = Field(
+            sc          = self._param.Mixture.species[specie]['Sc']
+            nu_tot      = Field(
                 self._ScalarFunctionSpace,
                 self._mesh,
                 name = "nuTot",
@@ -320,7 +322,9 @@ class MeanFlowClass(
             )
             self._fieldDict['D_' + specie]  = nu_tot / sc
 
-    def init_thermodynamic_quantities(self):
+    def init_thermodynamic_quantities(
+        self
+    ):
         """
         Initialize thermodynamic mean-flow quantities.
 
@@ -340,7 +344,9 @@ class MeanFlowClass(
         self._fieldDict['Pr'].set_constant_value(self._param.Case.PrandtlNumber)
 
 
-    def calculate_species_enthalpy(self):
+    def calculate_species_enthalpy(
+        self
+    ):
         """
         Compute and store species sensible enthalpies.
 
@@ -496,7 +502,9 @@ class MeanFlowClass(
             self._FEMSpaces.P2,
         )
 
-    def get_vertex_values(self):
+    def get_vertex_values(
+        self
+    ):
         """
         Return vertex-based values of all mean-flow fields.
 
@@ -515,7 +523,9 @@ class MeanFlowClass(
             self._mesh.export_mesh,
         )
 
-    def _get_mean_fields_to_be_read(self):
+    def _get_mean_fields_to_be_read(
+        self
+    ):
         """
         Assemble the list of mean-flow field names to be read from file.
 
@@ -557,7 +567,7 @@ class MeanFlowClass(
 
     def add_custom_mean_flow_quantity(
         self,
-        key,
+        key
     ):
         """
         Register an additional mean-flow quantity to be read.
@@ -620,7 +630,7 @@ class MeanFlowVertexValues(FieldProperties):
     def __init__(
         self,
         field_dict,
-        mesh,
+        mesh
     ):
         """
         Initialize the meanFlowVertexValues instance.
@@ -648,6 +658,7 @@ class MeanFlowVertexValues(FieldProperties):
         self._oneField      = np.ones(mesh.coordinates().shape[0])
         
         for key in list(field_dict.keys()):
+    
             #tempMeanArray = fieldDict[key].compute_vertex_values()
             # The vector components (velocity u) need to be reshaped
             if field_dict[key].space.num_sub_spaces > 1:

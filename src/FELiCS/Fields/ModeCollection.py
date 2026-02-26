@@ -209,7 +209,8 @@ class ModeCollection():
             A custom name for the mode.
         m : int, optional
             Azimuthal wavenumber associated with the mode. Default is 0.
-        """        
+        """
+
         # Check that we are in Modal analysis
         if self.analysisType != AnalysisType.MODAL:
             logger.error('appendSolutionOfEigenProblem called for non-Modal analysis in ModeCollection.')
@@ -270,6 +271,7 @@ class ModeCollection():
         m : int, optional
             Azimuthal wavenumber associated with the mode. Default is 0.
         """
+
         # Check that we are in Resolvent analysis
         if self.analysisType != AnalysisType.RESOLVENT:
             logger.error('appendSolutionOfSVDProblem called for non-Resolvent analysis in ModeCollection.')
@@ -316,7 +318,8 @@ class ModeCollection():
         # For each forcing, append to mode and compute response
         logger.debug(f'Appending {numberOfSolutions} forcing and response modes for omega={omega}.')
         for i in range(numberOfSolutions):
-            # Get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)             
+
+            # Get petsc vectors from petsc matrices (=get petsc vectors with correct sizes)
             X1, X2                      = W_forcing.getVecs()             
             X1.setValues(
                 range(
@@ -689,7 +692,9 @@ class ModeCollection():
         return fluctSolutObjList
 
 
-    def getSize(self):
+    def getSize(
+        self
+    ):
         """
         Return the number of modes in the collection.
 
@@ -701,7 +706,9 @@ class ModeCollection():
 
         return len(self.modeList)
 
-    def pop_list(self):
+    def pop_list(
+        self
+    ):
         """
         Remove and return the last mode in the collection.
 
@@ -890,6 +897,7 @@ class ModeCollection():
         
         # If omega was given as input, filter files accordingly
         if omegas is not None:
+
             #matchingOmegasIndices       = [i for i, omega in enumerate(np.round(fileOmegas, 3)) if omega in np.round(omegas, 3)]
             closestOmegasIndices        = [np.argmin(np.abs(np.array(fileOmegas) - omega)) for omega in omegas]
             if len(closestOmegasIndices) == 0:

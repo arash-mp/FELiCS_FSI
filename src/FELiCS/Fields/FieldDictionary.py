@@ -29,7 +29,9 @@ class FieldDictionary:
     """
 
 
-    def __init__(self):
+    def __init__(
+        self
+    ):
         """
         Initialize an empty FieldDictionary instance.
         """

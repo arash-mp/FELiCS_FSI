@@ -305,6 +305,7 @@ class Reader:
         
         if self._needInterpolation:
             if self._felicsMeshFilePath:
+
                 # Option 1: load from a given FELiCS mesh file
                 logger.debug(f"Executing Option 1: load from a given FELiCS mesh file. {self._felicsMeshFilePath}")
                 coordsArray = _load_coordinates_from_file(
@@ -315,6 +316,7 @@ class Reader:
                 return coordsArray
             
             else:
+
                 # Option 2: Coords into file containing the data. Load at first file access
                 # NOTE: assumes the coordinates are in the same group as the variables
                 logger.debug("Executing Option 2: loading from main file under group name.")
@@ -331,12 +333,15 @@ class Reader:
         
         else:
             logger.debug("Executing Option 3: No interpolation needed: load from FELiCS exported mesh file.")
+
             # Option 3: Load the FELiCS mesh
             if self._felicsMeshFilePath is not None:
+
                 # For example when we load the mean flow, the FELiCS mesh is usually in another directory
                 logger.debug(f"Using {self._felicsMeshFilePath}")
                 meshFile                    = self._felicsMeshFilePath
             else:
+
                 # Default FELiCS mesh file in the source directory (e.g. when loading modes)
                 logger.debug(f"self._felicsMeshFilePath is None, therefore using {os.path.join(self._sourceDir, 'mesh.h5')}")
                 meshFile                    = os.path.join(
@@ -391,6 +396,7 @@ class Reader:
 
         # Set new source if different
         key = (os.path.abspath(filePath), groupName)
+
         # NOTE: might need completion of the variable list
         if key != self._sourceKey:
             self._sourceKey     = key
@@ -441,6 +447,7 @@ class Reader:
         ) for subField in subFields]
         if max(degrees) > 2:
             log_and_raise(logger, "Reader currently only supports P1 and P2 FEM spaces.", NotImplementedError)
+
         # Get the number of DoFs in P2 and P1 subfields if present
         p2SubFieldIndex            = degrees.index(2) if 2 in degrees else None    # Keep only the first occurrence
         p1SubFieldIndex            = degrees.index(1) if 1 in degrees else None    # Keep only the first occurrence
@@ -475,6 +482,7 @@ class Reader:
             
             # If we have sub-spaces, get the indices of the sub-space DoFs
             if fieldType == "mixed":
+
                 # TODO: check that this does not mess up with the DoF indices
                 if numDofsForP2 > 0:
                     if field.get_list_of_sub_fields()[p2SubFieldIndex].info['type'] == 'vector':
@@ -487,6 +495,7 @@ class Reader:
                     else:
                         self._calcMeshP1Coords  = field.space.sub(p1SubFieldIndex).collapse()[0].tabulate_dof_coordinates()[:, :len(self._meshAxisNames)]
             else:
+
                 # Single space
                 dofsArray                       = field.space.tabulate_dof_coordinates()[:, :len(self._meshAxisNames)]
                 if numDofsForP2 > 0:
@@ -532,6 +541,7 @@ class Reader:
         """
         
         if not cachedProps:
+
             # TODO: complete the list if there are some missing
             cachedProps = [
                 "fullAxisNames",
@@ -680,6 +690,7 @@ class Reader:
 
         # Use cached triangulation
         logger.debug("Now performing linear interpolation using chached Delaunay triangulation.")
+
         # if len(self.meshAxisNames) == 3:
         #     logger.warning("PRELIMINARY FIX: FOR 3D interpolation nearest-neighbour interpolation is used.")
         #     nearestInterp           = NearestNDInterpolator(self._triangulationImportMesh, values)
@@ -822,8 +833,10 @@ class Reader:
             
         # Set the arrays in FEM depending on field type
         if info["type"] == "mixed":
+
             # Loop over the subfields
             for iField, subFieldName in enumerate(field.get_names_of_sub_fields()):
+
                 # If subfield is a vector, loop over its components
                 if info['subspaces'][iField]['type'] == 'vector':
                     subFields                               = field.get_list_of_sub_fields()
@@ -837,6 +850,7 @@ class Reader:
                             )
                         else:
                             logger.warning(f"Component '{compName}' not found in loaded arrays for vector subfield '{subFieldName}'. Set to default values.")
+
                 # For a scalar subfield, just set the array
                 elif info['subspaces'][iField]['type'] == 'scalar':
                     if subFieldName in baseNames:
@@ -862,6 +876,7 @@ class Reader:
                 else:
                     logger.warning(f"Component '{subFieldName}' not found in loaded arrays for vector field '{field.name}'. Set to default values.")
         else:
+
             # Then it's a scalar
             varName                                 = field.name
             if varName in baseNames:
@@ -1004,11 +1019,13 @@ class Reader:
                 # NOTE: This is not optimal if all subfields are P1, but this is a rare case?
                 if field.info["type"] == "mixed" and 1 in degrees and not self._needInterpolation:
                     logger.debug("Mixed field with P1 subfield detected.")
+
                     # Dict of only P1 variables
                     variablesP1     = [name for name, deg in zip(
                     field.get_names_of_sub_fields(),
                     degrees,
                     ) if deg == 1]
+
                     # Add "_real" and "_imag" suffixes for complex variables
                     variablesP1     = [var for var in allVars if (var in variablesP1) or (var.endswith("_real") and var[:-5] in variablesP1) or (var.endswith("_imag") and var[:-5] in variablesP1)]
                     logger.debug(f"Interpolating P1 variable(s): {variablesP1}")
@@ -1020,6 +1037,7 @@ class Reader:
                     # Dict of other variables mapped to calc mesh
                     otherVars       = [var for var in allVars if var not in variablesP1]
                     processedOther  = self._map_to_calc_mesh(otherVars)
+
                     # Combine both
                     processedData   = {**processedP1Data, **processedOther}
 

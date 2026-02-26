@@ -93,6 +93,7 @@ class CustomFormatter(logging.Formatter):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         if in_notebook():
+
             # Strip ANSI codes inside notebooks
             return re.sub(
                 r'\x1b\[[0-9;]*m',
@@ -101,6 +102,7 @@ class CustomFormatter(logging.Formatter):
             )
         else:
             return formatter.format(record)
+
             # Add colors everywhere else
             # log_color = self.FORMATS.get(record.levelno, "\x1b[0m")
             # return f"{log_color}{formatter.format(record)}{"\x1b[0m"}"
@@ -150,7 +152,7 @@ class Logger:
         self,
         debug_mode=False,
         test_mode=False,
-        logger_name="log",
+        logger_name="log"
     ):
         """
         Initialize the Logger instance.
@@ -172,7 +174,9 @@ class Logger:
 
         Logger._instance = self._logger
 
-    def _setup_logger(self):
+    def _setup_logger(
+        self
+    ):
         """
         Set up the logger with appropriate handlers and formatters.
 
@@ -182,6 +186,7 @@ class Logger:
         now = datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
         
         logfilename = f"logs{os.sep}{self.logger_name}_{now}.log"
+
         #logfilename_errors = f"logs{os.sep}{self.logger_name}_{now}.ERRORS.log"
 
         self._logger = logging.getLogger(self.logger_name)
@@ -198,11 +203,13 @@ class Logger:
             logfilename,
             encoding='utf-8',
         )
+
         #fh_errors = logging.FileHandler(logfilename_errors, encoding='utf-8')
 
         ch.setLevel(logging.ERROR if self.test_mode else 
                    logging.DEBUG if self.debug_mode else logging.INFO)
         fh.setLevel(logging.DEBUG if (self.debug_mode or self.test_mode) else logging.INFO)
+
         #fh_errors.setLevel(logging.WARNING)
 
         logging.addLevelName(
@@ -224,11 +231,13 @@ class Logger:
         formatter_log = logging.Formatter(
             '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
         )
+
         # use custom formatter to get colored output for the command line
         formatter_cmd = CustomFormatter() 
         
         ch.setFormatter(formatter_cmd)
         fh.setFormatter(formatter_log)
+
         #fh_errors.setFormatter(formatter_log)
         for handler in [ch, fh]: #, fh_errors]:
             self._logger.addHandler(handler)
@@ -236,7 +245,9 @@ class Logger:
         self._logger.debug("Logger initialized successfully")
 
     @property
-    def logger(self):
+    def logger(
+        self
+    ):
         """
         Get the underlying logger instance.
 
@@ -257,7 +268,7 @@ class Logger:
     @classmethod
     def get_logger(
         cls,
-        name=None,
+        name=None
     ):
         """
         Retrieve the singleton logger instance.
@@ -288,7 +299,7 @@ class Logger:
     @classmethod
     def change_log_location(
         cls,
-        new_log_path,
+        new_log_path
     ):
         """
         Move log files to a new directory and update file handlers.
@@ -354,7 +365,7 @@ class Logger:
 
     def close_logger(
         self,
-        logger,
+        logger
     ):
         """
         Remove all handlers from the given logger.

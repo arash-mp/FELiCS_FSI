@@ -95,7 +95,7 @@ class Writer:
     def __init__(
         self,
         mesh = None,
-        exportDir = "Output",
+        exportDir = "Output"
     ):
         """
         Initialize a Writer instance.
@@ -137,7 +137,7 @@ class Writer:
         self,
         listOfFields,
         fileName,
-        attributes = None,
+        attributes = None
     ):
         """
         Export a list of fields to a single HDF5 file and generate XMF content.
@@ -167,6 +167,7 @@ class Writer:
             without the final XMF footer. This can be reused to append
             additional attributes before closing the XMF document.
         """
+
         # get a list of purely scalar fields from the field list
         # (which could be scalar/vector/mixed fields)
         listOfSubFields = []
@@ -212,7 +213,8 @@ class Writer:
             XMF header/body text corresponding to the exported field but
             without the final XMF footer.
         """
-        # get a list of purely scalar fields from the field 
+
+        # get a list of purely scalar fields from the field
         # (which could be a scalar/vector/mixed field)
         listOfSubFields = self._get_list_of_scalar_fields(field)
 
@@ -263,6 +265,7 @@ class Writer:
             XMF header/body text corresponding to the exported fields but
             without the final XMF footer, allowing further extension.
         """
+
         #-----------------------------------------------------------------------
         ## save the mesh of the first field if no mesh has been given at initialization 
         #-----------------------------------------------------------------------
@@ -357,7 +360,7 @@ class Writer:
 
     def _get_list_of_scalar_fields(
         self,
-        field,
+        field
     ):
         """
         Decompose a field into a list of scalar subfields.
@@ -391,6 +394,7 @@ class Writer:
         Exception
             If ``field.info['type']`` is unknown or not supported.
         """
+
         # convert vector fields and mixed fields into a list of scalar fields
         listOfSubFields = []
 
@@ -454,7 +458,7 @@ class Writer:
 
     def _get_export_field(
         self,
-        field,
+        field
     ):
         """
         Map or interpolate a scalar field to the export mesh and space.
@@ -481,6 +485,7 @@ class Writer:
         lives on a mesh that is not compatible with the export mesh,
         interpolation is used and some loss of accuracy may occur.
         """
+
         #only works for scalar fields
         # TODO: check real quick if the field mesh is the same as the export mesh and throw error?
         exportField = Field(
@@ -504,6 +509,7 @@ class Writer:
             exportField.set_coefficient_array( field.get_coefficient_array()[self.mappingP2ToExport])
 
         else:
+
             # TODO: write warning that this may be slow and that data may be lost, if used on degree > 2
             self._interpolate_with_grid_data(
                 field,
@@ -540,15 +546,18 @@ class Writer:
         fields or strongly distorted meshes. A warning is advisable when
         using this on fields with polynomial degree greater than 2.
         """
+
         ## Interpolating a P1 FELiCS field to a P1 export field using griddata:
         # field: input field 
         # exportField: export field for writing in file
 
         # Dimension of the source and export meshes
         source_dim          = field.mesh.dolfinxMesh.geometry.dim
+
         # Get the coordinates of the source and export meshes
         source_coords       =       field.space.tabulate_dof_coordinates()[:, :source_dim]
         export_coords       = exportField.space.tabulate_dof_coordinates()[:, :source_dim]
+
         # Interpolate the source field values to the export mesh coordinates
         interpolated_values = griddata(
             source_coords,
@@ -556,11 +565,14 @@ class Writer:
             export_coords,
             method='linear',
         )
+
         # Set the interpolated values to the export field
         exportField.set_coefficient_array(interpolated_values)
 
 
-    def _create_xmf_header(self):
+    def _create_xmf_header(
+        self
+    ):
         """
         Create the XMF header and mesh description.
 
@@ -624,7 +636,7 @@ class Writer:
         h5FileName,
         fieldName,
         size,
-        fieldNameInFile=None,
+        fieldNameInFile=None
     ):
         """
         Create an XMF attribute block for a scalar field.
@@ -665,7 +677,9 @@ class Writer:
         return xmf
 
 
-    def _create_xmf_footer(self):
+    def _create_xmf_footer(
+        self
+    ):
         """
         Create the XMF footer.
 

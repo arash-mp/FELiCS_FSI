@@ -64,7 +64,7 @@ class MixtureClass():
     def __init__(
         self,
         mixFilePath,
-        speciesFilePath,
+        speciesFilePath
     ):
         """
         Initializing a mixture object based on a mixture.json file.
@@ -100,7 +100,9 @@ class MixtureClass():
         else:
             logger.info('No mixture file '+mixFilePath+', using defaults.')
         
-    def get_reaction_mechanism(self):
+    def get_reaction_mechanism(
+        self
+    ):
         """
         Return the dictionary describing the reaction mechanism.
 
@@ -114,7 +116,7 @@ class MixtureClass():
     
     def get_species_list(
         self,
-        keyword='all',
+        keyword='all'
     ):
         """
         Return a list of species based on a specified category.
@@ -145,7 +147,7 @@ class MixtureClass():
     
     def read_species_dict(
         self,
-        filename,
+        filename
     ):
         """
         Read species data from a dictionary file and store relevant transport properties.
@@ -178,7 +180,7 @@ class MixtureClass():
     
     def sc(
         self,
-        specie,
+        specie
     ):
         """
         Return the Schmidt number for a specific species.
@@ -201,7 +203,9 @@ class MixtureClass():
 
         return self.species[specie]['Sc']
 
-    def get_species_dict(self):
+    def get_species_dict(
+        self
+    ):
         """
         Return the dictionary of species in the mixture.
 
@@ -214,7 +218,9 @@ class MixtureClass():
         return self.__Species__
 
     @property
-    def reaction_mechanism(self):
+    def reaction_mechanism(
+        self
+    ):
         """
         Get the reaction mechanism definition.
 
@@ -227,7 +233,9 @@ class MixtureClass():
         return self.__Reaction_mechanism__
 
     @property
-    def pr(self):
+    def pr(
+        self
+    ):
         """
         Get the Prandtl number of the mixture.
 
@@ -240,7 +248,9 @@ class MixtureClass():
         return self.__Pr__
 
     @property
-    def viscosity(self):
+    def viscosity(
+        self
+    ):
         """
         Get the viscosity model and its parameters.
 
@@ -252,7 +262,9 @@ class MixtureClass():
         return self.__Viscosity__
 
     @property
-    def species(self):
+    def species(
+        self
+    ):
         """
         Get the species dictionary (alias to `Species`).
 
@@ -265,7 +277,9 @@ class MixtureClass():
         return self.__Species__
 
     @property
-    def species(self):
+    def species(
+        self
+    ):
         """
         Get the species dictionary.
 

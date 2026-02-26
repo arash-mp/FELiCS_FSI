@@ -20,7 +20,7 @@ from FELiCS.Misc.logging                        import Logger, log_and_raise
 from FELiCS.Misc.tensorUtils                    import (
     i_conj,
     i_dot,
-    i_grad,
+    i_grad
 )
 
 
@@ -79,7 +79,7 @@ class MassEquation(EquationTemplate):
         eqColl,
         fluc,
         X,
-        param,
+        param
     ):
         """
         Initialize the MassEquation object.
@@ -98,6 +98,7 @@ class MassEquation(EquationTemplate):
         # Disclaimers
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
             log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
+
         # initialize variables in template class
         super().__init__(
             index,
@@ -110,7 +111,7 @@ class MassEquation(EquationTemplate):
     def add_weight_matrix_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -127,6 +128,7 @@ class MassEquation(EquationTemplate):
         Adds the time-derivative term to the weak form if density is among the
         transported quantities.
         """
+
         # ------------------------ Time derivative term used
         # Only if density fluctuations are considered
         if 'rho' in self.param.get_transported_quantity_list():
@@ -135,7 +137,7 @@ class MassEquation(EquationTemplate):
     def add_linear_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the linear expression to the weak form.
@@ -153,6 +155,7 @@ class MassEquation(EquationTemplate):
         including volume and boundary terms via integration by parts. Special
         handling is added for boundary forcing in Input-Output analysis mode.
         """
+
         # ------------------------ Advection terms
         # The advection term is integrated by parts
 
@@ -193,7 +196,7 @@ class MassEquation(EquationTemplate):
     def add_nonlinear_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the nonlinear expression to the weak form.

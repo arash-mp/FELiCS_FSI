@@ -105,7 +105,7 @@ class CoordinateSystem():
         name: str,
         gdim: int,
         trueDim = None,
-        m = 0,
+        m = 0
     ):
         """
         Initialize the CoordinateSystem object.
@@ -152,6 +152,7 @@ class CoordinateSystem():
             self.J_hat = 1.
         
         elif name == "cylindricalfelics":
+
             #Given for {x,y,z} = {r\cos\phi, r\sin\phi, z}, where ordering is
             #{z, r, \phi}.
             self.J_hat = self.x[1]
@@ -162,7 +163,7 @@ class CoordinateSystem():
 
     def set_true_dimension(
         self,
-        dim,
+        dim
     ):
         """
         Corrects the true dimension of the system. This has to be called if a spectral dimension is included,
@@ -228,7 +229,7 @@ class Tensor():
         ufl_tens,
         CoordSys: CoordinateSystem,
         mayHaveSpectralDimension = False,
-        m = None,
+        m = None
     ):
         """
         Initialize a Tensor object.
@@ -285,7 +286,7 @@ class Tensor():
     # addition
     def __add__(
         self,
-        other,
+        other
     ):
         """
         Add two tensors or a tensor and a scalar.
@@ -376,7 +377,7 @@ class Tensor():
     # division, 
     def __rtruediv__(
         self,
-        other,
+        other
     ): # Tensor object to the left
         """
         Divide a scalar or tensor by this tensor.
@@ -433,7 +434,7 @@ class Tensor():
 
     # subtraction: A - B is the same as A.__sub__(B)
     def __sub__(self,
-    other,
+    other
     ):
         """
         Subtract one tensor from another or from a scalar.
@@ -476,8 +477,9 @@ class Tensor():
 
 
     # muliplication, both ways, because matrix mul not commutative
-    def __mul__(self,
-    other,
+    def __mul__(
+        self,
+        other
     ): # Tensor object to the left
         """
         Multiply this tensor with another tensor or scalar.
@@ -530,8 +532,9 @@ class Tensor():
         else:
             ValueError("Tensor multiplication only defined for Tensors, Constant, float, complex, and integer")
 
-    def __pow__(self,
-    exponent,
+    def __pow__(
+        self,
+        exponent
     ): # Tensor object to the left
         """
         Returns this tensor to the power of the exponent.
@@ -569,8 +572,9 @@ class Tensor():
 
 
 
-    def __rmul__(self,
-    other,
+    def __rmul__(
+        self,
+        other
     ): # Tensor object to the right
         """
         Multiply scalar or tensor from the left.
@@ -626,7 +630,7 @@ class Tensor():
 ### TENSOR OBJECT FUNCTIONS
 def i_dot(
          tensorA: Tensor,
-tensorB: Tensor,
+         tensorB: Tensor,
 ):
     """
     Performs a single contraction between two tensors.
@@ -661,7 +665,7 @@ tensorB: Tensor,
 
 
 def i_inner(tensorA: Tensor,
-tensorB: Tensor,
+            tensorB: Tensor,
 ):
     """
     Computes the inner product between two second-order tensors.
@@ -700,7 +704,9 @@ tensorB: Tensor,
     )
 
 
-def i_grad(T: Tensor):
+def i_grad(
+    T: Tensor
+ ):
     """
     Computes the gradient of a tensor.
 
@@ -731,6 +737,7 @@ def i_grad(T: Tensor):
         gradient = as_vector(diffs)
 
     elif T.order == 1:
+
         # partial derivatives part
         diffs =  []
         for i in range(T.dim):
@@ -751,6 +758,7 @@ def i_grad(T: Tensor):
 
     #TODO test order 2 in unittests!!!
     elif T.order == 2:
+
         # partial derivatives part
         diffs =  []
         for i in range(T.dim):
@@ -784,7 +792,9 @@ def i_grad(T: Tensor):
     )
     
 
-def i_div(tensor: Tensor):
+def i_div(
+    tensor: Tensor
+ ):
     """
     Computes the divergence of a tensor.
 
@@ -829,7 +839,9 @@ def i_div(tensor: Tensor):
     )
 
 
-def i_t(tensor: Tensor):
+def i_t(
+    tensor: Tensor
+):
     """
     Returns the transpose of a second-order tensor.
 
@@ -860,7 +872,9 @@ def i_t(tensor: Tensor):
         )
 
 
-def i_tr(tensor: Tensor):
+def i_tr(
+    tensor: Tensor
+):
     """
     Computes the trace of a second-order tensor.
 
@@ -911,7 +925,9 @@ def i_tr(tensor: Tensor):
 
 
 
-def i_identity(tensor: Tensor):
+def i_identity(
+    tensor: Tensor
+):
     """
     Returns the identity tensor corresponding to the tensor's dimension and coordinate system.
 
@@ -932,7 +948,9 @@ def i_identity(tensor: Tensor):
     m = 0,
     )
 
-def i_conj(tensor: Tensor):
+def i_conj(
+    tensor: Tensor
+):
     """
     Computes the complex conjugate of a tensor.
 
@@ -958,8 +976,9 @@ def i_conj(tensor: Tensor):
     )
 
 # TODO: implement unit test in TESTS folder 
-def i_outer(tensorA: Tensor,
-tensorB: Tensor,
+def i_outer(
+    tensorA: Tensor,
+    tensorB: Tensor
 ):
     """
     Computes the outer product of two tensors.

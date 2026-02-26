@@ -55,7 +55,7 @@ class ReactionClass:
         reactionData,
         reactionType,
         mean,
-        fluc,
+        fluc
     ):
         """
         Initializes the reactionClass instance.
@@ -97,6 +97,7 @@ class ReactionClass:
        
             self._RR = mean_RR_prefactor * mean_rho * (fluc.y(specie) - 2 * fluc.y(specie) * mean_Yspecie)\
                      + mean_RR_prefactor * fluc.rho * (mean_Yspecie - mean_Yspecie * mean_Yspecie)
+
             # self._RR = 860 * mean_rho * (fluc.Y(specie) - 2 * fluc.Y(specie) * mean_Yspecie)\
             #          + 860 * fluc.rho * (mean_Yspecie - mean_Yspecie * mean_Yspecie)
         else:
@@ -150,7 +151,7 @@ class ReactionClass:
         
     def source_term(
         self,
-        specie,
+        specie
     ):
         """
         Computes the source term for a specific species based on its role in the reaction.
@@ -301,7 +302,7 @@ class ReactionHandler:
         
     def rr(
         self,
-        index,
+        index
     ):
         """
         Retrieves the reaction rate for a specified reaction.

@@ -85,7 +85,7 @@ class Field:
         mesh,
         name=None,
         isStateVector=False,
-        m=None,
+        m=None
     ):
         self.space    = FEMSpace
         self.mesh     = mesh
@@ -132,17 +132,21 @@ class Field:
         self.function = Function(FEMSpace)
 
     @property 
-    def name(self):
+    def name(
+        self
+    ):
         return self._name
   
     @name.setter
     def name(
         self,
-        name,
+        name
     ):
         self._name = name
 
-    def get_names_of_sub_fields(self):
+    def get_names_of_sub_fields(
+        self
+    ):
         """
         Return the list of subfield names for vector or mixed spaces.
 
@@ -185,6 +189,7 @@ class Field:
                 subFieldNames.append(self._name+axis_names[i])
         
         elif self.info['type'] == 'mixed':
+
             # If it was not set before and is a state vector, use state vector names
             # NOTE: assumes stateVectorNames is a list of tuples 
             if self.isStateVector and not self._namesOfSubFields:
@@ -213,7 +218,7 @@ class Field:
 
     def set_names_of_sub_fields(
         self,
-        nameList,
+        nameList
     ):
         """
         Assign explicit names to the subfields of a mixed or vector field.
@@ -231,7 +236,9 @@ class Field:
         self._namesOfSubFields = nameList 
 
 
-    def get_tensor(self):
+    def get_tensor(
+        self
+    ):
         """
         Wrap the field as a tensor-aware object.
 
@@ -255,7 +262,9 @@ class Field:
         mayHaveSpectralDimension = self.hasSpectralDimension,
         )
 
-    def is_real(self):
+    def is_real(
+        self
+    ):
         """
         Check whether the field is (numerically) real-valued.
 
@@ -267,7 +276,9 @@ class Field:
         """
         return np.linalg.norm(np.imag(self.get_coefficient_array()))==0
 
-    def get_list_of_sub_fields(self):
+    def get_list_of_sub_fields(
+        self
+    ):
         """
         Get a list of single-component fields.
 
@@ -297,8 +308,10 @@ class Field:
         
         # Loop over sub-fields and append to list
         for i in range(numberOfSubSpaces):
+
             # transfer content
             space, mapping            = self.space.sub(i).collapse()
+
             # NOTE: the sub-fields inherit the wave number from the field.
             field                     = Field(
                 space,
@@ -316,7 +329,7 @@ class Field:
     def set_list_of_sub_fields(
         self,
         listOfFields,
-        name=[],
+        name=[]
     ):
         """
         Set the field coefficients from a list of single-component fields.
@@ -366,7 +379,9 @@ class Field:
                 
 
 
-    def describe_function_space(self):
+    def describe_function_space(
+        self
+    ):
         """
         Describe the structure of the function space and its subspaces.
 
@@ -395,9 +410,9 @@ class Field:
         value_size                      = self.space.value_size
         # TODO: remove after the writer has been updated. The input mesh in field HAS TO BE A FELiCSMesh, and CANNOT be a dolfinx mesh
         try:
-            nDofsMesh                       = len(self.mesh._coordinates)
+            nDofsMesh                   = len(self.mesh._coordinates)
         except:
-            nDofsMesh                       = self.space.dofmap.index_map.size_global
+            nDofsMesh                   = self.space.dofmap.index_map.size_global
 
         result = {
             'num_subspaces':            num_subspaces,
@@ -459,7 +474,9 @@ class Field:
         
         return result
 
-    def getSize(self):
+    def getSize(
+        self
+    ):
         """
         Get the length of the coefficient array from the underlying function.
 
@@ -471,7 +488,9 @@ class Field:
         return len(self.function.x.array[:])
 
 
-    def get_coefficient_array(self):
+    def get_coefficient_array(
+        self
+    ):
         """
         Get the coefficient array of the field.
 
@@ -488,7 +507,9 @@ class Field:
         return array
 
 
-    def get_real_coefficient_array(self):
+    def get_real_coefficient_array(
+        self
+    ):
         """
         Get the real part of the coefficient array of the field.
 
@@ -504,7 +525,10 @@ class Field:
         array[:] = np.real(self.function.x.array[:])
         return array
 
-    def get_imag_coefficient_array(self):
+    def get_imag_coefficient_array(
+            self
+
+    ):
         """
         Get the imaginary part of the coefficient array of the field.
 
@@ -524,7 +548,7 @@ class Field:
 
     def set_coefficient_array(
         self,
-        array,
+        array
     ):
         """
         Set the coefficient array of the field.
@@ -541,7 +565,7 @@ class Field:
 
     def set_constant_value(
         self,
-        value,
+        value
     ): 
         """
         Set all coefficients to a constant value.
@@ -553,7 +577,9 @@ class Field:
         """
         self.function.x.array[:] = value
 
-    def get_petsc_vector(self):
+    def get_petsc_vector(
+        self
+    ):
         """
         Convert the field to a PETSc vector.
 
@@ -564,7 +590,9 @@ class Field:
         """
         return PETSc.Vec().createWithArray(self.get_coefficient_array())
 
-    def conjugate(self):
+    def conjugate(
+        self
+    ):
         """
         Compute the complex conjugate of the field.
         """
@@ -572,7 +600,7 @@ class Field:
 
     def set_boundary_conditions(
         self,
-        bcs,
+        bcs
     ):
         """
         Apply boundary conditions to the field.
@@ -590,7 +618,9 @@ class Field:
         self.set_coefficient_array(petscArray.getArray())
 
         
-    def get_gradient_field(self):
+    def get_gradient_field(
+        self
+    ):
         """
         Compute the gradient of a scalar field as a new Field.
 
@@ -646,7 +676,9 @@ class Field:
 
         return gradientField
 
-    def calculate_l2_norm(self):
+    def calculate_l2_norm(
+        self
+    ):
         """
         Compute the L2 norm of the field (and its subfields, if mixed).
 
@@ -672,7 +704,9 @@ class Field:
         return np.sqrt(norm_squared)
 
 
-    def get_vorticity_field(self):
+    def get_vorticity_field(
+        self
+    ):
         """
         Compute the vorticity field associated with a velocity field.
 
@@ -699,6 +733,7 @@ class Field:
 
         dim = self.space.num_sub_spaces
         if dim < 2:
+
             # Error message
             pass
         componentGradient = []
@@ -716,6 +751,7 @@ class Field:
             vorticityField.name = "vorticity"
             
             return vorticityField
+
         # 3D field -> vector vorticity field
         # TODO: Still needs to be tested
         if dim == 3:
@@ -744,7 +780,7 @@ class Field:
 
     def export_to_h5(self,
     writer,
-    fileName=None,
+    fileName=None
     ):
         """
         Export the field to an HDF5 file using a FELiCS writer.
@@ -763,7 +799,7 @@ class Field:
             fileName = self.name
         writer.export_field_to_h5(
             self,
-            fileName,
+            fileName
         )
 
 
@@ -771,7 +807,7 @@ class Field:
         self,
         reader,
         importFilePath = None,
-        groupName = None,
+        groupName = None
     
         ):
         """
@@ -818,7 +854,7 @@ class Field:
         self,
         ufl_expression,
         bcs=[],
-        restartSolver=False,
+        restartSolver=False
     ):
         """
         Evaluate a UFL expression and update the field accordingly.
@@ -875,7 +911,7 @@ class Field:
         self,
         ufl_expression,
         bcs=[],
-        restartSolver=False,
+        restartSolver=False
     ):
         """
         Evaluate a tensor-based UFL expression and update the field accordingly.
@@ -895,7 +931,8 @@ class Field:
         - Uses a predefined solver if available to improve performance.
         - The weak form includes integration over the computational domain.
         """
-        ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
+
+        ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later
         if not hasattr(
             self.space,
             'FEMWeightSolver',
@@ -910,12 +947,12 @@ class Field:
                 iTest = Tensor(
                     test,
                     coordinate_system,
-                    mayHaveSpectralDimension=True,
+                    mayHaveSpectralDimension=True
                 )
                 iFluc = Tensor(
                     trial_FEM[i],
                     coordinate_system,
-                    mayHaveSpectralDimension=True,
+                    mayHaveSpectralDimension=True
                 )
                 if iTest.order  == 1:
                     matrix_ufl.add( ( i_dot(
@@ -952,7 +989,7 @@ class Field:
         ufl_expression,
         smoothFactor,
         bcs=[],
-        restartSolver=False,
+        restartSolver=False
     ):
         """
         Smooth a tensor-based UFL expression using a diffusion-like approach.
@@ -989,12 +1026,12 @@ class Field:
                 iTest = Tensor(
                     test,
                     coordinate_system,
-                    mayHaveSpectralDimension=True,
+                    mayHaveSpectralDimension=True
                 )
                 iFluc = Tensor(
                     trial_FEM[i],
                     coordinate_system,
-                    mayHaveSpectralDimension=True,
+                    mayHaveSpectralDimension=True
                 )
                 if iTest.order  == 1:
                     matrix_ufl.add( ( i_dot(
@@ -1021,7 +1058,7 @@ class Field:
                 pass
             matrix = petsc.assemble_matrix(
                 dolfinx.fem.form(matrix_ufl.lhs),
-                bcs=bcs,
+                bcs=bcs
             )
             matrix.assemble()
             self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
@@ -1030,11 +1067,11 @@ class Field:
         expr_ufl = UflDecorator(ufl_expression)
         petscVec = expr_ufl.get_assembled_vector(
             self.mesh,
-            bcs,
+            bcs
         )
         self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
             self.space.FEMSmoothSolver,
-            petscVec,
+            petscVec
         ))
 
 
@@ -1081,12 +1118,12 @@ class Field:
                 iTest = Tensor(
                     test,
                     coordinate_system,
-                    mayHaveSpectralDimension=True,
+                    mayHaveSpectralDimension=True
                 )
                 iFluc = Tensor(
                     trial_FEM[i],
                     coordinate_system,
-                    mayHaveSpectralDimension=True,
+                    mayHaveSpectralDimension=True
                 )
                 if iTest.order  == 1:
                     matrix_ufl.add( ( i_dot(

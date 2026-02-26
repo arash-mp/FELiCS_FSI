@@ -95,7 +95,7 @@ class FluctuationClass(
         param,
         mean,
         FEMSpaces,
-        coordinate_system,
+        coordinate_system
     ):
         """
         Initializes fluctuation fields and derives dependent variables.
@@ -204,7 +204,7 @@ class FluctuationSolutions(
     EquationOfStateHandler,
     MomentumHandler,
     EnergyHandler,
-    ReactionHandler,
+    ReactionHandler
 ):
     """
     Stores and manages linearized fluctuation solutions.
@@ -277,7 +277,7 @@ class FluctuationSolutions(
         vmixedVector,
         isResponseOrDirect,
         gain_number=-1,
-        gain_value=-1,
+        gain_value=-1
     ):
         """
         Initialize the fluctuationSolutions object.
@@ -307,6 +307,7 @@ class FluctuationSolutions(
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroField.x.array[:] = 0.0
         self._zeroField = self._zeroField.x.array[:]
+
         #self._zeroVectorField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
         #self._zeroVectorField.x.array[:] = 0.0
 
@@ -320,13 +321,14 @@ class FluctuationSolutions(
         self._gainNumber = gain_number
         self._FEMSpaces = FEMSpaces
         self._mean = mean
+
         # self._fieldDict = mean.fieldDict
         self._transportedQuantities = param.get_transported_quantity_list()
         self._param = param
 
     def _fluc_export_wrapper(
         self,
-        group,
+        group
     ):
         """
         Internal method to compute and export all fluctuation fields.
@@ -415,7 +417,7 @@ class FluctuationSolutions(
 
     def _import_sol_vector(
         self,
-        filename,
+        filename
     ):
         """
         Import raw VMixed solution vector from HDF5 file.
@@ -443,7 +445,9 @@ class FluctuationSolutions(
 
 
     @property
-    def solut_vector(self):
+    def solut_vector(
+        self
+    ):
         """
         Complex-valued vector of the fluctuation solution.
 
@@ -456,7 +460,9 @@ class FluctuationSolutions(
 
 
     @property
-    def solution_kind(self):
+    def solution_kind(
+        self
+    ):
         """
         Type of the solution based on analysis mode and configuration.
 
@@ -485,7 +491,9 @@ class FluctuationSolutions(
             return ""
 
     @property
-    def omega(self):
+    def omega(
+        self
+    ):
         """
         Eigenvalue (frequency) of the fluctuation solution.
 
@@ -498,7 +506,9 @@ class FluctuationSolutions(
 
 
     @property
-    def gain_number(self):
+    def gain_number(
+        self
+    ):
         """
         Gain number identifier.
 
@@ -511,7 +521,9 @@ class FluctuationSolutions(
 
 
     @property
-    def gain_value(self):
+    def gain_value(
+        self
+    ):
         """
         Gain magnitude.
 

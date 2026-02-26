@@ -65,7 +65,7 @@ class UflDecorator():
 
     def __init__(
         self,
-        inputUfl = None,
+        inputUfl = None
     ):
         """
         Initialize the UflDecorator.
@@ -81,7 +81,7 @@ class UflDecorator():
 
     def add(
         self,
-        input_ufl,
+        input_ufl
     ):
         """
         Add a UFL expression to the current expression.
@@ -105,7 +105,7 @@ class UflDecorator():
 
     def subtract(
         self,
-        input_ufl,
+        input_ufl
     ):
         """
         Subtract a UFL expression from the current expression.
@@ -128,7 +128,9 @@ class UflDecorator():
             self._expression = -input_ufl
 
     @property
-    def expression(self):
+    def expression(
+        self
+    ):
         """
         Return the current UFL expression.
 
@@ -140,7 +142,9 @@ class UflDecorator():
         return self._expression
 
     @property
-    def lhs(self):
+    def lhs(
+        self
+    ):
         """
         Return the left-hand side of the UFL expression.
 
@@ -152,7 +156,9 @@ class UflDecorator():
         return lhs(self._expression)
 
     @property
-    def rhs(self):
+    def rhs(
+        self
+    ):
         """
         Return the right-hand side of the UFL expression.
 
@@ -164,7 +170,9 @@ class UflDecorator():
         return rhs(self._expression)
 
     @property
-    def form(self):
+    def form(
+        self
+    ):
         """
         Return the general form representation of the UFL expression.
 
@@ -179,7 +187,7 @@ class UflDecorator():
     def get_assembled_matrix(
         self,
         mesh,   
-        bcs = [],
+        bcs = []
     ):
         """
         Assemble the left-hand side form into a matrix.
@@ -207,7 +215,7 @@ class UflDecorator():
     def get_assembled_vector(
         self,
         mesh,
-        bcs = [],
+        bcs = []
     ):
         """
         Assemble the right-hand side form into a vector.
@@ -235,7 +243,7 @@ class UflDecorator():
 
     def get_assembled_scalar(
         self,
-        mesh,
+        mesh
     ):
         """
         Assemble the expression into a scalar.
@@ -254,7 +262,9 @@ class UflDecorator():
         self._set_correct_mesh_object(mesh)
         return assemble_scalar(form(self._expression))
 
-    def lhs_is_zero(self):
+    def lhs_is_zero(
+        self
+    ):
         """
         Check whether the left-hand side of the expression is effectively zero.
 
@@ -272,7 +282,9 @@ class UflDecorator():
             else:
                 return False
 
-    def rhs_is_zero(self):
+    def rhs_is_zero(
+        self
+    ):
         """
         Check whether the right-hand side of the expression is effectively zero.
 
@@ -290,7 +302,9 @@ class UflDecorator():
             else:
                 return False
 
-    def is_zero(self):
+    def is_zero(
+        self
+    ):
         """
         Check whether the expression has been initialized.
 
@@ -307,7 +321,9 @@ class UflDecorator():
         else:
             return True
         
-    def print_expression(self):
+    def print_expression(
+        self
+    ):
         """
         Print a summary of the current UFL expression.
 
@@ -328,8 +344,9 @@ class UflDecorator():
             print('Ufl expression is zero.')
 
 
-    def _set_correct_mesh_object(self,
-    mesh,
+    def _set_correct_mesh_object(
+        self,
+        mesh
     ):
         """
         Internal workaround to ensure mesh compatibility in UFL expressions.
@@ -356,7 +373,7 @@ class UflDecorator():
 
     def __add__(
         self,
-        other,
+        other
     ):  
         """
         Add another UFL expression or UflDecorator to this one.
@@ -393,7 +410,7 @@ class UflDecorator():
 
     def __iadd__(
         self,
-        other,
+        other
     ):
         """
         In-place addition of another UFL expression or UflDecorator.
@@ -423,7 +440,7 @@ class UflDecorator():
 
     def __sub__(
         self,
-        other,
+        other
     ):
         """
         Subtract another UFL expression or UflDecorator from this one.
@@ -460,7 +477,7 @@ class UflDecorator():
 
     def __isub__(
         self,
-        other,
+        other
     ):
         """
         In-place subtraction of another UFL expression or UflDecorator.

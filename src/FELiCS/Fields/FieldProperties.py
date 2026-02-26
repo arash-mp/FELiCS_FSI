@@ -155,7 +155,9 @@ class FieldProperties:
     classes that manage field data for mean or fluctuating flow quantities.
     """
 
-    def is_mean_flow_class(self):
+    def is_mean_flow_class(
+        self
+    ):
         """
         Check if the current object is an instance of meanFlowClass.
 
@@ -171,7 +173,9 @@ class FieldProperties:
             MeanFlowClass,
         )
 
-    def is_mean_flow_vertex_values_class(self):
+    def is_mean_flow_vertex_values_class(
+        self
+    ):
         """
         Check if the current object is an instance of meanFlowVertexValues.
 
@@ -187,7 +191,9 @@ class FieldProperties:
         )
 
     @property
-    def alpha(self):
+    def alpha(
+        self
+    ):
         """
         Get the alpha field variable, with fallback for missing data.
 
@@ -210,12 +216,16 @@ class FieldProperties:
             return self._fieldDict['alpha']
 
     @property
-    def c(self):
+    def c(
+        self
+    ):
         # TODO: Sophie, could you delete this property? I think nobody uses it.
         return self._fieldDict['c']
 
     @property
-    def cp(self):
+    def cp(
+        self
+    ):
         """
         Get the specific heat at constant pressure.
 
@@ -231,7 +241,7 @@ class FieldProperties:
 
     def d(
         self,
-        specie,
+        specie
     ):
         """
         Get the diffusion coefficient for a given species.
@@ -259,7 +269,9 @@ class FieldProperties:
 
 
     @property
-    def d_q(self):
+    def d_q(
+        self
+    ):
         """
         Get the heat release rate field variable.
 
@@ -271,7 +283,9 @@ class FieldProperties:
         return self._fieldDict['dQ']
 
     @property
-    def field_dict(self):
+    def field_dict(
+        self
+    ):
         """
         Get the dictionary of all field variables, with special handling for mean flow classes.
 
@@ -309,7 +323,7 @@ class FieldProperties:
     @field_dict.setter
     def field_dict(
         self,
-        value,
+        value
     ):
         """
         Prevent setting the fieldDict property after initialization.
@@ -322,7 +336,9 @@ class FieldProperties:
         raise Exception('Properties of MeanFlow are not to be set after initialization!')
 
     @property
-    def field_names(self):
+    def field_names(
+        self
+    ):
         """
         Get the list of field variable names.
 
@@ -336,7 +352,7 @@ class FieldProperties:
     @field_names.setter
     def field_names(
         self,
-        value,
+        value
     ):
         """
         Prevent setting the FieldNames property after initialization.
@@ -349,7 +365,9 @@ class FieldProperties:
         raise Exception('Properties of MeanFlow are not to be set after initialization!')
 
     @property
-    def fluc(self):
+    def fluc(
+        self
+    ):
         """
         Get the fluctuation field object.
 
@@ -362,7 +380,7 @@ class FieldProperties:
 
     def forcing_i(
         self,
-        solution,
+        solution
     ):
         """
         Get the imaginary part of the forcing field for a given solution variable.
@@ -398,7 +416,7 @@ class FieldProperties:
         
     def forcing_r(
         self,
-        solution,
+        solution
     ):
         """
         Get the real part of the forcing field for a given solution variable.
@@ -434,7 +452,7 @@ class FieldProperties:
 
     def forcing(
         self,
-        solution,
+        solution
     ):
         """
         Get the complex forcing field for a given solution variable.
@@ -452,7 +470,9 @@ class FieldProperties:
         return self.forcing_r(solution)+self.forcing_i(solution)*1j
 
     @property
-    def forcing_domain(self):
+    def forcing_domain(
+        self
+    ):
         """
         Get the field variable for the domain where forcing is applied.
 
@@ -464,7 +484,9 @@ class FieldProperties:
         return self._fieldDict['forcingDomain']
 
     @property
-    def gamma(self):
+    def gamma(
+        self
+    ):
         """
         Get the heat capacity ratio (gamma).
 
@@ -476,7 +498,9 @@ class FieldProperties:
         return self._fieldDict['gamma'].get_tensor()
 
     @property
-    def pr(self):
+    def pr(
+        self
+    ):
         """
         Get the Prandtl number field variable.
 
@@ -488,7 +512,9 @@ class FieldProperties:
         return self._fieldDict['Pr'].get_tensor()
 
     @property
-    def unit_t(self):
+    def unit_t(
+        self
+    ):
         """
         Get the real unit number in tensor form.
 
@@ -507,7 +533,9 @@ class FieldProperties:
         )
 
     @property
-    def h(self):
+    def h(
+        self
+    ):
         """
         Get the enthalpy field variable.
 
@@ -519,7 +547,9 @@ class FieldProperties:
         return self._fieldDict['h']
 
     @property
-    def he(self):
+    def he(
+        self
+    ):
         """
         Get the total enthalpy field variable.
 
@@ -537,7 +567,9 @@ class FieldProperties:
         )
 
     @property
-    def h_spec(self):
+    def h_spec(
+        self
+    ):
         """
         Get the dictionary of species enthalpy fields.
 
@@ -549,7 +581,9 @@ class FieldProperties:
         return self.__hSpec
 
     @property
-    def meanflow_filename(self):
+    def meanflow_filename(
+        self
+    ):
         """
         Get the filename for the mean flow data.
 
@@ -561,7 +595,9 @@ class FieldProperties:
         return self._meanflowFilename
 
     @property
-    def molar_mass(self):
+    def molar_mass(
+        self
+    ):
         """
         Get the molar mass field variable.
 
@@ -573,7 +609,9 @@ class FieldProperties:
         return self._fieldDict['molarMass']
 
     @property
-    def nulam(self):
+    def nulam(
+        self
+    ):
         """
         Get the laminar viscosity field variable.
 
@@ -600,7 +638,9 @@ class FieldProperties:
                 return self._zeroField
 
     @property
-    def nu_tot(self):
+    def nu_tot(
+        self
+    ):
         """
         Get the total viscosity field variable (laminar + turbulent + SGS).
 
@@ -623,7 +663,9 @@ class FieldProperties:
         return nu_tot.get_tensor()
 
     @property
-    def p(self):
+    def p(
+        self
+    ):
         """
         Get the pressure field variable, with fallback for missing data.
 
@@ -651,7 +693,9 @@ class FieldProperties:
                 return self._zeroField
             
     @property
-    def phi(self):
+    def phi(
+        self
+    ):
         # TODO: Sophie, could you check if we can delete this property? I think nobody uses it.
         if 'phi' in list(self._fieldDict.keys()):
             return self._fieldDict['phi']
@@ -659,7 +703,9 @@ class FieldProperties:
             return self._zeroField
 
     @property
-    def rr_prefactor(self):
+    def rr_prefactor(
+        self
+    ):
         """
         Get the reaction rate prefactor field variable.
 
@@ -675,7 +721,9 @@ class FieldProperties:
             return self._fieldDict['RR_prefactor']
 
     @property
-    def q(self):
+    def q(
+        self
+    ):
         """
         Get the total heat release field variable.
 
@@ -687,7 +735,9 @@ class FieldProperties:
         return self._fieldDict['Q']
     
     @property
-    def r_spe(self):
+    def r_spe(
+        self
+    ):
         """
         Get the specific gas constant field variable.
 
@@ -699,7 +749,9 @@ class FieldProperties:
         return self._fieldDict['R_spe'].get_tensor()
 
     @property
-    def reaction(self):
+    def reaction(
+        self
+    ):
         """
         Get the reaction object.
 
@@ -711,7 +763,9 @@ class FieldProperties:
         return self.__reaction
     
     @property
-    def spg(self):
+    def spg(
+        self
+    ):
         """
         Get the sponge region term field variable.
 
@@ -723,7 +777,9 @@ class FieldProperties:
         return self._fieldDict['spg'].get_tensor()
 
     @property
-    def rho(self):
+    def rho(
+        self
+    ):
         """
         Get the density field variable, with fallback for missing data.
 
@@ -756,7 +812,9 @@ class FieldProperties:
                 return self._zeroField
 
     @property
-    def rhou(self):
+    def rhou(
+        self
+    ):
         """
         Get the momentum field variable (density * velocity).
 
@@ -772,7 +830,7 @@ class FieldProperties:
 
     def rho_y(
         self,
-        species,
+        species
     ):
         """
         Get the product of density and species mass fraction.
@@ -790,7 +848,9 @@ class FieldProperties:
         return self._mean.rho * self.y(species) + self.rho * self._mean.y(species)
 
     @property
-    def T(self):
+    def T(
+        self
+    ):
         """
         Get the temperature field variable, with fallback for missing data.
 
@@ -818,7 +878,9 @@ class FieldProperties:
                 return self._zeroField
 
     @property
-    def tau(self):
+    def tau(
+        self
+    ):
         """
         Get the stress tensor field variable.
 
@@ -851,7 +913,9 @@ class FieldProperties:
         return tau_out
 
     @property
-    def tb(self):
+    def tb(
+        self
+    ):
         """
         Get the burnt temperature field variable.
 
@@ -871,7 +935,9 @@ class FieldProperties:
             return self._fieldDict['Tb']
 
     @property
-    def tu(self):
+    def tu(
+        self
+    ):
         """
         Get the unburnt temperature field variable.
 
@@ -891,13 +957,17 @@ class FieldProperties:
             return self._fieldDict['Tu']
 
     @property
-    def tm(self):
+    def tm(
+        self
+    ):
         # TODO: Sophie, could you check if we can delete this property? I think nobody uses it.
         return self._fieldDict['Tm']
 
 
     @property
-    def response_domain(self):
+    def response_domain(
+        self
+    ):
         """
         Get the response domain mask field variable.
 
@@ -909,7 +979,9 @@ class FieldProperties:
         return self._fieldDict['responseDomain']
 
     @property
-    def u(self):
+    def u(
+        self
+    ):
         """
         Get the velocity field variable, with fallback for missing data.
 
@@ -930,7 +1002,9 @@ class FieldProperties:
                 return self._zeroVectorField
 
     @property
-    def u_forcing_i(self):
+    def u_forcing_i(
+        self
+    ):
         """
         Get the imaginary part of the velocity forcing field variable.
 
@@ -959,7 +1033,9 @@ class FieldProperties:
                 return self._zeroField
 
     @property
-    def u_forcing_r(self):
+    def u_forcing_r(
+        self
+    ):
         """
         Get the real part of the velocity forcing field variable.
 
@@ -988,7 +1064,9 @@ class FieldProperties:
                 return self._zeroField
 
     @property
-    def u_forcing(self):
+    def u_forcing(
+        self
+    ):
         """
         Get the complex velocity forcing field variable.
 
@@ -1001,7 +1079,9 @@ class FieldProperties:
         return forcing
 
     @property
-    def ut(self):
+    def ut(
+        self
+    ):
         """
         TODO: Deprecated variable must be deleted
         Get the transverse velocity component field variable.
@@ -1028,7 +1108,7 @@ class FieldProperties:
                 return Constant(0)
 
     def y(self,
-    specie,
+    specie
     ):
         """
         Get the mass fraction field variable for a given species.

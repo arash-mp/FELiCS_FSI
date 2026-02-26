@@ -61,7 +61,7 @@ class EnergyPressureEquation(EquationTemplate):
         eqColl,
         fluc,
         X,
-        param,
+        param
     ):
         """
         Initialize the EnergyPressureEquation object.
@@ -91,14 +91,14 @@ class EnergyPressureEquation(EquationTemplate):
             eqColl,
             fluc,
             X,
-            param,
+            param
         )
 
 
     def add_weight_matrix_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -113,6 +113,7 @@ class EnergyPressureEquation(EquationTemplate):
         mean : Function
             The mean function representing the average state.
         """
+
         # Time derivative terms
         # Volume term: -omega*p_f*conj(X)
         weakForm.add((self.fluc.p * i_conj(self.X)).ufl_tens * self.J_hat * dx)
@@ -269,6 +270,7 @@ class EnergyPressureEquation(EquationTemplate):
         mean : MeanFields
             The mean fields object containing time-averaged variables.
         """
+
         # Sophie: treat with care, so far not "Taylor"-tested!
         # Only for the state vector (u,rho,p), not for (u,rho,T).
 

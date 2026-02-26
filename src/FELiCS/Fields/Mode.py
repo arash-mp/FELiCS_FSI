@@ -131,7 +131,7 @@ class Mode(Field):
         isStateVector=True,
         m=0,
         analysisType='Modal',
-        modeType = None,
+        modeType = None
     ):
         """
         Initialize a Mode instance.
@@ -164,7 +164,7 @@ class Mode(Field):
             mesh,
             name,
             isStateVector,
-            m,
+            m
         )
         
         # Set values
@@ -188,7 +188,9 @@ class Mode(Field):
 
 
     @property
-    def name(self):
+    def name(
+        self
+    ):
         """
         Name of the mode.
 
@@ -203,7 +205,9 @@ class Mode(Field):
 
 
     @property
-    def omega(self):
+    def omega(
+        self
+    ):
         """
         Angular frequency associated with the mode.
 
@@ -221,7 +225,9 @@ class Mode(Field):
             return self.frequency
 
     @property
-    def gain(self):
+    def gain(
+        self
+    ):
         """
         Gain associated with the mode.
 
@@ -239,7 +245,7 @@ class Mode(Field):
     @gain.setter
     def gain(
         self,
-        gain,
+        gain
     ):
         """
         Set the gain of the mode.
@@ -254,7 +260,9 @@ class Mode(Field):
 
 
     @property
-    def gain_number(self):
+    def gain_number(
+        self
+    ):
         """
         Get the gain number of the mode.
 
@@ -272,7 +280,7 @@ class Mode(Field):
     @gain_number.setter
     def gain_number(
         self,
-        gain_number,
+        gain_number
     ):
         """
         Set the gain number for the mode.
@@ -285,7 +293,9 @@ class Mode(Field):
         self._gainNumber = gain_number
 
     @property
-    def frequency(self):
+    def frequency(
+        self
+    ):
         """
         Get the frequency of the mode.
 
@@ -303,7 +313,7 @@ class Mode(Field):
     @frequency.setter
     def frequency(
         self,
-        frequency,
+        frequency
     ):
         """
         Set the frequency for the mode.
@@ -317,7 +327,9 @@ class Mode(Field):
 
 
     @property
-    def eigen_value(self):
+    def eigen_value(
+        self
+    ):
         """
         Get the eigenvalue of the mode.
 
@@ -335,7 +347,7 @@ class Mode(Field):
     @eigen_value.setter
     def eigen_value(
         self,
-        eigen_value,
+        eigen_value
     ):
         """
         Set the eigenvalue for the mode.
@@ -348,7 +360,9 @@ class Mode(Field):
         self._eigenValue = eigen_value
 
     @property
-    def wave_number(self):
+    def wave_number(
+        self
+    ):
         """
         Get the wave number of the mode.
 
@@ -366,7 +380,7 @@ class Mode(Field):
     @wave_number.setter
     def wave_number(
         self,
-        wave_number,
+        wave_number
     ):
         """
         Set the wave number for the mode.
@@ -379,7 +393,9 @@ class Mode(Field):
         self._waveNumber = wave_number
 
     @property
-    def guess(self):
+    def guess(
+        self
+    ):
         """
         Get the initial guess of the mode.
 
@@ -397,7 +413,7 @@ class Mode(Field):
     @guess.setter
     def guess(
         self,
-        guess,
+        guess
     ):
         """
         Set the initial guess for the mode.
@@ -410,7 +426,9 @@ class Mode(Field):
         self._guess = guess
 
     @property 
-    def error(self):
+    def error(
+        self
+    ):
         """
         Get the error associated with the mode.
 
@@ -428,7 +446,7 @@ class Mode(Field):
     @error.setter
     def error(
         self,
-        error,
+        error
     ):
         """
         Set the error value for the mode.
@@ -440,7 +458,9 @@ class Mode(Field):
         """
         self._error = error
         
-    def describe(self):
+    def describe(
+        self
+    ):
         """
         Log a summary of the mode's properties.
 
@@ -463,7 +483,7 @@ class Mode(Field):
     def export_to_h5(
         self,
         writer,
-        fileName=None,
+        fileName=None
     ):
         """
         Export the mode to an HDF5 file.
@@ -522,7 +542,7 @@ class Mode(Field):
         self,
         reader,
         importDirPath,
-        importFileName = None,
+        importFileName = None
     ):
         """
         Import mode data from an HDF5 file.

@@ -52,7 +52,7 @@ class EquationOfStateHandler:
     """
 
     def __init__(
-            self
+        self
     ):
         """
         Initializes the equationOfStateHandler instance.

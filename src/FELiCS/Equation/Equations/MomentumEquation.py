@@ -68,7 +68,7 @@ class MomentumEquation(EquationTemplate):
         eqColl,
         fluc,
         X,
-        param,
+        param
     ):
         """
         Initialize the MomentumEquation instance.
@@ -107,7 +107,7 @@ class MomentumEquation(EquationTemplate):
     def add_weight_matrix_expression(
         self,
         weakForm,
-        mean,
+        mean
     ):
         """
         Add the weight matrix expression to the weak form.
@@ -234,6 +234,7 @@ class MomentumEquation(EquationTemplate):
                 ),
                 self.n)
             ).ufl_tens * J_hat * self.all_ds
+
             #elif self.param.Case.CoordinateSystem =='Cylindrical':
             #    # In cyl , a singular term error arise for the boundary term in the tensor framework
             #    # Because there is no Nabla operator in the boundary term we can use the ufl operator and avoid this error
@@ -244,6 +245,7 @@ class MomentumEquation(EquationTemplate):
             #    weakForm.add(( -1j*fluc.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),fluc.u),self.n) )*self.x[1]*self.all_ds)
                         
         else:
+
             ## ---- ALTERNATIVE: No integration by part, just one volume term
             logger.debug(" -> NOT using integration by parts for convection term.")
 
@@ -282,6 +284,7 @@ class MomentumEquation(EquationTemplate):
         # ------------------------ Pressure gradient terms
         int_by_parts = True
         if int_by_parts:
+
             # Integrate pressure gradient boundary terms (resulting from integration by parts)
             weakForm += (
                 1j * fluc.p * i_div(i_conj(X))
@@ -294,6 +297,7 @@ class MomentumEquation(EquationTemplate):
             ).ufl_tens * J_hat * self.all_ds
 
         else:
+
             # No integration by parts of the pressure term
             weakForm += -(1j * i_dot(
                 i_grad(fluc.p),
@@ -397,6 +401,7 @@ class MomentumEquation(EquationTemplate):
             #    weakForm.add(( -1j*mean.rho*dot(dot(outer(conj(mean.u),conj(self.X[0])),mean.u),self.n) )*self.x[1]*self.all_ds)
                         
         else:
+
             ## ---- ALTERNATIVE: No integration by part, just one volume term
             logger.debug(" -> NOT using integration by parts for convection term.")
             
@@ -414,6 +419,7 @@ class MomentumEquation(EquationTemplate):
         # ------------------------ Pressure gradient terms
         int_by_parts = True  
         if int_by_parts:
+
             # Integrate pressure gradient boundary terms (resulting from integration by parts)
             weakForm.add( 
                 (1j * mean.p * i_div(i_conj(X))).ufl_tens * J_hat * dx
@@ -427,6 +433,7 @@ class MomentumEquation(EquationTemplate):
             )
 
         else:
+
             # No integration by parts of the pressure term
             log_and_raise(logger, ' -> Pressure term without IbP not implemented in tensor framework.', Exception)
         # ------------------------ Diffusion term

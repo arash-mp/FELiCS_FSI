@@ -26,6 +26,7 @@ from    FELiCS.Misc.tensorUtils import CoordinateSystem
 from    FELiCS.Misc.logging     import Logger, log_and_raise
 
 comm = MPI.COMM_WORLD
+
 # Get the logger
 logger = Logger.get_logger("felics")
 
@@ -108,6 +109,7 @@ class FELiCSMesh:
             the mesh is wrapped directly.
         """
         if inputMesh is None:
+
             # Initialize gmsh and suppress its output
             gmsh.initialize()
             gmsh.option.setNumber(
@@ -149,6 +151,7 @@ class FELiCSMesh:
             self.gdim = gdim
             self._ufl_domain = mesh._ufl_domain
             self.calc_connectivity()
+
             # save the coordinates in gmsh order:
             gmsh.open(meshFileName)
         else:
@@ -186,6 +189,7 @@ class FELiCSMesh:
             )
         else:
             log_and_raise(logger, 'Coord. syst not yet implemented in tensor framework.', NotImplementedError)
+
         # update dimension if m!=0, i.e. if there is a spectral dimension
         logger.debug(f"The transverse/azimuthal wavenumber is m={m} and the geometric dimension is gdim={gdim}.")
         if m!=0 and gdim<3:
@@ -473,5 +477,5 @@ class ExportMesh(FELiCSMesh):
         super().__init__(
             coordinateSystemName    = base_mesh.coordinateSystemName,
             inputMesh               = exportMesh_dolfinx,
-            gdim                    = base_mesh.gdim,
+            gdim                    = base_mesh.gdim
         )

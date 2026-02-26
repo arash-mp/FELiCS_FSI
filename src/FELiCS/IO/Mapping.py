@@ -41,7 +41,7 @@ class Mapping:
     @staticmethod
     def calculate_mapping_from_spaces(
         inputSpace,
-        outputSpace,
+        outputSpace
     ):
         """
         Compute a DOF index mapping between two finite element spaces.
@@ -81,7 +81,7 @@ class Mapping:
     @staticmethod
     def calculate_mapping_from_dofs(
         inputDofs,
-        outputDofs,
+        outputDofs
     ):
         """
         Compute a DOF index mapping from coordinate arrays.
