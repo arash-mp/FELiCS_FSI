@@ -55,7 +55,7 @@ The pipeline consists of two passes:
 ## Step 1: Generate Definitions and Symbol Map
 
 ```bash
-python code_refactoring/felics_style_rewriter.py defs ./src/
+python /tools/code_refactoring/felics_style_rewriter.py defs ./src/
 ```
 
 This step runs **Pipeline A (`defs`)** and performs the following actions on every Python file:
@@ -98,7 +98,7 @@ This step runs **Pipeline A (`defs`)** and performs the following actions on eve
 ## Step 2: Review and Clean `felics_renames.json`
 
 The `defs` step produces a file named **`felics_renames.json`**, which acts as the authoritative rename map. The current  **`felics_renames.json`** can be found in 
-`code_refactoring/arxiv/felics_renames.json`. 
+`code_refactoring/felics_renames.json`. 
 
 > **Important**
 >
@@ -121,14 +121,15 @@ Delete the changes from the json files such as:
 - `Get_size → getSize` (external APIs)
 - `Get_vecs` and similar backend-specific functions
 
-Failing to clean this file may introduce incorrect renaming.
+Failing to clean this file may introduce incorrect renaming. 
 
+> ⚠️ **Careful:** You may also need to update the function names in the `.py` file *before* deleting them from the `.json` file.
 ---
 
 ## Step 3: Apply Renames Across Usages
 
 ```bash
-python code_refactoring/felics_style_rewriter.py usages ./src/
+python tools/code_refactoring/felics_style_rewriter.py usages ./src/
 ```
 
 This runs **Pipeline B (`usages`)**, which:
@@ -138,12 +139,13 @@ This runs **Pipeline B (`usages`)**, which:
 - Renames attribute access consistently
 - Reapplies trailing commas where needed
 
-This step must only be run **after** reviewing `felics_renames.json`.
+This step must only be run **after** reviewing `felics_renames.json`. The current  **`felics_renames.json`** can be found in 
+`code_refactoring/felics_renames.json`. 
 
 💡 Tip: If you are modifying or refactoring a single existing script, you can safely run the usages command on that file alone instead of the entire source tree:
 
 ```bash
-python code_refactoring/felics_style_rewriter.py usages ./path/to/script.py
+python /toold/code_refactoring/felics_style_rewriter.py usages ./path/to/script.py
 ```
 This is useful for incremental refactoring or when testing changes locally without touching unrelated files.
 ---
