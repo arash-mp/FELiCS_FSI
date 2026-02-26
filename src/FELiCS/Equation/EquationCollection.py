@@ -53,12 +53,12 @@ from    FELiCS.Equation.UflDecorator                       import UflDecorator
 from    FELiCS.Fields.FluctuationClass                     import FluctuationClass
 from    FELiCS.Misc.logging                                import Logger
 from    FELiCS.Misc.tensorUtils                            import (
-    as_vector,
-    i_dot,
-    i_conj,
-    # iInner,
-    Tensor,
-)
+                                                                    as_vector,
+                                                                    i_dot,
+                                                                    i_conj,
+                                                                    # iInner,
+                                                                    Tensor
+                                                                )
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -139,7 +139,7 @@ class EquationCollectionClass():
         param,
         FEMSpaces,
         mean,
-        mesh,
+        mesh
     ):
         """
         Initialize the EquationCollectionClass with simulation parameters and spaces.
@@ -162,10 +162,10 @@ class EquationCollectionClass():
         logger.info('Initializing the equation collection class.')
 
         # Store input parameters as private attributes
-        self._param            = param
-        self._FEMSpaces        = FEMSpaces
-        self._mean             = mean
-        self._mesh             = mesh
+        self._param             = param
+        self._FEMSpaces         = FEMSpaces
+        self._mean              = mean
+        self._mesh              = mesh
 
         # Get spatial coordinates
         self.x                  = SpatialCoordinate(mesh.dolfinxMesh)
@@ -176,15 +176,15 @@ class EquationCollectionClass():
         # Initialize boundary handler
         self.variables          = param.Case.StateVectorVariables
         self.boundaryHandler    = BoundaryHandler(
-            self.variables,
-            mesh,
-            param.BoundaryCondition.BCsFilePath,
-        )
+                                    self.variables,
+                                    mesh,
+                                    param.BoundaryCondition.BCsFilePath
+                                )
         # Initialize ds: Get all boundaries (So far hard coded)
         self.ds                 = Measure(
-            "ds",
-            subdomain_data=mesh.facet_tags,
-        )
+                                    "ds",
+                                    subdomain_data=mesh.facet_tags,
+                                )
         self.all_ds             = self.ds(self.boundaryHandler.IDs[0])
         for i in range(
             1,
@@ -226,7 +226,7 @@ class EquationCollectionClass():
             X.append(Tensor(
                 i,
                 self._coordinateSystem,
-                mayHaveSpectralDimension=True,
+                mayHaveSpectralDimension=True
             ))
         self.X = X
             
@@ -236,7 +236,7 @@ class EquationCollectionClass():
         else:
             self.R = Constant(
                 self._FEMSpaces.P2.mesh,
-                PETSc.ScalarType(1.0),
+                PETSc.ScalarType(1.0)
             )
 
         logger.debug('State vector: %s.' % param.Case.SolutionList)
@@ -256,7 +256,7 @@ class EquationCollectionClass():
                     self,
                     fluctuationC,
                     X[index],
-                    param,
+                    param
                 )
                 self.equationList.append(eqObject)
 
@@ -267,7 +267,7 @@ class EquationCollectionClass():
                     self,
                     fluctuationC,
                     X[index],
-                    self._param,
+                    self._param
                 )
                 self.equationList.append(eqObject)
 
@@ -278,7 +278,7 @@ class EquationCollectionClass():
                     self,
                     fluctuationC,
                     X[index],
-                    self._param,
+                    self._param
                 )
                 self.equationList.append(eqObject)
 
@@ -289,7 +289,7 @@ class EquationCollectionClass():
                     self,
                     fluctuationC,
                     X[index],
-                    self._param,
+                    self._param
                 )
                 self.equationList.append(eqObject)
 
@@ -306,7 +306,7 @@ class EquationCollectionClass():
                     fluctuationC,
                     X[index],
                     species,
-                    self._param,
+                    self._param
                 )
                 self.equationList.append(eqObject)
                             
@@ -332,7 +332,7 @@ class EquationCollectionClass():
                 self,
                 fluctuationC,
                 X,
-                self._param,
+                self._param
             ) # give equationsList-Dictionary as "index"
             self.equationList.append(eqObject)
 
@@ -343,13 +343,13 @@ class EquationCollectionClass():
                 X,
                 self._param,
                 mean,
-                fluctuationC,
+                fluctuationC
             )
             self.compute_resolvent_fem_weights(
                 X,
                 self._param,
                 mean,
-                fluctuationC,
+                fluctuationC
             )
 
             # Get indices for forcing and response, depending on used norm, 
@@ -380,7 +380,7 @@ class EquationCollectionClass():
 
     def get_linear_operator(
         self,
-        meanFlow,
+        meanFlow
     ):
         """
         Construct the linear operator matrix for the equation system.
@@ -404,19 +404,19 @@ class EquationCollectionClass():
         for equation in self.equationList:
             equation.add_linear_expression(
                 A_ufl,
-                meanFlow,
+                meanFlow
             )
 
         # assemble petsc matrix
         return A_ufl.get_assembled_matrix(
             self._mesh,
-            bcs=self.BCs,
+            bcs=self.BCs
         )
 
 
     def get_weight_matrix(
         self,
-        meanFlow,
+        meanFlow
     ):
         """
         Construct the weight matrix representing the time derivative term.  
@@ -461,7 +461,9 @@ class EquationCollectionClass():
             ) # no boundaries applied, else there is a bug when computing the eigenvalue problem
 
 
-    def get_fem_weight_matrix(self):
+    def get_fem_weight_matrix(
+        self
+    ):
         """
         Construct the full Finite Element Method (FEM) weight matrix.
 
@@ -505,7 +507,7 @@ class EquationCollectionClass():
     # TODO Sophie: This is a very quick implementation. Tensor framework needed!
     def get_fem_diffusion_matrix(self,
         diffusionFactor,
-        sponge=None,
+        sponge=None
     ):
         """
         Construct the Finite Element Method (FEM) diffusion matrix.
@@ -584,12 +586,13 @@ class EquationCollectionClass():
         # Assemble petsc matrix
         return D_ufl.get_assembled_matrix(
             self._mesh,
-            self.BCs,
+            self.BCs
         )
 
 
-    def get_full_rhs(self,
-    func,
+    def get_full_rhs(
+            self,
+            func
     ):
         """
         Construct the full FEM right-hand side (RHS) vector.    
@@ -631,7 +634,7 @@ class EquationCollectionClass():
 
     def get_nonlinear_expression(self,
         meanFlow,
-        setBC=True,
+        setBC=True
     ):
         """
         Construct the nonlinear vector expression for the system.
@@ -655,18 +658,19 @@ class EquationCollectionClass():
         for equation in self.equationList:
             equation.add_nonlinear_expression(
                 N_ufl,
-                meanFlow,
+                meanFlow
             )
         if setBC:
             return N_ufl.get_assembled_vector(
                 self._mesh,
-                self.BCs,
+                self.BCs
             )
         else:
             return N_ufl.get_assembled_vector(self._mesh)
 
-    def get_bilinear_operator(self,
-    meanFlow,
+    def get_bilinear_operator(
+        self,
+        meanFlow
     ):
         """
         Construct the bilinear operator matrix.
@@ -689,16 +693,17 @@ class EquationCollectionClass():
         for equation in self.equationList:
             equation.add_bilinear_expression(
                 BL_ufl,
-                meanFlow,
+                meanFlow
             )
         # assemble petsc matrix
         return BL_ufl.get_assembled_matrix(
             self._mesh,
-            bcs=self.BCs,
+            bcs=self.BCs
         )
 
-    def get_forcing_for_input_output(self,
-    meanFlow,
+    def get_forcing_for_input_output(
+        self,
+        meanFlow
     ):
         """
         Construct the forcing vector for input-output analysis.
@@ -720,19 +725,20 @@ class EquationCollectionClass():
         for equation in self.equationList:
             equation.add_linear_expression(
                 f_ufl,
-                meanFlow,
+                meanFlow
             )
         # assemble forcing vector
         forcing = f_ufl.get_assembled_vector(
             self._mesh,
-            self.BCs,
+            self.BCs
         )
         forcing.scale(-1j)
         return forcing
 
 
-    def get_resolvent_norm_response(self,
-    meanFlow,
+    def get_resolvent_norm_response(
+        self,
+        meanFlow
     ):
         """
         Construct the resolvent response norm matrix.
@@ -755,7 +761,7 @@ class EquationCollectionClass():
 
     def get_resolvent_norm_forcing(
         self,
-        meanFlow,
+        meanFlow
     ):
         """
         Construct the resolvent forcing norm matrix.
@@ -779,7 +785,7 @@ class EquationCollectionClass():
 
     def get_resolvent_weighting_fem(
         self,
-        meanFlow,
+        meanFlow
     ):
         """
         Assemble the FEM weighting matrix for resolvent analysis.
@@ -815,7 +821,7 @@ class EquationCollectionClass():
         X,
         param,
         mean,
-        fluc,
+        fluc
     ):
         """
         Compute energy norms for resolvent forcing and response.
@@ -892,8 +898,13 @@ class EquationCollectionClass():
                 fluc.u,
                 i_conj(X[idu]),
             )).ufl_tens * self._coordinateSystem.J_hat * dx     # TKE term
-            self.response_vf += (mean.r_spe * mean.T / mean.rho * fluc.rho * i_conj(X[idrho])).ufl_tens * self._coordinateSystem.J_hat * dx     # density term
-            self.response_vf += (mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T * i_conj(X[idT])).ufl_tens * self._coordinateSystem.J_hat * dx       # Temperature term
+            self.response_vf += (
+                mean.r_spe * mean.T /
+                mean.rho * fluc.rho * i_conj(X[idrho])
+            ).ufl_tens * self._coordinateSystem.J_hat * dx     # density term
+            self.response_vf += (
+                mean.rho*mean.cp/(mean.T*mean.gamma) * fluc.T * i_conj(X[idT])
+            ).ufl_tens * self._coordinateSystem.J_hat * dx       # Temperature term
         elif param.IOResolvent.ResponseNorm == 'TKE':
             logger.debug("Using TKE energy for response norm.")
             idu =  param.Case.SolutionList.index('u')
@@ -910,7 +921,7 @@ class EquationCollectionClass():
         X,
         param,
         mean,
-        fluc,
+        fluc
     ):
         """
         Compute FEM weighting matrix for resolvent input/output scaling.
@@ -954,11 +965,14 @@ class EquationCollectionClass():
                         i_conj(X[varIndex]),
                     ) ).ufl_tens * J_hat * dx
                 else:
-                    self.fem_weighting += ( fluc_var*i_conj(X[varIndex]) ).ufl_tens * J_hat * dx
+                    self.fem_weighting += (
+                        fluc_var*i_conj(X[varIndex]) ).ufl_tens * J_hat * dx
         
 
 
-    def get_restrictor_mat_response(self):
+    def get_restrictor_mat_response(
+        self
+    ):
         """
         Construct the response restrictor matrix for the resolvent analysis.
 
@@ -1019,7 +1033,7 @@ class EquationCollectionClass():
             dtype=complex,
         )
         for index in indices:
-            if len(index) == len(responseRestrictor_scalarP1.x.array[:]):
+            if len(index)   == len(responseRestrictor_scalarP1.x.array[:]):
                 array[index] = responseRestrictor_scalarP1.x.array[:]
             elif len(index) == len(responseRestrictor_scalarP2.x.array[:]):
                 array[index] = responseRestrictor_scalarP2.x.array[:]
@@ -1041,7 +1055,9 @@ class EquationCollectionClass():
 
         return P_petsc
 
-    def get_restrictor_mat_forcing(self):
+    def get_restrictor_mat_forcing(
+        self
+    ):
         """
         Construct the forcing restrictor matrix for the resolvent analysis.
 
@@ -1129,7 +1145,9 @@ class EquationCollectionClass():
 
         return P_petsc
 
-    def get_shrinker_mat_response(self):
+    def get_shrinker_mat_response(
+        self
+    ):
         """
         Construct a shrinker matrix for the resolvent response vector.
 
@@ -1162,7 +1180,9 @@ class EquationCollectionClass():
 
         return P_petsc
 
-    def get_shrinker_mat_forcing(self):
+    def get_shrinker_mat_forcing(
+        self
+    ):
         """
         Creates a (possibly rectangular) matrix which serves the purpose to "shrink" the forcing vector to the requested size 
         (e.g. only consider the velocity components when using the forcing norm "TKE").

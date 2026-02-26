@@ -1,8 +1,8 @@
 #  ___________________________________   _______________________________________________________
 # /-----------------------------------\ /-------------------------------------------------------\
 # |   (         (                (     |  This source code is part of FELiCS                     |
-# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
-# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |
 # |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
 # |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
 # |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
@@ -11,19 +11,20 @@
 # \___________________________________/ \_______________________________________________________/
 #
 # Standard libraries
-from    enum    import Enum
-import  json
+from enum import Enum
+import json
 
 # Third party libraries
-from    dolfinx.fem     import dirichletbc, locate_dofs_topological
-import  numpy           as np
-from    petsc4py.PETSc  import ScalarType
+from dolfinx.fem import dirichletbc, locate_dofs_topological
+import numpy as np
+from petsc4py.PETSc import ScalarType
 
 # Local Libraries and methods
-from 	FELiCS.Misc.logging import Logger
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
+
 
 class BoundaryHandler():
     """
@@ -57,10 +58,11 @@ class BoundaryHandler():
     Notes
     -----
     Raises
-    `ValueError`: If the boundary ID in the file does not exist in the mesh, if the boundary condition name is invalid or if the boundary conditions file is empty or not in a valid JSON format.
+    `ValueError`: If the boundary ID in the file does not exist in the mesh, 
+    if the boundary condition name is invalid or if the boundary conditions file is empty or not in a valid JSON format.
     `FileNotFoundError`: If the BCsFilePath does not exist, indicating the boundary file is missing.
     """
-        
+
     def __init__(
         self,
         variables,
@@ -70,75 +72,85 @@ class BoundaryHandler():
 
         ###### initialize list of boundaries ########
 
-        #1. get info from felics mesh and store variables
-        self.facet_tags             = mesh.facet_tags
-        self.IDs                    = np.unique(self.facet_tags.values)
-        self.variables              = variables
+        # 1. get info from felics mesh and store variables
+        self.facet_tags = mesh.facet_tags
+        self.IDs = np.unique(self.facet_tags.values)
+        self.variables = variables
 
-        #2. read bc file 
+        # 2. read bc file
         logger.debug(f"Reading boundary conditions from '{BCsFilePath}'")
         try:
             with open(
-            BCsFilePath,
-            'r',
+                BCsFilePath,
+                'r',
             ) as file:
                 # Attempt to load the JSON data. This will fail for empty or invalid files.
                 BCsInfo = json.load(file)
-            logger.debug("Successfully loaded and parsed the boundary conditions file.")
+            logger.debug(
+                "Successfully loaded and parsed the boundary conditions file.")
         except FileNotFoundError:
-            logger.error(f"Error: The boundary condition file was not found at '{BCsFilePath}'")
-            raise FileNotFoundError(f"The boundary condition file was not found at '{BCsFilePath}'")
+            logger.error(
+                f"Error: The boundary condition file was not found at '{BCsFilePath}'")
+            raise FileNotFoundError(
+                f"The boundary condition file was not found at '{BCsFilePath}'")
         except json.JSONDecodeError:
-            logger.error(f"Error: The file '{BCsFilePath}' is empty or not in a valid JSON format.")
-            raise ValueError(f"The file '{BCsFilePath}' is empty or not in a valid JSON format.")
-               
+            logger.error(
+                f"Error: The file '{BCsFilePath}' is empty or not in a valid JSON format.")
+            raise ValueError(
+                f"The file '{BCsFilePath}' is empty or not in a valid JSON format.")
 
-        #3. create boundary object for each boundary
+        # 3. create boundary object for each boundary
         self.boundaryList = []
         for ID in BCsInfo:
             id_int = int(ID)
-            if id_int not in self.IDs: # check if the boundary ID exists in mesh file
-                logger.error(f"The given boundary ID '{ID}' in your boundary file does not exist. The boundary IDs given from your mesh file are: '{self.IDs}'. ")
-                raise ValueError("One of the given boundary IDs does not exist. Please read the FELiCS error message for details.")
+            if id_int not in self.IDs:  # check if the boundary ID exists in mesh file
+                logger.error(
+                    f"The given boundary ID '{ID}' in your boundary file does not exist. The boundary IDs given from your mesh file are: '{self.IDs}'. ")
+                raise ValueError(
+                    "One of the given boundary IDs does not exist. Please read the FELiCS error message for details.")
             info = BCsInfo[ID]
-            name = info["name"].lower() # make the info in the bc file non-case sensitive
-            if   name  == "custom":
+            # make the info in the bc file non-case sensitive
+            name = info["name"].lower()
+            if name == "custom":
                 bc = Custom(
                     id_int,
                     BCsInfo[ID],
                     self,
                 )
-            elif name  == "zerodirichlet":
+            elif name == "zerodirichlet":
                 bc = ZeroDirichlet(
                     id_int,
                     BCsInfo[ID],
                     self,
                 )
-            elif name  == "wall":
+            elif name == "wall":
                 bc = Wall(
                     id_int,
                     BCsInfo[ID],
                     self,
                 )
-            elif name  == "symmetry":
+            elif name == "symmetry":
                 bc = Symmetry(
                     id_int,
                     BCsInfo[ID],
                     self,
                 )
-            elif name  == "none":
+            elif name == "none":
                 bc = BoundaryCondition(
                     id_int,
                     BCsInfo[ID],
                     self,
-                ) # this is the default boundary condition, nothing is done for any variable
+                )  # this is the default boundary condition, nothing is done for any variable
             else:
-                logger.error(f"The boundary condition with name '{name}' does not exist. Please choose from the following list: [custom, zeroDirichlet, wall, symmetry, none]. The names are not case sensitive. ")
-                raise ValueError("One of the set boudary conditions does not exist. Please read the FELiCS error message for details.")
+                logger.error(
+                    f"The boundary condition with name '{name}' does not exist. Please choose from the following list: [custom, zeroDirichlet, wall, symmetry, none]. The names are not case sensitive. ")
+                raise ValueError(
+                    "One of the set boudary conditions does not exist. Please read the FELiCS error message for details.")
             self.boundaryList.append(bc)
 
-
-    def get_list_of_boundaries(self):
+    def get_list_of_boundaries(
+        self
+    ):
         """
         Return the list of all boundary condition objects.
 
@@ -149,7 +161,6 @@ class BoundaryHandler():
         """
 
         return self.boundaryList
-
 
     def get_list_of_dirichlet_b_cs_for_dolfinx(
         self,
@@ -176,46 +187,51 @@ class BoundaryHandler():
         This function supports mixed function spaces and variables with multiple components.
         Logs a debug message each time a boundary condition is added.
         """
-        gdim = self.facet_tags.topology.dim # NOTE: THIS IS VERY PRELIMINARY AND HAS TO BE CHECKED
+        gdim = self.facet_tags.topology.dim  # NOTE: THIS IS VERY PRELIMINARY AND HAS TO BE CHECKED
         BCs = []
         for boundary in self.boundaryList:
             for var in self.variables:
                 index = self.variables.index(var)
-                if len(var[1])==0 and boundary.types[index][0] == BoundaryType.DIRICHLET:
+                if len(var[1]) == 0 and boundary.types[index][0] == BoundaryType.DIRICHLET:
                     value = boundary.values[index][0]
                     space = functionSpace.sub(index)
-                    dofs  = locate_dofs_topological(
+                    dofs = locate_dofs_topological(
                         space,
                         gdim-1,
-                        self.facet_tags.indices[self.facet_tags.values==boundary.ID],
+                        self.facet_tags.indices[self.facet_tags.values ==
+                                                boundary.ID],
                     )
                     BCs.append(dirichletbc(
                         value,
                         dofs,
                         space,
                     ))
-                    logger.debug("Adding Dirichlet BC for "+var[0]+ " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
-                else: 
+                    logger.debug("Adding Dirichlet BC for "+var[0] + " in equation "+str(
+                        index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
+                else:
                     for index2 in range(len(var[1])):
                         if boundary.types[index][index2] == BoundaryType.DIRICHLET:
                             value = boundary.values[index][index2]
                             space = functionSpace.sub(index).sub(index2)
-                            dofs  = locate_dofs_topological(
+                            dofs = locate_dofs_topological(
                                 space,
                                 gdim-1,
-                                self.facet_tags.indices[self.facet_tags.values==boundary.ID],
+                                self.facet_tags.indices[self.facet_tags.values ==
+                                                        boundary.ID],
                             )
                             BCs.append(dirichletbc(
                                 value,
                                 dofs,
                                 space,
                             ))
-                            logger.debug("Adding Dirichlet BC for "+var[0]+var[1][index2] + " in equation "+str(index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
+                            logger.debug("Adding Dirichlet BC for "+var[0]+var[1][index2] + " in equation "+str(
+                                index)+" with value "+str(value)+" on boundary with index "+str(boundary.ID))
 
         return BCs
-    
 
-    def get_list_of_nonlinear_boundaries(self):
+    def get_list_of_nonlinear_boundaries(
+            self
+    ):
         """
         Placeholder for returning nonlinear boundary condition objects.
 
@@ -223,11 +239,12 @@ class BoundaryHandler():
         -----
         This method is not implemented yet.
         """
-        #TODO Sophie: fill out later for base flow computations
+        # TODO Sophie: fill out later for base flow computations
         pass
 
-
-    def get_list_of_nonlinear_dirichlet_b_cs_for_dolfinx(self):
+    def get_list_of_nonlinear_dirichlet_b_cs_for_dolfinx(
+            self
+    ):
         """
         Placeholder for returning nonlinear DirichletBCs for Dolfinx.
 
@@ -235,7 +252,7 @@ class BoundaryHandler():
         -----
         This method is not implemented yet.
         """
-        #TODO Sophie: fill out later for base flow computations
+        # TODO Sophie: fill out later for base flow computations
         pass
 
 
@@ -257,10 +274,10 @@ class BoundaryType(Enum):
     The NEUMANN type currently has no distinct behavior; this will change in future updates.
     """
 
-    NONE      = 0
+    NONE = 0
     DIRICHLET = 1
-    NEUMANN   = 2 # equal to "none" at the moment; this should be changed in the future, and also communicated really well
-    #MIXED     = 3
+    NEUMANN = 2  # equal to "none" at the moment; this should be changed in the future, and also communicated really well
+    # MIXED     = 3
 
 
 class BoundaryCondition():
@@ -297,22 +314,23 @@ class BoundaryCondition():
         Boundary values for each variable/component.
     """
 
-    def __init__(self,
-    boundaryID,
-    boundaryInfo,
-    boundaryHandler,
+    def __init__(
+        self,
+        boundaryID,
+        boundaryInfo,
+        boundaryHandler,
     ):
-        self.ID   = boundaryID
+        self.ID = boundaryID
         self.info = boundaryInfo
-        self.bH   = boundaryHandler
+        self.bH = boundaryHandler
         self.name = "none"
 
         # initialize types and values lists with "NONE" and "0"
-        self.types         = []
-        self.values        = []
+        self.types = []
+        self.values = []
         for var in self.bH.variables:
             name, components = var
-            comp_types  = []
+            comp_types = []
             comp_values = []
             if len(components) > 0:
                 for comp in components:
@@ -323,7 +341,6 @@ class BoundaryCondition():
                 comp_values.append(0)
             self.types.append(comp_types)
             self.values.append(comp_values)
-
 
 
 class Custom(BoundaryCondition):
@@ -363,17 +380,17 @@ class Custom(BoundaryCondition):
             boundaryHandler,
         )
         self.name = "custom"
-        # This boundary condition takes what is given under "specifics". 
+        # This boundary condition takes what is given under "specifics".
 
-        # TODO Sophie: write warning if no specifics are there, and say that everything has been set to "None" (which basically means no boundary conditions) 
+        # TODO Sophie: write warning if no specifics are there, and say that everything has been set to "None" (which basically means no boundary conditions)
         specs = self.info["specifics"]
 
         for spec in specs:
             # 1. read specs: get variable name, type and value
             # TODO Sophie: catch "KeyError" if spec type or spec variable does not exist or if the value is not a number; give out easy to understand error message
-            var    = spec["variable"]
+            var = spec["variable"]
             bcType = BoundaryType[spec["type"].upper()]
-            value  = spec["value"]
+            value = spec["value"]
 
             # 2. get index of specific variable
             for v in self.bH.variables:
@@ -381,17 +398,18 @@ class Custom(BoundaryCondition):
                     component = var[-1]
                 else:
                     component = ""
-                if  v[0]+component == var and  (len(component)==0 or component in v[1]): #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked
+                # var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked
+                if v[0]+component == var and (len(component) == 0 or component in v[1]):
                     index1 = self.bH.variables.index(v)
-                    if len(v[1])>1:
+                    if len(v[1]) > 1:
                         index2 = v[1].index(component)
                     else:
                         index2 = 0
 
             # 3. set boundary condition
-            self.types[index1][index2]  = bcType
-            self.values[index1][index2] = ScalarType(np.real(value) + 1j*np.imag(value))
-
+            self.types[index1][index2] = bcType
+            self.values[index1][index2] = ScalarType(
+                np.real(value) + 1j*np.imag(value))
 
 
 class ZeroDirichlet(BoundaryCondition):
@@ -413,10 +431,10 @@ class ZeroDirichlet(BoundaryCondition):
     """
 
     def __init__(self,
-        boundaryID,
-        boundaryInfo,
-        boundaryHandler,
-    ):
+                 boundaryID,
+                 boundaryInfo,
+                 boundaryHandler,
+                 ):
         super().__init__(
             boundaryID,
             boundaryInfo,
@@ -427,9 +445,8 @@ class ZeroDirichlet(BoundaryCondition):
 
         for i in range(len(self.types)):
             for j in range(len(self.types[i])):
-                self.types[i][j]  = BoundaryType.DIRICHLET
-                self.values[i][j] = ScalarType(0.+0.j) 
-
+                self.types[i][j] = BoundaryType.DIRICHLET
+                self.values[i][j] = ScalarType(0.+0.j)
 
 
 class Wall(BoundaryCondition):
@@ -467,17 +484,17 @@ class Wall(BoundaryCondition):
             boundaryHandler,
         )
         self.name = "wall"
-        # This boundary condition, at the moment, sets only the velocity components to zero, 
+        # This boundary condition, at the moment, sets only the velocity components to zero,
         # all other variables have no boundary condition ("none").
         # TODO Sophie: add "attribute":  e.g. "adiabatic", "isothermal"
-      
+
         for var in self.bH.variables:
             if var[0] == "u" or var[0] == "rhou":
                 index_u = self.bH.variables.index(var)
                 for comp in var[1]:
                     index_comp = var[1].index(comp)
-                    self.types[index_u][index_comp]  = BoundaryType.DIRICHLET
-                    self.values[index_u][index_comp] = ScalarType(0.+0.j) 
+                    self.types[index_u][index_comp] = BoundaryType.DIRICHLET
+                    self.values[index_u][index_comp] = ScalarType(0.+0.j)
                 break
 
 
@@ -527,9 +544,9 @@ class Symmetry(BoundaryCondition):
         for spec in specs:
             # 1. read specs: get variable name, type and value
             # TODO Sophie: catch "KeyError" if spec type does not exist and give out easy to understand error message
-            var    = spec["variable"]
+            var = spec["variable"]
             bcType = BoundaryType[spec["type"].upper()]
-            value  = spec["value"]
+            value = spec["value"]
 
             # 2. get index of specific variable
             for v in self.bH.variables:
@@ -537,18 +554,16 @@ class Symmetry(BoundaryCondition):
                     component = var[-1]
                 else:
                     component = ""
-                # TODO Sophie: catch if a component is given which should not exist 
-                if  v[0]+component == var and  (len(component) == 0 or component in v[1]): #var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked
+                # TODO Sophie: catch if a component is given which should not exist
+                # var can be e.g.  ux, uy or rhoux, rhouy; var can also be e.g. rho or p; thus both has to be checked
+                if v[0]+component == var and (len(component) == 0 or component in v[1]):
                     index1 = self.bH.variables.index(v)
-                    if len(v[1])>1:
+                    if len(v[1]) > 1:
                         index2 = v[1].index(component)
                     else:
                         index2 = 0
 
             # 3. set boundary condition
-            self.types[index1][index2]  = bcType
-            self.values[index1][index2] = ScalarType(np.real(value) + 1j * np.imag(value))
-
-
-
-
+            self.types[index1][index2] = bcType
+            self.values[index1][index2] = ScalarType(
+                np.real(value) + 1j * np.imag(value))
