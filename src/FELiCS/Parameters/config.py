@@ -190,6 +190,7 @@ class config(ABC):
             filename = config_dict[field.split("_")[0]][field.split("_")[1]]
             if not os.path.isfile(filename):
                 log_and_raise(logger, f"File '{field.split('_')[1]}' from '{field.split('_')[0]}' not found.", Exception)
+    
     def importFromFile(self, configFilePath):
         """
         Import parameters from a .json file and update configuration.
