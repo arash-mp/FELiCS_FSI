@@ -15,6 +15,7 @@ public
 logs
 *.vscode/
 .DS_Store
+documentation/.DS_Store
 .github
 .github/*
 .github/*/*
