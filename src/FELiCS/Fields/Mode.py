@@ -509,6 +509,12 @@ class Mode(Field):
             Color limits passed to the underlying Field plotter.
         """
 
+        
+        # Check that the mode is defined on a 2D mesh, 3D not yet implemented
+        if self.mesh.dolfinxMesh.topology.dim != 2:
+            logger.warning("Mode.plot(): plotting is currently only implemented for 2D meshes. Returning without plotting.")
+            return
+
         # If the mode is already scalar, plot directly
         if self.info['type'] == 'scalar':
             return super().plot(

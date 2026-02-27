@@ -15,7 +15,6 @@ import  os
 
 # Third party libraries
 import  h5py
-
 import numpy as np
 
 # Local Libraries and methods
