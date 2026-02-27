@@ -20,11 +20,7 @@ import numpy as np
 
 # Local Libraries and methods
 from    FELiCS.Fields.FluctuationClass  import FluctuationSolutions
-from    FELiCS.Fields.Mode              import (
-    Mode,
-    AnalysisType,
-    ModeType,
-)
+from    FELiCS.Fields.Mode              import Mode, AnalysisType, ModeType
 from 	FELiCS.Misc.logging             import Logger,  log_and_raise
 
 
@@ -601,7 +597,8 @@ class ModeCollection():
         if not adjoint:
             growthRateMax = -9990.
             for mode in self.modeList:
-                if mode.isAdjoint == adjoint:
+
+                if mode.modeType == ModeType.DIRECT:
                     eigen_value = mode.eigen_value
                     if np.imag(eigen_value) > growthRateMax:
                         growthRateMax = np.imag(eigen_value)
@@ -609,7 +606,7 @@ class ModeCollection():
         elif adjoint:
             growthRateMin = 9990.
             for mode in self.modeList:
-                if mode.isAdjoint == adjoint:
+                if mode.modeType == ModeType.ADJOINT:
                     eigen_value = mode.eigen_value
                     if np.imag(eigen_value) < growthRateMin:
                         growthRateMin = np.imag(eigen_value)
@@ -872,6 +869,7 @@ class ModeCollection():
         modeType=None,
         gain_number=None
     ):
+
         """
         Import mode collection data from a specified folder using a reader.
 
@@ -892,6 +890,10 @@ class ModeCollection():
             numbers are imported.
         """
         
+        # If import folder is not specified, use the source directory of the reader as default
+        if importFolder is None:
+            importFolder = reader._sourceDir
+
         # Get the list of mode files in the directory, omegas values, and mode types
         h5Files, fileOmegas, fileTypes, gainNb  = self._get_and_sort_mode_files_in_dir(importFolder)
         

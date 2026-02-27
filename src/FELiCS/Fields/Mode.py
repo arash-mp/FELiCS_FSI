@@ -480,11 +480,101 @@ class Mode(Field):
             logger.info(f"  Frequency:     {self.frequency}")
         logger.info(f"  Wave Number:   {self.wave_number}") 
 
+    def plot(
+        self,
+        variableName=None,
+        xlim=None,
+        ylim=None,
+        plotType="real",
+        clim=None
+    ):
+        """
+        Plot a component of the mode using the base Field plot method.
+
+        For mixed modes, a specific variable can be selected by name. If no
+        name is provided, the first scalar field or the first component of
+        the first vector field is plotted.
+
+        Parameters
+        ----------
+        variableName : str or None, optional
+            Name of the variable to plot. This may refer to a mixed subfield
+            name or a component of a vector subfield (e.g. ``u_x``). If None,
+            a default component is chosen.
+        xlim, ylim : tuple, optional
+            Axis limits passed to the underlying Field plotter.
+        plotType : {'real', 'imag', 'magnitude'}, optional
+            Component of the complex field to plot. Default is ``"real"``.
+        clim : tuple, optional
+            Color limits passed to the underlying Field plotter.
+        """
+
+        # If the mode is already scalar, plot directly
+        if self.info['type'] == 'scalar':
+            return super().plot(
+                                xlim=xlim,
+                                ylim=ylim,
+                                plotType=plotType,
+                                clim=clim
+                                )
+
+        fields  = self.getListOfSubFields()
+        names   = self.getNamesOfSubFields()
+
+        selected_field = None
+
+        if variableName is not None:
+            if variableName in names:
+                selected_field = fields[names.index(variableName)]
+            else:
+
+                # Try to match a vector component name inside vector subfields
+                for field in fields:
+                    if field.info['type'] == 'vector':
+                        component_names     = field.getNamesOfSubFields()
+                        if variableName in component_names:
+                            selected_field  = field.getListOfSubFields()[
+                                component_names.index(variableName)
+                            ]
+                            break
+                if selected_field is None:
+                    logger.warning(
+                        f"Mode.plot(): variable '{variableName}' not found. "
+                        "Using the default component instead."
+                    )
+
+        if selected_field is None:
+
+            # Default: first scalar field or first component of first vector
+
+            first_field = fields[0]
+            if first_field.info['type']     == 'vector':
+                selected_field = first_field.getListOfSubFields()[0]
+            elif first_field.info['type']   == 'mixed':
+
+                # Take the first scalar component from the mixed subfield
+                nested_fields   = first_field.getListOfSubFields()
+                nested_first    = nested_fields[0]
+                if nested_first.info['type'] == 'vector':
+                    selected_field  = nested_first.getListOfSubFields()[0]
+                else:
+                    selected_field  = nested_first
+            else:
+                selected_field      = first_field
+
+        return selected_field.plot(
+                                    xlim=xlim,
+                                    ylim=ylim,
+                                    plotType=plotType,
+                                    clim=clim
+                                   )
+
     def export_to_h5(
         self,
         writer,
         fileName=None
-    ):
+     ):
+
         """
         Export the mode to an HDF5 file.
 
@@ -502,6 +592,7 @@ class Mode(Field):
             Base file name (without directory). If ``None``, a default is
             generated based on analysis type and mode properties.
         """
+
         # create standard fileName if none is given
         if fileName is None:
             fileName = ("Mode_" 
