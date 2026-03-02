@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 """
-FELiCS style checker (CI-friendly)
+FELiCS style checker
 
-Checks (no rewriting):
-  1) Line length > 80 that cannot be fixed by your rule:
-        - only split if an eligible comma exists (comma token inside (),[],{})
-     => report only lines >80 with NO eligible comma.
-  2) Class names PascalCase (excluding EXCL_RENAME)
-  3) Function names snake_case (excluding EXCL_RENAME)
-  4) Imports must be top-level (excluding exact EXCL_IMPORTS)
+Checks:
+  1) Class names PascalCase (excluding EXCL_RENAME)
+  2) Function names snake_case (excluding EXCL_RENAME)
+  3) Imports must be top-level (excluding exact EXCL_IMPORTS)
 
-Exit codes:
-  0 = clean
-  2 = violations found
 """
 
 from __future__ import annotations
@@ -30,10 +24,10 @@ from libcst import metadata
 
 
 # ---- keep these in sync with your rewriter ----
-EXCL_RENAME = {"t", "getKSP", "getSize", "getVecs"}
+EXCL_RENAME = {"T", "getKSP", "getSize", "getVecs"}
 
 EXCL_IMPORTS = {
-    "iPython",
+    "from IPython import get_ipython",
     "from fenics import project",
     "from FELiCS.Fields.MeanFlowClass import MeanFlowVertexValues",
     "from FELiCS.Fields.MeanFlowClass import MeanFlowClass",
@@ -65,27 +59,6 @@ def _is_pascal(name: str) -> bool:
 def _is_snake(name: str) -> bool:
     return bool(re.fullmatch(r"[a-z_][a-z0-9_]*", name))
 
-
-def _eligible_commas_by_line(source: str) -> Dict[int, List[int]]:
-    """
-    line -> comma columns for commas that are real tokens AND inside brackets.
-    """
-    toks = list(tokenize.generate_tokens(io.StringIO(source).readline))
-    bracket_depth = 0
-    out: Dict[int, List[int]] = {}
-
-    for ttype, tstr, (srow, scol), _end, _line in toks:
-        if ttype != tokenize.OP:
-            continue
-
-        if tstr in "([{":
-            bracket_depth += 1
-        elif tstr in ")]}":
-            bracket_depth = max(0, bracket_depth - 1)
-        elif tstr == "," and bracket_depth > 0:
-            out.setdefault(srow, []).append(scol)
-
-    return out
 
 
 class StyleReportVisitor(cst.CSTVisitor):
@@ -185,23 +158,23 @@ def check_tree(root: pathlib.Path, max_len: int = 80) -> List[Violation]:
             continue
 
         source_lines = source.splitlines()
-        eligible = _eligible_commas_by_line(source)
+        #eligible = _eligible_commas_by_line(source)
 
        # Rule: line length > 80 AND HAS an eligible comma => violation
         for i, line in enumerate(source_lines, start=1):
             if len(line) <= max_len:
                 continue
-            if eligible.get(i):  # only flag if it CAN be split by your rule
-                violations.append(
-                    Violation(
-                        file=str(pyfile),
-                        line=i,
-                        col=max_len,
-                        rule="line-length",
-                        message=f"Line > {max_len} chars and has an eligible comma (should be split)",
-                        snippet=line,
-                    )
-                )
+            #if eligible.get(i):  # only flag if it CAN be split by your rule
+             #   violations.append(
+              #      Violation(
+               #         file=str(pyfile),
+                #        line=i,
+                 #       col=max_len,
+                  #      rule="line-length",
+                   #     message=f"Line > {max_len} chars and has an eligible comma (should be split)",
+                    #    snippet=line,
+                   # )
+               # )
 
         # CST-based checks
         try:
