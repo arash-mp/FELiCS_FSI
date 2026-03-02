@@ -1,1611 +1,1611 @@
 [
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/run_resolvent.py",
+    "/src/run_resolvent.py",
     "runResolvent",
     "run_resolvent"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/run_modal.py",
+    "/src/run_modal.py",
     "runModal",
     "run_modal"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/run_input_output.py",
+    "/src/run_input_output.py",
     "runInputOutput",
     "run_input_output"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/functions.py",
+    "/src/FELiCS/Misc/functions.py",
     "getLastGitCommit",
     "get_last_git_commit"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "setTrueDimension",
     "set_true_dimension"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iDot",
     "i_dot"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iInner",
     "i_inner"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iGrad",
     "i_grad"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iDiv",
     "i_div"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iT",
     "i_t"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iTr",
     "i_tr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iIdentity",
     "i_identity"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iConj",
     "i_conj"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Misc/tensorUtils.py",
+    "/src/FELiCS/Misc/tensorUtils.py",
     "iOuter",
     "i_outer"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Boundary.py",
+    "/src/FELiCS/Equation/Boundary.py",
     "getListOfBoundaries",
     "get_list_of_boundaries"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Boundary.py",
+    "/src/FELiCS/Equation/Boundary.py",
     "getListOfDirichletBCsForDolfinx",
     "get_list_of_dirichlet_b_cs_for_dolfinx"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Boundary.py",
+    "/src/FELiCS/Equation/Boundary.py",
     "getListOfNonlinearBoundaries",
     "get_list_of_nonlinear_boundaries"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Boundary.py",
+    "/src/FELiCS/Equation/Boundary.py",
     "getListOfNonlinearDirichletBCsForDolfinx",
     "get_list_of_nonlinear_dirichlet_b_cs_for_dolfinx"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getLinearOperator",
     "get_linear_operator"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getWeightMatrix",
     "get_weight_matrix"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getFEMWeightMatrix",
     "get_fem_weight_matrix"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getFEMDiffusionMatrix",
     "get_fem_diffusion_matrix"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getFullRHS",
     "get_full_rhs"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getNonlinearExpression",
     "get_nonlinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getBilinearOperator",
     "get_bilinear_operator"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getForcingForInputOutput",
     "get_forcing_for_input_output"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getResolventNorm_response",
     "get_resolvent_norm_response"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getResolventNorm_forcing",
     "get_resolvent_norm_forcing"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getResolventWeighting_FEM",
     "get_resolvent_weighting_fem"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "computeResolventNorms",
     "compute_resolvent_norms"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "computeResolventFEMWeights",
     "compute_resolvent_fem_weights"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getRestrictorMatResponse",
     "get_restrictor_mat_response"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getRestrictorMatForcing",
     "get_restrictor_mat_forcing"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getShrinkerMatResponse",
     "get_shrinker_mat_response"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/EquationCollection.py",
+    "/src/FELiCS/Equation/EquationCollection.py",
     "getShrinkerMatForcing",
     "get_shrinker_mat_forcing"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "getReactionMechanism",
     "get_reaction_mechanism"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "getSpeciesList",
     "get_species_list"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "readSpeciesDict",
     "read_species_dict"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "Sc",
     "sc"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "getSpeciesDict",
     "get_species_dict"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "reactionMechanism",
     "reaction_mechanism"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "Pr",
     "pr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "Viscosity",
     "viscosity"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/MixtureClass.py",
+    "/src/FELiCS/Equation/MixtureClass.py",
     "Species",
     "species"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/UflDecorator.py",
+    "/src/FELiCS/Equation/UflDecorator.py",
     "getAssembledMatrix",
     "get_assembled_matrix"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/UflDecorator.py",
+    "/src/FELiCS/Equation/UflDecorator.py",
     "getAssembledVector",
     "get_assembled_vector"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/UflDecorator.py",
+    "/src/FELiCS/Equation/UflDecorator.py",
     "getAssembledScalar",
     "get_assembled_scalar"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/UflDecorator.py",
+    "/src/FELiCS/Equation/UflDecorator.py",
     "lhsIsZero",
     "lhs_is_zero"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/UflDecorator.py",
+    "/src/FELiCS/Equation/UflDecorator.py",
     "rhsIsZero",
     "rhs_is_zero"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/UflDecorator.py",
+    "/src/FELiCS/Equation/UflDecorator.py",
     "isZero",
     "is_zero"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/UflDecorator.py",
+    "/src/FELiCS/Equation/UflDecorator.py",
     "printExpression",
     "print_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/UflDecorator.py",
+    "/src/FELiCS/Equation/UflDecorator.py",
     "_setCorrectMeshObject",
     "_set_correct_mesh_object"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "meshAxisNames",
     "mesh_axis_names"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "fullAxisNames",
     "full_axis_names"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "_triangulationImportMesh",
     "_triangulation_import_mesh"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "calcMeshP2Coords",
     "calc_mesh_p2_coords"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "calcMeshP1Coords",
     "calc_mesh_p1_coords"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "mappingImportToCalcP2",
     "mapping_import_to_calc_p2"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "importMeshCoords",
     "import_mesh_coords"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "_assembleComplexArrays",
     "_assemble_complex_arrays"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Reader.py",
+    "/src/FELiCS/IO/Reader.py",
     "importInField",
     "import_in_field"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Writer.py",
+    "/src/FELiCS/IO/Writer.py",
     "exportListOfFieldsToH5",
     "export_list_of_fields_to_h5"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Writer.py",
+    "/src/FELiCS/IO/Writer.py",
     "exportFieldToH5",
     "export_field_to_h5"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Writer.py",
+    "/src/FELiCS/IO/Writer.py",
     "_getListOfScalarFields",
     "_get_list_of_scalar_fields"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Writer.py",
+    "/src/FELiCS/IO/Writer.py",
     "_getExportField",
     "_get_export_field"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Writer.py",
+    "/src/FELiCS/IO/Writer.py",
     "_interpolateWithGridData",
     "_interpolate_with_grid_data"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Writer.py",
+    "/src/FELiCS/IO/Writer.py",
     "_createXMFHeader",
     "_create_xmf_header"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Writer.py",
+    "/src/FELiCS/IO/Writer.py",
     "_createXMFForScalarField",
     "_create_xmf_for_scalar_field"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Writer.py",
+    "/src/FELiCS/IO/Writer.py",
     "_createXMFFooter",
     "_create_xmf_footer"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Mapping.py",
+    "/src/FELiCS/IO/Mapping.py",
     "calculateMappingFromSpaces",
     "calculate_mapping_from_spaces"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/IO/Mapping.py",
+    "/src/FELiCS/IO/Mapping.py",
     "calculateMappingFromDofs",
     "calculate_mapping_from_dofs"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Solvers/LinearSolver.py",
+    "/src/FELiCS/Solvers/LinearSolver.py",
     "solveGeneralEigenproblem",
     "solve_general_eigenproblem"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Solvers/LinearSolver.py",
+    "/src/FELiCS/Solvers/LinearSolver.py",
     "solveSVDOfResolvent",
     "solve_svd_of_resolvent"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Solvers/LinearSolver.py",
+    "/src/FELiCS/Solvers/LinearSolver.py",
     "solveEquationSystem",
     "solve_equation_system"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Solvers/LinearSolver.py",
+    "/src/FELiCS/Solvers/LinearSolver.py",
     "solveTransposeEquationSystem",
     "solve_transpose_equation_system"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Solvers/LinearSolver.py",
+    "/src/FELiCS/Solvers/LinearSolver.py",
     "createEquationSystemSolver",
     "create_equation_system_solver"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Solvers/LinearSolver.py",
+    "/src/FELiCS/Solvers/LinearSolver.py",
     "solveEquationSystemWithPredefinedSolver",
     "solve_equation_system_with_predefined_solver"
   ],
 
 
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Solvers/LinearSolver.py",
+    "/src/FELiCS/Solvers/LinearSolver.py",
     "destroySelf",
     "destroy_self"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "dotdict",
     "Dotdict"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getAllSettingsDict",
     "get_all_settings_dict"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "importFromFile",
     "import_from_file"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "importFromH5File",
     "import_from_h5_file"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "readDomainData",
     "read_domain_data"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getMesh",
     "get_mesh"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getInternalVelocityComponents",
     "get_internal_velocity_components"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getExternalVelocityComponents",
     "get_external_velocity_components"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getVelocityComponents",
     "get_velocity_components"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getTransportedQuantityList",
     "get_transported_quantity_list"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getEquationList",
     "get_equation_list"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getStateVectorVariables",
     "get_state_vector_variables"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getExtendedTransportedQuantityList",
     "get_extended_transported_quantity_list"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getMeanFlowFieldNames",
     "get_mean_flow_field_names"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "getNVelocityComponents",
     "get_n_velocity_components"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Parameters/Config.py",
+    "/src/FELiCS/Parameters/Config.py",
     "config",
     "Config"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getNamesOfSubFields",
     "get_names_of_sub_fields"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "setNamesOfSubFields",
     "set_names_of_sub_fields"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getTensor",
     "get_tensor"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "isReal",
     "is_real"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getListOfSubFields",
     "get_list_of_sub_fields"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "setListOfSubFields",
     "set_list_of_sub_fields"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "describeFunctionSpace",
     "describe_function_space"
   ],
 
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getCoefficientArray",
     "get_coefficient_array"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getRealCoefficientArray",
     "get_real_coefficient_array"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getImagCoefficientArray",
     "get_imag_coefficient_array"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "setCoefficientArray",
     "set_coefficient_array"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "setConstantValue",
     "set_constant_value"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getPetscVector",
     "get_petsc_vector"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "setBoundaryConditions",
     "set_boundary_conditions"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getGradientField",
     "get_gradient_field"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "calculateL2Norm",
     "calculate_l2_norm"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "getVorticityField",
     "get_vorticity_field"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "exportToH5",
     "export_to_h5"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "importData",
     "import_data"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "evaluateUflExpression",
     "evaluate_ufl_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "evaluateUflTensorExpression",
     "evaluate_ufl_tensor_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Field.py",
+    "/src/FELiCS/Fields/Field.py",
     "smoothUflTensorExpression",
     "smooth_ufl_tensor_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "importDataFromFileAndExportToH5",
     "import_data_from_file_and_export_to_h5"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "initLamDiff",
     "init_lam_diff"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "initThermodynamicQuantities",
     "init_thermodynamic_quantities"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "calculateSpeciesEnthalpy",
     "calculate_species_enthalpy"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "getVertexValues",
     "get_vertex_values"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "_getMeanFieldsToBeRead",
     "_get_mean_fields_to_be_read"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "addCustomMeanFlowQuantity",
     "add_custom_mean_flow_quantity"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "meanFlowClass",
     "MeanFlowClass"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/MeanFlowClass.py",
+    "/src/FELiCS/Fields/MeanFlowClass.py",
     "meanFlowVertexValues",
     "MeanFlowVertexValues"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FluctuationClass.py",
+    "/src/FELiCS/Fields/FluctuationClass.py",
     "fluctuationClass",
     "FluctuationClass"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FluctuationClass.py",
+    "/src/FELiCS/Fields/FluctuationClass.py",
     "_flucExportWrapper",
     "_fluc_export_wrapper"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FluctuationClass.py",
+    "/src/FELiCS/Fields/FluctuationClass.py",
     "_importSolVector",
     "_import_sol_vector"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FluctuationClass.py",
+    "/src/FELiCS/Fields/FluctuationClass.py",
     "solutVector",
     "solut_vector"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FluctuationClass.py",
+    "/src/FELiCS/Fields/FluctuationClass.py",
     "solutionKind",
     "solution_kind"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FluctuationClass.py",
+    "/src/FELiCS/Fields/FluctuationClass.py",
     "gainNumber",
     "gain_number"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FluctuationClass.py",
+    "/src/FELiCS/Fields/FluctuationClass.py",
     "gainValue",
     "gain_value"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FluctuationClass.py",
+    "/src/FELiCS/Fields/FluctuationClass.py",
     "fluctuationSolutions",
     "FluctuationSolutions"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "isMeanFlowClass",
     "is_mean_flow_class"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "isMeanFlowVertexValuesClass",
     "is_mean_flow_vertex_values_class"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "D",
     "d"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "dQ",
     "d_q"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "fieldDict",
     "field_dict"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "fieldDict",
     "field_dict"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "FieldNames",
     "field_names"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "FieldNames",
     "field_names"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "forcingDomain",
     "forcing_domain"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "Pr",
     "pr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "UnitT",
     "unit_t"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "hSpec",
     "h_spec"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "meanflowFilename",
     "meanflow_filename"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "molarMass",
     "molar_mass"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "nuTot",
     "nu_tot"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "RR_prefactor",
     "rr_prefactor"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "Q",
     "q"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "R_spe",
     "r_spe"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "rhoY",
     "rho_y"
   ],
 
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "Tb",
     "tb"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "Tu",
     "tu"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "Tm",
     "tm"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "responseDomain",
     "response_domain"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "Y",
     "y"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/FieldProperties.py",
+    "/src/FELiCS/Fields/FieldProperties.py",
     "fieldProperties",
     "FieldProperties"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Mode.py",
+    "/src/FELiCS/Fields/Mode.py",
     "gainNumber",
     "gain_number"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Mode.py",
+    "/src/FELiCS/Fields/Mode.py",
     "gainNumber",
     "gain_number"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Mode.py",
+    "/src/FELiCS/Fields/Mode.py",
     "eigenValue",
     "eigen_value"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Mode.py",
+    "/src/FELiCS/Fields/Mode.py",
     "eigenValue",
     "eigen_value"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Mode.py",
+    "/src/FELiCS/Fields/Mode.py",
     "waveNumber",
     "wave_number"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Mode.py",
+    "/src/FELiCS/Fields/Mode.py",
     "waveNumber",
     "wave_number"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Mode.py",
+    "/src/FELiCS/Fields/Mode.py",
     "exportToH5",
     "export_to_h5"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/Mode.py",
+    "/src/FELiCS/Fields/Mode.py",
     "importData",
     "import_data"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "appendMode",
     "append_mode"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "appendModeFromVector",
     "append_mode_from_vector"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "appendSolutionOfEigenProblem",
     "append_solution_of_eigen_problem"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "appendSolutionOfSVDProblem",
     "append_solution_of_svd_problem"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "getMaximumError",
     "get_maximum_error"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "getDirectEigenValueSpectrum",
     "get_direct_eigen_value_spectrum"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "getSpectrum",
     "get_spectrum"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "exportSpectrumToCSV",
     "export_spectrum_to_csv"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "getNearestMode",
     "get_nearest_mode"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "getLeadingMode",
     "get_leading_mode"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "getOldSolutionObject",
     "get_old_solution_object"
   ],
 
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "popList",
     "pop_list"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "_getAndSortModeFilesInDir",
     "_get_and_sort_mode_files_in_dir"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "exportModes",
     "export_modes"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Fields/ModeCollection.py",
+    "/src/FELiCS/Fields/ModeCollection.py",
     "importData",
     "import_data"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FEMSpaces.py",
+    "/src/FELiCS/SpaceDisc/FEMSpaces.py",
     "getElementShape",
     "get_element_shape"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FEMSpaces.py",
+    "/src/FELiCS/SpaceDisc/FEMSpaces.py",
     "getElementType",
     "get_element_type"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FEMSpaces.py",
+    "/src/FELiCS/SpaceDisc/FEMSpaces.py",
     "createFunctionSpace",
     "create_function_space"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FEMSpaces.py",
+    "/src/FELiCS/SpaceDisc/FEMSpaces.py",
     "addCustomScalarSpaceToMixedSpace",
     "add_custom_scalar_space_to_mixed_space"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FEMSpaces.py",
+    "/src/FELiCS/SpaceDisc/FEMSpaces.py",
     "_projectField2allFEMSpaces",
     "_project_field2all_fem_spaces"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FELiCSMesh.py",
+    "/src/FELiCS/SpaceDisc/FELiCSMesh.py",
     "exportMesh",
     "export_mesh"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FELiCSMesh.py",
+    "/src/FELiCS/SpaceDisc/FELiCSMesh.py",
     "setTrueDimension",
     "set_true_dimension"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FELiCSMesh.py",
+    "/src/FELiCS/SpaceDisc/FELiCSMesh.py",
     "saveInFELiCSFormat",
     "save_in_fe_li_cs_format"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FELiCSMesh.py",
+    "/src/FELiCS/SpaceDisc/FELiCSMesh.py",
     "calcConnectivity",
     "calc_connectivity"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FELiCSMesh.py",
+    "/src/FELiCS/SpaceDisc/FELiCSMesh.py",
     "getBCInfo",
     "get_bc_info"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FELiCSMesh.py",
+    "/src/FELiCS/SpaceDisc/FELiCSMesh.py",
     "coordinateSystem",
     "coordinate_system"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FELiCSMesh.py",
+    "/src/FELiCS/SpaceDisc/FELiCSMesh.py",
     "axisNames",
     "axis_names"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/SpaceDisc/FELiCSMesh.py",
+    "/src/FELiCS/SpaceDisc/FELiCSMesh.py",
     "meshAxisNames",
     "mesh_axis_names"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/SpongeTerm.py",
+    "/src/FELiCS/Equation/Equations/SpongeTerm.py",
     "addWeightMatrixExpression",
     "add_weight_matrix_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/SpongeTerm.py",
+    "/src/FELiCS/Equation/Equations/SpongeTerm.py",
     "addLinearExpression",
     "add_linear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/SpongeTerm.py",
+    "/src/FELiCS/Equation/Equations/SpongeTerm.py",
     "addNonlinearExpression",
     "add_nonlinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/SpeciesEquation.py",
+    "/src/FELiCS/Equation/Equations/SpeciesEquation.py",
     "addWeightMatrixExpression",
     "add_weight_matrix_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/SpeciesEquation.py",
+    "/src/FELiCS/Equation/Equations/SpeciesEquation.py",
     "addNonlinearExpression",
     "add_nonlinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/SpeciesEquation.py",
+    "/src/FELiCS/Equation/Equations/SpeciesEquation.py",
     "addLinearExpression",
     "add_linear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/MomentumEquation.py",
+    "/src/FELiCS/Equation/Equations/MomentumEquation.py",
     "addWeightMatrixExpression",
     "add_weight_matrix_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/MomentumEquation.py",
+    "/src/FELiCS/Equation/Equations/MomentumEquation.py",
     "addLinearExpression",
     "add_linear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/MomentumEquation.py",
+    "/src/FELiCS/Equation/Equations/MomentumEquation.py",
     "addNonlinearExpression",
     "add_nonlinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/MomentumEquation.py",
+    "/src/FELiCS/Equation/Equations/MomentumEquation.py",
     "addBilinearExpression",
     "add_bilinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/MassEquation.py",
+    "/src/FELiCS/Equation/Equations/MassEquation.py",
     "addWeightMatrixExpression",
     "add_weight_matrix_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/MassEquation.py",
+    "/src/FELiCS/Equation/Equations/MassEquation.py",
     "addLinearExpression",
     "add_linear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/MassEquation.py",
+    "/src/FELiCS/Equation/Equations/MassEquation.py",
     "addNonlinearExpression",
     "add_nonlinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EquationTemplate.py",
+    "/src/FELiCS/Equation/Equations/EquationTemplate.py",
     "addWeightMatrixExpression",
     "add_weight_matrix_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EquationTemplate.py",
+    "/src/FELiCS/Equation/Equations/EquationTemplate.py",
     "addLinearExpression",
     "add_linear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EquationTemplate.py",
+    "/src/FELiCS/Equation/Equations/EquationTemplate.py",
     "addNonlinearExpression",
     "add_nonlinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EquationTemplate.py",
+    "/src/FELiCS/Equation/Equations/EquationTemplate.py",
     "addBilinearExpression",
     "add_bilinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EnergyPressureEquation.py",
+    "/src/FELiCS/Equation/Equations/EnergyPressureEquation.py",
     "addWeightMatrixExpression",
     "add_weight_matrix_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EnergyPressureEquation.py",
+    "/src/FELiCS/Equation/Equations/EnergyPressureEquation.py",
     "addNonlinearExpression",
     "add_nonlinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EnergyPressureEquation.py",
+    "/src/FELiCS/Equation/Equations/EnergyPressureEquation.py",
     "addLinearExpression",
     "add_linear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EnergyPressureEquation.py",
+    "/src/FELiCS/Equation/Equations/EnergyPressureEquation.py",
     "addBilinearExpression",
     "add_bilinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EnthalpyEquation.py",
+    "/src/FELiCS/Equation/Equations/EnthalpyEquation.py",
     "addWeightMatrixExpression",
     "add_weight_matrix_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EnthalpyEquation.py",
+    "/src/FELiCS/Equation/Equations/EnthalpyEquation.py",
     "addNonlinearExpression",
     "add_nonlinear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Equations/EnthalpyEquation.py",
+    "/src/FELiCS/Equation/Equations/EnthalpyEquation.py",
     "addLinearExpression",
     "add_linear_expression"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EquationOfStateHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EquationOfStateHandler.py",
     "_initializeEoSFluctuations",
     "_initialize_eo_s_fluctuations"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EquationOfStateHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EquationOfStateHandler.py",
     "_getNeededFieldsForLinearEoS",
     "_get_needed_fields_for_linear_eo_s"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EquationOfStateHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EquationOfStateHandler.py",
     "_additionalFieldsToBeReadEoS",
     "_additional_fields_to_be_read_eo_s"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EquationOfStateHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EquationOfStateHandler.py",
     "equationOfStateHandler",
     "EquationOfStateHandler"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/viscosityModels.py",
+    "/src/FELiCS/Equation/dependentVariables/viscosityModels.py",
     "SutherlandFluctuationMean",
     "sutherland_fluctuation_mean"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
     "_determineReactionFormula",
     "_determine_reaction_formula"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
     "RR",
     "rr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
     "sourceTerm",
     "source_term"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
     "reactionClass",
     "ReactionClass"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
     "_additionalFieldsToBeReadReaction",
     "_additional_fields_to_be_read_reaction"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
     "_initializeReactions",
     "_initialize_reactions"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
     "RR",
     "rr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/ReactionHandler.py",
     "reactionHandler",
     "ReactionHandler"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
     "_getNeededFieldsForLinearMomentum",
     "_get_needed_fields_for_linear_momentum"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
     "_relateConservativeToPrimitiveVariablesMomentum",
     "_relate_conservative_to_primitive_variables_momentum"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
     "_initializeMolecularMomentumDiffusionFluctuation",
     "_initialize_molecular_momentum_diffusion_fluctuation"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
     "_additionalFieldsToBeReadEnergy",
     "_additional_fields_to_be_read_energy"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/MomentumHandler.py",
     "momentumHandler",
     "MomentumHandler"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
     "_relateConservativeToPrimitiveVariablesEnergy",
     "_relate_conservative_to_primitive_variables_energy"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
     "_getNeededFieldsForLinearEnergy",
     "_get_needed_fields_for_linear_energy"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
     "_initializeMolecularHeatDiffusionFluctuation",
     "_initialize_molecular_heat_diffusion_fluctuation"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
     "_additionalFieldsToBeReadEnergy",
     "_additional_fields_to_be_read_energy"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/EnergyHandler.py",
     "energyHandler",
     "EnergyHandler"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/dependentVariables/HeatReleaseHandler.py",
+    "/src/FELiCS/Equation/dependentVariables/HeatReleaseHandler.py",
     "heatReleaseHandler",
     "HeatReleaseHandler"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "computeSensitivities",
     "compute_sensitivities"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "deltaGT02_",
     "delta_gt02_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kf1_",
     "kf1_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kf2_",
     "kf2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kp2_",
     "kp2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kc2_",
     "kc2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kr2_",
     "kr2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q1_",
     "q1_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q2f_",
     "q2f_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q2r_",
     "q2r_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q2_",
     "q2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q_",
     "q_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q",
     "q"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "dQ",
     "d_q"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "rrCH4_",
     "rr_ch4_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "rrH2O_",
     "rr_h2_o_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "rrO2_",
     "rr_o2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "rrCO_",
     "rr_co_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "rrCO2_",
     "rr_co2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "sO2dT_",
     "s_o2d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "sCOdT_",
     "s_c_od_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "sCO2dT_",
     "s_co2d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kf1dT_",
     "kf1d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kp2dT_",
     "kp2d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kc2dT_",
     "kc2d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kf2dT_",
     "kf2d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Kr2dT_",
     "kr2d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q1dT_",
     "q1d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q1drho_",
     "q1drho_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q1dYCH4_",
     "q1d_ych4_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q1dYO2_",
     "q1d_yo2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q2dT_",
     "q2d_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q2drho_",
     "q2drho_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q2dYCO_",
     "q2d_yco_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q2dYO2_",
     "q2d_yo2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Q2dYCO2_",
     "q2d_yco2_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/c2sm2.py",
+    "/src/FELiCS/Equation/Reactions/c2sm2.py",
     "Wmix",
     "wmix"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/GlobalReaction.py",
+    "/src/FELiCS/Equation/Reactions/GlobalReaction.py",
     "ReadReactionDict",
     "read_reaction_dict"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/GlobalReaction.py",
+    "/src/FELiCS/Equation/Reactions/GlobalReaction.py",
     "computeMeanField",
     "compute_mean_field"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/GlobalReaction.py",
+    "/src/FELiCS/Equation/Reactions/GlobalReaction.py",
     "addReaction",
     "add_reaction"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/GlobalReaction.py",
+    "/src/FELiCS/Equation/Reactions/GlobalReaction.py",
     "dQ_",
     "d_q_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/GlobalReaction.py",
+    "/src/FELiCS/Equation/Reactions/GlobalReaction.py",
     "postHeatRelease",
     "post_heat_release"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/GlobalReaction.py",
+    "/src/FELiCS/Equation/Reactions/GlobalReaction.py",
     "postdQ",
     "postd_q"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_Hc",
     "janaf__hc"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_Ha",
     "janaf__ha"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_Ha_expr",
     "janaf__ha_expr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_Hs",
     "janaf__hs"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_Hs_expr",
     "janaf__hs_expr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_S0",
     "janaf_s0"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_S",
     "janaf_s"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_S_expr",
     "janaf_s_expr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_S_in_mix_expr",
     "janaf_s_in_mix_expr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_G",
     "janaf_g"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_Gs",
     "janaf__gs"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_G_expr",
     "janaf_g_expr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/janafopenfoam.py",
+    "/src/FELiCS/Equation/Reactions/janafopenfoam.py",
     "janaf_Gs_expr",
     "janaf__gs_expr"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/reactionMechanism.py",
+    "/src/FELiCS/Equation/Reactions/reactionMechanism.py",
     "discretizeReaction",
     "discretize_reaction"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/reactionMechanism.py",
+    "/src/FELiCS/Equation/Reactions/reactionMechanism.py",
     "reactionEquation",
     "reaction_equation"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/reactionMechanism.py",
+    "/src/FELiCS/Equation/Reactions/reactionMechanism.py",
     "reactionClass",
     "ReactionClass"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/reactionMechanism.py",
+    "/src/FELiCS/Equation/Reactions/reactionMechanism.py",
     "numberOfReactions",
     "number_of_reactions"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/reactionMechanism.py",
+    "/src/FELiCS/Equation/Reactions/reactionMechanism.py",
     "numberOfSpecies",
     "number_of_species"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/reactionMechanism.py",
+    "/src/FELiCS/Equation/Reactions/reactionMechanism.py",
     "reactionMechanism",
     "reaction_mechanism"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/reactionMechanism.py",
+    "/src/FELiCS/Equation/Reactions/reactionMechanism.py",
     "additionalMeanFieldQuantities",
     "additional_mean_field_quantities"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/reactionMechanism.py",
+    "/src/FELiCS/Equation/Reactions/reactionMechanism.py",
     "reactionMechanismClass",
     "ReactionMechanismClass"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "ReadReactionDict",
     "read_reaction_dict"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "computeMeanField",
     "compute_mean_field"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "addReaction",
     "add_reaction"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "dQ1_",
     "d_q1_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "dQ2f_",
     "d_q2f_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "dQ2r_",
     "d_q2r_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "dK2fdT_",
     "d_k2fd_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "dK2rdT_",
     "d_k2rd_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "dEquidT_",
     "d_equid_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "dexpInEquidT_",
     "dexp_in_equid_t_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "postHeatRelaese",
     "post_heat_relaese"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "postdQ1_",
     "postd_q1_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "postdQ2f_",
     "postd_q2f_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "postdQ2r_",
     "postd_q2r_"
   ],
   [
-    "/Users/marina/Documents/repositories/FELiCS/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
+    "/src/FELiCS/Equation/Reactions/TwoStepReaction.py",
     "testM",
     "test_m"
   ]
