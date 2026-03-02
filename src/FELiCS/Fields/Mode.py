@@ -494,6 +494,9 @@ class Mode(Field):
         For mixed modes, a specific variable can be selected by name. If no
         name is provided, the first scalar field or the first component of
         the first vector field is plotted.
+        
+        # NOTE: (Simon) we should instead implement a plot method for mixed Fields 
+        # in the Field class and simply call it from modes.
 
         Parameters
         ----------
@@ -524,8 +527,8 @@ class Mode(Field):
                                 clim=clim
                                 )
 
-        fields  = self.getListOfSubFields()
-        names   = self.getNamesOfSubFields()
+        fields  = self.get_list_of_sub_fields()
+        names   = self.get_names_of_sub_fields()
 
         selected_field = None
 
@@ -537,9 +540,9 @@ class Mode(Field):
                 # Try to match a vector component name inside vector subfields
                 for field in fields:
                     if field.info['type'] == 'vector':
-                        component_names     = field.getNamesOfSubFields()
+                        component_names     = field.get_names_of_sub_fields()
                         if variableName in component_names:
-                            selected_field  = field.getListOfSubFields()[
+                            selected_field  = field.get_list_of_sub_fields()[
                                 component_names.index(variableName)
                             ]
                             break
@@ -555,14 +558,14 @@ class Mode(Field):
 
             first_field = fields[0]
             if first_field.info['type']     == 'vector':
-                selected_field = first_field.getListOfSubFields()[0]
+                selected_field = first_field.get_list_of_sub_fields()[0]
             elif first_field.info['type']   == 'mixed':
 
                 # Take the first scalar component from the mixed subfield
-                nested_fields   = first_field.getListOfSubFields()
+                nested_fields   = first_field.get_list_of_sub_fields()
                 nested_first    = nested_fields[0]
                 if nested_first.info['type'] == 'vector':
-                    selected_field  = nested_first.getListOfSubFields()[0]
+                    selected_field  = nested_first.get_list_of_sub_fields()[0]
                 else:
                     selected_field  = nested_first
             else:

@@ -688,7 +688,7 @@ class ModeCollection():
         return fluctSolutObjList
 
 
-    def getSize(
+    def get_size(
         self
     ):
         """
@@ -863,7 +863,7 @@ class ModeCollection():
     def import_data(
         self,
         reader,
-        importFolder,
+        importFolder=None,
         omegas=None,
         modeType=None,
         gain_number=None
