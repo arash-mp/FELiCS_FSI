@@ -1178,22 +1178,96 @@ class Field:
 
     def plot(
         self,
+        variableName=None,
         xlim=None,
         ylim=None,
         plotType="real",
-        clim=None
+        clim=None,
+        axes=None,
     ):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
         field looks as expected and rule out e.g. import problems.
+        
+        Parameters
+        ----------
+        variableName : str, optional
+            Name of the variable to plot. For mixed or vector fields, this can refer to
+            a subfield name or a component of a vector subfield (e.g. 'u_x'). If None,
+            a default component is chosen.
+        xlim : tuple, optional
+            Limits for the x-axis as (xmin, xmax). If None, limits are determined automatically.
+        ylim : tuple, optional
+            Limits for the y-axis as (ymin, ymax). If None, limits are determined automatically.
+        plotType : str, optional
+            Type of plot to display. Options are 'real', 'imag', or 'magnitude'. Default is 'real'.
+        clim : tuple, optional
+            Color limits for the plot as (vmin, vmax). If None, limits are determined automatically based on the data and plotType.
+        axes : matplotlib.axes.Axes, optional
+            An existing Matplotlib Axes object to plot on. If None, a new figure and axes are created.
 
         Notes
         -----
         - This method provides a simple visualization of the field.
+        - For mixed or vector fields, a specific component can be selected via variableName.
+        - Currently only supports 2D meshes; 3D plotting is not yet implemented.
         """
 
+        # Check that the field is defined on a 2D mesh, 3D not yet implemented
+        if self.mesh.dolfinxMesh.topology.dim != 2:
+            logger.warning("Field.plot(): plotting is currently only implemented for 2D meshes. Returning without plotting.")
+            return
+
+        # Handle mixed or vector fields by selecting the appropriate scalar field to plot
         if self.space.num_sub_spaces > 1:
-            raise NotImplementedError("Plotting is only implemented for scalar fields. Use getListOfSingleFields() to get subfields. These can then be plotted individually with the same method.")
+            fields  = self.get_list_of_sub_fields()
+            names   = self.get_names_of_sub_fields()
+            
+            selected_field = None
+            
+            if variableName is not None:
+                if variableName in names:
+                    selected_field = fields[names.index(variableName)]
+                else:
+                    # Try to match a vector component name inside vector subfields
+                    for field in fields:
+                        if field.info['type'] == 'vector':
+                            component_names = field.get_names_of_sub_fields()
+                            if variableName in component_names:
+                                selected_field = field.get_list_of_sub_fields()[
+                                    component_names.index(variableName)
+                                ]
+                                break
+                    if selected_field is None:
+                        logger.warning(
+                            f"Field.plot(): variable '{variableName}' not found. "
+                            "Using the default component instead."
+                        )
+            
+            if selected_field is None:
+                # Default: first scalar field or first component of first vector
+                first_field = fields[0]
+                if first_field.info['type'] == 'vector':
+                    selected_field = first_field.get_list_of_sub_fields()[0]
+                elif first_field.info['type'] == 'mixed':
+                    # Take the first scalar component from the mixed subfield
+                    nested_fields = first_field.get_list_of_sub_fields()
+                    nested_first = nested_fields[0]
+                    if nested_first.info['type'] == 'vector':
+                        selected_field = nested_first.get_list_of_sub_fields()[0]
+                    else:
+                        selected_field = nested_first
+                else:
+                    selected_field = first_field
+            
+            return selected_field.plot(
+                variableName=variableName,
+                xlim=xlim,
+                ylim=ylim,
+                plotType=plotType,
+                clim=clim,
+                axes=axes
+            )
 
         # ---- METHOD 1: Directly use dof coordinates and tricontourf ----
         # NOTE: With this method we loose mesh connectivity information.
@@ -1259,7 +1333,8 @@ class Field:
         # ---- End of METHOD 2 ----
         
         # ---- Plotting ----
-        fig, axes       = plt.subplots()
+        if axes is None:
+            fig, axes       = plt.subplots()
         if clim is None:
             if plotType == "magnitude":
                 clim = (0, np.max(phi_vertex))
