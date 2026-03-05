@@ -149,6 +149,8 @@ def run_resolvent(param):
             writer,
             onlyNewN = nSol*2,
         )
+
+        resolventOperator.destroy_self()
         
     # End tracking time
     logger.info(f"Solving the SVD(s) took {time.time()-start:.4g} s")

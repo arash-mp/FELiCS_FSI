@@ -557,20 +557,6 @@ class ResolventOperator(object):
         self._ksp1.getPC().setFactorSolverType('mumps')                 
         self._ksp1.setUp()
 
-        # create KSP2: This is a solver for the System conj(OP)*x=y. It will later be used to solve the transposed system, thus 
-        #effectively solving OP^H *x=y, which is the Hermitian transpose of the system.                 
-        # TODO Sophie: unfortuantely there is no "solveHermitianTranspose" in the petsc4py (yet?). 
-        # Thus we have to do an additional LU decomposistion.... Change as soon as this is included in the petsc4py!                 
-        OP_H = ResolventOperator.copy()   #create a new matrix, s.t. the original one will not be overwritten                 
-        OP_H.conjugate()                 
-        OP_H.assemble()                 
-        self._ksp2 = PETSc.KSP().create()                 
-        self._ksp2.setOperators(OP_H)                 
-        self._ksp2.setType(PETSc.KSP.Type.PREONLY)                 
-        self._ksp2.getPC().setType(PETSc.PC.Type.LU)                 
-        self._ksp2.getPC().setFactorSolverType('mumps')                 
-        self._ksp2.setUp()
-
         ## create KSP3: This is a solver for the System Q_f*x=y (will later be used to solve the transposed system).
         ##Qf.conjugate() #=> is this needed?                 
         self._ksp3 = PETSc.KSP().create()                 
@@ -656,11 +642,13 @@ class ResolventOperator(object):
         self._P_response.multTranspose(
             self._R2,
             self._O1,
-        )  #O1 = P_r^T * R2                
-        self._ksp2.solveTranspose(
+        )  #O1 = P_r^T * R2  
+        self._O1.conjugate()
+        self._ksp1.solveTranspose(
             self._O1,
             self._O2,
         )  #O2 = (OP^H)^-1 * O1                 
+        self._O2.conjugate()
 
         self._W_FEM.multTranspose(
             self._O2,
@@ -699,10 +687,8 @@ class ResolventOperator(object):
         This method should be called if multiple resolvent SVDs are performed consecutively.
         """
         self._ksp1.getPC().destroy()                 
-        self._ksp2.getPC().destroy()                 
         self._ksp3.getPC().destroy()                 
         self._ksp1.destroy()                 
-        self._ksp2.destroy()                 
         self._ksp3.destroy() 
 
 
