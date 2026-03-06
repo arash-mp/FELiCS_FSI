@@ -34,18 +34,7 @@ phi.import_data(Reader(), "input.h5")
 
 ```
 
-    [31m(     [0m    [31m(     [0m          [31m(     [0m
-    [31m)[33m\ [31m)      [31m)[33m [31m)       [31m(    [31m)[33m\ [31m)  [0m
-    [31m([33m([0m)[33m/[31m(  (  [31m([33m([0m)[33m/[31m( (    [31m)\   [31m([33m([0m)[33m/[31m(  [0m
-    [31m/[33m([0m_[33m)[31m) )\  /[33m([0m_[33m)[31m))\  [31m([33m([0m([33m_[31m)  [31m/[33m([0m_[33m)[31m) [0m
-    [36m([0m_[36m)[0m_[36m)[0m[36m(([0m_[36m) ([0m_[36m))[0m [36m(([0m_[36m) [31m)[36m\[0m___ [36m([0m_[36m))   [0m
-    | __|| __|| |   (_)[31m([36m([0m/ __|/ __|  [0m
-    | _| | _| | |__ | | | (__ \__ \  [0m
-    |_|  |___||____||_|  \___||___/  [0m
-    Git commit: 
-
-
-    fatal: not a git repository: '/opt/anaconda3/envs/felics/lib/python3.13/site-packages/../.git'
+  
     Info     | FELiCSMesh.py          | __init__                   (line 124 ) : Opening mesh file: ./square_mesh.msh
     Info     | FELiCSMesh.py          | __init__                   (line 132 ) : Mesh contains 513 nodes and 1024 elements
     Info     | Reader.py              | _interpolate_to_calc_mesh  (line 706 ) : Linear interpolation took 0.6 seconds. (Mesh size: (1969, 2))

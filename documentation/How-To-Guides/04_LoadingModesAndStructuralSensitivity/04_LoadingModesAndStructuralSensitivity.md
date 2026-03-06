@@ -20,20 +20,6 @@ from    FELiCS.SpaceDisc.FEMSpaces          import  FEMSpaces
 from    FELiCS.Fields.ModeCollection        import  ModeCollection
 import  ufl
 from    FELiCS.Misc.tensorUtils             import Tensor, i_dot, i_conj
-```
-
-    [31m(     [0m    [31m(     [0m          [31m(     [0m
-    [31m)[33m\ [31m)      [31m)[33m [31m)       [31m(    [31m)[33m\ [31m)  [0m
-    [31m([33m([0m)[33m/[31m(  (  [31m([33m([0m)[33m/[31m( (    [31m)\   [31m([33m([0m)[33m/[31m(  [0m
-    [31m/[33m([0m_[33m)[31m) )\  /[33m([0m_[33m)[31m))\  [31m([33m([0m([33m_[31m)  [31m/[33m([0m_[33m)[31m) [0m
-    [36m([0m_[36m)[0m_[36m)[0m[36m(([0m_[36m) ([0m_[36m))[0m [36m(([0m_[36m) [31m)[36m\[0m___ [36m([0m_[36m))   [0m
-    | __|| __|| |   (_)[31m([36m([0m/ __|/ __|  [0m
-    | _| | _| | |__ | | | (__ \__ \  [0m
-    |_|  |___||____||_|  \___||___/  [0m
-    Git commit: 
-
-
-    fatal: not a git repository: '/opt/anaconda3/envs/felics/lib/python3.13/site-packages/../.git'
 
 
 🔧 Set up logging and read configuration
