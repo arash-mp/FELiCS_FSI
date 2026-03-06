@@ -6,6 +6,7 @@ FELiCS can be used to calculate the spatial gradient of a quantity with a few co
 
 ### Cartesian coordinates on a 2D domain
 Here, the gradient of a scalar field on a square 2D mesh is computed. We define our scalar field as follows:
+
 $$\phi(x,y) = \sin(2\pi x)\cos(2\pi y)$$
 
 
@@ -14,7 +15,7 @@ $$\phi(x,y) = \sin(2\pi x)\cos(2\pi y)$$
 
 ```python
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
-from FELiCS.SpaceDisc.FEMSpaces  import createFunctionSpace
+from FELiCS.SpaceDisc.FEMSpaces  import create_function_space
 from FELiCS.Fields.Field         import Field
 from FELiCS.IO.Reader            import Reader
 
@@ -25,45 +26,72 @@ coordinateSystemName = "Cartesian"
 mesh = FELiCSMesh(coordinateSystemName, meshFileName)
 
 # create a scalar space
-scalarSpace = createFunctionSpace(mesh, degree=2, dim=1)
+scalarSpace = create_function_space(mesh, degree=2, dim=1)
 
 # create a Field object and import the data from the h5 file
 phi = Field(scalarSpace, mesh=mesh, name="function_sine_cos") 
-phi.importData(Reader(), "input.h5")
+phi.import_data(Reader(), "input.h5")
 
 ```
 
-    Info     | FELiCSMesh.py          | __init__                   (line 75  ) : Opening mesh file: ./square_mesh.msh
-    Info     | FELiCSMesh.py          | __init__                   (line 83  ) : Mesh contains 513 nodes and 1024 elements
+    [31m(     [0m    [31m(     [0m          [31m(     [0m
+    [31m)[33m\ [31m)      [31m)[33m [31m)       [31m(    [31m)[33m\ [31m)  [0m
+    [31m([33m([0m)[33m/[31m(  (  [31m([33m([0m)[33m/[31m( (    [31m)\   [31m([33m([0m)[33m/[31m(  [0m
+    [31m/[33m([0m_[33m)[31m) )\  /[33m([0m_[33m)[31m))\  [31m([33m([0m([33m_[31m)  [31m/[33m([0m_[33m)[31m) [0m
+    [36m([0m_[36m)[0m_[36m)[0m[36m(([0m_[36m) ([0m_[36m))[0m [36m(([0m_[36m) [31m)[36m\[0m___ [36m([0m_[36m))   [0m
+    | __|| __|| |   (_)[31m([36m([0m/ __|/ __|  [0m
+    | _| | _| | |__ | | | (__ \__ \  [0m
+    |_|  |___||____||_|  \___||___/  [0m
+    Git commit: 
+
+
+    fatal: not a git repository: '/opt/anaconda3/envs/felics/lib/python3.13/site-packages/../.git'
+    Info     | FELiCSMesh.py          | __init__                   (line 124 ) : Opening mesh file: ./square_mesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 132 ) : Mesh contains 513 nodes and 1024 elements
+    Info     | Reader.py              | _interpolate_to_calc_mesh  (line 706 ) : Linear interpolation took 0.6 seconds. (Mesh size: (1969, 2))
 
 
 
 
 
-    (<FELiCS.Fields.Field.Field at 0x73f2542f9130>, [])
+    (<FELiCS.Fields.Field.Field at 0x17fee7770>, [])
 
 
 
 **Step 2: Get gradient as a vector field and extract the scalar fields**
 
 We now want to calculate the gradient of our scalar quantity using the `getGradientField()` method of our Field class. This method returns a Field object, which represents a vector-field as we calculate the gradient of a scalar with respect to our two spatial and one spectral dimension. The gradient is defined as
-$$\nabla \phi = \left(\frac{\partial \phi}{\partial x}, \frac{\partial \phi}{\partial y}\right)\ .$$
+
+$$
+\nabla \phi = \left(\frac{\partial \phi}{\partial x}, \frac{\partial \phi}{\partial y}\right)\ .
+$$
+
 So for our function the analytical gradient is
-$$\nabla \phi = \begin{pmatrix}
+
+$$
+\nabla \phi = \begin{pmatrix}
 2\pi \cos(2\pi x) \cos(2\pi y) \\
 -2\pi \sin(2\pi x) \sin(2\pi y) 
-\end{pmatrix}\ .$$ 
+\end{pmatrix}\ .
+$$
+
 The resulting field is defined on a vector space with 2 dimension. We can also transform it in two scalar fields via the command 'getListOfSingleFields()'.
 
 
 ```python
-gradPhi = phi.getGradientField() # this is a vector field
+gradPhi = phi.get_gradient_field() # this is a vector field
 
 # get scalar fields from gradient:
-gradList = gradPhi.getListOfSubFields()
+gradList = gradPhi.get_list_of_sub_fields()
 phi_x    = gradList[0]
 phi_y    = gradList[1]
 ```
+
+    ld: warning: duplicate -rpath '/opt/anaconda3/envs/felics/lib' ignored
+    ld: warning: duplicate -rpath '/opt/anaconda3/envs/felics/lib' ignored
+    ld: warning: duplicate -rpath '/opt/anaconda3/envs/felics/lib' ignored
+    ld: warning: duplicate -rpath '/opt/anaconda3/envs/felics/lib' ignored
+
 
 **Step 2: Postprocessing**
 
@@ -72,7 +100,7 @@ Exporting as h5 file and visualization of the gradients by using the FELiCS plot
 
 ```python
 from FELiCS.IO.Writer import Writer
-gradPhi.exportToH5(Writer())
+gradPhi.export_to_h5(Writer())
 
 phi.plot()
 phi_x.plot()
@@ -100,7 +128,9 @@ phi_y.plot()
 ### Cartesian coordinates with spectral dimension
 Here, to the two spatial dimensions (x and y) a third spectral dimension in z-direction is added.
 With the spectral dimension the scalar field becomes
+
 $$\phi \cdot e^{imz}$$
+
 where m is the wave number. With the wave number we represent a periodicity of the flow in z-direction, while still only calculating a 2D flowfield.
 
 **Step 1: Create FELiCSMesh, FELiCSSpace and Field**
@@ -108,7 +138,7 @@ where m is the wave number. With the wave number we represent a periodicity of t
 
 ```python
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
-from FELiCS.SpaceDisc.FEMSpaces  import createFunctionSpace
+from FELiCS.SpaceDisc.FEMSpaces  import create_function_space
 from FELiCS.Fields.Field         import Field
 from FELiCS.IO.Reader            import Reader
 
@@ -121,48 +151,59 @@ m = 3
 mesh = FELiCSMesh(coordinateSystemName, meshFileName, m=m) 
 
 # create a scalar space
-scalarSpace = createFunctionSpace(mesh, degree=2, dim=1)
+scalarSpace = create_function_space(mesh, degree=2, dim=1)
 
 # create a Field object and import the data from the h5 file
 # by setting m to an integer number that is not zero, the spectral direction is added to the field
 phi = Field(scalarSpace, mesh=mesh, name = "function_sine_cos", m = m) 
-phi.importData(Reader(),"input.h5")
+phi.import_data(Reader(),"input.h5")
 
 ```
 
-    Info     | FELiCSMesh.py          | __init__                   (line 75  ) : Opening mesh file: ./square_mesh.msh
-    Info     | FELiCSMesh.py          | __init__                   (line 83  ) : Mesh contains 513 nodes and 1024 elements
+    Info     | FELiCSMesh.py          | __init__                   (line 124 ) : Opening mesh file: ./square_mesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 132 ) : Mesh contains 513 nodes and 1024 elements
+    Info     | Reader.py              | _interpolate_to_calc_mesh  (line 706 ) : Linear interpolation took 0.6 seconds. (Mesh size: (1969, 2))
 
 
 
 
 
-    (<FELiCS.Fields.Field.Field at 0x73f2548ad650>, [])
+    (<FELiCS.Fields.Field.Field at 0x304e6fa50>, [])
 
 
 
 **Step 2: Calculate the gradient**
 
 With the spectral dimension, the gradient is now 3-dimensional:
+
 $$\nabla \phi = \left(\frac{\partial \phi}{\partial x}, \frac{\partial \phi}{\partial y}, \frac{\partial \phi}{\partial z}\right)$$
+
 and it is defined as:
+
 $$\nabla \phi = \begin{pmatrix}
 2\pi \cos(2\pi x) \cos(2\pi y) \cdot e^{imz} \\
 -2\pi \sin(2\pi x) \sin(2\pi y) \cdot e^{imz} \\
 im \sin(2\pi x) \cos(2\pi y) \cdot e^{imz}
 \end{pmatrix}\ .$$
+
 Note that the derivative in the spectral dimension is imaginary. 
 
 
 ```python
-gradPhi = phi.getGradientField() # this is a vector field
+gradPhi = phi.get_gradient_field() # this is a vector field
 
 # get scalar fields from gradient:
-gradList = gradPhi.getListOfSubFields()
+gradList = gradPhi.get_list_of_sub_fields()
 phi_x    = gradList[0]
 phi_y    = gradList[1]
 phi_z    = gradList[2]
 ```
+
+    ld: warning: duplicate -rpath '/opt/anaconda3/envs/felics/lib' ignored
+    ld: warning: duplicate -rpath '/opt/anaconda3/envs/felics/lib' ignored
+    ld: warning: duplicate -rpath '/opt/anaconda3/envs/felics/lib' ignored
+    ld: warning: duplicate -rpath '/opt/anaconda3/envs/felics/lib' ignored
+
 
 **Step 3: Postprocessing**
 
@@ -172,12 +213,12 @@ Exporting as h5 file and visualization of the gradients by using the FELiCS plot
 
 ```python
 from FELiCS.IO.Writer import Writer
-gradPhi.exportToH5(Writer())
+gradPhi.export_to_h5(Writer())
 
 phi.plot()
 phi_x.plot()
 phi_y.plot()
-phi_z.plot(imaginaryPart=True)
+phi_z.plot(plotType="imag")
 ```
 
 
@@ -203,3 +244,8 @@ phi_z.plot(imaginaryPart=True)
 ![png](output_15_3.png)
     
 
+
+
+```python
+
+```

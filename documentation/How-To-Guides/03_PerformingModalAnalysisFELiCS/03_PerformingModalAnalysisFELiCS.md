@@ -12,9 +12,9 @@ import numpy as np
 
 ```python
 from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
-from    FELiCS.Fields.meanFlowClass         import meanFlowClass
+from    FELiCS.Fields.MeanFlowClass         import MeanFlowClass
 from    FELiCS.Fields.Field                 import Field
-from    FELiCS.Parameters.config            import config 
+from    FELiCS.Parameters.Config            import Config 
 from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
 from    FELiCS.Solvers.LinearSolver         import LinearSolver
 from    FELiCS.Fields.ModeCollection        import ModeCollection
@@ -29,24 +29,24 @@ In this tutorial the Modal Analysis has been done for base flow with $Re = 50$. 
 ```python
 # Read parameters
 settingsFileName = "modal.json"
-param            = config()
-param.importFromFile(settingsFileName)
+param            = Config()
+param.import_from_file(settingsFileName)
 
-mesh             = param.getMesh()
+mesh             = param.get_mesh()
 ```
 
-    Info     | config.py              | importFromFile             (line 205 ) : Loading configuration from modal.json
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "needInterpolation" missing from file, setting default: True
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "MolViscPerturbModel" missing from file, setting default: {'type': 'Constant', 'Constants': {'Viscosity': 1.0}}
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "PrandtlNumber" missing from file, setting default: 0.72
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "ForcingCoeff" missing from file, setting default: []
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "ForcingNorm" missing from file, setting default: TKE
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "ResponseNorm" missing from file, setting default: TKE
-    Info     | logging.py             | change_log_location        (line 286 ) : Log files moved to: output_dir/log
-    Info     | MixtureClass.py        | __init__                   (line 75  ) : No mixture file Mixture.mix, using defaults.
-    Info     | FELiCSMesh.py          | __init__                   (line 94  ) : Opening mesh file: cylinder_wake.msh
-    Info     | FELiCSMesh.py          | __init__                   (line 102 ) : Mesh contains 3613 nodes and 7224 elements
-    Info     | config.py              | importFromFile             (line 267 ) : Configuration loaded successfully
+    Info     | Config.py              | import_from_file           (line 245 ) : Loading configuration from modal.json
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "needInterpolation" missing from file, setting default: True
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "MolViscPerturbModel" missing from file, setting default: {'type': 'Constant', 'Constants': {'Viscosity': 1.0}}
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "PrandtlNumber" missing from file, setting default: 0.72
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "ForcingCoeff" missing from file, setting default: []
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "ForcingNorm" missing from file, setting default: TKE
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "ResponseNorm" missing from file, setting default: TKE
+    Info     | logging.py             | change_log_location        (line 364 ) : Log files moved to: output_dir/log
+    Info     | MixtureClass.py        | __init__                   (line 101 ) : No mixture file Mixture.mix, using defaults.
+    Info     | FELiCSMesh.py          | __init__                   (line 124 ) : Opening mesh file: cylinder_wake.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 132 ) : Mesh contains 3613 nodes and 7224 elements
+    Info     | Config.py              | import_from_file           (line 314 ) : Configuration loaded successfully
 
 
 **Step 4: Define FEM spaces and read in the baseflow**
@@ -65,25 +65,26 @@ spaces   = FEMSpaces(
 writer = Writer(mesh, param.Export.ExportFolder)
 
 # Initialize mean flow class & import from file
-meanFlow    = meanFlowClass(
+meanFlow    = MeanFlowClass(
     param, 
     spaces, 
     mesh
 )
-meanFlow.importDataFromFileAndExportToH5(writer)
+meanFlow.import_data_from_file_and_export_to_h5(writer)
 ```
 
-    Info     | FEMSpaces.py           | __init__                   (line 132 ) : Defining FEM-spaces.
-    Info     | meanFlowClass.py       | importDataFromFileAndExportToH5 (line 155 ) : Reading input flow from: 'base_flow_for_FELiCS.fel'
-    Warning  | Reader.py              | _check_variable_availability_and_type (line 818 ) : No variables for field 'rho' found in file. Set to default values.
-    Warning  | Reader.py              | _set_arrays_to_field       (line 769 ) : Variable 'rho' not found in loaded arrays for scalar field. Set to default values.
-    Warning  | Reader.py              | _check_variable_availability_and_type (line 818 ) : No variables for field 'spg' found in file. Set to default values.
-    Warning  | Reader.py              | _set_arrays_to_field       (line 769 ) : Variable 'spg' not found in loaded arrays for scalar field. Set to default values.
+    Info     | FEMSpaces.py           | __init__                   (line 174 ) : Defining FEM-spaces.
+    Info     | MeanFlowClass.py       | import_data_from_file_and_export_to_h5 (line 192 ) : Reading input flow from: 'base_flow_for_FELiCS.fel'
+    Info     | Reader.py              | _interpolate_to_calc_mesh  (line 706 ) : Linear interpolation took 0.8 seconds. (Mesh size: (14058, 2))
+    Warning  | Reader.py              | _check_variable_availability_and_type (line 938 ) : No variables for field 'rho' found in file. Set to default values.
+    Warning  | Reader.py              | _set_arrays_to_field       (line 889 ) : Variable 'rho' not found in loaded arrays for scalar field. Set to default values.
+    Warning  | Reader.py              | _check_variable_availability_and_type (line 938 ) : No variables for field 'spg' found in file. Set to default values.
+    Warning  | Reader.py              | _set_arrays_to_field       (line 889 ) : Variable 'spg' not found in loaded arrays for scalar field. Set to default values.
 
 
 **Step 5: Define the Equations for the linear problem**
 
-Setting up an equation is straightforward in FELiCS. The EquationCollectionClass contains a range of predefined equations like the Navier-Stokes-Equations, that we will solve today. You can find a detailed list and information about the equations [here](./)
+Setting up an equation is straightforward in FELiCS. The EquationCollectionClass contains a range of predefined equations like the Navier-Stokes-Equations, that we will solve today. You can find a detailed list and information about the equations [here](https://felics-d43476.gitlab.io/GoverningEquations/index.html)
 
 
 ```python
@@ -96,7 +97,7 @@ equation    = EquationCollectionClass(
 )
 ```
 
-    Info     | EquationCollection.py  | __init__                   (line 137 ) : Initializing the equation collection class.
+    Info     | EquationCollection.py  | __init__                   (line 165 ) : Initializing the equation collection class.
 
 
 **Step 7: Define and solve the general Eigenproblem**
@@ -134,8 +135,8 @@ After initializing the <code style="color : Cyan">ModeCollection</code> class, w
 
 ```python
 # Get matrices for eigenproblem
-A       = equation.getLinearOperator(meanFlow)
-B       = equation.getWeightMatrix  (meanFlow)
+A       = equation.get_linear_operator(meanFlow)
+B       = equation.get_weight_matrix  (meanFlow)
 
 guesses  = param.Numerics.EigenValueGuess
 nSol    = param.Numerics.nSolut
@@ -145,20 +146,20 @@ solution    = ModeCollection(
     mesh
 )
 for guess in guesses:
-    tmp = LinearSolver.solveGeneralEigenproblem(
+    tmp = LinearSolver.solve_general_eigenproblem(
         A,
         B,
         guess,
         nSol,
     )
-    solution.appendSolutionOfEigenProblem(tmp, guess)
+    solution.append_solution_of_eigen_problem(tmp, guess)
 
 # Get leading eigenvalue
-eigenValue  = solution.getLeadingMode().eigenValue
+eigenValue  = solution.get_leading_mode().eigen_value
 print(f"Leading eigenvalue: {str(eigenValue)}")
 ```
 
-    Leading eigenvalue: (0.744756877836706+0.013262932365236848j)
+    Leading eigenvalue: (0.744756877836705+0.013262932365236025j)
 
 
 After solving the problem we can get the leading mode and its respective eigenvalue from the <code style="color : Cyan">ModeCollection</code> class. The eigenvalue printed should be approximatley 0.74+0.013j.

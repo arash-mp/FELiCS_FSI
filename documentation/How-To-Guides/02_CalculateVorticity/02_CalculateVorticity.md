@@ -7,7 +7,7 @@ We consider the domain $\Omega = (0,1) \times (0,1)$, and discretize with triang
 
 ```python
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
-from FELiCS.SpaceDisc.FEMSpaces  import createFunctionSpace
+from FELiCS.SpaceDisc.FEMSpaces  import create_function_space
 from FELiCS.Fields.Field         import Field
 from FELiCS.IO.Reader            import Reader
 
@@ -17,22 +17,35 @@ coordinateSystemName = "Cartesian"
 # Create a FELiCS mesh from the gmsh file
 mesh = FELiCSMesh(coordinateSystemName, meshFileName)
 
-scalarSpace = createFunctionSpace(mesh, degree=2, dim=1)
-vectorSpace = createFunctionSpace(mesh, degree=2, dim=2)
+scalarSpace = create_function_space(mesh, degree=2, dim=1)
+vectorSpace = create_function_space(mesh, degree=2, dim=2)
 
 phiVec = Field(vectorSpace, mesh=mesh, name="function_2d")
-phiVec.importData(Reader(), "input")
+phiVec.import_data(Reader(), "input")
 
 ```
 
-    Info     | FELiCSMesh.py          | __init__                   (line 94  ) : Opening mesh file: ./square_mesh.msh
-    Info     | FELiCSMesh.py          | __init__                   (line 102 ) : Mesh contains 513 nodes and 1024 elements
+    [31m(     [0m    [31m(     [0m          [31m(     [0m
+    [31m)[33m\ [31m)      [31m)[33m [31m)       [31m(    [31m)[33m\ [31m)  [0m
+    [31m([33m([0m)[33m/[31m(  (  [31m([33m([0m)[33m/[31m( (    [31m)\   [31m([33m([0m)[33m/[31m(  [0m
+    [31m/[33m([0m_[33m)[31m) )\  /[33m([0m_[33m)[31m))\  [31m([33m([0m([33m_[31m)  [31m/[33m([0m_[33m)[31m) [0m
+    [36m([0m_[36m)[0m_[36m)[0m[36m(([0m_[36m) ([0m_[36m))[0m [36m(([0m_[36m) [31m)[36m\[0m___ [36m([0m_[36m))   [0m
+    | __|| __|| |   (_)[31m([36m([0m/ __|/ __|  [0m
+    | _| | _| | |__ | | | (__ \__ \  [0m
+    |_|  |___||____||_|  \___||___/  [0m
+    Git commit: 
+
+
+    fatal: not a git repository: '/opt/anaconda3/envs/felics/lib/python3.13/site-packages/../.git'
+    Info     | FELiCSMesh.py          | __init__                   (line 124 ) : Opening mesh file: ./square_mesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 132 ) : Mesh contains 513 nodes and 1024 elements
+    Info     | Reader.py              | _interpolate_to_calc_mesh  (line 706 ) : Linear interpolation took 0.6 seconds. (Mesh size: (1969, 2))
 
 
 
 
 
-    (<FELiCS.Fields.Field.Field at 0x7ca0d41542d0>, [])
+    (<FELiCS.Fields.Field.Field at 0x1645e3770>, [])
 
 
 
@@ -61,7 +74,7 @@ To verify the solution we also calculate the gradient manually. -->
 
 
 ```python
-vorticity = phiVec.getVorticityField()
+vorticity = phiVec.get_vorticity_field()
 ```
 
 **Step3. Postprocessing via plotting contour plots**
@@ -70,7 +83,7 @@ We plot two 2D color plots of the velocity and vorticity magnitudes respectively
 
 
 ```python
-[phi_x, phi_y] = phiVec.getListOfSubFields()
+[phi_x, phi_y] = phiVec.get_list_of_sub_fields()
 
 phi_x.plot()
 phi_y.plot()
@@ -95,3 +108,8 @@ vorticity.plot()
 ![png](output_6_2.png)
     
 
+
+
+```python
+
+```
