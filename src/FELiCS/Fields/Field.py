@@ -1184,6 +1184,7 @@ class Field:
         plotType="real",
         clim=None,
         axes=None,
+        showBoundaries=False,
     ):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
@@ -1205,12 +1206,15 @@ class Field:
             Color limits for the plot as (vmin, vmax). If None, limits are determined automatically based on the data and plotType.
         axes : matplotlib.axes.Axes, optional
             An existing Matplotlib Axes object to plot on. If None, a new figure and axes are created.
+        showBoundaries : bool, optional
+            If True, plot the domain boundaries as black lines. Default is False.
 
         Notes
         -----
         - This method provides a simple visualization of the field.
         - For mixed or vector fields, a specific component can be selected via variableName.
         - Currently only supports 2D meshes; 3D plotting is not yet implemented.
+        - Plotting boundaries is computationally inexpensive.
         """
 
         # Check that the field is defined on a 2D mesh, 3D not yet implemented
@@ -1266,7 +1270,8 @@ class Field:
                 ylim=ylim,
                 plotType=plotType,
                 clim=clim,
-                axes=axes
+                axes=axes,
+                showBoundaries=showBoundaries,
             )
 
         # ---- METHOD 1: Directly use dof coordinates and tricontourf ----
@@ -1349,6 +1354,22 @@ class Field:
             vmax=clim[1]
         )
 
+        # Plot boundaries if requested
+        if showBoundaries:
+            coords = mesh.geometry.x
+            # Get boundary facets (edges in 2D)
+            boundary_facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
+            # Create connectivity between facets and vertices
+            mesh.topology.create_connectivity(tdim - 1, 0)
+            facet_to_vertices = mesh.topology.connectivity(tdim - 1, 0)
+            # Plot each boundary edge
+            for facet_idx in boundary_facets:
+                start = facet_to_vertices.offsets[facet_idx]
+                end = facet_to_vertices.offsets[facet_idx + 1]
+                vertices = facet_to_vertices.array[start:end]
+                edge_coords = coords[vertices]
+                axes.plot(edge_coords[:, 0], edge_coords[:, 1], 'k-', linewidth=0.8, alpha=0.5)
+
         # Set labels and title
         axes.set_xlabel('x')
         axes.set_ylabel('y')
@@ -1390,7 +1411,7 @@ class Field:
             axes.set_ylim(ylim)
 
         plt.tight_layout()
-        plt.show()
+        # plt.show()
         
 
     ### dunder methods for overloading arithmetic operators ###
