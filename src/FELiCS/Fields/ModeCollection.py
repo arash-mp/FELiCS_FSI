@@ -529,12 +529,17 @@ class ModeCollection():
             )
 
         spectrum, header = self.get_spectrum()
+        
+        # Apply specific formatting if spectrum uses object dtype to separate complex and float columns
+        fmt = ['%s'] + ['%.18e'] * (spectrum.shape[1] - 1) if spectrum.dtype == object else '%.18e'
+
         np.savetxt(
             filePath,
             spectrum,
             delimiter=',',
             header=','.join(header),
-            comments=''
+            comments='',
+            fmt=fmt
         )
         if self.analysisType == AnalysisType.MODAL:
             logger.info(f'Eigenvalue spectrum exported to {filePath}.')
