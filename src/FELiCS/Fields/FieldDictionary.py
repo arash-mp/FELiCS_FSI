@@ -10,8 +10,6 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-
-
 class FieldDictionary:
     """
     Container for storing and managing field variables.
@@ -31,7 +29,9 @@ class FieldDictionary:
     """
 
 
-    def __init__(self):
+    def __init__(
+        self
+    ):
         """
         Initialize an empty FieldDictionary instance.
         """

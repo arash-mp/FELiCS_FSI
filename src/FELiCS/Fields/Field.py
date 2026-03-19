@@ -10,10 +10,38 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import  numpy                   as     np
-from    dolfinx.fem             import Function, petsc
-from    FELiCS.Misc.logging     import Logger
-from    mpl_toolkits.axes_grid1 import make_axes_locatable 
+
+# TODO Sophie: throw error if Field is not scalar  
+# 
+# Standard libraries
+import os
+
+# Third party libraries
+from    basix.ufl                   import element
+import  dolfinx
+from    dolfinx                     import fem
+from    dolfinx.fem                 import Function, petsc
+import  matplotlib.pyplot           as plt
+from    matplotlib.tri              import Triangulation
+from    mpl_toolkits.axes_grid1     import make_axes_locatable 
+import  numpy                       as np
+from    petsc4py                    import PETSc
+import  ufl
+from    ufl                         import TestFunction, dx
+
+# Local Libraries and methods
+from FELiCS.Equation.UflDecorator   import UflDecorator
+from FELiCS.Misc.logging            import Logger, log_and_raise
+from FELiCS.Misc.tensorUtils        import (
+    i_grad, 
+    i_conj, 
+    i_dot,  
+    i_inner, 
+    Tensor,
+)
+from FELiCS.Solvers.LinearSolver    import LinearSolver
+from FELiCS.SpaceDisc.FEMSpaces     import create_function_space
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -51,14 +79,24 @@ class Field:
         set (even to zero), the field is assumed to have one spectral spatial
         dimension, and ``hasSpectralDimension`` is set to True.
     """
-    def __init__(self, FEMSpace, mesh, name=None, isStateVector=False, m=None):
+    def __init__(
+        self,
+        FEMSpace,
+        mesh,
+        name=None,
+        isStateVector=False,
+        m=None
+    ):
         self.space    = FEMSpace
         self.mesh     = mesh
 
         # get Info
-        self.info     = self.describeFunctionSpace()
+        self.info     = self.describe_function_space()
 
-        if name is None or not isinstance(name, str):
+        if name is None or not isinstance(
+            name,
+            str,
+        ):
             if self.info['type']=='scalar':
                 self._name = 'scalarField'
             elif self.info['type']=='vector':
@@ -69,7 +107,10 @@ class Field:
                 self._name = 'field'
                 logger.warning("Field type not recognized. Using default name 'field'.")
 
-            if not isinstance(name, str) and name is not None:
+            if not isinstance(
+                name,
+                str,
+            ) and name is not None:
                 logger.warning("Field initialized a 'name' not being a string. Using default names based on field type.")
                 
         else:
@@ -91,14 +132,21 @@ class Field:
         self.function = Function(FEMSpace)
 
     @property 
-    def name(self):
+    def name(
+        self
+    ):
         return self._name
   
     @name.setter
-    def name(self, name):
+    def name(
+        self,
+        name
+    ):
         self._name = name
 
-    def getNamesOfSubFields(self):
+    def get_names_of_sub_fields(
+        self
+    ):
         """
         Return the list of subfield names for vector or mixed spaces.
 
@@ -122,22 +170,26 @@ class Field:
             return subFieldNames
         
         elif self.info['type'] == 'vector':
-            axisNames           = self.mesh.axisNames
+            axis_names           = self.mesh.axis_names
             numSubSpaces        = self.info['num_subspaces']
             
             # Check that the number of axis names is sufficient
-            if len(axisNames) < numSubSpaces:
-                logger.error(f"Not enough axis names {axisNames} in the coordinate system for the vector field with {numSubSpaces} components.")
-                raise ValueError("Not enough axis names in the coordinate system for the vector field.")
+
+            if len(axis_names) < numSubSpaces:
+                log_and_raise(logger, f"Not enough axis names {axis_names} in the coordinate system for the vector field with {numSubSpaces} components.", ValueError)
 
             # If the vector was not given before, we set a default
-            if self._name is None or not isinstance(self._name, str):
+            if self._name is None or not isinstance(
+            self._name,
+            str,
+            ):
                 self._name       = 'vectorField'
 
             for i in range(numSubSpaces):
-                subFieldNames.append(self._name+axisNames[i])
+                subFieldNames.append(self._name+axis_names[i])
         
         elif self.info['type'] == 'mixed':
+
             # If it was not set before and is a state vector, use state vector names
             # NOTE: assumes stateVectorNames is a list of tuples 
             if self.isStateVector and not self._namesOfSubFields:
@@ -161,12 +213,13 @@ class Field:
                         subFieldNames.append(f'vector{counter_vectors}')
                         counter_vectors += 1
                     else:
-                        logger.error("Subspace type neither scalar nor vector.")
-                        raise ValueError("Subspace type neither scalar nor vector.") 
-
+                        log_and_raise(logger, "Subspace type neither scalar nor vector.", ValueError)
         return subFieldNames
 
-    def setNamesOfSubFields(self, nameList):
+    def set_names_of_sub_fields(
+        self,
+        nameList
+    ):
         """
         Assign explicit names to the subfields of a mixed or vector field.
 
@@ -183,7 +236,9 @@ class Field:
         self._namesOfSubFields = nameList 
 
 
-    def getTensor(self):
+    def get_tensor(
+        self
+    ):
         """
         Wrap the field as a tensor-aware object.
 
@@ -199,11 +254,17 @@ class Field:
         - Mixed functions are not yet fully supported and are treated as a
           single tensor object.
         """
-        from FELiCS.Misc.tensorUtils import Tensor
         # TODO Sophie: handle Tensors of mixed functions (later)
-        return Tensor(self.function, self.mesh.coordinateSystem, m = self.m, mayHaveSpectralDimension = self.hasSpectralDimension)
+        return Tensor(
+        self.function,
+        self.mesh.coordinate_system,
+        m = self.m,
+        mayHaveSpectralDimension = self.hasSpectralDimension,
+        )
 
-    def isReal(self):
+    def is_real(
+        self
+    ):
         """
         Check whether the field is (numerically) real-valued.
 
@@ -213,10 +274,11 @@ class Field:
             True if the imaginary part of the coefficient array has zero
             norm, False otherwise.
         """
-        import numpy as np
-        return np.linalg.norm(np.imag(self.getCoefficientArray()))==0
+        return np.linalg.norm(np.imag(self.get_coefficient_array()))==0
 
-    def getListOfSubFields(self):
+    def get_list_of_sub_fields(
+        self
+    ):
         """
         Get a list of single-component fields.
 
@@ -242,22 +304,33 @@ class Field:
             return listOfFields
       
         # Else get the names of the subfields
-        namesOfSubFields        = self.getNamesOfSubFields()
+        namesOfSubFields        = self.get_names_of_sub_fields()
         
         # Loop over sub-fields and append to list
         for i in range(numberOfSubSpaces):
+
             # transfer content
             space, mapping            = self.space.sub(i).collapse()
+
             # NOTE: the sub-fields inherit the wave number from the field.
-            field                     = Field(space, self.mesh, name=namesOfSubFields[i], m=self.m)
-            field.setCoefficientArray(self.getCoefficientArray()[mapping])
+            field                     = Field(
+                space,
+                self.mesh,
+                name=namesOfSubFields[i],
+                m=self.m,
+            )
+            field.set_coefficient_array(self.get_coefficient_array()[mapping])
             listOfFields.append(field)
 
         return listOfFields
 
 
 
-    def setListOfSubFields(self, listOfFields, name=[]):
+    def set_list_of_sub_fields(
+        self,
+        listOfFields,
+        name=[]
+    ):
         """
         Set the field coefficients from a list of single-component fields.
 
@@ -281,8 +354,11 @@ class Field:
         
         if numberOfSubSpaces == 0:
             # TODO: check that the functionSpaces are the same!
-            self.setCoefficientArray(listOfFields[0].getCoefficientArray())
-            if not name or not isinstance(name, str):
+            self.set_coefficient_array(listOfFields[0].get_coefficient_array())
+            if not name or not isinstance(
+                name,
+                str,
+            ):
                 self._name = listOfFields[0].name
             else:
                 self._name = name
@@ -292,15 +368,20 @@ class Field:
             for i in range(numberOfSubSpaces):
                 # TODO: check that the functionSpaces are the same!
                 space, mapping                  = self.space.sub(i).collapse()
-                self.function.x.array[mapping]  = listOfFields[i].getCoefficientArray()
+                self.function.x.array[mapping]  = listOfFields[i].get_coefficient_array()
                 namesOfSubFields.append(listOfFields[i].name)
-                self.setNamesOfSubFields(namesOfSubFields)
-                if isinstance(name,str):
+                self.set_names_of_sub_fields(namesOfSubFields)
+                if isinstance(
+                    name,
+                    str,
+                ):
                     self._name = name
                 
 
 
-    def describeFunctionSpace(self):
+    def describe_function_space(
+        self
+    ):
         """
         Describe the structure of the function space and its subspaces.
 
@@ -329,9 +410,9 @@ class Field:
         value_size                      = self.space.value_size
         # TODO: remove after the writer has been updated. The input mesh in field HAS TO BE A FELiCSMesh, and CANNOT be a dolfinx mesh
         try:
-            nDofsMesh                       = len(self.mesh._coordinates)
+            nDofsMesh                   = len(self.mesh._coordinates)
         except:
-            nDofsMesh                       = self.space.dofmap.index_map.size_global
+            nDofsMesh                   = self.space.dofmap.index_map.size_global
 
         result = {
             'num_subspaces':            num_subspaces,
@@ -393,7 +474,9 @@ class Field:
         
         return result
 
-    def getSize(self):
+    def getSize(
+        self
+    ):
         """
         Get the length of the coefficient array from the underlying function.
 
@@ -405,7 +488,9 @@ class Field:
         return len(self.function.x.array[:])
 
 
-    def getCoefficientArray(self):
+    def get_coefficient_array(
+        self
+    ):
         """
         Get the coefficient array of the field.
 
@@ -414,13 +499,17 @@ class Field:
         numpy.ndarray
             A complex-valued array representing the field coefficients.
         """
-        import numpy as np
-        array = np.empty(len(self.function.x.array[:]),dtype=complex)
+        array = np.empty(
+            len(self.function.x.array[:]),
+            dtype=complex,
+        )
         array[:] = self.function.x.array[:]
         return array
 
 
-    def getRealCoefficientArray(self):
+    def get_real_coefficient_array(
+        self
+    ):
         """
         Get the real part of the coefficient array of the field.
 
@@ -429,12 +518,17 @@ class Field:
         numpy.ndarray
             A float-valued array representing the field coefficients.
         """
-        import numpy as np
-        array = np.empty(len(self.function.x.array[:]),dtype=float)
+        array = np.empty(
+            len(self.function.x.array[:]),
+            dtype=float,
+        )
         array[:] = np.real(self.function.x.array[:])
         return array
 
-    def getImagCoefficientArray(self):
+    def get_imag_coefficient_array(
+            self
+
+    ):
         """
         Get the imaginary part of the coefficient array of the field.
 
@@ -443,14 +537,19 @@ class Field:
         numpy.ndarray
             A float-valued array representing the field coefficients.
         """
-        import numpy as np
-        array = np.empty(len(self.function.x.array[:]),dtype=float)
+        array = np.empty(
+            len(self.function.x.array[:]),
+            dtype=float,
+        )
         array[:] = np.imag(self.function.x.array[:])
         return array
 
 
 
-    def setCoefficientArray(self, array):
+    def set_coefficient_array(
+        self,
+        array
+    ):
         """
         Set the coefficient array of the field.
 
@@ -459,13 +558,15 @@ class Field:
         array : numpy.ndarray
             A complex-valued array of coefficients.
         """
-        import numpy as np
         if np.isscalar(array):
             self.function.x.array[:] = array
         else:
             self.function.x.array[:] = array[:]
 
-    def setConstantValue(self, value): 
+    def set_constant_value(
+        self,
+        value
+    ): 
         """
         Set all coefficients to a constant value.
 
@@ -476,7 +577,9 @@ class Field:
         """
         self.function.x.array[:] = value
 
-    def getPetscVector(self):
+    def get_petsc_vector(
+        self
+    ):
         """
         Convert the field to a PETSc vector.
 
@@ -485,17 +588,20 @@ class Field:
         petsc4py.PETSc.Vec
             A PETSc vector created from the coefficient array.
         """
-        from petsc4py import PETSc
-        return PETSc.Vec().createWithArray(self.getCoefficientArray())
+        return PETSc.Vec().createWithArray(self.get_coefficient_array())
 
-    def conjugate(self):
+    def conjugate(
+        self
+    ):
         """
         Compute the complex conjugate of the field.
         """
-        import numpy as np
-        self.setCoefficientArray(np.conj(self.getCoefficientArray()))
+        self.set_coefficient_array(np.conj(self.get_coefficient_array()))
 
-    def setBoundaryConditions(self, bcs):
+    def set_boundary_conditions(
+        self,
+        bcs
+    ):
         """
         Apply boundary conditions to the field.
 
@@ -504,12 +610,17 @@ class Field:
         bcs : list
             A list of Dirichlet boundary conditions to be applied.
         """
-        petscArray = self.getPetscVector()
-        petsc.set_bc(petscArray,bcs)
-        self.setCoefficientArray(petscArray.getArray())
+        petscArray = self.get_petsc_vector()
+        petsc.set_bc(
+            petscArray,
+            bcs,
+        )
+        self.set_coefficient_array(petscArray.getArray())
 
         
-    def getGradientField(self):
+    def get_gradient_field(
+        self
+    ):
         """
         Compute the gradient of a scalar field as a new Field.
 
@@ -525,10 +636,6 @@ class Field:
             field.
 
         """
-        # TODO Sophie: throw error if Field is not scalar    
-        from ufl import TestFunction, dx
-        from FELiCS.Misc.tensorUtils import iGrad, iConj, iDot, Tensor
-        from FELiCS.SpaceDisc.FEMSpaces import createFunctionSpace
         # Create  a Field for the gradient
         # The space must be a vector vor a scalar field
         # TODO Sophie: handle order (get it from function?)
@@ -536,25 +643,42 @@ class Field:
         dim = self.mesh.gdim 
         if self.hasSpectralDimension:
             dim += 1
-        gradientSpace = createFunctionSpace(self.mesh, degree=degree, dim=dim)
-        gradientField = Field(gradientSpace, self.mesh)
+        gradientSpace = create_function_space(
+            self.mesh,
+            degree=degree,
+            dim=dim,
+        )
+        gradientField = Field(
+            gradientSpace,
+            self.mesh,
+        )
 
-        coordSystem = self.mesh.coordinateSystem
+        coordSystem = self.mesh.coordinate_system
         J_hat = coordSystem.J_hat
 
         v = TestFunction(gradientSpace)
         # Sophie: m and hasSpectralDimension may not be needed for test function
-        v_tens = Tensor(v, CoordSys=coordSystem, m = self.m, mayHaveSpectralDimension=self.hasSpectralDimension)
-        expression = iDot(iGrad(self.getTensor()), iConj(v_tens)).ufl_tens * J_hat* dx
+        v_tens = Tensor(
+            v,
+            CoordSys=coordSystem,
+            m = self.m,
+            mayHaveSpectralDimension=self.hasSpectralDimension,
+        )
+        expression = i_dot(
+            i_grad(self.get_tensor()),
+            i_conj(v_tens),
+        ).ufl_tens * J_hat* dx
 
-        gradientField.evaluateUflTensorExpression(expression)    
+        gradientField.evaluate_ufl_tensor_expression(expression)    
 
         # TODO Sophie: check how to destroy all petsc objects, also matrix
         gradientSpace.FEMWeightSolver.destroy()
 
         return gradientField
 
-    def calculateL2Norm(self):
+    def calculate_l2_norm(
+        self
+    ):
         """
         Compute the L2 norm of the field (and its subfields, if mixed).
 
@@ -566,22 +690,23 @@ class Field:
         float
             The L2 norm of the field.
         """
-        import ufl
-        import numpy as np
-        from FELiCS.Misc.tensorUtils import iConj, iDot
-        from FELiCS.Equation.UflDecorator import UflDecorator
         norm_squared = 0.
-        list1 = self.getListOfSubFields()
-        J_hat = self.mesh.coordinateSystem.J_hat
+        list1 = self.get_list_of_sub_fields()
+        J_hat = self.mesh.coordinate_system.J_hat
         norm_ufl = UflDecorator()
         for field in list1:
-            fieldTens = field.getTensor()
-            norm_ufl += (iDot(fieldTens, iConj(fieldTens))).ufl_tens*J_hat*ufl.dx        
-        norm_squared = norm_ufl.getAssembledScalar(self.mesh)
+            fieldTens = field.get_tensor()
+            norm_ufl += (i_dot(
+                fieldTens,
+                i_conj(fieldTens),
+            )).ufl_tens*J_hat*ufl.dx        
+        norm_squared = norm_ufl.get_assembled_scalar(self.mesh)
         return np.sqrt(norm_squared)
 
 
-    def getVorticityField(self):
+    def get_vorticity_field(
+        self
+    ):
         """
         Compute the vorticity field associated with a velocity field.
 
@@ -608,46 +733,55 @@ class Field:
 
         dim = self.space.num_sub_spaces
         if dim < 2:
+
             # Error message
             pass
         componentGradient = []
-        velocityComponents = self.getListOfSubFields()
+        velocityComponents = self.get_list_of_sub_fields()
 
         for field in velocityComponents:
-            componentGradient.append(field.getGradientField())
+            componentGradient.append(field.get_gradient_field())
         
         
         # 2D field -> scalar vorticity field
         if dim == 2:
-            dvdx = componentGradient[1].getListOfSubFields()[0]
-            dudy = componentGradient[0].getListOfSubFields()[1]
+            dvdx = componentGradient[1].get_list_of_sub_fields()[0]
+            dudy = componentGradient[0].get_list_of_sub_fields()[1]
             vorticityField = dvdx - dudy
             vorticityField.name = "vorticity"
             
             return vorticityField
+
         # 3D field -> vector vorticity field
         # TODO: Still needs to be tested
         if dim == 3:
-            dwdy = componentGradient[2].getListOfSubFields()[1]
-            dvdz = componentGradient[1].getListOfSubFields()[2]
+            dwdy = componentGradient[2].get_list_of_sub_fields()[1]
+            dvdz = componentGradient[1].get_list_of_sub_fields()[2]
 
-            dudz = componentGradient[0].getListOfSubFields()[2]
-            dwdx = componentGradient[2].getListOfSubFields()[0]
+            dudz = componentGradient[0].get_list_of_sub_fields()[2]
+            dwdx = componentGradient[2].get_list_of_sub_fields()[0]
 
-            dvdx = componentGradient[1].getListOfSubFields()[0]
-            dudy = componentGradient[0].getListOfSubFields()[1]
+            dvdx = componentGradient[1].get_list_of_sub_fields()[0]
+            dudy = componentGradient[0].get_list_of_sub_fields()[1]
 
             vorticity_x = dwdy - dvdz
             vorticity_y = dudz - dwdx
             vorticity_z = dvdx - dudy
 
-            vorticityField = Field(self.space, self.mesh, name="vorticity")
-            vorticityField.setListOfSubFields([vorticity_x, vorticity_y, vorticity_z])
+            vorticityField = Field(
+                self.space,
+                self.mesh,
+                name="vorticity",
+            )
+            vorticityField.set_list_of_sub_fields([vorticity_x, vorticity_y, vorticity_z])
             
             return vorticityField
 
 
-    def exportToH5(self, writer, fileName=None):
+    def export_to_h5(self,
+    writer,
+    fileName=None
+    ):
         """
         Export the field to an HDF5 file using a FELiCS writer.
 
@@ -663,14 +797,18 @@ class Field:
         # Sophie: This will be the final method
         if fileName == None:
             fileName = self.name
-        writer.exportFieldToH5(self, fileName)
-
-
-    def importData(
+        writer.export_field_to_h5(
             self,
-            reader,
-            importFilePath = None,
-            groupName = None
+            fileName
+        )
+
+
+    def import_data(
+        self,
+        reader,
+        importFilePath = None,
+        groupName = None
+    
         ):
         """
         Import data into the field using a FELiCS reader.
@@ -695,22 +833,29 @@ class Field:
         list of str
             List of variable names that were not found in the file.
         """
-        import os
         # determine filepath if not given
         # TODO Sophie: these two lines should be in the reader
         if importFilePath==None:
-            importFilePath = os.path.join(reader._sourceDir, self.name)
+            importFilePath = os.path.join(
+                reader._sourceDir,
+                self.name,
+            )
         # Just call the reader function
-        self, notInFile = reader.importInField(
+        self, notInFile = reader.import_in_field(
             self,
             importFilePath,
-            groupName
+            groupName,
         )
         
         return self, notInFile
 
 
-    def evaluateUflExpression(self, ufl_expression, bcs=[], restartSolver=False):
+    def evaluate_ufl_expression(
+        self,
+        ufl_expression,
+        bcs=[],
+        restartSolver=False
+    ):
         """
         Evaluate a UFL expression and update the field accordingly.
 
@@ -723,12 +868,11 @@ class Field:
         restartSolver : bool, optional
             Whether to restart the solver instead of reusing an existing one.
         """
-        from FELiCS.Solvers.LinearSolver import LinearSolver
-        from FELiCS.Equation.UflDecorator import UflDecorator
-        import ufl
-        import dolfinx
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
-        if not hasattr(self.space, 'FEMWeightSolver') and not restartSolver:
+        if not hasattr(
+            self.space,
+            'FEMWeightSolver',
+        ) and not restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
             matrix_ufl = UflDecorator()
@@ -745,16 +889,30 @@ class Field:
         
             # matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
             # matrix.assemble()
-            matrix = matrix_ufl.getAssembledMatrix(self.mesh, bcs)
-            self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
+            matrix = matrix_ufl.get_assembled_matrix(
+                self.mesh,
+                bcs,
+            )
+            self.space.FEMWeightSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
-        petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
-        self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
+        petscVec = expr_ufl.get_assembled_vector(
+            self.mesh,
+            bcs,
+        )
+        self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
+            self.space.FEMWeightSolver,
+            petscVec,
+        ))
 
 
-    def evaluateUflTensorExpression(self, ufl_expression, bcs=[], restartSolver=False):
+    def evaluate_ufl_tensor_expression(
+        self,
+        ufl_expression,
+        bcs=[],
+        restartSolver=False
+    ):
         """
         Evaluate a tensor-based UFL expression and update the field accordingly.
 
@@ -773,46 +931,66 @@ class Field:
         - Uses a predefined solver if available to improve performance.
         - The weak form includes integration over the computational domain.
         """
-        # evaluates an ufl expression by 
-        from FELiCS.Solvers.LinearSolver import LinearSolver
-        from FELiCS.Equation.UflDecorator import UflDecorator
-        import ufl 
-        import dolfinx
 
-        from   FELiCS.Misc.tensorUtils import (
-            Tensor,
-            iDot,
-            iConj,
-        )
-        ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
-        if not hasattr(self.space, 'FEMWeightSolver') or restartSolver:
+        ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later
+        if not hasattr(
+            self.space,
+            'FEMWeightSolver',
+        ) or restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
             matrix_ufl = UflDecorator()
-            coordinateSystem = self.mesh.coordinateSystem
-            J_hat = coordinateSystem.J_hat
+            coordinate_system = self.mesh.coordinate_system
+            J_hat = coordinate_system.J_hat
             i=0
             for test in test_FEM:
-                iTest = Tensor(test, coordinateSystem, mayHaveSpectralDimension=True)
-                iFluc = Tensor(trial_FEM[i], coordinateSystem, mayHaveSpectralDimension=True)
+                iTest = Tensor(
+                    test,
+                    coordinate_system,
+                    mayHaveSpectralDimension=True
+                )
+                iFluc = Tensor(
+                    trial_FEM[i],
+                    coordinate_system,
+                    mayHaveSpectralDimension=True
+                )
                 if iTest.order  == 1:
-                    matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add( ( i_dot(
+                        iFluc,
+                        i_conj(iTest),
+                    ) ).ufl_tens*J_hat*ufl.dx)
                 elif iTest.order == 0:
-                    matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*ufl.dx)
                 else:
                     ##LOGGING TODO (Sophie): throw error 
                     print("ERROR, in 'Field.evaluateUflExpression'")
                 i+=1
-            matrix = matrix_ufl.getAssembledMatrix(self.mesh, bcs) 
-            self.space.FEMWeightSolver = LinearSolver.createEquationSystemSolver(matrix)
+            matrix = matrix_ufl.get_assembled_matrix(
+                self.mesh,
+                bcs,
+            ) 
+            self.space.FEMWeightSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
-        petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
-        self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMWeightSolver, petscVec))
+        petscVec = expr_ufl.get_assembled_vector(
+            self.mesh,
+            bcs,
+        )
+        self.set_coefficient_array(
+            LinearSolver.solve_equation_system_with_predefined_solver(
+            self.space.FEMWeightSolver,
+            petscVec,
+        ))
 
 
-    def smoothUflTensorExpression(self, ufl_expression, smoothFactor, bcs=[], restartSolver=False):
+    def smooth_ufl_tensor_expression(
+        self,
+        ufl_expression,
+        smoothFactor,
+        bcs=[],
+        restartSolver=False
+    ):
         """
         Smooth a tensor-based UFL expression using a diffusion-like approach.
 
@@ -833,36 +1011,43 @@ class Field:
           regularization term to the weak form.
         - It is particularly useful for regularizing noisy numerical solutions.
         """
-        # evaluates an ufl expression by 
-        from FELiCS.Solvers.LinearSolver import LinearSolver
-        from FELiCS.Equation.UflDecorator import UflDecorator
-        import ufl 
-        import dolfinx
-
-        from   FELiCS.Misc.tensorUtils import (
-            Tensor,
-            iDot,
-            iConj,
-            iGrad,
-            iInner,
-        )
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
-        if not hasattr(self.space, 'FEMSmoothSolver') or restartSolver:
+        if not hasattr(
+            self.space,
+            'FEMSmoothSolver',
+        ) or restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
             matrix_ufl = UflDecorator()
-            coordinateSystem = self.mesh.coordinateSystem
-            J_hat = coordinateSystem.J_hat
+            coordinate_system = self.mesh.coordinate_system
+            J_hat = coordinate_system.J_hat
             i=0
             for test in test_FEM:
-                iTest = Tensor(test, coordinateSystem, mayHaveSpectralDimension=True)
-                iFluc = Tensor(trial_FEM[i], coordinateSystem, mayHaveSpectralDimension=True)
+                iTest = Tensor(
+                    test,
+                    coordinate_system,
+                    mayHaveSpectralDimension=True
+                )
+                iFluc = Tensor(
+                    trial_FEM[i],
+                    coordinate_system,
+                    mayHaveSpectralDimension=True
+                )
                 if iTest.order  == 1:
-                    matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*ufl.dx)
-                    matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iTest))).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add( ( i_dot(
+                        iFluc,
+                        i_conj(iTest),
+                    ) ).ufl_tens * J_hat * ufl.dx)
+                    matrix_ufl.add((smoothFactor * i_inner(
+                        i_grad(iFluc),
+                        i_grad(iTest),
+                    )).ufl_tens*J_hat*ufl.dx)
                 elif iTest.order == 0:
-                    matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*ufl.dx)
-                    matrix_ufl.add((smoothFactor* iDot(iGrad(iFluc),iGrad(iConj(iTest)) )).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add((smoothFactor* i_dot(
+                        i_grad(iFluc),
+                        i_grad(i_conj(iTest)),
+                    )).ufl_tens*J_hat*ufl.dx)
                 else:
                     ##LOGGING TODO (Sophie): throw error 
                     print("ERROR, in 'Field.smoothTensorUflExpression'")
@@ -871,17 +1056,31 @@ class Field:
                 matrix_ufl.setCorrectMeshObject(self.mesh)
             except:
                 pass
-            matrix = petsc.assemble_matrix(dolfinx.fem.form(matrix_ufl.lhs), bcs=bcs)
+            matrix = petsc.assemble_matrix(
+                dolfinx.fem.form(matrix_ufl.lhs),
+                bcs=bcs
+            )
             matrix.assemble()
-            self.space.FEMSmoothSolver = LinearSolver.createEquationSystemSolver(matrix)
+            self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl = UflDecorator(ufl_expression)
-        petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
-        self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
+        petscVec = expr_ufl.get_assembled_vector(
+            self.mesh,
+            bcs
+        )
+        self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
+            self.space.FEMSmoothSolver,
+            petscVec
+        ))
 
 
-    def smooth(self, smoothFactor, bcs=[], restartSolver=False):
+    def smooth(
+        self,
+        smoothFactor,
+        bcs=[],
+        restartSolver=False
+    ):
         """
         Smooth the field using a diffusion-like approach.
 
@@ -904,73 +1103,171 @@ class Field:
         - Particularly useful for regularizing noisy numerical solutions.
         - The same solver is reused between calls unless ``restartSolver`` is True.
         """
-        # evaluates an ufl expression by 
-        from FELiCS.Solvers.LinearSolver import LinearSolver
-        from FELiCS.Equation.UflDecorator import UflDecorator
-        import ufl 
-        import dolfinx
-
-        from   FELiCS.Misc.tensorUtils import (
-            Tensor,
-            iDot,
-            iConj,
-            iGrad,
-            iInner,
-        )
         ## create petsc solver and save it as attribute to the corresponding space - to use the LU-decomposition later 
-        if not hasattr(self.space, 'FEMSmoothSolver') or restartSolver:
+        if not hasattr(
+            self.space,
+            'FEMSmoothSolver',
+        ) or restartSolver:
             test_FEM   = ufl.TestFunctions(self.space)
             trial_FEM  = ufl.TrialFunctions(self.space)
             matrix_ufl = UflDecorator()
-            coordinateSystem = self.mesh.coordinateSystem
-            J_hat = coordinateSystem.J_hat
+            coordinate_system = self.mesh.coordinate_system
+            J_hat = coordinate_system.J_hat
             i=0
             for test in test_FEM:
-                iTest = Tensor(test, coordinateSystem, mayHaveSpectralDimension=True)
-                iFluc = Tensor(trial_FEM[i], coordinateSystem, mayHaveSpectralDimension=True)
+                iTest = Tensor(
+                    test,
+                    coordinate_system,
+                    mayHaveSpectralDimension=True
+                )
+                iFluc = Tensor(
+                    trial_FEM[i],
+                    coordinate_system,
+                    mayHaveSpectralDimension=True
+                )
                 if iTest.order  == 1:
-                    matrix_ufl.add( ( iDot(iFluc, iConj(iTest)) ).ufl_tens*J_hat*ufl.dx)
-                    matrix_ufl.add((smoothFactor* iInner(iGrad(iFluc),iGrad(iTest))).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add( ( i_dot(
+                        iFluc,
+                        i_conj(iTest),
+                    )).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add((smoothFactor* i_inner(
+                        i_grad(iFluc),
+                        i_grad(iTest),
+                    )).ufl_tens*J_hat*ufl.dx)
                 elif iTest.order == 0:
-                    matrix_ufl.add( ( iFluc * iConj(iTest)).ufl_tens*J_hat*ufl.dx)
-                    matrix_ufl.add((smoothFactor* iDot(iGrad(iFluc),iGrad(iConj(iTest)) )).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*ufl.dx)
+                    matrix_ufl.add((smoothFactor* i_dot(
+                        i_grad(iFluc),
+                        i_grad(i_conj(iTest)),
+                    )).ufl_tens*J_hat*ufl.dx)
                 else:
                     ##LOGGING TODO (Sophie): throw error 
                     print("ERROR, in 'Field.smoothTensorUflExpression'")
                 i+=1
-            matrix = matrix_ufl.getAssembledMatrix(self.mesh, bcs=bcs)
-            self.space.FEMSmoothSolver = LinearSolver.createEquationSystemSolver(matrix)
+            matrix = matrix_ufl.get_assembled_matrix(
+                self.mesh,
+                bcs=bcs,
+            )
+            self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system
         expr_ufl     = UflDecorator()
-        listOfFields = self.getListOfSubFields()
+        listOfFields = self.get_list_of_sub_fields()
         test_FEM     = ufl.TestFunctions(self.space)
-        coordinateSystem = self.mesh.coordinateSystem
-        J_hat = coordinateSystem.J_hat
+        coordinate_system = self.mesh.coordinate_system
+        J_hat = coordinate_system.J_hat
         for i in range(len(listOfFields)):
-            iTest = Tensor(test_FEM[i], coordinateSystem, mayHaveSpectralDimension=True)
+            iTest = Tensor(
+                test_FEM[i],
+                coordinate_system,
+                mayHaveSpectralDimension=True,
+            )
             field     = listOfFields[i]
-            expr_ufl += (iDot(field.getTensor(), iConj(iTest))).ufl_tens*J_hat*ufl.dx
-        petscVec = expr_ufl.getAssembledVector(self.mesh, bcs)
-        self.setCoefficientArray(LinearSolver.solveEquationSystemWithPredefinedSolver(self.space.FEMSmoothSolver, petscVec))
+            expr_ufl += (i_dot(
+                field.get_tensor(),
+                i_conj(iTest),
+            )).ufl_tens*J_hat*ufl.dx
+        petscVec = expr_ufl.get_assembled_vector(
+            self.mesh,
+            bcs,
+        )
+        self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
+            self.space.FEMSmoothSolver,
+            petscVec,
+        ))
 
-    def plot(self, xlim=None, ylim=None, plotType="real"):
+    def plot(
+        self,
+        variableName=None,
+        xlim=None,
+        ylim=None,
+        plotType="real",
+        clim=None,
+        axes=None,
+    ):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
         field looks as expected and rule out e.g. import problems.
+        
+        Parameters
+        ----------
+        variableName : str, optional
+            Name of the variable to plot. For mixed or vector fields, this can refer to
+            a subfield name or a component of a vector subfield (e.g. 'u_x'). If None,
+            a default component is chosen.
+        xlim : tuple, optional
+            Limits for the x-axis as (xmin, xmax). If None, limits are determined automatically.
+        ylim : tuple, optional
+            Limits for the y-axis as (ymin, ymax). If None, limits are determined automatically.
+        plotType : str, optional
+            Type of plot to display. Options are 'real', 'imag', or 'magnitude'. Default is 'real'.
+        clim : tuple, optional
+            Color limits for the plot as (vmin, vmax). If None, limits are determined automatically based on the data and plotType.
+        axes : matplotlib.axes.Axes, optional
+            An existing Matplotlib Axes object to plot on. If None, a new figure and axes are created.
 
         Notes
         -----
         - This method provides a simple visualization of the field.
+        - For mixed or vector fields, a specific component can be selected via variableName.
+        - Currently only supports 2D meshes; 3D plotting is not yet implemented.
         """
-        import matplotlib.pyplot as plt
-        from matplotlib.tri import Triangulation
-        from dolfinx import fem
-        import numpy as np
-        from    basix.ufl                   import element
 
+        # Check that the field is defined on a 2D mesh, 3D not yet implemented
+        if self.mesh.dolfinxMesh.topology.dim != 2:
+            logger.warning("Field.plot(): plotting is currently only implemented for 2D meshes. Returning without plotting.")
+            return
+
+        # Handle mixed or vector fields by selecting the appropriate scalar field to plot
         if self.space.num_sub_spaces > 1:
-            raise NotImplementedError("Plotting is only implemented for scalar fields. Use getListOfSingleFields() to get subfields. These can then be plotted individually with the same method.")
+            fields  = self.get_list_of_sub_fields()
+            names   = self.get_names_of_sub_fields()
+            
+            selected_field = None
+            
+            if variableName is not None:
+                if variableName in names:
+                    selected_field = fields[names.index(variableName)]
+                else:
+                    # Try to match a vector component name inside vector subfields
+                    for field in fields:
+                        if field.info['type'] == 'vector':
+                            component_names = field.get_names_of_sub_fields()
+                            if variableName in component_names:
+                                selected_field = field.get_list_of_sub_fields()[
+                                    component_names.index(variableName)
+                                ]
+                                break
+                    if selected_field is None:
+                        logger.warning(
+                            f"Field.plot(): variable '{variableName}' not found. "
+                            "Using the default component instead."
+                        )
+            
+            if selected_field is None:
+                # Default: first scalar field or first component of first vector
+                first_field = fields[0]
+                if first_field.info['type'] == 'vector':
+                    selected_field = first_field.get_list_of_sub_fields()[0]
+                elif first_field.info['type'] == 'mixed':
+                    # Take the first scalar component from the mixed subfield
+                    nested_fields = first_field.get_list_of_sub_fields()
+                    nested_first = nested_fields[0]
+                    if nested_first.info['type'] == 'vector':
+                        selected_field = nested_first.get_list_of_sub_fields()[0]
+                    else:
+                        selected_field = nested_first
+                else:
+                    selected_field = first_field
+            
+            return selected_field.plot(
+                variableName=variableName,
+                xlim=xlim,
+                ylim=ylim,
+                plotType=plotType,
+                clim=clim,
+                axes=axes
+            )
 
         # ---- METHOD 1: Directly use dof coordinates and tricontourf ----
         # NOTE: With this method we loose mesh connectivity information.
@@ -987,38 +1284,70 @@ class Field:
         tdim            = mesh.topology.dim
 
         # Ensure cell->vertex connectivity
-        mesh.topology.create_connectivity(tdim, 0)
+        mesh.topology.create_connectivity(
+            tdim,
+            0
+        )
 
         # --- 1) Interpolate to P1 space on same mesh ---
-        V1              = fem.functionspace(mesh, element("CG", "triangle", 1))
+        V1              = fem.functionspace(
+            mesh,
+            element(
+                "CG",
+                "triangle",
+                1
+            )
+        )
         u1              = fem.Function(V1)
         u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
         
         # Get the values corresponding to plot type
         if plotType == "imag":
             phi_vertex      = np.imag(u1.x.array)
-            cmap            = "RdBu_r"
+            cmap            = "seismic"
         elif plotType == "magnitude":
             phi_vertex      = np.abs(u1.x.array)
-            cmap            = "viridis"
+            cmap            = "magma"
         else:
             phi_vertex      = np.real(u1.x.array)
-            cmap            = "RdBu_r"
+            cmap            = "seismic"
         # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
 
         # --- 2) Build triangulation from the mesh ---
-        cells_to_vertices = mesh.topology.connectivity(tdim, 0).array
-        triangles       = cells_to_vertices.reshape(-1, 3)
-        coords          = mesh.geometry.x
-        x               = coords[:, 0]
-        y               = coords[:, 1]
-        triang          = Triangulation(x, y, triangles=triangles)
+        cells_to_vertices   = mesh.topology.connectivity(
+            tdim,
+            0
+        ).array
+        triangles           = cells_to_vertices.reshape(
+            -1,
+            3
+        )
+        coords              = mesh.geometry.x
+        x                   = coords[:, 0]
+        y                   = coords[:, 1]
+        triang              = Triangulation(
+            x,
+            y,
+            triangles=triangles,
+        )
         # ---- End of METHOD 2 ----
         
         # ---- Plotting ----
-        fig, axes       = plt.subplots()
-        contour         = axes.tricontourf(triang, phi_vertex, levels=20, cmap=cmap, alpha=0.7)
-        axes.tricontour(triang, phi_vertex, levels=10, colors='black', alpha=0.5, linewidths=0.5)
+        if axes is None:
+            fig, axes       = plt.subplots()
+        if clim is None:
+            if plotType == "magnitude":
+                clim = (0, np.max(phi_vertex))
+            else:
+                clim = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
+        contour = axes.tripcolor(
+            triang,
+            phi_vertex,
+            shading='gouraud',
+            cmap=cmap,
+            vmin=clim[0],
+            vmax=clim[1]
+        )
 
         # Set labels and title
         axes.set_xlabel('x')
@@ -1036,14 +1365,25 @@ class Field:
 
         axes.set_title(title)
         axes.set_aspect('equal')
-        axes.grid(True, alpha=0.3)
+        axes.grid(
+            True,
+            alpha=0.3,
+        )
         
         # Add colorbar for phi
         divider         = make_axes_locatable(axes)
-        colorbar_axes   = divider.append_axes("right", size="2%", pad=0.5) 
-        cbar            = plt.colorbar(contour, label=title, cax=colorbar_axes)
+        colorbar_axes   = divider.append_axes(
+            "right",
+            size="2%",
+            pad=0.5,
+        ) 
+        cbar            = plt.colorbar(
+            contour,
+            label=title,
+            cax=colorbar_axes,
+        )
         cbar.formatter.set_powerlimits((0, 0))
-
+        cbar.update_ticks()
         if xlim is not None:
             axes.set_xlim(xlim)
         if ylim is not None:
@@ -1054,7 +1394,10 @@ class Field:
         
 
     ### dunder methods for overloading arithmetic operators ###
-    def __add__(self, other):
+    def __add__(
+        self,
+        other
+    ):
         """
         Overload the ``+`` operator for adding fields or scalars.
 
@@ -1071,21 +1414,32 @@ class Field:
             original field shifted by a scalar.
 
         """
-        import numpy as np
         ## overrides '+'
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
-        if isinstance(other, Field):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray() + other.getCoefficientArray())
+        if isinstance(
+            other,
+            Field
+        ):
+            result = Field(
+                self.space,
+                self.mesh
+            )
+            result.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
             return result 
         elif np.isscalar(other):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray() + other)
+            result = Field(
+                self.space,
+                self.mesh
+            )
+            result.set_coefficient_array(self.get_coefficient_array() + other)
             return result
         return NotImplemented
 
-    def __iadd__(self, other):
+    def __iadd__(
+        self,
+        other
+    ):
         """
         Overload the ``+=`` operator for adding fields or scalars.
 
@@ -1099,20 +1453,25 @@ class Field:
         -------
         self
         """
-        import numpy as np
         ## overrides '+'
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
-        if isinstance(other, Field):
-            self.setCoefficientArray(self.getCoefficientArray() + other.getCoefficientArray())
+        if isinstance(
+            other,
+            Field
+        ):
+            self.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
             return self
         elif np.isscalar(other):
-            self.setCoefficientArray(self.getCoefficientArray() + other)
+            self.set_coefficient_array(self.get_coefficient_array() + other)
             return self
         return NotImplemented
  
 
-    def __sub__(self, other):
+    def __sub__(
+        self,
+        other
+    ):
         """
         Overload the `-` operator for adding two Field objects.
 
@@ -1135,17 +1494,29 @@ class Field:
         ## overrides '-'
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
-        if isinstance(other, Field):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
+        if isinstance(
+            other,
+            Field
+        ):
+            result = Field(
+                self.space,
+                self.mesh
+            )
+            result.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
             return result 
         elif np.isscalar(other):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray() - other)
+            result = Field(
+                self.space,
+                self.mesh
+            )
+            result.set_coefficient_array(self.get_coefficient_array() - other)
             return result 
         return NotImplemented
 
-    def __isub__(self, other):
+    def __isub__(
+        self,
+        other
+    ):
         """
         Overload the `-=` operator for adding two Field objects.
 
@@ -1166,16 +1537,22 @@ class Field:
         ## overrides '-='
         ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
-        if isinstance(other, Field):
-            self.setCoefficientArray(self.getCoefficientArray() - other.getCoefficientArray())
+        if isinstance(
+            other,
+            Field
+        ):
+            self.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
             return self
         elif np.isscalar(other):
-            self.setCoefficientArray(self.getCoefficientArray() - other)
+            self.set_coefficient_array(self.get_coefficient_array() - other)
             return self
         return NotImplemented
 
 
-    def __mul__(self, other):
+    def __mul__(
+        self,
+        other
+    ):
         """
         Overload the ``*`` operator for pointwise multiplication.
 
@@ -1190,22 +1567,33 @@ class Field:
             A new Field whose coefficient array is the pointwise product
             of the two fields, or the field scaled by the scalar.
         """
-        import numpy as np
         ## overrides '*'
         ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
-        if isinstance(other, Field):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray()*other.getCoefficientArray())
+        if isinstance(
+            other,
+            Field
+        ):
+            result = Field(
+                self.space,
+                self.mesh
+            )
+            result.set_coefficient_array(self.get_coefficient_array()*other.get_coefficient_array())
             return result
         elif np.isscalar(other):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray()*other)
+            result = Field(
+                self.space,
+                self.mesh
+            )
+            result.set_coefficient_array(self.get_coefficient_array()*other)
             return result
         return NotImplemented
 
 
-    def __imul__(self, other):
+    def __imul__(
+        self,
+        other
+    ):
         """
         Overload the ``*=`` operator for pointwise multiplication.
 
@@ -1218,20 +1606,25 @@ class Field:
         -------
         self
         """
-        import numpy as np
         ## overrides '*='
         ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
-        if isinstance(other, Field):
-            self.setCoefficientArray(self.getCoefficientArray()*other.getCoefficientArray())
+        if isinstance(
+            other,
+            Field
+        ):
+            self.set_coefficient_array(self.get_coefficient_array() * other.get_coefficient_array())
             return self
         elif np.isscalar(other):
-            self.setCoefficientArray(self.getCoefficientArray()*other)
+            self.set_coefficient_array(self.get_coefficient_array() * other)
             return self
         return NotImplemented
 
 
-    def __truediv__(self, other):
+    def __truediv__(
+        self,
+        other
+    ):
         """
         Overload the ``/`` operator for pointwise division.
 
@@ -1252,22 +1645,33 @@ class Field:
           caller's responsibility to avoid division by zero.
 
         """
-        import numpy as np
         ## overrides '/'
         ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
-        if isinstance(other, Field):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray()/other.getCoefficientArray())
+        if isinstance(
+            other,
+            Field
+        ):
+            result = Field(
+                self.space,
+                self.mesh
+            )
+            result.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
             return result
         elif np.isscalar(other):
-            result = Field(self.space, self.mesh)
-            result.setCoefficientArray(self.getCoefficientArray()/other)
+            result = Field(
+                self.space,
+                self.mesh
+            )
+            result.set_coefficient_array(self.get_coefficient_array()/other)
             return result
         return NotImplemented
 
 
-    def __itruediv__(self, other):
+    def __itruediv__(
+        self,
+        other
+    ):
         """
         Overload the ``/=`` operator for pointwise division.
 
@@ -1286,15 +1690,17 @@ class Field:
           caller's responsibility to avoid division by zero.
 
         """
-        import numpy as np
         ## overrides '/='
         ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
         # TODO Sophie: raise error / not implemented if fields are not defined on the same space
-        if isinstance(other, Field):
-            self.setCoefficientArray(self.getCoefficientArray()/other.getCoefficientArray())
+        if isinstance(
+            other,
+            Field
+        ):
+            self.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
             return self
         elif np.isscalar(other):
-            self.setCoefficientArray(self.getCoefficientArray()/other)
+            self.set_coefficient_array(self.get_coefficient_array()/other)
             return self
         return NotImplemented
 

@@ -10,21 +10,23 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from ufl import (
-                lhs,
-                rhs,
-                )
-from dolfinx.fem import (
-                form,
-                assemble_scalar,
-                                )
-from dolfinx.fem.petsc import (
-                assemble_matrix,
-                assemble_vector,
-                set_bc
-                )
+# Third party libraries
+from dolfinx.fem        import (
+    form,
+    assemble_scalar,
+)
+from dolfinx.fem.petsc  import (
+    assemble_matrix,
+    assemble_vector,
+    set_bc,
+)
+from ufl                import (
+    lhs,
+    rhs,
+)
 
-from 	FELiCS.Misc.logging          import Logger
+# Local Libraries and methods
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -61,7 +63,10 @@ class UflDecorator():
     Operator overloading is supported (+, +=, -, -=).
     """
 
-    def __init__(self, inputUfl = None):
+    def __init__(
+        self,
+        inputUfl = None
+    ):
         """
         Initialize the UflDecorator.
 
@@ -74,7 +79,10 @@ class UflDecorator():
         if inputUfl != None:
             self._expression = inputUfl
 
-    def add(self, input_ufl):
+    def add(
+        self,
+        input_ufl
+    ):
         """
         Add a UFL expression to the current expression.
 
@@ -87,12 +95,18 @@ class UflDecorator():
         -----
         If no expression has been set yet, this initializes the expression.
         """
-        if hasattr(self,'_expression'):
+        if hasattr(
+            self,
+            '_expression',
+        ):
             self._expression += input_ufl
         else:
             self._expression = input_ufl
 
-    def subtract(self,input_ufl):
+    def subtract(
+        self,
+        input_ufl
+    ):
         """
         Subtract a UFL expression from the current expression.
 
@@ -105,13 +119,18 @@ class UflDecorator():
         -----
         If no expression has been set yet, this initializes the expression to the negative of the input.
         """
-        if hasattr(self,'_expression'):
+        if hasattr(
+            self,
+            '_expression',
+        ):
             self._expression -= input_ufl
         else:
             self._expression = -input_ufl
 
     @property
-    def expression(self):
+    def expression(
+        self
+    ):
         """
         Return the current UFL expression.
 
@@ -123,7 +142,9 @@ class UflDecorator():
         return self._expression
 
     @property
-    def lhs(self):
+    def lhs(
+        self
+    ):
         """
         Return the left-hand side of the UFL expression.
 
@@ -135,7 +156,9 @@ class UflDecorator():
         return lhs(self._expression)
 
     @property
-    def rhs(self):
+    def rhs(
+        self
+    ):
         """
         Return the right-hand side of the UFL expression.
 
@@ -147,7 +170,9 @@ class UflDecorator():
         return rhs(self._expression)
 
     @property
-    def form(self):
+    def form(
+        self
+    ):
         """
         Return the general form representation of the UFL expression.
 
@@ -159,7 +184,11 @@ class UflDecorator():
         return form(self._expression)
 
 
-    def getAssembledMatrix(self, mesh, bcs = []):
+    def get_assembled_matrix(
+        self,
+        mesh,   
+        bcs = []
+    ):
         """
         Assemble the left-hand side form into a matrix.
 
@@ -175,12 +204,19 @@ class UflDecorator():
         petsc4py.PETSc.Mat
             The assembled PETSc matrix.
         """
-        self._setCorrectMeshObject(mesh)
-        matrix = assemble_matrix(form(self.lhs), bcs=bcs)
+        self._set_correct_mesh_object(mesh)
+        matrix = assemble_matrix(
+            form(self.lhs),
+            bcs=bcs,
+        )
         matrix.assemble()
         return matrix
 
-    def getAssembledVector(self, mesh, bcs = []):
+    def get_assembled_vector(
+        self,
+        mesh,
+        bcs = []
+    ):
         """
         Assemble the right-hand side form into a vector.
 
@@ -196,13 +232,19 @@ class UflDecorator():
         petsc4py.PETSc.Vec
             The assembled PETSc vector.
         """
-        self._setCorrectMeshObject(mesh)
+        self._set_correct_mesh_object(mesh)
         vector = assemble_vector(form(-self.rhs))
         vector.assemble()
-        set_bc(vector, bcs)
+        set_bc(
+            vector,
+            bcs,
+        )
         return vector
 
-    def getAssembledScalar(self, mesh):
+    def get_assembled_scalar(
+        self,
+        mesh
+    ):
         """
         Assemble the expression into a scalar.
 
@@ -217,10 +259,12 @@ class UflDecorator():
             The scalar result of the assembly.
 
         """
-        self._setCorrectMeshObject(mesh)
+        self._set_correct_mesh_object(mesh)
         return assemble_scalar(form(self._expression))
 
-    def lhsIsZero(self):
+    def lhs_is_zero(
+        self
+    ):
         """
         Check whether the left-hand side of the expression is effectively zero.
 
@@ -229,7 +273,7 @@ class UflDecorator():
         bool
             True if lhs is zero or has insufficient arguments; otherwise, False.
         """
-        if self.isZero():
+        if self.is_zero():
             return True
         else:
             temp=lhs(self._expression)
@@ -238,7 +282,9 @@ class UflDecorator():
             else:
                 return False
 
-    def rhsIsZero(self):
+    def rhs_is_zero(
+        self
+    ):
         """
         Check whether the right-hand side of the expression is effectively zero.
 
@@ -247,7 +293,7 @@ class UflDecorator():
         bool
             True if rhs is zero or has insufficient arguments; otherwise, False.
         """
-        if self.isZero():
+        if self.is_zero():
             return True
         else:
             temp=rhs(self._expression)
@@ -256,7 +302,9 @@ class UflDecorator():
             else:
                 return False
 
-    def isZero(self):
+    def is_zero(
+        self
+    ):
         """
         Check whether the expression has been initialized.
 
@@ -265,19 +313,27 @@ class UflDecorator():
         bool
             True if the expression is not set; False otherwise.
         """
-        if hasattr(self,'__weakForm__'):
+        if hasattr(
+            self,
+            '__weakForm__',
+        ):
             return False
         else:
             return True
         
-    def printExpression(self):
+    def print_expression(
+        self
+    ):
         """
         Print a summary of the current UFL expression.
 
         Prints the expression, its arguments, and number of arguments.
         """
         # TODO: change this format? uses standard print.
-        if hasattr(self,'_expression'):
+        if hasattr(
+            self,
+            '_expression',
+        ):
             print('###### ufl expression:')
             print(self._expression)
             print('###### arguments:')
@@ -288,7 +344,10 @@ class UflDecorator():
             print('Ufl expression is zero.')
 
 
-    def _setCorrectMeshObject(self, mesh):
+    def _set_correct_mesh_object(
+        self,
+        mesh
+    ):
         """
         Internal workaround to ensure mesh compatibility in UFL expressions.
 
@@ -312,7 +371,10 @@ class UflDecorator():
         domain._ufl_cargo = mesh._cpp_object
  
 
-    def __add__(self, other):
+    def __add__(
+        self,
+        other
+    ):  
         """
         Add another UFL expression or UflDecorator to this one.
 
@@ -330,17 +392,26 @@ class UflDecorator():
         -----
         Does not currently validate that `other` is a valid UFL expression.
         """
-        if hasattr(self, "_expression"):
+        if hasattr(
+            self,
+            "_expression",
+        ):
             result = UflDecorator(self._expression)
         else: 
             result = UflDecorator()
-        if isinstance(other, UflDecorator):
+        if isinstance(
+            other,
+            UflDecorator,
+        ):
             result.add(other._expression)
         else:
             result.add(other)
         return result
 
-    def __iadd__(self, other):
+    def __iadd__(
+        self,
+        other
+    ):
         """
         In-place addition of another UFL expression or UflDecorator.
 
@@ -358,13 +429,19 @@ class UflDecorator():
         -----
         Does not currently validate that `other` is a valid UFL expression.
         """
-        if isinstance(other, UflDecorator):
+        if isinstance(
+            other,
+            UflDecorator,
+        ):
             self.add(other._expression)
         else:
             self.add(other)
         return self
 
-    def __sub__(self, other):
+    def __sub__(
+        self,
+        other
+    ):
         """
         Subtract another UFL expression or UflDecorator from this one.
 
@@ -382,17 +459,26 @@ class UflDecorator():
         -----
         Does not currently validate that `other` is a valid UFL expression.
         """
-        if hasattr(self, "_expression"):
+        if hasattr(
+            self,
+            "_expression",
+        ):
             result = UflDecorator(self._expression)
         else: 
             result = UflDecorator()
-        if isinstance(other, UflDecorator):
+        if isinstance(
+            other,
+            UflDecorator,
+        ):
             result.subtract(other._expression)
         else:
             result.subtract(other)
         return result
 
-    def __isub__(self, other):
+    def __isub__(
+        self,
+        other
+    ):
         """
         In-place subtraction of another UFL expression or UflDecorator.
 
@@ -410,7 +496,10 @@ class UflDecorator():
         -----
         Does not currently validate that `other` is a valid UFL expression.
         """
-        if isinstance(other, UflDecorator):
+        if isinstance(
+            other,
+            UflDecorator,
+        ):
             self.subtract(other._expression)
         else:
             self.subtract(other)

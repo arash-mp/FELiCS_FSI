@@ -4,7 +4,7 @@ Before you start, you should install all necessary FELiCS packages, and install 
 
 After installing FELiCS you can start writing your first FELiCS script. 
 
-This tutorial explains how to load previously computed resolvent or eigenmodes from disk using the FELiCS I/O module. The results were saved in the `/Input` directory. For more information about the initial computation of modal results, see [how-to guide 3](../03_PerformingModalAnalysisFELiCS/03_PerformingModalAnalysisFELiCS.md).
+This tutorial explains how to load previously computed resolvent or eigenmodes from disk using the FELiCS I/O module. The results were saved in the `/Input` directory. For more information about the initial computation of modal results, see the [how-to guide #3](../03_PerformingModalAnalysisFELiCS/03_HowToModalAnalysis.ipynb).
 
 **1. Imports and configuration**
 
@@ -12,15 +12,15 @@ We begin by importing the necessary FELiCS modules and reading the simulation co
 
 
 ```python
-from 	FELiCS.Parameters.config	        import 	config
+from 	FELiCS.Parameters.Config	        import 	Config
 from 	FELiCS.Misc.logging			        import  Logger
 from    FELiCS.IO.Reader                    import  Reader
 from    FELiCS.Fields.Field                 import  Field
 from    FELiCS.SpaceDisc.FEMSpaces          import  FEMSpaces
 from    FELiCS.Fields.ModeCollection        import  ModeCollection
 import  ufl
-from    FELiCS.Misc.tensorUtils             import Tensor, iDot, iConj
-```
+from    FELiCS.Misc.tensorUtils             import Tensor, i_dot, i_conj
+
 
 🔧 Set up logging and read configuration
 
@@ -29,25 +29,27 @@ from    FELiCS.Misc.tensorUtils             import Tensor, iDot, iConj
 logger = Logger(True, False, "felics")
 logger = Logger.get_logger("felics")
 
-param = config()
-param.importFromFile("Input/config.json")
+param = Config()
+param.import_from_file("Input/config.json")
 ```
 
-    Debug    | logging.py             | _setup_logger              (line 190 ) : Logger initialized successfully
-    Debug    | config.py              | __init__                   (line 46  ) : Initializing config class with defaults.
-    Info     | config.py              | importFromFile             (line 205 ) : Loading configuration from Input/config.json
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "MolViscPerturbModel" missing from file, setting default: {'type': 'Constant', 'Constants': {'Viscosity': 1.0}}
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "PrandtlNumber" missing from file, setting default: 0.72
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "ForcingNorm" missing from file, setting default: TKE
-    Warning  | config.py              | importFromFile             (line 224 ) : Field "ResponseNorm" missing from file, setting default: TKE
-    Debug    | config.py              | importFromFile             (line 229 ) : Checking mandatory files
-    Info     | logging.py             | change_log_location        (line 286 ) : Log files moved to: Input/OutModal/log
-    Debug    | config.py              | importFromFile             (line 245 ) : Creating Mixture class
-    Info     | MixtureClass.py        | __init__                   (line 75  ) : No mixture file Mixture.json, using defaults.
-    Debug    | config.py              | readDomainData             (line 414 ) : Reading domain data from 'Input/CylinderWakeMesh.msh'
-    Info     | FELiCSMesh.py          | __init__                   (line 94  ) : Opening mesh file: Input/CylinderWakeMesh.msh
-    Info     | FELiCSMesh.py          | __init__                   (line 102 ) : Mesh contains 3613 nodes and 7224 elements
-    Info     | config.py              | importFromFile             (line 267 ) : Configuration loaded successfully
+    Debug    | logging.py             | _setup_logger              (line 245 ) : Logger initialized successfully
+    Debug    | Config.py              | __init__                   (line 68  ) : Initializing config class with defaults.
+    Info     | Config.py              | import_from_file           (line 245 ) : Loading configuration from Input/config.json
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "MolViscPerturbModel" missing from file, setting default: {'type': 'Constant', 'Constants': {'Viscosity': 1.0}}
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "PrandtlNumber" missing from file, setting default: 0.72
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "ForcingNorm" missing from file, setting default: TKE
+    Warning  | Config.py              | import_from_file           (line 264 ) : Field "ResponseNorm" missing from file, setting default: TKE
+    Debug    | Config.py              | import_from_file           (line 273 ) : Checking mandatory files
+    Info     | logging.py             | change_log_location        (line 364 ) : Log files moved to: Input/OutModal/log
+    Debug    | Config.py              | import_from_file           (line 292 ) : Creating Mixture class
+    Info     | MixtureClass.py        | __init__                   (line 101 ) : No mixture file Mixture.json, using defaults.
+    Debug    | Config.py              | read_domain_data           (line 503 ) : Reading domain data from 'Input/CylinderWakeMesh.msh'
+    Info     | FELiCSMesh.py          | __init__                   (line 124 ) : Opening mesh file: Input/CylinderWakeMesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 132 ) : Mesh contains 3613 nodes and 7224 elements
+    Debug    | FELiCSMesh.py          | __init__                   (line 194 ) : The transverse/azimuthal wavenumber is m=0.0 and the geometric dimension is gdim=2.
+    Debug    | FELiCSMesh.py          | __init__                   (line 199 ) : Setting true dimension to self.dim=2 (geometric dimension)
+    Info     | Config.py              | import_from_file           (line 314 ) : Configuration loaded successfully
 
 
 This creates:
@@ -61,7 +63,7 @@ This ensures consistency of function spaces and mesh mappings.
 
 
 ```python
-mesh = param.getMesh()
+mesh = param.get_mesh()
 ```
 
 FELiCS loads the mesh using the path and options specified in `config.json`.
@@ -71,11 +73,13 @@ FELiCS loads the mesh using the path and options specified in `config.json`.
 FEMSpaces = FEMSpaces(param, mesh)
 ```
 
-    Info     | FEMSpaces.py           | __init__                   (line 132 ) : Defining FEM-spaces.
-    Debug    | FELiCSMesh.py          | __init__                   (line 381 ) : Initializing refined P1 export mesh.
-    Debug    | FEMSpaces.py           | __init__                   (line 166 ) : Adding FEM space of order 2 for u
-    Debug    | FEMSpaces.py           | __init__                   (line 166 ) : Adding FEM space of order 2 for p
-    Debug    | FEMSpaces.py           | __init__                   (line 184 ) : Mixed finite element list: [blocked element (Basix element (P, triangle, 2, gll_warped, unset, False, float64, []), (2,)), Basix element (P, triangle, 2, gll_warped, unset, False, float64, [])]
+    Info     | FEMSpaces.py           | __init__                   (line 174 ) : Defining FEM-spaces.
+    Debug    | FELiCSMesh.py          | __init__                   (line 469 ) : Initializing refined P1 export mesh.
+    Debug    | FELiCSMesh.py          | __init__                   (line 194 ) : The transverse/azimuthal wavenumber is m=0 and the geometric dimension is gdim=2.
+    Debug    | FELiCSMesh.py          | __init__                   (line 199 ) : Setting true dimension to self.dim=2 (geometric dimension)
+    Debug    | FEMSpaces.py           | __init__                   (line 235 ) : Adding FEM space of order 2 for u
+    Debug    | FEMSpaces.py           | __init__                   (line 235 ) : Adding FEM space of order 2 for p
+    Debug    | FEMSpaces.py           | __init__                   (line 253 ) : Mixed finite element list: [blocked element (Basix element (P, triangle, 2, gll_warped, unset, False, float64, []), (2,)), Basix element (P, triangle, 2, gll_warped, unset, False, float64, [])]
 
 
 This initializes the mixed finite-element space used for the velocity and pressure variables.
@@ -110,25 +114,29 @@ importSolution = ModeCollection(
     FEMSpaces.VMixed,
     mesh
 )
-importSolution.importData(
+importSolution.import_data(
     reader,
     "Input",
 )
 ```
 
-    Info     | ModeCollection.py      | importData                 (line 750 ) : Importing 2 modes into mode collection.
-    Debug    | Reader.py              | _update_calc_mesh          (line 398 ) : New calculation mesh / FEM space type, updating cache.
-    Debug    | Reader.py              | clear_cached_properties    (line 495 ) : No cached properties to clear.
-    Debug    | Reader.py              | importMeshCoords           (line 236 ) : Associating import mesh to Reader instance.
-    Debug    | Reader.py              | importMeshCoords           (line 241 ) : Getting the 2D import mesh coordinates (['x', 'y']).
-    Debug    | Reader.py              | _update_data_source        (line 347 ) : Reader: switched source to ('/home/demange/repositories/felics2.0/how_tos/11_LoadingModesAndStructuralSensitivity/Input/Mode_Modal_Adjoint_Omega_0.727-0.001j.h5', None), cleared per-file caches.
-    Debug    | Reader.py              | importInField              (line 885 ) : Cache empty, loading and interpolating/mapping all available data: ['p_imag', 'p_real', 'ux_imag', 'ux_real', 'uy_imag', 'uy_real']
-    Debug    | Reader.py              | importInField              (line 916 ) : Getting ['ux', 'uy', 'p'] from cached data.
-    Info     | ModeCollection.py      | importData                 (line 784 ) : Imported mode 1/2 from "Mode_Modal_Adjoint_Omega_0.727-0.001j.h5".
-    Debug    | Reader.py              | _update_data_source        (line 347 ) : Reader: switched source to ('/home/demange/repositories/felics2.0/how_tos/11_LoadingModesAndStructuralSensitivity/Input/Mode_Modal_Direct_Omega_0.727+0.001j.h5', None), cleared per-file caches.
-    Debug    | Reader.py              | importInField              (line 885 ) : Cache empty, loading and interpolating/mapping all available data: ['p_imag', 'p_real', 'ux_imag', 'ux_real', 'uy_imag', 'uy_real']
-    Debug    | Reader.py              | importInField              (line 916 ) : Getting ['ux', 'uy', 'p'] from cached data.
-    Info     | ModeCollection.py      | importData                 (line 784 ) : Imported mode 2/2 from "Mode_Modal_Direct_Omega_0.727+0.001j.h5".
+    Info     | ModeCollection.py      | import_data                (line 932 ) : 2 modes to import into mode collection.
+    Info     | ModeCollection.py      | import_data                (line 934 ) : Importing mode 1/2 from file "Mode_Modal_Direct_Omega_0.727+0.001j.h5".
+    Debug    | Reader.py              | _update_calc_mesh          (line 459 ) : New calculation mesh / FEM space type, updating cache.
+    Debug    | Reader.py              | clear_cached_properties    (line 561 ) : No cached properties to clear.
+    Debug    | Reader.py              | import_mesh_coords         (line 267 ) : Associating import mesh to Reader instance.
+    Debug    | Reader.py              | import_mesh_coords         (line 272 ) : Getting the 2D import mesh coordinates (['x', 'y']).
+    Debug    | Reader.py              | import_mesh_coords         (line 335 ) : Executing Option 3: No interpolation needed: load from FELiCS exported mesh file.
+    Debug    | Reader.py              | import_mesh_coords         (line 346 ) : self._felicsMeshFilePath is None, therefore using Input/mesh.h5
+    Debug    | Reader.py              | _update_data_source        (line 406 ) : Reader: switched source to ('/Users/marina/Documents/repositories/FELiCS/how_tos/04_LoadingModesAndStructuralSensitivity/Input/Mode_Modal_Direct_Omega_0.727+0.001j.h5', None), cleared per-file caches.
+    Debug    | Reader.py              | import_in_field            (line 1013) : Cache empty, loading and interpolating/mapping all available data: ['p_imag', 'p_real', 'ux_imag', 'ux_real', 'uy_imag', 'uy_real']
+    Debug    | Reader.py              | import_in_field            (line 1053) : Getting ['ux', 'uy', 'p'] from cached data.
+    Info     | ModeCollection.py      | import_data                (line 967 ) : Imported mode 1/2 from "Mode_Modal_Direct_Omega_0.727+0.001j.h5".
+    Info     | ModeCollection.py      | import_data                (line 934 ) : Importing mode 2/2 from file "Mode_Modal_Adjoint_Omega_0.727-0.001j.h5".
+    Debug    | Reader.py              | _update_data_source        (line 406 ) : Reader: switched source to ('/Users/marina/Documents/repositories/FELiCS/how_tos/04_LoadingModesAndStructuralSensitivity/Input/Mode_Modal_Adjoint_Omega_0.727-0.001j.h5', None), cleared per-file caches.
+    Debug    | Reader.py              | import_in_field            (line 1013) : Cache empty, loading and interpolating/mapping all available data: ['p_imag', 'p_real', 'ux_imag', 'ux_real', 'uy_imag', 'uy_real']
+    Debug    | Reader.py              | import_in_field            (line 1053) : Getting ['ux', 'uy', 'p'] from cached data.
+    Info     | ModeCollection.py      | import_data                (line 967 ) : Imported mode 2/2 from "Mode_Modal_Adjoint_Omega_0.727-0.001j.h5".
 
 
 🔍 **Inspect loaded modes**
@@ -139,20 +147,20 @@ This prints a summary of the imported modes: mode numbers, types, eigenvalues, .
 importSolution.describe()
 ```
 
-    Info     | ModeCollection.py      | describe                   (line 69  ) : ModeCollection for AnalysisType.MODAL analysis.
-    Info     | ModeCollection.py      | describe                   (line 70  ) : Contains 2 modes. Contents:
-    Info     | ModeCollection.py      | describe                   (line 74  ) :   Mode 0:
-    Info     | Mode.py                | describe                   (line 376 ) :   Mode Type:     ADJOINT
-    Warning  | Mode.py                | guess                      (line 329 ) : For this mode object no guess was defined. Returning "-9999."...
-    Info     | Mode.py                | describe                   (line 378 ) :   Guess:         -9999.0
-    Info     | Mode.py                | describe                   (line 379 ) :   Eigenvalue:    (0.7273431802447646-0.001270747767560071j)
-    Info     | Mode.py                | describe                   (line 386 ) :   Wave Number:   0
-    Info     | ModeCollection.py      | describe                   (line 74  ) :   Mode 1:
-    Info     | Mode.py                | describe                   (line 376 ) :   Mode Type:     DIRECT
-    Warning  | Mode.py                | guess                      (line 329 ) : For this mode object no guess was defined. Returning "-9999."...
-    Info     | Mode.py                | describe                   (line 378 ) :   Guess:         -9999.0
-    Info     | Mode.py                | describe                   (line 379 ) :   Eigenvalue:    (0.7273431802447553+0.0012707477677050048j)
-    Info     | Mode.py                | describe                   (line 386 ) :   Wave Number:   0
+    Info     | ModeCollection.py      | describe                   (line 105 ) : ModeCollection for AnalysisType.MODAL analysis.
+    Info     | ModeCollection.py      | describe                   (line 106 ) : Contains 2 modes. Contents:
+    Info     | ModeCollection.py      | describe                   (line 110 ) :   Mode 0:
+    Info     | Mode.py                | describe                   (line 471 ) :   Mode Type:     DIRECT
+    Warning  | Mode.py                | guess                      (line 410 ) : For this mode object no guess was defined. Returning "-9999."...
+    Info     | Mode.py                | describe                   (line 473 ) :   Guess:         -9999.0
+    Info     | Mode.py                | describe                   (line 474 ) :   Eigenvalue:    (0.7273431802447553+0.0012707477677050048j)
+    Info     | Mode.py                | describe                   (line 481 ) :   Wave Number:   0
+    Info     | ModeCollection.py      | describe                   (line 110 ) :   Mode 1:
+    Info     | Mode.py                | describe                   (line 471 ) :   Mode Type:     ADJOINT
+    Warning  | Mode.py                | guess                      (line 410 ) : For this mode object no guess was defined. Returning "-9999."...
+    Info     | Mode.py                | describe                   (line 473 ) :   Guess:         -9999.0
+    Info     | Mode.py                | describe                   (line 474 ) :   Eigenvalue:    (0.7273431802447646-0.001270747767560071j)
+    Info     | Mode.py                | describe                   (line 481 ) :   Wave Number:   0
 
 
 **4. Extracting specific modes and fields**
@@ -181,8 +189,8 @@ FELiCS organizes the mixed state vector hierarchically:<br>
 <br>
 Mode<br>
  └── Velocity field<br>
-     └── Streamwise component (u)<br>
-     └── Transverse component (v)<br>
+    └── Streamwise component (u)<br>
+    └── Transverse component (v)<br>
  └── Pressure<br>
  └── … (other fields depending on the model)
  
@@ -190,8 +198,8 @@ Mode<br>
 
 
 ```python
-uxFieldDirect  = directMode.getListOfSubFields()[0].getListOfSubFields()[0]
-uxFieldAdjoint = adjointMode.getListOfSubFields()[0].getListOfSubFields()[0]
+uxFieldDirect  = directMode.get_list_of_sub_fields()[0].get_list_of_sub_fields()[0]
+uxFieldAdjoint = adjointMode.get_list_of_sub_fields()[0].get_list_of_sub_fields()[0]
 ```
 
 Here:
@@ -231,15 +239,22 @@ Journal of Fluid Mechanics, 581: 167–197.
 doi: [10.1017/S0022112007005654](https://www.cambridge.org/core/journals/journal-of-fluid-mechanics/article/structural-sensitivity-of-the-first-instability-of-the-cylinder-wake/020BE9D060A70BD7FE0301965AC81DB3)
 
 Their analysis showed that, at the Hopf bifurcation of the cylinder wake, the wavemaker is a compact bubble located just downstream of the cylinder, at the intersection between:
-- ⚡ regions where the direct mode is energetic (perturbation amplification), and
-- 🎯 regions where the adjoint mode is energetic (flow receptivity).
+- regions where the direct mode is energetic (perturbation amplification), and
+- regions where the adjoint mode is energetic (flow receptivity).
 Understanding this overlap region is essential for model reduction, flow control, and sensitivity-based design.
 
 **📐 (Abbreviated) Mathematical definition**
 Given a direct velocity mode $u_d(x)$ and the corresponding adjoint mode $u_a(x)$, the structural sensitivity tensor is
-$$\mathbf{S}(x)=u_d(x) \otimes u_a^*(x)$$.
-Its Frobenius norm is a scalar field that gives the maximum possible of the structural sensitivity in each point:
-$$|\mathbf{S}(x)|_F=||u_d(x)|| ||u_a(x)||$$.
+
+$$
+\mathbf{S}(x) = u_d(x) \otimes u_a^*(x)
+$$
+
+Its Frobenius norm is a scalar field that gives the maximum possible structural sensitivity in each point:
+
+$$
+\lVert \mathbf{S}(x) \rVert_F = \lVert u_d(x) \rVert \, \lVert u_a(x) \rVert
+$$
 
 **🛠️ How to evaluate tensor expressions in FELiCS (essentials)**
 ```evaluateUflTensorExpression``` is a compact but powerful FELiCS routine that **evaluates any tensor-based UFL expression and stores the result in a Field**. It is the recommended way to compute derived quantities (e.g. structural sensitivity, vorticity, energy norms) because it:
@@ -269,8 +284,8 @@ The computational steps are:
 
 ```python
 # --- Extract direct and adjoint velocity fields -----------------------
-uFieldDirect  = directMode.getListOfSubFields()[0]   # velocity fluctuation
-uFieldAdjoint = adjointMode.getListOfSubFields()[0]
+uFieldDirect  = directMode.get_list_of_sub_fields()[0]   # velocity fluctuation
+uFieldAdjoint = adjointMode.get_list_of_sub_fields()[0]
 
 # --- Test space where the scalar sensitivity will live ---------------
 V_scalar = FEMSpaces.P2
@@ -281,23 +296,23 @@ sS       = Field(V_scalar, mesh)
 sS.name  = "StructuralSensitivity"
 
 # --- Build the UFL tensor expression ---------------------------------
-J_hat  = sS.mesh.coordinateSystem.J_hat
+J_hat  = sS.mesh.coordinate_system.J_hat
 
 v_tens = Tensor(
     v,
-    CoordSys=sS.mesh.coordinateSystem,
+    CoordSys=sS.mesh.coordinate_system,
     m=sS.m,
     mayHaveSpectralDimension=sS.hasSpectralDimension,
 )
 
 exprSS = (
-    iDot(uFieldDirect.getTensor(),  iConj(uFieldDirect.getTensor()))**0.5 *
-    iDot(uFieldAdjoint.getTensor(), iConj(uFieldAdjoint.getTensor()))**0.5 *
-    iConj(v_tens)
+    i_dot(uFieldDirect.get_tensor(),  i_conj(uFieldDirect.get_tensor()))**0.5 *
+    i_dot(uFieldAdjoint.get_tensor(), i_conj(uFieldAdjoint.get_tensor()))**0.5 *
+    i_conj(v_tens)
 ).ufl_tens * J_hat * ufl.dx
 
 # --- Evaluate expression and build the finite-element field -----------
-sS.evaluateUflTensorExpression(exprSS)
+sS.evaluate_ufl_tensor_expression(exprSS)
 ```
 
 **🎨 Plotting the result**
@@ -312,3 +327,8 @@ sS.plot(xlim=(-2, 6), ylim=(0, 4))
 ![png](output_39_0.png)
     
 
+
+
+```python
+
+```

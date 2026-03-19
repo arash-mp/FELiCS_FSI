@@ -10,10 +10,16 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import os
-import logging, re
-import shutil
+# Standard libraries
 from datetime import datetime
+import logging
+import os
+import re
+import shutil
+
+def log_and_raise(logger, log_message, exc_type=RuntimeError, raise_message=None):
+    logger.error(log_message)
+    raise exc_type(raise_message if raise_message is not None else log_message)
 
 def in_notebook():
     try:
@@ -21,6 +27,7 @@ def in_notebook():
         return get_ipython() is not None
     except ImportError:
         return False
+
 class CustomFormatter(logging.Formatter):
     """
     Custom log formatter with colored output for different log levels.
@@ -64,7 +71,10 @@ class CustomFormatter(logging.Formatter):
         logging.CRITICAL: bold_red + format_str + reset
     }
 
-    def format(self, record):
+    def format(
+        self,
+        record,
+    ):
         """
         Format the specified log record as text with color based on log level.
 
@@ -83,10 +93,16 @@ class CustomFormatter(logging.Formatter):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         if in_notebook():
+
             # Strip ANSI codes inside notebooks
-            return re.sub(r'\x1b\[[0-9;]*m', '', formatter.format(record))
+            return re.sub(
+                r'\x1b\[[0-9;]*m',
+                '',
+                formatter.format(record),
+            )
         else:
             return formatter.format(record)
+
             # Add colors everywhere else
             # log_color = self.FORMATS.get(record.levelno, "\x1b[0m")
             # return f"{log_color}{formatter.format(record)}{"\x1b[0m"}"
@@ -132,7 +148,12 @@ class Logger:
 
     _instance = None
     
-    def __init__(self, debug_mode=False, test_mode=False, logger_name="log"):
+    def __init__(
+        self,
+        debug_mode=False,
+        test_mode=False,
+        logger_name="log"
+    ):
         """
         Initialize the Logger instance.
 
@@ -153,7 +174,9 @@ class Logger:
 
         Logger._instance = self._logger
 
-    def _setup_logger(self):
+    def _setup_logger(
+        self
+    ):
         """
         Set up the logger with appropriate handlers and formatters.
 
@@ -163,6 +186,7 @@ class Logger:
         now = datetime.now().strftime("%d.%m.%Y-%H.%M.%S.%f")
         
         logfilename = f"logs{os.sep}{self.logger_name}_{now}.log"
+
         #logfilename_errors = f"logs{os.sep}{self.logger_name}_{now}.ERRORS.log"
 
         self._logger = logging.getLogger(self.logger_name)
@@ -175,26 +199,45 @@ class Logger:
             os.makedirs("logs")
 
         ch = logging.StreamHandler()
-        fh = logging.FileHandler(logfilename, encoding='utf-8')
+        fh = logging.FileHandler(
+            logfilename,
+            encoding='utf-8',
+        )
+
         #fh_errors = logging.FileHandler(logfilename_errors, encoding='utf-8')
 
         ch.setLevel(logging.ERROR if self.test_mode else 
                    logging.DEBUG if self.debug_mode else logging.INFO)
         fh.setLevel(logging.DEBUG if (self.debug_mode or self.test_mode) else logging.INFO)
+
         #fh_errors.setLevel(logging.WARNING)
 
-        logging.addLevelName(logging.ERROR, 'Error')
-        logging.addLevelName(logging.WARNING, 'Warning')
-        logging.addLevelName(logging.INFO, 'Info')
-        logging.addLevelName(logging.DEBUG, 'Debug')
+        logging.addLevelName(
+            logging.ERROR,
+            'Error',
+        )
+        logging.addLevelName(
+            logging.WARNING,
+            'Warning',
+        )
+        logging.addLevelName(
+            logging.INFO,
+            'Info',
+        )
+        logging.addLevelName(
+            logging.DEBUG,
+            'Debug',
+        )
         formatter_log = logging.Formatter(
             '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
         )
+
         # use custom formatter to get colored output for the command line
         formatter_cmd = CustomFormatter() 
         
         ch.setFormatter(formatter_cmd)
         fh.setFormatter(formatter_log)
+
         #fh_errors.setFormatter(formatter_log)
         for handler in [ch, fh]: #, fh_errors]:
             self._logger.addHandler(handler)
@@ -202,7 +245,9 @@ class Logger:
         self._logger.debug("Logger initialized successfully")
 
     @property
-    def logger(self):
+    def logger(
+        self
+    ):
         """
         Get the underlying logger instance.
 
@@ -221,7 +266,10 @@ class Logger:
         return self._logger
 
     @classmethod
-    def get_logger(cls, name=None):
+    def get_logger(
+        cls,
+        name=None
+    ):
         """
         Retrieve the singleton logger instance.
 
@@ -249,7 +297,10 @@ class Logger:
         return cls._instance
     
     @classmethod
-    def change_log_location(cls, new_log_path):
+    def change_log_location(
+        cls,
+        new_log_path
+    ):
         """
         Move log files to a new directory and update file handlers.
 
@@ -270,9 +321,15 @@ class Logger:
 
         instance = cls.get_logger()
 
-        os.makedirs(os.path.dirname(new_log_path), exist_ok=True)
+        os.makedirs(
+            os.path.dirname(new_log_path),
+            exist_ok=True,
+        )
 
-        file_handlers = [h for h in instance.handlers if isinstance(h, logging.FileHandler)]
+        file_handlers = [h for h in instance.handlers if isinstance(
+            h,
+            logging.FileHandler,
+        )]
 
         for handler in file_handlers:
             log_level = handler.level
@@ -286,10 +343,19 @@ class Logger:
 
             old_log_path = handler.baseFilename
             if os.path.exists(old_log_path):
-                shutil.move(old_log_path, new_log_path)
-            new_log_file_path = os.path.join(new_log_path, os.path.basename(old_log_path))
+                shutil.move(
+                    old_log_path,
+                    new_log_path,
+                )
+            new_log_file_path = os.path.join(
+                new_log_path,
+                os.path.basename(old_log_path),
+            )
 
-            new_file_handler = logging.FileHandler(new_log_file_path, encoding='utf-8')
+            new_file_handler = logging.FileHandler(
+                new_log_file_path,
+                encoding='utf-8',
+            )
             new_file_handler.setLevel(log_level)
             new_file_handler.setFormatter(log_formatter)
 
@@ -297,7 +363,10 @@ class Logger:
 
         instance.info(f"Log files moved to: {new_log_path}")
 
-    def close_logger(self, logger):
+    def close_logger(
+        self,
+        logger
+    ):
         """
         Remove all handlers from the given logger.
 
@@ -310,4 +379,3 @@ class Logger:
         """
         if logger.hasHandlers():
             logger.handlers.clear()
-

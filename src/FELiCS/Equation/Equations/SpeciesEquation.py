@@ -10,18 +10,21 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from ufl import (
-    dx
+# Standard libraries
+
+# Third party libraries
+from ufl import dx
+
+# Local Libraries and methods
+from FELiCS.Equation.Boundary                   import BoundaryType
+from FELiCS.Equation.Equations.EquationTemplate import EquationTemplate
+from FELiCS.Misc.logging                        import Logger, log_and_raise
+from FELiCS.Misc.tensorUtils                    import (
+    i_conj,
+    i_div,
+    i_dot,
+    i_grad,
 )
-from FELiCS.Misc.tensorUtils import (
-    iDot,
-    iDiv,
-    iGrad,
-    iConj,
-)
-from .EquationTemplate        import EquationTemplate
-from FELiCS.Misc.logging      import Logger
-from FELiCS.Equation.Boundary import BoundaryType
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -74,7 +77,15 @@ class SpeciesEquation(EquationTemplate):
     """
 
 
-    def __init__(self, index, eqColl, fluc, X, species, param):
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        species,
+        param
+    ):
         """
         Initialize the SpeciesEquation class.
 
@@ -94,16 +105,25 @@ class SpeciesEquation(EquationTemplate):
 
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
-            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
-    
+            log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
+
         # initialize variables in template class
-        super().__init__(index, eqColl, fluc, X, param)
+        super().__init__(
+            index,
+            eqColl,
+            fluc,
+            X,
+            param,
+        )
 
         self.species = species
 
 
-    def addWeightMatrixExpression(self, weakForm, mean):
+    def add_weight_matrix_expression(
+        self,
+        weakForm,
+        mean
+    ):
         """
         Add the weight matrix expression to the weak form.
 
@@ -121,9 +141,9 @@ class SpeciesEquation(EquationTemplate):
         """
 
         # Time derivative term
-        weakForm.add((self.fluc.Y(self.species) * iConj(self.X) * mean.rho).ufl_tens * self.J_hat * dx)
+        weakForm.add((self.fluc.y(self.species) * i_conj(self.X) * mean.rho).ufl_tens * self.J_hat * dx)
 
-    def addNonlinearExpression(self):
+    def add_nonlinear_expression(self):
         """
         Add the nonlinear expression to the weak form.
 
@@ -134,7 +154,11 @@ class SpeciesEquation(EquationTemplate):
 
         pass
 
-    def addLinearExpression(self, weakForm, mean):
+    def add_linear_expression(
+        self,
+        weakForm,
+        mean
+    ):
         """
         Construct the weak form of the linearized species transport equation.
 
@@ -172,43 +196,107 @@ class SpeciesEquation(EquationTemplate):
         ibp = True
         if ibp:
             logger.debug("Using integration by parts for advection term.")
-            weakForm.add(( 1j*fluc.Y(species)*iDiv(mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
-            weakForm.add(( 1j*mean.Y(species)*iDiv(mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
-            weakForm.add(( 1j*mean.Y(species)*iDiv(fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+            weakForm.add(( 1j*fluc.y(species)*i_div(mean.rho*mean.u*i_conj(X)) ).ufl_tens*J_hat*dx)
+            weakForm.add(( 1j*mean.y(species)*i_div(mean.rho*fluc.u*i_conj(X)) ).ufl_tens*J_hat*dx)
+            weakForm.add(( 1j*mean.y(species)*i_div(fluc.rho*mean.u*i_conj(X)) ).ufl_tens*J_hat*dx)
+
             # Boundary term from IbP
-            weakForm.add(( -1j*iDot(self.n,fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
-            weakForm.add(( -1j*iDot(self.n,mean.Y(species)*mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
-            weakForm.add(( -1j*iDot(self.n,mean.Y(species)*fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.all_ds)
+            weakForm.add(
+                ( -1j * i_dot(
+                    self.n,
+                    fluc.y(species) * mean.rho * mean.u * i_conj(X),
+                )).ufl_tens * J_hat * self.all_ds
+            )
+
+            weakForm.add(
+                ( -1j * i_dot(
+                    self.n,
+                    mean.y(species) * mean.rho * fluc.u * i_conj(X),
+                )).ufl_tens * J_hat * self.all_ds
+            )
+
+            weakForm.add(
+                ( -1j * i_dot(
+                    self.n,
+                    mean.y(species) * fluc.rho * mean.u * i_conj(X),
+                )).ufl_tens * J_hat * self.all_ds
+            )
+
         else:
             logger.debug("NOT using integration by parts for advection term.")
-            weakForm.add(( -1j*iDot(iGrad(fluc.Y(species)),mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
-            weakForm.add(( -1j*iDot(iGrad(mean.Y(species)),mean.rho*fluc.u*iConj(X)) ).ufl_tens*J_hat*dx)
-            weakForm.add(( -1j*iDot(iGrad(mean.Y(species)),fluc.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*dx)
+
+            weakForm.add(
+                ( -1j * i_dot(
+                i_grad(fluc.y(species)),
+                mean.rho * mean.u * i_conj(X),
+                )).ufl_tens * J_hat * dx
+            )
+
+            weakForm.add(
+                ( -1j * i_dot(
+                    i_grad(mean.y(species)),
+                    mean.rho * fluc.u * i_conj(X),
+                )).ufl_tens * J_hat * dx
+            )
+
+            weakForm.add(
+                ( -1j * i_dot(
+                    i_grad(mean.y(species)),
+                    fluc.rho * mean.u * i_conj(X),
+                )).ufl_tens * J_hat * dx
+            )
             
     
     
         # ----------------------------------------- Diffusion term
         # NOTE: similarly to what is done in the mom. eq., the diffusion term is integrated by parts but only the 
         # volume part is added to the eqs. --> neglecting the boundary part allows to set a Neumann condition  
-        weakForm.add(( -1j*mean.D(species)*(iDot(iGrad(fluc.Y(species)),iGrad(iConj(X)))) ).ufl_tens*J_hat*dx)
-        weakForm.add(( -1j*fluc.D(species)*(iDot(iGrad(mean.Y(species)),iGrad(iConj(X)))) ).ufl_tens*J_hat*dx)
+        weakForm.add(
+            ( -1j * mean.d(species) * (i_dot(
+                i_grad(fluc.y(species)),
+                i_grad(i_conj(X)),
+            ))).ufl_tens * J_hat * dx
+        )
+
+        weakForm.add(
+            ( -1j * fluc.d(species) * (i_dot(
+                i_grad(mean.y(species)),
+                i_grad(i_conj(X)),
+            ))).ufl_tens * J_hat * dx
+        )
         
         #--------------------------------Reaction
-        if self.param.Mixture.reactionMechanism['type'] == 'KaiserCnF2023':
-            reaction = mean.RR_prefactor * mean.rho * (fluc.Y(species) - 2 * fluc.Y(species) * mean.Y(species))\
-                            + mean.RR_prefactor * fluc.rho * (mean.Y(species) - mean.Y(species) * mean.Y(species))
-            weakForm.add((1j * reaction*iConj(X)).ufl_tens*J_hat*dx)
+        if self.param.Mixture.reaction_mechanism['type'] == 'KaiserCnF2023':
+            reaction = mean.rr_prefactor * mean.rho * (fluc.y(species) - 2 * fluc.y(species) * mean.y(species))\
+                            + mean.rr_prefactor * fluc.rho * (mean.y(species) - mean.y(species) * mean.y(species))
+            weakForm.add((1j * reaction * i_conj(X)).ufl_tens * J_hat * dx)
 
 
         # ----------------------------------------- Input/Output forcing
         if self.param.Case.AnalysisMode in ['Input-Output']:
+
             # add body forcing
             if param.IOResolvent.ForcingMode == 'Body':
-                weakForm.add(( mean.forcing(species)*iConj(X) ).ufl_tens*J_hat*dx)
+                weakForm.add(
+                    ( mean.forcing(species) * i_conj(X)).ufl_tens * J_hat * dx
+                )
+
             # Iterate through all boundaries, at which boundary forcing is applied
             for boundary_index in self.param.IOResolvent.ForcingBoundaryIndices:
+
                 # First subtract the part added in a few lines above...
-                weakForm.add(( 1j*iDot(self.n,fluc.Y(species)*mean.rho*mean.u*iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index))
+                weakForm.add(
+                    ( 1j * i_dot(
+                        self.n,
+                        fluc.y(species) * mean.rho * mean.u * i_conj(X),
+                    )).ufl_tens * J_hat * self.ds(boundary_index)
+                )
+
                 # Then add the forcing of the respective species given in the mean flow dict at the respective bounary
-                weakForm.add(( -1j*iDot(self.n,mean.u*mean.forcing(species)*iConj(X)) ).ufl_tens*J_hat*self.ds(boundary_index))
+                weakForm.add(
+                    ( -1j * i_dot(
+                        self.n,
+                        mean.u * mean.forcing(species) * i_conj(X),
+                    ) ).ufl_tens * J_hat * self.ds(boundary_index)
+                )
                     

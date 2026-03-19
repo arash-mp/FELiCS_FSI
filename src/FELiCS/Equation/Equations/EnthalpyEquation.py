@@ -10,17 +10,19 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from ufl import (
-    dx
+# Third party libraries
+from ufl import dx
+
+# Local Libraries and methods
+from FELiCS.Equation.Equations.EquationTemplate     import EquationTemplate
+from FELiCS.Misc.logging                            import Logger, log_and_raise
+from FELiCS.Misc.tensorUtils                        import (
+    i_conj,
+    i_div,
+    i_dot,
+    i_grad,
 )
-from FELiCS.Misc.tensorUtils import (
-    iDot,
-    iDiv,
-    iGrad,
-    iConj
-)
-from    .EquationTemplate   import EquationTemplate
-from    FELiCS.Misc.logging import Logger
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -68,7 +70,14 @@ class EnthalpyEquation(EquationTemplate):
     is not supported in the tensorial framework.
     """
 
-    def __init__(self, index, eqColl, fluc, X, param):
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        param
+    ):
         """
         Initialize the EnthalpyEquation object.
 
@@ -90,16 +99,26 @@ class EnthalpyEquation(EquationTemplate):
         - If the numerical scheme is 'Discontinuous Galerkin', an error is raised
           because it is not implemented in the tensorial framework.
         """
+
         # Disclaimer
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
-            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')
-    
+            log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
+
         # initialize variables in template class
-        super().__init__(index, eqColl, fluc, X, param)
+        super().__init__(
+            index,
+            eqColl,
+            fluc,
+            X,
+            param,
+        )
 
 
-    def addWeightMatrixExpression(self, weakForm, mean):
+    def add_weight_matrix_expression(
+        self,
+        weakForm,
+        mean
+    ):
         """
         Add the weight matrix expression to the weak form.
 
@@ -115,12 +134,21 @@ class EnthalpyEquation(EquationTemplate):
         This method adds the time derivative terms to the weak form using the
         tensorial representation of fluctuating enthalpy and pressure.
         """
+
         #  Time derivative terms
-        weakForm.add((mean.rho * self.fluc.h * iConj(self.X)).ufl_tens * self.J_hat * dx)
-        weakForm.add((-1 * self.fluc.p * iConj(self.X)).ufl_tens * self.J_hat * dx)
+        weakForm.add(
+            (mean.rho * self.fluc.h * 
+             i_conj(self.X)).ufl_tens *
+            self.J_hat * dx
+        )
+        weakForm.add(
+            (-1 * self.fluc.p * 
+             i_conj(self.X)).ufl_tens * 
+            self.J_hat * dx
+        )
     
      
-    def addNonlinearExpression(self):
+    def add_nonlinear_expression(self):
         """
         Add the nonlinear expression to the weak form.
 
@@ -131,7 +159,11 @@ class EnthalpyEquation(EquationTemplate):
         """
         pass
 
-    def addLinearExpression(self, weakForm, mean):
+    def add_linear_expression(
+        self,
+        weakForm,
+        mean
+    ):
         """
         Construct the weak form of the linearized enthalpy conservation equation.
 
@@ -159,14 +191,40 @@ class EnthalpyEquation(EquationTemplate):
             
         # ------------------------  Advection terms
         # Add volume integral of advection terms that remain after partial integration:
-        weakForm.add((1j * iDiv(iConj(X) * mean.rho * mean.u) * fluc.h).ufl_tens * J_hat * dx)
-        weakForm.add((1j * iDiv(iConj(X) * fluc.rho * mean.u) * mean.he).ufl_tens * J_hat * dx)
-        weakForm.add((1j * iDiv(iConj(X) * mean.rho * fluc.u) * mean.he).ufl_tens * J_hat * dx)
+        weakForm.add((1j * i_div(i_conj(X) * mean.rho * mean.u) * fluc.h).ufl_tens * J_hat * dx)
+        weakForm.add((1j * i_div(i_conj(X) * fluc.rho * mean.u) * mean.he).ufl_tens * J_hat * dx)
+        weakForm.add((1j * i_div(i_conj(X) * mean.rho * fluc.u) * mean.he).ufl_tens * J_hat * dx)
+        
         # Add boundary integrals resulting from said partial integration:
-        weakForm.add((-1j * iDot(mean.rho * mean.u * fluc.h * iConj(X), self.n)).ufl_tens * J_hat * self.all_ds)
-        weakForm.add((-1j * iDot(fluc.rho * mean.u * mean.he * iConj(X), self.n)).ufl_tens * J_hat * self.all_ds)
-        weakForm.add((-1j * iDot(mean.rho * fluc.u * mean.he * iConj(X), self.n)).ufl_tens * J_hat * self.all_ds)
+        weakForm.add(
+            (-1j * i_dot(
+                mean.rho * mean.u * fluc.h * i_conj(X),
+                self.n,
+            )).ufl_tens * J_hat * self.all_ds
+        )
+        weakForm.add(
+            (-1j * i_dot(
+                fluc.rho * mean.u * mean.he * i_conj(X),
+                self.n,
+            )).ufl_tens * J_hat * self.all_ds
+        )
+        weakForm.add(
+            (-1j * i_dot(
+                mean.rho * fluc.u * mean.he * i_conj(X),
+                self.n,
+            )).ufl_tens * J_hat * self.all_ds
+        )
             
         # ------------------------  Diffusion terms
-        weakForm.add((-1j * iDot(mean.alpha * iGrad(fluc.h), iGrad(iConj(X)))).ufl_tens * J_hat * dx)
-        weakForm.add((-1j * iDot(fluc.alpha * iGrad(mean.he), iGrad(iConj(X)))).ufl_tens * J_hat * dx)
+        weakForm.add(
+            (-1j * i_dot(
+                mean.alpha * i_grad(fluc.h),
+                i_grad(i_conj(X)),
+            )).ufl_tens * J_hat * dx
+        )
+        weakForm.add(
+            (-1j * i_dot(
+                fluc.alpha * i_grad(mean.he),
+                i_grad(i_conj(X)),
+            )).ufl_tens * J_hat * dx
+        )

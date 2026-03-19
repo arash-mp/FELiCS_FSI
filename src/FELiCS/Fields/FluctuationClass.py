@@ -15,14 +15,12 @@ from os import (
     listdir,
     remove,
 )
-from os.path import (
-    exists
-)
+from os.path import exists
 
 # Third party libraries
 import numpy as np
 from h5py import (
-    File
+    File,
 )
 from dolfinx.fem import (
     Function,
@@ -32,26 +30,26 @@ from ufl import (
 )
 
 # Local libraries and methods
-from    FELiCS.Fields.fieldProperties                               import fieldProperties
+from    FELiCS.Fields.FieldProperties                               import FieldProperties
 from    FELiCS.Fields.Field                                         import Field
-from    FELiCS.Equation.dependentVariables.energyHandler            import energyHandler
-from    FELiCS.Equation.dependentVariables.equationOfStateHandler   import equationOfStateHandler
-from    FELiCS.Equation.dependentVariables.heatReleaseHandler       import heatReleaseHandler
-from    FELiCS.Equation.dependentVariables.momentumHandler          import momentumHandler
-from    FELiCS.Equation.dependentVariables.reactionHandler          import reactionHandler
-from    FELiCS.Misc.tensorUtils                                     import Tensor
+from    FELiCS.Equation.dependentVariables.EnergyHandler            import EnergyHandler
+from    FELiCS.Equation.dependentVariables.EquationOfStateHandler   import EquationOfStateHandler
+from    FELiCS.Equation.dependentVariables.HeatReleaseHandler       import HeatReleaseHandler
+from    FELiCS.Equation.dependentVariables.MomentumHandler          import MomentumHandler
+from    FELiCS.Equation.dependentVariables.ReactionHandler          import ReactionHandler
 from 	FELiCS.Misc.logging                                         import Logger
+from    FELiCS.Misc.tensorUtils                                     import Tensor
 
 # Get the logger
 logger = Logger.get_logger("felics")
 
-class fluctuationClass(
-    fieldProperties,
-    reactionHandler,
-    equationOfStateHandler,
-    energyHandler,
-    momentumHandler,
-    ):
+class FluctuationClass(
+        FieldProperties,
+        ReactionHandler,
+        EquationOfStateHandler,
+        EnergyHandler,
+        MomentumHandler,
+):
     """
     Container for fluctuating variables and derived fields for postprocessing.
 
@@ -93,12 +91,12 @@ class fluctuationClass(
     """
 
     def __init__(
-            self,
-            param,
-            mean,
-            FEMSpaces,
-            coordinateSystem,
-        ):
+        self,
+        param,
+        mean,
+        FEMSpaces,
+        coordinate_system
+    ):
         """
         Initializes fluctuation fields and derives dependent variables.
 
@@ -117,8 +115,8 @@ class fluctuationClass(
         # Useful objects
         self._param                 = param
         self._FEMSpaces             = FEMSpaces
-        self._coordinateSystem      = coordinateSystem
-        fieldProperties.__init__(self)
+        self._coordinateSystem      = coordinate_system
+        FieldProperties.__init__(self)
         
         # Default flags
         self._isFluctuation         = True
@@ -127,50 +125,50 @@ class fluctuationClass(
         
         # Zero-value tensors
         self._zeroVectorField       = Field(
-            FEMSpaces.FunctionSpaceVectorVelocity, 
-            self._param.getMesh(), 
-            name="zeroVector"
-            ).getTensor()
+            FEMSpaces.FunctionSpaceVectorVelocity,
+            self._param.get_mesh(),
+            name="zeroVector",
+        ).get_tensor()
         self._zeroField             = Function(FEMSpaces.P2)
         self._zeroField             = Field(
-            FEMSpaces.P2, 
-            self._param.getMesh(), 
-            name="zeroScalar"
-            ).getTensor()
+            FEMSpaces.P2,
+            self._param.get_mesh(),
+            name="zeroScalar",
+        ).get_tensor()
         self._fieldDict             = {}
         self._mean                  = mean
-        self._transportedQuantities = param.getTransportedQuantityList()
+        self._transportedQuantities = param.get_transported_quantity_list()
 
         # _fluc is constructed. 
         self._fluc = TrialFunctions(FEMSpaces.VMixed)
         for field in self._transportedQuantities:
             indexOfFieldInList = self._transportedQuantities.index(field)
             self._fieldDict[field] = Tensor(
-                                            self._fluc[indexOfFieldInList],
-                                            self._coordinateSystem,
-                                            mayHaveSpectralDimension = True,
-                                            )
+                self._fluc[indexOfFieldInList],
+                self._coordinateSystem,
+                mayHaveSpectralDimension = True,
+            )
 
         # Get all the variables, which need to be present
         neededVariables = []
 
         if param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
-            momentumHandler.__init__(
-                self,
+            MomentumHandler.__init__(
+                    self,
                 )
-            neededVariables += self._getNeededFieldsForLinearMomentum()
+            neededVariables += self._get_needed_fields_for_linear_momentum()
 
         if param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
-            equationOfStateHandler.__init__(
-                self,
+            EquationOfStateHandler.__init__(
+                    self,
                 )
-            neededVariables += self._getNeededFieldsForLinearEoS()
+            neededVariables += self._get_needed_fields_for_linear_eo_s()
 
         if param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
-            energyHandler.__init__(
-                                  self,
+            EnergyHandler.__init__(
+                                    self,
                                   )
-            neededVariables += self._getNeededFieldsForLinearEnergy()
+            neededVariables += self._get_needed_fields_for_linear_energy()
             
 
         # Delete duplicates
@@ -180,13 +178,13 @@ class fluctuationClass(
         n_try = 1
         while not set(neededVariables).issubset((self._fieldDict.keys())):
             if param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
-                self._relateConservativeToPrimitiveVariablesMomentum()
-                self._initializeMolecularMomentumDiffusionFluctuation()
+                self._relate_conservative_to_primitive_variables_momentum()
+                self._initialize_molecular_momentum_diffusion_fluctuation()
             if param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
-                self._initializeEoSFluctuations()
+                self._initialize_eo_s_fluctuations()
             if param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
-                self._relateConservativeToPrimitiveVariablesEnergy()
-                self._initializeMolecularHeatDiffusionFluctuation()
+                self._relate_conservative_to_primitive_variables_energy()
+                self._initialize_molecular_heat_diffusion_fluctuation()
             n_try += 1
             if n_try > 100:
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
@@ -194,19 +192,19 @@ class fluctuationClass(
                      + str(notInitializedFields) + ". Maybe the mixture file is still in the old format (ending with a '.mix' instead of '.json')?")
 
         # print(self._param.Mixture.getReactionMechanism()['type'])
-        if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
-            reactionHandler.__init__(
-                self,
+        if not self._param.Mixture.get_reaction_mechanism()['type'] == 'None':
+            ReactionHandler.__init__(
+                    self,
                 )
-            self._initializeReactions()
+            self._initialize_reactions()
             
-class fluctuationSolutions(
-    fieldProperties,
-    heatReleaseHandler,
-    equationOfStateHandler,
-    momentumHandler,
-    energyHandler,
-    reactionHandler,
+class FluctuationSolutions(
+    FieldProperties,
+    HeatReleaseHandler,
+    EquationOfStateHandler,
+    MomentumHandler,
+    EnergyHandler,
+    ReactionHandler
 ):
     """
     Stores and manages linearized fluctuation solutions.
@@ -271,15 +269,15 @@ class fluctuationSolutions(
     """
 
     def __init__(
-            self,
-            param,
-            mean,
-            FEMSpaces,
-            omega,
-            vmixedVector,
-            isResponseOrDirect,
-            gainNumber=-1,
-            gainValue=-1
+        self,
+        param,
+        mean,
+        FEMSpaces,
+        omega,
+        vmixedVector,
+        isResponseOrDirect,
+        gain_number=-1,
+        gain_value=-1
     ):
         """
         Initialize the fluctuationSolutions object.
@@ -309,24 +307,29 @@ class fluctuationSolutions(
         self._zeroField = Function(FEMSpaces.P2)
         self._zeroField.x.array[:] = 0.0
         self._zeroField = self._zeroField.x.array[:]
+
         #self._zeroVectorField = Function(FEMSpaces.FunctionSpaceVectorVelocityP1)
         #self._zeroVectorField.x.array[:] = 0.0
 
         # if np.imag(gainValue) > 1e-10 * np.real(gainValue):
         #     printWarning('The gain is a complex number, while it should be \
         #     real. I will ignore this and take the real part!')
-        self._gainValue = np.real(gainValue)
+        self._gainValue = np.real(gain_value)
         self._omega = omega
         self._isResponseOrDirect = isResponseOrDirect
         self._vmixedVector = vmixedVector
-        self._gainNumber = gainNumber
+        self._gainNumber = gain_number
         self._FEMSpaces = FEMSpaces
         self._mean = mean
+
         # self._fieldDict = mean.fieldDict
-        self._transportedQuantities = param.getTransportedQuantityList()
+        self._transportedQuantities = param.get_transported_quantity_list()
         self._param = param
 
-    def _flucExportWrapper(self, group):
+    def _fluc_export_wrapper(
+        self,
+        group
+    ):
         """
         Internal method to compute and export all fluctuation fields.
 
@@ -345,28 +348,28 @@ class fluctuationSolutions(
         # Get all the variables, which need to be present
         neededVariables = []
         if self._param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
-            momentumHandler.__init__(
-                self,
+            MomentumHandler.__init__(
+                    self,
                 )
-            neededVariables += self._getNeededFieldsForLinearMomentum()
+            neededVariables += self._get_needed_fields_for_linear_momentum()
 
         if self._param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
-            equationOfStateHandler.__init__(
-                self,
+            EquationOfStateHandler.__init__(
+                    self,
                 )
-            neededVariables += self._getNeededFieldsForLinearEoS()
+            neededVariables += self._get_needed_fields_for_linear_eo_s()
 
         if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
-            energyHandler.__init__(
-                self,
+            EnergyHandler.__init__(
+                    self,
                 )
-            neededVariables += self._getNeededFieldsForLinearEnergy()
+            neededVariables += self._get_needed_fields_for_linear_energy()
     
         if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
-            energyHandler.__init__(
-                self,
+            EnergyHandler.__init__(
+                    self,
                 )
-            neededVariables += self._getNeededFieldsForLinearEnergy()
+            neededVariables += self._get_needed_fields_for_linear_energy()
    
 
         # Delete duplicates
@@ -375,44 +378,47 @@ class fluctuationSolutions(
         # While not all needed fluctuations are calculated, try calculating them
         n_try = 0
         while not set(neededVariables).issubset((self._fieldDict.keys())):
-            meanVertexValues = self._mean.getVertexValues()
+            meanVertexValues = self._mean.get_vertex_values()
             if self._param.Case.SetOfEquations['Momentum']['Equation'] not in ['None']:
-                self._relateConservativeToPrimitiveVariablesMomentum(
-                                                    meanVertexValues,
-                                                    )
-                self._initializeMolecularMomentumDiffusionFluctuation(meanVertexValues)
+                self._relate_conservative_to_primitive_variables_momentum(
+                    meanVertexValues,
+                )
+                self._initialize_molecular_momentum_diffusion_fluctuation(meanVertexValues)
 
             if self._param.Case.SetOfEquations['EquationOfState']['Equation'] not in ['None']:
-                self._initializeEoSFluctuations(
-                                            meanVertexValues,
-                                                )
+                self._initialize_eo_s_fluctuations(
+                    meanVertexValues,
+                )
 
             if self._param.Case.SetOfEquations['Energy']['Equation'] not in ['None']:
-                self._relateConservativeToPrimitiveVariablesEnergy(
-                                            meanVertexValues,
-                                                )
-                self._initializeMolecularHeatDiffusionFluctuation(
-                                            meanVertexValues,
-                                            )
+                self._relate_conservative_to_primitive_variables_energy(
+                    meanVertexValues,
+                )
+                self._initialize_molecular_heat_diffusion_fluctuation(
+                    meanVertexValues,
+                )
             n_try += 1
             if n_try > 100:
                 notInitializedFields = list(set(neededVariables) - set(list(self._fieldDict.keys())))
                 logger.error('Attempt to calculate secondary variables not successful. Missing quantities: ' +notInitializedFields +". Maybe the mixture file is still in the old format (ending with a '.mix' instead of '.json')?")
 
-        if not self._param.Mixture.getReactionMechanism()['type'] == 'None':
-            reactionHandler.__init__(
+        if not self._param.Mixture.get_reaction_mechanism()['type'] == 'None':
+            ReactionHandler.__init__(
                 self,
-                )
-            self._initializeReactions(
+            )
+            self._initialize_reactions(
                 meanVertexValues,
-                )
+            )
         self._writeDictToH5(
             self._fieldDict,
             group,
-            True
+            True,
         )
 
-    def _importSolVector(self, filename):
+    def _import_sol_vector(
+        self,
+        filename
+    ):
         """
         Import raw VMixed solution vector from HDF5 file.
 
@@ -427,7 +433,10 @@ class fluctuationSolutions(
             Complex-valued numpy array representing the solution.
         """
  
-        hf = File(filename, 'r')
+        hf = File(
+            filename,
+            'r',
+        )
         frequency = hf['fluctuation/0/'].attrs.get('frequency')
         fieldMagnitude = np.array(hf[f'fluctuation/0/{frequency}/magnitude'][:])
         fieldAngle = np.array(hf[f'fluctuation/0/{frequency}/angle'][:])
@@ -436,7 +445,9 @@ class fluctuationSolutions(
 
 
     @property
-    def solutVector(self):
+    def solut_vector(
+        self
+    ):
         """
         Complex-valued vector of the fluctuation solution.
 
@@ -449,7 +460,9 @@ class fluctuationSolutions(
 
 
     @property
-    def solutionKind(self):
+    def solution_kind(
+        self
+    ):
         """
         Type of the solution based on analysis mode and configuration.
 
@@ -478,7 +491,9 @@ class fluctuationSolutions(
             return ""
 
     @property
-    def omega(self):
+    def omega(
+        self
+    ):
         """
         Eigenvalue (frequency) of the fluctuation solution.
 
@@ -491,7 +506,9 @@ class fluctuationSolutions(
 
 
     @property
-    def gainNumber(self):
+    def gain_number(
+        self
+    ):
         """
         Gain number identifier.
 
@@ -504,7 +521,9 @@ class fluctuationSolutions(
 
 
     @property
-    def gainValue(self):
+    def gain_value(
+        self
+    ):
         """
         Gain magnitude.
 

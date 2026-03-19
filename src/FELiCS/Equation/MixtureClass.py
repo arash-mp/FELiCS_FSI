@@ -10,8 +10,12 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+# Standard libraries
 import  json
-from 	FELiCS.Misc.logging import Logger
+from    os      import path
+
+# Local Libraries and methods
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -57,7 +61,11 @@ class MixtureClass():
         If the file is not found and defaults are used.
     """
 
-    def __init__(self,mixFilePath,speciesFilePath):
+    def __init__(
+        self,
+        mixFilePath,
+        speciesFilePath
+    ):
         """
         Initializing a mixture object based on a mixture.json file.
 
@@ -68,7 +76,6 @@ class MixtureClass():
         speciesFilePath : string
             relative path to Species.json file
         """
-        from os import path
         # set default values
         self.__Species__={}
         self.__Reaction_mechanism__ = {'type':'None'}
@@ -76,17 +83,26 @@ class MixtureClass():
         self.__Viscosity__ = {'type':'Constant','Constants':{'nu':1.0}}
         if path.isfile(mixFilePath):
             if mixFilePath.endswith(".json"):
-                mixFile = open(mixFilePath, 'r')
+                mixFile = open(
+                    mixFilePath,
+                    'r',
+                )
                 data = json.load(mixFile)
                 for setting,value in data.items():
-                    setattr(self,'__'+setting+'__',value)
+                    setattr(
+                        self,
+                        '__'+setting+'__',
+                        value,
+                    )
                 mixFile.close()
             else:
                 logger.warning('Mixture file ('+mixFilePath+') does not have the correct format and will not be read (should be a "json" file). This could lead to an unexplained error later, if the calculation is depending on data given in the mixture file. Please convert the mixture file (examples can be found in the felics-test repository).')
         else:
             logger.info('No mixture file '+mixFilePath+', using defaults.')
         
-    def getReactionMechanism(self):
+    def get_reaction_mechanism(
+        self
+    ):
         """
         Return the dictionary describing the reaction mechanism.
 
@@ -98,7 +114,10 @@ class MixtureClass():
 
         return self.__Reaction_mechanism__
     
-    def getSpeciesList(self,keyword='all'):
+    def get_species_list(
+        self,
+        keyword='all'
+    ):
         """
         Return a list of species based on a specified category.
 
@@ -126,7 +145,10 @@ class MixtureClass():
                     speciesList.append(sp)
         return speciesList
     
-    def readSpeciesDict(self,filename):
+    def read_species_dict(
+        self,
+        filename
+    ):
         """
         Read species data from a dictionary file and store relevant transport properties.
 
@@ -142,18 +164,24 @@ class MixtureClass():
         'transported' will be processed.
         """
 
-        fileSpecies = open(filename,'r')
+        fileSpecies = open(
+            filename,
+            'r',
+        )
         SpeciesDict = eval(fileSpecies.read())
         self.__M={}
         self.__Sc={}
         self.__Sc_t={}
-        for specie in self.getSpeciesList('transported'):
+        for specie in self.get_species_list('transported'):
             self.__M[specie]=SpeciesDict[specie]['mol_weight']
             self.__Sc[specie]=SpeciesDict[specie]['Sc']
             self.__Sc_t[specie]=SpeciesDict[specie]['Sc_t']
         
     
-    def Sc(self,specie):
+    def sc(
+        self,
+        specie
+    ):
         """
         Return the Schmidt number for a specific species.
 
@@ -173,9 +201,11 @@ class MixtureClass():
             If the species is not defined in the species dictionary.
         """
 
-        return self.Species[specie]['Sc']
+        return self.species[specie]['Sc']
 
-    def getSpeciesDict(self):
+    def get_species_dict(
+        self
+    ):
         """
         Return the dictionary of species in the mixture.
 
@@ -188,7 +218,9 @@ class MixtureClass():
         return self.__Species__
 
     @property
-    def reactionMechanism(self):
+    def reaction_mechanism(
+        self
+    ):
         """
         Get the reaction mechanism definition.
 
@@ -201,7 +233,9 @@ class MixtureClass():
         return self.__Reaction_mechanism__
 
     @property
-    def Pr(self):
+    def pr(
+        self
+    ):
         """
         Get the Prandtl number of the mixture.
 
@@ -214,7 +248,9 @@ class MixtureClass():
         return self.__Pr__
 
     @property
-    def Viscosity(self):
+    def viscosity(
+        self
+    ):
         """
         Get the viscosity model and its parameters.
 
@@ -226,7 +262,9 @@ class MixtureClass():
         return self.__Viscosity__
 
     @property
-    def species(self):
+    def species(
+        self
+    ):
         """
         Get the species dictionary (alias to `Species`).
 
@@ -239,7 +277,9 @@ class MixtureClass():
         return self.__Species__
 
     @property
-    def Species(self):
+    def species(
+        self
+    ):
         """
         Get the species dictionary.
 

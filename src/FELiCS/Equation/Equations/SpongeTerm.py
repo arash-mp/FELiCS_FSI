@@ -10,14 +10,18 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from    ufl                     import dx
-from    .EquationTemplate       import EquationTemplate
-from    FELiCS.Misc.logging     import Logger
-from    FELiCS.Misc.tensorUtils import (
-    Tensor,
-    iDot,
-    iConj
-)
+
+# Third party libraries
+from ufl import dx
+
+# Local Libraries and methods
+from FELiCS.Equation.Equations.EquationTemplate import EquationTemplate
+from FELiCS.Misc.logging                        import Logger, log_and_raise
+from FELiCS.Misc.tensorUtils                    import (
+                                                        Tensor,
+                                                        i_dot,
+                                                        i_conj
+                                                        )
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -64,7 +68,14 @@ class SpongeTerm(EquationTemplate):
     Discontinuous Galerkin schemes are not supported in this tensorial framework.
     """
 
-    def __init__(self, index, eqColl, fluc, X, param):
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        param
+    ):
         """
         Initialize the SpongeTerm object.
 
@@ -79,16 +90,26 @@ class SpongeTerm(EquationTemplate):
         param : Parameters
             The parameters object.
         """
+
         # Disclaimers
         if param.Numerics.NumericalScheme in ['Discontinuous Galerkin']:
-            logger.error('Discontinuous Galerkin not implemented in tensorial framework.')
-            raise Exception('Discontinuous Galerkin not implemented in tensorial framework.')        
+            log_and_raise(logger, 'Discontinuous Galerkin not implemented in tensorial framework.', Exception)
 
         # initialize variables in template class
-        super().__init__(index, eqColl, fluc, X, param)
+        super().__init__(
+            index,
+            eqColl,
+            fluc,
+            X,
+            param
+        )
 
 
-    def addWeightMatrixExpression(self, weakForm, mean):
+    def add_weight_matrix_expression(
+        self,
+        weakForm,
+        mean
+    ):
         """
         Add the weight matrix expression to the weak form.
 
@@ -103,10 +124,15 @@ class SpongeTerm(EquationTemplate):
         -----
         This method does not apply any sponge term contributions.
         """
+
         # nothing to add for the sponge term
         pass
 
-    def addLinearExpression(self, weakForm, mean):
+    def add_linear_expression(
+        self,
+        weakForm,
+        mean
+    ):
         """
         Add the linear expression to the weak form.
 
@@ -141,13 +167,19 @@ class SpongeTerm(EquationTemplate):
                 logger.debug("Adding sponge term for %s-fluc: X[%d]." % (varID,varNum))
                 
                 # Dynamically get the corresponding fluctuation field
-                fluc_var = getattr(fluc, '%s' % varID)
+                fluc_var = getattr(
+                fluc,
+                '%s' % varID,
+                )
                 
                 # Apply the sponge
                 if varID == 'u': # For u we need the dot product with X
-                    weakForm.add(( -1j*mean.spg*iDot(fluc_var,iConj(X[varNum])) ).ufl_tens*J_hat*dx)
+                    weakForm.add(( -1j*mean.spg*i_dot(
+                    fluc_var,
+                    i_conj(X[varNum]),
+                    ) ).ufl_tens*J_hat*dx)
                 else:
-                    weakForm.add(( -1j*mean.spg*fluc_var*iConj(X[varNum]) ).ufl_tens*J_hat*dx)
+                    weakForm.add(( -1j*mean.spg*fluc_var*i_conj(X[varNum]) ).ufl_tens*J_hat*dx)
             
     
         # # Assuming velocity fluctuations are ALWAYS considered
@@ -163,7 +195,11 @@ class SpongeTerm(EquationTemplate):
         #     id_rho = param.Case.SolutionList.index('rho')
         #     weakForm.add(( -1j*mean.spg*fluc.rho*iConj(X[id_rho]) ).ufl_tens*J_hat*dx)
 
-    def addNonlinearExpression(self, weakForm, mean):
+    def add_nonlinear_expression(
+        self,
+        weakForm,
+        mean
+    ):
         """
         Add the nonlinear expression to the weak form.
 
@@ -197,15 +233,25 @@ class SpongeTerm(EquationTemplate):
                 logger.debug("Adding sponge term for %s-fluc: X[%d]." % (varID,varNum))
                 
                 # Dynamically get the corresponding fluctuation field
-                mean_var = getattr(mean, '%s' % varID)
+                mean_var = getattr(
+                    mean,
+                    '%s' % varID,
+                )
 
                 # Apply the sponge
                 if varID == 'u': # For u we need the dot product with X
-                    target_u = mean._fieldDict['u_target'].getTensor()
-                    weakForm.add(( -1j*mean.spg*iDot(mean_var-target_u,iConj(X[varNum])) ).ufl_tens*J_hat*dx)
+                    target_u = mean._fieldDict['u_target'].get_tensor()
+                    weakForm.add(
+                        ( -1j * mean.spg * i_dot(
+                            mean_var-target_u,
+                            i_conj(X[varNum]),
+                        )).ufl_tens * J_hat * dx
+                    )
                 else: 
                     # for every other name there has to exist a field in the mean flow dictionary with the name and the suffix '_target'
                     # TODO: what to do if the field does not exist? Logging: throw error
                     target_name = varID+"_target"
-                    target_tens = mean._fieldDict[target_name].getTensor()
-                    weakForm.add(( -1j*mean.spg*(mean_var-target_tens)*iConj(X[varNum]) ).ufl_tens*J_hat*dx)
+                    target_tens = mean._fieldDict[target_name].get_tensor()
+                    weakForm.add(
+                        ( -1j * mean.spg * (mean_var - target_tens) * i_conj(X[varNum])).ufl_tens * J_hat * dx
+                    )

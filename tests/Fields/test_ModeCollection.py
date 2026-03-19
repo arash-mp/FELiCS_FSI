@@ -39,29 +39,48 @@ from tests.UnitTestHelper    import UnitTestHelper
 class ModeCollectionTestHandler(RandomCaseHandler):
     def __init__(self, dim_vector):
         super().__init__(dim_vector)
-        self.mode_collection = ModeCollection(self.space_scalar, self.felics_mesh,)
+        self.mode_collection = ModeCollection(
+        self.space_scalar,
+        self.felics_mesh,
+        )
         
     def appendModesInCollection(self, analysisType, num_modes=5):
         for i in range(num_modes):
             if analysisType == "Modal":
-                mode1 = self.createFELiCSMode(name=f"fake_mode_direct_{i}", analysisType=analysisType, modeType="Direct")
+                mode1 = self.createFELiCSMode(
+                name=f"fake_mode_direct_{i}",
+                analysisType=analysisType,
+                modeType="Direct",
+                )
                 mode1.isAdjoint = False
-                mode1.eigenValue = np.random.randint(9999) + 1j*np.random.randint(9999)
-                mode2 = self.createFELiCSMode(name=f"fake_mode_adjoint_{i}", analysisType=analysisType, modeType="Adjoint")
+                mode1.eigen_value = np.random.randint(9999) + 1j*np.random.randint(9999)
+                mode2 = self.createFELiCSMode(
+                name=f"fake_mode_adjoint_{i}",
+                analysisType=analysisType,
+                modeType="Adjoint",
+                )
                 mode2.function.x.array[:] = mode1.function.x.array[:].conj()
                 mode2.isAdjoint = True
-                mode2.eigenValue = mode1.eigenValue
-                self.mode_collection.appendMode(mode1)
-                self.mode_collection.appendMode(mode2)
+                mode2.eigen_value = mode1.eigen_value
+                self.mode_collection.append_mode(mode1)
+                self.mode_collection.append_mode(mode2)
             elif analysisType == "Resolvent" or analysisType == "Input_Output":
-                mode1 = self.createFELiCSMode(name=f"fake_mode_forcing_{i}", analysisType=analysisType, modeType="Forcing")
-                mode2 = self.createFELiCSMode(name=f"fake_mode_response{i}", analysisType=analysisType, modeType="Response")
+                mode1 = self.createFELiCSMode(
+                name=f"fake_mode_forcing_{i}",
+                analysisType=analysisType,
+                modeType="Forcing",
+                )
+                mode2 = self.createFELiCSMode(
+                name=f"fake_mode_response{i}",
+                analysisType=analysisType,
+                modeType="Response",
+                )
                 mode1.isAdjoint = False
                 mode2.isAdjoint = False
                 mode1.singularValue = np.random.randint(9999) #+ 1j*np.random.randint(9999)
                 mode2.singularValue = np.random.randint(9999) #+ 1j*np.random.randint(9999)
-                self.mode_collection.appendMode(mode1)
-                self.mode_collection.appendMode(mode2)            
+                self.mode_collection.append_mode(mode1)
+                self.mode_collection.append_mode(mode2)            
         
     
     
@@ -82,17 +101,27 @@ def test_getDirectEigenValueSpectrum():
     print("Testing the direct eigenvalue spectrum")
     # NOTE: This test only makes sense for Modal analysis
     analysisType = "Modal"
-    randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
+    randomModeCollector.appendModesInCollection(
+    analysisType,
+    num_modes=5,
+    )
     # 1. define validation 
     validation_eigenvalues = []
     for mode in randomModeCollector.mode_collection.modeList:
         if mode.isAdjoint == False:
-            validation_eigenvalues.append(mode.eigenValue)
+            validation_eigenvalues.append(mode.eigen_value)
     # 2. compare eigenvalues from the method
-    test_eigenvalues = randomModeCollector.mode_collection.getDirectEigenValueSpectrum()
+    test_eigenvalues = randomModeCollector.mode_collection.get_direct_eigen_value_spectrum()
     
     for i, eigenvalue in enumerate(test_eigenvalues):
-        print(" - Testing eigenvalue ", i, ": ", eigenvalue, " vs ", validation_eigenvalues[i])
+        print(
+        " - Testing eigenvalue ",
+        i,
+        ": ",
+        eigenvalue,
+        " vs ",
+        validation_eigenvalues[i],
+        )
         assert np.abs(eigenvalue - validation_eigenvalues[i]) < 1e-14
     pass
     print("... passed.")
@@ -104,50 +133,62 @@ def test_getLeadingMode():
     leadingMode_test_direct = None
     print("Validating the leading mode in the direct spectrum")
     growthRateMax = -9990
-    randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
+    randomModeCollector.appendModesInCollection(
+    analysisType,
+    num_modes=5,
+    )
     for mode in randomModeCollector.mode_collection.modeList:
         if mode.isAdjoint == False:
-            eigenValue = mode.eigenValue
-            if np.imag(eigenValue) > growthRateMax:
-                growthRateMax = np.imag(eigenValue)
+            eigen_value = mode.eigen_value
+            if np.imag(eigen_value) > growthRateMax:
+                growthRateMax = np.imag(eigen_value)
                 leadingMode_test_direct   = mode
 
-    leadingMode_valid_direct = randomModeCollector.mode_collection.getLeadingMode()
+    leadingMode_valid_direct = randomModeCollector.mode_collection.get_leading_mode()
     assert leadingMode_valid_direct == leadingMode_test_direct
     print("... passed the validation for leading mode in the direct spectrum.")
 
     print("Validating the leading mode in the adjoint spectrum")
     leadingMode_test_adjoint = None
-    randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
+    randomModeCollector.appendModesInCollection(
+    analysisType,
+    num_modes=5,
+    )
     growthRateMin = 9990
     for mode in randomModeCollector.mode_collection.modeList:
         if mode.isAdjoint == True:
-            eigenValue = mode.eigenValue
-            if np.imag(eigenValue) < growthRateMin:
-                growthRateMin = np.imag(eigenValue)
+            eigen_value = mode.eigen_value
+            if np.imag(eigen_value) < growthRateMin:
+                growthRateMin = np.imag(eigen_value)
                 leadingMode_test_adjoint = mode
 
-    leadingMode_valid_adjoint = randomModeCollector.mode_collection.getLeadingMode(adjoint=True)
+    leadingMode_valid_adjoint = randomModeCollector.mode_collection.get_leading_mode(adjoint=True)
     assert leadingMode_test_adjoint == leadingMode_valid_adjoint
     print("... passed the validation for leading mode in the adjoint spectrum.")
         
 def test_popList():
     analysisType = "Modal"
     print("Validating popping the last mode for Modal analysis")
-    randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
+    randomModeCollector.appendModesInCollection(
+    analysisType,
+    num_modes=5,
+    )
     copy_list = randomModeCollector.mode_collection.modeList.copy()
     pop_valid = copy_list.pop()
-    pop_test = randomModeCollector.mode_collection.popList()
+    pop_test = randomModeCollector.mode_collection.pop_list()
     assert pop_test == pop_valid
     assert randomModeCollector.mode_collection.modeList == copy_list
     print("... passed the validation for Modal analysis.")
 
     analysisType = "Resolvent"
     print("Validating popping the last mode for Modal analysis")
-    randomModeCollector.appendModesInCollection(analysisType, num_modes=5)
+    randomModeCollector.appendModesInCollection(
+    analysisType,
+    num_modes=5,
+    )
     copy_list_res = randomModeCollector.mode_collection.modeList.copy()
     pop_valid_res = copy_list_res.pop()
-    pop_test_res = randomModeCollector.mode_collection.popList()
+    pop_test_res = randomModeCollector.mode_collection.pop_list()
     assert pop_test_res == pop_valid_res
     assert randomModeCollector.mode_collection.modeList == copy_list_res
     print("... passed the validation for resolvent analysis.")

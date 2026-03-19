@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#
 #  ___________________________________   _______________________________________________________
 # /-----------------------------------\ /-------------------------------------------------------\
 # |   (         (                (     |  This source code is part of FELiCS                     |
@@ -12,11 +11,12 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from dolfinx.fem import (
+# Third party libraries
+from dolfinx.fem    import (
     Function,
     Expression,
 )
-from ufl import (
+from ufl            import (
     dx,
     exp,
     conj,
@@ -72,7 +72,10 @@ class GlobalReaction():
         Index of CH4 in solution list.
     """
 
-    def __init__(self, reaction_mechanism):
+    def __init__(
+        self,
+        reaction_mechanism,
+    ):
         """
         Initializes the GlobalReaction instance.
 
@@ -85,26 +88,29 @@ class GlobalReaction():
         self.mixtureDirectory = "Mixture" #to be put in param
         self.speciesDirectory = "Species" #to be put in param
 
-        self.A=None
-        self.Ta=None
-        self.a=None
-        self.b=None
-        self.beta=None
-        self.h0=None
-        self.st_C=None
-        self.st_O=None
-        self.WO=None
-        self.WC=None
+        self.A      = None
+        self.Ta     = None
+        self.a      = None
+        self.b      = None
+        self.beta   = None
+        self.h0     = None
+        self.st_C   = None
+        self.st_O   = None
+        self.WO     = None
+        self.WC     = None
 
         self.reactionName='Global Reaction'
         print('Initializing reaction '+self.reactionName)
-        self.ReadReactionDict(reaction_mechanism)
+        self.read_reaction_dict(reaction_mechanism)
 
-        self.Q=None
-        self.i_rho=None
-        self.i_C=None
+        self.q      = None
+        self.i_rho  = None
+        self.i_C    = None
 
-    def ReadReactionDict(self, reaction):
+    def read_reaction_dict(
+        self,
+        reaction,
+    ):
         """
         Reads reaction parameters from a dictionary and updates class attributes.
 
@@ -118,24 +124,31 @@ class GlobalReaction():
         This method sets the reaction coefficients and molecular weights based on the provided reaction dictionary.
         """
 
-        self.A=reaction['reac_preexp']
-        self.Ta=reaction['reac_act_tem']
-        self.a=reaction['reac_nu_O']
-        self.b=reaction['reac_nu_C']
-        self.beta=reaction['reac_exp_tem']
-        self.st_O=reaction['reac_st_O']
-        self.st_C=reaction['reac_st_C']
-        self.h0=reaction['reac_h0']
-        educt_C=reaction['educt_C']
-        educt_O=reaction['educt_O']
+        self.A      = reaction['reac_preexp']
+        self.Ta     = reaction['reac_act_tem']
+        self.a      = reaction['reac_nu_O']
+        self.b      = reaction['reac_nu_C']
+        self.beta   = reaction['reac_exp_tem']
+        self.st_O   = reaction['reac_st_O']
+        self.st_C   = reaction['reac_st_C']
+        self.h0     = reaction['reac_h0']
+        educt_C     = reaction['educt_C']
+        educt_O     = reaction['educt_O']
 
-        fileSpecies = open(self.speciesDirectory,'r')
+        fileSpecies = open(
+            self.speciesDirectory,
+            'r',
+        )
         speciesDictDict = eval(fileSpecies.read())
         fileSpecies.close()
         self.WO=speciesDictDict[educt_O]['mol_weight']
         self.WC=speciesDictDict[educt_C]['mol_weight']
 
-    def computeMeanField(self,mean,ele):
+    def compute_mean_field(
+        self,
+        mean,
+        ele,
+    ):
         """
         Computes the mean field reaction rate and interpolates it as a function.
 
@@ -156,15 +169,24 @@ class GlobalReaction():
         Uses the reaction parameters and mean flow properties to construct the reaction rate expression.
         """
 
-        self.Q = Function(ele)
+        self.q = Function(ele)
         # https://jorgensd.github.io/dolfinx-tutorial/chapter1/membrane_code.html#interpolation-of-a-ufl-expression
-        expressionUFL = self.A*exp(-self.Ta/mean.T) * mean.rho**(self.b + self.a) * (mean.Y('CH4') / self.WC) **self.b * (mean.Y('O2') / self.WO)**self.a
-        expr = Expression(expressionUFL, ele.element.interpolation_points())
-        self.Q.interpolate(expr)
+        expressionUFL = self.A*exp(-self.Ta/mean.T) * mean.rho**(self.b + self.a) * (mean.y('CH4') / self.WC) **self.b * (mean.y('O2') / self.WO)**self.a
+        expr = Expression(
+            expressionUFL,
+            ele.element.interpolation_points(),
+        )
+        self.q.interpolate(expr)
         #self.Q = ele
-        return self.Q
+        return self.q
 
-    def addReaction(self, mean, testf, fluc, solutionList):
+    def add_reaction(
+        self,
+        mean,
+        testf,
+        fluc,
+        solutionList,
+    ):
         """
         Adds the reaction term to the weak form.
 
@@ -191,10 +213,17 @@ class GlobalReaction():
 
         self.i_rho=solutionList.index('rho')
         self.i_C=solutionList.index('CH4')
-        dQ=self.dQ_(mean, fluc)
-        return -conj(testf[self.i_rho])*(dQ*self.Q)*self.h0*dx-conj(testf[self.i_C])*(dQ*self.Q)*self.st_C*self.WC*dx
+        d_q=self.d_q_(
+            mean,
+            fluc,
+        )
+        return - conj(testf[self.i_rho]) * (d_q*self.q) * self.h0 * dx-conj(testf[self.i_C]) * (d_q * self.q) * self.st_C * self.WC * dx
 
-    def dQ_(self, mean, fluc):
+    def d_q_(
+        self,
+        mean,
+        fluc,
+    ):
         """
         Computes the fluctuation of the reaction rate.
 
@@ -215,15 +244,23 @@ class GlobalReaction():
         The calculation uses stoichiometric coefficients and mean/fluctuation values for temperature and species.
         """
 
-        dO2_= fluc.Y('CH4')/(self.st_C*self.WC)*self.st_O*self.WO
-        dT_ = -fluc.rho/mean.rho*mean.T
-        return ((self.a+self.b)*fluc.rho/mean.rho\
-                +self.beta*dT_/mean.T\
-                +self.Ta*dT_/mean.T/mean.T\
-                +self.a*dO2_/mean.Y('O2')\
-                +self.b*fluc.Y('CH4')/mean.Y('CH4'))
+        dO2_= fluc.y('CH4') / (self.st_C * self.WC) * self.st_O * self.WO
+        dT_ = - fluc.rho / mean.rho * mean.T
+        return (
+            (self.a + self.b) * fluc.rho / mean.rho \
+            + self.beta * dT_ / mean.T \
+            + self.Ta * dT_ / mean.T / mean.T \
+            + self.a * dO2_ / mean.y('O2') \
+            + self.b * fluc.y('CH4') / mean.y('CH4')
+        )
 
-    def postHeatRelease(self, mean, prho, pCH4, ele):
+    def post_heat_release(
+        self,
+        mean,
+        prho,
+        pCH4,
+        ele,
+    ):
         """
         Computes the post-processed heat release form.
 
@@ -248,11 +285,20 @@ class GlobalReaction():
             Interpolated post-processed heat release form.
         """
 
-        dQ=self.postdQ(mean, prho, pCH4)
-        form =-(dQ*self.Q)*self.h0
-        return dQ.interpolate(form)
+        d_q=self.postd_q(
+            mean,
+            prho,
+            pCH4,
+        )
+        form = - (d_q * self.q) * self.h0
+        return d_q.interpolate(form)
 
-    def postdQ(self, mean, prho, pCH4):
+    def postd_q(
+        self,
+        mean,
+        prho,
+        pCH4,
+    ):
         """
         Computes the post-processed fluctuation of the reaction rate.
 
@@ -271,13 +317,15 @@ class GlobalReaction():
             Post-processed fluctuation of the reaction rate.
         """
 
-        dO2_= pCH4/(self.st_C*self.WC)*self.st_O*self.WO
-        dT_ = -prho/mean.rho*mean.T
-        return ((self.a+self.b)*prho/mean.rho\
-                +self.beta*dT_/mean.T\
-                +self.Ta*dT_/mean.T/mean.T\
-                +self.a*dO2_/mean.Y('O2')\
-                +self.b*pCH4/mean.Y('CH4'))
+        dO2_= pCH4 / (self.st_C * self.WC) * self.st_O * self.WO
+        dT_ = - prho / mean.rho * mean.T
+        return (
+            (self.a + self.b) * prho / mean.rho \
+            + self.beta * dT_ / mean.T \
+            + self.Ta * dT_ / mean.T / mean.T \
+            + self.a * dO2_ / mean.y('O2') \
+            + self.b * pCH4 / mean.y('CH4')
+        )
 
 #CERFACS 1S_CH4_MP1 https://www.cerfacs.fr/cantera/mechanisms/meth.php
 #       self.A=1.1e7

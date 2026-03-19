@@ -42,7 +42,14 @@ class EquationTemplate(ABC):
     """
 
 
-    def __init__(self, index, eqColl, fluc, X, param):
+    def __init__(
+        self,
+        index,
+        eqColl,
+        fluc,
+        X,
+        param
+    ):
         """
         Initializes the EquationTemplate instance.
 
@@ -68,12 +75,14 @@ class EquationTemplate(ABC):
         self.n                 = eqColl.n
         self.ds                = eqColl.ds
         self.all_ds            = eqColl.all_ds
-        self.coordinateSystem  = eqColl._coordinateSystem
+        self.coordinate_system  = eqColl._coordinateSystem
         self.boundaryHandler   = eqColl.boundaryHandler
 
 
     @abstractmethod
-    def addWeightMatrixExpression(self):
+    def add_weight_matrix_expression(
+        self
+    ):
         """
         Define the weight matrix expression.
 
@@ -83,7 +92,9 @@ class EquationTemplate(ABC):
         pass
 
     @abstractmethod
-    def addLinearExpression(self):
+    def add_linear_expression(
+        self
+    ):
         """
         Define the linear expression.
 
@@ -93,7 +104,9 @@ class EquationTemplate(ABC):
         pass
 
     @abstractmethod
-    def addNonlinearExpression(self):
+    def add_nonlinear_expression(
+        self
+    ):
         """
         Define the nonlinear expression.
 
@@ -102,7 +115,10 @@ class EquationTemplate(ABC):
         """
         pass
 
-    def addBilinearExpression(self, *args):
+    def add_bilinear_expression(
+        self,
+        *args
+    ):
         """
         Optionally define a bilinear expression.
 

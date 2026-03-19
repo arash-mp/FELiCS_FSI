@@ -1,8 +1,8 @@
 #  ___________________________________   _______________________________________________________
 # /-----------------------------------\ /-------------------------------------------------------\
 # |   (         (                (     |  This source code is part of FELiCS                     |
-# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |  
-# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |  
+# |   )\ )     ) )        (      )\ )  |  (F)inite (E)lement (Li)nearized (C)ombustion (S)olver  |
+# |  (()/(  (  (()/( (    )\   (()/(   |                                                         |
 # |  /(_)) )\  /(_)))\  (((_)  /(_))   |  Licensed under the GNU GPLv3                           |
 # |  (_)_)((_) (_)) ((_) )\___ (_))    |                                                         |
 # |  | __|| __|| |   (_)((/ __|/ __|   |  (C) 2018-2025: The FELiCS Developers (www.felics.eu)   |
@@ -10,12 +10,16 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-from 	FELiCS.Misc.logging                 import Logger
+
+# Local Libraries and methods
+from FELiCS.Misc.logging import Logger, log_and_raise
+
 
 # Get the logger
 logger = Logger.get_logger("felics")
 
-class equationOfStateHandler:
+
+class EquationOfStateHandler:
     """
     Handles the thermodynamic relationships between temperature, pressure,
     and density using different forms of the Equation of State (EoS),
@@ -47,8 +51,9 @@ class equationOfStateHandler:
         Indicates if the current instance deals with a fluctuation solution.
     """
 
-
-    def __init__(self):
+    def __init__(
+        self
+    ):
         """
         Initializes the equationOfStateHandler instance.
 
@@ -58,11 +63,11 @@ class equationOfStateHandler:
         """
 
         pass
-    
-    def _initializeEoSFluctuations(
-                            self,
-                            mean = 'None'
-                            ):
+
+    def _initialize_eo_s_fluctuations(
+        self,
+        mean='None'
+    ):
         """
         Initializes the linearized Equation of State for fluctuations.
 
@@ -87,79 +92,85 @@ class equationOfStateHandler:
         # Fluctuations already initialized
         alreadyDefinedQuantities = list(self._fieldDict.keys())
 
-        #only do something if two out of the three variables (p,T,rho) are aleardy determined
-        if sum(el in ['rho','p', 'T'] for el in list(alreadyDefinedQuantities)) == 2:
-            
+        # only do something if two out of the three variables (p,T,rho) are aleardy determined
+        if sum(el in ['rho', 'p', 'T'] for el in list(alreadyDefinedQuantities)) == 2:
+
             # Type of equation of state
             EoSType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
             if EoSType not in ['Low-Mach', 'IdealGas']:
-                logger.error('Equation of State '+self._EoSType+' not defined.')
-                raise Exception('Equation of State '+self._EoSType+' not defined.')
-                
+
+                log_and_raise(logger, 'Equation of State '+self._EoSType+' not defined.', Exception)
             # Get the mean flow class     
+
             if mean == 'None':
                 mean = self._mean
 
             # OPT.1 -- Calculate density from pressure and temperature
-            if all(item in alreadyDefinedQuantities for item in ['p','T']):
-                logger.debug('Linearized EoS with input variables: [p, T] -> rho')
+            if all(item in alreadyDefinedQuantities for item in ['p', 'T']):
+                logger.debug(
+                    'Linearized EoS with input variables: [p, T] -> rho')
                 if self._isSolution:
-                    mean_T  = mean.fieldDict['T']
-                    mean_rho = mean.fieldDict['rho']
+                    mean_T = mean.field_dict['T']
+                    mean_rho = mean.field_dict['rho']
                     if EoSType == 'IdealGas':
-                        mean_Rspe = mean.fieldDict['R_spe']
+                        mean_Rspe = mean.field_dict['R_spe']
                 else:
                     mean_T = mean.T
                     mean_rho = mean.rho
                     if EoSType == 'IdealGas':
-                        mean_Rspe = mean.R_spe
-                        
+                        mean_Rspe = mean.r_spe
+
                 if EoSType == 'Low-Mach':
                     self._fieldDict['rho'] = -1 * mean_rho / mean_T * self.T
                 elif EoSType == 'IdealGas':
-                    self._fieldDict['rho'] = (self.p - mean_rho*mean_Rspe*self.T)/(mean_Rspe*mean_T)
+                    self._fieldDict['rho'] = (
+                        self.p - mean_rho*mean_Rspe*self.T)/(mean_Rspe*mean_T)
 
-            
             # OPT.2 -- Calculate pressure from density and temperature
-            elif all(item in alreadyDefinedQuantities for item in ['rho','T']):
-                logger.debug('Linearized EoS with input variables: [rho, T] -> p')
+            elif all(item in alreadyDefinedQuantities for item in ['rho', 'T']):
+                logger.debug(
+                    'Linearized EoS with input variables: [rho, T] -> p')
                 if EoSType == 'Low-Mach':
-                    logger.error('Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.')
-                    raise Exception('Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.')
+
+                    log_and_raise(logger, 'Equation of State '+self._EoSModel()+' not defined to obtain p-fluctuations.', Exception)
+
                 elif EoSType == 'IdealGas':
                     if self._isSolution:
-                        mean_T = mean.fieldDict['T']
-                        mean_rho = mean.fieldDict['rho']
-                        mean_Rspe = mean.fieldDict['R_spe']
+                        mean_T = mean.field_dict['T']
+                        mean_rho = mean.field_dict['rho']
+                        mean_Rspe = mean.field_dict['R_spe']
                     else:
                         mean_T = mean.T
                         mean_rho = mean.rho
-                        mean_Rspe = mean.R_spe
-                        
-                    self._fieldDict['p'] = mean_Rspe*(self.rho*mean_T + mean_rho*self.T)
-                        
-            
+                        mean_Rspe = mean.r_spe
+
+                    self._fieldDict['p'] = mean_Rspe * \
+                        (self.rho*mean_T + mean_rho*self.T)
+
             # OPT.3 -- Calculate temperature from density and pressure
-            elif all(item in alreadyDefinedQuantities for item in ['rho','p']):
-                logger.debug('Linearized EoS with input variables: [rho, p] -> T')
+            elif all(item in alreadyDefinedQuantities for item in ['rho', 'p']):
+                logger.debug(
+                    'Linearized EoS with input variables: [rho, p] -> T')
                 if self._isSolution:
-                    mean_T = mean.fieldDict['T']
-                    mean_rho = mean.fieldDict['rho']
+                    mean_T = mean.field_dict['T']
+                    mean_rho = mean.field_dict['rho']
                     if EoSType == 'IdealGas':
-                        mean_Rspe = mean.fieldDict['R_spe']
+                        mean_Rspe = mean.field_dict['R_spe']
                 else:
                     mean_T = mean.T
                     mean_rho = mean.rho
                     if EoSType == 'IdealGas':
-                        mean_Rspe = mean.R_spe
-                        
+                        mean_Rspe = mean.r_spe
+
                 if EoSType == 'Low-Mach':
                     self._fieldDict['T'] = -1 * self.rho / mean_rho * mean_T
                 elif EoSType == 'IdealGas':
-                    self._fieldDict['T'] = (self.p - self.rho*mean_Rspe*mean_T)/(mean_Rspe*mean_rho)
-                    
-                    
-    def _getNeededFieldsForLinearEoS(self):
+                    self._fieldDict['T'] = (
+                        self.p - self.rho*mean_Rspe*mean_T)/(mean_Rspe*mean_rho)
+
+    def _get_needed_fields_for_linear_eo_s(
+        self
+    ):
         """
         Returns the list of thermodynamic fields needed for linearized EoS.
 
@@ -179,16 +190,18 @@ class equationOfStateHandler:
 
         EoSEquationType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
         if EoSEquationType == 'Low-Mach':
-            return ['rho','T']
+            return ['rho', 'T']
         if EoSEquationType == 'IdealGas':
             return ['rho', 'p', 'T']
         if EoSEquationType == 'None':
             return []
         else:
-            raise Exception('Equation of state type ' + EoSEquationType + ' not implemented.')
+            raise Exception('Equation of state type ' +
+                            EoSEquationType + ' not implemented.')
 
-                
-    def _additionalFieldsToBeReadEoS(self):
+    def _additional_fields_to_be_read_eo_s(
+        self
+    ):
         """
         Specifies the additional mean flow fields required for EoS evaluation.
 
@@ -206,12 +219,12 @@ class equationOfStateHandler:
             If the EoS type is not implemented.
         """
         EoSEquationType = self._param.Case.SetOfEquations['EquationOfState']['Equation']
-        if EoSEquationType == 'IdealGas': 
+        if EoSEquationType == 'IdealGas':
             return ['R_spe']
         elif EoSEquationType == 'Low-Mach':
-            return ['rho','T']
+            return ['rho', 'T']
         elif EoSEquationType == 'None':
             return []
         else:
-            raise Exception('Equation of state type ' + EoSEquationType + ' not implemented.')
-
+            raise Exception('Equation of state type ' +
+                            EoSEquationType + ' not implemented.')

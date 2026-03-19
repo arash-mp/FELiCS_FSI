@@ -59,7 +59,10 @@ randomField = UflDecoratorTestHandler(dim_vector)
 
 # 2. create Ufl expression used for testing
 # NOTE: Test with Poisson problem
-lhs_expr = inner(grad(randomField.trial_scalar), grad(randomField.test_scalar)) * dx
+lhs_expr = inner(
+grad(randomField.trial_scalar),
+grad(randomField.test_scalar),
+) * dx
 rhs_expr = randomField.scalar_field * randomField.test_scalar * dx
 full_expr = lhs_expr - rhs_expr
 # --------------------------------------------------------------
@@ -75,7 +78,7 @@ def test_printExpression():
         # get output string
         string_buffer = io.StringIO()
         with contextlib.redirect_stdout(string_buffer):
-            UflDeco.printExpression()
+            UflDeco.print_expression()
         testString = string_buffer.getvalue()
         print(testString)
         
@@ -96,8 +99,8 @@ def test_lhsIsZero():
     from ufl import lhs, rhs
     for expr in [None, lhs_expr, rhs_expr, full_expr]:
         UflDeco = UflDecorator(expr)
-        lhs_is_zero_test    = UflDeco.lhsIsZero()
-        if UflDeco.isZero():
+        lhs_is_zero_test    = UflDeco.lhs_is_zero()
+        if UflDeco.is_zero():
             lhs_is_zero_valid = True
         else: 
             temp_expression     = lhs(UflDeco._expression)
@@ -114,8 +117,8 @@ def test_rhsIsZero():
     from ufl import lhs, rhs
     for expr in [None, lhs_expr, rhs_expr, full_expr]:
         UflDeco = UflDecorator(expr)
-        rhs_is_zero_test    = UflDeco.rhsIsZero()
-        if UflDeco.isZero():
+        rhs_is_zero_test    = UflDeco.rhs_is_zero()
+        if UflDeco.is_zero():
             rhs_is_zero_valid = True
         else: 
             temp_expression     = rhs(UflDeco._expression)

@@ -10,7 +10,7 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-class reactionClass:
+class ReactionClass:
     """
     Represents a chemical reaction with educts, products, and mechanism.
 
@@ -45,7 +45,14 @@ class reactionClass:
         Reaction rate (if discretized).
     """
 
-    def __init__(self, educts, products, reactionMechanism, fluc, mean):
+    def __init__(
+        self,
+        educts,
+        products,
+        reaction_mechanism,
+        fluc,
+        mean,
+    ):
         """
         Initializes the reactionClass instance.
 
@@ -75,9 +82,12 @@ class reactionClass:
         products = products[:-1]
         self.__name = educts + '-->' + products
         if not (fluc == None or mean == None):
-            self.discretizeReaction()
+            self.discretize_reaction()
 
-    def consumption(self, specie):
+    def consumption(
+        self,
+        specie,
+    ):
         """
         Returns the reaction rate for a consumed educt species.
 
@@ -100,7 +110,11 @@ class reactionClass:
         else: 
             printError('Specie ' + specie + ' not a educt of reaction ' + self.__name + '.')
 
-    def discretizeReaction(self, mean, fluc):
+    def discretize_reaction(
+        self,
+        mean,
+        fluc,
+    ):
         """
         Discretizes the reaction using the provided mean and fluctuation fields.
 
@@ -116,9 +130,11 @@ class reactionClass:
         Sets the reaction rate according to the specified mechanism.
         """
         self.__isDisretized == True
-        if reactionMechanism in ['EBU_CnF_Kaiser2023']:
-            self.__rr = mean.RR_prefactor * mean.rho * (fluc.Y('progress') - 2 * fluc.Y('progress') * mean.Y('progress'))\
-                      + mean.RR_prefactor * fluc.rho * (mean.Y('progress') -     mean.Y('progress') * mean.Y('progress'))
+        if reaction_mechanism in ['EBU_CnF_Kaiser2023']:
+            self.__rr = (
+                mean.rr_prefactor * mean.rho * (fluc.y('progress') - 2 * fluc.y('progress') * mean.y('progress'))
+                + mean.rr_prefactor * fluc.rho * (mean.y('progress') -     mean.y('progress') * mean.y('progress'))
+            )
             # self.__rr = 860 * mean.rho * (fluc.Y('progress') - 2 * fluc.Y('progress') * mean.Y('progress'))\
             #           + 860 * fluc.rho * (mean.Y('progress') -     mean.Y('progress') * mean.Y('progress'))
         else:
@@ -137,7 +153,10 @@ class reactionClass:
         """
         return self.__educts
 
-    def production(self, specie):
+    def production(
+        self,
+        specie,
+    ):
         """
         Returns the reaction rate for a produced product species.
 
@@ -174,7 +193,7 @@ class reactionClass:
         return self.__products
 
     @property
-    def reactionEquation(self):
+    def reaction_equation(self):
         """
         Returns the reaction equation string.
 
@@ -198,7 +217,7 @@ class reactionClass:
         return self.__rr
 
 
-class reactionMechanismClass:
+class ReactionMechanismClass:
     """
     Represents a collection of chemical reactions for a given mechanism.
 
@@ -229,7 +248,12 @@ class reactionMechanismClass:
         Name of the reaction mechanism.
     """
 
-    def __init__(self, reactionMechanism, fluc=None, mean=None):
+    def __init__(
+        self,
+        reaction_mechanism,
+        fluc=None,
+        mean=None,
+    ):
         """
         Initializes the reactionMechanismClass instance.
 
@@ -246,18 +270,24 @@ class reactionMechanismClass:
         self.__numberOfReactions = 0
         self.__reactionList = []
         self.__additionalMeanFieldQuantities = []
-        self.__reactionMechanism = reactionMechanism
+        self.__reactionMechanism = reaction_mechanism
         if self.__reactionMechanism in ['EBU_CnF_Kaiser2023']:            
             self.__numberOfSpecies = 1
             self.__numberOfReactions = 1
-            self.__reactionList.append(reactionClass('','progress',reactionMechanism, fluc, mean))
+            self.__reactionList.append(ReactionClass(
+                '',
+                'progress',
+                reaction_mechanism,
+                fluc,
+                mean,
+            ))
             self.__additionalMeanFieldQuantities.append('rr_prefactor')
             self.__additionalMeanFieldQuantities.append('T_u') # unburnt temperature
             self.__additionalMeanFieldQuantities.append('T_b') # burnt temperature
 
 
     @property
-    def numberOfReactions(self):
+    def number_of_reactions(self):
         """
         Returns the number of reactions in the mechanism.
 
@@ -269,7 +299,7 @@ class reactionMechanismClass:
         return self._numberOfReactions
 
     @property
-    def numberOfSpecies(self):
+    def number_of_species(self):
         """
         Returns the number of species in the mechanism.
 
@@ -281,7 +311,7 @@ class reactionMechanismClass:
         return self._numberOfSpecies
 
     @property
-    def reactionMechanism(self):
+    def reaction_mechanism(self):
         """
         Returns the name of the reaction mechanism.
 
@@ -305,7 +335,7 @@ class reactionMechanismClass:
         return self.__reactionList
 
     @property
-    def additionalMeanFieldQuantities(self):
+    def additional_mean_field_quantities(self):
         """
         Returns the list of additional mean field quantities.
 

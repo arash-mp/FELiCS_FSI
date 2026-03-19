@@ -10,12 +10,17 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+# Standard libraries
+from    enum import Enum
 import  os
-import  h5py
-import  numpy               as np
-from    enum                import Enum
-from    .Field              import Field
-from 	FELiCS.Misc.logging import Logger
+
+# Third party libraries
+import h5py
+import numpy as np
+
+# Local Libraries and methods
+from FELiCS.Fields.Field import Field
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -118,7 +123,16 @@ class Mode(Field):
         Property returning the error associated with the mode (returns -9999. if undefined).
     """
 
-    def __init__(self, FEMSpace, mesh, name="q_hat", isStateVector=True, m=0, analysisType='Modal', modeType = None):
+    def __init__(
+        self,
+        FEMSpace,
+        mesh,
+        name="q_hat",
+        isStateVector=True,
+        m=0,
+        analysisType='Modal',
+        modeType = None
+    ):
         """
         Initialize a Mode instance.
 
@@ -145,15 +159,21 @@ class Mode(Field):
             ``analysisType`` (e.g. DIRECT for MODAL, FORCING for RESOLVENT,
             RESPONSE for INPUT_OUTPUT).
         """
-        super().__init__(FEMSpace, mesh, name, isStateVector, m)
+        super().__init__(
+            FEMSpace,
+            mesh,
+            name,
+            isStateVector,
+            m
+        )
         
         # Set values
         self.analysisType      = AnalysisType[analysisType.upper()]
         # TODO Sophie: write error if analysisType is not given
-        self.waveNumber        = m
+        self.wave_number        = m
     
         # Define name of the subfields (variables of the mode)
-        self.namesOfSubFields   = self.getNamesOfSubFields()
+        self.namesOfSubFields   = self.get_names_of_sub_fields()
 
         if modeType is None:
             # Set some defaults in not a good way .> TODO: fix this as a property
@@ -168,7 +188,9 @@ class Mode(Field):
 
 
     @property
-    def name(self):
+    def name(
+        self
+    ):
         """
         Name of the mode.
 
@@ -183,7 +205,9 @@ class Mode(Field):
 
 
     @property
-    def omega(self):
+    def omega(
+        self
+    ):
         """
         Angular frequency associated with the mode.
 
@@ -196,12 +220,14 @@ class Mode(Field):
             Eigenvalue (modal) or frequency (resolvent / input–output).
         """
         if self.analysisType == AnalysisType.MODAL:
-            return self.eigenValue
+            return self.eigen_value
         elif self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT] :
             return self.frequency
 
     @property
-    def gain(self):
+    def gain(
+        self
+    ):
         """
         Gain associated with the mode.
 
@@ -217,7 +243,10 @@ class Mode(Field):
             return -9999.
 
     @gain.setter
-    def gain(self, gain):
+    def gain(
+        self,
+        gain
+    ):
         """
         Set the gain of the mode.
 
@@ -231,7 +260,9 @@ class Mode(Field):
 
 
     @property
-    def gainNumber(self):
+    def gain_number(
+        self
+    ):
         """
         Get the gain number of the mode.
 
@@ -246,8 +277,11 @@ class Mode(Field):
             logger.warning('For this mode object no gain number was defined. Returning "-1"...')
             return -1
 
-    @gainNumber.setter
-    def gainNumber(self, gainNumber):
+    @gain_number.setter
+    def gain_number(
+        self,
+        gain_number
+    ):
         """
         Set the gain number for the mode.
 
@@ -256,10 +290,12 @@ class Mode(Field):
         gainNumber : int
             Gain number of the mode.
         """
-        self._gainNumber = gainNumber
+        self._gainNumber = gain_number
 
     @property
-    def frequency(self):
+    def frequency(
+        self
+    ):
         """
         Get the frequency of the mode.
 
@@ -275,7 +311,10 @@ class Mode(Field):
             return -9999.
 
     @frequency.setter
-    def frequency(self,frequency):
+    def frequency(
+        self,
+        frequency
+    ):
         """
         Set the frequency for the mode.
 
@@ -288,7 +327,9 @@ class Mode(Field):
 
 
     @property
-    def eigenValue(self):
+    def eigen_value(
+        self
+    ):
         """
         Get the eigenvalue of the mode.
 
@@ -303,8 +344,11 @@ class Mode(Field):
             logger.warning('For this mode object no eigen value was defined. Returning "-9999."...')
             return -9999.
 
-    @eigenValue.setter
-    def eigenValue(self,eigenValue):
+    @eigen_value.setter
+    def eigen_value(
+        self,
+        eigen_value
+    ):
         """
         Set the eigenvalue for the mode.
 
@@ -313,10 +357,12 @@ class Mode(Field):
         eigenValue : float
             Eigenvalue associated with the mode.
         """
-        self._eigenValue = eigenValue
+        self._eigenValue = eigen_value
 
     @property
-    def waveNumber(self):
+    def wave_number(
+        self
+    ):
         """
         Get the wave number of the mode.
 
@@ -331,8 +377,11 @@ class Mode(Field):
             logger.warning('For this mode object no waveNumber was defined. Returning "-9999."...')
             return -9999.
  
-    @waveNumber.setter
-    def waveNumber(self,waveNumber):
+    @wave_number.setter
+    def wave_number(
+        self,
+        wave_number
+    ):
         """
         Set the wave number for the mode.
 
@@ -341,10 +390,12 @@ class Mode(Field):
         waveNumber : float or int
             Wave number corresponding to the mode.
         """
-        self._waveNumber = waveNumber
+        self._waveNumber = wave_number
 
     @property
-    def guess(self):
+    def guess(
+        self
+    ):
         """
         Get the initial guess of the mode.
 
@@ -360,7 +411,10 @@ class Mode(Field):
             return -9999.
 
     @guess.setter
-    def guess(self,guess):
+    def guess(
+        self,
+        guess
+    ):
         """
         Set the initial guess for the mode.
 
@@ -372,7 +426,9 @@ class Mode(Field):
         self._guess = guess
 
     @property 
-    def error(self):
+    def error(
+        self
+    ):
         """
         Get the error associated with the mode.
 
@@ -388,7 +444,10 @@ class Mode(Field):
             return -9999.
 
     @error.setter
-    def error(self,error):
+    def error(
+        self,
+        error
+    ):
         """
         Set the error value for the mode.
 
@@ -399,7 +458,9 @@ class Mode(Field):
         """
         self._error = error
         
-    def describe(self):
+    def describe(
+        self
+    ):
         """
         Log a summary of the mode's properties.
 
@@ -410,16 +471,21 @@ class Mode(Field):
         logger.info(f"  Mode Type:     {self.modeType.name}")
         if self.analysisType == AnalysisType.MODAL:
             logger.info(f"  Guess:         {self.guess}")
-            logger.info(f"  Eigenvalue:    {self.eigenValue}")
+            logger.info(f"  Eigenvalue:    {self.eigen_value}")
         elif self.analysisType == AnalysisType.RESOLVENT:
             logger.info(f"  Frequency:     {self.frequency}")
             logger.info(f"  Gain:          {self.gain}")
-            logger.info(f"  Gain Number:   {self.gainNumber}")
+            logger.info(f"  Gain Number:   {self.gain_number}")
         elif self.analysisType == AnalysisType.INPUT_OUTPUT:
             logger.info(f"  Frequency:     {self.frequency}")
-        logger.info(f"  Wave Number:   {self.waveNumber}") 
+        logger.info(f"  Wave Number:   {self.wave_number}") 
 
-    def exportToH5(self, writer, fileName=None):
+    def export_to_h5(
+        self,
+        writer,
+        fileName=None
+     ):
+
         """
         Export the mode to an HDF5 file.
 
@@ -437,15 +503,17 @@ class Mode(Field):
             Base file name (without directory). If ``None``, a default is
             generated based on analysis type and mode properties.
         """
+
         # create standard fileName if none is given
         if fileName is None:
-            fileName = "Mode_" \
-                       + self.analysisType.name.capitalize() + "_" \
-                       + self.modeType.name.capitalize() + "_" \
-                       + "Omega_" \
-                       + "{:.3f}".format(self.omega)
+            fileName = ("Mode_" 
+                + self.analysisType.name.capitalize() + "_" 
+                + self.modeType.name.capitalize() + "_" 
+                + "Omega_" 
+                + "{:.3f}".format(self.omega)
+            )
             if self.analysisType == AnalysisType.RESOLVENT:
-                fileName += "_GainNb_" + str(self.gainNumber)
+                fileName += "_GainNb_" + str(self.gain_number)
 
         # give a list of attributes to store in the file
         attr = lambda : None
@@ -461,19 +529,23 @@ class Mode(Field):
         if self.analysisType in [AnalysisType.RESOLVENT]:
             attrGainNumber  = lambda : None
             attrGainNumber.name = "number"
-            attrGainNumber.value = self.gainNumber
+            attrGainNumber.value = self.gain_number
             attrList.append(attrGainNumber)
 
         # export mode        
-        writer.exportFieldToH5(self, fileName, attrList)
-
-
-    def importData(
+        writer.export_field_to_h5(
             self,
-            reader,
-            importDirPath,
-            importFileName = None,
-        ):
+            fileName,
+            attrList,
+        )
+
+
+    def import_data(
+        self,
+        reader,
+        importDirPath,
+        importFileName = None
+    ):
         """
         Import mode data from an HDF5 file.
 
@@ -516,32 +588,44 @@ class Mode(Field):
                 fileName    = f'Mode_Modal_{modeType}_Omega_{"{:.3f}".format(self.omega)}.h5'
             elif self.analysisType == AnalysisType.RESOLVENT:
                 modeType    = 'Response' if self.modeType is ModeType.RESPONSE else 'Forcing'
-                fileName    = f'Mode_Resolvent_{modeType}_Omega_{"{:.3f}".format(self.frequency)}_GainNb_{self.gainNumber}.h5'
+                fileName    = f'Mode_Resolvent_{modeType}_Omega_{"{:.3f}".format(self.frequency)}_GainNb_{self.gain_number}.h5'
             elif self.analysisType == AnalysisType.INPUT_OUTPUT:
                 fileName    = f'Mode_Input_output_Response_Omega_{"{:.3f}".format(self.frequency)}.h5'
         
         # File name
-        importFilePath      = os.path.join(importDirPath, fileName)
+        importFilePath      = os.path.join(
+            importDirPath,
+            fileName,
+        )
         
         # Call the reader from Field parent class
-        self, notInFile     = super().importData(
+        self, notInFile     = super().import_data(
             reader,
             importFilePath,
         )
         
         # Read eignvalue or gain from file
         if self.analysisType == AnalysisType.MODAL:
-            with h5py.File(importFilePath, 'r') as f:
-                self.eigenValue = f["omega"][()]
+            with h5py.File(
+                importFilePath,
+                'r',
+            ) as f:
+                self.eigen_value = f["omega"][()]
                 
         elif self.analysisType == AnalysisType.RESOLVENT:
-            with h5py.File(importFilePath, 'r') as f:
+            with h5py.File(
+                importFilePath,
+                'r',
+            ) as f:
                 self.frequency  = f["omega"][()]     # NOTE: slight inconsistency in naming
                 self.gain       = f["gain"][()]
-                self.gainNumber = f["number"][()]
+                self.gain_number = f["number"][()]
                 
         elif self.analysisType == AnalysisType.INPUT_OUTPUT:
-            with h5py.File(importFilePath, 'r') as f:
+            with h5py.File(
+                importFilePath,
+                'r',
+            ) as f:
                 self.frequency  = f["omega"][()]    # NOTE: slight inconsistency in naming
         
         return self, notInFile

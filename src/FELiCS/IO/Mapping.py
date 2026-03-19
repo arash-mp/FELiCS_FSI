@@ -10,8 +10,11 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-import  numpy as np
-from 	FELiCS.Misc.logging         import Logger
+# Third party libraries
+import numpy as np
+
+# Local Libraries and methods
+from FELiCS.Misc.logging import Logger
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -36,9 +39,10 @@ class Mapping:
     """
 
     @staticmethod
-    def calculateMappingFromSpaces(
-            inputSpace,
-            outputSpace):
+    def calculate_mapping_from_spaces(
+        inputSpace,
+        outputSpace
+    ):
         """
         Compute a DOF index mapping between two finite element spaces.
 
@@ -69,12 +73,16 @@ class Mapping:
         inputDofs           = inputSpace.tabulate_dof_coordinates()
         outputDofs          = outputSpace.tabulate_dof_coordinates()
 
-        return Mapping.calculateMappingFromDofs(inputDofs, outputDofs)
+        return Mapping.calculate_mapping_from_dofs(
+            inputDofs,
+            outputDofs,
+        )
 
     @staticmethod
-    def calculateMappingFromDofs(
-            inputDofs,
-            outputDofs):
+    def calculate_mapping_from_dofs(
+        inputDofs,
+        outputDofs
+    ):
         """
         Compute a DOF index mapping from coordinate arrays.
 
@@ -115,8 +123,16 @@ class Mapping:
         outputMesh          = np.copy(outputDofs)
 
         # Append indices as last column
-        inputMesh           = np.append(inputMesh, np.arange(len(inputMesh))[:, None], axis=1).round(11)
-        outputMesh          = np.append(outputMesh, np.arange(len(outputMesh))[:, None], axis=1).round(11)
+        inputMesh           = np.append(
+            inputMesh,
+            np.arange(len(inputMesh))[:, None],
+            axis=1,
+        ).round(11)
+        outputMesh          = np.append(
+            outputMesh,
+            np.arange(len(outputMesh))[:, None],
+            axis=1,
+        ).round(11)
 
         # Sort by x,y,z
         inputMeshSorted     = inputMesh[np.lexsort((inputMesh[:,2], inputMesh[:,1], inputMesh[:,0]))].astype(int)

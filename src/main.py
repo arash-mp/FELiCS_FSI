@@ -10,15 +10,18 @@
 # |  |_|  |___||____||_|  \___||___/   |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
+# Standard libraries
 import 	argparse
-from 	runModal     				import  runModal  
-from 	runResolvent    			import  runResolvent
-from 	runInputOutput  			import  runInputOutput
-# from 	runModal_testReader     	import  runModal      
-# from 	runResolvent_testReader    	import  runResolvent  
-# from 	runInputOutput_testReader  	import  runInputOutput
-from 	FELiCS.Parameters.config	import 	config
+
+# Local Libraries and methods
 from 	FELiCS.Misc.logging			import  Logger
+from 	FELiCS.Parameters.Config	import 	Config
+from 	run_input_output  			import  run_input_output
+
+from 	run_modal     				import  run_modal 
+
+from 	run_resolvent    			import  run_resolvent
+
 
 # Define the description and epilog for the help message
 desc_text = """
@@ -35,28 +38,54 @@ Example usage:
     """
 
 # Initialize the argument parser
-parser = argparse.ArgumentParser(description=desc_text, epilog=epilog, formatter_class=argparse.RawTextHelpFormatter)
-parser.add_argument('-f',"--file", "-file", type=str, required=True, metavar="path",help='Specify the path to the config file')
-parser.add_argument('-d', '--debug', action='store_true', help='activate debug mode for extended output')
-parser.add_argument('-t', '--test', action='store_true', help='activate test mode with no output')
+parser = argparse.ArgumentParser(
+    description=desc_text,
+    epilog=epilog,
+    formatter_class=argparse.RawTextHelpFormatter,
+)
+parser.add_argument(
+    '-f',
+    "--file",
+    "-file",
+    type=str,
+    required=True,
+    metavar="path",
+    help='Specify the path to the config file',
+)
+parser.add_argument(
+    '-d',
+    '--debug',
+    action='store_true',
+    help='activate debug mode for extended output',
+)
+parser.add_argument(
+    '-t',
+    '--test',
+    action='store_true',
+    help='activate test mode with no output',
+)
 args = parser.parse_args()
 
 # Initialize the logger
-logger = Logger(args.debug, args.test, "felics")
+logger = Logger(
+    args.debug,
+    args.test,
+    "felics",
+)
 logger = Logger.get_logger("felics")
 
 if __name__ == '__main__':
 
     # Get the parameters
-    param = config()
-    param.importFromFile(args.file)
+    param = Config()
+    param.import_from_file(args.file)
     mode = param.Case.AnalysisMode
     if mode == "Modal":
-        runModal(param)
+        run_modal(param)
     elif mode == "Resolvent":
-        runResolvent(param)
+        run_resolvent(param)
     elif mode == "Input-Output":
-        runInputOutput(param)
+        run_input_output(param)
     else:
         logger.error("Analysis type not recognized in FELiCS main.")
     logger.info("Finished FELiCS run.")
