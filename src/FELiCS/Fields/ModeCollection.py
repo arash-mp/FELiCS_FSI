@@ -483,10 +483,14 @@ class ModeCollection():
             header          = ["omega"]
             header.extend([f'gain_{i}' for i in range(Ncols - 1)])
 
+            # Determine if any frequency is complex to set the correct data type
+            is_complex = any(isinstance(mode.frequency, complex) for mode in modeList)
+            spectrum_dtype = complex if is_complex else float
+
             # Define the spectrum array
             spectrum    = np.zeros(
                 (NLines, Ncols),
-                dtype=float,
+                dtype=spectrum_dtype,
             )
             hasResponse = any(mode.modeType == ModeType.RESPONSE for mode in modeList)
             
