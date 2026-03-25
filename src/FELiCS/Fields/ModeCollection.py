@@ -423,6 +423,98 @@ class ModeCollection():
                 spectrum.append(mode.eigen_value)
         return spectrum
     
+    def get_response_modes(
+        self
+    ):
+        """
+        Return a list of response modes.
+
+        Returns
+        -------
+        list
+            List of mode objects for response modes.
+        """
+        
+        # Check that we are in Resolvent or Input-Output analysis
+        if self.analysisType not in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
+            logger.error('get_response_modes called for non-Resolvent/Input-Output analysis in ModeCollection.')
+            return
+
+        mode_list = []
+        for mode in self.modeList:
+            if mode.modeType == ModeType.RESPONSE:
+                mode_list.append(mode)
+        return mode_list
+    
+    def get_forcing_modes(
+        self
+    ):
+        """
+        Return a list of forcing modes.
+
+        Returns
+        -------
+        list
+            List of mode objects for forcing modes.
+        """
+        
+        # Check that we are in Resolvent or Input-Output analysis
+        if self.analysisType not in [AnalysisType.RESOLVENT]:
+            logger.error('get_forcing_modes called for non-Resolvent analysis in ModeCollection.')
+            return
+
+        mode_list = []
+        for mode in self.modeList:
+            if mode.modeType == ModeType.FORCING:
+                mode_list.append(mode)
+        return mode_list
+    
+    def get_optimal_forcing_modes(
+        self
+    ):
+        """
+        Return a list of optimal forcing modes.
+
+        Returns
+        -------
+        list
+            List of mode objects for optimal forcing modes.
+        """
+        
+        # Check that we are in Resolvent or Input-Output analysis
+        if self.analysisType not in [AnalysisType.RESOLVENT]:
+            logger.error('get_optimal_forcing_modes called for non-Resolvent analysis in ModeCollection.')
+            return
+
+        mode_list = []
+        for mode in self.modeList:
+            if mode.modeType == ModeType.FORCING and mode.gain_number == 0:
+                mode_list.append(mode)
+        return mode_list
+    
+    def get_optimal_response_modes(
+        self
+    ):
+        """
+        Return a list of optimal response modes.
+
+        Returns
+        -------
+        list
+            List of mode objects for optimal response modes.
+        """
+        
+        # Check that we are in Resolvent or Input-Output analysis
+        if self.analysisType not in [AnalysisType.RESOLVENT]:
+            logger.error('get_optimal_response_modes called for non-Resolvent analysis in ModeCollection.')
+            return
+
+        mode_list = []
+        for mode in self.modeList:
+            if mode.modeType == ModeType.RESPONSE and mode.gain_number == 0:
+                mode_list.append(mode)
+        return mode_list
+    
     def get_spectrum(
         self
     ):
@@ -566,8 +658,8 @@ class ModeCollection():
                        color=colors[i], linewidth=2, markersize=4, alpha=0.7)
 
             ax.set_xlabel(r'$\omega$', fontsize=12)
-            ax.set_ylabel('Gain', fontsize=12)
-            ax.set_title('Resolvent Spectrum (Gains vs Frequency)', fontsize=14)
+            ax.set_ylabel(r'Gains squared $\sigma^2$', fontsize=12)
+            ax.set_yscale('log')
             ax.grid(True, alpha=0.3)
             ax.legend(fontsize=10)
 

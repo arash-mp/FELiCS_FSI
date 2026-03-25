@@ -1175,6 +1175,68 @@ class Field:
             self.space.FEMSmoothSolver,
             petscVec,
         ))
+        
+    def _select_field_for_plot(
+        self,
+        variableName,
+    ):
+        """Selects which scalar field to plot in case of a mixed or vector field, 
+        based on the provided variable name. 
+        If no name is provided or if the name is not found, a default component is 
+        selected.
+
+        Parameters
+        ----------
+        variableName : str or None
+            The name of the variable to plot. For mixed or vector fields, this can refer to
+            a subfield name or a component of a vector subfield (e.g. 'u_x'). If None, a default component is chosen.
+        """
+        
+        # Get the list of subfields and their names
+        fields  = self.get_list_of_sub_fields()
+        names   = self.get_names_of_sub_fields()
+        
+        selected_field = None
+        
+        # First try to match the variable name to a subfield name
+        if variableName is not None:
+            if variableName in names:
+                selected_field              = fields[names.index(variableName)]
+            else:
+                # Try to match a vector component name inside vector subfields
+                for field in fields:
+                    if field.info['type'] == 'vector':
+                        component_names     = field.get_names_of_sub_fields()
+                        if variableName in component_names:
+                            selected_field  = field.get_list_of_sub_fields()[
+                                component_names.index(variableName)
+                            ]
+                            break
+                if selected_field is None:
+                    logger.warning(
+                        f"Field.plot(): variable '{variableName}' not found. "
+                        "Using the default component instead."
+                    )
+        
+        # If no specific field was selected, choose a default one
+        if selected_field is None:
+            
+            # Default: first scalar field or first component of first vector
+            first_field                     = fields[0]
+            if first_field.info['type'] == 'vector':
+                selected_field              = first_field.get_list_of_sub_fields()[0]
+            elif first_field.info['type'] == 'mixed':
+                # Take the first scalar component from the mixed subfield
+                nested_fields               = first_field.get_list_of_sub_fields()
+                nested_first                = nested_fields[0]
+                if nested_first.info['type'] == 'vector':
+                    selected_field          = nested_first.get_list_of_sub_fields()[0]
+                else:
+                    selected_field          = nested_first
+            else:
+                selected_field              = first_field
+                
+        return selected_field
 
     def plot(
         self,
@@ -1184,7 +1246,8 @@ class Field:
         plotType="real",
         clim=None,
         axes=None,
-        showBoundaries=False,
+        showBoundaries=True,
+        free_aspect_ratio=False,
     ):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
@@ -1208,6 +1271,8 @@ class Field:
             An existing Matplotlib Axes object to plot on. If None, a new figure and axes are created.
         showBoundaries : bool, optional
             If True, plot the domain boundaries as black lines. Default is False.
+        free_aspect_ratio : bool, optional
+            If True, allow the aspect ratio to be free. Default is False.
 
         Notes
         -----
@@ -1224,45 +1289,8 @@ class Field:
 
         # Handle mixed or vector fields by selecting the appropriate scalar field to plot
         if self.space.num_sub_spaces > 1:
-            fields  = self.get_list_of_sub_fields()
-            names   = self.get_names_of_sub_fields()
             
-            selected_field = None
-            
-            if variableName is not None:
-                if variableName in names:
-                    selected_field = fields[names.index(variableName)]
-                else:
-                    # Try to match a vector component name inside vector subfields
-                    for field in fields:
-                        if field.info['type'] == 'vector':
-                            component_names = field.get_names_of_sub_fields()
-                            if variableName in component_names:
-                                selected_field = field.get_list_of_sub_fields()[
-                                    component_names.index(variableName)
-                                ]
-                                break
-                    if selected_field is None:
-                        logger.warning(
-                            f"Field.plot(): variable '{variableName}' not found. "
-                            "Using the default component instead."
-                        )
-            
-            if selected_field is None:
-                # Default: first scalar field or first component of first vector
-                first_field = fields[0]
-                if first_field.info['type'] == 'vector':
-                    selected_field = first_field.get_list_of_sub_fields()[0]
-                elif first_field.info['type'] == 'mixed':
-                    # Take the first scalar component from the mixed subfield
-                    nested_fields = first_field.get_list_of_sub_fields()
-                    nested_first = nested_fields[0]
-                    if nested_first.info['type'] == 'vector':
-                        selected_field = nested_first.get_list_of_sub_fields()[0]
-                    else:
-                        selected_field = nested_first
-                else:
-                    selected_field = first_field
+            selected_field = self._select_field_for_plot(variableName)
             
             return selected_field.plot(
                 variableName=variableName,
@@ -1272,6 +1300,7 @@ class Field:
                 clim=clim,
                 axes=axes,
                 showBoundaries=showBoundaries,
+                free_aspect_ratio=free_aspect_ratio
             )
 
         # ---- METHOD 1: Directly use dof coordinates and tricontourf ----
@@ -1313,6 +1342,9 @@ class Field:
         elif plotType == "magnitude":
             phi_vertex      = np.abs(u1.x.array)
             cmap            = "magma"
+        elif plotType == "angle":
+            phi_vertex      = np.angle(u1.x.array)
+            cmap            = "hsv"
         else:
             phi_vertex      = np.real(u1.x.array)
             cmap            = "seismic"
@@ -1342,10 +1374,10 @@ class Field:
             fig, axes       = plt.subplots()
         if clim is None:
             if plotType == "magnitude":
-                clim = (0, np.max(phi_vertex))
+                clim        = (0, np.max(phi_vertex))
             else:
-                clim = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
-        contour = axes.tripcolor(
+                clim        = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
+        contour             = axes.tripcolor(
             triang,
             phi_vertex,
             shading='gouraud',
@@ -1356,7 +1388,7 @@ class Field:
 
         # Plot boundaries if requested
         if showBoundaries:
-            coords = mesh.geometry.x
+            coords          = mesh.geometry.x
             # Get boundary facets (edges in 2D)
             boundary_facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
             # Create connectivity between facets and vertices
@@ -1364,9 +1396,9 @@ class Field:
             facet_to_vertices = mesh.topology.connectivity(tdim - 1, 0)
             # Plot each boundary edge
             for facet_idx in boundary_facets:
-                start = facet_to_vertices.offsets[facet_idx]
-                end = facet_to_vertices.offsets[facet_idx + 1]
-                vertices = facet_to_vertices.array[start:end]
+                start       = facet_to_vertices.offsets[facet_idx]
+                end         = facet_to_vertices.offsets[facet_idx + 1]
+                vertices    = facet_to_vertices.array[start:end]
                 edge_coords = coords[vertices]
                 axes.plot(edge_coords[:, 0], edge_coords[:, 1], 'k-', linewidth=0.8, alpha=0.5)
 
@@ -1381,11 +1413,14 @@ class Field:
             title += "_imag"
         elif plotType == "magnitude":
             title += "_magnitude"
+        elif plotType == "angle":
+            title += "_angle"
         else:
             title += "_real"
 
-        axes.set_title(title)
-        axes.set_aspect('equal')
+        # axes.set_title(title)
+        if not free_aspect_ratio:
+            axes.set_aspect('equal')
         axes.grid(
             True,
             alpha=0.3,
@@ -1412,6 +1447,8 @@ class Field:
 
         plt.tight_layout()
         # plt.show()
+        
+        return axes
         
 
     ### dunder methods for overloading arithmetic operators ###
