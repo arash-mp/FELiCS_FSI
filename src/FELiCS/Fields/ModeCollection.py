@@ -485,7 +485,7 @@ class ModeCollection():
 
             # Determine if any frequency is complex to set the correct data type
             is_complex = any(isinstance(mode.frequency, complex) for mode in modeList)
-            spectrum_dtype = complex if is_complex else float
+            spectrum_dtype = object if is_complex else float
 
             # Define the spectrum array
             spectrum    = np.zeros(
