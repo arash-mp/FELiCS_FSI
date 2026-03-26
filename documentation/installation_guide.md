@@ -119,9 +119,9 @@ conda activate <your_environment_name>
 
 Once the environment is active, test the FELiCS alias:
 ```bash
-FELiCS
+FELiCS -h
 ```
-If successful, the FELiCS logo is displayed:
+If successful, the FELiCS logo and help message are displayed:
 ```bash
 (         (               (
 )\ )      ) )       (    )\ )
@@ -131,12 +131,34 @@ If successful, the FELiCS logo is displayed:
 | __|| __|| |   (_)((/ __|/ __|
 | _| | _| | |__ | | | (__ \__ \
 |_|  |___||____||_|  \___||___/
+Git commit: ...
+usage: main.py [-h] -f path [-d] [-t]
+
+------------------ FELICS -----------------
+FELiCS (Finite Element Linearized Combustion Solver) 
+is a Python-based CFD tool for linearized flow analysis, 
+developed by the Laboratory for Flow Instabilities and Dynamics
+at TU Berlin, Germany.
+
+options:
+  -h, --help            show this help message and exit
+  -f, --file, -file path
+                        Specify the path to the config file
+  -d, --debug           activate debug mode for extended output
+  -t, --test            activate test mode with no output
+
+Example usage:
+    python main.py -h           shows help message 
+    python main.py -f path      start with config file at path (mandatory)
+    python main.py -f path -d   for debug mode
+    python main.py -f path -t   for test mode
 ```
 
 
 For a more thorough check, run a tutorial case:
 ```bash
-FELiCS -f $FELiCS_PATH/tutorials/modal_analysis_tutorial/modal.json
+cd $FELiCS_PATH/tutorials/modal_analysis_tutorial
+FELiCS -f modal.json
 ```
 This example should complete in under a minute. If successful, you will see the message: `Finished FELiCS run.`
 
@@ -167,7 +189,8 @@ To test the installation, start python in the FELiCS conda environment
 
 ```bash
 conda activate <felics-environemnt>
-python import FELiCS
+python 
+import FELiCS
 ```
 and try to import FELiCS. If successful, the FELiCS logo is displayed:
 ```python import FELiCS
