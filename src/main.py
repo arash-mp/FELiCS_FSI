@@ -25,9 +25,11 @@ from 	run_resolvent    			import  run_resolvent
 
 # Define the description and epilog for the help message
 desc_text = """
------------------- FELICS -----------------
-Finite Element Linearized Combustion Solver
-**add short FELICS description here**
+------------------------ FELICS -----------------------
+FELiCS (Finite Element Linearized Combustion Solver) 
+is a Python-based CFD tool for linearized flow analysis, 
+developed by the Laboratory for Flow Instabilities and Dynamics
+at TU Berlin, Germany.
 """
 epilog = """
 Example usage:
