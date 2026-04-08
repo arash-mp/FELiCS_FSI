@@ -1,5 +1,15 @@
 # Overview of FELiCS workflow
 
+## 0. Disclaimer
+
+⚠️ The present file represents a *work in progress* version of a guide for the FELiCS workflow. 
+
+🚧 Current limitations and ToDos:
+* Update the name of the methods/variables to fit the recent refactoring of the FELiCS code.
+* Update and complete the links to the documentation pages
+* Complete the description of the workflow (some parts are not yet covered)
+* Figure out an easier way to visualize the guide (collapsible list?, ...)
+
 ## 1. Initialisation & Meshing
 
 ```python
