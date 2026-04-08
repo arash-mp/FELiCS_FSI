@@ -210,8 +210,8 @@ class EnergyPressureEquation(EquationTemplate):
         # which is integrated by parts.
         
         # TEMPORARY: use constant Pr definition (This should move to fieldProperty or a handler)
-        kappa_m = mean.nu_tot*mean.cp/mean.pr            
-        kappa_f = fluc.nulam*mean.cp/mean.pr
+        kappa_m = mean.mu_tot*mean.cp/mean.pr            
+        kappa_f = fluc.mulam*mean.cp/mean.pr
         
         # Volume term:  
         #   j*(gamma-1)[(grad(conj(X)).(kappa_m*grad(T_f)) + (grad(conj(X)).(kappa_f*grad(T_m))]*dx
