@@ -121,7 +121,7 @@ class Field:
         self.isStateVector = isStateVector
 
         # handle spectral dimension and wave number
-        if m is not None:
+        if m is not None and m is not 0:
             self.hasSpectralDimension = True
             self.m = m
         else:
@@ -641,13 +641,20 @@ class Field:
         # TODO Sophie: handle order (get it from function?)
         degree = self.space.element.basix_element.degree
         dim = self.mesh.gdim 
+        print(dim)
+        
+        print(self.hasSpectralDimension)
+        
         if self.hasSpectralDimension:
             dim += 1
+            
+        print(dim)
         gradientSpace = create_function_space(
             self.mesh,
             degree=degree,
             dim=dim,
         )
+        
         gradientField = Field(
             gradientSpace,
             self.mesh,
@@ -732,16 +739,18 @@ class Field:
         # TODO: Add vorticity 3D field
 
         dim = self.space.num_sub_spaces
-        if dim < 2:
+        
+        # if dim > 2:
+        #     logger.log_and_raise("get_vorticity_field() called for a vector with more than 2 dimensions. Vorticity is only defined for 2D vector fields. Returning None.", ValueError)
 
-            # Error message
-            pass
         componentGradient = []
         velocityComponents = self.get_list_of_sub_fields()
+        
+        print(self.hasSpectralDimension)
 
         for field in velocityComponents:
+            logger.debug(f"Calculating gradient for component {field.name} of the velocity field.")
             componentGradient.append(field.get_gradient_field())
-        
         
         # 2D field -> scalar vorticity field
         if dim == 2:
