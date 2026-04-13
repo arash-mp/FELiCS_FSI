@@ -1070,8 +1070,12 @@ class ModeCollection():
         # If omega was given as input, filter files accordingly
         if omegas is not None:
 
-            #matchingOmegasIndices       = [i for i, omega in enumerate(np.round(fileOmegas, 3)) if omega in np.round(omegas, 3)]
-            closestOmegasIndices        = [np.argmin(np.abs(np.array(fileOmegas) - omega)) for omega in omegas]
+            closestOmegasIndices        = []
+            for omega in omegas:
+                minDistance             = np.min(np.abs(np.array(fileOmegas) - omega))
+                closestOmegasIndices.extend([i for i, fileOmega in enumerate(fileOmegas) if np.abs(fileOmega - omega) == minDistance])
+            closestOmegasIndices        = list(set(closestOmegasIndices))  # Remove duplicates
+            
             if len(closestOmegasIndices) == 0:
                 logger.error('No matching omegas found in the import folder for the specified omegas.')
                 return
