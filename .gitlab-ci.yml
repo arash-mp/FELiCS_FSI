@@ -1,5 +1,5 @@
 # Docker image for pipeline execution
-image: continuumio/anaconda3
+image: continuumio/miniconda3
 
 variables:
   GIT_STRATEGY: fetch
