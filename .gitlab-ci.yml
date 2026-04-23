@@ -11,7 +11,7 @@ felics-pytest:
     - pwd
     - ls -all
     - echo "Creating conda environment for FELiCS..."
-    - conda env create -f installation/felics_v3.0.0_env_v2.yml 
+    - conda env create -f installation/felics_v3.0.0_env.yml 
     - source /root/.bashrc
     - conda init
     - conda activate felics
