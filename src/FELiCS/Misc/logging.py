@@ -16,6 +16,8 @@ import logging
 import os
 import re
 import shutil
+import subprocess
+import sys
 
 def log_and_raise(logger, log_message, exc_type=RuntimeError, raise_message=None):
     logger.error(log_message)
@@ -152,6 +154,7 @@ class Logger:
         self,
         debug_mode=False,
         test_mode=False,
+        profiler_mode=False,
         logger_name="log"
     ):
         """
@@ -163,11 +166,14 @@ class Logger:
             If True, enables debug logging (default is False).
         test_mode : bool, optional
             If True, enables test mode logging (default is False).
+        profiler_mode : bool, optional
+            If True, enables profiler mode logging (default is False).
         logger_name : str, optional
             Name of the logger and log file prefix (default is "log").
         """
         self.debug_mode = debug_mode
         self.test_mode = test_mode
+        self.profiler_mode = profiler_mode
         self.logger_name = logger_name
         self._logger = None
         self._setup_logger()
@@ -243,6 +249,53 @@ class Logger:
             self._logger.addHandler(handler)
 
         self._logger.debug("Logger initialized successfully")
+        
+        if self.debug_mode or self.profiler_mode:
+            self._start_mem_tracker()
+
+    def _start_mem_tracker(self):
+        """
+        Launch the background memory-usage tracker alongside the log file.
+
+        Resolves the path to tools/memory_tracker.py relative to this file,
+        then spawns it as a detached subprocess that samples memory and writes
+        a CSV and PNG into the same directory as the log file.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        log_file = next(
+            (h.baseFilename for h in self._logger.handlers
+             if isinstance(h, logging.FileHandler)),
+            None,
+        )
+        if log_file is None:
+            return
+
+        tracker = os.path.normpath(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         '..', '..', '..', 'tools', 'memory_tracker.py')
+        )
+        if not os.path.isfile(tracker):
+            self._logger.warning(f"Memory tracker script not found: {tracker}")
+            return
+
+        subprocess.Popen(
+            [sys.executable, tracker,
+             '--pid',      str(os.getpid()),
+             '--log-file', log_file],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self._logger.info(
+            f"Memory tracker started for PID {os.getpid()}; "
+            f"output in log file directory"
+        )
 
     @property
     def logger(
@@ -306,6 +359,8 @@ class Logger:
 
         Moves all current log files to the specified new directory and updates the logger's file handlers to write to the new location.
 
+        Renames memory-profiler companion files (CSV, PNG) if they exist, and writes a redirect file so the background tracker switches its output directory as well.
+
         Parameters
         ----------
         new_log_path : str
@@ -347,6 +402,22 @@ class Logger:
                     old_log_path,
                     new_log_path,
                 )
+
+            # Move memory-tracker files (CSV, PNG) 
+            # if they exist, write a redirect file so the background tracker switches its output directory.
+            old_dir  = os.path.dirname(old_log_path)
+            log_stem = os.path.splitext(os.path.basename(old_log_path))[0]
+            for _companion in [f"{log_stem}_mem.csv", f"{log_stem}_mem.png"]:
+                _src = os.path.join(old_dir, _companion)
+                if os.path.exists(_src):
+                    shutil.move(_src, new_log_path)
+            _redirect = os.path.join(old_dir, f"{log_stem}_mem.redirect")
+            try:
+                with open(_redirect, "w") as _rf:
+                    _rf.write(new_log_path)
+            except OSError:
+                pass
+            
             new_log_file_path = os.path.join(
                 new_log_path,
                 os.path.basename(old_log_path),

@@ -66,12 +66,19 @@ parser.add_argument(
     action='store_true',
     help='activate test mode with no output',
 )
+parser.add_argument(
+    '-p',
+    '--profiler',
+    action='store_true',
+    help='activate profiler',
+)
 args = parser.parse_args()
 
 # Initialize the logger
 logger = Logger(
     args.debug,
     args.test,
+    args.profiler,
     "felics",
 )
 logger = Logger.get_logger("felics")
