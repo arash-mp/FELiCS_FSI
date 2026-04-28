@@ -10,21 +10,21 @@
 # |  |_|  |___||____||_|  \___||___/  |  Contact        info@felics.eu                          |
 # \___________________________________/ \_______________________________________________________/
 #
-# Background memory tracker for FELiCS runs.
+# Background CPU utilization tracker for FELiCS runs.
 #
-# Reads resident/virtual memory from /proc/<pid>/status (Linux only),
+# Reads CPU time metrics from /proc/<pid>/stat (Linux only),
 # writes a CSV, and regenerates a PNG plot after each sample.
-# Only standard-library modules plus matplotlib (already in the felics env) are used.
+# Only standard-library modules plus matplotlib are used.
 #
-# Usage (called automatically by main.py in debug mode):
-#   python track_mem_usage.py --pid <PID> --log-file <path/to/felics_<timestamp>.log>
+# Usage (called automatically by logger in debug mode):
+#   python cpu_tracker.py --pid <PID> --log-file <path/to/felics_<timestamp>.log>
 #                             [--interval <seconds>]
 
 import argparse
 import csv
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import matplotlib
 matplotlib.use('Agg')           # non-interactive backend – no display needed
@@ -32,42 +32,47 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 # Suffix used to communicate a log-directory change from Logger.change_log_location
-_REDIRECT_SUFFIX = "_memory.redirect"
+_REDIRECT_SUFFIX = "_cpu.redirect"
 
 
 # ---------------------------------------------------------------------------
 # /proc helpers (Linux)
 # ---------------------------------------------------------------------------
 
-def _read_proc_mem_kb(pid):
+def _read_cpu_ticks(pid):
     """
-    Return (rss_kb, vsz_kb) for `pid` by parsing /proc/<pid>/status.
+    Return the total CPU ticks (user + system time) for `pid` by parsing /proc/<pid>/stat.
 
     Parameters
     ----------
     pid : int
-        Process ID to read memory status for.
+        Process ID to read CPU status for.
 
     Returns
     -------
-    tuple of (int or None, int or None)
-        A tuple containing Resident Set Size (RSS) and Virtual Memory Size (VSZ) in kilobytes.
-        Returns (None, None) if the process no longer exists or the file cannot be read.
+    int or None
+        Total CPU ticks so far, or None if the process no longer exists.
     """
-    status_path = f"/proc/{pid}/status"
-    rss_kb = vsz_kb = None
+    stat_path = f"/proc/{pid}/stat"
     try:
-        with open(status_path, 'r') as fh:
-            for line in fh:
-                if line.startswith("VmRSS:"):
-                    rss_kb = int(line.split()[1])
-                elif line.startswith("VmSize:"):
-                    vsz_kb = int(line.split()[1])
-                if rss_kb is not None and vsz_kb is not None:
-                    break
-    except OSError:
-        return None, None
-    return rss_kb, vsz_kb
+        with open(stat_path, 'r') as fh:
+            data = fh.read()
+            
+        # Structure of /proc/[pid]/stat has the command name in parentheses.
+        # This name can contain spaces, so partition by the last closing parenthesis.
+        pid_s, rest = data.split('(', 1)
+        comm, rest = rest.rsplit(')', 1)
+        fields = rest.split()
+        
+        # fields[0] corresponds to state, which is the 3rd field in the stat file overall
+        # utime is 14th field -> index 11 in `fields`
+        # stime is 15th field -> index 12 in `fields`
+        utime = int(fields[11])
+        stime = int(fields[12])
+        
+        return utime + stime
+    except (OSError, ValueError, IndexError):
+        return None
 
 
 def _process_exists(pid):
@@ -91,39 +96,37 @@ def _process_exists(pid):
 # Plot helper
 # ---------------------------------------------------------------------------
 
-def _update_plot(timestamps, rss_mbs, vsz_mbs, png_path):
+def _update_plot(timestamps, cpu_percentages, png_path, elapsed_times):
     """
-    Generate and save a diagnostic plot of memory usage over time.
+    Generate and save a diagnostic plot of CPU utilization over time.
 
     Parameters
     ----------
     timestamps : list of datetime.datetime
-        List of timestamps corresponding to each memory sample.
-    rss_mbs : list of float
-        List of Resident Set Size memory values in megabytes.
-    vsz_mbs : list of float
-        List of Virtual Memory Size values in megabytes.
+        List of timestamps corresponding to each CPU sample.
+    cpu_percentages : list of float
+        List of CPU utilization percentages.
     png_path : str
         File path where the generated plot image will be saved.
+    elapsed_times : list of float
+        List of elapsed times from the start of the tracking.
 
     Returns
     -------
     None
     """
-    rss_gbs = [v / 1024.0 for v in rss_mbs]
-    vsz_gbs = [v / 1024.0 for v in vsz_mbs]
-    max_rss = max(rss_gbs)
-    max_vsz = max(vsz_gbs)
+    max_cpu = max(cpu_percentages) if cpu_percentages else 0.0
+    total_runtime = elapsed_times[-1] if elapsed_times else 0.0
+
+    # Format total runtime efficiently
+    runtime_str = str(timedelta(seconds=int(total_runtime))) if total_runtime >= 60 else f"{total_runtime:.1f}s"
 
     fig, ax = plt.subplots(figsize=(10, 4))
-    ax.plot(timestamps, rss_gbs,
-            label=f'RSS (max: {max_rss:.2f} GB)', color='tab:blue')
-    ax.plot(timestamps, vsz_gbs,
-            label=f'Virtual (max: {max_vsz:.2f} GB)',
-            color='tab:orange', linestyle='--')
+    ax.plot(timestamps, cpu_percentages,
+            label=f'CPU (max: {max_cpu:.1f}%)', color='tab:red')
     ax.set_xlabel('Time')
-    ax.set_ylabel('Memory (GB)')
-    ax.set_title('FELiCS Memory Usage')
+    ax.set_ylabel('CPU Utilization (%)')
+    ax.set_title(f'FELiCS CPU Usage based on CPU clock ticks per second (Total Runtime: {runtime_str})')
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
     fig.autofmt_xdate()
     ax.legend()
@@ -139,9 +142,9 @@ def _update_plot(timestamps, rss_mbs, vsz_mbs, png_path):
 
 def main():
     """
-    Main entry point for the memory tracker script.
+    Main entry point for the CPU tracker script.
 
-    Parses command-line arguments to monitor the memory usage of a specified PID,
+    Parses command-line arguments to monitor the CPU usage of a specified PID,
     writes the tracking data to a CSV file, and iteratively updates a plot image.
     Outputs are placed alongside the provided log file path and track redirects
     if the log file location changes during execution.
@@ -155,7 +158,7 @@ def main():
     None
     """
     parser = argparse.ArgumentParser(
-        description='Track resident/virtual memory of a FELiCS process and '
+        description='Track CPU utilization of a FELiCS process and '
                     'store results alongside the log file.'
     )
     parser.add_argument('--pid', type=int, required=True,
@@ -167,28 +170,42 @@ def main():
                         help='Sampling interval in seconds (default: 1.0)')
     args = parser.parse_args()
 
+    # Determine CPU clock ticks per second (usually 100 on Linux)
+    try:
+        clk_tck = os.sysconf("SC_CLK_TCK")
+    except (ValueError, AttributeError):
+        clk_tck = 100.0
+
     # Derive output paths from the log file path
     log_dir  = os.path.dirname(os.path.abspath(args.log_file))
     log_stem = os.path.splitext(os.path.basename(args.log_file))[0]
-    csv_path = os.path.join(log_dir, f"{log_stem}_memory.csv")
-    png_path = os.path.join(log_dir, f"{log_stem}_memory.png")
+    csv_path = os.path.join(log_dir, f"{log_stem}_cpu.csv")
+    png_path = os.path.join(log_dir, f"{log_stem}_cpu.png")
 
     os.makedirs(log_dir, exist_ok=True)
 
     # Write CSV header
     with open(csv_path, 'w', newline='') as fh:
-        csv.writer(fh).writerow(['timestamp', 'elapsed_s', 'rss_mb', 'vsz_mb'])
+        csv.writer(fh).writerow(['timestamp', 'elapsed_s', 'cpu_percent'])
 
-    elapsed_times = []
-    timestamps    = []
-    rss_mbs       = []
-    vsz_mbs       = []
-    start_time    = time.time()
+    elapsed_times   = []
+    timestamps      = []
+    cpu_percentages = []
+    
+    start_time = time.time()
+    
+    # Initialize previous state for CPU delta calculation
+    prev_time = start_time
+    prev_ticks = _read_cpu_ticks(args.pid)
+    
+    if prev_ticks is None:
+        # Cannot read CPU info, perhaps process died immediately
+        return
 
     while _process_exists(args.pid):
+        time.sleep(args.interval)
+        
         # Check whether Logger.change_log_location has moved the log file.
-        # If so, a redirect file is left in the old directory containing the
-        # new directory path.  Follow it so CSV and PNG end up alongside the log.
         redirect_file = os.path.join(log_dir, f"{log_stem}{_REDIRECT_SUFFIX}")
         if os.path.exists(redirect_file):
             try:
@@ -196,44 +213,52 @@ def main():
                     new_dir = rf.read().strip()
                 os.remove(redirect_file)
                 log_dir  = new_dir
-                csv_path = os.path.join(log_dir, f"{log_stem}_memory.csv")
-                png_path = os.path.join(log_dir, f"{log_stem}_memory.png")
-                # Companion files were moved by change_log_location; write a
-                # fresh CSV header only if the moved file is not already there.
+                csv_path = os.path.join(log_dir, f"{log_stem}_cpu.csv")
+                png_path = os.path.join(log_dir, f"{log_stem}_cpu.png")
+                
                 if not os.path.exists(csv_path):
                     os.makedirs(log_dir, exist_ok=True)
                     with open(csv_path, 'w', newline='') as fh:
                         csv.writer(fh).writerow(
-                            ['timestamp', 'elapsed_s', 'rss_mb', 'vsz_mb']
+                            ['timestamp', 'elapsed_s', 'cpu_percent']
                         )
             except OSError:
                 pass
 
-        rss_kb, vsz_kb = _read_proc_mem_kb(args.pid)
-        if rss_kb is None:
+        current_ticks = _read_cpu_ticks(args.pid)
+        if current_ticks is None:
             break
 
+        current_time = time.time()
+        
+        delta_ticks = current_ticks - prev_ticks
+        delta_time = current_time - prev_time
+        
+        cpu_percent = 0.0
+        if delta_time > 0:
+            # (ticks / ticks_per_second) / total_elapsed_seconds
+            cpu_percent = 100.0 * (delta_ticks / clk_tck) / delta_time
+
         now     = datetime.now()
-        elapsed = time.time() - start_time
+        elapsed = current_time - start_time
         ts      = now.strftime("%H:%M:%S.%f")
-        rss_mb  = rss_kb / 1024.0
-        vsz_mb  = vsz_kb / 1024.0
 
         elapsed_times.append(elapsed)
         timestamps.append(now)
-        rss_mbs.append(rss_mb)
-        vsz_mbs.append(vsz_mb)
+        cpu_percentages.append(cpu_percent)
 
         # Append row to CSV
         with open(csv_path, 'a', newline='') as fh:
             csv.writer(fh).writerow(
-                [ts, f"{elapsed:.3f}", f"{rss_mb:.2f}", f"{vsz_mb:.2f}"]
+                [ts, f"{elapsed:.3f}", f"{cpu_percent:.1f}"]
             )
 
         # Regenerate plot
-        _update_plot(timestamps, rss_mbs, vsz_mbs, png_path)
+        _update_plot(timestamps, cpu_percentages, png_path, elapsed_times)
 
-        time.sleep(args.interval)
+        # Slide window forward
+        prev_ticks = current_ticks
+        prev_time = current_time
 
 
 if __name__ == '__main__':
