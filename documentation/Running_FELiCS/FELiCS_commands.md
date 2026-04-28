@@ -18,6 +18,8 @@ This command will display the following options:
 | `-f <path>` or `--file <path>` | (Mandatory) Specifies the path to a FELiCS config file (in `json` format). For more details, refer to [FELiCS Settings](FELiCS_settings.md). |
 | `-d` or `--debug` | (Optional) Activate debug mode for extended verbose output |
 | `-t` or `--test` | (Optional) Activate test mode which produces no verbose output |
+| `-p` or `--profiler` | (Optional) Activate cpu and memory profiling (saves csv's and png's in log file directory)|
+
 
 ## Example Usages
 
@@ -29,3 +31,5 @@ Here are some examples of how to use the `FELiCS` command:
 | `FELiCS -f config.json` | Start with config file |
 | `FELiCS -f config.json -d` | Start in debug mode |
 | `FELiCS -f config.json -t` | Start in test mode |
+| `FELiCS -f config.json -p` | Start with active profilers |
+
