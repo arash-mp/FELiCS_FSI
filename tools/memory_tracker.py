@@ -24,7 +24,7 @@ import argparse
 import csv
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import matplotlib
 matplotlib.use('Agg')           # non-interactive backend – no display needed
@@ -115,15 +115,19 @@ def _update_plot(timestamps, rss_mbs, vsz_mbs, png_path):
     max_rss = max(rss_gbs)
     max_vsz = max(vsz_gbs)
 
+    # Format total runtime efficiently
+    total_runtime = (timestamps[-1] - timestamps[0]).total_seconds() if timestamps else 0.0
+    runtime_str = str(timedelta(seconds=int(total_runtime))) if total_runtime >= 60 else f"{total_runtime:.1f}s"
+
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.plot(timestamps, rss_gbs,
-            label=f'RSS (max: {max_rss:.2f} GB)', color='tab:blue')
+            label=f'RSS (max: {max_rss:.2f} GB)', color='tab:blue') 
     ax.plot(timestamps, vsz_gbs,
             label=f'Virtual (max: {max_vsz:.2f} GB)',
             color='tab:orange', linestyle='--')
     ax.set_xlabel('Time')
     ax.set_ylabel('Memory (GB)')
-    ax.set_title('FELiCS Memory Usage')
+    ax.set_title(f'FELiCS Memory Usage (Total Runtime: {runtime_str})')
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
     fig.autofmt_xdate()
     ax.legend()
