@@ -33,10 +33,12 @@ at TU Berlin, Germany.
 """
 epilog = """
 Example usage:
-    python main.py -h		shows help message 
-    python main.py -f path	start with config file at path (mandatory)
+    python main.py -h		    shows help message 
+    python main.py -f path	    start with config file at path (mandatory)
     python main.py -f path -d	for debug mode
     python main.py -f path -t	for test mode
+    python main.py -f path -p	starts memory and cpu profiler alongside the run
+
     """
 
 # Initialize the argument parser
