@@ -46,8 +46,8 @@ def sutherland_fluctuation_mean(
     else:
         mean_T      = mean.T
         mean_rho    = mean.rho
-        mean_nulam  = mean.nulam
+        mean_mulam  = mean.mulam
 
     fluct = (mean_T + 3 * Ts) / (2 * (mean_T + Ts)) * (-1 * rho / mean_rho)
-    nulam = mean_nulam * fluct
-    return nulam, fluct
+    mulam = mean_mulam * fluct
+    return mulam, fluct
