@@ -11,6 +11,7 @@ dependencies:
 - colorama
 - h5py
 - pyvista
+- pytest
 - pip
 - pip:
   - gmsh
