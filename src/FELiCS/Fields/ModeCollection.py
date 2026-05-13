@@ -565,10 +565,14 @@ class ModeCollection():
             header          = ["omega"]
             header.extend([f'gain_{i}' for i in range(Ncols - 1)])
 
+            # Determine if any frequency is complex to set the correct data type
+            is_complex = any(isinstance(mode.frequency, complex) for mode in modeList)
+            spectrum_dtype = object if is_complex else float
+
             # Define the spectrum array
             spectrum    = np.zeros(
                 (NLines, Ncols),
-                dtype=float,
+                dtype=spectrum_dtype,
             )
             hasResponse = any(mode.modeType == ModeType.RESPONSE for mode in modeList)
             
@@ -685,12 +689,17 @@ class ModeCollection():
             )
 
         spectrum, header = self.get_spectrum()
+        
+        # Apply specific formatting if spectrum uses object dtype to separate complex and float columns
+        fmt = ['%s'] + ['%.18e'] * (spectrum.shape[1] - 1) if spectrum.dtype == object else '%.18e'
+
         np.savetxt(
             filePath,
             spectrum,
             delimiter=',',
             header=','.join(header),
-            comments=''
+            comments='',
+            fmt=fmt
         )
         if self.analysisType == AnalysisType.MODAL:
             logger.info(f'Eigenvalue spectrum exported to {filePath}.')

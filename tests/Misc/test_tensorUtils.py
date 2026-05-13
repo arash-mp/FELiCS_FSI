@@ -51,8 +51,8 @@ logger = Logger.get_logger("felics_unit_test")
 #################################################################
 
 class TensorUtilsTestHandle(RandomCaseHandler):
-    def __init__(self,dim_vector):
-        super().__init__(dim_vector)
+    def __init__(self,dim_vector, dim_mesh = 2):
+        super().__init__(dim_vector, dim_mesh)
         self.func_scalar1 = self.createDolfinxFunction(dim=1)
         self.func_scalar2 = self.createDolfinxFunction(dim=1)
         self.func_vector1 = self.createDolfinxFunction(dim=dim_vector)
@@ -138,7 +138,12 @@ class TensorUtilsTestHandle(RandomCaseHandler):
     
     def checkExpressionInAllCoordinateSystems(self, expressionFunction, tol=1.e-14):
         coordinateSystemList = ["cartesian", "cylindricalfelics"]
-        m_list = [0, np.random.randint(20)+1]
+        if self.dim_mesh == 2:
+            logger.info(f"Checking alignment for 2D problem")
+            m_list = [0, np.random.randint(20)+1, -1 * (np.random.randint(20)+1)]
+        elif self.dim_mesh == 3:
+            logger.info(f"Checking alignment for 3D problem")
+            m_list = [0.0]
         for coordinateSystemName in coordinateSystemList:
             for m in m_list:
                 logger.info(f"Checking alignment for coordinate system {coordinateSystemName} and m={m}")
@@ -164,6 +169,7 @@ dim_vector           = 3 #dimension of vector function space, 2 or 3 (at the mom
 
 # 1. create Test class
 randomField = TensorUtilsTestHandle(dim_vector)
+randomField3D = TensorUtilsTestHandle(dim_vector, dim_mesh=3)
 
 # --------------------------------------------------------------
 # Tests for tensor algebra
@@ -177,6 +183,7 @@ def test_scalar_minus_float():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_float_minus_scalar():
@@ -188,7 +195,8 @@ def test_float_minus_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
-    
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
+
     
 def test_scalar_minus_scalar():
     logger.info("Testing scalar minus scalar")
@@ -199,6 +207,8 @@ def test_scalar_minus_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
+
     
     
 def test_scalar_plus_scalar():
@@ -210,6 +220,7 @@ def test_scalar_plus_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
 
 def test_float_times_scalar():
@@ -221,6 +232,7 @@ def test_float_times_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_scalar_times_float():
@@ -232,6 +244,7 @@ def test_scalar_times_float():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_scalar_times_scalar():
@@ -243,6 +256,7 @@ def test_scalar_times_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_scalar_divide_scalar():
@@ -254,6 +268,7 @@ def test_scalar_divide_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_scalar_exp_to_positive_float():
@@ -265,6 +280,7 @@ def test_scalar_exp_to_positive_float():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_scalar_exp_to_negetive_float():
@@ -276,6 +292,7 @@ def test_scalar_exp_to_negetive_float():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_vector_dot_vector():
@@ -293,6 +310,7 @@ def test_vector_dot_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_scalar_times_vector():
@@ -310,6 +328,7 @@ def test_scalar_times_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_vector_times_scalar():
@@ -327,6 +346,7 @@ def test_vector_times_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_float_divide_scalar_times_vector():
@@ -344,6 +364,7 @@ def test_float_divide_scalar_times_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_vector_divided_by_scalar():
@@ -361,6 +382,7 @@ def test_vector_divided_by_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_vector_dot_dyade():
@@ -381,6 +403,7 @@ def test_vector_dot_dyade():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_dyade_dot_vector():
@@ -400,6 +423,7 @@ def test_dyade_dot_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_vector_dot_dyade_dot_vector():
@@ -420,6 +444,7 @@ def test_vector_dot_dyade_dot_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_dyade_dot_dyade():
@@ -450,6 +475,7 @@ def test_dyade_dot_dyade():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_dyade_inner_dyade():
@@ -466,6 +492,7 @@ def test_dyade_inner_dyade():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_dyade_transpose():
@@ -486,6 +513,7 @@ def test_dyade_transpose():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_dyade_trace():
@@ -497,6 +525,7 @@ def test_dyade_trace():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_scalar_conj():
@@ -508,6 +537,7 @@ def test_scalar_conj():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_vector_conj():
@@ -525,6 +555,7 @@ def test_vector_conj():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_dyade_hermitian():
@@ -545,6 +576,7 @@ def test_dyade_hermitian():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_identity():
@@ -572,6 +604,7 @@ def test_identity():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_grad_scalar_dot_grad_scalar():
@@ -586,6 +619,7 @@ def test_grad_scalar_dot_grad_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_scalar_times_grad_scalar():
@@ -603,6 +637,7 @@ def test_scalar_times_grad_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_grad_scalar_times_scalar():
@@ -620,6 +655,7 @@ def test_grad_scalar_times_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_float_divide_scalar_times_grad_scalar():
@@ -637,6 +673,7 @@ def test_float_divide_scalar_times_grad_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_grad_scalar_divided_by_scalar():
@@ -654,6 +691,7 @@ def test_grad_scalar_divided_by_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_grad_scalar_dot_dyade():
@@ -676,6 +714,7 @@ def test_grad_scalar_dot_dyade():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_dyade_dot_grad_scalar():
@@ -697,6 +736,7 @@ def test_dyade_dot_grad_scalar():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_grad_scalar_dot_dyade_dot_grad_scalar():
@@ -723,7 +763,7 @@ def test_grad_scalar_dot_dyade_dot_grad_scalar():
     # 2. check alignment
     # randomField.checkExpressionInAllCoordinateSystems(expression, tol=1e-10)
     randomField.checkExpressionInAllCoordinateSystems(expression)
-
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     # NOTE: This case needs a higher tolerance, possibly due to the multiple gradients involved and the functions are not smoothed.
     
     
@@ -742,6 +782,7 @@ def test_grad_scalar_conj():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
     
     
 def test_div_vector():
@@ -753,6 +794,8 @@ def test_div_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
+    
     
 def test_vector_outer_vector():
     logger.info("Testing outer product of vectors.")
@@ -783,6 +826,8 @@ def test_vector_outer_vector():
         return tensor_expr, valid_expr
     # 2. check alignment
     randomField.checkExpressionInAllCoordinateSystems(expression)
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
+    
     
 def test_grad_scalar_outer_grad_scalar():
     logger.info("Testing outer product of grad of two scalars.")
@@ -814,7 +859,8 @@ def test_grad_scalar_outer_grad_scalar():
     # 2. check alignment
     # randomField.checkExpressionInAllCoordinateSystems(expression, tol=1e-11)
     randomField.checkExpressionInAllCoordinateSystems(expression)
-
+    randomField3D.checkExpressionInAllCoordinateSystems(expression)
+    
 
 #################################################################
 ##### moving log files to TESTS folder ##########################

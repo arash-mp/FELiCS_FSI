@@ -13,7 +13,7 @@ with this coordinate choice our square mesh is basically "rolled" into a cylinde
 ```python
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 from FELiCS.IO.Reader            import Reader
-from FELiCS.SpaceDisc.FEMSpaces  import createFunctionSpace
+from FELiCS.SpaceDisc.FEMSpaces  import create_function_space
 from FELiCS.Fields.Field         import Field
 
 meshFileName = "./square_mesh.msh"
@@ -23,21 +23,22 @@ m = 3
 # Create a FELiCS mesh from the gmsh file
 mesh = FELiCSMesh(coordinateSystemName, meshFileName)
 
-space = createFunctionSpace(mesh, degree=2, dim=1)
+space = create_function_space(mesh, degree=2, dim=1)
 
 phi = Field(space, mesh, name="function_sine_cos") 
-phi.importData(Reader(), "input.h5")
+phi.import_data(Reader(), "input.h5")
 
 ```
 
-    Info     | FELiCSMesh.py          | __init__                   (line 75  ) : Opening mesh file: ./square_mesh.msh
-    Info     | FELiCSMesh.py          | __init__                   (line 83  ) : Mesh contains 513 nodes and 1024 elements
+    Info     | FELiCSMesh.py          | __init__                   (line 124 ) : Opening mesh file: ./square_mesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 132 ) : Mesh contains 513 nodes and 1024 elements
+    Info     | Reader.py              | _interpolate_to_calc_mesh  (line 706 ) : Linear interpolation took 0.6 seconds. (Mesh size: (1969, 2))
 
 
 
 
 
-    (<FELiCS.Fields.Field.Field at 0x7fcd431458b0>, [])
+    (<FELiCS.Fields.Field.Field at 0x16bf64410>, [])
 
 
 
@@ -47,7 +48,7 @@ We now want to calculate the gradient of our scalar quantity using the `getGradi
 
 
 ```python
-gradPhi = phi.getGradientField()
+gradPhi = phi.get_gradient_field()
 
 ```
 
@@ -57,7 +58,7 @@ Visualization of the gradients with
 
 
 ```python
-gradPhiList = gradPhi.getListOfSubFields()
+gradPhiList = gradPhi.get_list_of_sub_fields()
 phi_x = gradPhiList[0]
 phi_r = gradPhiList[1]
 phi_x.plot()
@@ -79,7 +80,9 @@ phi_r.plot()
 ### Cylindrical coordinates with spectral dimension
 Here, to the two spatial dimensions (x and r) a third spectral dimension in theta-direction is added.
 With the spectral dimension the scalar field becomes
+
 $$\phi \cdot e^{im\theta}$$
+
 where m is the wave number. With the wave number we represent a periodicity of the flow in theta-direction, while still only calculating a 2D flowfield.
 
 **Step 1: Create FELiCSMesh, FELiCSSpace and Field**
@@ -87,7 +90,7 @@ where m is the wave number. With the wave number we represent a periodicity of t
 
 ```python
 from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
-from FELiCS.SpaceDisc.FEMSpaces  import createFunctionSpace
+from FELiCS.SpaceDisc.FEMSpaces  import create_function_space
 from FELiCS.Fields.Field         import Field
 from FELiCS.IO.Reader            import Reader
 
@@ -100,31 +103,35 @@ m = 2
 mesh = FELiCSMesh(coordinateSystemName, meshFileName, m=m) 
 
 # create a scalar space
-scalarSpace = createFunctionSpace(mesh, degree=2, dim=1)
+scalarSpace = create_function_space(mesh, degree=2, dim=1)
 
 # create a Field object and import the data from the h5 file
 # by setting m to an integer number that is not zero, the spectral direction is added to the field
 phi = Field(scalarSpace, mesh=mesh, name = "function_sine_cos", m = m) 
-phi.importData(Reader(),"input.h5")
+phi.import_data(Reader(),"input.h5")
 
 ```
 
-    Info     | FELiCSMesh.py          | __init__                   (line 75  ) : Opening mesh file: ./square_mesh.msh
-    Info     | FELiCSMesh.py          | __init__                   (line 83  ) : Mesh contains 513 nodes and 1024 elements
+    Info     | FELiCSMesh.py          | __init__                   (line 124 ) : Opening mesh file: ./square_mesh.msh
+    Info     | FELiCSMesh.py          | __init__                   (line 132 ) : Mesh contains 513 nodes and 1024 elements
+    Info     | Reader.py              | _interpolate_to_calc_mesh  (line 706 ) : Linear interpolation took 0.6 seconds. (Mesh size: (1969, 2))
 
 
 
 
 
-    (<FELiCS.Fields.Field.Field at 0x7fcd3a5ca750>, [])
+    (<FELiCS.Fields.Field.Field at 0x16e16f6b0>, [])
 
 
 
 **Step 2: Calculate the gradient**
 
 With the spectral dimension, the gradient is now 3-dimensional:
+
 $$\nabla \phi = \left(...\right)$$
+
 and it is defined as:
+
 $$\nabla \phi = \begin{pmatrix}
 ... \\
 ... \\
@@ -133,11 +140,12 @@ $$\nabla \phi = \begin{pmatrix}
 
 
 
+
 ```python
-gradPhi = phi.getGradientField() # this is a vector field
+gradPhi = phi.get_gradient_field() # this is a vector field
 
 # get scalar fields from gradient:
-gradList = gradPhi.getListOfSubFields()
+gradList = gradPhi.get_list_of_sub_fields()
 phi_x    = gradList[0]
 phi_r    = gradList[1]
 phi_t    = gradList[2]
@@ -151,11 +159,11 @@ Exporting as h5 file and visualization of the gradients by using the FELiCS plot
 
 ```python
 from FELiCS.IO.Writer import Writer
-gradPhi.exportToH5(Writer())
+gradPhi.export_to_h5(Writer())
 
 phi_x.plot()
 phi_r.plot()
-phi_t.plot(imaginaryPart=True)
+phi_t.plot(plotType="imag", clim=(-5,5))
 ```
 
 
@@ -175,6 +183,11 @@ phi_t.plot(imaginaryPart=True)
 ![png](output_13_2.png)
     
 
+
+
+```python
+
+```
 
 
 ```python

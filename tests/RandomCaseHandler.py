@@ -35,34 +35,52 @@ from FELiCS.SpaceDisc.FELiCSMesh import FELiCSMesh
 
 class RandomCaseHandler():
     # TODO: write docstrings
-    def __init__(self,dim_vector, ):
+    def __init__(self,dim_vector, dim_mesh = 2):
         # 1. Define mesh 
-        self.mesh = mesh.create_rectangle(
-        comm=MPI.COMM_WORLD,
-        points=((0.0, 0.0), (1.0, 1.0)),
-        n=(10, 10),
-        cell_type=mesh.CellType.triangle,
-        ghost_mode=mesh.GhostMode.none,
-        )
+        if dim_mesh == 2:
+            self.dim_mesh = 2
+            self.mesh = mesh.create_rectangle(
+            comm=MPI.COMM_WORLD,
+            points=((0.0, 0.0), (1.0, 1.0)),
+            n=(10, 10),
+            cell_type=mesh.CellType.triangle,
+            ghost_mode=mesh.GhostMode.none,
+            )
+        elif dim_mesh == 3:
+            self.dim_mesh = 3
+            self.mesh = mesh.create_box(
+                MPI.COMM_WORLD,
+                points=((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
+                n=(10,10,10),
+                cell_type=mesh.CellType.hexahedron
+            )
+        else:
+            raise ValueError("dim_mesh can only be 2 or 3.")
         # 1.b create FELiCSMesh, which is necessary for Field defination
         # NOTE: The default coordinate system is Cylindrical, whith non-zero wave number
-        self.fixed_m = np.random.randint(20) + 1
+        # NOTE: The defalult coordinate system for 3D mesh is Cylindrical, with zero wave number
+        if dim_mesh == 2:
+            self.fixed_m = np.random.randint(20) + 1
+        else:
+            self.fixed_m = 0.0
+            
         self.felics_mesh = FELiCSMesh(
-        "Cylindrical",
-        gdim=2,
-        m=self.fixed_m,
-        inputMesh=self.mesh,
+            "Cylindrical",
+            gdim=dim_mesh,
+            m=self.fixed_m,
+            inputMesh=self.mesh,
         )
+        
         # 2. create function spaces & test/trial functions
         self.dim_vector = dim_vector
         scalar_element = element(
         "CG",
-        'triangle',
+        self.mesh.topology.cell_type.name,
         2,
         )
         vector_element = element(
         "CG",
-        "triangle",
+        self.mesh.topology.cell_type.name,
         2,
         shape=(dim_vector,),
         )
