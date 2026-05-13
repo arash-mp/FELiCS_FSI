@@ -1191,21 +1191,23 @@ class Field:
     ):
         """Selects which scalar field to plot in case of a mixed or vector field, 
         based on the provided variable name. 
-        If no name is provided or if the name is not found, a default component is 
-        selected.
+        If no name is provided or if the name is not found, a the first component 
+        of the first vector subfield or the first scalar subfield is selected.
 
         Parameters
         ----------
         variableName : str or None
-            The name of the variable to plot. For mixed or vector fields, this can refer to
-            a subfield name or a component of a vector subfield (e.g. 'u_x'). If None, a default component is chosen.
+            The name of the variable to plot, e.g. "rho" or "u_x". 
+            For mixed or vector fields, this can refer to a subfield name or a 
+            component of a vector subfield (e.g. 'u_x'). 
+            By default (None), the first component is chosen.
         """
         
         # Get the list of subfields and their names
-        fields  = self.get_list_of_sub_fields()
-        names   = self.get_names_of_sub_fields()
+        fields                              = self.get_list_of_sub_fields()
+        names                               = self.get_names_of_sub_fields()
         
-        selected_field = None
+        selected_field                      = None
         
         # First try to match the variable name to a subfield name
         if variableName is not None:
@@ -1227,7 +1229,7 @@ class Field:
                         "Using the default component instead."
                     )
         
-        # If no specific field was selected, choose a default one
+        # If no specific field was selected, choose the first one
         if selected_field is None:
             
             # Default: first scalar field or first component of first vector
@@ -1249,18 +1251,20 @@ class Field:
 
     def plot(
         self,
-        variableName=None,
-        xlim=None,
-        ylim=None,
-        plotType="real",
-        clim=None,
-        axes=None,
-        showBoundaries=True,
-        free_aspect_ratio=False,
+        variableName        = None,
+        xlim                = None,
+        ylim                = None,
+        plotType            = "real",
+        clim                = None,
+        axes                = None,
+        showBoundaries      = True,
+        free_aspect_ratio   = False,
     ):
         """
         Plotting function for debugging purposes. This function can be used, to check if a
         field looks as expected and rule out e.g. import problems.
+        
+        This method is not meant to produce paper-quality plots.
         
         Parameters
         ----------
@@ -1273,13 +1277,13 @@ class Field:
         ylim : tuple, optional
             Limits for the y-axis as (ymin, ymax). If None, limits are determined automatically.
         plotType : str, optional
-            Type of plot to display. Options are 'real', 'imag', or 'magnitude'. Default is 'real'.
+            Type of plot to display. Options are 'real', 'imag', 'angle' or 'magnitude'. Default is 'real'.
         clim : tuple, optional
             Color limits for the plot as (vmin, vmax). If None, limits are determined automatically based on the data and plotType.
         axes : matplotlib.axes.Axes, optional
             An existing Matplotlib Axes object to plot on. If None, a new figure and axes are created.
         showBoundaries : bool, optional
-            If True, plot the domain boundaries as black lines. Default is False.
+            If True, plot the domain boundaries as black lines. Default is True.
         free_aspect_ratio : bool, optional
             If True, allow the aspect ratio to be free. Default is False.
 
@@ -1299,32 +1303,23 @@ class Field:
         # Handle mixed or vector fields by selecting the appropriate scalar field to plot
         if self.space.num_sub_spaces > 1:
             
-            selected_field = self._select_field_for_plot(variableName)
+            selected_field  = self._select_field_for_plot(variableName)
             
             return selected_field.plot(
-                variableName=variableName,
-                xlim=xlim,
-                ylim=ylim,
-                plotType=plotType,
-                clim=clim,
-                axes=axes,
-                showBoundaries=showBoundaries,
-                free_aspect_ratio=free_aspect_ratio
+                variableName        = variableName,
+                xlim                = xlim,
+                ylim                = ylim,
+                plotType            = plotType,
+                clim                = clim,
+                axes                = axes,
+                showBoundaries      = showBoundaries,
+                free_aspect_ratio   = free_aspect_ratio
             )
 
-        # ---- METHOD 1: Directly use dof coordinates and tricontourf ----
-        # NOTE: With this method we loose mesh connectivity information.
-        # phi_vertex      = self.getCoefficientArray()
-        # dof_coordinates = self.space.tabulate_dof_coordinates()
-        # x               = dof_coordinates[:, 0]
-        # y               = dof_coordinates[:, 1]
-        # triang          = Triangulation(x, y)
-        # ---- End of METHOD 1 ----
-
-        # ---- METHOD 2: Interpolate to P1 space and use tricontourf ----
-        mesh            = self.mesh.dolfinxMesh      # dolfinx.mesh.Mesh
-        u_h             = self.function              # fem.Function in Vh
-        tdim            = mesh.topology.dim
+        # ---- Interpolate to P1 space and use tricontourf ----
+        mesh    = self.mesh.dolfinxMesh      # dolfinx.mesh.Mesh
+        u_h     = self.function              # fem.Function in Vh
+        tdim    = mesh.topology.dim
 
         # Ensure cell->vertex connectivity
         mesh.topology.create_connectivity(
@@ -1333,7 +1328,7 @@ class Field:
         )
 
         # --- 1) Interpolate to P1 space on same mesh ---
-        V1              = fem.functionspace(
+        V1 = fem.functionspace(
             mesh,
             element(
                 "CG",
@@ -1341,8 +1336,9 @@ class Field:
                 1
             )
         )
-        u1              = fem.Function(V1)
+        u1 = fem.Function(V1)
         u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
+        # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
         
         # Get the values corresponding to plot type
         if plotType == "imag":
@@ -1357,9 +1353,8 @@ class Field:
         else:
             phi_vertex      = np.real(u1.x.array)
             cmap            = "seismic"
-        # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
 
-        # --- 2) Build triangulation from the mesh ---
+        # ---- Build triangulation from the mesh ---
         cells_to_vertices   = mesh.topology.connectivity(
             tdim,
             0
@@ -1368,48 +1363,62 @@ class Field:
             -1,
             3
         )
-        coords              = mesh.geometry.x
-        x                   = coords[:, 0]
-        y                   = coords[:, 1]
-        triang              = Triangulation(
+        coords  = mesh.geometry.x
+        x       = coords[:, 0]
+        y       = coords[:, 1]
+        triang  = Triangulation(
             x,
             y,
             triangles=triangles,
         )
-        # ---- End of METHOD 2 ----
         
         # ---- Plotting ----
         if axes is None:
-            fig, axes       = plt.subplots()
+            fig, axes   = plt.subplots()
         if clim is None:
             if plotType == "magnitude":
-                clim        = (0, np.max(phi_vertex))
+                clim    = (0, np.max(phi_vertex))
             else:
-                clim        = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
-        contour             = axes.tripcolor(
+                clim    = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
+        
+        # Main plot using tripcolor for smooth shading
+        contour     = axes.tripcolor(
             triang,
             phi_vertex,
-            shading='gouraud',
-            cmap=cmap,
-            vmin=clim[0],
-            vmax=clim[1]
+            shading = 'gouraud',
+            cmap    = cmap,
+            vmin    = clim[0],
+            vmax    = clim[1]
         )
 
-        # Plot boundaries if requested
-        if showBoundaries:
-            coords          = mesh.geometry.x
+        def _plot_domain_boundaries(mesh, axes):
+            """This function plots the boundaries of the domain by extracting the exterior facets 
+            (edges in 2D) from the mesh and plotting them as black lines on the provided axes.
+
+            Parameters
+            ----------
+            mesh : dolfinx.mesh.Mesh
+                The mesh for which to plot boundaries
+            axes : matplotlib.axes.Axes
+                The axes on which to plot the boundaries
+            """
+            coords              = mesh.geometry.x
             # Get boundary facets (edges in 2D)
-            boundary_facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
+            boundary_facets     = dolfinx.mesh.exterior_facet_indices(mesh.topology)
             # Create connectivity between facets and vertices
             mesh.topology.create_connectivity(tdim - 1, 0)
-            facet_to_vertices = mesh.topology.connectivity(tdim - 1, 0)
+            facet_to_vertices   = mesh.topology.connectivity(tdim - 1, 0)
             # Plot each boundary edge
             for facet_idx in boundary_facets:
-                start       = facet_to_vertices.offsets[facet_idx]
-                end         = facet_to_vertices.offsets[facet_idx + 1]
-                vertices    = facet_to_vertices.array[start:end]
-                edge_coords = coords[vertices]
+                start           = facet_to_vertices.offsets[facet_idx]
+                end             = facet_to_vertices.offsets[facet_idx + 1]
+                vertices        = facet_to_vertices.array[start:end]
+                edge_coords     = coords[vertices]
                 axes.plot(edge_coords[:, 0], edge_coords[:, 1], 'k-', linewidth=0.8, alpha=0.5)
+                
+        # Plot boundaries if requested
+        if showBoundaries:
+            _plot_domain_boundaries(mesh, axes)
 
         # Set labels and title
         axes.set_xlabel('x')
@@ -1417,38 +1426,55 @@ class Field:
         if self.name != "":
             title = self.name
         else:
-            title = "scalar_field"
+            title   = "scalar_field"
         if plotType == "imag":
-            title += "_imag"
+            title   += "_imag"
         elif plotType == "magnitude":
-            title += "_magnitude"
+            title   += "_magnitude"
         elif plotType == "angle":
-            title += "_angle"
+            title   += "_angle"
         else:
-            title += "_real"
+            title   += "_real"
 
         # axes.set_title(title)
         if not free_aspect_ratio:
             axes.set_aspect('equal')
         axes.grid(
             True,
-            alpha=0.3,
+            alpha = 0.3,
         )
         
-        # Add colorbar for phi
-        divider         = make_axes_locatable(axes)
-        colorbar_axes   = divider.append_axes(
-            "right",
-            size="2%",
-            pad=0.5,
-        ) 
-        cbar            = plt.colorbar(
-            contour,
-            label=title,
-            cax=colorbar_axes,
-        )
-        cbar.formatter.set_powerlimits((0, 0))
-        cbar.update_ticks()
+        
+        def _add_colorbar_for_contour(axes, contour, label):
+            """This method adds a colorbar to the plot with a fixed size and padding, 
+            ensuring that it fits well with the main plot regardless of the figure size.
+
+            Parameters
+            ----------
+            axes : matplotlib.axes.Axes
+                The axes to which the colorbar should be attached.
+            contour : matplotlib.contour.QuadContourSet
+                The contour object for which to add a colorbar.
+            label : str
+                The label for the colorbar.
+            """
+            # Add colorbar for phi
+            divider     = make_axes_locatable(axes)
+            colorbar_axes = divider.append_axes(
+                "right",
+                size    = "2%",
+                pad     = 0.5,
+            ) 
+            cbar = plt.colorbar(
+                contour,
+                label   = label,
+                cax     = colorbar_axes,
+            )
+            cbar.formatter.set_powerlimits((0, 0))
+            cbar.update_ticks()
+            
+            
+        _add_colorbar_for_contour(axes, contour, title)
         if xlim is not None:
             axes.set_xlim(xlim)
         if ylim is not None:
