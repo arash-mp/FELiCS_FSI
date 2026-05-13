@@ -423,97 +423,86 @@ class ModeCollection():
                 spectrum.append(mode.eigen_value)
         return spectrum
     
-    def get_response_modes(
-        self
+    def get_subset_resolvent_modes(
+        self,
+        modeType    = None,
+        gain_number = None,
+        frequency   = None
     ):
         """
-        Return a list of response modes.
+        Return a subset of resolvent modes based on mode type and gain number.
+
+        Parameters
+        ----------
+        modeType : str or None, optional
+            Mode type to filter by (e.g. 'response', 'forcing'). If None, all types are included.
+        gain_number : int or None, optional
+            Gain number to filter by. If None, all gain numbers are included.
+        frequency : None or list of float, optional
+            Frequency or list of frequencies to filter by. If None, all frequencies are included.
+            Returns the modes at closest available frequencies if specified.
 
         Returns
         -------
-        list
-            List of mode objects for response modes.
+        sub_collection : ModeCollection
+            Return a mode collection containing the subset of modes matching the specified criteria.
         """
         
-        # Check that we are in Resolvent or Input-Output analysis
-        if self.analysisType not in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
-            logger.error('get_response_modes called for non-Resolvent/Input-Output analysis in ModeCollection.')
+        # Check that we are in Resolvent analysis
+        if self.analysisType != AnalysisType.RESOLVENT:
+            logger.error('get_subset_resolvent_modes called for non-Resolvent analysis in ModeCollection.')
             return
 
-        mode_list = []
-        for mode in self.modeList:
-            if mode.modeType == ModeType.RESPONSE:
-                mode_list.append(mode)
-        return mode_list
-    
-    def get_forcing_modes(
-        self
-    ):
-        """
-        Return a list of forcing modes.
+        # Prepare a new ModeCollection to store the subset of modes
+        sub_collection = ModeCollection(
+            self.femSpace,
+            self.mesh,
+            isStateVector   = self.isStateVector,
+            analysisType    = "Resolvent"
+        )
 
-        Returns
-        -------
-        list
-            List of mode objects for forcing modes.
-        """
+        # Method to get all unique frequencies in the collection
+        def _get_unique_frequencies(collection):
+            """Simple method to get all unique frequencies in the collection.
+
+            Parameters
+            ----------
+            collection : ModeCollection
+                The mode collection to extract frequencies from.
+
+            Returns
+            -------
+            list
+                A list of unique frequencies.
+            """
+            frequencies = set()
+            for mode in collection.modeList:
+                frequencies.add(mode.frequency)
+            return sorted(list(frequencies))
         
-        # Check that we are in Resolvent or Input-Output analysis
-        if self.analysisType not in [AnalysisType.RESOLVENT]:
-            logger.error('get_forcing_modes called for non-Resolvent analysis in ModeCollection.')
-            return
+        # If we ask for specific frequencies, get the closest available in the collection
+        if frequency is not None:
+            if not isinstance(frequency, list):
+                frequency       = [frequency]
+            unique_frequencies  = _get_unique_frequencies(self)
+            
+            new_frequencies     = frequency.copy()
+            for i, freq in enumerate(frequency):
+                closest_freq    = min(unique_frequencies, key=lambda x: abs(x - freq))
+                # Update the frequency to the closest available one
+                new_frequencies[i] = closest_freq
+            frequency           = new_frequencies
+            logger.info(f"Requested frequencies: {frequency}. Closest available frequencies in collection: {new_frequencies}.")
 
-        mode_list = []
         for mode in self.modeList:
-            if mode.modeType == ModeType.FORCING:
-                mode_list.append(mode)
-        return mode_list
-    
-    def get_optimal_forcing_modes(
-        self
-    ):
-        """
-        Return a list of optimal forcing modes.
-
-        Returns
-        -------
-        list
-            List of mode objects for optimal forcing modes.
-        """
+            if (
+                (modeType       is None or mode.modeType == ModeType[modeType.upper()]) and 
+                (gain_number    is None or mode.gain_number == gain_number) and 
+                (frequency      is None or mode.frequency in frequency)
+                ):
+                sub_collection.append_mode(mode)
         
-        # Check that we are in Resolvent or Input-Output analysis
-        if self.analysisType not in [AnalysisType.RESOLVENT]:
-            logger.error('get_optimal_forcing_modes called for non-Resolvent analysis in ModeCollection.')
-            return
-
-        mode_list = []
-        for mode in self.modeList:
-            if mode.modeType == ModeType.FORCING and mode.gain_number == 0:
-                mode_list.append(mode)
-        return mode_list
-    
-    def get_optimal_response_modes(
-        self
-    ):
-        """
-        Return a list of optimal response modes.
-
-        Returns
-        -------
-        list
-            List of mode objects for optimal response modes.
-        """
-        
-        # Check that we are in Resolvent or Input-Output analysis
-        if self.analysisType not in [AnalysisType.RESOLVENT]:
-            logger.error('get_optimal_response_modes called for non-Resolvent analysis in ModeCollection.')
-            return
-
-        mode_list = []
-        for mode in self.modeList:
-            if mode.modeType == ModeType.RESPONSE and mode.gain_number == 0:
-                mode_list.append(mode)
-        return mode_list
+        return sub_collection
     
     def get_spectrum(
         self
