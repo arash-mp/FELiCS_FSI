@@ -310,14 +310,14 @@ class Field:
         for i in range(numberOfSubSpaces):
 
             # transfer content
-            space, mapping            = self.space.sub(i).collapse()
+            space, mapping      = self.space.sub(i).collapse()
 
             # NOTE: the sub-fields inherit the wave number from the field.
-            field                     = Field(
+            field               = Field(
                 space,
                 self.mesh,
-                name=namesOfSubFields[i],
-                m=self.m,
+                name    = namesOfSubFields[i],
+                m       = self.m,
             )
             field.set_coefficient_array(self.get_coefficient_array()[mapping])
             listOfFields.append(field)
@@ -639,16 +639,12 @@ class Field:
         # Create  a Field for the gradient
         # The space must be a vector vor a scalar field
         # TODO Sophie: handle order (get it from function?)
-        degree = self.space.element.basix_element.degree
-        dim = self.mesh.gdim 
-        print(dim)
-        
-        print(self.hasSpectralDimension)
+        degree  = self.space.element.basix_element.degree
+        dim     = self.mesh.gdim 
         
         if self.hasSpectralDimension:
             dim += 1
             
-        print(dim)
         gradientSpace = create_function_space(
             self.mesh,
             degree=degree,
@@ -735,18 +731,21 @@ class Field:
         - No explicit error is raised if the field is not a velocity-type
           vector; it is the caller's responsibility to ensure consistency.
         """
-        # TODO Sophie: throw error if Field is not vector
         # TODO: Add vorticity 3D field
 
         dim = self.space.num_sub_spaces
         
-        # if dim > 2:
-        #     logger.log_and_raise("get_vorticity_field() called for a vector with more than 2 dimensions. Vorticity is only defined for 2D vector fields. Returning None.", ValueError)
-
-        componentGradient = []
-        velocityComponents = self.get_list_of_sub_fields()
+        if self.info['type'] != 'vector':
+            logger.warning("get_vorticity_field() called for a field that is not a vector. \
+                Vorticity is only defined for 2D or 3D vector fields. Returning None.")
+            return None
         
-        print(self.hasSpectralDimension)
+        if dim > 2:
+            logger.warning("get_vorticity_field() called for a vector with more than 2 dimensions. \
+                Vorticity is only validated for 2D vector fields. Use at your own risk.")
+        
+        componentGradient       = []
+        velocityComponents      = self.get_list_of_sub_fields()
 
         for field in velocityComponents:
             logger.debug(f"Calculating gradient for component {field.name} of the velocity field.")
@@ -754,9 +753,9 @@ class Field:
         
         # 2D field -> scalar vorticity field
         if dim == 2:
-            dvdx = componentGradient[1].get_list_of_sub_fields()[0]
-            dudy = componentGradient[0].get_list_of_sub_fields()[1]
-            vorticityField = dvdx - dudy
+            dvdx                = componentGradient[1].get_list_of_sub_fields()[0]
+            dudy                = componentGradient[0].get_list_of_sub_fields()[1]
+            vorticityField      = dvdx - dudy
             vorticityField.name = "vorticity"
             
             return vorticityField
@@ -780,7 +779,7 @@ class Field:
             vorticityField = Field(
                 self.space,
                 self.mesh,
-                name="vorticity",
+                name = "vorticity",
             )
             vorticityField.set_list_of_sub_fields([vorticity_x, vorticity_y, vorticity_z])
             
@@ -971,8 +970,11 @@ class Field:
                 elif iTest.order == 0:
                     matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*ufl.dx)
                 else:
-                    ##LOGGING TODO (Sophie): throw error 
-                    print("ERROR, in 'Field.evaluateUflExpression'")
+                    log_and_raise(
+                        logger, 
+                        "Unsupported test function order in 'Field.evaluate_ufl_tensor_expression'. Only order 0 and 1 are supported.", 
+                        ValueError
+                    )
                 i+=1
             matrix = matrix_ufl.get_assembled_matrix(
                 self.mesh,
@@ -1058,8 +1060,11 @@ class Field:
                         i_grad(i_conj(iTest)),
                     )).ufl_tens*J_hat*ufl.dx)
                 else:
-                    ##LOGGING TODO (Sophie): throw error 
-                    print("ERROR, in 'Field.smoothTensorUflExpression'")
+                    log_and_raise(
+                        logger,
+                        "Unsupported test function order in 'Field.smoothTensorUflExpression'. Only order 0 and 1 are supported.",
+                        ValueError
+                    )
                 i+=1
             try:
                 matrix_ufl.setCorrectMeshObject(self.mesh)
@@ -1150,8 +1155,11 @@ class Field:
                         i_grad(i_conj(iTest)),
                     )).ufl_tens*J_hat*ufl.dx)
                 else:
-                    ##LOGGING TODO (Sophie): throw error 
-                    print("ERROR, in 'Field.smoothTensorUflExpression'")
+                    log_and_raise(
+                        logger,
+                        "Unsupported test function order in 'Field.smoothTensorUflExpression'. Only order 0 and 1 are supported.",
+                        ValueError
+                    )
                 i+=1
             matrix = matrix_ufl.get_assembled_matrix(
                 self.mesh,
@@ -1160,31 +1168,34 @@ class Field:
             self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system
-        expr_ufl     = UflDecorator()
-        listOfFields = self.get_list_of_sub_fields()
-        test_FEM     = ufl.TestFunctions(self.space)
-        coordinate_system = self.mesh.coordinate_system
-        J_hat = coordinate_system.J_hat
+        expr_ufl            = UflDecorator()
+        listOfFields        = self.get_list_of_sub_fields()
+        test_FEM            = ufl.TestFunctions(self.space)
+        coordinate_system   = self.mesh.coordinate_system
+        J_hat               = coordinate_system.J_hat
         for i in range(len(listOfFields)):
-            iTest = Tensor(
+            iTest           = Tensor(
                 test_FEM[i],
                 coordinate_system,
                 mayHaveSpectralDimension=True,
             )
-            field     = listOfFields[i]
-            expr_ufl += (i_dot(
+            field           = listOfFields[i]
+            expr_ufl        += (i_dot(
                 field.get_tensor(),
                 i_conj(iTest),
             )).ufl_tens*J_hat*ufl.dx
-        petscVec = expr_ufl.get_assembled_vector(
+            
+        petscVec            = expr_ufl.get_assembled_vector(
             self.mesh,
             bcs,
         )
-        self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
-            self.space.FEMSmoothSolver,
-            petscVec,
-        ))
-        
+        self.set_coefficient_array(
+            LinearSolver.solve_equation_system_with_predefined_solver(
+                self.space.FEMSmoothSolver,
+                petscVec,
+            )
+        )
+
     def _select_field_for_plot(
         self,
         variableName,
@@ -1303,7 +1314,7 @@ class Field:
         # Handle mixed or vector fields by selecting the appropriate scalar field to plot
         if self.space.num_sub_spaces > 1:
             
-            selected_field  = self._select_field_for_plot(variableName)
+            selected_field          = self._select_field_for_plot(variableName)
             
             return selected_field.plot(
                 variableName        = variableName,
