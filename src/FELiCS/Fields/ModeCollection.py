@@ -607,20 +607,23 @@ class ModeCollection():
         spectrum, header = self.get_spectrum()
 
         if self.analysisType == AnalysisType.MODAL:
+            
             # Extract eigenvalues from spectrum
             if len(header) == 2:  # Only direct modes
-                eigval = spectrum[:, 0] + 1j * spectrum[:, 1]
+                eigval          = spectrum[:, 0] + 1j * spectrum[:, 1]
+                eigval_adjoint  = np.array([])
+
             else:  # Direct and adjoint modes
-                eigval_direct = spectrum[:, 0] + 1j * spectrum[:, 1]
-                eigval_adjoint = spectrum[:, 2] + 1j * spectrum[:, 3]
-                eigval = np.concatenate([eigval_direct, eigval_adjoint])
+                eigval          = spectrum[:, 0] + 1j * spectrum[:, 1]
+                eigval_adjoint  = spectrum[:, 2] + 1j * spectrum[:, 3]
 
             # Plot eigenvalue spectrum
             if ax is None:
-                fig, ax = plt.subplots(figsize=(10, 6))
+                fig, ax         = plt.subplots(figsize=(10, 6))
             
-            stable = eigval[eigval.imag <= 0]
-            unstable = eigval[eigval.imag > 0]
+            # Separate stable and unstable eigenvalues for direct modes
+            stable              = eigval[eigval.imag <= 0]
+            unstable            = eigval[eigval.imag > 0]
             
             if len(stable) > 0:
                 ax.scatter(stable.real, stable.imag, s=20, alpha=0.6, 
@@ -628,6 +631,9 @@ class ModeCollection():
             if len(unstable) > 0:
                 ax.scatter(unstable.real, unstable.imag, s=30, alpha=0.8, 
                           c='red', label=f'Unstable ({len(unstable)})', edgecolors='black', linewidths=0.5)
+            if len(eigval_adjoint) > 0:
+                ax.scatter(eigval_adjoint.real, eigval_adjoint.imag, s=20, alpha=0.6, 
+                          c='green', label=f'Adjoint ({len(eigval_adjoint)})', marker='x')
 
             ax.set_xlabel(r'$\mathrm{Re}(\omega)$', fontsize=12)
             ax.set_ylabel(r'$\mathrm{Im}(\omega)$', fontsize=12)
