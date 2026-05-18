@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+<Xdmf Version="2.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <Domain>
+    <Grid Collection="grid"  Name="grid">
+      <Topology Type="Triangle" NumberOfElements="27332">
+         <DataItem ItemType="Function" Dimensions="81996" Function="$0 - 0">
+            <DataItem Format="HDF" DataType="Int" Dimensions="81996">
+                mesh.h5:/cells/triangles
+            </DataItem>
+         </DataItem>
+      </Topology>
+      <Geometry Type="X_Y"> 
+<DataItem Format="HDF" ItemType="Uniform" Precision="8" NumberType="Float" Dimensions="14058">
+mesh.h5:/coordinates/x
+</DataItem> 
+<DataItem Format="HDF" ItemType="Uniform" Precision="8" NumberType="Float" Dimensions="14058">
+mesh.h5:/coordinates/y
+</DataItem> 
+</Geometry>
+<Attribute Name="ux" Center="Node" AttributeType="Scalar">                  
+   <DataItem ItemType="Function" Dimensions="14058" Function="$0">                      
+       <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="14058"> 
+           MeanFlow.h5:ux                                           
+       </DataItem>                                                                      
+   </DataItem>                                                                          
+</Attribute>  
+
+<Attribute Name="uy" Center="Node" AttributeType="Scalar">                  
+   <DataItem ItemType="Function" Dimensions="14058" Function="$0">                      
+       <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="14058"> 
+           MeanFlow.h5:uy                                           
+       </DataItem>                                                                      
+   </DataItem>                                                                          
+</Attribute>  
+
+<Attribute Name="p" Center="Node" AttributeType="Scalar">                  
+   <DataItem ItemType="Function" Dimensions="14058" Function="$0">                      
+       <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="14058"> 
+           MeanFlow.h5:p                                           
+       </DataItem>                                                                      
+   </DataItem>                                                                          
+</Attribute>  
+
+<Attribute Name="rho" Center="Node" AttributeType="Scalar">                  
+   <DataItem ItemType="Function" Dimensions="14058" Function="$0">                      
+       <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="14058"> 
+           MeanFlow.h5:rho                                           
+       </DataItem>                                                                      
+   </DataItem>                                                                          
+</Attribute>  
+
+<Attribute Name="spg" Center="Node" AttributeType="Scalar">                  
+   <DataItem ItemType="Function" Dimensions="14058" Function="$0">                      
+       <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="14058"> 
+           MeanFlow.h5:spg                                           
+       </DataItem>                                                                      
+   </DataItem>                                                                          
+</Attribute>  
+
+<Attribute Name="nulam" Center="Node" AttributeType="Scalar">                  
+   <DataItem ItemType="Function" Dimensions="14058" Function="$0">                      
+       <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="14058"> 
+           MeanFlow.h5:nulam                                           
+       </DataItem>                                                                      
+   </DataItem>                                                                          
+</Attribute>  
+
+<Attribute Name="Pr" Center="Node" AttributeType="Scalar">                  
+   <DataItem ItemType="Function" Dimensions="14058" Function="$0">                      
+       <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="14058"> 
+           MeanFlow.h5:Pr                                           
+       </DataItem>                                                                      
+   </DataItem>                                                                          
+</Attribute>  
+    </Grid>
+  </Domain>
+</Xdmf>
