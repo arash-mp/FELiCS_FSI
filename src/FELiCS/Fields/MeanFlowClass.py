@@ -189,6 +189,49 @@ class MeanFlowClass(
         initialized via :meth:`initLamDiff` and
         :meth:`initThermodynamicQuantities`.
         """
+        
+        # Import the data
+        self.import_data_from_file()
+
+        # export a list of all mean fields and export them in a "MeanFlow" file
+        exportFields = []
+        for key, value in self._fieldDict.items():
+            exportFields.append(value)
+
+        self.xmfHeader = writer.export_list_of_fields_to_h5(
+            exportFields,
+            "MeanFlow",
+        )
+
+
+    def import_data_from_file(
+        self,
+    ):
+        """ Import mean-flow fields from the configured input file.
+        
+        This method reads the mean-flow quantities from the file specified in
+        ``param.FlowInput.MeanFlowFilePath``, constructs `Field` instances for
+        all required variables, computes additional transport and thermodynamic
+        quantities, and exports the assembled set of fields to an HDF5 file.
+        
+        Notes
+        -----
+        The set of fields to be read is assembled from:
+        
+        - the mean-flow field names defined in ``param``,
+        - additional fields required by the energy, equation-of-state, and reaction handlers and 
+        - any custom mean-flow quantities added by the user.
+
+        If the density field ``rho`` is requested but not present in the file,
+        its values are initialized to a constant of 1.0. If a turbulent
+        velocity field ``ut`` exists, it is initialized to zero.
+
+        After import, transport coefficients and thermodynamic quantities are
+        initialized via :meth:`initLamDiff` and
+        :meth:`initThermodynamicQuantities`.
+        """
+        
+        
         logger.info(f"Reading input flow from: '{self._param.FlowInput.MeanFlowFilePath}'")
 
         # Initialization
@@ -255,17 +298,7 @@ class MeanFlowClass(
         # NOTE: This should move to a handler
         self.init_lam_diff()
         self.init_thermodynamic_quantities()
-
-        # export a list of all mean fields and export them in a "MeanFlow" file
-        exportFields = []
-        for key, value in self._fieldDict.items():
-            exportFields.append(value)
-
-        self.xmfHeader = writer.export_list_of_fields_to_h5(
-            exportFields,
-            "MeanFlow",
-        )
-
+        
 
 
     def init_lam_diff(
