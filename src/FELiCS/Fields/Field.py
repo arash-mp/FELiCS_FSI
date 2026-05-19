@@ -1498,6 +1498,69 @@ class Field:
         
 
     ### dunder methods for overloading arithmetic operators ###
+    def _dofmap_hash(
+        self
+    ):
+        """Return a cached integer hash of the space's DOF map.
+
+        The hash is computed once from the raw dofmap array bytes and stored
+        on the function space object so that repeated arithmetic operations
+        between the same pair of spaces pay the O(N) cost only on the first
+        call.
+        """
+        if not hasattr(self.space, '_felics_dofmap_hash'):
+            self.space._felics_dofmap_hash = hash(
+                self.space.dofmap.list.tobytes()
+            )
+        return self.space._felics_dofmap_hash
+
+    def _assert_compatible_space(
+        self,
+        other
+    ):
+        """Raise ValueError if *other* is not defined on a compatible space."""
+        # Fast path: identical space object
+        if self.space is other.space:
+            return
+
+        if self.info['type'] != other.info['type']:
+            log_and_raise(
+                logger,
+                f"Incompatible field types: '{self.info['type']}' vs '{other.info['type']}'",
+                ValueError,
+            )
+        if self.info['value_size'] != other.info['value_size']:
+            log_and_raise(
+                logger,
+                f"Incompatible field value sizes: {self.info['value_size']} vs {other.info['value_size']}",
+                ValueError,
+            )
+        if len(self.get_coefficient_array()) != len(other.get_coefficient_array()):
+            log_and_raise(
+                logger,
+                f"Incompatible number of DOFs: {len(self.get_coefficient_array())} vs {len(other.get_coefficient_array())}",
+                ValueError,
+            )
+        if self.space.ufl_element() != other.space.ufl_element():
+            log_and_raise(
+                logger,
+                f"Incompatible FEM elements: {self.space.ufl_element()} vs {other.space.ufl_element()}",
+                ValueError,
+            )
+        if self.space.mesh is not other.space.mesh:
+            log_and_raise(
+                logger,
+                "Fields are defined on different meshes",
+                ValueError,
+            )
+        if self._dofmap_hash() != other._dofmap_hash():
+            log_and_raise(
+                logger,
+                "Fields have incompatible DOF orderings (e.g. collapsed subspace vs standalone space). "
+                "Interpolate one field onto the other's space before operating.",
+                ValueError,
+            )
+
     def __add__(
         self,
         other
@@ -1518,26 +1581,34 @@ class Field:
             original field shifted by a scalar.
 
         """
-        ## overrides '+'
-        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
+            
+            self._assert_compatible_space(other)
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
+            result.set_coefficient_array(
+                self.get_coefficient_array() + other.get_coefficient_array()
+            )
             return result 
+        
         elif np.isscalar(other):
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array() + other)
+            result.set_coefficient_array(
+                self.get_coefficient_array() + other
+            )
             return result
+        
         return NotImplemented
 
     def __iadd__(
@@ -1557,18 +1628,25 @@ class Field:
         -------
         self
         """
-        ## overrides '+'
-        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
-            self.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
+            
+            self._assert_compatible_space(other)
+            
+            self.set_coefficient_array(
+                self.get_coefficient_array() + other.get_coefficient_array()
+            )
             return self
+        
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array() + other)
+            self.set_coefficient_array(
+                self.get_coefficient_array() + other
+            )
             return self
+        
         return NotImplemented
  
 
@@ -1595,26 +1673,32 @@ class Field:
         NotImplementedError
             If `other` is not a Field object.
         """
-        ## overrides '-'
-        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
+            self._assert_compatible_space(other)
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
+            result.set_coefficient_array(
+                self.get_coefficient_array() - other.get_coefficient_array()
+            )
             return result 
+        
         elif np.isscalar(other):
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array() - other)
-            return result 
+            result.set_coefficient_array(
+                self.get_coefficient_array() - other
+            )
+            return result
+        
         return NotImplemented
 
     def __isub__(
@@ -1638,18 +1722,24 @@ class Field:
         NotImplementedError
             If `other` is not a Field object.
         """
-        ## overrides '-='
-        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
-            self.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
+            self._assert_compatible_space(other)
+            
+            self.set_coefficient_array(
+                self.get_coefficient_array() - other.get_coefficient_array()
+            )
             return self
+        
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array() - other)
+            self.set_coefficient_array(
+                self.get_coefficient_array() - other
+            )
             return self
+        
         return NotImplemented
 
 
@@ -1671,26 +1761,33 @@ class Field:
             A new Field whose coefficient array is the pointwise product
             of the two fields, or the field scaled by the scalar.
         """
-        ## overrides '*'
-        ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
+            
+            self._assert_compatible_space(other)
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array()*other.get_coefficient_array())
+            result.set_coefficient_array(
+                self.get_coefficient_array()*other.get_coefficient_array()
+            )
             return result
+        
         elif np.isscalar(other):
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array()*other)
+            result.set_coefficient_array(
+                self.get_coefficient_array()*other
+            )
             return result
+        
         return NotImplemented
 
 
@@ -1710,18 +1807,25 @@ class Field:
         -------
         self
         """
-        ## overrides '*='
-        ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
-            self.set_coefficient_array(self.get_coefficient_array() * other.get_coefficient_array())
+            
+            self._assert_compatible_space(other)
+            
+            self.set_coefficient_array(
+                self.get_coefficient_array() * other.get_coefficient_array()
+            )
             return self
+        
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array() * other)
+            self.set_coefficient_array(
+                self.get_coefficient_array() * other
+            )
             return self
+        
         return NotImplemented
 
 
@@ -1749,26 +1853,33 @@ class Field:
           caller's responsibility to avoid division by zero.
 
         """
-        ## overrides '/'
-        ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
+            
+            self._assert_compatible_space(other)
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
+            result.set_coefficient_array(
+                self.get_coefficient_array()/other.get_coefficient_array()
+            )
             return result
+        
         elif np.isscalar(other):
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array()/other)
+            result.set_coefficient_array(
+                self.get_coefficient_array()/other
+            )
             return result
+        
         return NotImplemented
 
 
@@ -1794,20 +1905,23 @@ class Field:
           caller's responsibility to avoid division by zero.
 
         """
-        ## overrides '/='
-        ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
-            self.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
+            
+            self._assert_compatible_space(other)
+            
+            self.set_coefficient_array(
+                self.get_coefficient_array()/other.get_coefficient_array()
+            )
             return self
+        
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array()/other)
+            self.set_coefficient_array(
+                self.get_coefficient_array()/other
+            )
             return self
+        
         return NotImplemented
-
-
-
-
