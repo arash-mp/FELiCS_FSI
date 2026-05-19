@@ -16,10 +16,10 @@ import  os
 # Third party libraries
 import  h5py
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Local Libraries and methods
 from    FELiCS.Fields.FluctuationClass  import FluctuationSolutions
+from    FELiCS.Misc.plottingUtils     import plot_spectrum as _plot_spectrum
 from    FELiCS.Fields.Mode              import Mode, AnalysisType, ModeType
 from 	FELiCS.Misc.logging             import Logger,  log_and_raise
 
@@ -589,87 +589,23 @@ class ModeCollection():
 
     def plot_spectrum(
         self,
-        ax = None
+        ax=None
     ):
         """
         Plot the eigenvalue spectrum for Modal analysis or gains for Resolvent analysis.
+        Delegates to :func:`FELiCS.Fields.plottingUtils.plot_spectrum`.
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
-                Matplotlib axes to plot on. If None, a new figure and axes will be created. Default is None.
+            Matplotlib axes to plot on. If None, a new figure and axes will be
+            created. Default is None.
 
         Returns
         -------
-        ax
-            Matplotlib axes objects.
+        matplotlib.axes.Axes or None
         """
-        spectrum, header = self.get_spectrum()
-
-        if self.analysisType == AnalysisType.MODAL:
-            
-            # Extract eigenvalues from spectrum
-            if len(header) == 2:  # Only direct modes
-                eigval          = spectrum[:, 0] + 1j * spectrum[:, 1]
-                eigval_adjoint  = np.array([])
-
-            else:  # Direct and adjoint modes
-                eigval          = spectrum[:, 0] + 1j * spectrum[:, 1]
-                eigval_adjoint  = spectrum[:, 2] + 1j * spectrum[:, 3]
-
-            # Plot eigenvalue spectrum
-            if ax is None:
-                fig, ax         = plt.subplots(figsize=(10, 6))
-            
-            # Separate stable and unstable eigenvalues for direct modes
-            stable              = eigval[eigval.imag <= 0]
-            unstable            = eigval[eigval.imag > 0]
-            
-            if len(stable) > 0:
-                ax.scatter(stable.real, stable.imag, s=20, alpha=0.6, 
-                          c='blue', label=f'Stable ({len(stable)})', edgecolors='none')
-            if len(unstable) > 0:
-                ax.scatter(unstable.real, unstable.imag, s=30, alpha=0.8, 
-                          c='red', label=f'Unstable ({len(unstable)})', edgecolors='black', linewidths=0.5)
-            if len(eigval_adjoint) > 0:
-                ax.scatter(eigval_adjoint.real, eigval_adjoint.imag, s=20, alpha=0.6, 
-                          c='green', label=f'Adjoint ({len(eigval_adjoint)})', marker='x')
-
-            ax.set_xlabel(r'$\mathrm{Re}(\omega)$', fontsize=12)
-            ax.set_ylabel(r'$\mathrm{Im}(\omega)$', fontsize=12)
-            ax.set_title('Eigenvalue Spectrum (Modal Analysis)', fontsize=14)
-            ax.grid(True, alpha=0.3)
-            ax.axhline(y=0, color='k', linestyle='-', linewidth=0.5)
-            # ax.axvline(x=0, color='k', linestyle='-', linewidth=0.5)
-            ax.legend(fontsize=10)
-
-        elif self.analysisType == AnalysisType.RESOLVENT:
-            # Plot gains vs frequency
-            omega = spectrum[:, 0]
-            gains = spectrum[:, 1:]
-
-            if ax is None:
-                fig, ax = plt.subplots(figsize=(10, 6))
-
-            colors = plt.cm.viridis(np.linspace(0, 1, gains.shape[1]))
-            for i in range(gains.shape[1]):
-                ax.plot(omega, gains[:, i], 'o-', label=f'Mode {i}', 
-                       color=colors[i], linewidth=2, markersize=4, alpha=0.7)
-
-            ax.set_xlabel(r'$\omega$', fontsize=12)
-            ax.set_ylabel(r'Gains squared $\sigma^2$', fontsize=12)
-            ax.set_yscale('log')
-            ax.grid(True, alpha=0.3)
-            ax.legend(fontsize=10)
-
-        else:
-            logger.error(f'Plotting not supported for {self.analysisType} analysis')
-            return None
-
-        plt.tight_layout()
-        # plt.show()
-
-        return ax
+        return _plot_spectrum(self, ax=ax)
 
     def export_spectrum_to_csv(
         self,
