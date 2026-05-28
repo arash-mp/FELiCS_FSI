@@ -66,7 +66,7 @@ For further details on settings and file formats, see the [FELiCS settings docum
 
 
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 2
 
 cylinder_wake.md
 modal_analysis.md
