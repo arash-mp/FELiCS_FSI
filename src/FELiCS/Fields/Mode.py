@@ -520,6 +520,10 @@ class Mode(Field):
         attr.name  = "omega"
         attr.value = self.omega
         attrList = [attr]
+        attrm  = lambda : None
+        attrm.name = "m"
+        attrm.value = self.wave_number
+        attrList.append(attrm)
         if self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
             attrGain  = lambda : None
             attrGain.name = "gain"
