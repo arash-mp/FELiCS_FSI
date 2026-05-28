@@ -92,9 +92,6 @@ class Config(ABC):
                 'AnalysisMode':             {'datatype':str,    'default':'Modal'},
                 'CalculateAdjoint':         {'datatype':bool,   'default':True},
                 'CoordinateSystem':         {'datatype':str,    'default':'Cartesian'},
-
-                # 'HeatCapacityConstPressure':{'datatype':int,    'default':1005},
-                # 'HeatCapacityRatio':        {'datatype':int,    'default':1.4},
                 'needInterpolation':        {'datatype':bool,   'default':True},
                 'm':                        {'datatype':int,    'default':0},
                 'MeshFilePath':             {'datatype':str,    'default':''},
@@ -120,20 +117,16 @@ class Config(ABC):
                     }
                 },
                 'SpeciesFilePath':          {'datatype':str,    'default':''},
-                'TransVelFluc':             {'datatype':bool,   'default':False},
                 'TurbulenceModel':          {'datatype':str,    'default':'None'}
             },
             'Export':{
                 'ExportFolder':             {'datatype':str,    'default':''},
-                'Video':                    {'datatype':bool,   'default':False},
             },
             'FlowInput':{
-                'AveragingDirection':       {'datatype':str,    'default':'None'},
                 'MeanFlowFilePath':         {'datatype':str,    'default':''},
             },
             'IOResolvent':{
                 'ForcingBoundaryIndices':   {'datatype':list,   'default':[]},
-                'ForcingCoeff':             {'datatype':list,   'default':[]},
                 'ForcingMode':              {'datatype':str,    'default':'Body'},
                 'ForcingNorm':              {'datatype':str,    'default':'TKE'},
                 'ResponseNorm':             {'datatype':str,    'default':'TKE'},
