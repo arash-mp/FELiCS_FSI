@@ -31,3 +31,9 @@ hf.create_dataset('/MeanFlow/responseDomain', data=Wresponse)
     hf.create_dataset('/MeanFlow/forcingDomain', data=Wforcing)
 hf.close()
 ```
+
+# Mean flow file
+
+The base flow can be obtained from numerical simulations, experimental results or analytical models. A RANS mean field can also be computed using the finite element Newton solver `FlowSolver.py` integrateed in FELiCS.
+The relevant mean flow information (velocities, pressure, viscosity, forcing and response domains, ...) are encapsulated in a **.fel** file. 
+The construction of such a file is presented in [fel file in FELiCS](fel_file.md).
