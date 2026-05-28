@@ -5,25 +5,25 @@ The typical *monolithic* FELiCS workflow consists of:
 2. Running the [`FELiCS` command](#felics-commands)
 3. Post-processing the generated [output files](#output-files)
 
+## Input files
+
 The main input files for FELiCS are:
 - a configuration file (`.json`)
 - a mesh file (`.msh`)
 - a boundary conditions file (`.json`)
-- a mean flow file (`.fel`)
+- a mean flow file (`.fel` or `MeanFlow.h5`)
 
 Additional input files may be required depending on the simulation setup.
-
-## Input files
 
 The different input files are described in the following sections:
 
 | File | Description |
 | - | - |
-| [Configuration file](param_files.md) | Main simulation settings and solver parameters |
-| [Mesh file](gmsh_files.md) | Computational mesh in Gmsh format |
-| [Mean flow file](mean_files.md) | Mean flow solution used by FELiCS |
-| [Boundary file](bc_files.md) | Boundary condition definitions |
-| [Mixture file](mix_files.md) | Optional mixture properties for reacting flows |
+| [Configuration file](input_files/param_files.md) | Main simulation settings and solver parameters |
+| [Mesh file](input_files/gmsh_files.md) | Computational mesh in Gmsh format |
+| [Mean flow file](input_files/mean_files.md) | Mean flow solution used by FELiCS |
+| [Boundary file](input_files/bc_files.md) | Boundary condition definitions |
+| [Mixture file](input_files/mix_files.md) | Optional mixture properties for reacting flows |
 
 ## FELiCS Commands
 
@@ -42,7 +42,7 @@ FELiCS -h
 | Argument | Description |
 | - | - |
 | `-h` | Show the help message and exit |
-| `-f <path>`, `--file <path>` | (**Mandatory**) Specifies the path to a FELiCS config file (in `json` format). For more details, refer to [FELiCS Settings](FELiCS_settings.md). |
+| `-f <path>`, `--file <path>` | (**Mandatory**) Specifies the path to a FELiCS [config file](input_files/param_files.md) (in `json` format). |
 | `-d`, `--debug` | (*Optional*) Enable *debug mode* for extended verbose output |
 | `-t`, `--test` | (*Optional*) Enable *test mode* with no verbose output |
 
@@ -74,7 +74,30 @@ where
 * `settings.json`, `boundaries.json`, `mixture.json` - Configuration files needed to run.
 * `output_dir` - Output directory, must correspond to the `Case{ExportFolder}` field in the `settings.json` file. -->
 
-## Output Files
+## Output files
+
+After running an analysis, FELiCS generates several output files containing:
+- computed solutions (`.h5`),
+- interpolated mean-flow fields (`.h5`),
+- computational meshes (`.h5`),
+- solution spectra (`.csv`),
+- and execution logs (`.log`).
+
+For visualization purposes, FELiCS also automatically generates associated `.xmf` metadata files compatible with ParaView.
+
+The generated files depend on the selected analysis type and export options.
+
+The different output files are described in the following sections:
+
+| File | Description |
+| - | - |
+| [Solution files](output_files/solution_files.md) | Modal, resolvent, or input/output solutions exported by FELiCS |
+| [FELiCS Mean-flow files](output_files/FELiCSmeanflow_files.md) | Mean-flow fields exported onto the FELiCS mesh |
+| [FELiCS Mesh files](output_files/FELiCSmesh_files.md) | Exported FEM meshes used by FELiCS |
+| [Spectrum files](output_files/spectrum_files.md) | Eigenvalue or gain spectra exported as CSV files |
+| [Log files](output_files/log_files.md) | Solver logs and execution information |
+
+<!-- ## Output Files
 After running an analysis the output directory will contain the following file types:
 
 ```bash
@@ -96,7 +119,7 @@ where
 * `Modal_mesh.h5` - The export FEM mesh. Note that the name will change with the type of analysis.
 * `solution.xmf, MeanFlow.xmf` - Paraview metadata files.
 * `spectrum.csv` - File containing the eigenvalues or gains from the modal and resolvent analysis. Again, the file name changes based on the type of analysis.
-* `log/` - Directory containing the verbose output from the different runs.
+* `log/` - Directory containing the verbose output from the different runs. -->
 
 ## Summary
 

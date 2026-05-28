@@ -1,24 +1,24 @@
-# FELiCS configuration files
+# FELiCS configuration file
 
 FELiCS runs are controlled by a main configuration file, written in the `json` format.
 
-This file defines both the parameters of the run (i.e. numerical and physical options) as well as the paths to the other FELiCS [input files](index.md/#input-files).
+This file defines both the parameters of the run (i.e. numerical and physical options) as well as the paths to the other FELiCS [input files](../index.md/#input-files).
 
-The configuration file is directly passed to FELiCS from the command line with the `-file` option:
+The configuration file is directly passed to FELiCS from the command line with the `-f` (or `--file`) option:
 
 ```bash
 FELiCS -f <configuration_file.json>
 ```
 
-> 💡 **Note:** The configuration file is expected to be located in the running directory of the case, and the paths to other FELiCS input files are interpreted relative that directory.
+> 💡 **Note:** The configuration file is expected to be located in the running directory of the case, and the paths to other FELiCS files are interpreted relative that directory.
 
 ## File format
 
-The configuration file uses the JSON format.
+The configuration file uses the [JSON](https://www.json.org/json-en.html) format.
 
 Some important JSON rules are:
 - strings must use double quotes,
-- boolean values are written as true or false,
+- boolean values are written as `true` or `false`,
 - comments are not allowed,
 - trailing commas are not allowed.
 
@@ -38,7 +38,7 @@ For example:
 
 The `settings.json` file is organized into 6 **parameter categories**. 
 
-Each category groups parameters related to one aspect of the simulation setup. Use the following links to acess the parameters definition of each category:
+Each category groups parameters related to one aspect of the simulation setup. Use the following links to access the parameters definition of each category:
 
 | Category | Purpose |
 | - | - |
@@ -49,7 +49,7 @@ Each category groups parameters related to one aspect of the simulation setup. U
 | [IOResolvent](parameters/IOResolvent/index.md) | *Resolvent and input-output analysis settings* |
 | [Numerics](parameters/Numerics/index.md) | *Discretization and solver-related parameters* |
 
-A typical file will look like:
+A typical configuration file will look like:
 ```
 {
     "BoundaryCondition": {},
@@ -63,22 +63,22 @@ A typical file will look like:
 
 ## Defaults and parameter handling
 
-FELiCS does not read arbitrary parameters from the configuration file. When a run starts, FELiCS initializes its internal dictionary of supported parameters and default values. The values provided in `settings.json` then overwrite these defaults.
+FELiCS does not read arbitrary parameters from the configuration file. When a run starts, FELiCS initializes its internal dictionary of supported parameters and default values. The values provided in `<your_settings>.json` then overwrite these defaults.
 
 This has two important consequences:
-- parameters omitted from `settings.json` keep their default value;
+- parameters omitted from `<your_settings>.json` keep their default value;
 - parameters that are not registered in FELiCS are ignored.
 
-The list of supported parameters and their defaults is defined in {py:func}`getAllSettingsDict() <FELiCS.parameters.config.getAllSettingsDict>` method of the FELiCS source code, in:
+The list of supported parameters and their defaults is defined in the {py:func}`getAllSettingsDict() <FELiCS.parameters.config.getAllSettingsDict>` method of the FELiCS source code, in:
 
 ```bash
 src/FELiCS/parameters/config.py
 ```
 
-> 💡 **Note for developers:** When adding a new parameter to FELiCS, it should also be added to the default parameter dictionary in `config.py`; otherwise, it will not be read from `settings.json`.
+> 💡 **Note for developers:** When adding a new parameter to FELiCS, remember to add it to the default parameter dictionary in `config.py`; otherwise, it will not be read from `<your_settings>.json`.
 
 ## FELiCS-specific formatting conventions
-Some FELiCS inputs require additional conventions from JSON standards.
+Some FELiCS inputs uses additional conventions from JSON standards.
 
 ### Real/complex valued numbers
 
@@ -103,7 +103,7 @@ File paths are interpreted relative to the directory from which FELiCS is execut
 
 ## Example
 
-The following example is the configuration file from [tutorial 2: Modal Analysis](../Tutorials/modal_analysis.md):
+The following example is the configuration file from [tutorial 2: Modal Analysis](../../Tutorials/modal_analysis.md):
 
 ```json
 {

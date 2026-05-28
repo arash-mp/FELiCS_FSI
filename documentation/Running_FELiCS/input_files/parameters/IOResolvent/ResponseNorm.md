@@ -22,4 +22,4 @@ Defines the norm used to measure response amplitudes in resolvent analyses.
 }
 ```
 
-This parameter is only relevant for [resolvent analyses](../../../GoverningEquations/analysisMode_resolvent.md).
+This parameter is only relevant for [resolvent analyses](../../../../GoverningEquations/analysisMode_resolvent.md).

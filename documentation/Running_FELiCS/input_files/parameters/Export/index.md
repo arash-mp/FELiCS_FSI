@@ -17,7 +17,7 @@ The `Export` category contains parameters controlling the export of FELiCS outpu
 
 ## Related documentation
 
-See the documentation on the FELiCS [output files](../../index.md/#output-files) to know which outputs are produced by the runs.
+See the documentation on the FELiCS [output files](../../../index.md#output-files) to know which outputs are produced by the runs.
 
 ## Detailed content
 ```{toctree}

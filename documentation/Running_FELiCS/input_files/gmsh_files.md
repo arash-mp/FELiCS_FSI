@@ -4,6 +4,8 @@ FELiCS imports computational meshes using the [Gmsh](https://gmsh.info/) `.msh` 
 
 Both 2D and 3D meshes are supported.
 
+The mesh file used for a run is specified through [`Case.MeshFilePath`](parameters/Case/MeshFilePath.md).
+
 ## Supported mesh format
 
 Meshes should be exported from Gmsh (or compatible meshing tools) using:
@@ -37,9 +39,9 @@ In this case:
 - boundary `2` corresponds to curve `6`.
 
 The numerical identifiers (`1`, `2`, ...) are the values used in:
-- the [`IOResolvent.ForcingBoundaryIndices`](../Configuration/IOResolvent/ForcingBoundaryIndices.md) parameter,
+- the [`IOResolvent.ForcingBoundaryIndices`](parameters/IOResolvent/ForcingBoundaryIndices.md) parameter,
 - the [boundary-condition](bc_files.md) file.
 
 ## Example
 
-An example of mesh generation and usage in FELiCS is provided in [Tutorial 2](../Tutorials/modal_analysis.md).
+An example of mesh generation and usage in FELiCS is provided in [Tutorial 2](../../Tutorials/modal_analysis.md).

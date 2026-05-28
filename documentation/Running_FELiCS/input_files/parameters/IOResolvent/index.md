@@ -26,7 +26,7 @@ These parameters define the forcing configuration, response norms, and analyzed 
 
 ## Related documentation
 
-See the documentation pages about the [resolvent](../../../GoverningEquations/analysisMode_resolvent.md) and [input/output](../../../GoverningEquations/analysisMode_input_output.md) analyses.
+See the documentation pages about the [resolvent](../../../../GoverningEquations/analysisMode_resolvent.md) and [input/output](../../../../GoverningEquations/analysisMode_input_output.md) analyses.
 
 ## Detailed content
 ```{toctree}

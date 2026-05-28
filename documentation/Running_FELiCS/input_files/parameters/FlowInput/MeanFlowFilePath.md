@@ -28,4 +28,4 @@ The expected file type depends on the value of [`needInterpolation`](../Case/nee
 | `true` | `.fel` | Mean flow defined on an external CFD grid and interpolated onto the FELiCS mesh |
 | `false` | `MeanFlow.h5` | Mean flow previously exported by FELiCS on the same computational mesh |
 
-See the [mean-flow input documentation](../../mean_files.md) for more details on supported formats.
+See the documentation page on input [mean-flow files](../../mean_files.md) for more details on supported formats.

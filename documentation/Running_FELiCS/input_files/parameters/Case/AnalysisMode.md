@@ -23,4 +23,4 @@ Controls the type of linear analysis performed by the FELiCS run.
 }
 ```
 
-For more information about the theory behind each type of analysis, see the pages about [modal](../../../GoverningEquations/analysisMode_modal.md), [input-output](../../../GoverningEquations/analysisMode_input_output.md) and [resolvent](../../../GoverningEquations/analysisMode_resolvent.md) analyses.
+For more information about the theory behind each type of analysis, see the pages about [modal](../../../../GoverningEquations/analysisMode_modal.md), [input-output](../../../../GoverningEquations/analysisMode_input_output.md) and [resolvent](../../../../GoverningEquations/analysisMode_resolvent.md) analyses.

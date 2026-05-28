@@ -19,7 +19,7 @@ These parameters control how the mean flow is imported and processed before the 
 
 ## Related documentation
 
-- [Mean-flow input documentation](../../meanflow/index.md)
+- See FELiCS input [mean-flow files](../../mean_files.md)
 
 ## Detailed content
 ```{toctree}

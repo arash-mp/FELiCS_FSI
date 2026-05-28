@@ -2,7 +2,7 @@
 
 The boundary-condition file defines the boundary conditions applied by FELiCS on the computational domain boundaries.
 
-The file is provided in JSON format and referenced in the main configuration file through [`BoundaryCondition.BCsFilePath`](../Configuration/BoundaryCondition/BCsFilePath.md).
+The file is provided in JSON format and referenced in the main configuration file through [`BoundaryCondition.BCsFilePath`](parameters/BoundaryCondition/BCsFilePath.md).
 
 ## Boundary identifiers
 
@@ -85,37 +85,41 @@ Each specification contains:
 
 ## Example
 
-
+Below is the boundary condition file corresponding to the [tutorial 2: Modal Analysis](../../Tutorials/modal_analysis.md):
 
 ```json
 {
     "1": {
-        "name": "zeroDirichlet"
+        "name":             "zeroDirichlet"
     },
-
-    "2": {
-        "name": "symmetry",
+    "2":{
+        "name":             "symmetry",
         "specifics": [
-            {
-                "variable": "ux",
-                "type": "Dirichlet",
-                "value": 0.0
-            },
-            {
-                "variable": "uy",
-                "type": "Neumann",
-                "value": 0.0
-            },
-            {
-                "variable": "p",
-                "type": "Dirichlet",
-                "value": 0.0
-            }
+        {
+            "type":         "Dirichlet",
+            "value":        0.0,
+            "variable":     "ux"
+        },
+        {
+            "type":         "Neumann",
+            "value":        0.0,
+            "variable":     "uy"
+        },
+        {
+            "type":         "Dirichlet",
+            "value":        0.0,
+            "variable":     "p"
+        }
         ]
     },
-
     "3": {
-        "name": "wall"
+        "name":             "zeroDirichlet"
+    },
+    "4": {
+        "name":             "zeroDirichlet"
+    },
+    "5":{
+        "name":             "wall"
     }
 }
 ```

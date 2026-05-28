@@ -1,6 +1,6 @@
 # MolVisc ([`Case`](index.md))
 
-Defines the molecular viscosity used by FELiCS when a constant viscosity model is selected.
+Defines the **mean flow** molecular viscosity value used by FELiCS when a constant viscosity model is selected.
 
 <dl>
   <dt><strong>Type</strong></dt>

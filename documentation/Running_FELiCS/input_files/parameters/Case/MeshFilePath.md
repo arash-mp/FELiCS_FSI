@@ -23,4 +23,4 @@ The path can be given either as:
 - a relative path from the FELiCS running directory,
 - or an absolute path.
 
-FELiCS currently supports Gmsh mesh files (`.msh`).
+FELiCS currently supports Gmsh [mesh files](../../gmsh_files.md) (`.msh`).
