@@ -1077,36 +1077,7 @@ class FieldProperties:
         """
         forcing = self.u_forcing_r + self.u_forcing_i * 1j
         return forcing
-
-    @property
-    def ut(
-        self
-    ):
-        """
-        TODO: Deprecated variable must be deleted
-        Get the transverse velocity component field variable.
-
-        Returns
-        -------
-        object
-            Field variable for transverse velocity component.
-        """
-        if self.is_mean_flow_class() or self.is_mean_flow_vertex_values_class():
-            if 'ut' in list(self._fieldDict.keys()):
-                return self._fieldDict['u'][2]
-            else:
-                mesh = self._fieldDict[
-                    list(self._fieldDict.keys())[0]].space.mesh
-                return Constant(
-                    mesh,
-                    0.0,
-                )
-        else:
-            if  self._param.Case.TransVelFluc:
-                return self._fieldDict['u'][2]
-            else:
-                return Constant(0)
-
+            
     def y(self,
     specie
     ):
