@@ -124,7 +124,7 @@ class Logger:
     Logger class for flexible and colored logging to file and console.
 
     Provides a singleton logger with support for colored console output, file logging, dynamic log file location changes, and debug/test modes.
-
+    TODO: Add description for profiler. (and parameter for init)
     **Initialize the Logger object**
 
     Parameters
@@ -198,6 +198,7 @@ class Logger:
         self._logger = logging.getLogger(self.logger_name)
         self._logger.handlers.clear()
         self._logger.propagate = False
+        self._logger._felics_profiler_mode = self.profiler_mode
         
         self._logger.setLevel(logging.DEBUG if (self.debug_mode or self.test_mode) else logging.INFO)
 
@@ -250,7 +251,7 @@ class Logger:
 
         self._logger.debug("Logger initialized successfully")
         
-        if self.debug_mode or self.profiler_mode:
+        if self.profiler_mode:
             self._start_mem_tracker()
             self._start_cpu_tracker()
 
@@ -452,18 +453,22 @@ class Logger:
             # if they exist, write a redirect file so the background tracker switches its output directory.
             old_dir  = os.path.dirname(old_log_path)
             log_stem = os.path.splitext(os.path.basename(old_log_path))[0]
-            for _companion in [f"{log_stem}_memory.csv", f"{log_stem}_memory.png", f"{log_stem}_cpu.csv", f"{log_stem}_cpu.png"]:
-                _src = os.path.join(old_dir, _companion)
-                if os.path.exists(_src):
-                    shutil.move(_src, new_log_path)
-            
-            for _suffix in ["_memory.redirect", "_cpu.redirect"]:
-                _redirect = os.path.join(old_dir, f"{log_stem}{_suffix}")
-                try:
-                    with open(_redirect, "w") as _rf:
-                        _rf.write(new_log_path)
-                except OSError:
-                    pass
+            profiler_active = bool(getattr(instance, "_felics_profiler_mode", False))
+            for _tracker in ["memory", "cpu"]:
+                _has_tracker_files = False
+                for _ext in ["csv", "png"]:
+                    _src = os.path.join(old_dir, f"{log_stem}_{_tracker}.{_ext}")
+                    if os.path.exists(_src):
+                        shutil.move(_src, new_log_path)
+                        _has_tracker_files = True
+
+                if _has_tracker_files or profiler_active:
+                    _redirect = os.path.join(old_dir, f"{log_stem}_{_tracker}.redirect")
+                    try:
+                        with open(_redirect, "w") as _rf:
+                            _rf.write(new_log_path)
+                    except OSError:
+                        pass
             
             new_log_file_path = os.path.join(
                 new_log_path,
