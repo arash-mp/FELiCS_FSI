@@ -332,9 +332,9 @@ class EnergyPressureEquation(EquationTemplate):
         # reference: self._fieldDict['T'] = (self.p - self.rho*mean_Rspe*mean_T)/(mean_Rspe*mean_rho)
 
         ## ------------------------  Viscous diffusion term 
-        tau_bil  = mean.nu_tot * i_grad(u_bil)
+        tau_bil  = mean.mu_tot * i_grad(u_bil)
         tau_bil += i_t(tau_bil)
-        tau_bil += -2.0/3.0 * mean.nu_tot * \
+        tau_bil += -2.0/3.0 * mean.mu_tot * \
                         i_div(u_bil) * i_identity(i_grad(u_bil))
         
         weakForm.add(
