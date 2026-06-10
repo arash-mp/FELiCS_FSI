@@ -266,7 +266,7 @@ class MeanFlowClass(
 		"Deleting turbulent kinematic viscosity...")
             self._fieldDict['muturb'] = self._fieldDict['nuturb'] * self._fieldDict['rho']
             self._fieldDict['muturb'].name = "muturb"
-            del self._fieldDict['nuturb']  
+            del self._fieldDict['nuturb']
         # Define the viscosity and alfa fields
         # NOTE: This should move to a handler
         self.init_lam_diff()
@@ -291,19 +291,19 @@ class MeanFlowClass(
         Initialize molecular viscosity and species diffusion coefficients.
 
         Based on the selected molecular viscosity model and the mixture data,
-        this method constructs the laminar viscosity field ``nulam`` (if a
+        this method constructs the laminar viscosity field ``mulam`` (if a
         constant model is used) and computes species diffusion coefficients
         ``D_<specie>`` using the corresponding Schmidt numbers.
 
         The effective kinematic viscosity for each species is assembled from
         the available contributions:
-        ``nulam``, ``nuturb`` and ``nuSGS``, if present in ``_fieldDict``.
+        ``mulam``, ``muturb`` and ``muSGS``, if present in ``_fieldDict``.
 
         Notes
         -----
         This routine populates the following entries in ``_fieldDict``:
 
-        - ``'nulam'`` : Field
+        - ``'mulam'`` : Field
             Constant laminar viscosity (for constant viscosity models).
         - ``'D_<specie>'`` : Field
             Species diffusion coefficients for transported species.
