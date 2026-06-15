@@ -212,10 +212,18 @@ def main():
                 with open(redirect_file) as rf:
                     new_dir = rf.read().strip()
                 os.remove(redirect_file)
+                old_log_dir = log_dir
                 log_dir  = new_dir
                 csv_path = os.path.join(log_dir, f"{log_stem}_cpu.csv")
                 png_path = os.path.join(log_dir, f"{log_stem}_cpu.png")
-                
+                # The redirect is written after the move, so any files still in
+                # old_log_dir were written during the race window and are strays.
+                for _ext in ["csv", "png"]:
+                    _stray = os.path.join(old_log_dir, f"{log_stem}_cpu.{_ext}")
+                    try:
+                        os.remove(_stray)
+                    except OSError:
+                        pass
                 if not os.path.exists(csv_path):
                     os.makedirs(log_dir, exist_ok=True)
                     with open(csv_path, 'w', newline='') as fh:
