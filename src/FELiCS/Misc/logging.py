@@ -63,15 +63,20 @@ class CustomFormatter(logging.Formatter):
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format_str = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+    _fmt      = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+    _fmt_debug = '%(asctime)s | %(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
 
-    FORMATS = {
-        logging.DEBUG: grey + format_str +  reset,
-        logging.INFO: grey + format_str +reset,
-        logging.WARNING: yellow + format_str + reset,
-        logging.ERROR: red + format_str + reset,
-        logging.CRITICAL: bold_red + format_str + reset
-    }
+    def __init__(self, debug_mode=False):
+        super().__init__()
+        fmt = self._fmt_debug if debug_mode else self._fmt
+        self.FORMATS = {
+            logging.DEBUG:    self.grey     + fmt + self.reset,
+            logging.INFO:     self.grey     + fmt + self.reset,
+            logging.WARNING:  self.yellow   + fmt + self.reset,
+            logging.ERROR:    self.red      + fmt + self.reset,
+            logging.CRITICAL: self.bold_red + fmt + self.reset,
+        }
+        self._datefmt = '%Y-%m-%d %H:%M:%S' if debug_mode else None
 
     def format(
         self,
@@ -93,7 +98,7 @@ class CustomFormatter(logging.Formatter):
             The formatted log message string.
         """
         log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
+        formatter = logging.Formatter(log_fmt, datefmt=self._datefmt)
         if in_notebook():
 
             # Strip ANSI codes inside notebooks
@@ -105,26 +110,11 @@ class CustomFormatter(logging.Formatter):
         else:
             return formatter.format(record)
 
-            # Add colors everywhere else
-            # log_color = self.FORMATS.get(record.levelno, "\x1b[0m")
-            # return f"{log_color}{formatter.format(record)}{"\x1b[0m"}"
-
-        # if 'IPYTHON' in globals():
-        #     return formatter.format(record)
-        # else:
-        #     return re.sub(r'\x1b\[[0-9;]*m', '', formatter.format(record))
-
-
-# 
-# handler = logging.StreamHandler()
-# handler.setFormatter(CustomFormatter(format_str))
-
 class Logger:
     """
     Logger class for flexible and colored logging to file and console.
 
     Provides a singleton logger with support for colored console output, file logging, dynamic log file location changes, and debug/test modes.
-    TODO: Add description for profiler. (and parameter for init)
     **Initialize the Logger object**
 
     Parameters
@@ -132,6 +122,8 @@ class Logger:
     debug_mode : bool, optional
         If True, enables debug logging (default is False).
     test_mode : bool, optional
+        If True, enables test mode logging (default is False).
+    profiler_mode : bool, optional
         If True, enables test mode logging (default is False).
     logger_name : str, optional
         Name of the logger and log file prefix (default is "log").
@@ -142,6 +134,8 @@ class Logger:
         Indicates if debug mode is enabled.
     test_mode : bool
         Indicates if test mode is enabled.
+    profiler_mode : bool
+        Indicates if profilers are enabled.
     logger_name : str
         Name of the logger.
     _logger : logging.Logger
@@ -167,7 +161,7 @@ class Logger:
         test_mode : bool, optional
             If True, enables test mode logging (default is False).
         profiler_mode : bool, optional
-            If True, enables profiler mode logging (default is False).
+            If True, enables profilers (default is False).
         logger_name : str, optional
             Name of the logger and log file prefix (default is "log").
         """
@@ -235,12 +229,18 @@ class Logger:
             logging.DEBUG,
             'Debug',
         )
-        formatter_log = logging.Formatter(
+        _log_fmt = (
+            '%(asctime)s | %(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+            if self.debug_mode else
             '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+        )
+        formatter_log = logging.Formatter(
+            _log_fmt,
+            datefmt='%Y-%m-%d %H:%M:%S' if self.debug_mode else None,
         )
 
         # use custom formatter to get colored output for the command line
-        formatter_cmd = CustomFormatter() 
+        formatter_cmd = CustomFormatter(debug_mode=self.debug_mode)
         
         ch.setFormatter(formatter_cmd)
         fh.setFormatter(formatter_log)
