@@ -112,8 +112,8 @@ def _update_plot(timestamps, rss_mbs, vsz_mbs, png_path):
     """
     rss_gbs = [v / 1024.0 for v in rss_mbs]
     vsz_gbs = [v / 1024.0 for v in vsz_mbs]
-    max_rss = max(rss_gbs)
-    max_vsz = max(vsz_gbs)
+    max_rss = max(rss_gbs) if rss_gbs else 0.0
+    max_vsz = max(vsz_gbs) if vsz_gbs else 0.0
 
     # Format total runtime efficiently
     total_runtime = (timestamps[-1] - timestamps[0]).total_seconds() if timestamps else 0.0
@@ -183,7 +183,6 @@ def main():
     with open(csv_path, 'w', newline='') as fh:
         csv.writer(fh).writerow(['timestamp', 'elapsed_s', 'rss_mb', 'vsz_mb'])
 
-    elapsed_times = []
     timestamps    = []
     rss_mbs       = []
     vsz_mbs       = []
@@ -223,7 +222,6 @@ def main():
         rss_mb  = rss_kb / 1024.0
         vsz_mb  = vsz_kb / 1024.0
 
-        elapsed_times.append(elapsed)
         timestamps.append(now)
         rss_mbs.append(rss_mb)
         vsz_mbs.append(vsz_mb)
