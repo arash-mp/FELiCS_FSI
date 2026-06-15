@@ -20,3 +20,4 @@ documentation/.DS_Store
 .github/*
 .github/*/*
 *.log
+.claude
