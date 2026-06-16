@@ -60,7 +60,7 @@ conda activate felics
 The settings and the boundary conditions of the base flow can be found in ```Re50.json``` and ```bc.json```. 
 In the file ```Re50.json``` we set the molecular viscostiy, $\nu = 0.02$:
 ```json
-"Molvisc":0.02
+"MolVisc": 0.02
 ```
 based on the Reynolds number $\mathrm{Re} = 50$, the cylinder diameter $d = 1$ and the bulk velocity $U_\infty = 1$.
 We only solve the continuity and the momentum equation. Therefore we set everything to <code style="color : Darkorange">None</code> in the <code style="color : Blue">"SetofEquations"</code>, except for <code style="color : Blue">"Momentum"</code> and <code style="color : Blue">"Mass"</code>. 
@@ -79,15 +79,19 @@ We obtain the base flow via running the python script [```solveBaseFlow.py```](.
 ```sh
 python solveBaseFlow.py
 ```
-After executing [```solveBaseFlow.py```](./../../tutorials/cylinder_wake_tutorial/solveBaseFlow.py), these files are be added to the working directory
+After executing [```solveBaseFlow.py```](./../../tutorials/cylinder_wake_tutorial/solveBaseFlow.py), these files are added to the working directory
 ```bash
 .
-└── logs
-└── out 
-├ base_flow_for_FELiCS.fel
-├ cylinder_wake.msh
-├ initial_solution.fel
-└ ...
+├── base_flow_for_FELiCS.fel
+├── cylinder_wake.msh
+├── initial_solution.fel
+├── logs/
+└── out/
+    ├── baseFlow.h5
+    ├── baseFlow.xmf
+    ├── log/
+    ├── mesh.h5
+    └── ...
 ```
 
 The file ```out/baseFlow.xmf``` can be opened in Paraview to visualize the base flow: 

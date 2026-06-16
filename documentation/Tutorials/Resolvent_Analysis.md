@@ -79,7 +79,7 @@ Here are some key settings for our resolvent analysis:
 ```
 ```{note}
 The velocity components are thus refered to as `ux, ur, ut` instead of `ux, uy, uz`.
-'''
+```
 
 - We choose to study axisymmetric perturbations by setting the azimuthal wavenumber to 0:
 ```json
