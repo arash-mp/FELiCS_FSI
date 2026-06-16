@@ -23,7 +23,7 @@ felics-pytest:
     - cd tests
     - python3 -m pytest
   only:
-    - 8-run-tutorials-in-pipeline
+    - development
 
 felics-tutorials:
   stage: test
@@ -42,7 +42,7 @@ felics-tutorials:
   script:
     - bash tutorials/test_tutorials.sh
   only:
-    - 8-run-tutorials-in-pipeline
+    - development
 
 create documentation:
   pages:  # specifies that this is a Pages job
