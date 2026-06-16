@@ -21,3 +21,6 @@ documentation/.DS_Store
 .github/*/*
 *.log
 .claude
+tutorials/test_tutorials_output
+tutorials/*/output_dir
+tutorials/*/out

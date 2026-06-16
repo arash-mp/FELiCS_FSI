@@ -50,10 +50,9 @@ def read_csv_file(file_path):
         print(f"An error occurred: {e}")
 
 
-import matplotlib.pyplot as plt
-
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 x_coords, y_coords = read_csv_file("./output_dir/spectrum.csv")
 # Plotting
@@ -64,6 +63,5 @@ plt.title('Scatter Plot of Eigenvalues')
 plt.xlabel('Re(Eigenvalue)')
 plt.ylabel('Im(Eigenvalue)')
 plt.grid(True)
-plt.show()
-
-# plt.savefig('eigenvalues_scatter_plot.png')
+plt.savefig('eigenvalues_scatter_plot.png')
+plt.close()
