@@ -33,7 +33,7 @@ at TU Berlin, Germany.
 """
 epilog = """
 Example usage:
-    python main.py -h		        : shows help message 
+    python main.py -h		        : shows help message
     python main.py -f <path>	    : start with config file (json) at path (mandatory)
     python main.py -f <path> -d	    : for debug mode (adds debug messages to log output)
     python main.py -f <path> -t	    : for test mode (disables log output)
