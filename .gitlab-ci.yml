@@ -19,10 +19,11 @@ felics-pytest:
     - pip install -e .
     - cd ..
   script:
+    - export PYTHONPATH="$(pwd)/src${PYTHONPATH:+:$PYTHONPATH}"
     - cd tests
     - python3 -m pytest
   only:
-    - development
+    - 8-run-tutorials-in-pipeline
 
 felics-tutorials:
   stage: test
