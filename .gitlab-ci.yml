@@ -1,5 +1,5 @@
 # Docker image for pipeline execution
-image: continuumio/miniconda3
+image: condaforge/mambaforge
 
 variables:
   GIT_STRATEGY: fetch
@@ -11,7 +11,7 @@ felics-pytest:
     - pwd
     - ls -all
     - echo "Creating conda environment for FELiCS..."
-    - conda env create -f installation/felics_v3.0.0_env_v2.yml 
+    - mamba env create -f installation/felics_v3.0.0_env_v2.yml 
     - source /root/.bashrc
     - conda init
     - conda activate felics
@@ -31,7 +31,7 @@ felics-tutorials:
     - pwd
     - ls -all
     - echo "Creating conda environment for FELiCS..."
-    - conda env create -f installation/felics_v3.0.0_env_v2.yml
+    - mamba env create -f installation/felics_v3.0.0_env_v2.yml
     - source /root/.bashrc
     - conda init
     - conda activate felics
