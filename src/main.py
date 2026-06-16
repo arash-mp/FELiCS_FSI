@@ -78,7 +78,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 # Initialize the logger
-logger = Logger(
+Logger(
     args.debug,
     args.test,
     args.profiler,
