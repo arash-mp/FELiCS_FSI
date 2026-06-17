@@ -27,7 +27,7 @@ from    FELiCS.Fields.FieldProperties                               import  Fiel
 from    FELiCS.Fields.Field                                         import  Field
 from    FELiCS.IO.Mapping                                           import  Mapping
 from    FELiCS.IO.Reader                                            import  Reader
-from    FELiCS.Misc.logging                                         import  Logger
+from    FELiCS.Misc.logging                                         import  Logger, log_and_raise
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -251,24 +251,7 @@ class MeanFlowClass(
         if 'ut' in list(self._fieldDict.keys()):
             self._fieldDict['ut'].setConstant(0.)
         
-        # FELiCS uses dynamic viscosity exclusively and consistently.
-        # Therefore, calculate dynamic viscosity if needed and delete koniematic viscosity
-        if 'nulam' in list(self._fieldDict) and not 'mulam' in list(self._fieldDict):
-            logger.warning("FELiCS uses dynamic viscosity exclusively and consistently. "
-		"Calculating laminar dynamic viscosity from laminar kinematic viscosity... "
-		"Deleting laminar kinematic viscosity...")
-            self._fieldDict['mulam'] = self._fieldDict['nulam'] * self._fieldDict['rho']
-            self._fieldDict['mulam'].name = "mulam"
-            del self._fieldDict['nulam'] 
-        if 'nuturb' in list(self._fieldDict) and not 'muturb' in list(self._fieldDict):
-            logger.warning("FELiCS uses dynamic viscosity exclusively and consistently. "
-		"Calculating turbulent dynamic viscosity from turbulent kinematic viscosity... "
-		"Deleting turbulent kinematic viscosity...")
-            self._fieldDict['muturb'] = self._fieldDict['nuturb'] * self._fieldDict['rho']
-            self._fieldDict['muturb'].name = "muturb"
-            del self._fieldDict['nuturb']
         # Define the viscosity and alfa fields
-        # NOTE: This should move to a handler
         self.init_lam_diff()
         self.init_thermodynamic_quantities()
 
@@ -281,8 +264,6 @@ class MeanFlowClass(
             exportFields,
             "MeanFlow",
         )
-
-
 
     def init_lam_diff(
         self
@@ -304,17 +285,66 @@ class MeanFlowClass(
         This routine populates the following entries in ``_fieldDict``:
 
         - ``'mulam'`` : Field
-            Constant laminar viscosity (for constant viscosity models).
+            Constant laminar viscosity.
+        - ``'muturb'`` : Field
+            Turbulent viscosity.
         - ``'D_<specie>'`` : Field
             Species diffusion coefficients for transported species.
         """
-        if self._param.Case.MolViscModel == 'Constant':
-            self._fieldDict['mulam']            = Field(
+        
+        # Fields in self can include missing fields set to zero
+        fields_in_self = list(self._fieldDict.keys())
+        
+        # Initialize the molecular viscosity
+        if self._param.Case.MolViscModel == 'File':
+            
+            if 'mulam' in self._notInFileList and 'nulam' in fields_in_self:
+                logger.warning("FELiCS uses dynamic viscosity (mulam) exclusively.")
+                logger.warning("Calculating mulam from kinematic viscosity (nulam) and deleting nulam.")
+                self._fieldDict["mulam"]        = self._fieldDict["nulam"] * self._fieldDict['rho']
+                self._fieldDict["mulam"].name   = "mulam"
+                del self._fieldDict["nulam"]
+                
+            elif 'mulam' in self._notInFileList and 'nulam' in self._notInFileList:
+                log_and_raise(
+                    logger, 
+                    f"Neither kinematic viscosity (nulam) nor dynamic viscosity (mulam) in meanflow file."
+                )
+                
+            elif 'mulam' not in self._notInFileList and 'nulam' not in self._notInFileList:
+                logger.warning("Both kinematic viscosity (nulam) and dynamic viscosity (mulam) in meanflow file.")
+                logger.warning("Using mulam field and deleting nulam.")
+                del self._fieldDict["nulam"]
+            
+        elif self._param.Case.MolViscModel == 'Constant':
+            
+            self._fieldDict['mulam'] = Field(
                 self._FEMSpaces.P2,
                 self._mesh,
                 name = "mulam",
             )
             self._fieldDict['mulam'].set_coefficient_array(self._param.Case.MolVisc)
+            
+        # Initialize the turbulent viscosity
+        if self._param.Case.TurbulenceModel == 'File':
+            
+            if 'muturb' in self._notInFileList and 'nuturb' in fields_in_self:
+                logger.warning("FELiCS uses dynamic viscosity (muturb) exclusively.")
+                logger.warning("Calculating muturb from kinematic viscosity (nuturb) and deleting nuturb.")
+                self._fieldDict["muturb"]        = self._fieldDict["nuturb"] * self._fieldDict['rho']
+                self._fieldDict["muturb"].name   = "muturb"
+                del self._fieldDict["nuturb"]
+                
+            elif 'muturb' in self._notInFileList and 'nuturb' in self._notInFileList:
+                log_and_raise(
+                    logger, 
+                    f"Neither kinematic viscosity (nuturb) nor dynamic viscosity (muturb) in meanflow file."
+                )
+                
+            elif 'muturb' not in self._notInFileList and 'nuturb' not in self._notInFileList:
+                logger.warning("Both kinematic viscosity (nuturb) and dynamic viscosity (muturb) in meanflow file.")
+                logger.warning("Using muturb field and deleting nuturb.")
+                del self._fieldDict["nuturb"]
 
         for specie in self._param.Mixture.get_species_list('transported'):
             sc          = self._param.Mixture.species[specie]['Sc']
