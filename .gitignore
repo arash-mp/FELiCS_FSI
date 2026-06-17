@@ -24,3 +24,4 @@ documentation/.DS_Store
 tutorials/test_tutorials_output
 tutorials/*/output_dir
 tutorials/*/out
+*.code-workspace
