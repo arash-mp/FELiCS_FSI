@@ -755,8 +755,10 @@ class Config(ABC):
             MeanList.append(specie)
         if self.Case.TurbulenceModel in ['File']:
             MeanList.append('nuturb')
+            MeanList.append('muturb')
         if self.Case.MolViscModel in ['File'] or self.Case.MolViscPerturbModel in ['Sutherland mean']:
             MeanList.append('nulam')
+            MeanList.append('mulam')
         if self.Case.Reaction:
             MeanList.append('dQ')
         return MeanList
