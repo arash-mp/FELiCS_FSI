@@ -308,7 +308,9 @@ class MeanFlowClass(
             elif 'mulam' in self._notInFileList and 'nulam' in self._notInFileList:
                 log_and_raise(
                     logger, 
-                    f"Neither kinematic viscosity (nulam) nor dynamic viscosity (mulam) in meanflow file."
+                    f"Neither kinematic viscosity (nulam) nor dynamic viscosity (mulam) in meanflow file. \
+                             Please either set the parameter 'Case.MolViscModel' in your json file to 'Constant' or provide \
+                             a field 'nulam' or 'mulam' in your mean flow file."
                 )
                 
             elif 'mulam' not in self._notInFileList and 'nulam' not in self._notInFileList:
@@ -338,7 +340,9 @@ class MeanFlowClass(
             elif 'muturb' in self._notInFileList and 'nuturb' in self._notInFileList:
                 log_and_raise(
                     logger, 
-                    f"Neither kinematic viscosity (nuturb) nor dynamic viscosity (muturb) in meanflow file."
+                    f"Neither kinematic viscosity (nuturb) nor dynamic viscosity (muturb) in meanflow file. \
+                             Please either set the parameter 'Case.TurbulenceModel' in your json file to 'None' or provide \
+                             a field 'nuturb' or 'muturb' in your mean flow file."
                 )
                 
             elif 'muturb' not in self._notInFileList and 'nuturb' not in self._notInFileList:
