@@ -593,7 +593,7 @@ class ModeCollection():
     ):
         """
         Plot the eigenvalue spectrum for Modal analysis or gains for Resolvent analysis.
-        Delegates to :func:`FELiCS.Fields.plottingUtils.plot_spectrum`.
+        Delegates to :func:`FELiCS.Misc.plottingUtils.plot_spectrum`.
 
         Parameters
         ----------

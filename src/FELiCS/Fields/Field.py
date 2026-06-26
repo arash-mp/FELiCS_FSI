@@ -1198,7 +1198,7 @@ class Field:
     ):
         """
         Plotting function for debugging purposes. Delegates to
-        :func:`FELiCS.Fields.plottingUtils.plot_field`.
+        :func:`FELiCS.Misc.plottingUtils.plot_field`.
 
         Parameters
         ----------

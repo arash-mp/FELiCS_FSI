@@ -22,6 +22,8 @@ import  numpy                       as np
 
 # Local libraries
 from    FELiCS.Misc.logging         import Logger
+from    FELiCS.Fields.Mode          import AnalysisType
+
 
 logger = Logger.get_logger("felics")
 
@@ -150,8 +152,9 @@ def plot_spectrum(mode_collection, ax=None):
     """
     spectrum, header = mode_collection.get_spectrum()
 
+    # TODO Sophie: check if the import is really circular => remove here
     # Lazy import to avoid circular dependency (Mode → Field → plottingUtils → Mode)
-    from FELiCS.Fields.Mode import AnalysisType
+    #from FELiCS.Fields.Mode import AnalysisType
 
     if mode_collection.analysisType == AnalysisType.MODAL:
         if len(header) == 2:
