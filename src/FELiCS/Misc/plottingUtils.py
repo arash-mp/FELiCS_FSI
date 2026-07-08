@@ -76,6 +76,7 @@ def _add_colorbar_for_contour(axes, contour, label):
     cbar.update_ticks()
 
 
+# TODO before merge: put this into field 
 def _select_field_for_plot(field, variableName):
     """Select a scalar sub-field suitable for plotting.
 
@@ -136,6 +137,11 @@ def _select_field_for_plot(field, variableName):
 # Public functions
 # ---------------------------------------------------------------------------
 
+## TODO:
+# - give array of values and string of what to do 
+# - maybe even two different plotting functions?
+# - maybe give possibility to give some plotting parameters
+
 def plot_spectrum(mode_collection, ax=None):
     """Plot the eigenvalue spectrum (Modal) or gain curves (Resolvent) for a
     :class:`FELiCS.Fields.ModeCollection.ModeCollection`.
@@ -152,7 +158,7 @@ def plot_spectrum(mode_collection, ax=None):
     """
     spectrum, header = mode_collection.get_spectrum()
 
-    # TODO Sophie: check if the import is really circular => remove here
+    # TODO Sophie: circular dependency removed, but runnability has to be restored
     # Lazy import to avoid circular dependency (Mode → Field → plottingUtils → Mode)
     #from FELiCS.Fields.Mode import AnalysisType
 
@@ -214,6 +220,11 @@ def plot_spectrum(mode_collection, ax=None):
     return ax
 
 
+# TODO: check responsibilities
+# Sophies first idea:
+# - give only dolfinx mesh, scalar function, and all the plot info
+#   (NOT field, felicsMesh etc)
+
 def plot_field(
     field,
     variableName      = None,
@@ -254,6 +265,7 @@ def plot_field(
         )
         return
 
+    # TODO: maybe just use the selected field instead of re-calling the method?
     # Delegate vector / mixed fields to the scalar component
     if field.space.num_sub_spaces > 1:
         selected = _select_field_for_plot(field, variableName)
