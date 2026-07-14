@@ -8,7 +8,7 @@ MeanFlow.h5
 
 The file uses the HDF5 format and stores the mean-flow quantities used internally by FELiCS.
 
-The exported fields are defined on the FELiCS [export mesh](ELiCSmesh_files.md). 
+The exported fields are defined on the FELiCS [export mesh](FELiCSmesh_files.md). 
 
 The file is exported in the output directory defined by the [Export.ExportFolder](../input_files/parameters/Export/ExportFolder.md) parameter.
 

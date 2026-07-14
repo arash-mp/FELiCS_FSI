@@ -11,7 +11,7 @@ The `Export` category contains parameters controlling the export of FELiCS outpu
 ## Example
 ```json
 "Export": {
-    "ExportFolder": "results/",
+    "ExportFolder": "results/"
 }
 ```
 

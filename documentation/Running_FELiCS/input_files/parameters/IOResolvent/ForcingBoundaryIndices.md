@@ -19,7 +19,7 @@ Defines the indices of the boundaries where forcing is applied in input/output a
 
 The indices should correspond to the physical boundary tags defined in the [computational mesh](../../gmsh_files.md).
 
-This parameter is only used for `"InputOutput"` analyses with [`ForcingMode`](ForcingMode.md) set to `boundary`. It is ignored for resolvent and modal analyses.
+This parameter is only used for `"InputOutput"` analyses with [`ForcingMode`](ForcingMode.md) set to `"Boundary"`. It is ignored for resolvent and modal analyses.
 
 See also:
 - [`ForcingMode`](ForcingMode.md)

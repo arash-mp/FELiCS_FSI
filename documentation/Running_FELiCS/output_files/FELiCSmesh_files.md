@@ -36,6 +36,6 @@ For second-order (`P2`) finite-element spaces, this is achieved by refining the 
 
 As a result:
 - exported [solution fields](solution_files.md),
-- and exported [mean-flow fields](.)
+- and exported [mean-flow fields](FELiCSmeanflow_files.md)
 
 are both defined on this FELiCS export mesh rather than directly on the original computational mesh.

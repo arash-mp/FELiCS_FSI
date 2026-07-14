@@ -25,4 +25,4 @@ Defines how forcing is applied in resolvent or input/output analyses.
 
 When `"Boundary"` forcing is selected, the forced boundaries should be specified through [`ForcingBoundaryIndices`](ForcingBoundaryIndices.md).
 
-This parameter is only relevant when [Case.AnalysisMode](../Case/AnalysisMode.md) is set to `Input-output`.
+This parameter is only relevant when [Case.AnalysisMode](../Case/AnalysisMode.md) is set to `"InputOutput"`.

@@ -49,6 +49,17 @@ Each category groups parameters related to one aspect of the simulation setup. U
 | [IOResolvent](parameters/IOResolvent/index.md) | *Resolvent and input-output analysis settings* |
 | [Numerics](parameters/Numerics/index.md) | *Discretization and solver-related parameters* |
 
+```{toctree}
+:maxdepth: 2
+
+parameters/BoundaryCondition/index
+parameters/Case/index
+parameters/Export/index
+parameters/FlowInput/index
+parameters/IOResolvent/index
+parameters/Numerics/index
+```
+
 A typical configuration file will look like:
 ```
 {

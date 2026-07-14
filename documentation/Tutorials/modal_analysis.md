@@ -75,10 +75,10 @@ The wall BC is imposed with:
         "name": "wall"
     }
 ``` 
-The complete structure of this file is detailed in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
+The complete structure of this file is detailed in the [boundary-condition file documentation](./../Running_FELiCS/input_files/bc_files.md).
 
 ### Settings
-The setting file, [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
+The setting file, [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) can be found inside the [FELiCS configuration file documentation](./../Running_FELiCS/input_files/param_files.md).
 
 Here are some key settings for our resolvent analysis:
 

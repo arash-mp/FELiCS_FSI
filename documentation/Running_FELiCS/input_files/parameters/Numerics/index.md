@@ -26,7 +26,7 @@ These parameters control the polynomial approximation, eigenvalue targeting, and
 
 ## Related documentation
 
---
+See the documentation pages about the [modal](../../../../GoverningEquations/analysisMode_modal.md), [resolvent](../../../../GoverningEquations/analysisMode_resolvent.md), and [input/output](../../../../GoverningEquations/analysisMode_input_output.md) analyses for the theory behind these numerical settings.
 
 ## Detailed content
 ```{toctree}

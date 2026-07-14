@@ -5,6 +5,7 @@ The typical *monolithic* FELiCS workflow consists of:
 2. Running the [`FELiCS` command](#felics-commands)
 3. Post-processing the generated [output files](#output-files)
 
+(input-files)=
 ## Input files
 
 The main input files for FELiCS are:
@@ -25,6 +26,7 @@ The different input files are described in the following sections:
 | [Boundary file](input_files/bc_files.md) | Boundary condition definitions |
 | [Mixture file](input_files/mix_files.md) | Optional mixture properties for reacting flows |
 
+(felics-commands)=
 ## FELiCS Commands
 
 After completing the steps in the [installation guide](../installation_guide.md), the `FELiCS` program can be called directly from the command line, for instance with:
@@ -54,6 +56,7 @@ FELiCS -f config.json -d
 FELiCS -f config.json -t
 ```
 
+(output-files)=
 ## Output files
 
 After running an analysis, FELiCS generates several output files containing:
@@ -91,11 +94,11 @@ flowchart LR
     end
 
     subgraph PrepFiles["FELiCS input files"]
-        B1[settings.json<br><a href="./FELiCS_settings.html">see details</a>]
-        B2[.fel file<br><a href="./fel_file.html">see details</a>]
+        B1[settings.json<br><a href="input_files/param_files.html">see details</a>]
+        B2[.fel file<br><a href="input_files/mean_files.html">see details</a>]
         B3[.msh file<br><a href="../Tutorials/cylinder_wake.html">see Tutorial 1</a>]
-        B4[boundaries.json<br><a href="./FELiCS_settings.html">see details</a><br><a href="../Tutorials/modal_analysis.html">see Tutorial 2</a>]
-        B5[mixture.json<br><a href="./FELiCS_settings.html">see details</a>]
+        B4[boundaries.json<br><a href="input_files/bc_files.html">see details</a><br><a href="../Tutorials/modal_analysis.html">see Tutorial 2</a>]
+        B5[mixture.json<br><a href="input_files/mix_files.html">see details</a>]
 
         style PrepFiles fill:#f1faee,stroke:#457b9d,stroke-width:2px
         style B1 fill:#ffafcc,stroke:#333,stroke-width:1px
@@ -107,7 +110,7 @@ flowchart LR
 
     end
 
-    C[FELiCS<br><a href="./FELiCS_commands.html">see details</a>]
+    C[FELiCS<br><a href="#felics-commands">see details</a>]
     style C fill:#e76f51
 
     subgraph Output["Output"]
