@@ -210,8 +210,8 @@ class EnergyPressureEquation(EquationTemplate):
         # which is integrated by parts.
         
         # TEMPORARY: use constant Pr definition (This should move to fieldProperty or a handler)
-        kappa_m = mean.nu_tot*mean.cp/mean.pr            
-        kappa_f = fluc.nulam*mean.cp/mean.pr
+        kappa_m = mean.mu_tot*mean.cp/mean.pr            
+        kappa_f = fluc.mulam*mean.cp/mean.pr
         
         # Volume term:  
         #   j*(gamma-1)[(grad(conj(X)).(kappa_m*grad(T_f)) + (grad(conj(X)).(kappa_f*grad(T_m))]*dx
@@ -332,9 +332,9 @@ class EnergyPressureEquation(EquationTemplate):
         # reference: self._fieldDict['T'] = (self.p - self.rho*mean_Rspe*mean_T)/(mean_Rspe*mean_rho)
 
         ## ------------------------  Viscous diffusion term 
-        tau_bil  = mean.nu_tot * i_grad(u_bil)
+        tau_bil  = mean.mu_tot * i_grad(u_bil)
         tau_bil += i_t(tau_bil)
-        tau_bil += -2.0/3.0 * mean.nu_tot * \
+        tau_bil += -2.0/3.0 * mean.mu_tot * \
                         i_div(u_bil) * i_identity(i_grad(u_bil))
         
         weakForm.add(

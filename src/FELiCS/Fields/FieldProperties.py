@@ -108,9 +108,9 @@ class FieldProperties:
         Filename for the mean flow data.
     molarMass : object
         Field variable for molar mass.
-    nulam : object
-        Field variable for laminar viscosity.
-    nuTot : object
+    mulam : object
+        Field variable for laminar dynamic viscosity.
+    muTot : object
         Field variable for total viscosity (laminar + turbulent + SGS).
     p : object
         Field variable for pressure.
@@ -609,7 +609,7 @@ class FieldProperties:
         return self._fieldDict['molarMass']
 
     @property
-    def nulam(
+    def mulam(
         self
     ):
         """
@@ -621,24 +621,24 @@ class FieldProperties:
             Field variable for laminar viscosity.
         """
         if self.is_mean_flow_class():
-            if 'nulam' in list(self._fieldDict.keys()):
-                return self._fieldDict['nulam'].get_tensor()
+            if 'mulam' in list(self._fieldDict.keys()):
+                return self._fieldDict['mulam'].get_tensor()
             else:
                 return self._zeroField.get_tensor()
         elif self.is_mean_flow_vertex_values_class():
-            if 'nulam' in list(self._fieldDict.keys()):
-                return self._fieldDict['nulam']
+            if 'mulam' in list(self._fieldDict.keys()):
+                return self._fieldDict['mulam']
             else:
                 return self._zeroField
         
         else:
-            if 'nulam' in list(self._fieldDict.keys()):
-                return self._fieldDict['nulam']
+            if 'mulam' in list(self._fieldDict.keys()):
+                return self._fieldDict['mulam']
             else:
                 return self._zeroField
 
     @property
-    def nu_tot(
+    def mu_tot(
         self
     ):
         """
@@ -649,18 +649,19 @@ class FieldProperties:
         object
             Field variable for total viscosity.
         """
-        nu_tot = Field(
+        mu_tot = Field(
             self._ScalarFunctionSpace,
             self._mesh,
         )
 
-        if 'nulam' in list(self._fieldDict.keys()):
-            nu_tot += self._fieldDict['nulam']
-        if 'nuturb' in list(self._fieldDict.keys()):
-            nu_tot += self._fieldDict['nuturb']
-        if 'nuSGS' in list(self._fieldDict.keys()):
-            nu_tot += self._fieldDict['nuSGS']
-        return nu_tot.get_tensor()
+        if 'mulam' in list(self._fieldDict.keys()):
+            mu_tot += self._fieldDict['mulam']
+        if 'muturb' in list(self._fieldDict.keys()):
+            mu_tot += self._fieldDict['muturb']
+        if 'muSGS' in list(self._fieldDict.keys()):
+            mu_tot += self._fieldDict['muSGS']
+            
+        return mu_tot.get_tensor()
 
     @property
     def p(
@@ -890,26 +891,26 @@ class FieldProperties:
             Field variable for stress tensor.
         """
         if self.is_mean_flow_class() or self.is_mean_flow_vertex_values_class():
-            mean_nu = self.nu_tot
+            mean_mu = self.mu_tot
             mean_u = self.u
-            tau_out = mean_nu * i_grad(mean_u)
+            tau_out = mean_mu * i_grad(mean_u)
             tau_out += i_t(tau_out)
             # Sophie: this if-clause if not really necessary, in the incompressible case the term is just zero
             if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-                tau_out += ( - 2.0 / 3.0 * mean_nu * 
+                tau_out += ( - 2.0 / 3.0 * mean_mu * 
                             i_div(mean_u) * i_identity(i_grad(mean_u)))
                 
         else:
-            mean_nu = self._mean.nu_tot
+            mean_mu = self._mean.mu_tot
             mean_u = self._mean.u
-            fluc_nu = self.nulam
-            tau_out = mean_nu * i_grad(self.u) + \
-                        fluc_nu * i_grad(mean_u)
+            fluc_mu = self.mulam
+            tau_out = mean_mu * i_grad(self.u) + \
+                        fluc_mu * i_grad(mean_u)
             tau_out += i_t(tau_out)
             # Sophie: this if-clause if not really necessary, in the incompressible case the term is just zero
             if not self._param.Case.SetOfEquations['Energy']['Equation'] == 'None':
-                tau_out += -2.0/3.0 * mean_nu * i_div(self.u) * i_identity(i_grad(self.u))
-                tau_out += -2.0/3.0 * fluc_nu * i_div(mean_u) * i_identity(i_grad(self.u))
+                tau_out += -2.0/3.0 * mean_mu * i_div(self.u) * i_identity(i_grad(self.u))
+                tau_out += -2.0/3.0 * fluc_mu * i_div(mean_u) * i_identity(i_grad(self.u))
         return tau_out
 
     @property
