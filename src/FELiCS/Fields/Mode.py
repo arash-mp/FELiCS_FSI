@@ -127,11 +127,11 @@ class Mode(Field):
         self,
         FEMSpace,
         mesh,
-        name="q_hat",
-        isStateVector=True,
-        m=0,
-        analysisType='Modal',
-        modeType = None
+        name            = "q_hat",
+        isStateVector   = True,
+        m               = None,
+        analysisType    = 'Modal',
+        modeType        = None
     ):
         """
         Initialize a Mode instance.
