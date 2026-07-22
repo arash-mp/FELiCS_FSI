@@ -21,3 +21,6 @@ documentation/.DS_Store
 .github/*/*
 *.log
 *.code-workspace
+.claude
+output_dir
+out
