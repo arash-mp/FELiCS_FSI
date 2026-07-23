@@ -27,7 +27,7 @@ from    FELiCS.Fields.FieldProperties                               import  Fiel
 from    FELiCS.Fields.Field                                         import  Field
 from    FELiCS.IO.Mapping                                           import  Mapping
 from    FELiCS.IO.Reader                                            import  Reader
-from    FELiCS.Misc.logging                                         import  Logger
+from    FELiCS.Misc.logging                                         import  Logger, log_and_raise
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -250,9 +250,8 @@ class MeanFlowClass(
         # set 'ut' field to zero
         if 'ut' in list(self._fieldDict.keys()):
             self._fieldDict['ut'].setConstant(0.)
-                
+        
         # Define the viscosity and alfa fields
-        # NOTE: This should move to a handler
         self.init_lam_diff()
         self.init_thermodynamic_quantities()
 
@@ -266,8 +265,6 @@ class MeanFlowClass(
             "MeanFlow",
         )
 
-
-
     def init_lam_diff(
         self
     ):
@@ -275,52 +272,105 @@ class MeanFlowClass(
         Initialize molecular viscosity and species diffusion coefficients.
 
         Based on the selected molecular viscosity model and the mixture data,
-        this method constructs the laminar viscosity field ``nulam`` (if a
+        this method constructs the laminar viscosity field ``mulam`` (if a
         constant model is used) and computes species diffusion coefficients
         ``D_<specie>`` using the corresponding Schmidt numbers.
 
         The effective kinematic viscosity for each species is assembled from
         the available contributions:
-        ``nulam``, ``nuturb`` and ``nuSGS``, if present in ``_fieldDict``.
+        ``mulam``, ``muturb`` and ``muSGS``, if present in ``_fieldDict``.
 
         Notes
         -----
         This routine populates the following entries in ``_fieldDict``:
 
-        - ``'nulam'`` : Field
-            Constant laminar viscosity (for constant viscosity models).
+        - ``'mulam'`` : Field
+            Constant laminar viscosity.
+        - ``'muturb'`` : Field
+            Turbulent viscosity.
         - ``'D_<specie>'`` : Field
             Species diffusion coefficients for transported species.
         """
-        if self._param.Case.MolViscModel == 'Constant':
-            self._fieldDict['nulam']            = Field(
+        
+        # Fields in self can include missing fields set to zero
+        fields_in_self = list(self._fieldDict.keys())
+        
+        # Initialize the molecular viscosity
+        if self._param.Case.MolViscModel == 'File':
+            
+            if 'mulam' in self._notInFileList and 'nulam' in fields_in_self:
+                logger.warning("FELiCS uses dynamic viscosity (mulam) exclusively.")
+                logger.warning("Calculating mulam from kinematic viscosity (nulam) and deleting nulam.")
+                self._fieldDict["mulam"]        = self._fieldDict["nulam"] * self._fieldDict['rho']
+                self._fieldDict["mulam"].name   = "mulam"
+                del self._fieldDict["nulam"]
+                
+            elif 'mulam' in self._notInFileList and 'nulam' in self._notInFileList:
+                log_and_raise(
+                    logger, 
+                    f"Neither kinematic viscosity (nulam) nor dynamic viscosity (mulam) in meanflow file. \
+                             Please either set the parameter 'Case.MolViscModel' in your json file to 'Constant' or provide \
+                             a field 'nulam' or 'mulam' in your mean flow file."
+                )
+                
+            elif 'mulam' not in self._notInFileList and 'nulam' not in self._notInFileList:
+                logger.warning("Both kinematic viscosity (nulam) and dynamic viscosity (mulam) in meanflow file.")
+                logger.warning("Using mulam field and deleting nulam.")
+                del self._fieldDict["nulam"]
+            
+        elif self._param.Case.MolViscModel == 'Constant':
+            
+            self._fieldDict['mulam'] = Field(
                 self._FEMSpaces.P2,
                 self._mesh,
-                name = "nulam",
+                name = "mulam",
             )
-            self._fieldDict['nulam'].set_coefficient_array(self._param.Case.MolVisc)
+            self._fieldDict['mulam'].set_coefficient_array(self._param.Case.MolVisc)
+            
+        # Initialize the turbulent viscosity
+        if self._param.Case.TurbulenceModel == 'File':
+            
+            if 'muturb' in self._notInFileList and 'nuturb' in fields_in_self:
+                logger.warning("FELiCS uses dynamic viscosity (muturb) exclusively.")
+                logger.warning("Calculating muturb from kinematic viscosity (nuturb) and deleting nuturb.")
+                self._fieldDict["muturb"]        = self._fieldDict["nuturb"] * self._fieldDict['rho']
+                self._fieldDict["muturb"].name   = "muturb"
+                del self._fieldDict["nuturb"]
+                
+            elif 'muturb' in self._notInFileList and 'nuturb' in self._notInFileList:
+                log_and_raise(
+                    logger, 
+                    f"Neither kinematic viscosity (nuturb) nor dynamic viscosity (muturb) in meanflow file. \
+                             Please either set the parameter 'Case.TurbulenceModel' in your json file to 'None' or provide \
+                             a field 'nuturb' or 'muturb' in your mean flow file."
+                )
+                
+            elif 'muturb' not in self._notInFileList and 'nuturb' not in self._notInFileList:
+                logger.warning("Both kinematic viscosity (nuturb) and dynamic viscosity (muturb) in meanflow file.")
+                logger.warning("Using muturb field and deleting nuturb.")
+                del self._fieldDict["nuturb"]
 
         for specie in self._param.Mixture.get_species_list('transported'):
             sc          = self._param.Mixture.species[specie]['Sc']
-            nu_tot      = Field(
+            mu_tot      = Field(
                 self._ScalarFunctionSpace,
                 self._mesh,
-                name = "nuTot",
+                name = "muTot",
             )
 
-            if 'nulam' in list(self._fieldDict.keys()):
-                nu_tot += self._fieldDict['nulam']
-            if 'nuturb' in list(self._fieldDict.keys()):
-                nu_tot += self._fieldDict['nuturb']
-            if 'nuSGS' in list(self._fieldDict.keys()):
-                nu_tot += self._fieldDict['nuSGS']
+            if 'mulam' in list(self._fieldDict.keys()):
+                mu_tot += self._fieldDict['mulam']
+            if 'muturb' in list(self._fieldDict.keys()):
+                mu_tot += self._fieldDict['muturb']
+            if 'muSGS' in list(self._fieldDict.keys()):
+                mu_tot += self._fieldDict['muSGS']
                 
             self._fieldDict['D_' + specie]  = Field(
                 self._FEMSpaces.P2,
                 self._mesh,
                 name= 'D_'+specie,
             )
-            self._fieldDict['D_' + specie]  = nu_tot / sc
+            self._fieldDict['D_' + specie]  = mu_tot / sc
 
     def init_thermodynamic_quantities(
         self

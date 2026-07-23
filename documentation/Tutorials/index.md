@@ -62,11 +62,11 @@ You will:
 ---
 
 Each tutorial folder contains all necessary scripts, input files, and example outputs.  
-For further details on settings and file formats, see the [FELiCS settings documentation](../Running_FELiCS/FELiCS_settings.md).
+For further details on settings and file formats, see the [FELiCS input files documentation](../Running_FELiCS/input_files/index.md).
 
 
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 2
 
 cylinder_wake.md
 modal_analysis.md

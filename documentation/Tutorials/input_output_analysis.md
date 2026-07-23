@@ -115,7 +115,7 @@ and use the implemented flame model
 ```
 
 ### Settings
-The setting file [```input_output.json```](../../tutorials/input_ouput_tutorial/input_output.json) encapsulates the analysis information. The explanation of each field is provided in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
+The setting file [```input_output.json```](../../tutorials/input_ouput_tutorial/input_ouput_tutorial.json) encapsulates the analysis information. The explanation of each field is provided in the [FELiCS configuration file documentation](./../Running_FELiCS/input_files/param_files.md).
 
 Here are some key settings for input/output analysis with reacting flows:
 
