@@ -50,7 +50,11 @@ This command will display the following options:
 | `-d` or `--debug` | (Optional) Activate debug mode for extended verbose output |
 | `-t` or `--test` | (Optional) Activate test mode which produces no verbose output |
 | `-p` or `--profiler` | (Optional) Activate cpu and memory profiling (saves csv's and png's in log file directory)|
+| `-p -d` | (Optional) Activate cpu and memory profiling (saves csv's and png's in log file directory) as well as debug mode for extended verbose output |
 
+```{caution}
+The CPU and memory profiler only work on Linux.
+```
 
 Here are some examples of how to use the `FELiCS` command:
 
@@ -61,6 +65,8 @@ Here are some examples of how to use the `FELiCS` command:
 | `FELiCS -f config.json -d` | Start in debug mode |
 | `FELiCS -f config.json -t` | Start in test mode |
 | `FELiCS -f config.json -p` | Start with active profilers |
+| `FELiCS -f config.json -d -p` | Start with active profilers and debug mode |
+
 
 
 (output-files)=
@@ -71,7 +77,10 @@ After running an analysis, FELiCS generates several output files containing:
 - interpolated mean-flow fields (`.h5`),
 - computational meshes (`.h5`),
 - solution spectra (`.csv`),
-- and execution logs (`.log`).
+- and execution logs (`.log`),
+- cpu and memory profiler data if profilers are enabled (`.csv`),
+- plots showing cpu and memory profiler results if profilers are enabled (`.png`).
+
 
 For visualization purposes, FELiCS also automatically generates associated `.xmf` metadata files compatible with ParaView.
 
