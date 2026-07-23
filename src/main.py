@@ -73,7 +73,7 @@ parser.add_argument(
     '-p',
     '--profiler',
     action='store_true',
-    help='activate profiler',
+    help='activate profiler (caution: only works on Linux)',
 )
 args = parser.parse_args()
 
