@@ -14,6 +14,7 @@
 import 	argparse
 
 # Local Libraries and methods
+from    FELiCS.Misc.functions       import get_last_git_commit
 from 	FELiCS.Misc.logging			import  Logger
 from 	FELiCS.Parameters.Config	import 	Config
 from 	run_input_output  			import  run_input_output
@@ -73,6 +74,9 @@ logger = Logger(
     "felics",
 )
 logger = Logger.get_logger("felics")
+
+# get last git commit for reference
+logger.info("Last git commit: " + str(get_last_git_commit()))
 
 if __name__ == '__main__':
 
