@@ -136,7 +136,8 @@ If successful, the FELiCS logo is displayed:
 
 For a more thorough check, run a tutorial case:
 ```bash
-FELiCS -f $FELiCS_PATH/tutorials/modal_analysis_tutorial/modal.json
+cd $FELiCS_PATH/tutorials/modal_analysis_tutorial/
+FELiCS -f modal.json
 ```
 This example should complete in under a minute. If successful, you will see the message: `Finished FELiCS run.`
 
