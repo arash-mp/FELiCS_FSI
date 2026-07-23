@@ -131,6 +131,8 @@ If successful, the FELiCS logo is displayed:
 | __|| __|| |   (_)((/ __|/ __|
 | _| | _| | |__ | | | (__ \__ \
 |_|  |___||____||_|  \___||___/
+usage: main.py [-h] -f path [-d] [-t]
+main.py: error: the following arguments are required: -f/--file/-file
 ```
 
 
@@ -170,7 +172,7 @@ To test the installation, start python in the FELiCS conda environment
 conda activate <felics-environemnt>
 python import FELiCS
 ```
-and try to import FELiCS. If successful, the FELiCS logo is displayed:
+and try to import FELiCS. If successful, the output should be:
 ```python import FELiCS
 (         (               (
 )\ )      ) )       (    )\ )
@@ -180,6 +182,8 @@ and try to import FELiCS. If successful, the FELiCS logo is displayed:
 | __|| __|| |   (_)((/ __|/ __|
 | _| | _| | |__ | | | (__ \__ \
 |_|  |___||____||_|  \___||___/
+usage: main.py [-h] -f path [-d] [-t]
+main.py: error: the following arguments are required: -f/--file/-file
 ```
 
 ```{Caution}
