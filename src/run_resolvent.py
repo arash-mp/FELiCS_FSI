@@ -98,7 +98,7 @@ def run_resolvent(param):
     solution                    = ModeCollection(
         FEMSpaces.VMixed,
         mesh,
-        analysisType='Resolvent',
+        analysisType            = 'Resolvent',
     )
     
     # Run analysis at each frequency
@@ -108,7 +108,7 @@ def run_resolvent(param):
         
         # Catch bug for omega = 1.0
         if omega == 1.0:
-            omega += 1.e-4
+            omega               += 1.e-4
             logger.warning("Omega was equal to 1.0, which can lead to numerical issues. Added 1.e-4 to omega.")
 
         # initialize the resolvent operator, which is a class that imitates 
@@ -131,9 +131,9 @@ def run_resolvent(param):
         # via the matrix vector multiplation "mult"
         gains, eigenvectors_c   = LinearSolver.solve_svd_of_resolvent(
             resolventOperator,
-            nev             = nSol,
-            tol             = 1.e-16,
-            max_it          = 200,
+            nev                 = nSol,
+            tol                 = 1.e-16,
+            max_it              = 200,
         )
 
         solution.append_solution_of_svd_problem(
@@ -141,13 +141,14 @@ def run_resolvent(param):
             omega,
             gains,
             resolventOperator,
+            m                   = param.Case.m
         )
 
         # export spectrum and newly calculated modes
         solution.export_spectrum_to_csv(writer)
         solution.export_modes(
             writer,
-            onlyNewN = nSol*2,
+            onlyNewN            = nSol*2,
         )
 
         resolventOperator.destroy_self()

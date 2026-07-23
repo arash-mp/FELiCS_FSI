@@ -25,7 +25,7 @@ def sutherland_fluctuation_mean(
     Parameters
     ----------
     mean : object
-        Object containing mean temperature, density, and laminar viscosity (attributes: T, rho, nulam or fieldDict).
+        Object containing mean temperature, density, and laminar viscosity (attributes: T, rho, mulam or fieldDict).
     rho : float
         Density value for the fluctuation calculation.
     Ts : float
@@ -33,21 +33,16 @@ def sutherland_fluctuation_mean(
 
     Returns
     -------
-    nulam : float
+    mulam : float
         Fluctuation viscosity computed from the Sutherland model.
     fluct : float
         Fluctuation factor for the viscosity.
     """
 
-    if False:
-        mean_T      = mean.field_dict['T']
-        mean_rho    = mean.field_dict['rho']
-        mean_nulam  = mean.field_dict['nulam']
-    else:
-        mean_T      = mean.T
-        mean_rho    = mean.rho
-        mean_nulam  = mean.nulam
+    mean_T      = mean.T
+    mean_rho    = mean.rho
+    mean_mulam  = mean.mulam
 
-    fluct = (mean_T + 3 * Ts) / (2 * (mean_T + Ts)) * (-1 * rho / mean_rho)
-    nulam = mean_nulam * fluct
-    return nulam, fluct
+    fluct       = (mean_T + 3 * Ts) / (2 * (mean_T + Ts)) * (-1 * rho / mean_rho)
+    mulam       = mean_mulam * fluct
+    return mulam, fluct

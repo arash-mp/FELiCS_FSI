@@ -33,7 +33,7 @@ param.import_from_file(filename)
 3. Check presence of FELiCS [mandatory files](https://felics-d43476.gitlab.io/Running_FELiCS/index.html#overview) in running directory
 4. Initialize a FELiCS [`MixtureClass`](https://felics-d43476.gitlab.io/autoapi/FELiCS/Equation/MixtureClass/index.html#module-FELiCS.Equation.MixtureClass) class  instance
     * Sets default physical parameters
-    * Reads in physical parameters from a FELiCS [mixture file](https://felics-d43476.gitlab.io/Running_FELiCS/FELiCS_settings.html#structure-of-the-mixture-json-file) if present in the running directory.
+    * Reads in physical parameters from a FELiCS [mixture file](https://felics-d43476.gitlab.io/Running_FELiCS/input_files/mix_files.html) if present in the running directory.
 
 5. Read the domain data (*not conceptually clear*) with [`read_domain_data()`](https://felics-d43476.gitlab.io/autoapi/FELiCS/Parameters/Config/index.html#FELiCS.Parameters.Config.Config.read_domain_data)
     *  Initialize a [`FELiCSMesh`](https://felics-d43476.gitlab.io/autoapi/FELiCS/SpaceDisc/FELiCSMesh/index.html#module-FELiCS.SpaceDisc.FELiCSMesh) class instance.
@@ -107,7 +107,7 @@ equation = EquationCollectionClass(param, FEMSpaces, meanFlow, mesh)
 
 1. Store needed FELiCS objects and ufl geometric objects (`SpatialCoordinate`)
 2. Instantiate the FELiCS [`BoundaryHandler`](https://felics-d43476.gitlab.io/autoapi/FELiCS/Equation/Boundary/index.html#FELiCS.Equation.Boundary.BoundaryHandler)
-    * Read the FELiCS [`boundary file`](https://felics-d43476.gitlab.io/Running_FELiCS/FELiCS_settings.html#structure-of-the-boundaries-json-file)
+    * Read the FELiCS [`boundary file`](https://felics-d43476.gitlab.io/Running_FELiCS/input_files/bc_files.html)
     * Set list of BC at each mesh boundary
         * Instantiate a FELiCS [`BoundaryCondition()`](https://felics-d43476.gitlab.io/autoapi/FELiCS/Equation/Boundary/index.html#FELiCS.Equation.Boundary.BoundaryCondition) object
         * Set the specific type of boundary

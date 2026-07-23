@@ -64,7 +64,7 @@ class MomentumHandler:
         """
         outList = ['u', 'rhou', 'p']
         if not self._param.Case.MolViscPerturbModel['type'] == 'Constant':
-            outList.append('nulam')
+            outList.append('mulam')
         return outList
 
     def _relate_conservative_to_primitive_variables_momentum(
@@ -120,17 +120,17 @@ class MomentumHandler:
         if viscosityModel['type']   == 'Constant':
             pass
         elif viscosityModel['type'] == 'Sutherland mean':
-            if 'rho' in alreadyDeterminedFields and not 'nulam' in alreadyDeterminedFields:
+            if 'rho' in alreadyDeterminedFields and not 'mulam' in alreadyDeterminedFields:
                 if mean == 'None':
                     mean = self._mean
                 mixture = self._param.Case.MolViscPerturbModel
                 Ts = viscosityModel['Constants']['Ts']
-                nulam, fluc = sutherland_fluctuation_mean(
+                mulam, fluc = sutherland_fluctuation_mean(
                     mean,
                     self.rho,
                     Ts
                 )
-                self._fieldDict['nulam'] = nulam
+                self._fieldDict['mulam'] = mulam
         else:
             raise Exception("Viscosity model " +
                             viscosityModel['type'] + " not implemented.")
