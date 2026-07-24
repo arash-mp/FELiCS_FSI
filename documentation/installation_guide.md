@@ -39,7 +39,7 @@ In the installation directory, we provide different _.yml_ files that contain al
 The older versions of yml files can be found in the folder [yml_old](https://gitlab.com/felics-group/FELiCS/-/blob/main/installation/) with the corresponding version in the filename.
 
 ```{note}
-Sometimes when using WSL, there might be troubles with the latest yml file. If so please try the second version.
+On some machines, the latest `.yml` file may cause issues with the `gmsh` package. If that happens, try the alternate version instead: [felics_v3.0.0_env_v2.yml](https://gitlab.com/felics-group/FELiCS/-/blob/main/installation/). 
 ```
 
 ```{admonition} Optional
@@ -157,7 +157,11 @@ Example usage:
 
 For a more thorough check, run a tutorial case:
 ```bash
+<<<<<<< HEAD
 cd $FELiCS_PATH/tutorials/modal_analysis_tutorial
+=======
+cd $FELiCS_PATH/tutorials/modal_analysis_tutorial/
+>>>>>>> main
 FELiCS -f modal.json
 ```
 This example should complete in under a minute. If successful, you will see the message: `Finished FELiCS run.`
