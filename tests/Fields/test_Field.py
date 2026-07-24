@@ -34,7 +34,11 @@ from FELiCS.Fields.Field import Field
 from FELiCS.Fields.Mode  import Mode
 from tests.RandomCaseHandler import RandomCaseHandler
 from tests.UnitTestHelper    import UnitTestHelper
+from FELiCS.Misc.logging import Logger, log_and_raise
 
+# initialize the logger
+logger = Logger(logger_name="felics_unit_test")
+logger = Logger.get_logger("felics_unit_test")
 #################################################################
 ##### define necessary functions ################################
 #################################################################
@@ -64,12 +68,12 @@ randomField = FieldTestHandler(dim_vector)
 # --------------------------------------------------------------
 
 def test_calculateL2Norm():
-    print("Testing L2 norm calculation")
+    logger.info("Testing L2 norm calculation")
     # 1. define expressions
     for field in [randomField.scalar_field, randomField.vector_field, randomField.mixed_field]:
-        print(
-        " - Testing field of type: ",
-        field._name,
+        logger.info(
+        " - Testing field of type: " + 
+        field._name
         )
         list = field.get_list_of_sub_fields()
         J_hat = field.mesh.coordinate_system.J_hat
@@ -89,12 +93,12 @@ def test_calculateL2Norm():
         computedL2Norm = field.calculate_l2_norm()
         validL2Norm = np.sqrt(dolfinx.fem.assemble_scalar(dolfinx.fem.form(validExpr)))
         assert np.abs(computedL2Norm - validL2Norm) < 1.e-14
-    print("... passed.")
+    logger.info("... passed.")
 
 def test_getVorticityField():
     # test for 2-D vector
     dim_vector = 2
-    print("Testing computation of the vorticity field in 2D")
+    logger.info("Testing computation of the vorticity field in 2D")
     randomField     = FieldTestHandler(dim_vector)
     field           = randomField.vector_field
     components      = field.get_list_of_sub_fields()
@@ -109,7 +113,7 @@ def test_getVorticityField():
     # Test for 3D vector
     # NOTE: we do this in the last step
     dim_vector = 3
-    print("Testing computation of the vorticity field in 3D")
+    logger.info("Testing computation of the vorticity field in 3D")
     randomField     = FieldTestHandler(dim_vector)
     field           = randomField.vector_field
     components      = field.get_list_of_sub_fields()
@@ -135,7 +139,7 @@ def test_getVorticityField():
     assert np.linalg.norm(vorticity_field_valid.function.x.array[:] - vorticity_field_test.function.x.array[:]) < 1e-12
 
 def test_evaluateUflExpression():
-    print("testing evaluate Ufl expression")
+    logger.info("testing evaluate Ufl expression")
     from FELiCS.Solvers.LinearSolver import LinearSolver
     # NOTE: So far only scalar field is tested
     # 0 Define a simple ufl expression
@@ -175,7 +179,7 @@ def test_evaluateUflExpression():
     test_array = randomField.scalar_field.function.x.array.copy()
     # NOTE: This need a higher tolerance than 1e-14
     assert np.linalg.norm(validation_array-test_array) < 1e-13
-    print("... passed.")
+    logger.info("... passed.")
     
 def test_setBoundaryConditions():
     # NOTE: Only scalar field
@@ -210,10 +214,10 @@ def test_setBoundaryConditions():
     randomField.scalar_field.set_boundary_conditions(bcs)
     test_array = randomField.scalar_field.function.x.array[:]
     assert np.linalg.norm(validation_array-test_array) < 1e-14
-    print("... passed.")
+    logger.info("... passed.")
             
 def test_smoothUflTensorExpression():
-    print("testing evaluate Ufl expression with smooth")
+    logger.info("testing evaluate Ufl expression with smooth")
     from FELiCS.Solvers.LinearSolver import LinearSolver
     # NOTE: So far only scalar field is tested
     # 0 Define a simple ufl expression and smooth factor
@@ -255,7 +259,7 @@ def test_smoothUflTensorExpression():
             i_grad(i_conj(iTest)),
              )).ufl_tens*J_hat*dx)
         else:
-            print("Wrong order for test function")
+            logger.info("Wrong order for test function")
         i+=1
     try:
         matrix_ufl.setCorrectMeshObject(temp_scalar_field.mesh)
@@ -283,10 +287,10 @@ def test_smoothUflTensorExpression():
     )
     test_array = randomField.scalar_field.function.x.array.copy()
     assert np.linalg.norm(validation_array-test_array) < 1e-14
-    print("... passed")
+    logger.info("... passed")
     
 def test_smooth():
-    print("testing smoothing functionality")
+    logger.info("testing smoothing functionality")
     from FELiCS.Solvers.LinearSolver import LinearSolver
     # NOTE: So far only scalar field is tested
     # 0 Define a simple ufl expression and smooth factor
@@ -327,7 +331,7 @@ def test_smooth():
             i_grad(i_conj(iTest)),
              )).ufl_tens*J_hat*dx)
         else:
-            print("Wrong order for test function")
+            logger.info("Wrong order for test function")
         i+=1
     matrix = matrix_ufl.get_assembled_matrix(
     temp_scalar_field.mesh,
@@ -362,4 +366,89 @@ def test_smooth():
     randomField.scalar_field.smooth(smoothFactor)
     test_array = randomField.scalar_field.function.x.array.copy()
     assert np.linalg.norm(validation_array-test_array) < 1e-14
-    print("... passed")
+    logger.info("... passed")
+    
+def test_get_names_of_sub_fields():
+    logger.info("Testing get names of sub fields")
+    logger.warning("Only default functionalities are tested since random fields don't have preset name yet.")
+    # 1. define expressions
+    for field in [randomField.scalar_field, randomField.vector_field, randomField.mixed_field]:
+        logger.info(
+        " - Testing field of type: " + 
+        field._name
+        )
+        subFieldNames           = []
+        if field.info['type'] == 'scalar':
+            logger.warning("getNamesOfSubFields() called for single scalar field. Returning empty list.")
+            validValue = subFieldNames
+        elif field.info['type'] == 'vector':
+            axis_names           = field.mesh.axis_names
+            numSubSpaces        = field.info['num_subspaces']
+            
+            # Check that the number of axis names is sufficient
+
+            if len(axis_names) < numSubSpaces:
+                log_and_raise(logger, f"Not enough axis names {axis_names} in the coordinate system for the vector field with {numSubSpaces} components.", ValueError)
+
+            # If the vector was not given before, we set a default
+            if field._name is None or not isinstance(
+            field._name,
+            str,
+            ):
+                field._name       = 'vectorField'
+
+            for i in range(numSubSpaces):
+                subFieldNames.append(field._name+axis_names[i])
+        elif field.info['type'] == 'mixed':
+            if field.isStateVector and not field._namesOfSubFields:
+                for name in field.space.stateVectorNames:
+                    subFieldNames.append(name[0])
+                validValue = subFieldNames
+            
+            # If it was set before, return the stored names
+            elif field._namesOfSubFields:
+                validValue = field._namesOfSubFields
+            
+            # Otherwise, set default names
+            else:
+                counter_scalars     = 1
+                counter_vectors     = 1
+                for i in range(field.info['num_subspaces']):
+                    if field.info['subspaces'][i]['type'] == 'scalar':
+                        subFieldNames.append(f'scalar{counter_scalars}')
+                        counter_scalars += 1
+                    elif field.info['subspaces'][i]['type'] == 'vector':
+                        subFieldNames.append(f'vector{counter_vectors}')
+                        counter_vectors += 1
+                    else:
+                        log_and_raise(logger, "Subspace type neither scalar nor vector.", ValueError)
+        validValue = subFieldNames
+        # 2. check alignment
+        computedValue = field.get_names_of_sub_fields()
+        assert validValue == computedValue
+    logger.info("... passed.") 
+    
+def test_set_names_of_sub_fields():
+    logger.info("Testing set names of sub fields")
+    # 1. define expressions
+    for field in [randomField.scalar_field, randomField.vector_field, randomField.mixed_field]:
+        logger.info(
+            " - Testing field of type: " + 
+            field._name
+        )
+        if field.info["type"] == 'scalar':
+            nameList = []
+        elif field.info['type'] == 'vector':
+            nameList = ['vec_1', 'vec_2', 'vec_3']
+        elif field.info['type'] == 'mixed':
+            nameList = ['testScalar', 'testVector']
+        field.set_names_of_sub_fields(nameList)
+        # 2. check alignment
+        validValue = nameList
+        computedValue = field._namesOfSubFields
+        assert validValue == computedValue
+    logger.info("... passed.") 
+#################################################################
+##### moving log files to TESTS folder ##########################
+#################################################################
+Logger.change_log_location("./TESTS/Fields/logs")

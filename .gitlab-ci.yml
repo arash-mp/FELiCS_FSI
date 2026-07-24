@@ -19,8 +19,28 @@ felics-pytest:
     - pip install -e .
     - cd ..
   script:
+    - export PYTHONPATH="$(pwd)/src${PYTHONPATH:+:$PYTHONPATH}"
     - cd tests
-    - python3 -m pytest 
+    - python3 -m pytest
+  only:
+    - development
+
+felics-tutorials:
+  stage: test
+  image: continuumio/miniconda3
+  before_script:
+    - git --version
+    - pwd
+    - ls -all
+    - echo "Creating conda environment for FELiCS..."
+    - conda env create -f installation/felics_v3.0.0_env_v2.yml
+    - source /opt/conda/etc/profile.d/conda.sh
+    - conda activate felics
+    - cd installation
+    - pip install -e .
+    - cd ..
+  script:
+    - bash tutorials/test_tutorials.sh
   only:
     - development
 

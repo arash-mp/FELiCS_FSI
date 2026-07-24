@@ -127,11 +127,11 @@ class Mode(Field):
         self,
         FEMSpace,
         mesh,
-        name="q_hat",
-        isStateVector=True,
-        m=0,
-        analysisType='Modal',
-        modeType = None
+        name            = "q_hat",
+        isStateVector   = True,
+        m               = None,
+        analysisType    = 'Modal',
+        modeType        = None
     ):
         """
         Initialize a Mode instance.
@@ -168,9 +168,17 @@ class Mode(Field):
         )
         
         # Set values
-        self.analysisType      = AnalysisType[analysisType.upper()]
+        self.analysisType       = AnalysisType[analysisType.upper()]
         # TODO Sophie: write error if analysisType is not given
-        self.wave_number        = m
+
+        # Set default values for mode properties
+        self._gain              = None
+        self._gainNumber        = None
+        self._frequency         = None
+        self._eigenValue        = None
+        self._waveNumber        = m
+        self._guess             = None
+        self._error             = None
     
         # Define name of the subfields (variables of the mode)
         self.namesOfSubFields   = self.get_names_of_sub_fields()
@@ -178,13 +186,13 @@ class Mode(Field):
         if modeType is None:
             # Set some defaults in not a good way .> TODO: fix this as a property
             if self.analysisType == AnalysisType.MODAL:
-                self.modeType = ModeType.DIRECT
+                self.modeType   = ModeType.DIRECT
             elif self.analysisType == AnalysisType.RESOLVENT:
-                self.modeType = ModeType.FORCING
+                self.modeType   = ModeType.FORCING
             elif self.analysisType == AnalysisType.INPUT_OUTPUT:
-                self.modeType = ModeType.RESPONSE
+                self.modeType   = ModeType.RESPONSE
         else:
-            self.modeType = ModeType[modeType.upper()]
+            self.modeType       = ModeType[modeType.upper()]
 
 
     @property
@@ -236,11 +244,12 @@ class Mode(Field):
         float
             The mode gain. If undefined, returns ``-9999.`` and issues a warning.
         """
-        try:
-            return self._gain
-        except: 
+        
+        if self._gain is None:
             logger.warning('For this mode object no gain was defined. Returning "-9999."...')
             return -9999.
+        else:
+            return self._gain
 
     @gain.setter
     def gain(
@@ -257,8 +266,6 @@ class Mode(Field):
         """
         self._gain = gain
 
-
-
     @property
     def gain_number(
         self
@@ -271,11 +278,11 @@ class Mode(Field):
         int
             Gain number of the mode. Returns -1 if undefined.
         """
-        try:
-            return self._gainNumber
-        except: 
+        if self._gainNumber is None:
             logger.warning('For this mode object no gain number was defined. Returning "-1"...')
             return -1
+        else:
+            return self._gainNumber
 
     @gain_number.setter
     def gain_number(
@@ -304,11 +311,11 @@ class Mode(Field):
         float
             Frequency of the mode. Returns -9999. if undefined.
         """
-        try:
-            return self._frequency
-        except: 
+        if self._frequency is None:
             logger.warning('For this mode object no frequency was defined. Returning "-9999."...')
             return -9999.
+        else:
+            return self._frequency
 
     @frequency.setter
     def frequency(
@@ -338,11 +345,11 @@ class Mode(Field):
         float
             Eigenvalue of the mode. Returns -9999. if undefined.
         """
-        try:
-            return self._eigenValue
-        except: 
+        if self._eigenValue is None:
             logger.warning('For this mode object no eigen value was defined. Returning "-9999."...')
             return -9999.
+        else:
+            return self._eigenValue
 
     @eigen_value.setter
     def eigen_value(
@@ -371,11 +378,11 @@ class Mode(Field):
         float
             Wave number of the mode. Returns -9999. if undefined.
         """
-        try:
-            return self._waveNumber
-        except: 
+        if self._waveNumber is None:
             logger.warning('For this mode object no waveNumber was defined. Returning "-9999."...')
             return -9999.
+        else:
+            return self._waveNumber
  
     @wave_number.setter
     def wave_number(
@@ -404,11 +411,11 @@ class Mode(Field):
         float
             Initial guess used. Returns -9999. if undefined.
         """
-        try:
-            return self._guess
-        except: 
+        if self._guess is None:
             logger.warning('For this mode object no guess was defined. Returning "-9999."...')
             return -9999.
+        else:
+            return self._guess
 
     @guess.setter
     def guess(
@@ -437,11 +444,11 @@ class Mode(Field):
         float
             Error of the mode. Returns -9999. if undefined.
         """
-        try:
-            return self._error
-        except: 
+        if self._error is None:
             logger.warning('For this mode object no error was defined. Returning "-9999."...')
             return -9999.
+        else:
+            return self._error
 
     @error.setter
     def error(
@@ -516,20 +523,24 @@ class Mode(Field):
                 fileName += "_GainNb_" + str(self.gain_number)
 
         # give a list of attributes to store in the file
-        attr = lambda : None
-        attr.name  = "omega"
-        attr.value = self.omega
-        attrList = [attr]
+        attr                        = lambda : None
+        attr.name                   = "omega"
+        attr.value                  = self.omega
+        attrList                    = [attr]
+        attrm                       = lambda : None
+        attrm.name                  = "m"
+        attrm.value                 = self.wave_number
+        attrList.append(attrm)
         if self.analysisType in [AnalysisType.RESOLVENT, AnalysisType.INPUT_OUTPUT]:
-            attrGain  = lambda : None
-            attrGain.name = "gain"
-            attrGain.value = self.gain
+            attrGain                = lambda : None
+            attrGain.name           = "gain"
+            attrGain.value          = self.gain
             attrList.append(attrGain)
 
         if self.analysisType in [AnalysisType.RESOLVENT]:
-            attrGainNumber  = lambda : None
-            attrGainNumber.name = "number"
-            attrGainNumber.value = self.gain_number
+            attrGainNumber          = lambda : None
+            attrGainNumber.name     = "number"
+            attrGainNumber.value    = self.gain_number
             attrList.append(attrGainNumber)
 
         # export mode        

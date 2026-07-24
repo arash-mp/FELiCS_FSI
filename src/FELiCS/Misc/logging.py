@@ -16,6 +16,8 @@ import logging
 import os
 import re
 import shutil
+import subprocess
+import sys
 
 def log_and_raise(logger, log_message, exc_type=RuntimeError, raise_message=None):
     logger.error(log_message)
@@ -61,15 +63,20 @@ class CustomFormatter(logging.Formatter):
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format_str = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+    _base_fmt       = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+    _base_fmt_debug = '%(asctime)s | %(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
 
-    FORMATS = {
-        logging.DEBUG: grey + format_str +  reset,
-        logging.INFO: grey + format_str +reset,
-        logging.WARNING: yellow + format_str + reset,
-        logging.ERROR: red + format_str + reset,
-        logging.CRITICAL: bold_red + format_str + reset
-    }
+    def __init__(self, debug_mode=False):
+        super().__init__()
+        fmt = self._base_fmt_debug if debug_mode else self._base_fmt
+        self.FORMATS = {
+            logging.DEBUG:    self.grey     + fmt + self.reset,
+            logging.INFO:     self.grey     + fmt + self.reset,
+            logging.WARNING:  self.yellow   + fmt + self.reset,
+            logging.ERROR:    self.red      + fmt + self.reset,
+            logging.CRITICAL: self.bold_red + fmt + self.reset,
+        }
+        self._datefmt = '%Y-%m-%d %H:%M:%S' if debug_mode else None
 
     def format(
         self,
@@ -91,7 +98,7 @@ class CustomFormatter(logging.Formatter):
             The formatted log message string.
         """
         log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
+        formatter = logging.Formatter(log_fmt, datefmt=self._datefmt)
         if in_notebook():
 
             # Strip ANSI codes inside notebooks
@@ -103,26 +110,11 @@ class CustomFormatter(logging.Formatter):
         else:
             return formatter.format(record)
 
-            # Add colors everywhere else
-            # log_color = self.FORMATS.get(record.levelno, "\x1b[0m")
-            # return f"{log_color}{formatter.format(record)}{"\x1b[0m"}"
-
-        # if 'IPYTHON' in globals():
-        #     return formatter.format(record)
-        # else:
-        #     return re.sub(r'\x1b\[[0-9;]*m', '', formatter.format(record))
-
-
-# 
-# handler = logging.StreamHandler()
-# handler.setFormatter(CustomFormatter(format_str))
-
 class Logger:
     """
     Logger class for flexible and colored logging to file and console.
 
     Provides a singleton logger with support for colored console output, file logging, dynamic log file location changes, and debug/test modes.
-
     **Initialize the Logger object**
 
     Parameters
@@ -130,6 +122,8 @@ class Logger:
     debug_mode : bool, optional
         If True, enables debug logging (default is False).
     test_mode : bool, optional
+        If True, enables test mode logging (default is False).
+    profiler_mode : bool, optional
         If True, enables test mode logging (default is False).
     logger_name : str, optional
         Name of the logger and log file prefix (default is "log").
@@ -140,6 +134,8 @@ class Logger:
         Indicates if debug mode is enabled.
     test_mode : bool
         Indicates if test mode is enabled.
+    profiler_mode : bool
+        Indicates if profilers are enabled.
     logger_name : str
         Name of the logger.
     _logger : logging.Logger
@@ -152,6 +148,7 @@ class Logger:
         self,
         debug_mode=False,
         test_mode=False,
+        profiler_mode=False,
         logger_name="log"
     ):
         """
@@ -163,11 +160,14 @@ class Logger:
             If True, enables debug logging (default is False).
         test_mode : bool, optional
             If True, enables test mode logging (default is False).
+        profiler_mode : bool, optional
+            If True, enables profilers (default is False).
         logger_name : str, optional
             Name of the logger and log file prefix (default is "log").
         """
         self.debug_mode = debug_mode
         self.test_mode = test_mode
+        self.profiler_mode = profiler_mode
         self.logger_name = logger_name
         self._logger = None
         self._setup_logger()
@@ -192,6 +192,7 @@ class Logger:
         self._logger = logging.getLogger(self.logger_name)
         self._logger.handlers.clear()
         self._logger.propagate = False
+        self._logger._felics_profiler_mode = self.profiler_mode
         
         self._logger.setLevel(logging.DEBUG if (self.debug_mode or self.test_mode) else logging.INFO)
 
@@ -228,12 +229,18 @@ class Logger:
             logging.DEBUG,
             'Debug',
         )
-        formatter_log = logging.Formatter(
+        _log_fmt = (
+            '%(asctime)s | %(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+            if self.debug_mode else
             '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+        )
+        formatter_log = logging.Formatter(
+            _log_fmt,
+            datefmt='%Y-%m-%d %H:%M:%S' if self.debug_mode else None,
         )
 
         # use custom formatter to get colored output for the command line
-        formatter_cmd = CustomFormatter() 
+        formatter_cmd = CustomFormatter(debug_mode=self.debug_mode)
         
         ch.setFormatter(formatter_cmd)
         fh.setFormatter(formatter_log)
@@ -243,6 +250,98 @@ class Logger:
             self._logger.addHandler(handler)
 
         self._logger.debug("Logger initialized successfully")
+        
+        if self.profiler_mode:
+            self._start_mem_tracker()
+            self._start_cpu_tracker()
+
+    def _start_cpu_tracker(self):
+        """
+        Launch the background CPU-usage tracker alongside the log file.
+
+        Resolves the path to tools/cpu_tracker.py relative to this file,
+        then spawns it as a detached subprocess that samples CPU utilization and writes
+        a CSV and PNG into the same directory as the log file.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        log_file = next(
+            (h.baseFilename for h in self._logger.handlers
+             if isinstance(h, logging.FileHandler)),
+            None,
+        )
+        if log_file is None:
+            return
+
+        tracker = os.path.normpath(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         '..', '..', '..', 'tools', 'cpu_tracker.py')
+        )
+        if not os.path.isfile(tracker):
+            self._logger.warning(f"CPU tracker script not found: {tracker}")
+            return
+
+        subprocess.Popen(
+            [sys.executable, tracker,
+             '--pid',      str(os.getpid()),
+             '--log-file', log_file],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self._logger.info(
+            f"CPU tracker started for PID {os.getpid()}; "
+            f"output in log file directory"
+        )
+
+    def _start_mem_tracker(self):
+        """
+        Launch the background memory-usage tracker alongside the log file.
+
+        Resolves the path to tools/memory_tracker.py relative to this file,
+        then spawns it as a detached subprocess that samples memory and writes
+        a CSV and PNG into the same directory as the log file.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        log_file = next(
+            (h.baseFilename for h in self._logger.handlers
+             if isinstance(h, logging.FileHandler)),
+            None,
+        )
+        if log_file is None:
+            return
+
+        tracker = os.path.normpath(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         '..', '..', '..', 'tools', 'memory_tracker.py')
+        )
+        if not os.path.isfile(tracker):
+            self._logger.warning(f"Memory tracker script not found: {tracker}")
+            return
+
+        subprocess.Popen(
+            [sys.executable, tracker,
+             '--pid',      str(os.getpid()),
+             '--log-file', log_file],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self._logger.info(
+            f"Memory tracker started for PID {os.getpid()}; "
+            f"output in log file directory"
+        )
 
     @property
     def logger(
@@ -306,6 +405,8 @@ class Logger:
 
         Moves all current log files to the specified new directory and updates the logger's file handlers to write to the new location.
 
+        Renames memory-profiler companion files (CSV, PNG) if they exist, and writes a redirect file so the background tracker switches its output directory as well.
+
         Parameters
         ----------
         new_log_path : str
@@ -347,6 +448,28 @@ class Logger:
                     old_log_path,
                     new_log_path,
                 )
+
+            # Move tracker files (CSV, PNG) 
+            # if they exist, write a redirect file so the background tracker switches its output directory.
+            old_dir  = os.path.dirname(old_log_path)
+            log_stem = os.path.splitext(os.path.basename(old_log_path))[0]
+            profiler_active = bool(getattr(instance, "_felics_profiler_mode", False))
+            for _tracker in ["memory", "cpu"]:
+                _has_tracker_files = False
+                for _ext in ["csv", "png"]:
+                    _src = os.path.join(old_dir, f"{log_stem}_{_tracker}.{_ext}")
+                    if os.path.exists(_src):
+                        shutil.move(_src, new_log_path)
+                        _has_tracker_files = True
+
+                if _has_tracker_files or profiler_active:
+                    _redirect = os.path.join(old_dir, f"{log_stem}_{_tracker}.redirect")
+                    try:
+                        with open(_redirect, "w") as _rf:
+                            _rf.write(new_log_path)
+                    except OSError:
+                        pass
+            
             new_log_file_path = os.path.join(
                 new_log_path,
                 os.path.basename(old_log_path),

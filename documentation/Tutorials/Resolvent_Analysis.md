@@ -59,7 +59,7 @@ $PhysicalNames
 ```
 the IDs of "centerline", "inlet", "outlet", "walls" are respectively 2,3,4,5.
 
-Define the boundaries in the file [boundaries.json](../../tutorials/resolvent_tutorial/boundaries.json) using the corresponding IDs. The file structure is detailed in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
+Define the boundaries in the file [boundaries.json](../../tutorials/resolvent_tutorial/boundaries.json) using the corresponding IDs. The file structure is detailed in the [boundary-condition file documentation](./../Running_FELiCS/input_files/bc_files.md).
 In our case, we set:
 | Boundary | $u'_x$ | $u'_r$ | $u'_\theta$ | $p'$ |
 |:----------|:-----------|:-----------|:-----------|:-----------|
@@ -69,7 +69,7 @@ In our case, we set:
 | <code style="color : Darkorange">Wall</code> | Dirichlet | Dirichlet | Dirichlet | Neumann |
 
 ### Settings
-The setting file [```resolvent_settings.json```](../../tutorials/resolvent_tutorial/resolvent_settings.json) contains all the analysis information. The explanation of each field is provided in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
+The setting file [```resolvent_settings.json```](../../tutorials/resolvent_tutorial/resolvent_settings.json) contains all the analysis information. The explanation of each field is provided in the [FELiCS configuration file documentation](./../Running_FELiCS/input_files/param_files.md).
 
 Here are some key settings for our resolvent analysis:
 
@@ -79,7 +79,7 @@ Here are some key settings for our resolvent analysis:
 ```
 ```{note}
 The velocity components are thus refered to as `ux, ur, ut` instead of `ux, uy, uz`.
-'''
+```
 
 - We choose to study axisymmetric perturbations by setting the azimuthal wavenumber to 0:
 ```json

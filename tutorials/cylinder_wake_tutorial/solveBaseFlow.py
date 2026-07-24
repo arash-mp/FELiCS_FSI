@@ -20,11 +20,11 @@ import dolfinx
 
 from   mpi4py import MPI
 
-from   FELiCS.Parameters.config import config
+from   FELiCS.Parameters.Config import Config
 
 from   FELiCS.IO.Writer                   import Writer
 from   FELiCS.SpaceDisc.FEMSpaces         import FEMSpaces
-from   FELiCS.Fields.meanFlowClass        import meanFlowClass
+from   FELiCS.Fields.MeanFlowClass        import MeanFlowClass
 from   FELiCS.Equation.EquationCollection import EquationCollectionClass
 
 from   FELiCS.Solvers.LinearSolver  import LinearSolver 
@@ -73,11 +73,11 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
     ## INITIALIZATION 
     #-----------------------------------------------------------------------
     # read parameters
-    param=config()
-    param.importFromFile(settingsFileName)
+    param=Config()
+    param.import_from_file(settingsFileName)
 
     # mesh
-    mesh      = param.getMesh()
+    mesh      = param.get_mesh()
     
     # FEMSpaces
     femSpaces = FEMSpaces(param, mesh)
@@ -86,8 +86,8 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
     writer    = Writer(mesh, param.Export.ExportFolder)
 
     # initialize mean flow class 
-    meanFlow = meanFlowClass(param, femSpaces, mesh)
-    meanFlow.importDataFromFileAndExportToH5(writer)
+    meanFlow = MeanFlowClass(param, femSpaces, mesh)
+    meanFlow.import_data_from_file_and_export_to_h5(writer)
     
     # equation
     equation = EquationCollectionClass(
@@ -114,28 +114,28 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
     # track time
     start= time.time()
     # calculate initial residuum
-    N = equation.getNonlinearExpression(meanFlow)
+    N = equation.get_nonlinear_expression(meanFlow)
     residuum = np.linalg.norm(N.getArray())
     # calulate the base flow
     i=0
     while(residuum > target_residuum and i<100):
         i+=1
-    
+
         # solve equation system
-        L = equation.getLinearOperator(meanFlow)
-        newtonSummand_array = LinearSolver.solveEquationSystem(L,N)
+        L = equation.get_linear_operator(meanFlow)
+        newtonSummand_array = LinearSolver.solve_equation_system(L,N)
         L.destroy()
         N.destroy()
-    
+
         # update baseFlow
-        baseFlow_array = baseFlow.getCoefficientArray() - newtonSummand_array
-        baseFlow.setCoefficientArray(baseFlow_array)
-        
+        baseFlow_array = baseFlow.get_coefficient_array() - newtonSummand_array
+        baseFlow.set_coefficient_array(baseFlow_array)
+
         # calculate nonlinear expression & residuum
-        [u,p] = baseFlow.getListOfSubFields()
+        [u,p] = baseFlow.get_list_of_sub_fields()
         meanFlow._fieldDict['u'] = u
         meanFlow._fieldDict['p'] = p
-        N = equation.getNonlinearExpression(meanFlow)
+        N = equation.get_nonlinear_expression(meanFlow)
         residuum = np.linalg.norm(N.getArray())
         print("-------------------------------------------------------------" )
         print("-- Base flow iteration: "+str(i)+"; Residuum: %4g " % residuum)
@@ -147,7 +147,7 @@ def calculateBaseFlow(settingsFileName, optimizerParameters = None, deformed = F
     print('-- Solving the base flow problem took %4g s' % end)
     print('-- Residuum:  %12g' % (residuum))
 
-    baseFlow.exportToH5(writer, "baseFlow")
+    baseFlow.export_to_h5(writer, "baseFlow")
  
 
 

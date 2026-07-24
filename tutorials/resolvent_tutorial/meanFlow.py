@@ -12,6 +12,8 @@
 #
 # Import required packages
 import sys
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import h5py
@@ -57,7 +59,8 @@ plt.colorbar(sc1, ax=ax1)
 sc2 = ax2.scatter(x, y, c=ur)
 ax2.set_title('Response Domain')
 plt.colorbar(sc2, ax=ax2)
-plt.show()
+plt.savefig('mean_flow_velocity.png')
+plt.close()
 
 # Upstream sponge parameters
 x0inlet = -2  # Start of inlet sponge region
@@ -86,7 +89,8 @@ fig1, ax = plt.subplots()
 tpc = plt.scatter(x, y, c=spg)
 plt.axis('equal')
 plt.colorbar(tpc)
-
+plt.savefig('mean_flow_sponge.png')
+plt.close()
 
 # Define regions for forcing and response domains
 Wforcing = np.where((x > -4) & (x < 12), 1, 0)
@@ -98,7 +102,8 @@ plt.colorbar(sc1, ax=ax1)
 sc2 = ax2.scatter(x, y, c=Wresponse)
 ax2.set_title('Response Domain')
 plt.colorbar(sc2, ax=ax2)
-plt.show()
+plt.savefig('mean_flow_domains.png')
+plt.close()
 
 # Create and save the FELiCS mean flow file
 print(f'-- Saving data to file: {case["SAVE_FILE"]}')

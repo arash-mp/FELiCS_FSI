@@ -121,7 +121,7 @@ class Field:
         self.isStateVector = isStateVector
 
         # handle spectral dimension and wave number
-        if m is not None:
+        if m is not None and m is not 0:
             self.hasSpectralDimension = True
             self.m = m
         else:
@@ -1052,15 +1052,7 @@ class Field:
                     ##LOGGING TODO (Sophie): throw error 
                     print("ERROR, in 'Field.smoothTensorUflExpression'")
                 i+=1
-            try:
-                matrix_ufl.setCorrectMeshObject(self.mesh)
-            except:
-                pass
-            matrix = petsc.assemble_matrix(
-                dolfinx.fem.form(matrix_ufl.lhs),
-                bcs=bcs
-            )
-            matrix.assemble()
+            matrix = matrix_ufl.get_assembled_matrix(self.mesh,bcs)
             self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system

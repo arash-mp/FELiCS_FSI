@@ -11,6 +11,8 @@
 # \___________________________________/ \_______________________________________________________/
 #
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import h5py
 import matplotlib.tri as tri
@@ -37,7 +39,8 @@ plt.xlabel('St')
 plt.ylabel('$\\sigma^2$')
 plt.title('Resolvent Gains')
 plt.legend()
-plt.show()
+plt.savefig('resolvent_gains.png')
+plt.close()
 
 # --- Load and plot a response mode ---
 
@@ -146,7 +149,8 @@ plot_mode_fromfile(forcing_file,['ur'], mesh_file, quantity = 'real', ax=ax2, xl
 
 ax3 = plt.subplot(3,1,3)
 plot_mode_fromfile(forcing_file,['p'], mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], vmin = -1.3e-3, vmax = 1.3e-3,title='Real($p$)')
-plt.show()
+plt.savefig('resolvent_forcing.png')
+plt.close()
 # Response
 figure = plt.figure()
 ax1 = plt.subplot(3,1,1)
@@ -155,4 +159,5 @@ ax2 = plt.subplot(3,1,2)
 plot_mode_fromfile(response_file,['ur'], mesh_file, quantity = 'real', ax=ax2, xlims=[-2,8], vmin = -2.5e-2, vmax = 2.5e-2, title='Real($u_r$)')
 ax3 = plt.subplot(3,1,3)
 plot_mode_fromfile(response_file,['p'], mesh_file, quantity = 'real', ax=ax3, xlims=[-2,8], vmin = -1.3e-2, vmax = 1.3e-2, title='Real($p$)')
-plt.show()
+plt.savefig('resolvent_response.png')
+plt.close()

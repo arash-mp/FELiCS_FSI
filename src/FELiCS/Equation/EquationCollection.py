@@ -869,31 +869,38 @@ class EquationCollectionClass():
 
             if param.IOResolvent.ForcingNorm == 'Chu':
                 logger.debug("Using Chu's disturbance energy (rho-T) for forcing norm.")
-                idu   = param.Case.SolutionList.index('u')
-                idrho = param.Case.SolutionList.index('rho')
-                idT   = param.Case.SolutionList.index('T')
-                self.forcing_vf += (barrho*i_dot(
-                    fluc.u,
-                    i_conj(X[idu]),
-                )).ufl_tens*self._coordinateSystem.J_hat*dx     # TKE term
-                self.forcing_vf += (
-                    mean.r_spe * mean.T / 
-                    mean.rho * fluc.rho * i_conj(X[idrho])
-                ).ufl_tens * self._coordinateSystem.J_hat * dx     # density term
-                self.forcing_vf += (
-                    mean.rho * mean.cp / 
-                    (mean.T * mean.gamma) * fluc.T * i_conj(X[idT])
-                ).ufl_tens * self._coordinateSystem.J_hat * dx       # Temperature term
+                idu                     = param.Case.SolutionList.index('u')
+                idrho                   = param.Case.SolutionList.index('rho')
+                idT                     = param.Case.SolutionList.index('T')
+                
+                # TKE term
+                self.forcing_vf         += (
+                    barrho*i_dot(fluc.u, i_conj(X[idu]))
+                    ).ufl_tens*self._coordinateSystem.J_hat*dx     
+                
+                # Density term
+                self.forcing_vf         += (
+                    mean.r_spe*mean.T/mean.rho*fluc.rho*i_conj(X[idrho])
+                ).ufl_tens * self._coordinateSystem.J_hat * dx     
+                
+                # Temperature term
+                self.forcing_vf         += (
+                    mean.rho*mean.cp/(mean.T*mean.gamma)*fluc.T*i_conj(X[idT])
+                ).ufl_tens * self._coordinateSystem.J_hat * dx
+                
             elif param.IOResolvent.ForcingNorm == 'TKE':
                 logger.debug("Using TKE energy for forcing norm.")
-                idu   = param.Case.SolutionList.index('u')
-                self.forcing_vf += (barrho * i_dot(
-                    fluc.u,
-                    i_conj(X[idu]),
-                )).ufl_tens * self._coordinateSystem.J_hat * dx
-                self.__forcing_coeff = self._param.IOResolvent.ForcingCoeff
+                idu                     = param.Case.SolutionList.index('u')
+                self.forcing_vf         += (
+                    barrho*i_dot(fluc.u, i_conj(X[idu]))
+                    ).ufl_tens * self._coordinateSystem.J_hat * dx
             else:
-                log_and_raise(logger, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.", Exception, f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.")
+                log_and_raise(
+                    logger, 
+                    f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented.", 
+                    Exception, 
+                    f"Forcing norm type '{param.IOResolvent.ForcingNorm}' not implemented."
+                )
 
         # In boundary forcing, forcing is allowed only on the specific boundaries
         elif param.IOResolvent.ForcingMode=='Boundary':
