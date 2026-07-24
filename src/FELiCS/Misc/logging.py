@@ -63,12 +63,12 @@ class CustomFormatter(logging.Formatter):
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    _fmt      = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
-    _fmt_debug = '%(asctime)s | %(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+    _base_fmt       = '%(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
+    _base_fmt_debug = '%(asctime)s | %(levelname)-8s | %(filename)-22s | %(funcName)-26s (line %(lineno)-4s) : %(message)s'
 
     def __init__(self, debug_mode=False):
         super().__init__()
-        fmt = self._fmt_debug if debug_mode else self._fmt
+        fmt = self._base_fmt_debug if debug_mode else self._base_fmt
         self.FORMATS = {
             logging.DEBUG:    self.grey     + fmt + self.reset,
             logging.INFO:     self.grey     + fmt + self.reset,
