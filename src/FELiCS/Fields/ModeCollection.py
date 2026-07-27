@@ -19,7 +19,7 @@ import numpy as np
 
 # Local Libraries and methods
 from    FELiCS.Fields.FluctuationClass  import FluctuationSolutions
-from    FELiCS.Misc.plottingUtils     import plot_spectrum as _plot_spectrum
+from    FELiCS.Misc.plottingUtils       import plot_modal_spectrum, plot_resolvent_spectrum
 from    FELiCS.Fields.Mode              import Mode, AnalysisType, ModeType
 from 	FELiCS.Misc.logging             import Logger,  log_and_raise
 
@@ -589,23 +589,54 @@ class ModeCollection():
 
     def plot_spectrum(
         self,
-        ax=None
+        ax=None,
+        xlim=None,
+        ylim=None,
     ):
         """
         Plot the eigenvalue spectrum for Modal analysis or gains for Resolvent analysis.
-        Delegates to :func:`FELiCS.Misc.plottingUtils.plot_spectrum`.
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
             Matplotlib axes to plot on. If None, a new figure and axes will be
             created. Default is None.
+        xlim : tuple, optional
+            Limits for the x-axis. If None, limits are determined automatically.
+        ylim : tuple, optional
+            Limits for the y-axis. If None, limits are determined automatically.
 
         Returns
         -------
         matplotlib.axes.Axes or None
         """
-        return _plot_spectrum(self, ax=ax)
+        spectrum, header    = self.get_spectrum()
+
+        if self.analysisType == AnalysisType.MODAL:
+            eigval          = spectrum[:, 0] + 1j * spectrum[:, 1]
+            eigval_adjoint  = (
+                None if len(header) == 2
+                else spectrum[:, 2] + 1j * spectrum[:, 3]
+            )
+            return plot_modal_spectrum(
+                eigval, 
+                eigval_adjoint, 
+                ax = ax, 
+                xlim = xlim, 
+                ylim = ylim
+            )
+
+        if self.analysisType == AnalysisType.RESOLVENT:
+            return plot_resolvent_spectrum(
+                spectrum[:, 0],
+                spectrum[:, 1:],
+                ax = ax,
+                xlim = xlim,
+                ylim = ylim
+            )
+
+        logger.warning(f'Plotting not supported for {self.analysisType} analysis')
+        return None
 
     def export_spectrum_to_csv(
         self,

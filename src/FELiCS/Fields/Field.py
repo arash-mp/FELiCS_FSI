@@ -1227,6 +1227,9 @@ class Field:
         -------
         matplotlib.axes.Axes
         """
+
+
+
         return plot_field(
             self,
             variableName      = variableName,
@@ -1238,6 +1241,62 @@ class Field:
             showBoundaries    = showBoundaries,
             free_aspect_ratio = free_aspect_ratio,
         )
+
+    def _select_field_for_plot(self, variableName = None):
+        """Select a scalar sub-field suitable for plotting.
+
+        For mixed or vector fields the sub-field matching *variableName* is
+        returned.  If no name is given, or the name is not found, the first
+        scalar component is used as a fallback.
+
+        Parameters
+        ----------
+        self : FELiCS Field
+        variableName : str or None
+
+        Returns
+        -------
+        FELiCS Field
+            A scalar field ready for plotting.
+        """
+        fields         = self.get_list_of_sub_fields()
+        names          = self.get_names_of_sub_fields()
+        selected_field = None
+
+        if variableName is not None:
+            if variableName in names:
+                selected_field = fields[names.index(variableName)]
+            else:
+                # Try to match a vector component name inside vector sub-fields
+                for f in fields:
+                    if f.info['type'] == 'vector':
+                        component_names = f.get_names_of_sub_fields()
+                        if variableName in component_names:
+                            selected_field = f.get_list_of_sub_fields()[
+                                component_names.index(variableName)
+                            ]
+                            break
+
+                if selected_field is None:
+                    logger.warning(
+                        f"Field.plot(): variable '{variableName}' not found. "
+                        "Using the default component instead."
+                    )
+
+        if selected_field is None:
+            first_field = fields[0]
+            if first_field.info['type'] == 'vector':
+                selected_field = first_field.get_list_of_sub_fields()[0]
+            elif first_field.info['type'] == 'mixed':
+                nested_first = first_field.get_list_of_sub_fields()[0]
+                if nested_first.info['type'] == 'vector':
+                    selected_field = nested_first.get_list_of_sub_fields()[0]
+                else:
+                    selected_field = nested_first
+            else:
+                selected_field = first_field
+
+        return selected_field
 
     ### dunder methods for overloading arithmetic operators ###
     def _dofmap_hash(

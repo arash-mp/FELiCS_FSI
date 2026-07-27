@@ -12,9 +12,8 @@
 #
 
 # Third party libraries
-from    basix.ufl                   import element
 import  dolfinx
-from    dolfinx                     import fem
+import  basix.ufl                   as ufl
 import  matplotlib.pyplot           as plt
 from    matplotlib.tri              import Triangulation
 from    mpl_toolkits.axes_grid1     import make_axes_locatable
@@ -22,9 +21,6 @@ import  numpy                       as np
 
 # Local libraries
 from    FELiCS.Misc.logging         import Logger
-from    FELiCS.Fields.Mode          import AnalysisType
-
-
 logger = Logger.get_logger("felics")
 
 
@@ -32,25 +28,25 @@ logger = Logger.get_logger("felics")
 # Private helpers
 # ---------------------------------------------------------------------------
 
-def _plot_domain_boundaries(mesh, axes, tdim):
-    """Plot the exterior boundary edges of *mesh* as black lines on *axes*.
+def _plot_domain_boundaries(dolfinx_mesh, axes, tdim):
+    """Plot the exterior boundary edges of *dolfinx_mesh* as black lines on *axes*.
 
     Parameters
     ----------
-    mesh : dolfinx.mesh.Mesh
+    dolfinx_mesh : dolfinx.mesh.Mesh
     axes : matplotlib.axes.Axes
     tdim : int
         Topological dimension of the mesh.
     """
-    coords          = mesh.geometry.x
-    boundary_facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
-    mesh.topology.create_connectivity(tdim - 1, 0)
-    facet_to_vertices = mesh.topology.connectivity(tdim - 1, 0)
+    coords              = dolfinx_mesh.geometry.x
+    boundary_facets     = dolfinx.mesh.exterior_facet_indices(dolfinx_mesh.topology)
+    dolfinx_mesh.topology.create_connectivity(tdim - 1, 0)
+    facet_to_vertices   = dolfinx_mesh.topology.connectivity(tdim - 1, 0)
     for facet_idx in boundary_facets:
-        start    = facet_to_vertices.offsets[facet_idx]
-        end      = facet_to_vertices.offsets[facet_idx + 1]
-        vertices = facet_to_vertices.array[start:end]
-        edge_coords = coords[vertices]
+        start           = facet_to_vertices.offsets[facet_idx]
+        end             = facet_to_vertices.offsets[facet_idx + 1]
+        vertices        = facet_to_vertices.array[start:end]
+        edge_coords     = coords[vertices]
         axes.plot(
             edge_coords[:, 0],
             edge_coords[:, 1],
@@ -75,146 +71,101 @@ def _add_colorbar_for_contour(axes, contour, label):
     cbar.formatter.set_powerlimits((0, 0))
     cbar.update_ticks()
 
-
-# TODO before merge: put this into field 
-def _select_field_for_plot(field, variableName):
-    """Select a scalar sub-field suitable for plotting.
-
-    For mixed or vector fields the sub-field matching *variableName* is
-    returned.  If no name is given, or the name is not found, the first
-    scalar component is used as a fallback.
-
-    Parameters
-    ----------
-    field        : FELiCS Field
-    variableName : str or None
-
-    Returns
-    -------
-    FELiCS Field
-        A scalar field ready for plotting.
-    """
-    fields         = field.get_list_of_sub_fields()
-    names          = field.get_names_of_sub_fields()
-    selected_field = None
-
-    if variableName is not None:
-        if variableName in names:
-            selected_field = fields[names.index(variableName)]
-        else:
-            # Try to match a vector component name inside vector sub-fields
-            for f in fields:
-                if f.info['type'] == 'vector':
-                    component_names = f.get_names_of_sub_fields()
-                    if variableName in component_names:
-                        selected_field = f.get_list_of_sub_fields()[
-                            component_names.index(variableName)
-                        ]
-                        break
-
-            if selected_field is None:
-                logger.warning(
-                    f"Field.plot(): variable '{variableName}' not found. "
-                    "Using the default component instead."
-                )
-
-    if selected_field is None:
-        first_field = fields[0]
-        if first_field.info['type'] == 'vector':
-            selected_field = first_field.get_list_of_sub_fields()[0]
-        elif first_field.info['type'] == 'mixed':
-            nested_first = first_field.get_list_of_sub_fields()[0]
-            if nested_first.info['type'] == 'vector':
-                selected_field = nested_first.get_list_of_sub_fields()[0]
-            else:
-                selected_field = nested_first
-        else:
-            selected_field = first_field
-
-    return selected_field
-
 # ---------------------------------------------------------------------------
 # Public functions
 # ---------------------------------------------------------------------------
 
-## TODO:
-# - give array of values and string of what to do 
-# - maybe even two different plotting functions?
-# - maybe give possibility to give some plotting parameters
-
-def plot_spectrum(mode_collection, ax=None):
-    """Plot the eigenvalue spectrum (Modal) or gain curves (Resolvent) for a
-    :class:`FELiCS.Fields.ModeCollection.ModeCollection`.
+def plot_modal_spectrum(eigval, eigval_adjoint=None, ax=None, xlim=None, ylim=None):
+    """Plot direct and optional adjoint eigenvalues.
 
     Parameters
     ----------
-    mode_collection : ModeCollection
+    eigval : numpy.ndarray
+        Complex direct eigenvalues.
+    eigval_adjoint : numpy.ndarray, optional
+        Complex adjoint eigenvalues.
     ax : matplotlib.axes.Axes, optional
         Axes to draw on. A new figure is created when *None*.
+    xlim : tuple, optional
+        Limits for the x-axis.
+    ylim : tuple, optional
+        Limits for the y-axis.
 
     Returns
     -------
-    matplotlib.axes.Axes or None
+    matplotlib.axes.Axes
     """
-    spectrum, header = mode_collection.get_spectrum()
+    if ax is None:
+        _, ax = plt.subplots(figsize=(10, 6))
 
-    # TODO Sophie: circular dependency removed, but runnability has to be restored
-    # Lazy import to avoid circular dependency (Mode → Field → plottingUtils → Mode)
-    #from FELiCS.Fields.Mode import AnalysisType
+    stable   = eigval[eigval.imag <= 0]
+    unstable = eigval[eigval.imag > 0]
 
-    if mode_collection.analysisType == AnalysisType.MODAL:
-        if len(header) == 2:
-            eigval         = spectrum[:, 0] + 1j * spectrum[:, 1]
-            eigval_adjoint = np.array([])
-        else:
-            eigval         = spectrum[:, 0] + 1j * spectrum[:, 1]
-            eigval_adjoint = spectrum[:, 2] + 1j * spectrum[:, 3]
+    if len(stable) > 0:
+        ax.scatter(stable.real, stable.imag, s=20, alpha=0.6,
+                   c='blue', label=f'Stable ({len(stable)})', edgecolors='none')
+    if len(unstable) > 0:
+        ax.scatter(unstable.real, unstable.imag, s=30, alpha=0.8,
+                   c='red', label=f'Unstable ({len(unstable)})',
+                   edgecolors='black', linewidths=0.5)
+    if eigval_adjoint is not None and len(eigval_adjoint) > 0:
+        ax.scatter(eigval_adjoint.real, eigval_adjoint.imag, s=20, alpha=0.6,
+                   c='green', label=f'Adjoint ({len(eigval_adjoint)})', marker='x')
 
-        if ax is None:
-            _, ax = plt.subplots(figsize=(10, 6))
+    ax.set_xlabel(r'$\mathrm{Re}(\omega)$', fontsize=12)
+    ax.set_ylabel(r'$\mathrm{Im}(\omega)$', fontsize=12)
+    ax.set_title('Eigenvalue Spectrum (Modal Analysis)', fontsize=14)
+    ax.grid(True, alpha=0.3)
+    ax.axhline(y=0, color='k', linestyle='-', linewidth=0.5)
+    ax.legend(fontsize=10)
 
-        stable   = eigval[eigval.imag <= 0]
-        unstable = eigval[eigval.imag > 0]
+    if xlim is not None:
+        ax.set_xlim(xlim)
+    if ylim is not None:
+        ax.set_ylim(ylim)
 
-        if len(stable) > 0:
-            ax.scatter(stable.real, stable.imag, s=20, alpha=0.6,
-                       c='blue', label=f'Stable ({len(stable)})', edgecolors='none')
-        if len(unstable) > 0:
-            ax.scatter(unstable.real, unstable.imag, s=30, alpha=0.8,
-                       c='red', label=f'Unstable ({len(unstable)})',
-                       edgecolors='black', linewidths=0.5)
-        if len(eigval_adjoint) > 0:
-            ax.scatter(eigval_adjoint.real, eigval_adjoint.imag, s=20, alpha=0.6,
-                       c='green', label=f'Adjoint ({len(eigval_adjoint)})', marker='x')
+    plt.tight_layout()
+    return ax
 
-        ax.set_xlabel(r'$\mathrm{Re}(\omega)$', fontsize=12)
-        ax.set_ylabel(r'$\mathrm{Im}(\omega)$', fontsize=12)
-        ax.set_title('Eigenvalue Spectrum (Modal Analysis)', fontsize=14)
-        ax.grid(True, alpha=0.3)
-        ax.axhline(y=0, color='k', linestyle='-', linewidth=0.5)
-        ax.legend(fontsize=10)
 
-    elif mode_collection.analysisType == AnalysisType.RESOLVENT:
-        omega = spectrum[:, 0]
-        gains = spectrum[:, 1:]
+def plot_resolvent_spectrum(omega, gains, ax=None, xlim=None, ylim=None):
+    """Plot resolvent gain curves.
+    
+    Parameters
+    ----------
+    omega : numpy.ndarray
+        Frequencies at which gains are computed.
+    gains : numpy.ndarray
+        Gains corresponding to each frequency. Should be a 2D array where each column represents a different mode.
+    ax : matplotlib.axes.Axes, optional
+        Axes to draw on. A new figure is created when *None*.
+    xlim : tuple, optional
+        Limits for the x-axis.
+    ylim : tuple, optional
+        Limits for the y-axis.
 
-        if ax is None:
-            _, ax = plt.subplots(figsize=(10, 6))
+    Returns
+    -------
+    matplotlib.axes.Axes
+    """
+    if ax is None:
+        _, ax = plt.subplots(figsize=(10, 6))
 
-        colors = plt.cm.viridis(np.linspace(0, 1, gains.shape[1]))
-        for i in range(gains.shape[1]):
-            ax.plot(omega, gains[:, i], 'o-', label=f'Mode {i}',
-                    color=colors[i], linewidth=2, markersize=4, alpha=0.7)
+    colors = plt.cm.hot(np.linspace(0, 1, gains.shape[1]))
+    for i in range(gains.shape[1]):
+        ax.plot(omega, gains[:, i], 'o-', label=f'Mode {i}',
+                color=colors[i], linewidth=2, markersize=4, alpha=0.7)
 
-        ax.set_xlabel(r'$\omega$', fontsize=12)
-        ax.set_ylabel(r'Gains squared $\sigma^2$', fontsize=12)
-        ax.set_yscale('log')
-        ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=10)
+    ax.set_xlabel(r'$\omega$', fontsize=12)
+    ax.set_ylabel(r'Gains squared $\sigma^2$', fontsize=12)
+    ax.set_yscale('log')
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=10)
 
-    else:
-        logger.error(f'Plotting not supported for {mode_collection.analysisType} analysis')
-        return None
+    if xlim is not None:
+        ax.set_xlim(xlim)
+    if ylim is not None:
+        ax.set_ylim(ylim)
 
     plt.tight_layout()
     return ax
@@ -268,7 +219,7 @@ def plot_field(
     # TODO: maybe just use the selected field instead of re-calling the method?
     # Delegate vector / mixed fields to the scalar component
     if field.space.num_sub_spaces > 1:
-        selected = _select_field_for_plot(field, variableName)
+        selected = field._select_field_for_plot(field, variableName)
         return plot_field(
             selected,
             variableName      = variableName,
@@ -288,8 +239,8 @@ def plot_field(
     mesh.topology.create_connectivity(tdim, 0)
 
     # Interpolate to P1 so values sit at vertices
-    V1 = fem.functionspace(mesh, element("CG", "triangle", 1))
-    u1 = fem.Function(V1)
+    V1 = dolfinx.fem.functionspace(mesh, ufl.element("CG", "triangle", 1))
+    u1 = dolfinx.fem.Function(V1)
     u1.interpolate(u_h)
 
     if plotType == "imag":
