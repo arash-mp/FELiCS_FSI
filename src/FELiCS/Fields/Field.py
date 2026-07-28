@@ -37,7 +37,7 @@ from FELiCS.Misc.tensorUtils        import (
 )
 from FELiCS.Solvers.LinearSolver    import LinearSolver
 from FELiCS.SpaceDisc.FEMSpaces     import create_function_space
-from FELiCS.Misc.plottingUtils      import plot_field
+from FELiCS.Misc.plottingUtils      import plot_scalar_function
 
 
 # Get the logger
@@ -1197,8 +1197,8 @@ class Field:
         free_aspect_ratio   = False,
     ):
         """
-        Plotting function for debugging purposes. Delegates to
-        :func:`FELiCS.Misc.plottingUtils.plot_field`.
+        Plotting function for debugging purposes. Selects a scalar component
+        and delegates to :func:`FELiCS.Misc.plottingUtils.plot_scalar_function`.
 
         Parameters
         ----------
@@ -1227,12 +1227,12 @@ class Field:
         -------
         matplotlib.axes.Axes
         """
+        selected_field = self._select_field_for_plot(variableName)
 
-
-
-        return plot_field(
-            self,
-            variableName      = variableName,
+        return plot_scalar_function(
+            self.mesh.dolfinxMesh,
+            selected_field.function,
+            title             = selected_field.name,
             xlim              = xlim,
             ylim              = ylim,
             plotType          = plotType,
@@ -1284,19 +1284,19 @@ class Field:
                     )
 
         if selected_field is None:
-            first_field = fields[0]
-            if first_field.info['type'] == 'vector':
-                selected_field = first_field.get_list_of_sub_fields()[0]
-            elif first_field.info['type'] == 'mixed':
-                nested_first = first_field.get_list_of_sub_fields()[0]
-                if nested_first.info['type'] == 'vector':
-                    selected_field = nested_first.get_list_of_sub_fields()[0]
-                else:
-                    selected_field = nested_first
-            else:
-                selected_field = first_field
+            selected_field = fields[0]
 
-        return selected_field
+        return self._select_first_scalar_field_for_plot(selected_field)
+
+    def _select_first_scalar_field_for_plot(self, field):
+        """Return the first scalar component contained in *field*."""
+        if field.info['type'] == 'vector':
+            return field.get_list_of_sub_fields()[0]
+        if field.info['type'] == 'mixed':
+            return self._select_first_scalar_field_for_plot(
+                field.get_list_of_sub_fields()[0]
+            )
+        return field
 
     ### dunder methods for overloading arithmetic operators ###
     def _dofmap_hash(

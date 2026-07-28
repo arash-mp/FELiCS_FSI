@@ -212,14 +212,10 @@ def plot_resolvent_spectrum(
     return ax
 
 
-# TODO: check responsibilities
-# Sophies first idea:
-# - give only dolfinx mesh, scalar function, and all the plot info
-#   (NOT field, felicsMesh etc)
-
-def plot_field(
-    field,
-    variableName      = None,
+def plot_scalar_function(
+    dolfinx_mesh,
+    function,
+    title             = "scalar_field",
     xlim              = None,
     ylim              = None,
     plotType          = "real",
@@ -228,16 +224,18 @@ def plot_field(
     showBoundaries    = True,
     free_aspect_ratio = False,
 ):
-    """Plot a scalar (or scalar component of a vector/mixed) FELiCS field.
+    """Plot a scalar finite-element function on a two-dimensional mesh.
 
     This is a debug-level visualisation utility, not intended for
     publication-quality figures.
 
     Parameters
     ----------
-    field             : FELiCS Field
-    variableName      : str, optional
-        Subfield or component name to plot (e.g. ``'u_x'``).
+    dolfinx_mesh      : dolfinx.mesh.Mesh
+    function          : dolfinx.fem.Function
+        Scalar function to plot. 
+    title             : str
+        Base title used for the colorbar label.
     xlim              : tuple, optional
     ylim              : tuple, optional
     plotType          : {'real', 'imag', 'magnitude', 'angle'}
@@ -250,39 +248,21 @@ def plot_field(
     -------
     matplotlib.axes.Axes
     """
-    if field.mesh.dolfinxMesh.topology.dim != 2:
+    if dolfinx_mesh.topology.dim != 2:
         logger.warning(
-            "Field.plot(): plotting is currently only implemented for 2D "
-            "meshes. Returning without plotting."
+            "plot_scalar_function(): plotting is currently only implemented "
+            "for 2D meshes. Returning without plotting."
         )
         return
 
-    # TODO: maybe just use the selected field instead of re-calling the method?
-    # Delegate vector / mixed fields to the scalar component
-    if field.space.num_sub_spaces > 1:
-        selected = field._select_field_for_plot(field, variableName)
-        return plot_field(
-            selected,
-            variableName      = variableName,
-            xlim              = xlim,
-            ylim              = ylim,
-            plotType          = plotType,
-            clim              = clim,
-            axes              = axes,
-            showBoundaries    = showBoundaries,
-            free_aspect_ratio = free_aspect_ratio,
-        )
+    tdim = dolfinx_mesh.topology.dim
 
-    mesh = field.mesh.dolfinxMesh
-    u_h  = field.function
-    tdim = mesh.topology.dim
-
-    mesh.topology.create_connectivity(tdim, 0)
+    dolfinx_mesh.topology.create_connectivity(tdim, 0)
 
     # Interpolate to P1 so values sit at vertices
-    V1 = dolfinx.fem.functionspace(mesh, ufl.element("CG", "triangle", 1))
+    V1 = dolfinx.fem.functionspace(dolfinx_mesh, ufl.element("CG", "triangle", 1))
     u1 = dolfinx.fem.Function(V1)
-    u1.interpolate(u_h)
+    u1.interpolate(function)
 
     if plotType == "imag":
         phi_vertex      = np.imag(u1.x.array)
@@ -297,9 +277,9 @@ def plot_field(
         phi_vertex      = np.real(u1.x.array)
         cmap            = "seismic"
 
-    cells_to_vertices   = mesh.topology.connectivity(tdim, 0).array
+    cells_to_vertices   = dolfinx_mesh.topology.connectivity(tdim, 0).array
     triangles           = cells_to_vertices.reshape(-1, 3)
-    coords              = mesh.geometry.x
+    coords              = dolfinx_mesh.geometry.x
     triang              = Triangulation(coords[:, 0], coords[:, 1], triangles=triangles)
 
     if axes is None:
@@ -321,12 +301,12 @@ def plot_field(
     )
 
     if showBoundaries:
-        _plot_domain_boundaries(mesh, axes, tdim)
+        _plot_domain_boundaries(dolfinx_mesh, axes, tdim)
 
     axes.set_xlabel('x')
     axes.set_ylabel('y')
 
-    title = field.name if field.name else "scalar_field"
+    title = title if title else "scalar_field"
     if plotType == "imag":
         title += "_imag"
     elif plotType == "magnitude":
@@ -349,3 +329,30 @@ def plot_field(
 
     plt.tight_layout()
     return axes
+
+
+def plot_field(
+    dolfinx_mesh,
+    function,
+    title             = "scalar_field",
+    xlim              = None,
+    ylim              = None,
+    plotType          = "real",
+    clim              = None,
+    axes              = None,
+    showBoundaries    = True,
+    free_aspect_ratio = False,
+):
+    """Compatibility wrapper for plotting a scalar finite-element function."""
+    return plot_scalar_function(
+        dolfinx_mesh,
+        function,
+        title             = title,
+        xlim              = xlim,
+        ylim              = ylim,
+        plotType          = plotType,
+        clim              = clim,
+        axes              = axes,
+        showBoundaries    = showBoundaries,
+        free_aspect_ratio = free_aspect_ratio,
+    )
