@@ -77,10 +77,10 @@ def _add_colorbar_for_contour(axes, contour, label):
 
 def plot_modal_spectrum(
     eigval, 
-    eigval_adjoint=None, 
-    ax=None, 
-    xlim=None, 
-    ylim=None
+    eigval_adjoint  = None, 
+    ax              = None, 
+    xlim            = None, 
+    ylim            = None
 ):
     """Plot direct and optional adjoint eigenvalues.
 
@@ -158,9 +158,9 @@ def plot_modal_spectrum(
 def plot_resolvent_spectrum(
     omega, 
     gains, 
-    ax=None, 
-    xlim=None, 
-    ylim=None
+    ax              = None, 
+    xlim            = None, 
+    ylim            = None
 ):
     """Plot resolvent gain curves.
     
@@ -329,30 +329,3 @@ def plot_scalar_function(
 
     plt.tight_layout()
     return axes
-
-
-def plot_field(
-    dolfinx_mesh,
-    function,
-    title             = "scalar_field",
-    xlim              = None,
-    ylim              = None,
-    plotType          = "real",
-    clim              = None,
-    axes              = None,
-    showBoundaries    = True,
-    free_aspect_ratio = False,
-):
-    """Compatibility wrapper for plotting a scalar finite-element function."""
-    return plot_scalar_function(
-        dolfinx_mesh,
-        function,
-        title             = title,
-        xlim              = xlim,
-        ylim              = ylim,
-        plotType          = plotType,
-        clim              = clim,
-        axes              = axes,
-        showBoundaries    = showBoundaries,
-        free_aspect_ratio = free_aspect_ratio,
-    )
