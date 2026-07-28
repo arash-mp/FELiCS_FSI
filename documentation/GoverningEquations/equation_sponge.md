@@ -1,6 +1,6 @@
 # Sponge functions
 
-The sponge functions introduce additional source terms into the governing equations to stabilize numerical calculations. They are mainly used as an additional boundary treatment for outflow or far-field boundaries. Including a sponge ensures that perturbations decay in the outflow or far field, thus mimicking open boundary conditions and improving spectral accuracy. In FELiCS, if a sponge coefficient is given, sponge functions are incorporated by iterating over all equations and adding the corresponding damping terms to each. The sponge coefficient can be specified as a spatial field in the [mean flow file](../Running_FELiCS/fel_file.md). 
+The sponge functions introduce additional source terms into the governing equations to stabilize numerical calculations. They are mainly used as an additional boundary treatment for outflow or far-field boundaries. Including a sponge ensures that perturbations decay in the outflow or far field, thus mimicking open boundary conditions and improving spectral accuracy. In FELiCS, if a sponge coefficient is given, sponge functions are incorporated by iterating over all equations and adding the corresponding damping terms to each. The sponge coefficient can be specified as a spatial field in the [mean flow file](../Running_FELiCS/input_files/mean_files.md). 
 
 Assumptions:
 - fluctuations can be smoothly damped with a specifically tailored sink term

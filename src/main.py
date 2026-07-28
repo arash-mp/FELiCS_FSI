@@ -14,6 +14,7 @@
 import 	argparse
 
 # Local Libraries and methods
+from    FELiCS.Misc.functions       import get_last_git_commit
 from 	FELiCS.Misc.logging			import  Logger
 from 	FELiCS.Parameters.Config	import 	Config
 from 	run_input_output  			import  run_input_output
@@ -33,10 +34,13 @@ at TU Berlin, Germany.
 """
 epilog = """
 Example usage:
-    python main.py -h		shows help message 
-    python main.py -f path	start with config file at path (mandatory)
-    python main.py -f path -d	for debug mode
-    python main.py -f path -t	for test mode
+    python main.py -h		        : shows help message
+    python main.py -f <path>	    : start with config file (json) at path (mandatory)
+    python main.py -f <path> -d	    : for debug mode (adds debug messages to log output)
+    python main.py -f <path> -t	    : for test mode (disables log output)
+    python main.py -f <path> -p	    : starts memory and cpu profiler alongside the run
+    python main.py -f <path> -d -p	: uses debug mode for extended log output and starts profilers
+
     """
 
 # Initialize the argument parser
@@ -66,15 +70,25 @@ parser.add_argument(
     action='store_true',
     help='activate test mode with no output',
 )
+parser.add_argument(
+    '-p',
+    '--profiler',
+    action='store_true',
+    help='activate profiler (caution: only works on Linux)',
+)
 args = parser.parse_args()
 
 # Initialize the logger
-logger = Logger(
+Logger(
     args.debug,
     args.test,
+    args.profiler,
     "felics",
 )
 logger = Logger.get_logger("felics")
+
+# get last git commit for reference
+logger.info("Last git commit: " + str(get_last_git_commit()))
 
 if __name__ == '__main__':
 
