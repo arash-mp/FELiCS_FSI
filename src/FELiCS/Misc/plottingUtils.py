@@ -65,9 +65,9 @@ def _add_colorbar_for_contour(axes, contour, label):
     contour : matplotlib.collections.TriMesh or similar mappable
     label   : str
     """
-    divider      = make_axes_locatable(axes)
-    colorbar_axes = divider.append_axes("right", size="2%", pad=0.5)
-    cbar = plt.colorbar(contour, label=label, cax=colorbar_axes)
+    divider         = make_axes_locatable(axes)
+    colorbar_axes   = divider.append_axes("right", size="2%", pad=0.5)
+    cbar            = plt.colorbar(contour, label=label, cax=colorbar_axes)
     cbar.formatter.set_powerlimits((0, 0))
     cbar.update_ticks()
 
@@ -98,19 +98,40 @@ def plot_modal_spectrum(eigval, eigval_adjoint=None, ax=None, xlim=None, ylim=No
     if ax is None:
         _, ax = plt.subplots(figsize=(10, 6))
 
-    stable   = eigval[eigval.imag <= 0]
-    unstable = eigval[eigval.imag > 0]
+    stable              = eigval[eigval.imag <= 0]
+    unstable            = eigval[eigval.imag > 0]
 
     if len(stable) > 0:
-        ax.scatter(stable.real, stable.imag, s=20, alpha=0.6,
-                   c='blue', label=f'Stable ({len(stable)})', edgecolors='none')
+        ax.scatter(
+            stable.real, 
+            stable.imag, 
+            s           = 20, 
+            alpha       = 0.6,
+            c           ='blue', 
+            label       = f'Stable ({len(stable)})', 
+            edgecolors  = 'none'
+        )
     if len(unstable) > 0:
-        ax.scatter(unstable.real, unstable.imag, s=30, alpha=0.8,
-                   c='red', label=f'Unstable ({len(unstable)})',
-                   edgecolors='black', linewidths=0.5)
+        ax.scatter(
+            unstable.real, 
+            unstable.imag, 
+            s           = 30, 
+            alpha       = 0.8, 
+            c           = 'red', 
+            label       = f'Unstable ({len(unstable)})', 
+            edgecolors  = 'black', 
+            linewidths  = 0.5
+        )
     if eigval_adjoint is not None and len(eigval_adjoint) > 0:
-        ax.scatter(eigval_adjoint.real, eigval_adjoint.imag, s=20, alpha=0.6,
-                   c='green', label=f'Adjoint ({len(eigval_adjoint)})', marker='x')
+        ax.scatter(
+            eigval_adjoint.real, 
+            eigval_adjoint.imag, 
+            s           = 20, 
+            alpha       = 0.6, 
+            c           = 'green', 
+            label       = f'Adjoint ({len(eigval_adjoint)})', 
+            marker      = 'x'
+        )
 
     ax.set_xlabel(r'$\mathrm{Re}(\omega)$', fontsize=12)
     ax.set_ylabel(r'$\mathrm{Im}(\omega)$', fontsize=12)
@@ -149,12 +170,20 @@ def plot_resolvent_spectrum(omega, gains, ax=None, xlim=None, ylim=None):
     matplotlib.axes.Axes
     """
     if ax is None:
-        _, ax = plt.subplots(figsize=(10, 6))
+        _, ax           = plt.subplots(figsize=(10, 6))
 
-    colors = plt.cm.hot(np.linspace(0, 1, gains.shape[1]))
+    colors              = plt.cm.hot(np.linspace(0, 1, gains.shape[1]))
     for i in range(gains.shape[1]):
-        ax.plot(omega, gains[:, i], 'o-', label=f'Mode {i}',
-                color=colors[i], linewidth=2, markersize=4, alpha=0.7)
+        ax.plot(
+            omega, 
+            gains[:, i], 
+            'o-', 
+            label       = f'Mode {i}', 
+            color       = colors[i], 
+            linewidth   = 2, 
+            markersize  = 4, 
+            alpha       = 0.7
+        )
 
     ax.set_xlabel(r'$\omega$', fontsize=12)
     ax.set_ylabel(r'Gains squared $\sigma^2$', fontsize=12)
@@ -244,25 +273,25 @@ def plot_field(
     u1.interpolate(u_h)
 
     if plotType == "imag":
-        phi_vertex = np.imag(u1.x.array)
-        cmap       = "seismic"
+        phi_vertex      = np.imag(u1.x.array)
+        cmap            = "seismic"
     elif plotType == "magnitude":
-        phi_vertex = np.abs(u1.x.array)
-        cmap       = "magma"
+        phi_vertex      = np.abs(u1.x.array)
+        cmap            = "magma"
     elif plotType == "angle":
-        phi_vertex = np.angle(u1.x.array)
-        cmap       = "hsv"
+        phi_vertex      = np.angle(u1.x.array)
+        cmap            = "hsv"
     else:
-        phi_vertex = np.real(u1.x.array)
-        cmap       = "seismic"
+        phi_vertex      = np.real(u1.x.array)
+        cmap            = "seismic"
 
-    cells_to_vertices = mesh.topology.connectivity(tdim, 0).array
-    triangles         = cells_to_vertices.reshape(-1, 3)
-    coords            = mesh.geometry.x
-    triang            = Triangulation(coords[:, 0], coords[:, 1], triangles=triangles)
+    cells_to_vertices   = mesh.topology.connectivity(tdim, 0).array
+    triangles           = cells_to_vertices.reshape(-1, 3)
+    coords              = mesh.geometry.x
+    triang              = Triangulation(coords[:, 0], coords[:, 1], triangles=triangles)
 
     if axes is None:
-        _, axes = plt.subplots()
+        _, axes         = plt.subplots()
 
     if clim is None:
         if plotType == "magnitude":
@@ -270,7 +299,7 @@ def plot_field(
         else:
             clim = (-0.5 * np.max(np.abs(phi_vertex)), 0.5 * np.max(np.abs(phi_vertex)))
 
-    contour = axes.tripcolor(
+    contour     = axes.tripcolor(
         triang,
         phi_vertex,
         shading = 'gouraud',
