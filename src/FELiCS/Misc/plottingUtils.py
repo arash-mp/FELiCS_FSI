@@ -75,7 +75,13 @@ def _add_colorbar_for_contour(axes, contour, label):
 # Public functions
 # ---------------------------------------------------------------------------
 
-def plot_modal_spectrum(eigval, eigval_adjoint=None, ax=None, xlim=None, ylim=None):
+def plot_modal_spectrum(
+    eigval, 
+    eigval_adjoint=None, 
+    ax=None, 
+    xlim=None, 
+    ylim=None
+):
     """Plot direct and optional adjoint eigenvalues.
 
     Parameters
@@ -149,7 +155,13 @@ def plot_modal_spectrum(eigval, eigval_adjoint=None, ax=None, xlim=None, ylim=No
     return ax
 
 
-def plot_resolvent_spectrum(omega, gains, ax=None, xlim=None, ylim=None):
+def plot_resolvent_spectrum(
+    omega, 
+    gains, 
+    ax=None, 
+    xlim=None, 
+    ylim=None
+):
     """Plot resolvent gain curves.
     
     Parameters
