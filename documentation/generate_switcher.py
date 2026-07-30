@@ -2,7 +2,10 @@
 multi-version FELiCS documentation deployed to GitLab Pages.
 
 Run once, after every version has been built into its own "public/<version>"
-subdirectory (see the "create documentation" job in .gitlab-ci.yml).
+subdirectory (see the "create documentation" job in .gitlab-ci.yml). URLs are
+deliberately relative to this directory rather than an absolute CI_PAGES_URL,
+so the same output works unmodified at the Pages site root, under a Pages
+path_prefix preview, or opened straight from a downloaded artifact.
 """
 
 import argparse
@@ -12,11 +15,6 @@ import os
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        '--pages-url',
-        required=True,
-        help="Base URL the documentation is published under (CI_PAGES_URL).",
-    )
     parser.add_argument(
         '--preferred',
         required=True,
@@ -35,7 +33,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def build_switcher_entries(pages_url, versions, preferred):
+def build_switcher_entries(versions, preferred):
     def sort_key(version):
         if version == preferred:
             return (0, version)
@@ -49,7 +47,7 @@ def build_switcher_entries(pages_url, versions, preferred):
         entry = {
             'name': name,
             'version': version,
-            'url': f'{pages_url}/{version}/',
+            'url': f'{version}/',
         }
         if version == preferred:
             entry['preferred'] = True
@@ -57,8 +55,8 @@ def build_switcher_entries(pages_url, versions, preferred):
     return entries
 
 
-def write_redirect_index(output_dir, pages_url, preferred):
-    redirect_url = f'{pages_url}/{preferred}/'
+def write_redirect_index(output_dir, preferred):
+    redirect_url = f'{preferred}/index.html'
     content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,9 +81,9 @@ def write_switcher_json(output_dir, entries):
 
 def main():
     arguments = parse_arguments()
-    entries = build_switcher_entries(arguments.pages_url, arguments.versions, arguments.preferred)
+    entries = build_switcher_entries(arguments.versions, arguments.preferred)
     write_switcher_json(arguments.output_dir, entries)
-    write_redirect_index(arguments.output_dir, arguments.pages_url, arguments.preferred)
+    write_redirect_index(arguments.output_dir, arguments.preferred)
 
 
 if __name__ == '__main__':

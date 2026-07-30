@@ -92,10 +92,10 @@ felics-tutorials:
         git worktree remove --force "$worktree_dir"
         # Every built version gets the same switcher widget, even releases
         # whose own (immutable) historical conf.py predates this feature.
-        python3 documentation/inject_version_switcher.py --pages-url "${CI_PAGES_URL}" "public/${version}"
+        python3 documentation/inject_version_switcher.py "public/${version}"
       done
       cp documentation/_static/felics_version_switcher.js documentation/_static/felics_version_switcher.css public/_static/
-      python3 documentation/generate_switcher.py --pages-url "${CI_PAGES_URL}" --preferred "${PREFERRED_VERSION}" --output-dir public ${DOC_VERSIONS}
+      python3 documentation/generate_switcher.py --preferred "${PREFERRED_VERSION}" --output-dir public ${DOC_VERSIONS}
   artifacts:
     paths:
       - public

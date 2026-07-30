@@ -22,7 +22,7 @@
     };
   }
 
-  function buildSwitcherBar(versions, currentVersion) {
+  function buildSwitcherBar(versions, currentVersion, pagesBase) {
     var bar = document.createElement('div');
     bar.className = 'felics-version-switcher';
 
@@ -35,7 +35,10 @@
     select.className = 'felics-version-switcher__select';
     versions.forEach(function (entry) {
       var option = document.createElement('option');
-      option.value = entry.url;
+      // entry.url is relative (e.g. "v3.1.1/"); resolve it against the
+      // versioned site's own base, derived at runtime from the current page,
+      // rather than a URL baked in at build time.
+      option.value = pagesBase + '/' + entry.url;
       option.textContent = entry.name;
       option.selected = entry.version === currentVersion;
       select.appendChild(option);
@@ -61,7 +64,7 @@
         return response.json();
       })
       .then(function (versions) {
-        var bar = buildSwitcherBar(versions, versionRoot.currentVersion);
+        var bar = buildSwitcherBar(versions, versionRoot.currentVersion, versionRoot.pagesBase);
         document.body.appendChild(bar);
       })
       .catch(function (error) {
