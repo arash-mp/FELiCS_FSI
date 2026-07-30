@@ -122,3 +122,21 @@ verify documentation build:
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: manual
   allow_failure: true
+
+# Same build as "create documentation", but published to an isolated preview
+# URL (Pages path_prefix, scoped to the triggering branch) instead of the
+# live site at the project's Pages root, so it never overwrites production.
+# Requires "Pages: multiple deployments" to be enabled for this project
+# (Settings > Pages, GitLab 16.7+) - if it is not, this job may fail or
+# publish unexpectedly, so check that setting before relying on it. Trigger
+# the same way as "verify documentation build" above, then open the preview
+# URL GitLab prints for this job (Deployments > Pages, or the job log).
+preview documentation:
+  extends: .documentation-build
+  pages:
+    publish: public
+    path_prefix: '$CI_COMMIT_REF_SLUG'
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+  allow_failure: true
