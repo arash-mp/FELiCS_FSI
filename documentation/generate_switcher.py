@@ -33,16 +33,21 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def parse_release_version(version):
+    return tuple(int(component) for component in version.lstrip('v').split('.'))
+
+
 def build_switcher_entries(versions, preferred):
-    def sort_key(version):
-        if version == preferred:
-            return (0, version)
-        if version == 'development':
-            return (2, version)
-        return (1, version)
+    release_tags = sorted(
+        (version for version in versions if version != 'development'),
+        key=parse_release_version,
+        reverse=True,
+    )
+    development = [version for version in versions if version == 'development']
+    ordered_versions = release_tags + development
 
     entries = []
-    for version in sorted(versions, key=sort_key):
+    for version in ordered_versions:
         name = 'development (latest)' if version == 'development' else version
         entry = {
             'name': name,
