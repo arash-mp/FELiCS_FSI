@@ -116,6 +116,12 @@ create documentation:
 # without merging: GitLab UI -> CI/CD -> Pipelines -> "Run pipeline" -> pick
 # your branch -> Run, then manually start this job and download its "public"
 # artifact to inspect locally.
+# Note: double-clicking the downloaded index.html opens it as a file:// URL,
+# where the version switcher will not appear - browsers block the fetch() it
+# needs to load switcher.json for local files. The redirect still works
+# (that's a plain <meta> tag, no network request), but to see the switcher
+# itself, serve the extracted "public" folder instead, e.g.
+# "python -m http.server" from inside it, then open localhost in a browser.
 verify documentation build:
   extends: .documentation-build
   rules:
