@@ -19,6 +19,7 @@ import numpy as np
 
 # Local Libraries and methods
 from    FELiCS.Fields.FluctuationClass  import FluctuationSolutions
+from    FELiCS.Misc.plottingUtils       import plot_modal_spectrum, plot_resolvent_spectrum
 from    FELiCS.Fields.Mode              import Mode, AnalysisType, ModeType
 from 	FELiCS.Misc.logging             import Logger,  log_and_raise
 
@@ -422,6 +423,87 @@ class ModeCollection():
                 spectrum.append(mode.eigen_value)
         return spectrum
     
+    def get_subset_resolvent_modes(
+        self,
+        modeType    = None,
+        gain_number = None,
+        frequency   = None
+    ):
+        """
+        Return a subset of resolvent modes based on mode type and gain number.
+
+        Parameters
+        ----------
+        modeType : str or None, optional
+            Mode type to filter by (e.g. 'response', 'forcing'). If None, all types are included.
+        gain_number : int or None, optional
+            Gain number to filter by. If None, all gain numbers are included.
+        frequency : None or list of float, optional
+            Frequency or list of frequencies to filter by. If None, all frequencies are included.
+            Returns the modes at closest available frequencies if specified.
+
+        Returns
+        -------
+        sub_collection : ModeCollection
+            Return a mode collection containing the subset of modes matching the specified criteria.
+        """
+        
+        # Check that we are in Resolvent analysis
+        if self.analysisType != AnalysisType.RESOLVENT:
+            logger.error('get_subset_resolvent_modes called for non-Resolvent analysis in ModeCollection.')
+            return
+
+        # Prepare a new ModeCollection to store the subset of modes
+        sub_collection = ModeCollection(
+            self.femSpace,
+            self.mesh,
+            isStateVector   = self.isStateVector,
+            analysisType    = "Resolvent"
+        )
+
+        # Method to get all unique frequencies in the collection
+        def _get_unique_frequencies(collection):
+            """Simple method to get all unique frequencies in the collection.
+
+            Parameters
+            ----------
+            collection : ModeCollection
+                The mode collection to extract frequencies from.
+
+            Returns
+            -------
+            list
+                A list of unique frequencies.
+            """
+            frequencies = set()
+            for mode in collection.modeList:
+                frequencies.add(mode.frequency)
+            return sorted(list(frequencies))
+        
+        # If we ask for specific frequencies, get the closest available in the collection
+        if frequency is not None:
+            if not isinstance(frequency, list):
+                frequency       = [frequency]
+            unique_frequencies  = _get_unique_frequencies(self)
+            
+            new_frequencies     = frequency.copy()
+            for i, freq in enumerate(frequency):
+                closest_freq    = min(unique_frequencies, key=lambda x: abs(x - freq))
+                # Update the frequency to the closest available one
+                new_frequencies[i] = closest_freq
+            frequency           = new_frequencies
+            logger.info(f"Requested frequencies: {frequency}. Closest available frequencies in collection: {new_frequencies}.")
+
+        for mode in self.modeList:
+            if (
+                (modeType       is None or mode.modeType == ModeType[modeType.upper()]) and 
+                (gain_number    is None or mode.gain_number == gain_number) and 
+                (frequency      is None or mode.frequency in frequency)
+                ):
+                sub_collection.append_mode(mode)
+        
+        return sub_collection
+    
     def get_spectrum(
         self
     ):
@@ -504,6 +586,57 @@ class ModeCollection():
                     spectrum[LineIndex[0], 1 + mode.gain_number] = mode.gain
 
         return spectrum, header
+
+    def plot_spectrum(
+        self,
+        ax=None,
+        xlim=None,
+        ylim=None,
+    ):
+        """
+        Plot the eigenvalue spectrum for Modal analysis or gains for Resolvent analysis.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            Matplotlib axes to plot on. If None, a new figure and axes will be
+            created. Default is None.
+        xlim : tuple, optional
+            Limits for the x-axis. If None, limits are determined automatically.
+        ylim : tuple, optional
+            Limits for the y-axis. If None, limits are determined automatically.
+
+        Returns
+        -------
+        matplotlib.axes.Axes or None
+        """
+        spectrum, header    = self.get_spectrum()
+
+        if self.analysisType == AnalysisType.MODAL:
+            eigval          = spectrum[:, 0] + 1j * spectrum[:, 1]
+            eigval_adjoint  = (
+                None if len(header) == 2
+                else spectrum[:, 2] + 1j * spectrum[:, 3]
+            )
+            return plot_modal_spectrum(
+                eigval, 
+                eigval_adjoint, 
+                ax = ax, 
+                xlim = xlim, 
+                ylim = ylim
+            )
+
+        if self.analysisType == AnalysisType.RESOLVENT:
+            return plot_resolvent_spectrum(
+                spectrum[:, 0],
+                spectrum[:, 1:],
+                ax = ax,
+                xlim = xlim,
+                ylim = ylim
+            )
+
+        logger.warning(f'Plotting not supported for {self.analysisType} analysis')
+        return None
 
     def export_spectrum_to_csv(
         self,
@@ -908,8 +1041,12 @@ class ModeCollection():
         # If omega was given as input, filter files accordingly
         if omegas is not None:
 
-            #matchingOmegasIndices       = [i for i, omega in enumerate(np.round(fileOmegas, 3)) if omega in np.round(omegas, 3)]
-            closestOmegasIndices        = [np.argmin(np.abs(np.array(fileOmegas) - omega)) for omega in omegas]
+            closestOmegasIndices        = []
+            for omega in omegas:
+                minDistance             = np.min(np.abs(np.array(fileOmegas) - omega))
+                closestOmegasIndices.extend([i for i, fileOmega in enumerate(fileOmegas) if np.abs(fileOmega - omega) == minDistance])
+            closestOmegasIndices        = list(set(closestOmegasIndices))  # Remove duplicates
+            
             if len(closestOmegasIndices) == 0:
                 logger.error('No matching omegas found in the import folder for the specified omegas.')
                 return

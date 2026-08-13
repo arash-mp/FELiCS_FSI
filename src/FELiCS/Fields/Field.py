@@ -17,13 +17,9 @@
 import os
 
 # Third party libraries
-from    basix.ufl                   import element
 import  dolfinx
 from    dolfinx                     import fem
 from    dolfinx.fem                 import Function, petsc
-import  matplotlib.pyplot           as plt
-from    matplotlib.tri              import Triangulation
-from    mpl_toolkits.axes_grid1     import make_axes_locatable 
 import  numpy                       as np
 from    petsc4py                    import PETSc
 import  ufl
@@ -41,6 +37,7 @@ from FELiCS.Misc.tensorUtils        import (
 )
 from FELiCS.Solvers.LinearSolver    import LinearSolver
 from FELiCS.SpaceDisc.FEMSpaces     import create_function_space
+from FELiCS.Misc.plottingUtils      import plot_scalar_function
 
 
 # Get the logger
@@ -310,14 +307,14 @@ class Field:
         for i in range(numberOfSubSpaces):
 
             # transfer content
-            space, mapping            = self.space.sub(i).collapse()
+            space, mapping      = self.space.sub(i).collapse()
 
             # NOTE: the sub-fields inherit the wave number from the field.
-            field                     = Field(
+            field               = Field(
                 space,
                 self.mesh,
-                name=namesOfSubFields[i],
-                m=self.m,
+                name    = namesOfSubFields[i],
+                m       = self.m,
             )
             field.set_coefficient_array(self.get_coefficient_array()[mapping])
             listOfFields.append(field)
@@ -639,15 +636,18 @@ class Field:
         # Create  a Field for the gradient
         # The space must be a vector vor a scalar field
         # TODO Sophie: handle order (get it from function?)
-        degree = self.space.element.basix_element.degree
-        dim = self.mesh.gdim 
+        degree  = self.space.element.basix_element.degree
+        dim     = self.mesh.gdim 
+        
         if self.hasSpectralDimension:
             dim += 1
+            
         gradientSpace = create_function_space(
             self.mesh,
             degree=degree,
             dim=dim,
         )
+        
         gradientField = Field(
             gradientSpace,
             self.mesh,
@@ -728,26 +728,31 @@ class Field:
         - No explicit error is raised if the field is not a velocity-type
           vector; it is the caller's responsibility to ensure consistency.
         """
-        # TODO Sophie: throw error if Field is not vector
         # TODO: Add vorticity 3D field
 
         dim = self.space.num_sub_spaces
-        if dim < 2:
-
-            # Error message
-            pass
-        componentGradient = []
-        velocityComponents = self.get_list_of_sub_fields()
+        
+        if self.info['type'] != 'vector':
+            logger.warning("get_vorticity_field() called for a field that is not a vector. \
+                Vorticity is only defined for 2D or 3D vector fields. Returning None.")
+            return None
+        
+        if dim > 2:
+            logger.warning("get_vorticity_field() called for a vector with more than 2 dimensions. \
+                Vorticity is only validated for 2D vector fields. Use at your own risk.")
+        
+        componentGradient       = []
+        velocityComponents      = self.get_list_of_sub_fields()
 
         for field in velocityComponents:
+            logger.debug(f"Calculating gradient for component {field.name} of the velocity field.")
             componentGradient.append(field.get_gradient_field())
-        
         
         # 2D field -> scalar vorticity field
         if dim == 2:
-            dvdx = componentGradient[1].get_list_of_sub_fields()[0]
-            dudy = componentGradient[0].get_list_of_sub_fields()[1]
-            vorticityField = dvdx - dudy
+            dvdx                = componentGradient[1].get_list_of_sub_fields()[0]
+            dudy                = componentGradient[0].get_list_of_sub_fields()[1]
+            vorticityField      = dvdx - dudy
             vorticityField.name = "vorticity"
             
             return vorticityField
@@ -771,7 +776,7 @@ class Field:
             vorticityField = Field(
                 self.space,
                 self.mesh,
-                name="vorticity",
+                name = "vorticity",
             )
             vorticityField.set_list_of_sub_fields([vorticity_x, vorticity_y, vorticity_z])
             
@@ -962,8 +967,11 @@ class Field:
                 elif iTest.order == 0:
                     matrix_ufl.add( ( iFluc * i_conj(iTest)).ufl_tens*J_hat*ufl.dx)
                 else:
-                    ##LOGGING TODO (Sophie): throw error 
-                    print("ERROR, in 'Field.evaluateUflExpression'")
+                    log_and_raise(
+                        logger, 
+                        "Unsupported test function order in 'Field.evaluate_ufl_tensor_expression'. Only order 0 and 1 are supported.", 
+                        ValueError
+                    )
                 i+=1
             matrix = matrix_ufl.get_assembled_matrix(
                 self.mesh,
@@ -1049,8 +1057,11 @@ class Field:
                         i_grad(i_conj(iTest)),
                     )).ufl_tens*J_hat*ufl.dx)
                 else:
-                    ##LOGGING TODO (Sophie): throw error 
-                    print("ERROR, in 'Field.smoothTensorUflExpression'")
+                    log_and_raise(
+                        logger,
+                        "Unsupported test function order in 'Field.smoothTensorUflExpression'. Only order 0 and 1 are supported.",
+                        ValueError
+                    )
                 i+=1
             matrix = matrix_ufl.get_assembled_matrix(self.mesh,bcs)
             self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
@@ -1133,8 +1144,11 @@ class Field:
                         i_grad(i_conj(iTest)),
                     )).ufl_tens*J_hat*ufl.dx)
                 else:
-                    ##LOGGING TODO (Sophie): throw error 
-                    print("ERROR, in 'Field.smoothTensorUflExpression'")
+                    log_and_raise(
+                        logger,
+                        "Unsupported test function order in 'Field.smoothTensorUflExpression'. Only order 0 and 1 are supported.",
+                        ValueError
+                    )
                 i+=1
             matrix = matrix_ufl.get_assembled_matrix(
                 self.mesh,
@@ -1143,44 +1157,49 @@ class Field:
             self.space.FEMSmoothSolver = LinearSolver.create_equation_system_solver(matrix)
 
         ## assemble rhs and solve equation system
-        expr_ufl     = UflDecorator()
-        listOfFields = self.get_list_of_sub_fields()
-        test_FEM     = ufl.TestFunctions(self.space)
-        coordinate_system = self.mesh.coordinate_system
-        J_hat = coordinate_system.J_hat
+        expr_ufl            = UflDecorator()
+        listOfFields        = self.get_list_of_sub_fields()
+        test_FEM            = ufl.TestFunctions(self.space)
+        coordinate_system   = self.mesh.coordinate_system
+        J_hat               = coordinate_system.J_hat
         for i in range(len(listOfFields)):
-            iTest = Tensor(
+            iTest           = Tensor(
                 test_FEM[i],
                 coordinate_system,
                 mayHaveSpectralDimension=True,
             )
-            field     = listOfFields[i]
-            expr_ufl += (i_dot(
+            field           = listOfFields[i]
+            expr_ufl        += (i_dot(
                 field.get_tensor(),
                 i_conj(iTest),
             )).ufl_tens*J_hat*ufl.dx
-        petscVec = expr_ufl.get_assembled_vector(
+            
+        petscVec            = expr_ufl.get_assembled_vector(
             self.mesh,
             bcs,
         )
-        self.set_coefficient_array(LinearSolver.solve_equation_system_with_predefined_solver(
-            self.space.FEMSmoothSolver,
-            petscVec,
-        ))
+        self.set_coefficient_array(
+            LinearSolver.solve_equation_system_with_predefined_solver(
+                self.space.FEMSmoothSolver,
+                petscVec,
+            )
+        )
 
     def plot(
         self,
-        variableName=None,
-        xlim=None,
-        ylim=None,
-        plotType="real",
-        clim=None,
-        axes=None,
+        variableName        = None,
+        xlim                = None,
+        ylim                = None,
+        plotType            = "real",
+        clim                = None,
+        axes                = None,
+        showBoundaries      = True,
+        free_aspect_ratio   = False,
     ):
         """
-        Plotting function for debugging purposes. This function can be used, to check if a
-        field looks as expected and rule out e.g. import problems.
-        
+        Plotting function for debugging purposes. Selects a scalar component
+        and delegates to :func:`FELiCS.Misc.plottingUtils.plot_scalar_function`.
+
         Parameters
         ----------
         variableName : str, optional
@@ -1188,204 +1207,168 @@ class Field:
             a subfield name or a component of a vector subfield (e.g. 'u_x'). If None,
             a default component is chosen.
         xlim : tuple, optional
-            Limits for the x-axis as (xmin, xmax). If None, limits are determined automatically.
+            Limits for the x-axis as (xmin, xmax).
         ylim : tuple, optional
-            Limits for the y-axis as (ymin, ymax). If None, limits are determined automatically.
+            Limits for the y-axis as (ymin, ymax).
         plotType : str, optional
-            Type of plot to display. Options are 'real', 'imag', or 'magnitude'. Default is 'real'.
+            Type of plot to display. Options are 'real', 'imag', 'angle' or 'magnitude'.
+            Default is 'real'.
         clim : tuple, optional
-            Color limits for the plot as (vmin, vmax). If None, limits are determined automatically based on the data and plotType.
+            Color limits for the plot as (vmin, vmax).
         axes : matplotlib.axes.Axes, optional
-            An existing Matplotlib Axes object to plot on. If None, a new figure and axes are created.
+            An existing Matplotlib Axes object to plot on. If None, a new figure and axes
+            are created.
+        showBoundaries : bool, optional
+            If True, plot the domain boundaries as black lines. Default is True.
+        free_aspect_ratio : bool, optional
+            If True, allow the aspect ratio to be free. Default is False.
 
-        Notes
-        -----
-        - This method provides a simple visualization of the field.
-        - For mixed or vector fields, a specific component can be selected via variableName.
-        - Currently only supports 2D meshes; 3D plotting is not yet implemented.
+        Returns
+        -------
+        matplotlib.axes.Axes
         """
+        selected_field = self._select_field_for_plot(variableName)
 
-        # Check that the field is defined on a 2D mesh, 3D not yet implemented
-        if self.mesh.dolfinxMesh.topology.dim != 2:
-            logger.warning("Field.plot(): plotting is currently only implemented for 2D meshes. Returning without plotting.")
-            return
-
-        # Handle mixed or vector fields by selecting the appropriate scalar field to plot
-        if self.space.num_sub_spaces > 1:
-            fields  = self.get_list_of_sub_fields()
-            names   = self.get_names_of_sub_fields()
-            
-            selected_field = None
-            
-            if variableName is not None:
-                if variableName in names:
-                    selected_field = fields[names.index(variableName)]
-                else:
-                    # Try to match a vector component name inside vector subfields
-                    for field in fields:
-                        if field.info['type'] == 'vector':
-                            component_names = field.get_names_of_sub_fields()
-                            if variableName in component_names:
-                                selected_field = field.get_list_of_sub_fields()[
-                                    component_names.index(variableName)
-                                ]
-                                break
-                    if selected_field is None:
-                        logger.warning(
-                            f"Field.plot(): variable '{variableName}' not found. "
-                            "Using the default component instead."
-                        )
-            
-            if selected_field is None:
-                # Default: first scalar field or first component of first vector
-                first_field = fields[0]
-                if first_field.info['type'] == 'vector':
-                    selected_field = first_field.get_list_of_sub_fields()[0]
-                elif first_field.info['type'] == 'mixed':
-                    # Take the first scalar component from the mixed subfield
-                    nested_fields = first_field.get_list_of_sub_fields()
-                    nested_first = nested_fields[0]
-                    if nested_first.info['type'] == 'vector':
-                        selected_field = nested_first.get_list_of_sub_fields()[0]
-                    else:
-                        selected_field = nested_first
-                else:
-                    selected_field = first_field
-            
-            return selected_field.plot(
-                variableName=variableName,
-                xlim=xlim,
-                ylim=ylim,
-                plotType=plotType,
-                clim=clim,
-                axes=axes
-            )
-
-        # ---- METHOD 1: Directly use dof coordinates and tricontourf ----
-        # NOTE: With this method we loose mesh connectivity information.
-        # phi_vertex      = self.getCoefficientArray()
-        # dof_coordinates = self.space.tabulate_dof_coordinates()
-        # x               = dof_coordinates[:, 0]
-        # y               = dof_coordinates[:, 1]
-        # triang          = Triangulation(x, y)
-        # ---- End of METHOD 1 ----
-
-        # ---- METHOD 2: Interpolate to P1 space and use tricontourf ----
-        mesh            = self.mesh.dolfinxMesh      # dolfinx.mesh.Mesh
-        u_h             = self.function              # fem.Function in Vh
-        tdim            = mesh.topology.dim
-
-        # Ensure cell->vertex connectivity
-        mesh.topology.create_connectivity(
-            tdim,
-            0
+        return plot_scalar_function(
+            self.mesh.dolfinxMesh,
+            selected_field.function,
+            title             = selected_field.name,
+            xlim              = xlim,
+            ylim              = ylim,
+            plotType          = plotType,
+            clim              = clim,
+            axes              = axes,
+            showBoundaries    = showBoundaries,
+            free_aspect_ratio = free_aspect_ratio,
         )
 
-        # --- 1) Interpolate to P1 space on same mesh ---
-        V1              = fem.functionspace(
-            mesh,
-            element(
-                "CG",
-                "triangle",
-                1
-            )
-        )
-        u1              = fem.Function(V1)
-        u1.interpolate(u_h)   # works if u_h is scalar-valued; see note below for vectors
-        
-        # Get the values corresponding to plot type
-        if plotType == "imag":
-            phi_vertex      = np.imag(u1.x.array)
-            cmap            = "seismic"
-        elif plotType == "magnitude":
-            phi_vertex      = np.abs(u1.x.array)
-            cmap            = "magma"
-        else:
-            phi_vertex      = np.real(u1.x.array)
-            cmap            = "seismic"
-        # Now u1.x.array has one value per vertex, in the same ordering as geometry.x
+    def _select_field_for_plot(self, variableName = None):
+        """Select a scalar sub-field suitable for plotting.
 
-        # --- 2) Build triangulation from the mesh ---
-        cells_to_vertices   = mesh.topology.connectivity(
-            tdim,
-            0
-        ).array
-        triangles           = cells_to_vertices.reshape(
-            -1,
-            3
-        )
-        coords              = mesh.geometry.x
-        x                   = coords[:, 0]
-        y                   = coords[:, 1]
-        triang              = Triangulation(
-            x,
-            y,
-            triangles=triangles,
-        )
-        # ---- End of METHOD 2 ----
-        
-        # ---- Plotting ----
-        if axes is None:
-            fig, axes       = plt.subplots()
-        if clim is None:
-            if plotType == "magnitude":
-                clim = (0, np.max(phi_vertex))
+        For mixed or vector fields the sub-field matching *variableName* is
+        returned.  If no name is given, or the name is not found, the first
+        scalar component is used as a fallback.
+
+        Parameters
+        ----------
+        self : FELiCS Field
+        variableName : str or None
+
+        Returns
+        -------
+        FELiCS Field
+            A scalar field ready for plotting.
+        """
+        fields         = self.get_list_of_sub_fields()
+        names          = self.get_names_of_sub_fields()
+        selected_field = None
+
+        if variableName is not None:
+            if variableName in names:
+                selected_field = fields[names.index(variableName)]
             else:
-                clim = (-0.5*np.max(np.abs(phi_vertex)), 0.5*np.max(np.abs(phi_vertex)))
-        contour = axes.tripcolor(
-            triang,
-            phi_vertex,
-            shading='gouraud',
-            cmap=cmap,
-            vmin=clim[0],
-            vmax=clim[1]
-        )
+                # Try to match a vector component name inside vector sub-fields
+                for f in fields:
+                    if f.info['type'] == 'vector':
+                        component_names = f.get_names_of_sub_fields()
+                        if variableName in component_names:
+                            selected_field = f.get_list_of_sub_fields()[
+                                component_names.index(variableName)
+                            ]
+                            break
 
-        # Set labels and title
-        axes.set_xlabel('x')
-        axes.set_ylabel('y')
-        if self.name != "":
-            title = self.name
-        else:
-            title = "scalar_field"
-        if plotType == "imag":
-            title += "_imag"
-        elif plotType == "magnitude":
-            title += "_magnitude"
-        else:
-            title += "_real"
+                if selected_field is None:
+                    logger.warning(
+                        f"Field.plot(): variable '{variableName}' not found. "
+                        "Using the default component instead."
+                    )
 
-        axes.set_title(title)
-        axes.set_aspect('equal')
-        axes.grid(
-            True,
-            alpha=0.3,
-        )
-        
-        # Add colorbar for phi
-        divider         = make_axes_locatable(axes)
-        colorbar_axes   = divider.append_axes(
-            "right",
-            size="2%",
-            pad=0.5,
-        ) 
-        cbar            = plt.colorbar(
-            contour,
-            label=title,
-            cax=colorbar_axes,
-        )
-        cbar.formatter.set_powerlimits((0, 0))
-        cbar.update_ticks()
-        if xlim is not None:
-            axes.set_xlim(xlim)
-        if ylim is not None:
-            axes.set_ylim(ylim)
+        if selected_field is None:
+            selected_field = fields[0]
 
-        plt.tight_layout()
-        plt.show()
-        
+        return self._select_first_scalar_field_for_plot(selected_field)
+
+    def _select_first_scalar_field_for_plot(self, field):
+        """Return the first scalar component contained in *field*."""
+        if field.info['type'] == 'vector':
+            return field.get_list_of_sub_fields()[0]
+        if field.info['type'] == 'mixed':
+            return self._select_first_scalar_field_for_plot(
+                field.get_list_of_sub_fields()[0]
+            )
+        return field
 
     ### dunder methods for overloading arithmetic operators ###
+    def _dofmap_hash(
+        self
+    ):
+        """Return a cached integer hash of the space's DOF map.
+
+        The hash is computed once from the raw dofmap array bytes and stored
+        on the function space object so that repeated arithmetic operations
+        between the same pair of spaces pay the O(N) cost only on the first
+        call.
+        """
+        if not hasattr(self.space, '_felics_dofmap_hash'):
+            self.space._felics_dofmap_hash = hash(
+                self.space.dofmap.list.tobytes()
+            )
+        return self.space._felics_dofmap_hash
+
+    def _assert_compatible_space(
+        self,
+        other
+    ):
+        """Raise ValueError if *other* is not defined on a compatible space.
+        
+        Parameters
+        ----------
+        other : Field
+            Another Field object to compare against.
+        
+        """
+        # Fast path: identical space object
+        if self.space is other.space:
+            return
+
+        if self.info['type'] != other.info['type']:
+            log_and_raise(
+                logger,
+                f"Incompatible field types: '{self.info['type']}' vs '{other.info['type']}'",
+                ValueError,
+            )
+        if self.info['value_size'] != other.info['value_size']:
+            log_and_raise(
+                logger,
+                f"Incompatible field value sizes: {self.info['value_size']} vs {other.info['value_size']}",
+                ValueError,
+            )
+        if len(self.get_coefficient_array()) != len(other.get_coefficient_array()):
+            log_and_raise(
+                logger,
+                f"Incompatible number of DOFs: {len(self.get_coefficient_array())} vs {len(other.get_coefficient_array())}",
+                ValueError,
+            )
+        if self.space.ufl_element() != other.space.ufl_element():
+            log_and_raise(
+                logger,
+                f"Incompatible FEM elements: {self.space.ufl_element()} vs {other.space.ufl_element()}",
+                ValueError,
+            )
+        if self.space.mesh is not other.space.mesh:
+            log_and_raise(
+                logger,
+                "Fields are defined on different meshes",
+                ValueError,
+            )
+        if self._dofmap_hash() != other._dofmap_hash():
+            log_and_raise(
+                logger,
+                "Fields have incompatible DOF orderings (e.g. collapsed subspace vs standalone space). "
+                "Interpolate one field onto the other's space before operating.",
+                ValueError,
+            )
+
     def __add__(
         self,
         other
@@ -1406,26 +1389,34 @@ class Field:
             original field shifted by a scalar.
 
         """
-        ## overrides '+'
-        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
+            
+            self._assert_compatible_space(other)
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
+            result.set_coefficient_array(
+                self.get_coefficient_array() + other.get_coefficient_array()
+            )
             return result 
+        
         elif np.isscalar(other):
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array() + other)
+            result.set_coefficient_array(
+                self.get_coefficient_array() + other
+            )
             return result
+        
         return NotImplemented
 
     def __iadd__(
@@ -1445,18 +1436,25 @@ class Field:
         -------
         self
         """
-        ## overrides '+'
-        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
-            self.set_coefficient_array(self.get_coefficient_array() + other.get_coefficient_array())
+            
+            self._assert_compatible_space(other)
+            
+            self.set_coefficient_array(
+                self.get_coefficient_array() + other.get_coefficient_array()
+            )
             return self
+        
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array() + other)
+            self.set_coefficient_array(
+                self.get_coefficient_array() + other
+            )
             return self
+        
         return NotImplemented
  
 
@@ -1483,26 +1481,32 @@ class Field:
         NotImplementedError
             If `other` is not a Field object.
         """
-        ## overrides '-'
-        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
+            self._assert_compatible_space(other)
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
+            result.set_coefficient_array(
+                self.get_coefficient_array() - other.get_coefficient_array()
+            )
             return result 
+        
         elif np.isscalar(other):
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array() - other)
-            return result 
+            result.set_coefficient_array(
+                self.get_coefficient_array() - other
+            )
+            return result
+        
         return NotImplemented
 
     def __isub__(
@@ -1526,18 +1530,24 @@ class Field:
         NotImplementedError
             If `other` is not a Field object.
         """
-        ## overrides '-='
-        ## returns newly created Field with a coefficient array, which is the sum of two given coefficientarrays
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
-            self.set_coefficient_array(self.get_coefficient_array() - other.get_coefficient_array())
+            self._assert_compatible_space(other)
+            
+            self.set_coefficient_array(
+                self.get_coefficient_array() - other.get_coefficient_array()
+            )
             return self
+        
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array() - other)
+            self.set_coefficient_array(
+                self.get_coefficient_array() - other
+            )
             return self
+        
         return NotImplemented
 
 
@@ -1559,26 +1569,33 @@ class Field:
             A new Field whose coefficient array is the pointwise product
             of the two fields, or the field scaled by the scalar.
         """
-        ## overrides '*'
-        ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
+            
+            self._assert_compatible_space(other)
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array()*other.get_coefficient_array())
+            result.set_coefficient_array(
+                self.get_coefficient_array()*other.get_coefficient_array()
+            )
             return result
+        
         elif np.isscalar(other):
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array()*other)
+            result.set_coefficient_array(
+                self.get_coefficient_array()*other
+            )
             return result
+        
         return NotImplemented
 
 
@@ -1598,18 +1615,25 @@ class Field:
         -------
         self
         """
-        ## overrides '*='
-        ## returns newly created Field with a coefficient array, which is the product of two given coefficientarrays, or the product of its coefficientarray with a scalar value
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
-            self.set_coefficient_array(self.get_coefficient_array() * other.get_coefficient_array())
+            
+            self._assert_compatible_space(other)
+            
+            self.set_coefficient_array(
+                self.get_coefficient_array() * other.get_coefficient_array()
+            )
             return self
+        
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array() * other)
+            self.set_coefficient_array(
+                self.get_coefficient_array() * other
+            )
             return self
+        
         return NotImplemented
 
 
@@ -1637,26 +1661,33 @@ class Field:
           caller's responsibility to avoid division by zero.
 
         """
-        ## overrides '/'
-        ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
+            
+            self._assert_compatible_space(other)
+            
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
+            result.set_coefficient_array(
+                self.get_coefficient_array()/other.get_coefficient_array()
+            )
             return result
+        
         elif np.isscalar(other):
             result = Field(
                 self.space,
                 self.mesh
             )
-            result.set_coefficient_array(self.get_coefficient_array()/other)
+            result.set_coefficient_array(
+                self.get_coefficient_array()/other
+            )
             return result
+        
         return NotImplemented
 
 
@@ -1682,20 +1713,23 @@ class Field:
           caller's responsibility to avoid division by zero.
 
         """
-        ## overrides '/='
-        ## returns newly created Field with a coefficient array, which is the division of two given coefficientarrays, or the division of its coefficientarray with a scalar value
-        # TODO Sophie: raise error / not implemented if fields are not defined on the same space
+        
         if isinstance(
             other,
             Field
         ):
-            self.set_coefficient_array(self.get_coefficient_array()/other.get_coefficient_array())
+            
+            self._assert_compatible_space(other)
+            
+            self.set_coefficient_array(
+                self.get_coefficient_array()/other.get_coefficient_array()
+            )
             return self
+        
         elif np.isscalar(other):
-            self.set_coefficient_array(self.get_coefficient_array()/other)
+            self.set_coefficient_array(
+                self.get_coefficient_array()/other
+            )
             return self
+        
         return NotImplemented
-
-
-
-

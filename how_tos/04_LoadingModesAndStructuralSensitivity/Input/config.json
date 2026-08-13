@@ -1,64 +1,63 @@
 {
 "BoundaryCondition":{
-    "BCsFilePath":"Input/boundaries.json"
+    "BCsFilePath":              "Input/boundaries.json"
 },
 "Case":{
-    "AnalysisMode":"Modal",
-    "CalculateAdjoint":true,
-    "CoordinateSystem":"Cartesian",
-    "needInterpolation":false,
-    "m":0.0,
-    "MeshFilePath":"Input/CylinderWakeMesh.msh",
-    "MixtureFilePath":"Mixture.json",
-    "MolVisc":0.02127659574468085,
-    "MolViscModel":"Constant",
-    "nDim":2,
-    "Reaction":false,
+    "AnalysisMode":             "Modal",
+    "CalculateAdjoint":         true,
+    "CoordinateSystem":         "Cartesian",
+    "needInterpolation":        false,
+    "m":                        0.0,
+    "MeshFilePath":             "Input/cylinder_wake.msh",
+    "MixtureFilePath":          "Mixture.json",
+    "MolVisc":                  0.02,
+    "MolViscModel":             "Constant",
+    "nDim":                     2,
+    "Reaction":                 false,
     "SetOfEquations":{
         "Momentum":{
-            "Equation":"NSPrimitive",
-            "Variable":"u"
+            "Equation":         "NSPrimitive",
+            "Variable":         "u"
         },
         "Mass":{
-            "Equation":"Continuity",
-            "Variable":"p"
+            "Equation":         "Continuity",
+            "Variable":         "p"
         },
         "Energy":{
-            "Equation":"None",
-            "Variable":"None"
+            "Equation":         "None",
+            "Variable":         "None"
         },
         "Species":{
-            "Equation":"None",
-            "Variable":"None"
+            "Equation":         "None",
+            "Variable":         "None"
         },
         "EquationOfState":{
-            "Equation":"None",
-            "Variable":"None"
+            "Equation":         "None",
+            "Variable":         "None"
         }
     },
-    "SpeciesFilePath":"",
-    "TransVelFluc":false,
-    "TurbulenceModel":"None"
+    "SpeciesFilePath":          "",
+    "TransVelFluc":             false,
+    "TurbulenceModel":          "None"
 },
 "Export":{
-    "ExportFolder":"OutModal",
-    "Video":false
+    "ExportFolder":             "Input"
 },
 "FlowInput":{
-    "AveragingDirection":"None",
-    "MeanFlowFilePath":"meanFlow/meanflow.h5"
+    "AveragingDirection":       "None",
+    "MeanFlowFilePath":         "Input/MeanFlow.h5"
 },
 "IOResolvent":{
-    "ForcingBoundaryIndices":[],
-    "ForcingCoeff":[],
-    "ForcingMode":"Body",
-    "Omegas":[]
+    "ForcingBoundaryIndices":   [],
+    "ForcingCoeff":             [],
+    "ForcingMode":              "Body",
+    "Omegas":                   []
 },
 "Numerics":{
-    "EigenValueGuess":[0.7],
-    "nSolut":1,
+    "EigenValueGuess":          [0.7],
+    "nSolut":                   20,
     "PolynomialOrder":{
-        "u":2,
-        "p":2
+                                "u":2,
+                                "p":2
     }
 }}
