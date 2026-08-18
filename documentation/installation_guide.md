@@ -131,6 +131,8 @@ If successful, the FELiCS logo and help message are displayed:
 | __|| __|| |   (_)((/ __|/ __|
 | _| | _| | |__ | | | (__ \__ \
 |_|  |___||____||_|  \___||___/
+usage: main.py [-h] -f path [-d] [-t]
+main.py: error: the following arguments are required: -f/--file/-file
 Git commit: ...
 usage: main.py [-h] -f path [-d] [-t]
 
@@ -157,11 +159,7 @@ Example usage:
 
 For a more thorough check, run a tutorial case:
 ```bash
-<<<<<<< HEAD
-cd $FELiCS_PATH/tutorials/modal_analysis_tutorial
-=======
 cd $FELiCS_PATH/tutorials/modal_analysis_tutorial/
->>>>>>> main
 FELiCS -f modal.json
 ```
 This example should complete in under a minute. If successful, you will see the message: `Finished FELiCS run.`
@@ -196,7 +194,7 @@ conda activate <felics-environemnt>
 python 
 import FELiCS
 ```
-and try to import FELiCS. If successful, the FELiCS logo is displayed:
+and try to import FELiCS. If successful, the output should be:
 ```python import FELiCS
 (         (               (
 )\ )      ) )       (    )\ )
@@ -206,6 +204,8 @@ and try to import FELiCS. If successful, the FELiCS logo is displayed:
 | __|| __|| |   (_)((/ __|/ __|
 | _| | _| | |__ | | | (__ \__ \
 |_|  |___||____||_|  \___||___/
+usage: main.py [-h] -f path [-d] [-t]
+main.py: error: the following arguments are required: -f/--file/-file
 ```
 
 ```{Caution}
