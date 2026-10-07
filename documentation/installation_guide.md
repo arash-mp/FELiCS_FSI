@@ -77,7 +77,6 @@ if [ -f "$FELICS_DIRECTORY/src/main.py" ]; then
 	FELiCS() {
 	    export OMP_NUM_THREADS=2;
 	    python \$FELiCS_PATH/src/main.py \"\$@\";
-	    python \$FELiCS_PATH/src/main.py \"\$@\";
 	    unset OMP_NUM_THREADS
 	}" >> ~/.bashrc
 else
