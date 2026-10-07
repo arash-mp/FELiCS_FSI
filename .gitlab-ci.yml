@@ -107,7 +107,6 @@ create documentation:
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
     - if: '$CI_COMMIT_BRANCH == "development"'
-    - if: '$CI_COMMIT_BRANCH == "felics_workshop_2026"' 
     - if: '$CI_COMMIT_TAG'
 
 # Same build as "create documentation" but deliberately has no "pages" key,
