@@ -167,7 +167,8 @@ class BoundaryHandler():
 
     def get_list_of_dirichlet_b_cs_for_dolfinx(
         self,
-        functionSpace
+        functionSpace,
+        exclude_ids=None
     ):
         """
         Constructs the list of Dirichlet boundary conditions for Dolfinx.
@@ -179,6 +180,12 @@ class BoundaryHandler():
         ----------
         functionSpace : dolfinx.fem.functionspace
             The function space on which the boundary conditions are applied. 
+        exclude_ids : list of int, optional
+            Boundary IDs to skip entirely. Used by the rigid-body FSI module, which
+            must assemble the fluid operator *without* the Dirichlet velocity BC on
+            the FSI interface (so the interface-velocity columns are retained and
+            can be replaced by the transpiration constraint). Default: none skipped,
+            i.e. the behaviour is identical to before.
 
         Returns
         -------
@@ -192,7 +199,11 @@ class BoundaryHandler():
         """
         gdim = self.facet_tags.topology.dim  # NOTE: THIS IS VERY PRELIMINARY AND HAS TO BE CHECKED
         BCs = []
+        if exclude_ids is None:
+            exclude_ids = []
         for boundary in self.boundaryList:
+            if boundary.ID in exclude_ids:
+                continue
             for var in self.variables:
                 index = self.variables.index(var)
                 if len(var[1]) == 0 and boundary.types[index][0] == BoundaryType.DIRICHLET:

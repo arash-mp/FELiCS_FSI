@@ -127,6 +127,33 @@ class Config(ABC):
                 'ExportFolder':             {'datatype':str,    'default':''},
                 'Video':                    {'datatype':bool,   'default':False},
             },
+            'FSI':{
+                # --- master switch ---------------------------------------------------
+                'Enabled':                  {'datatype':bool,   'default':False},
+                'InterfaceBoundaryID':      {'datatype':int,    'default':5},
+                # --- body properties (shared by all DOFs) ----------------------------
+                # -1.0 = "not given" (a real mass is >= 0). RigidBodyFSI then takes the
+                # body mass from the first translation DOF that states one.
+                'Mass':                     {'datatype':float,  'default':-1.0},
+                'CenterOfMass':             {'datatype':list,   'default':[]},
+                # --- multi-DOF style: a list of per-DOF dicts ------------------------
+                #   each entry: {"Enabled", "MotionType", "Damping", "Stiffness",
+                #                "RotationCenter"/"MomentOfInertia"/"MomentOfInertiaCM"
+                #                or "MotionDirection"/"Mass"}
+                'DOFs':                     {'datatype':list,   'default':[]},
+                # --- optional full n x n structural matrix overrides -----------------
+                'MassMatrix':               {'datatype':list,   'default':[]},
+                'DampingMatrix':            {'datatype':list,   'default':[]},
+                'StiffnessMatrix':          {'datatype':list,   'default':[]},
+                # --- single-DOF (legacy) style: motion at the FSI top level ----------
+                'MotionType':               {'datatype':str,    'default':'Rotation'},
+                'MotionDirection':          {'datatype':list,   'default':[0.0, 1.0]},
+                'RotationCenter':           {'datatype':list,   'default':[0.0, 0.0]},
+                'MomentOfInertia':          {'datatype':float,  'default':1.0},
+                'MomentOfInertiaCM':        {'datatype':float,  'default':0.0},
+                'Damping':                  {'datatype':float,  'default':0.0},
+                'Stiffness':                {'datatype':float,  'default':0.0},
+            },
             'FlowInput':{
                 'AveragingDirection':       {'datatype':str,    'default':'None'},
                 'MeanFlowFilePath':         {'datatype':str,    'default':''},
@@ -137,12 +164,33 @@ class Config(ABC):
                 'ForcingMode':              {'datatype':str,    'default':'Body'},
                 'ForcingNorm':              {'datatype':str,    'default':'TKE'},
                 'ResponseNorm':             {'datatype':str,    'default':'TKE'},
-                'Omegas':                   {'datatype':list,   'default':[]}
+                'Omegas':                   {'datatype':list,   'default':[]},
+                # --- rigid-body FSI: which rows are forced / measured --------
+                # The four combinations:
+                #   fluid  -> fluid : wake receptivity
+                #   fluid  -> body  : GUST RESPONSE
+                #   body   -> fluid : ACTUATOR AUTHORITY
+                #   both   -> both  : full coupled input-output
+                'ForceFluid':               {'datatype':bool,   'default':True},
+                'ForceStructure':           {'datatype':bool,   'default':False},
+                'MeasureFluid':             {'datatype':bool,   'default':True},
+                'MeasureStructure':         {'datatype':bool,   'default':False},
+                # 'Inertia' (= M^-1, dimensionally consistent) or 'Identity'
+                'StructuralForcingNorm':    {'datatype':str,    'default':'Inertia'},
+                'StructuralForcingScale':   {'datatype':float,  'default':1.0},
+                # 'Kinetic' | 'Displacement' | 'Energy'
+                'StructuralResponseNorm':   {'datatype':str,    'default':'Kinetic'},
+                # --- discounted resolvent (needed for an UNSTABLE base flow) --
+                # shift = omega + i*beta, with beta > max growth rate
+                'Discounted':               {'datatype':bool,   'default':False},
+                'DiscountBeta':             {'datatype':float,  'default':0.0}
             },
             'Numerics':{
                 'EigenValueGuess':          {'datatype':list,   'default':[1.0]},
                 'nSolut':                   {'datatype':int,    'default':3},
-                'PolynomialOrder':          {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]}
+                'PolynomialOrder':          {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]},
+                'EigenSolverTolerance':     {'datatype':float,  'default':1e-12},
+                'EigenSolverMaxIterations': {'datatype':int,    'default':200}
             }
         }
         return SettingsDict
@@ -252,9 +300,13 @@ class Config(ABC):
         # Loop over fields and overwrite defaults by file values
         for category in default_config:
             dict = Dotdict()
+            # Tolerate a category being absent from the case file entirely (e.g.
+            # an old case file with no 'FSI' block): all its fields then take
+            # their defaults, and FSI.Enabled defaults to False.
+            category_data = input_data.get(category, {})
             for parameter in default_config[category]:
-                if parameter in input_data[category]:
-                    input_value         = input_data[category][parameter]
+                if parameter in category_data:
+                    input_value         = category_data[parameter]
                     if parameter in ["EigenValueGuess","Omegas"]:
                         dict[parameter] = self.parse_complex_list(input_value)
                     else:
