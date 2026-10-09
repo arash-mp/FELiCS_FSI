@@ -27,3 +27,6 @@ tutorials/*/output_dir
 tutorials/*/out
 output_dir
 out
+RUNS/
+install/
+*.patch
