@@ -92,9 +92,6 @@ class Config(ABC):
                 'AnalysisMode':             {'datatype':str,    'default':'Modal'},
                 'CalculateAdjoint':         {'datatype':bool,   'default':True},
                 'CoordinateSystem':         {'datatype':str,    'default':'Cartesian'},
-
-                # 'HeatCapacityConstPressure':{'datatype':int,    'default':1005},
-                # 'HeatCapacityRatio':        {'datatype':int,    'default':1.4},
                 'needInterpolation':        {'datatype':bool,   'default':True},
                 'm':                        {'datatype':int,    'default':0},
                 'MeshFilePath':             {'datatype':str,    'default':''},
@@ -120,12 +117,10 @@ class Config(ABC):
                     }
                 },
                 'SpeciesFilePath':          {'datatype':str,    'default':''},
-                'TransVelFluc':             {'datatype':bool,   'default':False},
                 'TurbulenceModel':          {'datatype':str,    'default':'None'}
             },
             'Export':{
                 'ExportFolder':             {'datatype':str,    'default':''},
-                'Video':                    {'datatype':bool,   'default':False},
             },
             'FSI':{
                 # --- master switch ---------------------------------------------------
@@ -155,12 +150,10 @@ class Config(ABC):
                 'Stiffness':                {'datatype':float,  'default':0.0},
             },
             'FlowInput':{
-                'AveragingDirection':       {'datatype':str,    'default':'None'},
                 'MeanFlowFilePath':         {'datatype':str,    'default':''},
             },
             'IOResolvent':{
                 'ForcingBoundaryIndices':   {'datatype':list,   'default':[]},
-                'ForcingCoeff':             {'datatype':list,   'default':[]},
                 'ForcingMode':              {'datatype':str,    'default':'Body'},
                 'ForcingNorm':              {'datatype':str,    'default':'TKE'},
                 'ResponseNorm':             {'datatype':str,    'default':'TKE'},
@@ -807,8 +800,10 @@ class Config(ABC):
             MeanList.append(specie)
         if self.Case.TurbulenceModel in ['File']:
             MeanList.append('nuturb')
+            MeanList.append('muturb')
         if self.Case.MolViscModel in ['File'] or self.Case.MolViscPerturbModel in ['Sutherland mean']:
             MeanList.append('nulam')
+            MeanList.append('mulam')
         if self.Case.Reaction:
             MeanList.append('dQ')
         return MeanList

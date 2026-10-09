@@ -636,7 +636,7 @@ class RigidBodyMotionFSI:
         X_u     = i_conj(self.X[self.u_index])   # conjugated velocity test
         X_p     = i_conj(self.X[self.p_index])   # conjugated pressure test
         n       = self.n
-        mean_nu = self.meanFlow.nu_tot
+        mean_mu = self.meanFlow.mu_tot      # dynamic viscosity (upstream: nu -> mu)
         J_hat   = cs.J_hat
         ds_if   = self.equation.ds(self.interface_id)
 
@@ -647,7 +647,7 @@ class RigidBodyMotionFSI:
         visc_traction = i_dot(strain2, n)
         moment_press  = X_p * i_dot(d_tens, n)
         moment_visc   = i_dot(d_tens, visc_traction)
-        moment_integrand = moment_press - mean_nu * moment_visc
+        moment_integrand = moment_press - mean_mu * moment_visc
 
         force_ufl = UflDecorator()
         force_ufl.add(moment_integrand.ufl_tens * J_hat * ds_if)

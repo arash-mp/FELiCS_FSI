@@ -9,7 +9,6 @@ import  numpy as np
 from    FELiCS.Equation.EquationCollection  import EquationCollectionClass
 from    FELiCS.Fields.MeanFlowClass         import MeanFlowClass
 from    FELiCS.Fields.ModeCollection        import ModeCollection
-# import  FELiCS.IO.Import as Import
 from    FELiCS.IO.Writer                    import Writer
 from 	FELiCS.Misc.logging                 import Logger
 from    FELiCS.Solvers.LinearSolver         import LinearSolver
@@ -124,23 +123,23 @@ def run_modal(param):
     #-----------------------------------------------------------------------
     # Get FELiCS objects required for analysis
     # mesh
-    mesh      = param.get_mesh()
+    mesh            = param.get_mesh()
     from    FELiCS.SpaceDisc.FEMSpaces          import FEMSpaces
-
+    
     # FEMSpaces
-    FEMSpaces = FEMSpaces(
+    FEMSpaces       = FEMSpaces(
         param,
         mesh,
     )
 
     # writer to export the results in files
-    writer    = Writer(
+    writer          = Writer(
         mesh,
         param.Export.ExportFolder,
     )
 
     # read in mean flow and export to h5-file
-    meanFlow = MeanFlowClass(
+    meanFlow        = MeanFlowClass(
         param,
         FEMSpaces,
         mesh,
@@ -148,7 +147,7 @@ def run_modal(param):
     meanFlow.import_data_from_file_and_export_to_h5(writer)
 
     # equation
-    equation = EquationCollectionClass(
+    equation        = EquationCollectionClass(
         param,
         FEMSpaces,
         meanFlow,
@@ -175,9 +174,9 @@ def run_modal(param):
         n_struct = 0
 
     # get parameters for eigenproblem
-    guesses          = param.Numerics.EigenValueGuess
-    nSol             = param.Numerics.nSolut
-    adjoint          = param.Case.CalculateAdjoint
+    guesses         = param.Numerics.EigenValueGuess
+    nSol            = param.Numerics.nSolut
+    adjoint         = param.Case.CalculateAdjoint
 
     # eigensolver settings from the case file (fall back to the solver defaults
     # if the case file does not specify them)
@@ -196,10 +195,10 @@ def run_modal(param):
         adjoint = False
 
     # track time
-    start= time.time()
+    start           = time.time()
 
     # solve eigenproblem for each guess
-    solution = ModeCollection(
+    solution        = ModeCollection(
         FEMSpaces.VMixed,
         mesh,
         analysisType = "modal",
@@ -207,7 +206,7 @@ def run_modal(param):
     for guess in guesses:
 
         logger.info("Solving direct GEVP for guess: omega = " + str(guess))
-        tmp     = LinearSolver.solve_general_eigenproblem(
+        tmp         = LinearSolver.solve_general_eigenproblem(
             A,
             B,
             guess,
@@ -227,7 +226,11 @@ def run_modal(param):
             struct_amp    = eig_vecs_aug[:, N:]            # shape (nev, 2*n_dof)
             tmp           = (eig_vals, eig_vecs_flu, error)
 
-            solution.append_solution_of_eigen_problem(tmp, guess)
+            solution.append_solution_of_eigen_problem(
+                tmp,
+                guess,
+                m       = param.Case.m
+            )
 
             # attach the structural amplitudes to the freshly added modes
             new_modes = solution.modeList[-len(eig_vals):]
@@ -263,7 +266,11 @@ def run_modal(param):
                     f"participation = {mode.dof_frac}"
                 )
         else:
-            solution.append_solution_of_eigen_problem(tmp, guess)
+            solution.append_solution_of_eigen_problem(
+                tmp,
+                guess,
+                m       = param.Case.m
+            )
 
         n_calculated = nSol
 
@@ -277,13 +284,14 @@ def run_modal(param):
                 nSol,
                 tol=eig_tol,
                 max_it=eig_max_it,
-                adjoint=True,
+                adjoint = True,
             )
 
             solution.append_solution_of_eigen_problem(
                 tmp,
                 guess,
-                adjoint=True,
+                adjoint = True,
+                m = param.Case.m
             )
 
             n_calculated += nSol
@@ -301,9 +309,8 @@ def run_modal(param):
             onlyNewN = n_calculated,
         )
 
-
-    # end tracking time
-    end = time.time() - start
+    # End tracking time
+    end             = time.time() - start
     logger.info('Solving the general eigenproblem took %4g s' % end)
     residuum_max    = solution.get_maximum_error()
     logger.debug('Maximum residuum of all solutions:  %12g' % (residuum_max))

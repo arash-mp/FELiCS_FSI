@@ -3,6 +3,10 @@ image: continuumio/anaconda3
 
 variables:
   GIT_STRATEGY: fetch
+  # Number of most recent release tags (on main) to build docs for, in
+  # addition to "development". Override at the pipeline/schedule level to
+  # change without editing this file.
+  FELICS_DOC_NUM_RELEASES: "3"
 
 felics-pytest:
   stage: test
@@ -19,38 +23,126 @@ felics-pytest:
     - pip install -e .
     - cd ..
   script:
+    - export PYTHONPATH="$(pwd)/src${PYTHONPATH:+:$PYTHONPATH}"
     - cd tests
-    - python3 -m pytest 
+    - python3 -m pytest
   only:
     - development
 
-create documentation:
-  pages:  # specifies that this is a Pages job
-    publish: public
+felics-tutorials:
+  stage: test
+  image: continuumio/miniconda3
+  before_script:
+    - git --version
+    - pwd
+    - ls -all
+    - echo "Creating conda environment for FELiCS..."
+    - conda env create -f installation/felics_v3.0.0_env_v2.yml
+    - source /opt/conda/etc/profile.d/conda.sh
+    - conda activate felics
+    - cd installation
+    - pip install -e .
+    - cd ..
+  script:
+    - bash tutorials/test_tutorials.sh
+  only:
+    - development
+
+# Shared by "create documentation" (the real Pages deploy) and
+# "verify documentation build" (a safe, non-publishing dry run for testing
+# this pipeline on a branch, see the wiki / AGENTS.md docs section). Not a
+# runnable job itself (leading dot).
+.documentation-build:
   stage: deploy
+  variables:
+    # Tags and the "development" branch must be fetchable regardless of which
+    # ref triggered the pipeline, so this job needs full history.
+    GIT_DEPTH: "0"
   before_script:
     - git --version
     - ls -all
-    - echo "Installing Sphinx and dependencies..."  
+    - echo "Installing Sphinx and dependencies..."
     - pip install -U pip
     - pip install -U sphinx myst-parser sphinx-book-theme
     - pip install -U sphinx-autoapi==3.0.0
     - pip install -U astroid==3.3.11
     - pip install sphinxcontrib-mermaid
   script:
-    - cd documentation
-    - mkdir ../public
     - python3 --version
     - pip list
-    - sphinx-build -b html . _build
-    - ls
-    - cp -r _build/ ../public/.
-    - cd ..
-    - ls
-    - cp -r public/_build/* public/
-    - rm -r public/_build
+    - git fetch origin '+refs/heads/*:refs/remotes/origin/*' --tags
+    - |
+      set -e
+      RELEASE_TAGS=$(git tag --merged origin/main --sort=-v:refname | head -n "${FELICS_DOC_NUM_RELEASES}")
+      PREFERRED_VERSION=$(git tag --merged origin/main --sort=-v:refname | head -n 1)
+      DOC_VERSIONS="development ${RELEASE_TAGS}"
+      echo "Building documentation for versions -> ${DOC_VERSIONS}"
+      mkdir -p public/_static
+      for version in $DOC_VERSIONS; do
+        echo "=== Building documentation for ${version} ==="
+        if [ "$version" = "development" ]; then
+          checkout_ref="origin/development"
+        else
+          checkout_ref="$version"
+        fi
+        worktree_dir="/tmp/felics-doc-${version}"
+        rm -rf "$worktree_dir"
+        git worktree add --force "$worktree_dir" "$checkout_ref"
+        sphinx-build -b html "$worktree_dir/documentation" "public/${version}"
+        git worktree remove --force "$worktree_dir"
+        # Every built version gets the same switcher widget, even releases
+        # whose own (immutable) historical conf.py predates this feature.
+        python3 documentation/inject_version_switcher.py "public/${version}"
+      done
+      cp documentation/_static/felics_version_switcher.js documentation/_static/felics_version_switcher.css public/_static/
+      python3 documentation/generate_switcher.py --preferred "${PREFERRED_VERSION}" --output-dir public ${DOC_VERSIONS}
   artifacts:
     paths:
       - public
-  only:
-    - main
+
+create documentation:
+  extends: .documentation-build
+  pages:  # specifies that this is a Pages job
+    publish: public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "development"'
+    - if: '$CI_COMMIT_TAG'
+
+# Same build as "create documentation" but deliberately has no "pages" key,
+# so it can never publish to the live GitLab Pages site no matter which
+# branch it runs on. Use this to test docs-pipeline changes for real (real
+# runner, real network, real git tags) without touching production and
+# without merging: GitLab UI -> CI/CD -> Pipelines -> "Run pipeline" -> pick
+# your branch -> Run, then manually start this job and download its "public"
+# artifact to inspect locally.
+# Note: double-clicking the downloaded index.html opens it as a file:// URL,
+# where the version switcher will not appear - browsers block the fetch() it
+# needs to load switcher.json for local files. The redirect still works
+# (that's a plain <meta> tag, no network request), but to see the switcher
+# itself, serve the extracted "public" folder instead, e.g.
+# "python -m http.server" from inside it, then open localhost in a browser.
+verify documentation build:
+  extends: .documentation-build
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+  allow_failure: true
+
+# Same build as "create documentation", but published to an isolated preview
+# URL (Pages path_prefix, scoped to the triggering branch) instead of the
+# live site at the project's Pages root, so it never overwrites production.
+# Requires "Pages: multiple deployments" to be enabled for this project
+# (Settings > Pages, GitLab 16.7+) - if it is not, this job may fail or
+# publish unexpectedly, so check that setting before relying on it. Trigger
+# the same way as "verify documentation build" above, then open the preview
+# URL GitLab prints for this job (Deployments > Pages, or the job log).
+preview documentation:
+  extends: .documentation-build
+  pages:
+    publish: public
+    path_prefix: '$CI_COMMIT_REF_SLUG'
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+  allow_failure: true

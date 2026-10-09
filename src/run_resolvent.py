@@ -133,7 +133,7 @@ def run_resolvent(param):
     solution                    = ModeCollection(
         FEMSpaces.VMixed,
         mesh,
-        analysisType='Resolvent',
+        analysisType            = 'Resolvent',
     )
     
     gain_records                = []
@@ -145,7 +145,7 @@ def run_resolvent(param):
         
         # Catch bug for omega = 1.0
         if omega == 1.0:
-            omega += 1.e-4
+            omega               += 1.e-4
             logger.warning("Omega was equal to 1.0, which can lead to numerical issues. Added 1.e-4 to omega.")
 
         # Standard resolvent : shift = omega            (valid for a STABLE base flow)
@@ -178,9 +178,9 @@ def run_resolvent(param):
         # via the matrix vector multiplation "mult"
         gains, eigenvectors_c   = LinearSolver.solve_svd_of_resolvent(
             resolventOperator,
-            nev             = nSol,
-            tol             = 1.e-16,
-            max_it          = 200,
+            nev                 = nSol,
+            tol                 = 1.e-16,
+            max_it              = 200,
         )
 
         if not fsi_enabled:
@@ -189,12 +189,13 @@ def run_resolvent(param):
                 omega,
                 gains,
                 resolventOperator,
+                m                   = param.Case.m
             )
             # export spectrum and newly calculated modes
             solution.export_spectrum_to_csv(writer)
             solution.export_modes(
                 writer,
-                onlyNewN = nSol*2,
+                onlyNewN            = nSol*2,
             )
         else:
             # ModeCollection expects vectors of the FLUID size; the augmented
@@ -213,11 +214,12 @@ def run_resolvent(param):
                 border,
                 layout,
                 gain_records,
+                m = param.Case.m,
             )
             solution.export_spectrum_to_csv(writer)
             solution.export_modes(
                 writer,
-                onlyNewN = nSol*2,
+                onlyNewN            = nSol*2,
             )
             # Rewrite the FSI csv after EVERY frequency (it is tiny, so this is
             # free) so that partial results are usable immediately and survive a
@@ -242,7 +244,7 @@ def run_resolvent(param):
 # FSI-specific bookkeeping
 # ----------------------------------------------------------------------
 def _append_and_record_fsi(solution, gains, forcing_vecs, omega, beta,
-                           resolventOperator, fsi, border, layout, records):
+                           resolventOperator, fsi, border, layout, records, m=0):
     """Append the FLUID part of the forcing/response modes to the ModeCollection,
     and record the STRUCTURAL amplitudes, for one frequency.
 
@@ -308,7 +310,7 @@ def _append_and_record_fsi(solution, gains, forcing_vecs, omega, beta,
                 isStateVector = True,
                 analysisType  = 'Resolvent',
                 modeType      = mtype,
-                m             = 0,
+                m             = m,
             )
             md.gain        = float(np.real(gains[i]))   # NOTE: gains are sigma^2
             md.gain_number = i

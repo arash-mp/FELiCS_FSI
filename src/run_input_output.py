@@ -86,7 +86,7 @@ def run_input_output(param):
     solution                = ModeCollection(
         FEMSpaces.VMixed,
         mesh,
-        analysisType = "input_output",
+        analysisType        = "input_output",
     )
     for omega in omegas:
 
@@ -102,8 +102,9 @@ def run_input_output(param):
         )
         solution.append_mode_from_vector(
             solutionVector,
-            frequency = omega,
-            gain = 1,
+            frequency       = omega,
+            gain            = 1,
+            m               = param.Case.m
         ) 
 
         # export newest mode

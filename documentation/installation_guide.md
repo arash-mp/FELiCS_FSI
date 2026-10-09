@@ -39,7 +39,7 @@ In the installation directory, we provide different _.yml_ files that contain al
 The older versions of yml files can be found in the folder [yml_old](https://gitlab.com/felics-group/FELiCS/-/blob/main/installation/) with the corresponding version in the filename.
 
 ```{note}
-Sometimes when using WSL, there might be troubles with the latest yml file. If so please try the second version. 
+On some machines, the latest `.yml` file may cause issues with the `gmsh` package. If that happens, try the alternate version instead: [felics_v3.0.0_env_v2.yml](https://gitlab.com/felics-group/FELiCS/-/blob/main/installation/). 
 ```
 
 ```{admonition} Optional
@@ -76,7 +76,6 @@ if [ -f "$FELICS_DIRECTORY/src/main.py" ]; then
 	echo -e "FELiCS_PATH=\"${FELICS_DIRECTORY}\" 
 	FELiCS() {
 	    export OMP_NUM_THREADS=2;
-	    python \$FELiCS_PATH/src/main.py \"\$@\";
 	    python \$FELiCS_PATH/src/main.py \"\$@\";
 	    unset OMP_NUM_THREADS
 	}" >> ~/.bashrc
@@ -119,9 +118,9 @@ conda activate <your_environment_name>
 
 Once the environment is active, test the FELiCS alias:
 ```bash
-FELiCS
+FELiCS -h
 ```
-If successful, the FELiCS logo is displayed:
+If successful, the FELiCS logo and help message are displayed:
 ```bash
 (         (               (
 )\ )      ) )       (    )\ )
@@ -131,12 +130,36 @@ If successful, the FELiCS logo is displayed:
 | __|| __|| |   (_)((/ __|/ __|
 | _| | _| | |__ | | | (__ \__ \
 |_|  |___||____||_|  \___||___/
+usage: main.py [-h] -f path [-d] [-t]
+main.py: error: the following arguments are required: -f/--file/-file
+Git commit: ...
+usage: main.py [-h] -f path [-d] [-t]
+
+------------------ FELICS -----------------
+FELiCS (Finite Element Linearized Combustion Solver) 
+is a Python-based CFD tool for linearized flow analysis, 
+developed by the Laboratory for Flow Instabilities and Dynamics
+at TU Berlin, Germany.
+
+options:
+  -h, --help            show this help message and exit
+  -f, --file, -file path
+                        Specify the path to the config file
+  -d, --debug           activate debug mode for extended output
+  -t, --test            activate test mode with no output
+
+Example usage:
+    python main.py -h           shows help message 
+    python main.py -f path      start with config file at path (mandatory)
+    python main.py -f path -d   for debug mode
+    python main.py -f path -t   for test mode
 ```
 
 
 For a more thorough check, run a tutorial case:
 ```bash
-FELiCS -f $FELiCS_PATH/tutorials/modal_analysis_tutorial/modal.json
+cd $FELiCS_PATH/tutorials/modal_analysis_tutorial/
+FELiCS -f modal.json
 ```
 This example should complete in under a minute. If successful, you will see the message: `Finished FELiCS run.`
 
@@ -167,9 +190,10 @@ To test the installation, start python in the FELiCS conda environment
 
 ```bash
 conda activate <felics-environemnt>
-python import FELiCS
+python 
+import FELiCS
 ```
-and try to import FELiCS. If successful, the FELiCS logo is displayed:
+and try to import FELiCS. If successful, the output should be:
 ```python import FELiCS
 (         (               (
 )\ )      ) )       (    )\ )
@@ -179,6 +203,8 @@ and try to import FELiCS. If successful, the FELiCS logo is displayed:
 | __|| __|| |   (_)((/ __|/ __|
 | _| | _| | |__ | | | (__ \__ \
 |_|  |___||____||_|  \___||___/
+usage: main.py [-h] -f path [-d] [-t]
+main.py: error: the following arguments are required: -f/--file/-file
 ```
 
 ```{Caution}

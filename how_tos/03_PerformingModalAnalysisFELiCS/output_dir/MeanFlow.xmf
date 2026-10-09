@@ -57,10 +57,10 @@ mesh.h5:/coordinates/y
    </DataItem>                                                                          
 </Attribute>  
 
-<Attribute Name="nulam" Center="Node" AttributeType="Scalar">                  
+<Attribute Name="mulam" Center="Node" AttributeType="Scalar">                  
    <DataItem ItemType="Function" Dimensions="14058" Function="$0">                      
        <DataItem Format="HDF" Precision="8" NumberType="Float" Dimensions="14058"> 
-           MeanFlow.h5:nulam                                           
+           MeanFlow.h5:mulam                                           
        </DataItem>                                                                      
    </DataItem>                                                                          
 </Attribute>  

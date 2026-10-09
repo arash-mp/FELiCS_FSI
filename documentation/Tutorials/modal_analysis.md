@@ -35,7 +35,7 @@ The boundary conditions for the fluctuations are:
 
 ```{note}
 The BCs for the base flow variables ($\bar{u}_x, \bar{u}_y, \bar{p}$) in [base flow tutorial](./cylinder_wake.md) and for the perturbations ($u_x', u_y', p'$) current modal analysis are different.
-'''
+```
 
 These BCs are implemented in [```bc_modal.json```](./../../tutorials/modal_analysis_tutorial/bc_modal.json) using different names.
 
@@ -75,10 +75,10 @@ The wall BC is imposed with:
         "name": "wall"
     }
 ``` 
-The complete structure of this file is detailed in [Setting files](./../Running_FELiCS/FELiCS_settings.md).
+The complete structure of this file is detailed in the [boundary-condition file documentation](./../Running_FELiCS/input_files/bc_files.md).
 
 ### Settings
-The setting file, [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) can be found inside [FELiCS settings](./../Running_FELiCS/FELiCS_settings.md).
+The setting file, [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) contains all the information relevant for modal analysis. The detailed structure of [```modal.json```](./../../tutorials/modal_analysis_tutorial/modal.json) can be found inside the [FELiCS configuration file documentation](./../Running_FELiCS/input_files/param_files.md).
 
 Here are some key settings for our resolvent analysis:
 

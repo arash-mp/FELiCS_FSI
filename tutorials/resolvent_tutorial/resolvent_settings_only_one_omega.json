@@ -1,0 +1,64 @@
+{
+"BoundaryCondition":{
+    "BCsFilePath":"boundaries.json"
+},
+"Case":{
+    "AnalysisMode":"Resolvent",
+    "CalculateAdjoint":false,
+    "CoordinateSystem":"Cylindrical",
+    "m":0.0,
+    "MeshFilePath":"FeliCS_mesh.msh",
+    "MolVisc":0.000125,
+    "MolViscModel":"Constant",
+    "nDim":2,
+    "Reaction":false,
+    "SetOfEquations":{
+        "Momentum":{
+            "Equation":"NSPrimitive",
+            "Variable":"u"
+        },
+        "Mass":{
+            "Equation":"Continuity",
+            "Variable":"p"
+        },
+        "Energy":{
+            "Equation":"None",
+            "Variable":"None"
+        },
+        "Species":{
+            "Equation":"None",
+            "Variable":"None"
+        },
+        "EquationOfState":{
+            "Equation":"None",
+            "Variable":"None"
+        }
+    },
+    "SpeciesFilePath":"",
+    "TransVelFluc":true,
+    "TurbulenceModel":"None"
+},
+"Export":{
+    "ExportFolder":"./output_dir/",
+    "Video":false
+},
+"FlowInput":{
+    "AveragingDirection":"None",
+    "MeanFlowFilePath":"meanFlow.fel"
+},
+"IOResolvent":{
+    "ForcingBoundaryIndices": [],
+    "ForcingCoeff":[],
+    "ForcingMode":"Body",
+    "ForcingNorm":"TKE",
+    "ResponseNorm":"TKE",
+    "Omegas":[0.062]
+},
+"Numerics":{
+    "EigenValueGuess":[],
+    "nSolut": 2,
+    "PolynomialOrder":{
+        "u": 2,
+        "p": 1
+    }
+}}

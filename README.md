@@ -48,20 +48,20 @@ We welcome contributions from the community! Please refer to our [Contribution G
 
 ## Citation
 
-If you use FELiCS in a scientific publication, we would appreciate citing [this paper](https://arc.aiaa.org/doi/10.2514/6.2023-3434) using the following citations:
+If you use FELiCS in a scientific publication, we would appreciate citing [this paper](https://joss.theoj.org/papers/10.21105/joss.10241) using the following citations:
 
 ```
-@inproceedings{Kaiser_felics,
-   author = {Thomas L. Kaiser and Simon Demange and Jens S. Müller and Sophie Knechtel and Kilian Oberleithner},
-   city = {Reston, Virginia},
-   doi = {10.2514/6.2023-3434},
-   isbn = {978-1-62410-704-7},
-   journal = {AIAA AVIATION 2023 Forum},
-   month = {6},
-   publisher = {American Institute of Aeronautics and Astronautics},
-   title = {FELiCS: A Versatile Linearized Solver Addressing Dynamics in Multi-Physics Flows},
-   url = {https://arc.aiaa.org/doi/10.2514/6.2023-3434},
-   year = {2023},
+@article{FELiCS2026,
+  title = {{FELiCS}: A Versatile Linearized Flow Solver for Multi-Physics Applications},
+  author = {Knechtel, S. J. and Demange, S. and Goldack, M. and Fuchs, L. M. and Casel, M. and Song, X. and M{\"u}ller, J. S. and Villi{\'e}, A. and Bergner, F. and Degner, M. T. and Talasikar, A. R. and Nehls, A. and Matthaiou, M. and Kuhn, P. and Oberleithner, K. and Kaiser, T. L.},
+  year = 2026,
+  journal = {Journal of Open Source Software},
+  volume = {11},
+  number = {124},
+  pages = {10241},
+  issn = {2475-9066},
+  doi = {10.21105/joss.10241},
+  url = {https://joss.theoj.org/papers/10.21105/joss.10241}
 }
 ```
 
