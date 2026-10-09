@@ -1,0 +1,101 @@
+{
+    "BoundaryCondition": {
+        "BCsFilePath": "bc_modal_fsi.json"
+    },
+    "Case": {
+        "AnalysisMode": "Modal",
+        "CalculateAdjoint": false,
+        "CoordinateSystem": "Cartesian",
+        "m": 0.0,
+        "MeshFilePath": "inclined_ellipse_2D_fine.msh",
+        "MolVisc": 0.02,
+        "MolViscModel": "Constant",
+        "nDim": 2,
+        "Reaction": false,
+        "SetOfEquations": {
+            "Momentum": {
+                "Equation": "NSPrimitive",
+                "Variable": "u"
+            },
+            "Mass": {
+                "Equation": "Continuity",
+                "Variable": "p"
+            },
+            "Energy": {
+                "Equation": "None",
+                "Variable": "None"
+            },
+            "Species": {
+                "Equation": "None",
+                "Variable": "None"
+            },
+            "EquationOfState": {
+                "Equation": "None",
+                "Variable": "None"
+            }
+        },
+        "SpeciesFilePath": "",
+        "TransVelFluc": false,
+        "TurbulenceModel": "None"
+    },
+
+
+    "FSI": {
+        "Enabled": true,
+        "InterfaceBoundaryID": 1,
+        "Mass": 0.3067962,
+        "CenterOfMass": [
+            0.0,
+            0.0
+        ],
+        "DOFs": [
+            {
+                "Enabled": true,
+                "MotionType": "Vertical",
+                "Damping": 0.0,
+                "Stiffness": 0.0
+            },
+            {
+                "Enabled": false,
+                "MotionType": "Rotation",
+                "RotationCenter": [
+                    0.0,
+                    0.0
+                ],
+                "MomentOfInertiaCM": 0.3067962,
+                "Damping": 0.0,
+                "Stiffness": 0.0
+            },
+            {
+                "Enabled": false,
+                "MotionType": "Horizontal",
+                "Damping": 0.0,
+                "Stiffness": 0.0
+            }
+        ]
+    },
+    "Export": {
+        "ExportFolder": "fsi_rot",
+        "Video": false
+    },
+    "FlowInput": {
+        "AveragingDirection": "None",
+        "MeanFlowFilePath": "meanflow_Re50.fel"
+    },
+    "IOResolvent": {
+        "ForcingBoundaryIndices": [],
+        "ForcingMode": "Body",
+        "Omegas": [],
+        "ResponseCoeff": []
+    },
+    "Numerics": {
+        "EigenValueGuess": [0.805],
+        "nSolut": 50,
+        "EigenSolverTolerance": 1e-12,
+        "EigenSolverMaxIterations": 300,
+        "PolynomialOrder": {
+            "u": 2,
+            "p": 1
+        }
+    }
+}

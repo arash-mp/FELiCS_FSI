@@ -1,0 +1,17 @@
+{
+    "1": {
+        "name": "wall"
+    },
+    "2": {
+        "name": "zeroDirichlet"
+    },
+    "3": {
+        "name": "zeroDirichlet"
+    },
+    "4": {
+        "name": "zeroDirichlet"
+   },
+    "5": {
+        "name": "zeroDirichlet"
+    }
+}
