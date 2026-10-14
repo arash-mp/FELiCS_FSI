@@ -757,90 +757,161 @@ class RigidBodyMotionFSI:
         return self.N_fluid + 2 * k + 1
 
     # ----------------------------------------------------------------------
+    # Bordering helper: build the augmented matrix in ONE shot
+    # ----------------------------------------------------------------------
+    def _bordered_matrix(self, M_ff, zero_rows, diag, extra_rows, extra_cols,
+                         extra_vals):
+        """Return the (N + n_struct) square bordered copy of M_ff, with
+
+          * the rows `zero_rows` emptied and, if diag != 0, a `diag` put on
+            their diagonal (what Mat.zeroRows(rows, diag) does), then
+          * the entries (extra_rows, extra_cols) = extra_vals INSERTED
+            (a later entry overwrites an earlier one at the same position,
+            like Mat.setValue with INSERT_VALUES),
+
+        assembled ONCE from a CSR built with numpy.  Setting the entries one
+        by one into an already assembled PETSc matrix (the previous code)
+        makes PETSc reallocate - i.e. copy - the whole matrix for nearly
+        every new nonzero, which takes hours for N ~ 1e6.
+
+        Every inserted entry lies in a zeroed row or in a structural row, so
+        those rows are rebuilt from the inserted entries alone, and all other
+        rows are copied block-wise from M_ff (no global sort, ~1 extra copy
+        of the matrix in memory)."""
+        N     = M_ff.getSize()[0]
+        Nnew  = N + self.n_struct
+        comm  = M_ff.getComm()
+        if comm.getSize() > 1:
+            log_and_raise(logger, "FSI bordering is serial only (MPI size 1).",
+                          NotImplementedError)
+
+        ai, aj, av = M_ff.getValuesCSR()
+        ai = np.asarray(ai, dtype=np.int64)
+
+        zero_rows = np.unique(np.asarray(zero_rows, dtype=np.int64))
+        is_zero   = np.zeros(Nnew, dtype=bool)
+        is_zero[zero_rows] = True
+
+        # the small set of entries that rows get rebuilt from: the zeroRows
+        # diagonal first, then the inserted entries (later ones win)
+        er = [zero_rows] if diag != 0.0 else []
+        ec = [zero_rows] if diag != 0.0 else []
+        ev = ([np.full(len(zero_rows), diag, dtype=PETSc.ScalarType)]
+              if diag != 0.0 else [])
+        er.append(np.asarray(extra_rows, dtype=np.int64))
+        ec.append(np.asarray(extra_cols, dtype=np.int64))
+        ev.append(np.asarray(extra_vals, dtype=PETSc.ScalarType))
+        r = np.concatenate(er); c = np.concatenate(ec); v = np.concatenate(ev)
+        order = np.lexsort((np.arange(len(r)), c, r))
+        r, c, v = r[order], c[order], v[order]
+        last = np.ones(len(r), dtype=bool)
+        last[:-1] = (r[1:] != r[:-1]) | (c[1:] != c[:-1])
+        r, c, v = r[last], c[last], v[last]
+
+        if not np.all(is_zero[r] | (r >= N)):
+            log_and_raise(
+                logger,
+                "FSI bordering: an inserted entry falls in a fluid row that is "
+                "not zeroed - not supported by the fast bordering.",
+                RuntimeError,
+            )
+
+        # row lengths of the result
+        counts = np.zeros(Nnew, dtype=np.int64)
+        counts[:N] = np.diff(ai)
+        counts[is_zero] = 0
+        counts += np.bincount(r, minlength=Nnew)
+        indptr = np.zeros(Nnew + 1, dtype=np.int64)
+        np.cumsum(counts, out=indptr[1:])
+        nnz = int(indptr[-1])
+        indices = np.empty(nnz, dtype=PETSc.IntType)
+        data    = np.empty(nnz, dtype=PETSc.ScalarType)
+
+        # rebuilt rows (zeroed or structural): sorted, from (r, c, v)
+        special = np.union1d(zero_rows, np.unique(r))
+        rstart  = np.searchsorted(r, special, side="left")
+        rend    = np.searchsorted(r, special, side="right")
+
+        # copy the untouched fluid rows block-wise, write the special rows
+        prev = 0
+        for s, a0, a1 in zip(special.tolist(), rstart.tolist(), rend.tolist()):
+            if s > prev:                            # untouched rows prev..s-1
+                hi = min(s, N)
+                if hi > prev:
+                    indices[indptr[prev]:indptr[hi]] = aj[ai[prev]:ai[hi]]
+                    data[indptr[prev]:indptr[hi]] = av[ai[prev]:ai[hi]]
+            indices[indptr[s]:indptr[s + 1]] = c[a0:a1]
+            data[indptr[s]:indptr[s + 1]] = v[a0:a1]
+            prev = s + 1
+        if prev < N:
+            indices[indptr[prev]:indptr[N]] = aj[ai[prev]:ai[N]]
+            data[indptr[prev]:indptr[N]] = av[ai[prev]:ai[N]]
+        del ai, aj, av
+
+        M = PETSc.Mat().createAIJ(
+            (Nnew, Nnew),
+            csr=(indptr.astype(PETSc.IntType), indices, data),
+            comm=comm,
+        )
+        M.assemble()
+        return M
+
+    # ----------------------------------------------------------------------
     # Bordering of the linear operator A
     # ----------------------------------------------------------------------
     def _border_A(self, A_ff, force_vecs, couplings):
-        N     = A_ff.getSize()[0]
-        ns    = self.n_struct
-        Nnew  = N + ns
-        comm  = A_ff.getComm()
-
-        ai, aj, av = A_ff.getValuesCSR()
-        d_nnz          = np.empty(Nnew, dtype=PETSc.IntType)
-        d_nnz[:N]      = np.diff(ai) + ns          # room for the structural cols
-        d_nnz[N:]      = Nnew                       # generous for structural rows
-        ai_pad         = np.concatenate(
-            [ai, np.full(ns, ai[-1], dtype=ai.dtype)])
-
-        A = PETSc.Mat().createAIJ((Nnew, Nnew), nnz=d_nnz, comm=comm)
-        A.setUp()
-        A.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
-        A.setValuesCSR(ai_pad, aj, av)
-        A.assemble()
+        er, ec, ev = [], [], []
 
         # --- transpiration constraint: overwrite interface velocity rows ----
-        interface_dofs = np.array([c[0] for c in couplings], dtype=PETSc.IntType)
-        A.zeroRows(interface_dofs, diag=1.0)
+        #     (rows emptied, 1 on the diagonal, + structural couplings)
+        interface_dofs = np.array([cp[0] for cp in couplings], dtype=np.int64)
         for (row, b_list, a_list) in couplings:
             for k in range(self.n_dof):
-                A.setValue(row, self._eta_col(k),  b_list[k])   # + b^(k) eta_k
-                A.setValue(row, self._phi_col(k), -a_list[k])   # - a^(k) phi_k
+                er.append(row); ec.append(self._eta_col(k)); ev.append(b_list[k])    # + b^(k) eta_k
+                er.append(row); ec.append(self._phi_col(k)); ev.append(-a_list[k])   # - a^(k) phi_k
 
         # --- structural ODE rows (A = -1j * algebraic terms) ----------------
+        fr, fc, fv = [], [], []
         for k in range(self.n_dof):
             # eta_k row :  d(eta_k)/dt - phi_k = 0
-            A.setValue(self._eta_col(k), self._phi_col(k), 1j)
+            er.append(self._eta_col(k)); ec.append(self._phi_col(k)); ev.append(1j)
             # phi_k row :  sum_j M_kj d(phi_j)/dt + D_kj phi_j + K_kj eta_j - F'_k = 0
             for j in range(self.n_dof):
                 if self.K_mat[k, j] != 0.0:
-                    A.setValue(self._phi_col(k), self._eta_col(j),
-                               -1j * self.K_mat[k, j])
+                    er.append(self._phi_col(k)); ec.append(self._eta_col(j))
+                    ev.append(-1j * self.K_mat[k, j])
                 if self.D_mat[k, j] != 0.0:
-                    A.setValue(self._phi_col(k), self._phi_col(j),
-                               -1j * self.D_mat[k, j])
+                    er.append(self._phi_col(k)); ec.append(self._phi_col(j))
+                    ev.append(-1j * self.D_mat[k, j])
             # force/moment coupling to the fluid:  -1j*(-F'_k) = +1j*m^(k)
             m_arr = force_vecs[k].getArray()
-            for l in np.nonzero(m_arr)[0]:
-                A.setValue(self._phi_col(k), int(l), 1j * m_arr[l])
+            nz = np.nonzero(m_arr)[0]
+            fr.append(np.full(len(nz), self._phi_col(k), dtype=np.int64))
+            fc.append(nz.astype(np.int64))
+            fv.append(1j * m_arr[nz])
 
-        A.assemble()
-        return A
+        rows = np.concatenate([np.asarray(er, dtype=np.int64)] + fr)
+        cols = np.concatenate([np.asarray(ec, dtype=np.int64)] + fc)
+        vals = np.concatenate([np.asarray(ev, dtype=PETSc.ScalarType)]
+                              + [np.asarray(x, dtype=PETSc.ScalarType) for x in fv])
+        return self._bordered_matrix(A_ff, interface_dofs, 1.0, rows, cols, vals)
 
     # ----------------------------------------------------------------------
     # Bordering of the weight matrix B
     # ----------------------------------------------------------------------
     def _border_B(self, B_ff, couplings):
-        N     = B_ff.getSize()[0]
-        ns    = self.n_struct
-        Nnew  = N + ns
-        comm  = B_ff.getComm()
-
-        bi, bj, bv = B_ff.getValuesCSR()
-        d_nnz          = np.empty(Nnew, dtype=PETSc.IntType)
-        d_nnz[:N]      = np.diff(bi) + 1
-        d_nnz[N:]      = ns + 1
-        bi_pad         = np.concatenate(
-            [bi, np.full(ns, bi[-1], dtype=bi.dtype)])
-
-        B = PETSc.Mat().createAIJ((Nnew, Nnew), nnz=d_nnz, comm=comm)
-        B.setUp()
-        B.setOption(PETSc.Mat.Option.NEW_NONZERO_ALLOCATION_ERR, False)
-        B.setValuesCSR(bi_pad, bj, bv)
-        B.assemble()
-
         # interface-velocity rows are algebraic constraints -> zero in B
-        interface_dofs = np.array([c[0] for c in couplings], dtype=PETSc.IntType)
-        B.zeroRows(interface_dofs, diag=0.0)
+        interface_dofs = np.array([cp[0] for cp in couplings], dtype=np.int64)
 
         # structural mass rows
+        er, ec, ev = [], [], []
         for k in range(self.n_dof):
-            B.setValue(self._eta_col(k), self._eta_col(k), 1.0)   # d(eta_k)/dt
-            for j in range(self.n_dof):                            # M_kj d(phi_j)/dt
+            er.append(self._eta_col(k)); ec.append(self._eta_col(k)); ev.append(1.0)   # d(eta_k)/dt
+            for j in range(self.n_dof):                                               # M_kj d(phi_j)/dt
                 if self.M_mat[k, j] != 0.0:
-                    B.setValue(self._phi_col(k), self._phi_col(j),
-                               self.M_mat[k, j])
-        B.assemble()
-        return B
+                    er.append(self._phi_col(k)); ec.append(self._phi_col(j))
+                    ev.append(self.M_mat[k, j])
+        return self._bordered_matrix(B_ff, interface_dofs, 0.0, er, ec, ev)
 
     # ----------------------------------------------------------------------
     # Energy-weighted structural weight of a mode
