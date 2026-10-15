@@ -91,6 +91,40 @@ eta_k -> N+2k, phi_k -> N+2k+1:
 
 For n = 1 this is identical to the original single-DOF implementation.
 
+Mean-flow base states (option FSI.MovingBaseState)
+--------------------------------------------------
+The formulation above assumes that the base state solves the steady equations
+the operator is linearised from.  A time-averaged turbulent flow does not: it
+leaves a residual  R0 = (U0.grad)U0 + grad P0 - div(2 mu S0)  (the part of the
+Reynolds-stress force the frozen eddy viscosity mu = mu_lam + mu_turb does not
+represent).  R0 is a force field fixed in the laboratory frame, and when the
+body moves through it the linear system sees a spurious force proportional to
+the displacement (a static heave produces lift).  With MovingBaseState the
+residual force and the eddy viscosity are carried rigidly with the body, which
+restores the exact result that a rigidly displaced body with its displaced mean
+flow is a steady solution.  For every DOF j (displacement field d_j) this adds
+
+  momentum :  eta_j * [ -(d_j.grad)R0  + r_j z x R0  - div(2 (d_j.grad mu) S0) ]
+  force_k  :  eta_j * [ int_G 2 (d_j.grad mu) d_k.(S0 n) dS
+                        + int_G (d_j.n)(d_k.R0) dS ]
+
+(r_j = 1 for a rotation, 0 for a translation; n = outward normal of the fluid).
+The last term is the base-stress ("added stiffness") contribution discussed by
+Negi et al. (2020); it vanishes only for R0 = 0 at the wall.  For an exact
+steady base flow (R0 = 0, uniform mu) all terms vanish and the original
+formulation is recovered.
+Option FSI.MovingBaseStateWake changes how a ROTATION carries the fields:
+rigid rotation upstream of the trailing edge, blended (smoothstep over
+MovingBaseStateWakeLength) into a pure translation by the trailing-edge
+displacement downstream, so that the wake is shifted rather than swung about
+the pivot.  The transport field xi_j then replaces d_j in the momentum terms
+(with div(xi_j) and the local rotation of xi_j); on the body xi_j = d_j, so the
+force rows are unchanged.
+Option FSI.MovingBaseStateResidual selects R0: "Discrete" (default) is the
+residual of the P2 base flow under FELiCS's own momentum operator, computed
+here; "File" reads C, V, T from the mean-flow file.
+Derivation: documentation/GoverningEquations/fsi_moving_base_state.md
+
 Limitations
 -----------
 * DIRECT modal analysis only (no adjoint yet).
@@ -100,13 +134,27 @@ Limitations
 # Third party libraries
 import numpy as np
 from petsc4py import PETSc
-from dolfinx.fem import Function, Expression, locate_dofs_topological
-from ufl import as_vector
+from dolfinx.fem import Function, Expression, form, locate_dofs_topological
+from dolfinx.fem.petsc import assemble_matrix, assemble_vector
+from dolfinx.mesh import compute_midpoints
+from ufl import (
+    FacetNormal,
+    Measure,
+    TestFunction,
+    TrialFunction,
+    as_vector,
+    dx,
+    grad,
+    inner,
+    max_value,
+    min_value,
+)
 
 # Local libraries and methods
 from FELiCS.Equation.UflDecorator import UflDecorator
-from FELiCS.Misc.tensorUtils import Tensor, i_dot, i_grad, i_t, i_conj
+from FELiCS.Misc.tensorUtils import Tensor, i_dot, i_grad, i_inner, i_t, i_conj
 from FELiCS.Misc.logging import Logger, log_and_raise
+from FELiCS.Parameters.Config import MOVING_BASE_STATE_FIELDS
 
 # Get the logger
 logger = Logger.get_logger("felics")
@@ -283,6 +331,62 @@ class RigidBodyMotionFSI:
                 logger.info(f"  damping matrix D =\n{self.D_mat}")
             if np.any(self.K_mat):
                 logger.info(f"  stiffness matrix K =\n{self.K_mat}")
+
+        # ---- mean-flow base states -----------------------------------------
+        self.moving_base_state = bool(getattr(fsi, "MovingBaseState", False))
+        self.static_check      = bool(getattr(fsi, "StaticCheck", False))
+        self.mbs_residual      = str(getattr(fsi, "MovingBaseStateResidual", "Discrete"))
+        self.mbs_wake          = bool(getattr(fsi, "MovingBaseStateWake", False))
+        self.mbs_wake_length   = float(getattr(fsi, "MovingBaseStateWakeLength", 0.5))
+        self._trailing_edge    = None
+        self._mbs_columns      = None
+        self._mbs_force_matrix = np.zeros((self.n_dof, self.n_dof), dtype=complex)
+        self._force_arrays     = None
+        if self.mbs_wake and not self.moving_base_state:
+            logger.warning(
+                "  MovingBaseStateWake = true has no effect because "
+                "MovingBaseState = false."
+            )
+        if self.moving_base_state and self.mbs_residual not in ("Discrete", "File"):
+            log_and_raise(
+                logger,
+                "FSI.MovingBaseStateResidual must be 'Discrete' or 'File', got "
+                f"'{self.mbs_residual}'.",
+                ValueError,
+            )
+        if self.moving_base_state and self.mbs_wake:
+            if self.mbs_wake_length <= 0.0:
+                log_and_raise(
+                    logger,
+                    "FSI.MovingBaseStateWakeLength must be positive, got "
+                    f"{self.mbs_wake_length}.",
+                    ValueError,
+                )
+            self._trailing_edge = self._find_trailing_edge()
+        if self.moving_base_state:
+            logger.info(
+                "  MovingBaseState = true: the base-flow residual and the eddy "
+                "viscosity move rigidly with the body (mean-flow base state)."
+            )
+            if self.mbs_wake:
+                x_te, y_te = self._trailing_edge
+                logger.info(
+                    "  MovingBaseStateWake = true: for rotation DOFs the fields "
+                    f"rotate rigidly for x <= {x_te:.5f} (trailing edge at "
+                    f"({x_te:.5f}, {y_te:.5f})) and are translated by the "
+                    "trailing-edge displacement for x >= "
+                    f"{x_te + self.mbs_wake_length:.5f} (smoothstep blend)."
+                )
+            else:
+                logger.info(
+                    "  MovingBaseStateWake = false: rotation DOFs rotate the "
+                    "fields rigidly everywhere, including the wake."
+                )
+        else:
+            logger.info(
+                "  MovingBaseState = false: original formulation (the base "
+                "state is assumed to solve the steady equations)."
+            )
 
     # ----------------------------------------------------------------------
     # Configuration parsing
@@ -729,12 +833,21 @@ class RigidBodyMotionFSI:
 
         # per-DOF force/moment vectors
         force_vecs = [self._build_force_vector(dof) for dof in self.dofs]
+        self._force_arrays = [v.getArray().copy() for v in force_vecs]
 
         # summed transpiration couplings
         couplings = self._build_transpiration_couplings()
 
+        # mean-flow base state carried with the body
+        if self.moving_base_state:
+            self._build_moving_base_state(couplings)
+            self._set_direct_solver_ordering()
+
         A_aug = self._border_A(A_ff, force_vecs, couplings)
         B_aug = self._border_B(B_ff, couplings)
+
+        if self.static_check:
+            self._static_check(A_aug, couplings)
 
         logger.info(
             f"FSI-augmented operators assembled: fluid size N = {self.N_fluid}, "
@@ -774,10 +887,11 @@ class RigidBodyMotionFSI:
         makes PETSc reallocate - i.e. copy - the whole matrix for nearly
         every new nonzero, which takes hours for N ~ 1e6.
 
-        Every inserted entry lies in a zeroed row or in a structural row, so
-        those rows are rebuilt from the inserted entries alone, and all other
-        rows are copied block-wise from M_ff (no global sort, ~1 extra copy
-        of the matrix in memory)."""
+        Zeroed rows and structural rows are rebuilt from the inserted entries
+        alone; kept fluid rows may receive entries in structural columns only
+        (c >= N), appended after their own entries; all other rows are copied
+        block-wise from M_ff (no global sort, ~1 extra copy of the matrix in
+        memory)."""
         N     = M_ff.getSize()[0]
         Nnew  = N + self.n_struct
         comm  = M_ff.getComm()
@@ -808,11 +922,16 @@ class RigidBodyMotionFSI:
         last[:-1] = (r[1:] != r[:-1]) | (c[1:] != c[:-1])
         r, c, v = r[last], c[last], v[last]
 
-        if not np.all(is_zero[r] | (r >= N)):
+        # An inserted entry in a fluid row that is kept must lie in a
+        # structural column (c >= N): it is then appended after the row's
+        # own entries, which all have c < N, and the row stays sorted.
+        kept = ~(is_zero[r] | (r >= N))
+        if np.any(c[kept] < N):
             log_and_raise(
                 logger,
-                "FSI bordering: an inserted entry falls in a fluid row that is "
-                "not zeroed - not supported by the fast bordering.",
+                "FSI bordering: an inserted entry falls in a fluid column of a "
+                "fluid row that is not zeroed - not supported by the fast "
+                "bordering.",
                 RuntimeError,
             )
 
@@ -833,6 +952,7 @@ class RigidBodyMotionFSI:
         rend    = np.searchsorted(r, special, side="right")
 
         # copy the untouched fluid rows block-wise, write the special rows
+        # (kept fluid rows with appended structural columns: own entries first)
         prev = 0
         for s, a0, a1 in zip(special.tolist(), rstart.tolist(), rend.tolist()):
             if s > prev:                            # untouched rows prev..s-1
@@ -840,8 +960,14 @@ class RigidBodyMotionFSI:
                 if hi > prev:
                     indices[indptr[prev]:indptr[hi]] = aj[ai[prev]:ai[hi]]
                     data[indptr[prev]:indptr[hi]] = av[ai[prev]:ai[hi]]
-            indices[indptr[s]:indptr[s + 1]] = c[a0:a1]
-            data[indptr[s]:indptr[s + 1]] = v[a0:a1]
+            start = indptr[s]
+            if s < N and not is_zero[s]:
+                nown = ai[s + 1] - ai[s]
+                indices[start:start + nown] = aj[ai[s]:ai[s + 1]]
+                data[start:start + nown] = av[ai[s]:ai[s + 1]]
+                start += nown
+            indices[start:indptr[s + 1]] = c[a0:a1]
+            data[start:indptr[s + 1]] = v[a0:a1]
             prev = s + 1
         if prev < N:
             indices[indptr[prev]:indptr[N]] = aj[ai[prev]:ai[N]]
@@ -876,10 +1002,13 @@ class RigidBodyMotionFSI:
             # eta_k row :  d(eta_k)/dt - phi_k = 0
             er.append(self._eta_col(k)); ec.append(self._phi_col(k)); ev.append(1j)
             # phi_k row :  sum_j M_kj d(phi_j)/dt + D_kj phi_j + K_kj eta_j - F'_k = 0
+            # F'_k contains  sum_j C_kj eta_j  from the moving base state
+            # (C = 0 otherwise), hence one combined entry per (k, j)
             for j in range(self.n_dof):
-                if self.K_mat[k, j] != 0.0:
+                a_eta = -1j * self.K_mat[k, j] + 1j * self._mbs_force_matrix[k, j]
+                if a_eta != 0.0:
                     er.append(self._phi_col(k)); ec.append(self._eta_col(j))
-                    ev.append(-1j * self.K_mat[k, j])
+                    ev.append(a_eta)
                 if self.D_mat[k, j] != 0.0:
                     er.append(self._phi_col(k)); ec.append(self._phi_col(j))
                     ev.append(-1j * self.D_mat[k, j])
@@ -890,11 +1019,437 @@ class RigidBodyMotionFSI:
             fc.append(nz.astype(np.int64))
             fv.append(1j * m_arr[nz])
 
+        # --- moving base state: forcing  eta_j * f_j  in the momentum rows
+        #     (A = -1j * algebraic terms, the forcing is on the right-hand
+        #     side, hence +1j).  Interface rows are excluded: they hold the
+        #     transpiration constraint.
+        if self._mbs_columns is not None:
+            for j, g in enumerate(self._mbs_columns):
+                nz = np.flatnonzero(self._mbs_rows_mask(g, interface_dofs))
+                fr.append(nz.astype(np.int64))
+                fc.append(np.full(len(nz), self._eta_col(j), dtype=np.int64))
+                fv.append(1j * g[nz])
+
         rows = np.concatenate([np.asarray(er, dtype=np.int64)] + fr)
         cols = np.concatenate([np.asarray(ec, dtype=np.int64)] + fc)
         vals = np.concatenate([np.asarray(ev, dtype=PETSc.ScalarType)]
                               + [np.asarray(x, dtype=PETSc.ScalarType) for x in fv])
         return self._bordered_matrix(A_ff, interface_dofs, 1.0, rows, cols, vals)
+
+    # ----------------------------------------------------------------------
+    # Mean-flow base state carried with the body (FSI.MovingBaseState)
+    # ----------------------------------------------------------------------
+    def _base_residual(self):
+        """Residual R0 of the base flow under the frozen-viscosity momentum
+        equations, as a Tensor, from the source set by
+        FSI.MovingBaseStateResidual ("Discrete" or "File")."""
+        if self.mbs_residual == "File":
+            return self._base_residual_from_file()
+        return self._base_residual_discrete()
+
+    def _base_residual_discrete(self):
+        """Residual of the P2 base flow under FELiCS's own momentum operator,
+
+            (R, v) = int [(grad U0)(rho U0)] . v + tau0 : grad v - P0 div v dx
+                     + int_dOmega (P0 n - tau0 n) . v dS ,   tau0 = mu (grad U0 + grad U0^T),
+
+        for all P2 vector test functions v (no boundary conditions), i.e. the
+        L2 projection of the strong residual including the inter-element flux
+        jumps.  This is the force the discrete linear operator "sees", so moving
+        it keeps the discrete displaced base state in equilibrium; the residual
+        of the continuous mean flow (e.g. from DNS statistics) can differ from
+        it by O(1) in an under-resolved boundary layer, where it is the small
+        difference of large convective and viscous terms."""
+        velocity = self.meanFlow.u.ufl_tens
+        space    = velocity.function_space
+        domain   = space.mesh
+        pressure = self.meanFlow.p.ufl_tens
+        density  = self.meanFlow.rho.ufl_tens
+        mu_total = self.meanFlow.mu_tot.ufl_tens
+        normal   = FacetNormal(domain)
+        dx_base  = Measure("dx", domain=domain)
+        ds_base  = Measure("ds", domain=domain)
+        trial, test = TrialFunction(space), TestFunction(space)
+        grad_u = grad(velocity)
+        tau = mu_total * (grad_u + grad_u.T)
+        weak_residual = (
+            inner(grad_u * (density * velocity), test)
+            + inner(tau, grad(test))
+            - inner(pressure, test[0].dx(0) + test[1].dx(1))
+        ) * dx_base + inner(pressure * normal - tau * normal, test) * ds_base
+        mass = assemble_matrix(form(inner(trial, test) * dx_base))
+        mass.assemble()
+        rhs = assemble_vector(form(weak_residual))
+        rhs.assemble()
+        ksp = PETSc.KSP().create(mass.getComm())
+        ksp.setOperators(mass)
+        ksp.setType(PETSc.KSP.Type.PREONLY)
+        ksp.getPC().setType(PETSc.PC.Type.LU)
+        try:
+            ksp.getPC().setFactorSolverType("mumps")
+            ksp.setUp()
+        except PETSc.Error:
+            ksp.getPC().setFactorSolverType("petsc")
+            ksp.setUp()
+        residual = Function(space)
+        ksp.solve(rhs, residual.x.petsc_vec)
+        residual.x.scatter_forward()
+        ksp.destroy()
+        mass.destroy()
+        rhs.destroy()
+        values = residual.x.array
+        logger.info(
+            "  base-flow residual R0: discrete residual of the P2 base flow "
+            f"(MovingBaseStateResidual = Discrete), nodal rms "
+            f"{np.sqrt(np.mean(np.abs(values)**2)):.3e}, max {np.abs(values).max():.3e}"
+        )
+        return Tensor(residual, self.cs)
+
+    def _base_residual_from_file(self):
+        """Residual of the base flow under the frozen-viscosity equations,
+        R0 = C - mu_lam V - T (T only with TurbulenceModel "File"), as a
+        Tensor.  The pieces come from the mean-flow file (computed there from
+        the DNS/LES statistics with the same eddy viscosity)."""
+        missing = [name for name in MOVING_BASE_STATE_FIELDS
+                   if not self.meanFlow.was_read_from_file(name)]
+        if missing:
+            log_and_raise(
+                logger,
+                "FSI.MovingBaseStateResidual = 'File' needs the base-flow "
+                f"residual fields {MOVING_BASE_STATE_FIELDS} in the mean-flow "
+                f"file, but {missing} are missing.  Write them with the "
+                "mean-flow pre-processing (make_felics_baseflow.py, "
+                "WRITE_FSI_RESIDUAL) or use MovingBaseStateResidual = "
+                "'Discrete'.",
+                ValueError,
+            )
+        if self.meanFlow.was_read_from_file("rho"):
+            logger.warning(
+                "  FSI.MovingBaseState: the mean-flow file has a 'rho' field, "
+                "but the residual fields assume rho = 1 (incompressible, "
+                "non-dimensional).  Make sure they were computed with the "
+                "same density."
+            )
+        f = {name: self.meanFlow.get_field_tensor(name).ufl_tens
+             for name in MOVING_BASE_STATE_FIELDS}
+        mu_lam = self.meanFlow.get_field_tensor("mulam").ufl_tens
+        use_turb = self.param.Case.TurbulenceModel == "File"
+        r_x = f["fsiCx"] - mu_lam * f["fsiVx"]
+        r_y = f["fsiCy"] - mu_lam * f["fsiVy"]
+        if use_turb:
+            r_x = r_x - f["fsiTx"]
+            r_y = r_y - f["fsiTy"]
+        logger.info(
+            "  base-flow residual R0 from the mean-flow file = C - mu_lam V"
+            + (" - T  (TurbulenceModel File)" if use_turb else
+               "  (TurbulenceModel not File: no eddy-viscosity part)")
+        )
+        return Tensor(as_vector((r_x, r_y)), self.cs)
+
+    def _base_strain(self):
+        """Mean strain-rate tensor S0 = (grad U0 + grad U0^T)/2."""
+        grad_u = i_grad(self.meanFlow.u)
+        return (grad_u + i_t(grad_u)) * 0.5
+
+    def _build_moving_base_state(self, couplings):
+        """Momentum columns f_j and force-row matrix C_kj of the moving base
+        state; see the module docstring."""
+        residual = self._base_residual()
+        self._mbs_columns = [
+            self._moving_base_state_vector(dof, residual) for dof in self.dofs
+        ]
+        G, Geo = self._moving_base_state_force_matrices(residual)
+        self._mbs_force_matrix = G + Geo
+        interface_dofs = np.array([cp[0] for cp in couplings], dtype=np.int64)
+        for j, g in enumerate(self._mbs_columns):
+            kept = g[self._mbs_rows_mask(g, interface_dofs)]
+            logger.info(
+                f"  moving base state, DOF {j}: momentum forcing column "
+                f"||f_j|| = {np.linalg.norm(kept):.4e} "
+                f"({np.count_nonzero(kept)} entries)"
+            )
+        with np.printoptions(precision=5, suppress=False):
+            logger.info(
+                "  moving base state, force rows (per unit displacement):\n"
+                f"    eddy-viscosity transport  G   =\n{G.real}\n"
+                f"    wall residual (added stiffness) Geo =\n{Geo.real}\n"
+                f"    (structural stiffness K =\n{self.K_mat})"
+            )
+
+    def _find_trailing_edge(self):
+        """Trailing edge = midpoint of the FSI-interface facet with the
+        largest x (to within half a wall-cell size)."""
+        mesh  = getattr(self.mesh, "dolfinxMesh", self.mesh)
+        fdim  = mesh.topology.dim - 1
+        facet_tags = self.mesh.facet_tags
+        facets = facet_tags.indices[facet_tags.values == self.interface_id]
+        midpoints = compute_midpoints(mesh, fdim, facets)
+        index = int(np.argmax(midpoints[:, 0]))
+        return float(midpoints[index, 0]), float(midpoints[index, 1])
+
+    def _transport_field(self, dof):
+        """Field xi_j(x) that carries the base-flow residual and the eddy
+        viscosity for DOF j, its local rotation a_j = (curl xi_j)_z / 2 and its
+        divergence (None where identically zero).
+
+        Translation: xi = d_j (a = None, div = None).  Rotation, rigid:
+        xi = d_j, a = 1.  Rotation with MovingBaseStateWake:
+
+            xi = w d_j + (1 - w) d_j(x_TE),
+            w  = 1 - smoothstep((x - x_TE) / L),   L = MovingBaseStateWakeLength,
+
+        i.e. rigid rotation upstream of the trailing edge and a translation by
+        the trailing-edge displacement downstream.  xi = d_j on the body."""
+        d = dof.displacement_ufl(self.x)
+        if dof.motion_type != "rotation":
+            return d, None, None
+        if not (self.moving_base_state and self.mbs_wake):
+            return d, 1.0, None
+        x_te, y_te = self._trailing_edge
+        cx, cy = dof.center
+        d_te = as_vector((-(y_te - cy), x_te - cx))
+        ramp = (self.x[0] - x_te) / self.mbs_wake_length
+        ramp = max_value(0.0, min_value(1.0, ramp))
+        weight = 1.0 - (3.0 * ramp**2 - 2.0 * ramp**3)
+        xi = weight * d + (1.0 - weight) * d_te
+        rotation = 0.5 * (xi[1].dx(0) - xi[0].dx(1))
+        divergence = xi[0].dx(0) + xi[1].dx(1)
+        return xi, rotation, divergence
+
+    def _set_direct_solver_ordering(self):
+        """The moving-base-state columns are dense (the base-flow residual is
+        non-zero almost everywhere).  MUMPS' automatic ordering choice may
+        fail on such a matrix (PORD crashed with MUMPS 5.6), so use QAMD,
+        which treats quasi-dense rows/columns separately, for the shift-and-
+        invert factorisation - unless the user chose an ordering with
+        -st_mat_mumps_icntl_7 (e.g. via PETSC_OPTIONS)."""
+        options = PETSc.Options()
+        key = "st_mat_mumps_icntl_7"
+        if options.hasName(key):
+            logger.info(
+                f"  MUMPS ordering for the eigensolver set by the user: "
+                f"-{key} {options.getString(key)}"
+            )
+            return
+        options.setValue(key, 6)
+        logger.info(
+            "  MUMPS ordering for the eigensolver set to QAMD "
+            f"(-{key} 6) because of the dense moving-base-state columns; "
+            "override with PETSC_OPTIONS if needed."
+        )
+
+    def _mbs_rows_mask(self, g, interface_dofs):
+        """Rows of a momentum forcing column that enter the matrix: nonzero
+        and not an interface (transpiration-constraint) row."""
+        mask = g != 0.0
+        mask[interface_dofs] = False
+        return mask
+
+    def _moving_base_state_force_matrices(self, residual):
+        """G_kj = int_G 2 (d_j.grad mu) d_k.(S0 n) dS  (perturbation of the
+        viscous traction by the moving eddy viscosity) and
+        Geo_kj = int_G (d_j.n)(d_k.R0) dS  (base stress at the displaced wall,
+        zero for an exact base flow).  n: outward normal of the fluid."""
+        n_dof   = self.n_dof
+        G       = np.zeros((n_dof, n_dof), dtype=complex)
+        Geo     = np.zeros((n_dof, n_dof), dtype=complex)
+        J_hat   = self.cs.J_hat
+        ds_if   = self.equation.ds(self.interface_id)
+        mean_mu = self.meanFlow.mu_tot
+        strain  = self._base_strain()
+        traction = i_dot(strain, self.n)
+        for k, dof_k in enumerate(self.dofs):
+            d_k = Tensor(dof_k.displacement_ufl(self.x), self.cs)
+            for j, dof_j in enumerate(self.dofs):
+                d_j = Tensor(dof_j.displacement_ufl(self.x), self.cs)
+                mu_shift = i_dot(i_grad(mean_mu), d_j)
+                g_form = UflDecorator()
+                g_form.add((mu_shift * i_dot(d_k, traction) * 2.0).ufl_tens
+                           * J_hat * ds_if)
+                G[k, j] = g_form.get_assembled_scalar(self.mesh)
+                geo_form = UflDecorator()
+                geo_form.add((i_dot(d_j, self.n) * i_dot(d_k, residual)).ufl_tens
+                             * J_hat * ds_if)
+                Geo[k, j] = geo_form.get_assembled_scalar(self.mesh)
+        return G, Geo
+
+    def _moving_base_state_vector(self, dof, residual):
+        """Weak form of the momentum forcing per unit eta_j,
+        int f_j . conj(v) dx  with transport field xi_j (= d_j unless
+        MovingBaseStateWake changes it for a rotation, see _transport_field):
+
+          f_j = -(xi_j.grad)R0 + a_j z x R0 - div(2 (xi_j.grad mu) S0),
+
+        integrated by parts as
+
+          int R0 . (xi_j.grad)conj(v) dx + int div(xi_j) R0 . conj(v) dx
+          - int_dOmega (xi_j.n)(R0 . conj(v)) dS
+          + int a_j (z x R0) . conj(v) dx + int 2 (xi_j.grad mu) S0 : grad conj(v) dx
+
+        (the viscous boundary term is dropped like in the momentum equation
+        itself).  Dirichlet rows are zero."""
+        J_hat    = self.cs.J_hat
+        test_u   = i_conj(self.X[self.u_index])
+        grad_v   = i_grad(test_u)
+
+        # ufl inner() conjugates its second argument itself, hence the
+        # unconjugated test function there (as in the momentum equation)
+        grad_v_plain = i_grad(self.X[self.u_index])
+        xi_ufl, rotation, divergence = self._transport_field(dof)
+        xi       = Tensor(xi_ufl, self.cs)
+        mu_shift = i_dot(i_grad(self.meanFlow.mu_tot), xi)
+        strain   = self._base_strain()
+
+        volume = i_dot(residual, i_dot(grad_v, xi))
+        volume = volume + i_inner(strain * mu_shift * 2.0, grad_v_plain)
+        if divergence is not None:
+            volume = volume + Tensor(divergence, self.cs) * i_dot(residual, test_u)
+        if rotation is not None:
+            z_cross_r = Tensor(
+                as_vector((-residual.ufl_tens[1], residual.ufl_tens[0])),
+                self.cs,
+            )
+            rotation_term = i_dot(z_cross_r, test_u)
+            if isinstance(rotation, float):
+                volume = volume + rotation_term * rotation
+            else:
+                volume = volume + Tensor(rotation, self.cs) * rotation_term
+        boundary = i_dot(xi, self.n) * i_dot(residual, test_u) * (-1.0)
+
+        g_form = UflDecorator()
+        g_form.add(volume.ufl_tens * J_hat * dx)
+        g_form.add(boundary.ufl_tens * J_hat * self.equation.all_ds)
+        bcs = self.equation.boundaryHandler.get_list_of_dirichlet_b_cs_for_dolfinx(
+            self.FEMSpaces.VMixed,
+            exclude_ids=[self.interface_id],
+        )
+        return g_form.get_assembled_vector(self.mesh, bcs=bcs).getArray().copy()
+
+    # ----------------------------------------------------------------------
+    # Diagnostics
+    # ----------------------------------------------------------------------
+    def _static_check(self, A_aug, couplings):
+        """Log the static aerodynamic force matrices of
+        _static_force_matrices: for a pure translation in a uniform stream
+        the physical answer is (close to) zero."""
+        for label, force in self._static_force_matrices(A_aug, couplings).items():
+            with np.printoptions(precision=5, suppress=False):
+                logger.info(
+                    f"  STATIC CHECK, {label}: aerodynamic force on DOF k per "
+                    f"unit static displacement of DOF j (rows k, columns j; "
+                    f"an aerodynamic stiffness is minus this):\n{force.real}"
+                    f"\n    imaginary part (should be ~0): "
+                    f"{np.abs(force.imag).max():.2e}"
+                )
+
+    def _static_force_matrices(self, A_aug, couplings):
+        """Solve the steady (omega = 0) fluid problem for a unit static
+        displacement of each DOF and return the aerodynamic force on every
+        DOF, for the frozen base state (original formulation) and, if
+        enabled, the moving base state.  One extra LU factorisation.
+
+        Returns
+        -------
+        dict
+            label -> (n_dof x n_dof) complex array, entry [k, j] = force on
+            DOF k for eta_j = 1.
+        """
+        N    = self.N_fluid
+        comm = A_aug.getComm()
+        index_set = PETSc.IS().createGeneral(
+            np.arange(N, dtype=PETSc.IntType), comm=comm)
+        A_fluid = A_aug.createSubMatrix(index_set, index_set)
+        ksp = PETSc.KSP().create(comm)
+        ksp.setOperators(A_fluid)
+        ksp.setType(PETSc.KSP.Type.PREONLY)
+        ksp.getPC().setType(PETSc.PC.Type.LU)
+        try:
+            ksp.getPC().setFactorSolverType("mumps")
+            ksp.setUp()
+        except PETSc.Error:
+            logger.warning(
+                "  STATIC CHECK: MUMPS not available, using the PETSc LU "
+                "(slow for large meshes)."
+            )
+            ksp.getPC().setFactorSolverType("petsc")
+            ksp.setUp()
+        interface_dofs = np.array([cp[0] for cp in couplings], dtype=np.int64)
+
+        cases = [("frozen base state (original formulation)", False)]
+        if self.moving_base_state:
+            cases.append(("moving base state", True))
+        result = {}
+        for label, moving in cases:
+            force = np.zeros((self.n_dof, self.n_dof), dtype=complex)
+            for j in range(self.n_dof):
+                column = np.zeros(N, dtype=complex)
+                for (row, b_list, a_list) in couplings:
+                    column[row] = b_list[j]
+                if moving:
+                    g = self._mbs_columns[j]
+                    mask = self._mbs_rows_mask(g, interface_dofs)
+                    column[mask] += 1j * g[mask]
+                rhs = A_fluid.createVecLeft()
+                rhs.setArray(-column)
+                sol = A_fluid.createVecRight()
+                ksp.solve(rhs, sol)
+                q_fluid = sol.getArray()
+                for k in range(self.n_dof):
+                    force[k, j] = self._force_arrays[k] @ q_fluid
+                    if moving:
+                        force[k, j] += self._mbs_force_matrix[k, j]
+            result[label] = force
+        ksp.destroy()
+        A_fluid.destroy()
+        index_set.destroy()
+        return result
+
+    def aerodynamic_force_diagnostics(self, eigen_value, q_aug):
+        """Fluid force on every DOF in one mode, and its split into an
+        apparent aerodynamic stiffness and damping.
+
+        With perturbations ~ exp(-1j lambda t), s = -1j lambda and phi = s eta.
+        F_k = m^(k) . q_fluid (+ sum_j C_kj eta_j for the moving base state).
+        The structural equation  sum_j (M_kj s phi_j + D_kj phi_j + K_kj eta_j)
+        = F_k  must hold to solver accuracy; its relative residual is returned.
+        Writing  F_k / eta_k = -k_a - c_a s  with real k_a, c_a  gives the
+        apparent (per-DOF, cross-coupling included) aerodynamic stiffness and
+        damping; for a single DOF k_a = m |lambda|^2 - K, c_a = -2 m Im(lambda) - D.
+
+        Returns
+        -------
+        dict
+            ``force``, ``ratio`` (F_k/eta_k), ``k_aero``, ``c_aero`` (lists,
+            one entry per DOF), ``residual`` and ``phi_minus_s_eta``.
+        """
+        s       = -1j * complex(eigen_value)
+        q_fluid = np.asarray(q_aug[:self.N_fluid])
+        eta = np.array([q_aug[self._eta_col(k)] for k in range(self.n_dof)],
+                       dtype=complex)
+        phi = np.array([q_aug[self._phi_col(k)] for k in range(self.n_dof)],
+                       dtype=complex)
+        force = np.array([
+            self._force_arrays[k] @ q_fluid + self._mbs_force_matrix[k] @ eta
+            for k in range(self.n_dof)
+        ])
+        lhs = self.M_mat @ (s * phi) + self.D_mat @ phi + self.K_mat @ eta
+        scale = max(np.linalg.norm(force), np.linalg.norm(lhs), 1e-300)
+        residual = float(np.linalg.norm(lhs - force) / scale)
+        phi_err = float(np.linalg.norm(phi - s * eta)
+                        / max(np.linalg.norm(phi), 1e-300))
+        ratio, k_aero, c_aero = [], [], []
+        for k in range(self.n_dof):
+            if abs(eta[k]) == 0.0 or s.imag == 0.0:
+                ratio.append(complex("nan")); k_aero.append(float("nan"))
+                c_aero.append(float("nan"))
+                continue
+            z = force[k] / eta[k]
+            c = -z.imag / s.imag
+            ratio.append(z)
+            c_aero.append(float(c))
+            k_aero.append(float(-z.real - c * s.real))
+        return dict(force=list(force), ratio=ratio, k_aero=k_aero,
+                    c_aero=c_aero, residual=residual, phi_minus_s_eta=phi_err)
 
     # ----------------------------------------------------------------------
     # Bordering of the weight matrix B

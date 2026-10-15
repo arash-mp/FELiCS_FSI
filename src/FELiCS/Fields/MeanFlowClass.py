@@ -634,6 +634,47 @@ class MeanFlowClass(
         logger.debug("Mean flow fields to read: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
 
+    def get_field_tensor(
+        self,
+        name
+    ):
+        """
+        Return the tensor wrapper of a mean-flow field by name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the field as read from the mean-flow file (e.g. ``'fsiCx'``).
+
+        Returns
+        -------
+        FELiCS.Misc.tensorUtils.Tensor
+            Tensor wrapper of the field.
+        """
+        return self._fieldDict[name].get_tensor()
+
+    def was_read_from_file(
+        self,
+        name
+    ):
+        """
+        Whether a mean-flow field was found in the mean-flow file.
+
+        Fields that were requested but missing are set to zero by the reader;
+        this distinguishes a genuine zero from a missing input.
+
+        Parameters
+        ----------
+        name : str
+            Name of the field.
+
+        Returns
+        -------
+        bool
+            ``True`` if the field exists and was read from file.
+        """
+        return name in self._fieldDict and name not in self._notInFileList
+
     def add_custom_mean_flow_quantity(
         self,
         key

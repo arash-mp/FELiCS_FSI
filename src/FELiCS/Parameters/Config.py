@@ -31,6 +31,20 @@ from    FELiCS.SpaceDisc.FELiCSMesh     import FELiCSMesh
 # Get the logger
 logger = Logger.get_logger("felics")
 
+# Mean-flow fields read when FSI.MovingBaseState is on: the residual of the
+# base flow under the frozen-eddy-viscosity equations, split as
+#     R0 = C - mu_lam V - T,
+# C = (U.grad)U + grad P,  V = div(2 S),  T = div(2 mu_turb S)   (x, y parts).
+MOVING_BASE_STATE_FIELDS = [
+    'fsiCx',
+    'fsiCy',
+    'fsiVx',
+    'fsiVy',
+    'fsiTx',
+    'fsiTy',
+]
+
+
 class Dotdict(dict):
     """
     Adds possibility to use dot notation to access entries of dictionary dict
@@ -148,6 +162,28 @@ class Config(ABC):
                 'MomentOfInertiaCM':        {'datatype':float,  'default':0.0},
                 'Damping':                  {'datatype':float,  'default':0.0},
                 'Stiffness':                {'datatype':float,  'default':0.0},
+                # --- mean-flow base states --------------------------------------
+                # Move the residual force of a non-equilibrium base flow (and the
+                # frozen eddy viscosity) rigidly with the body.  Needs the fields
+                # MOVING_BASE_STATE_FIELDS in the mean-flow file.  See
+                # documentation/GoverningEquations/fsi_moving_base_state.md
+                'MovingBaseState':          {'datatype':bool,   'default':False},
+                # Only with MovingBaseState: for rotation DOFs, carry the
+                # base-flow residual and eddy viscosity rigidly near the body
+                # but let the wake follow the trailing-edge displacement
+                # (a pure translation) downstream of the trailing edge,
+                # blended over MovingBaseStateWakeLength (chord units).
+                # Base-flow residual that moves with the body: "Discrete" =
+                # residual of the P2 base flow under FELiCS's own momentum
+                # operator (consistent with the linear operator, no extra input);
+                # "File" = fields fsiC*/fsiV*/fsiT* from the mean-flow file.
+                'MovingBaseStateResidual':  {'datatype':str,    'default':'Discrete'},
+                'MovingBaseStateWake':      {'datatype':bool,   'default':False},
+                'MovingBaseStateWakeLength':{'datatype':float,  'default':0.5},
+                # Diagnostic: solve the steady (omega = 0) fluid problem for a unit
+                # static displacement of every DOF and log the aerodynamic force.
+                # Costs one extra LU factorisation of the fluid operator.
+                'StaticCheck':              {'datatype':bool,   'default':False},
             },
             'FlowInput':{
                 'MeanFlowFilePath':         {'datatype':str,    'default':''},
@@ -794,6 +830,12 @@ class Config(ABC):
         # Always look for a sponge variable in the mean flow file
         # if not present it will be zero
         MeanList.append('spg')
+
+        # Base-flow residual pieces for the FSI option MovingBaseState
+        fsi = getattr(self, 'FSI', None) or {}
+        if (fsi.get('Enabled', False) and fsi.get('MovingBaseState', False)
+                and fsi.get('MovingBaseStateResidual', 'Discrete') == 'File'):
+            MeanList.extend(MOVING_BASE_STATE_FIELDS)
 
         # Add species, which are not transported
         for specie in self.Mixture.get_species_list('constraint'):

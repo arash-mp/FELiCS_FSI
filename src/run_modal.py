@@ -258,6 +258,36 @@ def run_modal(param):
                 mode.dof_frac, mode.dof_phase = fsi.dof_participation(
                     eig_vecs_aug[i, :]
                 )
+                # fluid force on every DOF and its split into an apparent
+                # aerodynamic stiffness k_a and damping c_a (F_k/eta_k =
+                # -k_a - c_a s); a mode is unstable when c_a beats the
+                # structural damping.  Logged at info level for modes with a
+                # noticeable structural part.
+                diag = fsi.aerodynamic_force_diagnostics(
+                    mode.eigen_value,
+                    eig_vecs_aug[i, :],
+                )
+                mode.k_aero = diag["k_aero"]
+                mode.c_aero = diag["c_aero"]
+                log_level = (
+                    logger.info if mode.struct_ratio_energy >= 0.1
+                    else logger.debug
+                )
+                lines = [
+                    f"  FSI mode lambda = {complex(mode.eigen_value):.6f}, "
+                    f"structural energy ratio = {mode.struct_ratio_energy:.3e}, "
+                    f"structural residual = {diag['residual']:.1e}, "
+                    f"|phi - s eta|/|phi| = {diag['phi_minus_s_eta']:.1e}"
+                ]
+                for k, label in enumerate(fsi.dof_labels):
+                    lines.append(
+                        f"    DOF {k} ({label}): share = {mode.dof_frac[k]:.3f}, "
+                        f"phase = {mode.dof_phase[k]:+.1f} deg, "
+                        f"F/eta = {diag['ratio'][k]:.4e}, "
+                        f"k_aero = {diag['k_aero'][k]:+.4e}, "
+                        f"c_aero = {diag['c_aero'][k]:+.4e}"
+                    )
+                log_level("\n".join(lines))
                 logger.debug(
                     f"  FSI mode lambda = {mode.eigen_value}: "
                     f"eta_hat = {mode.eta_hat}, phi_hat = {mode.phi_hat}, "
