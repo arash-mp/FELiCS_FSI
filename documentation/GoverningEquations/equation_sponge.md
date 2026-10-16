@@ -16,6 +16,20 @@ Nomenclature:
 - $X_{\phi_{i}}$: FEM test function for the corresponding equation 
 
 
+## Incompressible pressure (`Numerics.SpongeOnPressure`)
+For incompressible cases (`Mass` equation `Continuity`), the pressure is a Lagrange multiplier, not a transported quantity. By default (`"SpongeOnPressure": true`) the sponge is also added to the continuity equation, which then becomes $\nabla\cdot\mathbf{u}' + \sigma p' = 0$ inside the sponge.
+
+```{warning}
+On the NACA0017 mean-flow cases this pressure sponge produced spurious **growing** modes concentrated in the outlet sponge, e.g. $\omega = 0.62 + 0.38\mathrm{i}$ and $0.90 + 0.12\mathrm{i}$. Their position depended on the mesh, and they disappeared both without a sponge and with the sponge on the velocity only.
+```
+
+Set `"SpongeOnPressure": false` in the `Numerics` block to apply the sponge to the velocity (and to any transported scalars) only:
+```json
+"Numerics": {
+    "SpongeOnPressure": false
+}
+```
+
 ## Nonlinear equations
 When the sponge is activated, the following term is added to the nonlinear equations for all state variables $\phi_{i}$:
 $$

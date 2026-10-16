@@ -105,6 +105,39 @@ class SpongeTerm(EquationTemplate):
         )
 
 
+    def _is_skipped(
+        self,
+        equation_id,
+    ):
+        """
+        Check whether the sponge is left out of an equation.
+
+        The incompressible pressure is a Lagrange multiplier, not a
+        transported quantity. A sponge on it turns the continuity equation
+        into ``div(u') + spg p' = 0`` inside the sponge, which can create
+        spurious growing modes localised at the outlet. With
+        ``Numerics.SpongeOnPressure = false`` the sponge acts on the
+        velocity (and any transported scalars) only.
+
+        Parameters
+        ----------
+        equation_id : str
+            Key of the equation in ``param.Case.SetOfEquations``.
+
+        Returns
+        -------
+        bool
+            True if no sponge term is added to this equation.
+        """
+        equation = self.param.Case.SetOfEquations[equation_id]['Equation']
+        if equation == 'Continuity' and not self.param.Numerics.SpongeOnPressure:
+            logger.info(
+                "Sponge not applied to the continuity equation "
+                "(Numerics.SpongeOnPressure = false)."
+            )
+            return True
+        return False
+
     def add_weight_matrix_expression(
         self,
         weakForm,
@@ -161,6 +194,9 @@ class SpongeTerm(EquationTemplate):
             if not (param.Case.SetOfEquations[eqID]['Equation'] == 'None' or \
                 param.Case.SetOfEquations[eqID]['Variable'] == 'None'):
                 
+                if self._is_skipped(eqID):
+                    continue
+
                 #  Get the corresponding variable
                 varID = param.Case.SetOfEquations[eqID]['Variable']
                 varNum = param.Case.SolutionList.index(varID)
@@ -227,6 +263,9 @@ class SpongeTerm(EquationTemplate):
             if not (param.Case.SetOfEquations[eqID]['Equation'] == 'None' or \
                 param.Case.SetOfEquations[eqID]['Variable'] == 'None'):
                 
+                if self._is_skipped(eqID):
+                    continue
+
                 #  Get the corresponding variable
                 varID = param.Case.SetOfEquations[eqID]['Variable']
                 varNum = param.SolutionList.index(varID)

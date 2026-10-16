@@ -219,7 +219,10 @@ class Config(ABC):
                 'nSolut':                   {'datatype':int,    'default':3},
                 'PolynomialOrder':          {'datatype':dict,   'default':{'u':'2'},    'options':[1,2]},
                 'EigenSolverTolerance':     {'datatype':float,  'default':1e-12},
-                'EigenSolverMaxIterations': {'datatype':int,    'default':200}
+                'EigenSolverMaxIterations': {'datatype':int,    'default':200},
+                # False: no sponge term in the incompressible continuity
+                # equation (the sponge then damps the velocity only)
+                'SpongeOnPressure':         {'datatype':bool,   'default':True}
             }
         }
         return SettingsDict
