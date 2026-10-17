@@ -23,6 +23,7 @@ All tests are validation tests against references implemented here:
                                                          integration-by-parts
                                                          boundary terms
 * force-row matrices G and Geo                       vs  analytical integrals
+* selection of the force-row terms (MovingBaseStateForceTerms)
 """
 # Standard libraries
 import os
@@ -359,6 +360,19 @@ def test_moving_base_state_force_matrices_analytical():
     area = 0.8
     assert np.allclose(Geo, area * np.eye(2), atol=1e-12)
     assert np.allclose(G, np.array([[0.0, 0.0], [2.0 * area, 0.0]]), atol=1e-12)
+
+
+def test_selected_mbs_force_matrix():
+    fsi = _bare_fsi(2, 4, np.eye(2), np.zeros((2, 2)), np.eye(2))
+    G = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=complex)
+    Geo = np.array([[10.0, 20.0], [30.0, 40.0]], dtype=complex)
+    expected = {"All": G + Geo, "NoGeo": G, "NoG": Geo, "None": np.zeros((2, 2))}
+    for terms, reference in expected.items():
+        fsi.mbs_force_terms = terms
+        assert np.allclose(fsi._selected_mbs_force_matrix(G, Geo), reference), terms
+    # default (attribute not set, e.g. older pickles): all terms
+    del fsi.mbs_force_terms
+    assert np.allclose(fsi._selected_mbs_force_matrix(G, Geo), G + Geo)
 
 
 # ---------------------------------------------------------------------------

@@ -140,6 +140,7 @@ In a boundary layer that the P2 mesh does not fully resolve, the residual of the
 - `MovingBaseStateResidual` (default `"Discrete"`): source of $\mathbf{R}_0$, `"Discrete"` or `"File"`.
 - `MovingBaseStateWake` (default `false`, needs `MovingBaseState`): rotation DOFs use the wake-following transport instead of a rigid rotation everywhere.
 - `MovingBaseStateWakeLength` (default `0.5`, chord units): blend length $L$ downstream of the trailing edge.
+- `MovingBaseStateForceTerms` (default `"All"`, needs `MovingBaseState`): which force-row terms are added, for sensitivity tests. `"All"` = $G + G^{eo}$; `"NoGeo"` drops the base stress at the displaced wall $G^{eo}$ (the "added stiffness" that Negi et al. 2020 show to vanish for an exact base flow); `"NoG"` drops the moving eddy-viscosity traction $G$; `"None"` drops both. The momentum forcing is always kept. Both matrices are written to the log in every case. Note that only `"All"` keeps the exact result that a static translation gives zero force.
 - `StaticCheck` (default `false`): solves the steady fluid problem for a unit static displacement of every DOF and logs the aerodynamic force matrix, for the frozen base state and (if enabled) the moving one. A pure translation in a uniform stream should give nearly zero. This costs one extra LU factorisation.
 
 ## Per-mode output

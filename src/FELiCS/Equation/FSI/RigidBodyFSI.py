@@ -120,6 +120,9 @@ displacement downstream, so that the wake is shifted rather than swung about
 the pivot.  The transport field xi_j then replaces d_j in the momentum terms
 (with div(xi_j) and the local rotation of xi_j); on the body xi_j = d_j, so the
 force rows are unchanged.
+Option FSI.MovingBaseStateForceTerms ("All", "NoGeo", "NoG", "None") keeps or
+drops the two force-row terms (G: moving eddy viscosity, Geo: base stress at the
+displaced wall) for sensitivity tests; the momentum forcing is always kept.
 Option FSI.MovingBaseStateResidual selects R0: "Discrete" (default) is the
 residual of the P2 base flow under FELiCS's own momentum operator, computed
 here; "File" reads C, V, T from the mean-flow file.
@@ -158,6 +161,14 @@ from FELiCS.Parameters.Config import MOVING_BASE_STATE_FIELDS
 
 # Get the logger
 logger = Logger.get_logger("felics")
+
+# FSI.MovingBaseStateForceTerms: which moving-base-state terms enter the force rows
+MBS_FORCE_TERMS = {
+    "All":   "G + Geo",
+    "NoGeo": "G only (no base stress at the displaced wall)",
+    "NoG":   "Geo only (no moving eddy-viscosity traction)",
+    "None":  "neither G nor Geo (momentum forcing only)",
+}
 
 
 def _interpolation_points(V):
@@ -338,6 +349,7 @@ class RigidBodyMotionFSI:
         self.mbs_residual      = str(getattr(fsi, "MovingBaseStateResidual", "Discrete"))
         self.mbs_wake          = bool(getattr(fsi, "MovingBaseStateWake", False))
         self.mbs_wake_length   = float(getattr(fsi, "MovingBaseStateWakeLength", 0.5))
+        self.mbs_force_terms   = str(getattr(fsi, "MovingBaseStateForceTerms", "All"))
         self._trailing_edge    = None
         self._mbs_columns      = None
         self._mbs_force_matrix = np.zeros((self.n_dof, self.n_dof), dtype=complex)
@@ -346,6 +358,18 @@ class RigidBodyMotionFSI:
             logger.warning(
                 "  MovingBaseStateWake = true has no effect because "
                 "MovingBaseState = false."
+            )
+        if self.moving_base_state and self.mbs_force_terms not in MBS_FORCE_TERMS:
+            log_and_raise(
+                logger,
+                "FSI.MovingBaseStateForceTerms must be one of "
+                f"{list(MBS_FORCE_TERMS)}, got '{self.mbs_force_terms}'.",
+                ValueError,
+            )
+        if self.moving_base_state and self.mbs_force_terms != "All":
+            logger.info(
+                f"  MovingBaseStateForceTerms = {self.mbs_force_terms}: force rows "
+                f"use {MBS_FORCE_TERMS[self.mbs_force_terms]} (sensitivity test)."
             )
         if self.moving_base_state and self.mbs_residual not in ("Discrete", "File"):
             log_and_raise(
@@ -1159,7 +1183,7 @@ class RigidBodyMotionFSI:
             self._moving_base_state_vector(dof, residual) for dof in self.dofs
         ]
         G, Geo = self._moving_base_state_force_matrices(residual)
-        self._mbs_force_matrix = G + Geo
+        self._mbs_force_matrix = self._selected_mbs_force_matrix(G, Geo)
         interface_dofs = np.array([cp[0] for cp in couplings], dtype=np.int64)
         for j, g in enumerate(self._mbs_columns):
             kept = g[self._mbs_rows_mask(g, interface_dofs)]
@@ -1173,6 +1197,7 @@ class RigidBodyMotionFSI:
                 "  moving base state, force rows (per unit displacement):\n"
                 f"    eddy-viscosity transport  G   =\n{G.real}\n"
                 f"    wall residual (added stiffness) Geo =\n{Geo.real}\n"
+                f"    used in the force rows: {MBS_FORCE_TERMS[self.mbs_force_terms]}\n"
                 f"    (structural stiffness K =\n{self.K_mat})"
             )
 
@@ -1244,6 +1269,14 @@ class RigidBodyMotionFSI:
         mask = g != 0.0
         mask[interface_dofs] = False
         return mask
+
+    def _selected_mbs_force_matrix(self, G, Geo):
+        """Force-row matrix of the moving base state for the terms selected by
+        FSI.MovingBaseStateForceTerms (default "All": G + Geo)."""
+        terms = getattr(self, "mbs_force_terms", "All")
+        use_g = terms in ("All", "NoGeo")
+        use_geo = terms in ("All", "NoG")
+        return (G if use_g else np.zeros_like(G)) + (Geo if use_geo else np.zeros_like(Geo))
 
     def _moving_base_state_force_matrices(self, residual):
         """G_kj = int_G 2 (d_j.grad mu) d_k.(S0 n) dS  (perturbation of the

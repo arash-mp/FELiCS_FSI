@@ -180,6 +180,13 @@ class Config(ABC):
                 'MovingBaseStateResidual':  {'datatype':str,    'default':'Discrete'},
                 'MovingBaseStateWake':      {'datatype':bool,   'default':False},
                 'MovingBaseStateWakeLength':{'datatype':float,  'default':0.5},
+                # Only with MovingBaseState: which moving-base-state terms enter
+                # the force rows (sensitivity tests). "All" = G + Geo; "NoGeo" =
+                # without the base stress at the displaced wall (Geo, the
+                # "added stiffness" of Negi et al. 2020); "NoG" = without the
+                # moving eddy-viscosity traction (G); "None" = neither (the
+                # momentum forcing is kept in all cases).
+                'MovingBaseStateForceTerms':{'datatype':str,    'default':'All'},
                 # Diagnostic: solve the steady (omega = 0) fluid problem for a unit
                 # static displacement of every DOF and log the aerodynamic force.
                 # Costs one extra LU factorisation of the fluid operator.
