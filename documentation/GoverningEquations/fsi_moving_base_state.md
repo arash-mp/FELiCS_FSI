@@ -67,20 +67,30 @@ Check: for a static displacement, $\mathbf{u}' = -\eta_j[(\mathbf{d}_j\cdot\nabl
 
 Rigid rotation is the right transport for the body and its boundary layer, but not for the wake. A pitched airfoil sheds its wake from the displaced trailing edge, and the wake then follows the free stream; it does not swing about the pivot. Rotating the residual rigidly by $\eta_j$ about $\mathbf{c}_j$ moves the wake at a distance $\ell$ behind the pivot by $\ell\,\eta_j$, which is several times the trailing-edge displacement a few chords downstream.
 
-With `MovingBaseStateWake`, rotation DOFs carry $\mathbf{R}_0$ and $\mu$ with the field
+With `MovingBaseStateWake`, DOF $j$ carries $\mathbf{R}_0$ and $\mu$ with the field
 
 $$
-\boldsymbol{\xi}_j = w\,\mathbf{d}_j + (1-w)\,\mathbf{d}_j(\mathbf{x}_{TE}),\qquad
+\boldsymbol{\xi}_j = w\,\mathbf{d}_j + (1-w)\,\mathbf{d}_j^{\,wake},\qquad
 w = 1 - \mathrm{smoothstep}\!\left(\frac{x - x_{TE}}{L}\right),
 $$
 
-so the fields rotate rigidly for $x \le x_{TE}$ and are translated by the trailing-edge displacement for $x \ge x_{TE} + L$, with $L$ = `MovingBaseStateWakeLength`. The trailing edge $\mathbf{x}_{TE}$ is taken as the interface facet with the largest $x$. A vector field is carried with the local rotation of $\boldsymbol{\xi}_j$, $a_j = \tfrac12(\nabla\times\boldsymbol{\xi}_j)_z$, and without stretching:
+so the fields move rigidly with the body for $x \le x_{TE}$ and with $\mathbf{d}_j^{\,wake}$ for $x \ge x_{TE} + L$, with $L$ = `MovingBaseStateWakeLength`. The wake transport is chosen per DOF type:
+
+| option | value | $\mathbf{d}_j^{\,wake}$ |
+|---|---|---|
+| `MovingBaseStateWakeRotation` | `"Translate"` (default) | $\mathbf{d}_j(\mathbf{x}_{TE})$: the wake is shifted by the trailing-edge displacement |
+| | `"Frozen"` | $0$: the wake does not follow the rotation |
+| | `"Rigid"` | $\mathbf{d}_j$: rigid rotation everywhere (no blend) |
+| `MovingBaseStateWakeTranslation` | `"Rigid"` (default) | $\mathbf{d}_j$: the wake follows the translation (no blend) |
+| | `"Frozen"` | $0$: the wake does not follow the translation |
+
+For example, a near wake that follows the heave but not the pitch (as seen in DNS of a pitching and heaving airfoil) is `MovingBaseStateWake = true`, `MovingBaseStateWakeRotation = "Frozen"`, `MovingBaseStateWakeTranslation = "Rigid"`. The trailing edge $\mathbf{x}_{TE}$ is taken as the interface facet with the largest $x$. A vector field is carried with the local rotation of $\boldsymbol{\xi}_j$, $a_j = \tfrac12(\nabla\times\boldsymbol{\xi}_j)_z$, and without stretching:
 
 $$
 \mathbf{f}_j = -(\boldsymbol{\xi}_j\cdot\nabla)\mathbf{R}_0 + a_j\,\hat{\mathbf{z}}\times\mathbf{R}_0 - \nabla\cdot\big(2\,(\boldsymbol{\xi}_j\cdot\nabla\mu)\,\mathbf{S}_0\big).
 $$
 
-For a rigid rotation, $\boldsymbol{\xi}_j = \mathbf{d}_j$ and $a_j = 1$, which recovers the expression above. On the body $\boldsymbol{\xi}_j = \mathbf{d}_j$, so the force rows $G$ and $Geo$ are unchanged. Translations are not affected by the option.
+For a rigid rotation, $\boldsymbol{\xi}_j = \mathbf{d}_j$ and $a_j = 1$, which recovers the expression above (for a rigid translation $a_j = 0$). On the body $\boldsymbol{\xi}_j = \mathbf{d}_j$, so the force rows $G$ and $Geo$ are unchanged.
 
 ```{note}
 This is a modelling choice, not a derivation: the transported base state is no longer an exact steady solution in the blend region. The blend length $L$ is a parameter; check the sensitivity of the results to it.
@@ -88,7 +98,7 @@ This is a modelling choice, not a derivation: the transported base state is no l
 
 ## Weak form and discrete coupling
 
-The forcing is integrated by parts, with $\boldsymbol{\xi}_j = \mathbf{d}_j$, $a_j = r_j$ and $\nabla\cdot\boldsymbol{\xi}_j = 0$ unless `MovingBaseStateWake` is on. As in the momentum equation, the viscous boundary term is dropped:
+The forcing is integrated by parts, with $\boldsymbol{\xi}_j = \mathbf{d}_j$, $a_j = r_j$ and $\nabla\cdot\boldsymbol{\xi}_j = 0$ unless `MovingBaseStateWake` changes the transport of DOF $j$. As in the momentum equation, the viscous boundary term is dropped:
 
 $$
 \begin{aligned}
@@ -138,8 +148,10 @@ In a boundary layer that the P2 mesh does not fully resolve, the residual of the
 
 - `MovingBaseState` (default `false`): switches the terms above on.
 - `MovingBaseStateResidual` (default `"Discrete"`): source of $\mathbf{R}_0$, `"Discrete"` or `"File"`.
-- `MovingBaseStateWake` (default `false`, needs `MovingBaseState`): rotation DOFs use the wake-following transport instead of a rigid rotation everywhere.
+- `MovingBaseStateWake` (default `false`, needs `MovingBaseState`): use a separate wake transport downstream of the trailing edge instead of the rigid motion everywhere.
 - `MovingBaseStateWakeLength` (default `0.5`, chord units): blend length $L$ downstream of the trailing edge.
+- `MovingBaseStateWakeRotation` (default `"Translate"`, needs `MovingBaseStateWake`): wake transport of rotation DOFs, `"Translate"`, `"Frozen"` or `"Rigid"` (table above).
+- `MovingBaseStateWakeTranslation` (default `"Rigid"`, needs `MovingBaseStateWake`): wake transport of translation DOFs, `"Rigid"` or `"Frozen"`.
 - `MovingBaseStateForceTerms` (default `"All"`, needs `MovingBaseState`): which force-row terms are added, for sensitivity tests. `"All"` = $G + G^{eo}$; `"NoGeo"` drops the base stress at the displaced wall $G^{eo}$ (the "added stiffness" that Negi et al. 2020 show to vanish for an exact base flow); `"NoG"` drops the moving eddy-viscosity traction $G$; `"None"` drops both. The momentum forcing is always kept. Both matrices are written to the log in every case. Note that only `"All"` keeps the exact result that a static translation gives zero force.
 - `StaticCheck` (default `false`): solves the steady fluid problem for a unit static displacement of every DOF and logs the aerodynamic force matrix, for the frozen base state and (if enabled) the moving one. A pure translation in a uniform stream should give nearly zero. This costs one extra LU factorisation.
 

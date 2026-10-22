@@ -113,13 +113,20 @@ The last term is the base-stress ("added stiffness") contribution discussed by
 Negi et al. (2020); it vanishes only for R0 = 0 at the wall.  For an exact
 steady base flow (R0 = 0, uniform mu) all terms vanish and the original
 formulation is recovered.
-Option FSI.MovingBaseStateWake changes how a ROTATION carries the fields:
-rigid rotation upstream of the trailing edge, blended (smoothstep over
-MovingBaseStateWakeLength) into a pure translation by the trailing-edge
-displacement downstream, so that the wake is shifted rather than swung about
-the pivot.  The transport field xi_j then replaces d_j in the momentum terms
-(with div(xi_j) and the local rotation of xi_j); on the body xi_j = d_j, so the
-force rows are unchanged.
+Option FSI.MovingBaseStateWake changes how the fields are carried downstream
+of the trailing edge: rigid motion upstream, blended (smoothstep over
+MovingBaseStateWakeLength) into a wake transport downstream.  The wake
+transport is chosen per DOF type:
+  MovingBaseStateWakeRotation    "Translate" (default): the trailing-edge
+                                 displacement (wake shifted, not swung);
+                                 "Frozen": none (the wake does not follow the
+                                 pitch); "Rigid": rigid rotation everywhere.
+  MovingBaseStateWakeTranslation "Rigid" (default): the wake follows the
+                                 translation; "Frozen": it does not.
+E.g. a wake that follows the heave but not the pitch: Wake = true,
+WakeRotation = "Frozen", WakeTranslation = "Rigid".  The transport field xi_j
+then replaces d_j in the momentum terms (with div(xi_j) and the local rotation
+of xi_j); on the body xi_j = d_j, so the force rows are unchanged.
 Option FSI.MovingBaseStateForceTerms ("All", "NoGeo", "NoG", "None") keeps or
 drops the two force-row terms (G: moving eddy viscosity, Geo: base stress at the
 displaced wall) for sensitivity tests; the momentum forcing is always kept.
@@ -168,6 +175,18 @@ MBS_FORCE_TERMS = {
     "NoGeo": "G only (no base stress at the displaced wall)",
     "NoG":   "Geo only (no moving eddy-viscosity traction)",
     "None":  "neither G nor Geo (momentum forcing only)",
+}
+
+
+# FSI.MovingBaseStateWakeRotation / ...WakeTranslation: transport downstream of the TE
+MBS_WAKE_ROTATION = {
+    "Translate": "translated by the trailing-edge displacement",
+    "Frozen":    "not moved (the wake does not follow the rotation)",
+    "Rigid":     "rotated rigidly, as near the body",
+}
+MBS_WAKE_TRANSLATION = {
+    "Rigid":  "translated with the body",
+    "Frozen": "not moved (the wake does not follow the translation)",
 }
 
 
@@ -349,6 +368,8 @@ class RigidBodyMotionFSI:
         self.mbs_residual      = str(getattr(fsi, "MovingBaseStateResidual", "Discrete"))
         self.mbs_wake          = bool(getattr(fsi, "MovingBaseStateWake", False))
         self.mbs_wake_length   = float(getattr(fsi, "MovingBaseStateWakeLength", 0.5))
+        self.mbs_wake_rotation    = str(getattr(fsi, "MovingBaseStateWakeRotation", "Translate"))
+        self.mbs_wake_translation = str(getattr(fsi, "MovingBaseStateWakeTranslation", "Rigid"))
         self.mbs_force_terms   = str(getattr(fsi, "MovingBaseStateForceTerms", "All"))
         self._trailing_edge    = None
         self._mbs_columns      = None
@@ -386,6 +407,15 @@ class RigidBodyMotionFSI:
                     f"{self.mbs_wake_length}.",
                     ValueError,
                 )
+            for key, value, allowed in (
+                    ("MovingBaseStateWakeRotation", self.mbs_wake_rotation, MBS_WAKE_ROTATION),
+                    ("MovingBaseStateWakeTranslation", self.mbs_wake_translation, MBS_WAKE_TRANSLATION)):
+                if value not in allowed:
+                    log_and_raise(
+                        logger,
+                        f"FSI.{key} must be one of {list(allowed)}, got '{value}'.",
+                        ValueError,
+                    )
             self._trailing_edge = self._find_trailing_edge()
         if self.moving_base_state:
             logger.info(
@@ -395,11 +425,14 @@ class RigidBodyMotionFSI:
             if self.mbs_wake:
                 x_te, y_te = self._trailing_edge
                 logger.info(
-                    "  MovingBaseStateWake = true: for rotation DOFs the fields "
-                    f"rotate rigidly for x <= {x_te:.5f} (trailing edge at "
-                    f"({x_te:.5f}, {y_te:.5f})) and are translated by the "
-                    "trailing-edge displacement for x >= "
-                    f"{x_te + self.mbs_wake_length:.5f} (smoothstep blend)."
+                    "  MovingBaseStateWake = true: the fields move rigidly with "
+                    f"the body for x <= {x_te:.5f} (trailing edge at "
+                    f"({x_te:.5f}, {y_te:.5f})); for x >= "
+                    f"{x_te + self.mbs_wake_length:.5f} (smoothstep blend) they are, "
+                    f"for rotation DOFs, {MBS_WAKE_ROTATION[self.mbs_wake_rotation]} "
+                    f"(WakeRotation = {self.mbs_wake_rotation}), and for translation "
+                    f"DOFs, {MBS_WAKE_TRANSLATION[self.mbs_wake_translation]} "
+                    f"(WakeTranslation = {self.mbs_wake_translation})."
                 )
             else:
                 logger.info(
@@ -1217,26 +1250,35 @@ class RigidBodyMotionFSI:
         viscosity for DOF j, its local rotation a_j = (curl xi_j)_z / 2 and its
         divergence (None where identically zero).
 
-        Translation: xi = d_j (a = None, div = None).  Rotation, rigid:
-        xi = d_j, a = 1.  Rotation with MovingBaseStateWake:
+        Rigid (no MovingBaseStateWake, or the wake mode "Rigid"):
+        translation xi = d_j (a = None, div = None), rotation xi = d_j, a = 1.
+        With MovingBaseStateWake:
 
-            xi = w d_j + (1 - w) d_j(x_TE),
+            xi = w d_j + (1 - w) d_wake,
             w  = 1 - smoothstep((x - x_TE) / L),   L = MovingBaseStateWakeLength,
 
-        i.e. rigid rotation upstream of the trailing edge and a translation by
-        the trailing-edge displacement downstream.  xi = d_j on the body."""
+        i.e. rigid motion upstream of the trailing edge and d_wake downstream:
+        d_j(x_TE) for a rotation with WakeRotation = "Translate", 0 for
+        WakeRotation / WakeTranslation = "Frozen".  xi = d_j on the body."""
         d = dof.displacement_ufl(self.x)
-        if dof.motion_type != "rotation":
-            return d, None, None
+        is_rotation = dof.motion_type == "rotation"
+        rigid = (d, 1.0, None) if is_rotation else (d, None, None)
         if not (self.moving_base_state and self.mbs_wake):
-            return d, 1.0, None
-        x_te, y_te = self._trailing_edge
-        cx, cy = dof.center
-        d_te = as_vector((-(y_te - cy), x_te - cx))
+            return rigid
+        mode = self.mbs_wake_rotation if is_rotation else self.mbs_wake_translation
+        if mode == "Rigid":
+            return rigid
+        if mode == "Translate":
+            x_te, y_te = self._trailing_edge
+            cx, cy = dof.center
+            d_wake = as_vector((-(y_te - cy), x_te - cx))
+        else:                                    # "Frozen"
+            d_wake = as_vector((0.0, 0.0))
+        x_te = self._trailing_edge[0]
         ramp = (self.x[0] - x_te) / self.mbs_wake_length
         ramp = max_value(0.0, min_value(1.0, ramp))
         weight = 1.0 - (3.0 * ramp**2 - 2.0 * ramp**3)
-        xi = weight * d + (1.0 - weight) * d_te
+        xi = weight * d + (1.0 - weight) * d_wake
         rotation = 0.5 * (xi[1].dx(0) - xi[0].dx(1))
         divergence = xi[0].dx(0) + xi[1].dx(1)
         return xi, rotation, divergence
@@ -1309,7 +1351,7 @@ class RigidBodyMotionFSI:
     def _moving_base_state_vector(self, dof, residual):
         """Weak form of the momentum forcing per unit eta_j,
         int f_j . conj(v) dx  with transport field xi_j (= d_j unless
-        MovingBaseStateWake changes it for a rotation, see _transport_field):
+        MovingBaseStateWake changes it, see _transport_field):
 
           f_j = -(xi_j.grad)R0 + a_j z x R0 - div(2 (xi_j.grad mu) S0),
 

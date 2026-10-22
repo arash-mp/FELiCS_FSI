@@ -168,11 +168,11 @@ class Config(ABC):
                 # MOVING_BASE_STATE_FIELDS in the mean-flow file.  See
                 # documentation/GoverningEquations/fsi_moving_base_state.md
                 'MovingBaseState':          {'datatype':bool,   'default':False},
-                # Only with MovingBaseState: for rotation DOFs, carry the
-                # base-flow residual and eddy viscosity rigidly near the body
-                # but let the wake follow the trailing-edge displacement
-                # (a pure translation) downstream of the trailing edge,
-                # blended over MovingBaseStateWakeLength (chord units).
+                # Only with MovingBaseState: carry the base-flow residual and
+                # eddy viscosity rigidly near the body but with a separate wake
+                # transport downstream of the trailing edge (see
+                # MovingBaseStateWakeRotation / ...WakeTranslation), blended
+                # over MovingBaseStateWakeLength (chord units).
                 # Base-flow residual that moves with the body: "Discrete" =
                 # residual of the P2 base flow under FELiCS's own momentum
                 # operator (consistent with the linear operator, no extra input);
@@ -180,6 +180,15 @@ class Config(ABC):
                 'MovingBaseStateResidual':  {'datatype':str,    'default':'Discrete'},
                 'MovingBaseStateWake':      {'datatype':bool,   'default':False},
                 'MovingBaseStateWakeLength':{'datatype':float,  'default':0.5},
+                # Only with MovingBaseStateWake: what the wake (x > x_TE + blend)
+                # does for each DOF type.  Rotation: "Translate" = shifted by the
+                # trailing-edge displacement (default), "Frozen" = not moved,
+                # "Rigid" = rotated rigidly as near the body.  Translation:
+                # "Rigid" = moved with the body (default), "Frozen" = not moved.
+                # Wake that follows the heave but not the pitch: Rotation
+                # "Frozen", Translation "Rigid".
+                'MovingBaseStateWakeRotation':   {'datatype':str, 'default':'Translate'},
+                'MovingBaseStateWakeTranslation':{'datatype':str, 'default':'Rigid'},
                 # Only with MovingBaseState: which moving-base-state terms enter
                 # the force rows (sensitivity tests). "All" = G + Geo; "NoGeo" =
                 # without the base stress at the displaced wall (Geo, the

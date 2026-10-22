@@ -32,6 +32,7 @@ from types import SimpleNamespace
 
 # Third party libraries
 import numpy as np
+import pytest
 from mpi4py import MPI
 from petsc4py import PETSc
 from basix.ufl import element, mixed_element
@@ -272,6 +273,8 @@ def _fe_fsi(case, mean_u, mean_mu):
     fsi.moving_base_state = True
     fsi.mbs_wake = False
     fsi.mbs_wake_length = 0.5
+    fsi.mbs_wake_rotation = "Translate"
+    fsi.mbs_wake_translation = "Rigid"
     fsi._trailing_edge = None
     fsi.FEMSpaces = SimpleNamespace(VMixed=case.mixed)
     fsi.meanFlow = SimpleNamespace(
@@ -382,20 +385,24 @@ _WAKE_START = 1.0 / 3.0      # trailing edge x; with the length below the blend
 _WAKE_LENGTH = 0.5           # ends at x = 5/6: both on mesh lines (6 cells)
 
 
-def _reference_wake_transport(x, center, trailing_edge, length):
+def _reference_wake_transport(x, center, trailing_edge, length, frozen=False):
     """Independent implementation of the transport field (conditional
-    instead of max/min, explicit smoothstep)."""
+    instead of max/min, explicit smoothstep).  frozen: the wake is not moved
+    (WakeRotation = "Frozen") instead of translated by the TE displacement."""
     x_te, y_te = trailing_edge
     cx, cy = center
     ramp = (x[0] - x_te) / length
     ramp = conditional(lt(ramp, 0.0), 0.0, conditional(gt(ramp, 1.0), 1.0, ramp))
     weight = 1.0 - ramp * ramp * (3.0 - 2.0 * ramp)
     rigid = as_vector((-(x[1] - cy), x[0] - cx))
+    if frozen:
+        return weight * rigid
     shifted = as_vector((-(y_te - cy), x_te - cx))
     return weight * rigid + (1.0 - weight) * shifted
 
 
-def test_wake_transport_vector_matches_strong_form():
+@pytest.mark.parametrize("wake_rotation", ["Translate", "Frozen"])
+def test_wake_transport_vector_matches_strong_form(wake_rotation):
     case = _fe_case()
     mean_u = _interpolate(case.vector_space, lambda x: np.vstack((
         0.2 + x[0] * x[1] - 0.3 * x[1]**2, 0.5 * x[0]**2 - x[0] * x[1] + 0.1)))
@@ -410,6 +417,7 @@ def test_wake_transport_vector_matches_strong_form():
     fsi = _fe_fsi(case, mean_u, mean_mu)
     fsi.mbs_wake = True
     fsi.mbs_wake_length = _WAKE_LENGTH
+    fsi.mbs_wake_rotation = wake_rotation
     fsi._trailing_edge = (_WAKE_START, 0.1)
     dof = _RigidBodyDOF("rotation", 1.0, 0.0, 0.0, center=(0.2, 0.15))
 
@@ -419,7 +427,7 @@ def test_wake_transport_vector_matches_strong_form():
     # strong form f = -(xi.grad)R0 + a z x R0 - div(2 (xi.grad mu) S0),
     # a = (curl xi)/2, plus the dropped viscous boundary term
     xi = _reference_wake_transport(case.x, dof.center, fsi._trailing_edge,
-                                   _WAKE_LENGTH)
+                                   _WAKE_LENGTH, frozen=(wake_rotation == "Frozen"))
     rotation = 0.5 * (xi[1].dx(0) - xi[0].dx(1))
     n = FacetNormal(case.domain)
     S0 = sym(grad(mean_u))
@@ -468,6 +476,57 @@ def test_wake_transport_limits():
     fsi.mbs_wake = False
     xi_r, rotation_r, divergence_r = fsi._transport_field(rotation_dof)
     assert rotation_r == 1.0 and divergence_r is None
+
+
+def _interpolated_transport(case, xi):
+    xi_h = Function(case.vector_space)
+    xi_h.interpolate(Expression(
+        xi, case.vector_space.element.interpolation_points()))
+    return xi_h.x.array.real.reshape(-1, 2)
+
+
+def test_wake_transport_frozen_and_rigid_modes():
+    """WakeRotation "Frozen" / "Rigid" and WakeTranslation "Frozen" / "Rigid":
+    rigid upstream of the TE, the chosen wake transport downstream."""
+    case = _fe_case()
+    fsi = _fe_fsi(case, Function(case.vector_space), Function(case.scalar_space))
+    fsi.mbs_wake = True
+    fsi.mbs_wake_length = _WAKE_LENGTH
+    fsi._trailing_edge = (_WAKE_START, 0.1)
+    center = (0.2, 0.15)
+    coords = case.vector_space.tabulate_dof_coordinates()
+    upstream = coords[:, 0] <= _WAKE_START + 1e-12
+    downstream = coords[:, 0] >= _WAKE_START + _WAKE_LENGTH - 1e-12
+    assert upstream.any() and downstream.any()
+    rotation_dof = _RigidBodyDOF("rotation", 1.0, 0.0, 0.0, center=center)
+    heave_dof = _RigidBodyDOF("translation", 1.0, 0.0, 0.0, direction=(0.0, 1.0))
+    rigid_rot = np.c_[-(coords[:, 1] - center[1]), coords[:, 0] - center[0]]
+    heave = np.array([0.0, 1.0])
+
+    # pitch: wake not moved
+    fsi.mbs_wake_rotation = "Frozen"
+    xi, rotation, divergence = fsi._transport_field(rotation_dof)
+    assert rotation is not None and divergence is not None
+    values = _interpolated_transport(case, xi)
+    assert np.allclose(values[upstream], rigid_rot[upstream], atol=1e-12)
+    assert np.allclose(values[downstream], 0.0, atol=1e-12)
+
+    # pitch: rigid everywhere, as without the option
+    fsi.mbs_wake_rotation = "Rigid"
+    xi, rotation, divergence = fsi._transport_field(rotation_dof)
+    assert rotation == 1.0 and divergence is None
+
+    # heave: follows the body everywhere by default
+    xi, rotation, divergence = fsi._transport_field(heave_dof)
+    assert rotation is None and divergence is None
+
+    # heave: wake not moved
+    fsi.mbs_wake_translation = "Frozen"
+    xi, rotation, divergence = fsi._transport_field(heave_dof)
+    assert rotation is not None and divergence is not None
+    values = _interpolated_transport(case, xi)
+    assert np.allclose(values[upstream], heave, atol=1e-12)
+    assert np.allclose(values[downstream], 0.0, atol=1e-12)
 
 
 # ---------------------------------------------------------------------------
