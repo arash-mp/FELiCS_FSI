@@ -273,6 +273,7 @@ def _fe_fsi(case, mean_u, mean_mu):
     fsi.moving_base_state = True
     fsi.mbs_wake = False
     fsi.mbs_wake_length = 0.5
+    fsi.mbs_wake_offset = 0.0
     fsi.mbs_wake_rotation = "Translate"
     fsi.mbs_wake_translation = "Rigid"
     fsi._trailing_edge = None
@@ -561,3 +562,29 @@ def test_discrete_base_residual_matches_projected_strong_form():
     ).solve()
     assert np.allclose(residual.x.array, reference.x.array, rtol=1e-9, atol=1e-11)
     assert np.abs(reference.x.array).max() > 1e-2
+
+
+def test_wake_transport_offset():
+    """MovingBaseStateWakeOffset: rigid up to x_TE + offset, wake transport
+    beyond x_TE + offset + L (here: pitch rotated over a short stretch of the
+    near wake, then not moved)."""
+    case = _fe_case()
+    fsi = _fe_fsi(case, Function(case.vector_space), Function(case.scalar_space))
+    fsi.mbs_wake = True
+    fsi.mbs_wake_rotation = "Frozen"
+    fsi.mbs_wake_offset = 1.0 / 6.0          # blend from x = 1/2 to 5/6: mesh lines
+    fsi.mbs_wake_length = 1.0 / 3.0
+    fsi._trailing_edge = (_WAKE_START, 0.1)
+    center = (0.2, 0.15)
+    dof = _RigidBodyDOF("rotation", 1.0, 0.0, 0.0, center=center)
+    xi, rotation, divergence = fsi._transport_field(dof)
+    values = _interpolated_transport(case, xi)
+    coords = case.vector_space.tabulate_dof_coordinates()
+    rigid = np.c_[-(coords[:, 1] - center[1]), coords[:, 0] - center[0]]
+    x_blend = _WAKE_START + fsi.mbs_wake_offset
+    upstream = coords[:, 0] <= x_blend + 1e-12
+    downstream = coords[:, 0] >= x_blend + fsi.mbs_wake_length - 1e-12
+    near_wake = upstream & (coords[:, 0] > _WAKE_START + 1e-12)
+    assert near_wake.any() and downstream.any()
+    assert np.allclose(values[upstream], rigid[upstream], atol=1e-12)
+    assert np.allclose(values[downstream], 0.0, atol=1e-12)

@@ -114,8 +114,9 @@ Negi et al. (2020); it vanishes only for R0 = 0 at the wall.  For an exact
 steady base flow (R0 = 0, uniform mu) all terms vanish and the original
 formulation is recovered.
 Option FSI.MovingBaseStateWake changes how the fields are carried downstream
-of the trailing edge: rigid motion upstream, blended (smoothstep over
-MovingBaseStateWakeLength) into a wake transport downstream.  The wake
+of the trailing edge: rigid motion up to x_TE + MovingBaseStateWakeOffset
+(default 0), blended (smoothstep over MovingBaseStateWakeLength) into a wake
+transport downstream.  The wake
 transport is chosen per DOF type:
   MovingBaseStateWakeRotation    "Translate" (default): the trailing-edge
                                  displacement (wake shifted, not swung);
@@ -368,6 +369,7 @@ class RigidBodyMotionFSI:
         self.mbs_residual      = str(getattr(fsi, "MovingBaseStateResidual", "Discrete"))
         self.mbs_wake          = bool(getattr(fsi, "MovingBaseStateWake", False))
         self.mbs_wake_length   = float(getattr(fsi, "MovingBaseStateWakeLength", 0.5))
+        self.mbs_wake_offset   = float(getattr(fsi, "MovingBaseStateWakeOffset", 0.0))
         self.mbs_wake_rotation    = str(getattr(fsi, "MovingBaseStateWakeRotation", "Translate"))
         self.mbs_wake_translation = str(getattr(fsi, "MovingBaseStateWakeTranslation", "Rigid"))
         self.mbs_force_terms   = str(getattr(fsi, "MovingBaseStateForceTerms", "All"))
@@ -407,6 +409,13 @@ class RigidBodyMotionFSI:
                     f"{self.mbs_wake_length}.",
                     ValueError,
                 )
+            if self.mbs_wake_offset < 0.0:
+                log_and_raise(
+                    logger,
+                    "FSI.MovingBaseStateWakeOffset must be >= 0, got "
+                    f"{self.mbs_wake_offset}.",
+                    ValueError,
+                )
             for key, value, allowed in (
                     ("MovingBaseStateWakeRotation", self.mbs_wake_rotation, MBS_WAKE_ROTATION),
                     ("MovingBaseStateWakeTranslation", self.mbs_wake_translation, MBS_WAKE_TRANSLATION)):
@@ -424,11 +433,12 @@ class RigidBodyMotionFSI:
             )
             if self.mbs_wake:
                 x_te, y_te = self._trailing_edge
+                x_blend = x_te + self.mbs_wake_offset
                 logger.info(
                     "  MovingBaseStateWake = true: the fields move rigidly with "
-                    f"the body for x <= {x_te:.5f} (trailing edge at "
-                    f"({x_te:.5f}, {y_te:.5f})); for x >= "
-                    f"{x_te + self.mbs_wake_length:.5f} (smoothstep blend) they are, "
+                    f"the body for x <= {x_blend:.5f} (trailing edge at "
+                    f"({x_te:.5f}, {y_te:.5f}), offset {self.mbs_wake_offset:g}); for x >= "
+                    f"{x_blend + self.mbs_wake_length:.5f} (smoothstep blend) they are, "
                     f"for rotation DOFs, {MBS_WAKE_ROTATION[self.mbs_wake_rotation]} "
                     f"(WakeRotation = {self.mbs_wake_rotation}), and for translation "
                     f"DOFs, {MBS_WAKE_TRANSLATION[self.mbs_wake_translation]} "
@@ -1255,9 +1265,10 @@ class RigidBodyMotionFSI:
         With MovingBaseStateWake:
 
             xi = w d_j + (1 - w) d_wake,
-            w  = 1 - smoothstep((x - x_TE) / L),   L = MovingBaseStateWakeLength,
+            w  = 1 - smoothstep((x - x_TE - x_off) / L),
+            L = MovingBaseStateWakeLength, x_off = MovingBaseStateWakeOffset,
 
-        i.e. rigid motion upstream of the trailing edge and d_wake downstream:
+        i.e. rigid motion up to x_TE + x_off and d_wake downstream:
         d_j(x_TE) for a rotation with WakeRotation = "Translate", 0 for
         WakeRotation / WakeTranslation = "Frozen".  xi = d_j on the body."""
         d = dof.displacement_ufl(self.x)
@@ -1274,8 +1285,8 @@ class RigidBodyMotionFSI:
             d_wake = as_vector((-(y_te - cy), x_te - cx))
         else:                                    # "Frozen"
             d_wake = as_vector((0.0, 0.0))
-        x_te = self._trailing_edge[0]
-        ramp = (self.x[0] - x_te) / self.mbs_wake_length
+        x_blend = self._trailing_edge[0] + getattr(self, "mbs_wake_offset", 0.0)
+        ramp = (self.x[0] - x_blend) / self.mbs_wake_length
         ramp = max_value(0.0, min_value(1.0, ramp))
         weight = 1.0 - (3.0 * ramp**2 - 2.0 * ramp**3)
         xi = weight * d + (1.0 - weight) * d_wake

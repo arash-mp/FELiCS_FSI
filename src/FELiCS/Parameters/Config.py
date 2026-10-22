@@ -180,6 +180,11 @@ class Config(ABC):
                 'MovingBaseStateResidual':  {'datatype':str,    'default':'Discrete'},
                 'MovingBaseStateWake':      {'datatype':bool,   'default':False},
                 'MovingBaseStateWakeLength':{'datatype':float,  'default':0.5},
+                # Only with MovingBaseStateWake: the blend starts this far
+                # (chord units) behind the trailing edge; the fields move
+                # rigidly up to x_TE + offset (e.g. rotate a short stretch of
+                # the near wake with the body).  0 = blend starts at the TE.
+                'MovingBaseStateWakeOffset':{'datatype':float,  'default':0.0},
                 # Only with MovingBaseStateWake: what the wake (x > x_TE + blend)
                 # does for each DOF type.  Rotation: "Translate" = shifted by the
                 # trailing-edge displacement (default), "Frozen" = not moved,

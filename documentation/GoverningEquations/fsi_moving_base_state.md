@@ -71,10 +71,10 @@ With `MovingBaseStateWake`, DOF $j$ carries $\mathbf{R}_0$ and $\mu$ with the fi
 
 $$
 \boldsymbol{\xi}_j = w\,\mathbf{d}_j + (1-w)\,\mathbf{d}_j^{\,wake},\qquad
-w = 1 - \mathrm{smoothstep}\!\left(\frac{x - x_{TE}}{L}\right),
+w = 1 - \mathrm{smoothstep}\!\left(\frac{x - x_{TE} - x_{o}}{L}\right),
 $$
 
-so the fields move rigidly with the body for $x \le x_{TE}$ and with $\mathbf{d}_j^{\,wake}$ for $x \ge x_{TE} + L$, with $L$ = `MovingBaseStateWakeLength`. The wake transport is chosen per DOF type:
+so the fields move rigidly with the body for $x \le x_{TE} + x_o$ and with $\mathbf{d}_j^{\,wake}$ for $x \ge x_{TE} + x_o + L$, with $L$ = `MovingBaseStateWakeLength` and $x_o$ = `MovingBaseStateWakeOffset` (default 0). The wake transport is chosen per DOF type:
 
 | option | value | $\mathbf{d}_j^{\,wake}$ |
 |---|---|---|
@@ -150,6 +150,7 @@ In a boundary layer that the P2 mesh does not fully resolve, the residual of the
 - `MovingBaseStateResidual` (default `"Discrete"`): source of $\mathbf{R}_0$, `"Discrete"` or `"File"`.
 - `MovingBaseStateWake` (default `false`, needs `MovingBaseState`): use a separate wake transport downstream of the trailing edge instead of the rigid motion everywhere.
 - `MovingBaseStateWakeLength` (default `0.5`, chord units): blend length $L$ downstream of the trailing edge.
+- `MovingBaseStateWakeOffset` (default `0`, chord units): the blend starts at $x_{TE} + x_o$, so a stretch $x_o$ of the near wake still moves rigidly with the body. For example, pitch only, near wake rotated over 0.2c and not moved beyond about 0.5c: `MovingBaseStateWake = true`, `MovingBaseStateWakeRotation = "Frozen"`, `MovingBaseStateWakeOffset = 0.2`, `MovingBaseStateWakeLength = 0.3`.
 - `MovingBaseStateWakeRotation` (default `"Translate"`, needs `MovingBaseStateWake`): wake transport of rotation DOFs, `"Translate"`, `"Frozen"` or `"Rigid"` (table above).
 - `MovingBaseStateWakeTranslation` (default `"Rigid"`, needs `MovingBaseStateWake`): wake transport of translation DOFs, `"Rigid"` or `"Frozen"`.
 - `MovingBaseStateForceTerms` (default `"All"`, needs `MovingBaseState`): which force-row terms are added, for sensitivity tests. `"All"` = $G + G^{eo}$; `"NoGeo"` drops the base stress at the displaced wall $G^{eo}$ (the "added stiffness" that Negi et al. 2020 show to vanish for an exact base flow); `"NoG"` drops the moving eddy-viscosity traction $G$; `"None"` drops both. The momentum forcing is always kept. Both matrices are written to the log in every case. Note that only `"All"` keeps the exact result that a static translation gives zero force.
