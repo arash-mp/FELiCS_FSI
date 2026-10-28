@@ -638,6 +638,34 @@ class FieldProperties:
                 return self._zeroField
 
     @property
+    def mu_tot_perturbation(
+        self
+    ):
+        """
+        Total viscosity as seen by the perturbation stress: like mu_tot, with the
+        eddy viscosity multiplied by the complex factor of Case.EddyViscosityLag
+        (1 without a lag model, so this equals mu_tot).
+
+        Returns
+        -------
+        object
+            Tensor of the viscosity acting on the perturbation strain.
+        """
+        lag = getattr(self, "eddy_viscosity_lag", None)
+        if lag is None or not lag.active or 'muturb' not in self._fieldDict:
+            return self.mu_tot
+        mu_tot = Field(
+            self._ScalarFunctionSpace,
+            self._mesh,
+        )
+        if 'mulam' in list(self._fieldDict.keys()):
+            mu_tot += self._fieldDict['mulam']
+        if 'muSGS' in list(self._fieldDict.keys()):
+            mu_tot += self._fieldDict['muSGS']
+        mu_turb = self._fieldDict['muturb'].get_tensor()
+        return mu_tot.get_tensor() + Tensor(mu_turb.ufl_tens * lag.factor(), mu_turb.CoordSys)
+
+    @property
     def mu_tot(
         self
     ):
@@ -901,7 +929,7 @@ class FieldProperties:
                             i_div(mean_u) * i_identity(i_grad(mean_u)))
                 
         else:
-            mean_mu = self._mean.mu_tot
+            mean_mu = self._mean.mu_tot_perturbation
             mean_u = self._mean.u
             fluc_mu = self.mulam
             tau_out = mean_mu * i_grad(self.u) + \

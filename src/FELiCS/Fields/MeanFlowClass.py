@@ -24,6 +24,7 @@ from    FELiCS.Equation.dependentVariables.ReactionHandler          import  Reac
 import  FELiCS.Equation.Reactions.janafspecie                       as      janafspecie
 import  FELiCS.Equation.Reactions.janafopenfoam                     as      janafopenfoam
 from    FELiCS.Fields.FieldProperties                               import  FieldProperties
+from    FELiCS.Fields.EddyViscosityLag                              import  EddyViscosityLag
 from    FELiCS.Fields.Field                                         import  Field
 from    FELiCS.IO.Mapping                                           import  Mapping
 from    FELiCS.IO.Reader                                            import  Reader
@@ -273,6 +274,9 @@ class MeanFlowClass(
         # Define the viscosity and alfa fields
         self.init_lam_diff()
         self.init_thermodynamic_quantities()
+
+        # Optional time lag of the frozen eddy viscosity seen by the perturbation
+        self._eddyViscosityLag = EddyViscosityLag(self._param, self)
 
     def _export_fields_to_h5(
         self,
@@ -633,6 +637,20 @@ class MeanFlowClass(
         
         logger.debug("Mean flow fields to read: "+str(listOfFieldsToBeRead))
         return listOfFieldsToBeRead
+
+    @property
+    def eddy_viscosity_lag(
+        self
+    ):
+        """
+        Time-lag model of the eddy viscosity seen by the perturbation (Case.EddyViscosityLag).
+
+        Returns
+        -------
+        FELiCS.Fields.EddyViscosityLag.EddyViscosityLag or None
+            None before the mean flow is imported.
+        """
+        return getattr(self, "_eddyViscosityLag", None)
 
     def get_field_tensor(
         self,

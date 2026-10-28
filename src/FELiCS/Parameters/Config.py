@@ -131,7 +131,12 @@ class Config(ABC):
                     }
                 },
                 'SpeciesFilePath':          {'datatype':str,    'default':''},
-                'TurbulenceModel':          {'datatype':str,    'default':'None'}
+                'TurbulenceModel':          {'datatype':str,    'default':'None'},
+                # Time lag of the frozen eddy viscosity seen by the perturbation: {'Model': 'None' |
+                # 'Relaxation' | 'Delay', 'TimeScale', 'Eigenvalue': [re, im], 'Region': 'All' | 'Wake' |
+                # 'Band', ...}.  No defaults for the model keys.
+                # See documentation/GoverningEquations/eddy_viscosity_lag.md
+                'EddyViscosityLag':         {'datatype':dict,   'default':{'Model':'None'}}
             },
             'Export':{
                 'ExportFolder':             {'datatype':str,    'default':''},

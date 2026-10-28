@@ -33,6 +33,7 @@ We describe the physical models and state equations required to close the govern
 equation_state.md
 equation_viscosity.md
 equation_turbulence_models.md
+eddy_viscosity_lag.md
 equation_reaction.md
 ```
 
